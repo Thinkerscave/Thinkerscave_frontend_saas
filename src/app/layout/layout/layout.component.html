@@ -1,0 +1,20 @@
+<div class="layout-container">
+  <app-top-bar class="topbar"></app-top-bar>
+
+  <div class="main-content">
+    <app-side-menu class="sidemenu"></app-side-menu>
+
+    <div class="page-content">
+      <!-- 🧭 Add Breadcrumb Here -->
+      <app-breadcrumb 
+        [menuLabel]="'User Management'" 
+        [subMenuLabel]="'Organization Registration'">
+      </app-breadcrumb>
+
+      <!-- Body Content -->
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+  <app-footer class="footer"></app-footer>
+</div>

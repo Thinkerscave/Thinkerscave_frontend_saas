@@ -1,0 +1,39 @@
+<p-card header="Menu Sequence Management" class="mb-4">
+  <div class="grid">
+    <!-- Menu Reordering -->
+    <div class="col-12 md:col-6">
+      <h5 class="mb-3">Reorder Menus</h5>
+      <p-orderList [value]="menus" dragdrop="true" [listStyle]="{ height: '300px' }" (onReorder)="onMenuReorder($event)">
+        <ng-template let-menu pTemplate="item">
+          <div class="flex justify-content-between align-items-center">
+            <span class="font-medium" (click)="onMenuClick(menu)">{{ menu.label }}</span>
+            <!-- <i class="pi pi-bars text-gray-500"></i> -->
+          </div>
+        </ng-template>
+      </p-orderList>
+    </div>
+
+    <!-- Submenu Reordering -->
+    <div class="col-12 md:col-6">
+      <h5 class="mb-3">Reorder Submenus</h5>
+
+      <p-orderList 
+        [value]="selectedSubmenus" 
+        dragdrop="true" 
+        [listStyle]="{ height: '300px' }" 
+        (onReorder)="onSubMenuReorder($event)">
+        <ng-template let-submenu pTemplate="item">
+          <div class="flex justify-content-between align-items-center">
+            <span>{{ submenu.label }}</span>
+            <!-- <i class="pi pi-bars text-gray-500"></i> -->
+          </div>
+        </ng-template>
+      </p-orderList>
+    </div>
+  </div>
+
+  <!-- Submit Button -->
+  <div class="flex justify-content-end mt-4">
+    <button pButton label="Submit Order" icon="pi pi-save" class="p-button-success" (click)="submitOrder()"></button>
+  </div>
+</p-card>

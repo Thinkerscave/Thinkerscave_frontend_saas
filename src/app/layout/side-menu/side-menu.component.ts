@@ -1,0 +1,70 @@
+import { Component } from '@angular/core';
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { MenuItem } from 'primeng/api';
+
+@Component({
+  selector: 'app-side-menu',
+  imports: [PanelMenuModule],
+  templateUrl: './side-menu.component.html',
+  styleUrl: './side-menu.component.scss'
+})
+export class SideMenuComponent {
+  items: MenuItem[] = [
+    {
+      label: 'Dashboard',
+      icon: 'pi pi-home',
+      routerLink: '/app'
+    },
+    {
+      label: 'Menu Management',
+      icon: 'pi pi-bars',
+      items: [
+        { label: 'Manage Menu', routerLink: '/app/manage-menu' },
+        { label: 'Manage Sub-menu', routerLink: '/app/manage-sub-menu' },
+        { label: 'Menu Sequence', routerLink: '/app/menu-sequence' }
+      ]
+    },
+    {
+      label: 'Role Management',
+      icon: 'pi pi-lock',
+      items: [
+        { label: 'Manage Role', routerLink: '/role/manage' },
+        { label: 'Role-Menu Mapping', routerLink: '/role/menu-mapping' },
+        { label: 'Role-Privilege Mapping', routerLink: '/role/privilege-mapping' }
+      ]
+    },
+    {
+      label: 'Organization Management',
+      icon: 'pi pi-building',
+      items: [
+        { label: 'Manage Organization', routerLink: '/app/organization-registration' }
+      ]
+    },
+    {
+      label: 'Student Management',
+      icon: 'pi pi-users',
+      items: [
+        { label: 'Manage Student', routerLink: '/student/manage' }
+      ]
+    },
+    {
+      label: 'Staff Management',
+      icon: 'pi pi-id-card',
+      items: [
+        { label: 'Manage Staff', routerLink: '/staff/manage' },
+        { label: 'Manage Salary', routerLink: '/staff/salary' },
+        { label: 'Leave Management', routerLink: '/staff/leave' }
+      ]
+    },
+    {
+      label: 'Attendance Management',
+      icon: 'pi pi-calendar',
+      items: [
+        { label: 'Class Attendance', routerLink: '/attendance/class' },
+        { label: 'Hostel Attendance', routerLink: '/attendance/hostel' },
+        { label: 'Staff Attendance', routerLink: '/attendance/staff' }
+      ]
+    }
+  ];
+
+}

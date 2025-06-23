@@ -1,0 +1,21 @@
+.topbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 2rem;
+  background: linear-gradient(to right, #3949ab, #1e88e5);
+  color: white;
+  font-size: 1.2rem;
+
+  .app-name {
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .profile-info {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
