@@ -1,31 +1,31 @@
-
 .mb-2 {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .block {
-    display: block;
+  display: block;
 }
 
 .w-full {
-    width: 100%;
+  width: 100%;
 }
 
 .mt-4 {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }
 
 .flex {
-    display: flex;
+  display: flex;
 }
 
 .gap-2 {
-    gap: 0.5rem;
+  gap: 0.5rem;
 }
 
 .justify-content-end {
-    justify-content: flex-end;
+  justify-content: flex-end;
 }
+
 .menu-list-container {
   padding: 20px;
   background-color: #f9f9f9;
@@ -50,17 +50,18 @@
 .p-datatable {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  overflow: hidden; /* Ensures rounded corners apply to content */
+  overflow: hidden;
+  /* Ensures rounded corners apply to content */
 }
 
-.p-datatable .p-datatable-thead > tr > th {
+.p-datatable .p-datatable-thead>tr>th {
   background-color: #f5f5f5;
   color: #555;
   font-weight: 600;
   padding: 1rem 0.8rem;
 }
 
-.p-datatable .p-datatable-tbody > tr > td {
+.p-datatable .p-datatable-tbody>tr>td {
   padding: 0.8rem;
   vertical-align: middle;
 }
@@ -71,19 +72,38 @@
 }
 
 .p-button-rounded {
-  border-radius: 50% !important; /* Ensure perfect roundness */
+  border-radius: 50% !important;
+  /* Ensure perfect roundness */
   width: 2.2rem;
   height: 2.2rem;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  padding: 0; /* Remove default padding for round buttons */
+  padding: 0;
+  /* Remove default padding for round buttons */
 }
 
 /* Utility classes (similar to PrimeFlex, or add PrimeFlex) */
 .p-mr-2 {
   margin-right: 0.5rem;
 }
+
 .text-center {
   text-align: center;
+}
+
+/* This rule can stay the same */
+.custom-textarea {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Update the :focus rule to be more specific and forceful.
+  We add !important to ensure our styles are applied.
+*/
+.custom-textarea:focus {
+    border-color: #28a745 !important; /* Green border color on focus */
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important; /* Optional glow effect */
+    outline: 0 none !important; /* Remove the default browser outline */
 }
