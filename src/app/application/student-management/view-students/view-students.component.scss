@@ -1,0 +1,23 @@
+/* Styling for the table header */
+.table-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.5rem 0;
+}
+
+/* Creates a flex container for the action buttons (Edit/Delete).
+  This allows us to space them out evenly.
+*/
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem; /* Adds a small space between the buttons */
+}
+
+/* PrimeNG tables on small screens can sometimes hide parts of buttons.
+  This ensures the buttons are always fully visible.
+*/
+:host ::ng-deep .p-datatable-responsive-scroll > .p-datatable-wrapper {
+    overflow-x: auto;
+}

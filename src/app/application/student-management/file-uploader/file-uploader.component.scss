@@ -1,0 +1,42 @@
+.document-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.doc-name-container {
+    flex: 1; /* This is the key property to make it take up available horizontal space */
+    min-width: 150px; /* Prevents the input from becoming too small on narrow screens */
+}
+
+.doc-name-container input {
+    width: 50%;
+}
+
+.file-upload-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Creates space between the button and the text */
+}
+
+.file-name-display {
+    font-size: 0.9em;
+    color: #495057; /* Standard PrimeNG text color */
+    font-style: italic;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px; /* Adjust this width as needed for your design */
+}
+
+.action-button-container {
+    flex-shrink: 0; 
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center; /* Pushes buttons to the right */
+    gap: 0.5rem;
+}

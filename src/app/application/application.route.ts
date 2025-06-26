@@ -25,5 +25,11 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'organization-registration',
     loadComponent: () =>
       import('./registration/organization-registration/organization-registration.component').then(m => m.OrganizationRegistrationComponent),
-  }
+  },
+  {
+    // CORRECTED: The path is changed from 'student-registration' to 'manage-student'
+    // to correctly reflect that this component is in the 'student-management' folder.
+    path: 'managestudent',
+    loadComponent: () => import('./student-management/managestudent/managestudent.component').then(m => m.ManagestudentComponent)
+  },
 ];

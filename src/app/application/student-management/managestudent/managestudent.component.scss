@@ -1,0 +1,106 @@
+ .form-container {
+     display: grid;
+     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+     gap: 1.5rem;
+ }
+
+ .form-field {
+     display: flex;
+     flex-direction: column;
+ }
+
+ .form-field label {
+     margin-bottom: 0.5rem;
+     font-weight: 600;
+ }
+
+ .form-field input,
+ .form-field select {
+     width: 100%;
+     padding: 0.75rem;
+     border: 1px solid #ced4da;
+     border-radius: 4px;
+     box-sizing: border-box;
+     /* Ensures padding doesn't affect overall width */
+ }
+
+ /* Use flexbox for the row of inputs */
+ .form-row {
+     display: flex;
+     gap: 1.5rem;
+     /* Creates space between the input fields */
+ }
+
+ /* Each field within the row will grow equally */
+ .form-row .form-field {
+     flex: 1;
+     /* This makes all input fields take up equal space */
+     display: flex;
+     flex-direction: column;
+ }
+
+ .form-row .form-field label {
+     margin-bottom: 0.5rem;
+     font-weight: 600;
+ }
+
+ /* Styles for the button container */
+ .form-actions {
+     display: flex;
+     justify-content: center;
+     /* Aligns buttons to the right */
+     gap: 0.5rem;
+     /* Adds space between the buttons */
+     margin-top: 1.5rem;
+     /* Adds space above the buttons */
+ }
+
+ /* Use the PrimeFlex grid system for a responsive layout.
+  This creates a 2-column layout on medium screens and up,
+  and a single-column layout on small screens.
+*/
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* Default to 1 column */
+    gap: 1.5rem;
+}
+
+/* On screens wider than 768px, switch to a 2-column grid */
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Ensure the full-width address field spans both columns in the grid */
+.field.col-12 {
+    grid-column: 1 / -1;
+}
+
+/* General styling for form fields to ensure consistency */
+.field {
+    display: flex;
+    flex-direction: column;
+}
+
+.field label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Ensure PrimeNG inputs fill their container */
+.field input[pInputText],
+.field textarea[pInputTextarea],
+.field p-dropdown {
+    width: 100%;
+}
+
+.section-header {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+hr {
+    border-color: var(--surface-d);
+}

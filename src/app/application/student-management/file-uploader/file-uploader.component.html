@@ -1,0 +1,45 @@
+
+<div class="p-card p-4">
+    <h4 class="mt-0 mb-4">Add Document</h4>
+
+    <div class="document-rows-container">
+
+     
+        <div *ngFor="let doc of documents; let i = index; let isLast = last" class="document-row">
+
+            <!-- 1. Document Name Input -->
+            <div class="doc-name-container">
+                <input type="text" pInputText [id]="'docName' + i" [(ngModel)]="doc.docName" placeholder="Document Name">
+            </div>
+
+            <!-- 2. File Upload Button and Name Display -->
+            <div class="file-upload-container">
+                <p-fileUpload mode="basic" [name]="'docFile' + i" accept="application/pdf"
+                    (onSelect)="onFileSelect($event, i)" chooseLabel="File Upload" [auto]="true">
+                </p-fileUpload>
+                <!-- NEW: This span displays the name of the chosen file. -->
+                <!-- It only appears if 'doc.file' is not null. -->
+                <!-- The tooltip shows the full name on hover, useful for long file names. -->
+                <span *ngIf="doc.file" class="file-name-display" [pTooltip]="doc.file.name" tooltipPosition="top">
+                    {{ doc.file.name }}
+                </span>
+            </div>
+            
+            <!-- 3. Action Button (+ or -) -->
+            <div class="action-button-container">
+                <button *ngIf="!isLast" pButton pRipple type="button" icon="pi pi-minus" (click)="removeDocumentRow(i)"
+                    class="p-button-rounded p-button-danger" pTooltip="Remove this row" tooltipPosition="top"></button>
+                <button *ngIf="isLast" pButton pRipple type="button" icon="pi pi-plus" (click)="addDocumentRow()"
+                    class="p-button-rounded p-button-success" pTooltip="Add another document" tooltipPosition="top"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main action buttons at the bottom of the card -->
+    <div class="form-actions mt-4">
+         <button pButton pRipple type="button" label="Cancel" (click)="cancel()"
+            class="p-button-secondary p-button-outlined"></button>
+         <button pButton pRipple type="button" label="Save as Draft" (click)="submitAll()"
+            class="p-button-primary"></button>
+    </div>
+</div>
