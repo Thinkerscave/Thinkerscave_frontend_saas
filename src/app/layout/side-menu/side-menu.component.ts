@@ -44,7 +44,7 @@ export class SideMenuComponent {
       label: 'Student Management',
       icon: 'pi pi-users',
       items: [
-        { label: 'Manage Student', routerLink: '/student/manage' }
+        { label: 'Manage Student', routerLink: '/app/managestudent' }
       ]
     },
     {
