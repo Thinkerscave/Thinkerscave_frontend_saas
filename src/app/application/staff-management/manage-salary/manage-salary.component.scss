@@ -1,0 +1,30 @@
+// Re-using some styles from our previous components for consistency
+
+.section-header {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+// Ensure the first section header has no top margin
+.section-header:first-of-type {
+  margin-top: 0;
+}
+
+// Add space between form fields and their labels
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+// Custom style for the read-only salary summary panel
+.salary-summary {
+  background-color: #f8f9fa; // A light grey background
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}

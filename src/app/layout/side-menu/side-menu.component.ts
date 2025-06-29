@@ -51,9 +51,9 @@ export class SideMenuComponent {
       label: 'Staff Management',
       icon: 'pi pi-id-card',
       items: [
-        { label: 'Manage Staff', routerLink: '/staff/manage' },
-        { label: 'Manage Salary', routerLink: '/staff/salary' },
-        { label: 'Leave Management', routerLink: '/staff/leave' }
+        { label: 'Manage Staff', routerLink: '/app/staff' },
+        { label: 'Manage Salary', routerLink: '/app/salary' },
+        { label: 'Leave Management', routerLink: '/app/leave' }
       ]
     },
     {

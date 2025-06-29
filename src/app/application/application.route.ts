@@ -32,4 +32,16 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'managestudent',
     loadComponent: () => import('./student-management/managestudent/managestudent.component').then(m => m.ManagestudentComponent)
   },
+  {
+    path: 'staff',
+    loadComponent: () => import('./staff-management/manage-staff/manage-staff.component').then(m => m.ManageStaffComponent)
+  },
+  {
+    path: 'salary',
+    loadComponent: () => import('./staff-management/manage-salary/manage-salary.component').then(m => m.ManageSalaryComponent)
+  },
+  {
+    path: 'leave',
+    loadComponent: () => import('./staff-management/leave-management/leave-management.component').then(m => m.LeaveManagementComponent)
+  }
 ];
