@@ -1,0 +1,163 @@
+<p-tabs value="0">
+    <p-tablist>
+        <p-tab value="0">Add</p-tab>
+        <p-tab value="1">View</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+        <p-tabpanel value="0">
+            <div class="card">
+                <form [formGroup]="staffForm" (ngSubmit)="onSubmit()">
+                    <div class="p-fluid p-formgrid grid">
+
+                        <div class="col-12">
+                            <h5 class="section-header">Personal Information</h5>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="fullName">Full Name</label>
+                            <input pInputText id="fullName" type="text" formControlName="fullName" />
+                            <small class="p-error" *ngIf="f['fullName'].touched && f['fullName'].errors?.['required']">
+                                Full Name is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="dob">Date of Birth</label>
+                            <p-calendar id="dob" dateFormat="dd/mm/yy" [showIcon]="true"
+                                formControlName="dob"></p-calendar>
+                            <small class="p-error" *ngIf="f['dob'].touched && f['dob'].errors?.['required']">
+                                Date of Birth is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="gender">Gender</label>
+                            <p-dropdown id="gender" [options]="genderOptions" placeholder="Select a Gender"
+                                formControlName="gender"></p-dropdown>
+                            <small class="p-error" *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
+                                Gender is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="mobileNumber">Mobile Number</label>
+                            <p-inputMask id="mobileNumber" mask="(+91) 99999-99999"
+                                formControlName="mobileNumber"></p-inputMask>
+                            <small class="p-error"
+                                *ngIf="f['mobileNumber'].touched && f['mobileNumber'].errors?.['required']">
+                                Mobile number is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12">
+                            <label for="email">Personal Email</label>
+                            <input pInputText id="email" type="email" formControlName="email" />
+                            <small class="p-error" *ngIf="f['email'].touched && f['email'].errors?.['required']">
+                                Email is required.
+                            </small>
+                            <small class="p-error" *ngIf="f['email'].errors?.['email']">
+                                Please enter a valid email address.
+                            </small>
+                        </div>
+
+                        <div class="field col-12">
+                            <label for="currentAddress">Current Address</label>
+                            <textarea id="currentAddress" pInputTextarea rows="3"
+                                formControlName="currentAddress"></textarea>
+                            <small class="p-error"
+                                *ngIf="f['currentAddress'].touched && f['currentAddress'].errors?.['required']">
+                                Address is required.
+                            </small>
+                        </div>
+
+                        <div class="col-12">
+                            <h5 class="section-header">Employment Details</h5>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="employeeId">Employee ID</label>
+                            <input pInputText id="employeeId" type="text" formControlName="employeeId" />
+                            <small class="p-error"
+                                *ngIf="f['employeeId'].touched && f['employeeId'].errors?.['required']">
+                                Employee ID is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="doj">Date of Joining</label>
+                            <p-calendar id="doj" dateFormat="dd/mm/yy" [showIcon]="true"
+                                formControlName="dateOfJoining"></p-calendar>
+                            <small class="p-error"
+                                *ngIf="f['dateOfJoining'].touched && f['dateOfJoining'].errors?.['required']">
+                                Date of Joining is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="jobTitle">Job Title / Designation</label>
+                            <input pInputText id="jobTitle" type="text" formControlName="jobTitle" />
+                            <small class="p-error" *ngIf="f['jobTitle'].touched && f['jobTitle'].errors?.['required']">
+                                Job Title is required.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="department">Department</label>
+                            <p-dropdown id="department" [options]="departmentOptions" placeholder="Select a Department"
+                                formControlName="department"></p-dropdown>
+                            <small class="p-error"
+                                *ngIf="f['department'].touched && f['department'].errors?.['required']">
+                                Department is required.
+                            </small>
+                        </div>
+
+                        <div class="col-12">
+                            <h5 class="section-header">Financial & Statutory Details</h5>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="panNumber">PAN Number</label>
+                            <input pInputText id="panNumber" type="text" formControlName="panNumber"
+                                style="text-transform: uppercase;" />
+                            <small class="p-error"
+                                *ngIf="f['panNumber'].touched && f['panNumber'].errors?.['required']">
+                                PAN Number is required.
+                            </small>
+                            <small class="p-error" *ngIf="f['panNumber'].errors?.['pattern']">
+                                Invalid PAN format.
+                            </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                            <label for="aadhaarNumber">Aadhaar Number</label>
+                            <p-inputMask id="aadhaarNumber" mask="9999-9999-9999"
+                                formControlName="aadhaarNumber"></p-inputMask>
+                            <small class="p-error"
+                                *ngIf="f['aadhaarNumber'].touched && f['aadhaarNumber'].errors?.['required']">
+                                Aadhaar Number is required.
+                            </small>
+                        </div>
+
+                        <div class="col-12 mt-4 flex justify-content-end">
+                            <p-button label="Add Staff" icon="pi pi-check" type="submit"
+                                [disabled]="staffForm.invalid"></p-button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </p-tabpanel>
+        <p-tabpanel value="1">
+            <p class="m-0">
+                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam
+                rem
+                aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt
+                explicabo.
+                Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni
+                dolores eos qui ratione voluptatem sequi nesciunt. Consectetur, adipisci velit, sed quia non numquam
+                eius
+                modi.
+            </p>
+        </p-tabpanel>
+
+    </p-tabpanels>
+</p-tabs>
