@@ -1,0 +1,27 @@
+<p-card header="Role-Menu Mapping">
+  <div class="grid mb-3">
+    <div class="col-12 md:col-4">
+      <label class="block mb-1">Select Role</label>
+      <p-dropdown 
+        [options]="roles" 
+        [(ngModel)]="selectedRole"
+        placeholder="Select a Role"
+        class="w-full">
+      </p-dropdown>
+    </div>
+  </div>
+
+  <p-tree 
+    [value]="menuTree" 
+    selectionMode="checkbox" 
+    [(selection)]="selectedNodes"
+    [propagateSelectionUp]="false"
+    [propagateSelectionDown]="true"
+    class="w-full mt-2">
+  </p-tree>
+
+  <div class="flex justify-content-end gap-2 mt-4">
+    <button pButton label="Cancel" class="p-button-secondary"></button>
+    <button pButton label="Submit" class="p-button-success" (click)="submit()"></button>
+  </div>
+</p-card>

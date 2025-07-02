@@ -22,6 +22,11 @@ export const APPLICATION_ROUTES: Routes = [
       import('./menu-management/menu-sequence/menu-sequence.component').then(m => m.MenuSequenceComponent),
   },
   {
+    path: 'role-menu-mapping',
+    loadComponent: () =>
+      import('./role-management/role-menu-mapping/role-menu-mapping.component').then(m => m.RoleMenuMappingComponent),
+  },
+  {
     path: 'organization-registration',
     loadComponent: () =>
       import('./registration/organization-registration/organization-registration.component').then(m => m.OrganizationRegistrationComponent),

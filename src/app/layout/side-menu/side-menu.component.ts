@@ -29,7 +29,7 @@ export class SideMenuComponent {
       icon: 'pi pi-lock',
       items: [
         { label: 'Manage Role', routerLink: '/role/manage' },
-        { label: 'Role-Menu Mapping', routerLink: '/role/menu-mapping' },
+        { label: 'Role-Menu Mapping', routerLink: '/app/role-menu-mapping' },
         { label: 'Role-Privilege Mapping', routerLink: '/role/privilege-mapping' }
       ]
     },
