@@ -28,9 +28,14 @@ export class SideMenuComponent {
       label: 'Role Management',
       icon: 'pi pi-lock',
       items: [
+
         { label: 'Manage Role', routerLink: '/app/role/manage' },
         { label: 'Role-Menu Mapping', routerLink: '/app/role/menu-mapping' },
-        { label: 'Role-Privilege Mapping', routerLink: '/app/role/privilege-mapping' }
+        { label: 'Role-Privilege Mapping', routerLink: '/app/role/privilege-mapping' },
+        { label: 'Manage Role', routerLink: '/role/manage' },
+        { label: 'Role-Menu Mapping', routerLink: '/app/role-menu-mapping' },
+        { label: 'Role-Privilege Mapping', routerLink: '/role/privilege-mapping' }
+
       ]
     },
     {
