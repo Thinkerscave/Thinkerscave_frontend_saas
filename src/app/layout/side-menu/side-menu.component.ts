@@ -28,9 +28,9 @@ export class SideMenuComponent {
       label: 'Role Management',
       icon: 'pi pi-lock',
       items: [
-        { label: 'Manage Role', routerLink: '/role/manage' },
-        { label: 'Role-Menu Mapping', routerLink: '/role/menu-mapping' },
-        { label: 'Role-Privilege Mapping', routerLink: '/role/privilege-mapping' }
+        { label: 'Manage Role', routerLink: '/app/role/manage' },
+        { label: 'Role-Menu Mapping', routerLink: '/app/role/menu-mapping' },
+        { label: 'Role-Privilege Mapping', routerLink: '/app/role/privilege-mapping' }
       ]
     },
     {
@@ -60,9 +60,9 @@ export class SideMenuComponent {
       label: 'Attendance Management',
       icon: 'pi pi-calendar',
       items: [
-        { label: 'Class Attendance', routerLink: '/attendance/class' },
-        { label: 'Hostel Attendance', routerLink: '/attendance/hostel' },
-        { label: 'Staff Attendance', routerLink: '/attendance/staff' }
+        { label: 'Class Attendance', routerLink: '/app/attendance/class' },
+        { label: 'Hostel Attendance', routerLink: '/app/attendance/hostel' },
+        { label: 'Staff Attendance', routerLink: '/app/attendance/staff' }
       ]
     }
   ];

@@ -71,6 +71,12 @@ export class ManageSalaryComponent {
       basic: [0, Validators.required],
       hra: [0, Validators.required],
       specialAllowance: [0, Validators.required],
+      academicAllowance: [0, Validators.required],
+      medicalAllowance: [0, Validators.required],
+      travelAllowance: [0, Validators.required],
+      otherAllowance: [0, Validators.required],
+      dearnessAllowance: [0, Validators.required],
+
       // Deductions
       professionalTax: [0, Validators.required],
       incomeTax: [0, Validators.required],
