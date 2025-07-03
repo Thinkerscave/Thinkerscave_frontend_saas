@@ -48,5 +48,19 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'leave',
     loadComponent: () => import('./staff-management/leave-management/leave-management.component').then(m => m.LeaveManagementComponent)
+  },
+  {
+    path: 'attendance/class',
+    loadComponent: () => import('./attendance-management/class-attendance/class-attendance.component').then(m => m.ClassAttendanceComponent)
+  }, {
+    path: 'attendance/hostel',
+    loadComponent: () => import('./attendance-management/hostel-attendance/hostel-attendance.component').then(m => m.HostelAttendanceComponent)
+  }, {
+    path: 'attendance/staff',
+    loadComponent: () => import('./attendance-management/staff-attendance/staff-attendance.component').then(m => m.StaffAttendanceComponent)
+  },
+  {
+    path: 'role/manage',
+    loadComponent: () => import('./role-management/manage-role/manage-role.component').then(m => m.ManageRoleComponent)
   }
 ];

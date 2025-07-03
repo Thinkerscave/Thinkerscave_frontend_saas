@@ -2,16 +2,19 @@
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
 <div class="card">
-    <p-table #dt [value]="staffSalaries" [rows]="10" [paginator]="true" [globalFilterFields]="['name','id','department']" responsiveLayout="scroll">
+    <p-table #dt [value]="staffSalaries" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['name','id','department']" responsiveLayout="scroll">
         <ng-template pTemplate="caption">
             <div class="flex flex-column md:flex-row justify-content-between align-items-center">
                 <h3 class="m-0">Manage Employee Salaries</h3>
                 <div class="mt-3 md:mt-0">
                     <span class="p-input-icon-left mr-2">
                         <i class="pi pi-search"></i>
-                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                            placeholder="Search..." />
                     </span>
-                    <p-button label="Run Payroll" icon="pi pi-cog" styleClass="p-button-help" (click)="runPayroll()"></p-button>
+                    <p-button label="Run Payroll" icon="pi pi-cog" styleClass="p-button-help"
+                        (click)="runPayroll()"></p-button>
                 </div>
             </div>
         </ng-template>
@@ -33,7 +36,8 @@
                 <td>{{staff.department}}</td>
                 <td>{{staff.ctc | currency:'INR':'symbol':'1.0-0'}}</td>
                 <td>
-                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-info" (click)="editSalary(staff)"></button>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-info"
+                        (click)="editSalary(staff)"></button>
                 </td>
             </tr>
         </ng-template>
@@ -41,8 +45,10 @@
 </div>
 
 
-<p-dialog [(visible)]="salaryDialogVisible" [style]="{width: '750px'}" header="Edit Salary Details" [modal]="true" class="p-fluid" (onHide)="hideDialog()">
+<p-dialog [(visible)]="salaryDialogVisible" [style]="{width: '800px'}" header="Edit Salary Details" [modal]="true"
+    class="p-fluid" (onHide)="hideDialog()">
     <form [formGroup]="salaryForm">
+
         <div class="formgrid grid">
             <div class="col-12 md:col-6">
                 <h5 class="section-header">Earnings</h5>
@@ -70,33 +76,62 @@
                     <label for="professionalTax">Professional Tax</label>
                     <p-inputNumber id="professionalTax" formControlName="professionalTax" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
-                 <div class="field">
+                <div class="field">
                     <label for="incomeTax">Income Tax (TDS)</label>
                     <p-inputNumber id="incomeTax" formControlName="incomeTax" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
             </div>
+        </div>
 
-            <div class="col-12">
-                <h5 class="section-header">Monthly Salary Summary</h5>
-                <div class="salary-summary p-4 grid">
-                    <div class="col-4 text-center">
-                        <div class="text-color-secondary">Gross Earnings</div>
-                        <div class="font-bold text-xl">{{grossSalary | currency:'INR':'symbol':'1.2-2'}}</div>
-                    </div>
-                     <div class="col-4 text-center">
-                        <div class="text-color-secondary">Total Deductions</div>
-                        <div class="font-bold text-xl">{{totalDeductions | currency:'INR':'symbol':'1.2-2'}}</div>
-                    </div>
-                     <div class="col-4 text-center">
-                        <div class="text-green-600">Net Salary</div>
-                        <div class="font-bold text-2xl text-green-600">{{netSalary | currency:'INR':'symbol':'1.2-2'}}</div>
+        <div class="col-12 mt-4">
+            <h5 class="section-header">Other Allowances</h5>
+            <div class="formgrid grid">
+                <div class="field col-12 md:col-4">
+                    <label for="academicAllowance">Academic Allowance</label>
+                    <p-inputNumber id="academicAllowance" formControlName="academicAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="travelAllowance">Travel Allowance</label>
+                    <p-inputNumber id="travelAllowance" formControlName="travelAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="dearnessAllowance">Dearness Allowance</label>
+                    <p-inputNumber id="dearnessAllowance" formControlName="dearnessAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="medicalAllowance">Medical Allowance</label>
+                    <p-inputNumber id="medicalAllowance" formControlName="medicalAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="otherAllowance">Other Allowance</label>
+                    <p-inputNumber id="otherAllowance" formControlName="otherAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-4">
+            <h5 class="section-header">Monthly Salary Summary</h5>
+            <div class="salary-summary p-4 grid">
+                <div class="col-4 text-center">
+                    <div class="text-color-secondary">Gross Earnings</div>
+                    <div class="font-bold text-xl">{{grossSalary | currency:'INR':'symbol':'1.2-2'}}</div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="text-color-secondary">Total Deductions</div>
+                    <div class="font-bold text-xl">{{totalDeductions | currency:'INR':'symbol':'1.2-2'}}</div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="text-green-600">Net Salary</div>
+                    <div class="font-bold text-2xl text-green-600">{{netSalary | currency:'INR':'symbol':'1.2-2'}}
                     </div>
                 </div>
             </div>
         </div>
+
     </form>
     <ng-template pTemplate="footer">
         <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
-        <button pButton pRipple label="Save" icon="pi pi-check" (click)="saveSalary()" [disabled]="salaryForm.invalid"></button>
+        <button pButton pRipple label="Save" icon="pi pi-check" (click)="saveSalary()"
+            [disabled]="salaryForm.invalid"></button>
     </ng-template>
 </p-dialog>
