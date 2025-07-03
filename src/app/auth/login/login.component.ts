@@ -8,6 +8,7 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
+import { LoginService } from '../../services/login.service';
 
 @Component({
   selector: 'app-login',
@@ -26,13 +27,26 @@ export class LoginComponent {
   username = '';
   password = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private loginService: LoginService) { }
 
-  onLogin() {
-    if (this.username === 'first') {
-      this.router.navigate(['/first-time-login']);
-    } else {
-      this.router.navigate(['/app']);
-    }
+  login() {
+    const loginPayload = {
+      username: this.username,
+      password: this.password
+    };
+    this.loginService.generateToken(loginPayload).subscribe({
+      next: (res: any) => {
+        this.loginService.loginUser(res.token);
+        console.log(res);
+      },
+      error: (e) => {
+        console.error(e);
+        alert("Invalid Details !! Try again");
+      },
+      complete: () => {
+        console.log("complete");
+        this.router.navigate(['/app']);
+      }
+    });
   }
 }
