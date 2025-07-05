@@ -6,6 +6,7 @@ import { LayoutComponent } from './layout/layout/layout.component';
 
 export const routes: Routes = [
     { path: '', component: LoginComponent },
+    { path: 'login', component: LoginComponent },
     { path: 'forgot-password', component: ForgotPasswordComponent },
     { path: 'first-time-login', component: FirstTimeLoginComponent },
     {

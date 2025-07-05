@@ -1,22 +1,33 @@
-<div class="flex justify-content-center align-items-center min-h-screen bg-primary-50">
-  <p-card class="w-full sm:w-10 md:w-5 lg:w-3 shadow-4 border-round-xl">
-    <form (ngSubmit)="login()" class="p-fluid text-center">
+<div class="flex justify-content-center align-items-center min-h-screen login-bg">
+  <p-toast></p-toast>
+  <p-card class="glass-card w-full sm:w-10 md:w-6 lg:w-4 xl:w-3">
+    <form (ngSubmit)="login()" class="p-fluid text-center fade-in">
+
+      <h2 class="text-900 mb-4">Welcome Back</h2>
 
       <div class="field mb-3">
-        <label for="username" class="block text-900 font-semibold mb-2">Username</label>
-        <input id="username" type="text" pInputText [(ngModel)]="username" name="username" required class="w-full" />
+        <label for="username" class="block font-semibold mb-2 text-left w-full">Username</label>
+        <input id="username" type="text" pInputText [(ngModel)]="username" name="username" required class="w-full" placeholder="Enter your username" />
       </div>
 
       <div class="field mb-3">
-        <label for="password" class="block text-900 font-semibold mb-2">Password</label>
-        <input id="password" type="text" pInputText [(ngModel)]="password" name="password" required class="w-full" />
+        <label for="password" class="block font-semibold mb-2 text-left w-full">Password</label>
+        <p-password id="password" name="password" [(ngModel)]="password" [feedback]="false" [toggleMask]="true"
+          styleClass="w-full" inputStyleClass="w-full" required placeholder="Enter your password"></p-password>
       </div>
 
-      <button pButton type="submit" label="Login" class="p-button-sm w-6 mx-auto mt-2 mb-3"></button>
-
-      <div class="text-center mt-2">
-        <a routerLink="/forgot-password" class="text-primary cursor-pointer text-sm">Forgot Password?</a>
+      <div class="flex justify-content-between mb-3 text-sm">
+        <div class="flex align-items-center gap-2">
+          <p-checkbox inputId="remember" binary="true" name="rememberMe" [(ngModel)]="rememberMe"></p-checkbox>
+          <label for="remember" class="text-sm text-gray-800 cursor-pointer">Remember Me</label>
+        </div>
+        <a routerLink="/forgot-password"
+          class="text-sm text-gray-800 hover:text-blue-600 transition-colors duration-200">
+          Forgot Password?
+        </a>
       </div>
+
+      <button pButton type="submit" label="Login" class="p-button-sm w-6 mx-auto mt-2 mb-3 p-button-rounded"></button>
     </form>
   </p-card>
 </div>

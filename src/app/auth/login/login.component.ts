@@ -9,6 +9,10 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 import { LoginService } from '../../services/login.service';
+import { CheckboxModule } from 'primeng/checkbox';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-login',
@@ -19,15 +23,17 @@ import { LoginService } from '../../services/login.service';
     PasswordModule,
     ButtonModule,
     CardModule,
-    DividerModule],
+    DividerModule, CheckboxModule, FloatLabelModule,ToastModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
+  providers: [MessageService]
 })
 export class LoginComponent {
   username = '';
   password = '';
+  rememberMe: boolean = false;
 
-  constructor(private router: Router, private loginService: LoginService) { }
+  constructor(private router: Router, private loginService: LoginService,private messageService: MessageService) { }
 
   login() {
     const loginPayload = {
@@ -41,7 +47,12 @@ export class LoginComponent {
       },
       error: (e) => {
         console.error(e);
-        alert("Invalid Details !! Try again");
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Login Failed',
+          detail: 'Invalid username or password',
+          life: 5000
+        });
       },
       complete: () => {
         console.log("complete");
