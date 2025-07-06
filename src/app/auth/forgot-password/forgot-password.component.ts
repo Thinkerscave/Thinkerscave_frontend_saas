@@ -23,8 +23,7 @@ import { ToastModule } from 'primeng/toast';
     CardModule,
     DividerModule, CheckboxModule, FloatLabelModule, ToastModule],
   templateUrl: './forgot-password.component.html',
-  styleUrl: './forgot-password.component.scss',
-  providers: [MessageService]
+  styleUrl: './forgot-password.component.scss'
 })
 export class ForgotPasswordComponent {
   step: number = 1;

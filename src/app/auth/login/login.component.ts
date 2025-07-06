@@ -23,27 +23,32 @@ import { MessageService } from 'primeng/api';
     PasswordModule,
     ButtonModule,
     CardModule,
-    DividerModule, CheckboxModule, FloatLabelModule,ToastModule],
+    DividerModule, CheckboxModule, FloatLabelModule, ToastModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
-  providers: [MessageService]
+  styleUrl: './login.component.scss'
 })
 export class LoginComponent {
   username = '';
   password = '';
   rememberMe: boolean = false;
+  firstTimeLogin: boolean = true;
 
-  constructor(private router: Router, private loginService: LoginService,private messageService: MessageService) { }
+  constructor(private router: Router, private loginService: LoginService, private messageService: MessageService) { }
 
   login() {
     const loginPayload = {
       username: this.username,
       password: this.password
     };
+    if (this.firstTimeLogin) {
+      // Save data if needed
+      localStorage.setItem('username', this.username);
+      this.router.navigate(['/auth/first-time-login']);
+    }
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
         this.loginService.loginUser(res.token);
-        console.log(res);
+        this.router.navigate(['/app']);
       },
       error: (e) => {
         console.error(e);
@@ -53,10 +58,6 @@ export class LoginComponent {
           detail: 'Invalid username or password',
           life: 5000
         });
-      },
-      complete: () => {
-        console.log("complete");
-        this.router.navigate(['/app']);
       }
     });
   }
