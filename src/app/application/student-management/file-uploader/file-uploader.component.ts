@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgModule } from '@angular/core';
+import { Component, EventEmitter, NgModule, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -28,6 +28,8 @@ export class FileUploaderComponent {
     { docName: '', file: null }
   ];
 
+  @Output() documentsReady = new EventEmitter<{ files: File[], types: string[] }>();
+
   constructor() { }
 
   /**
@@ -46,6 +48,7 @@ export class FileUploaderComponent {
    * @param index The index of the row to remove.
    */
   removeDocumentRow(index: number): void {
+
     this.documents.splice(index, 1);
   }
 
@@ -64,10 +67,11 @@ export class FileUploaderComponent {
    * @param index The index of the row where the file was selected.
    */
   onFileSelect(event: any, index: number): void {
-    const file: File = event.files[0];
-    if (file) {
+    const file: File = event.target.files[0];
+    if (file) { 
       // Update the 'file' property of the correct document object in the array.
       this.documents[index].file = file;
+      
     }
   }
 
@@ -84,6 +88,15 @@ export class FileUploaderComponent {
     if (isValid) {
       // In a real application, you would use a service to send this data
       // to your server, likely as multipart/form-data.
+
+      const files = this.documents.map(doc => doc.file!) as File[];
+      const types = this.documents.map(doc => doc.docName.trim());
+
+      alert(types)
+      alert(files)
+
+      // Emit to parent
+      this.documentsReady.emit({ files, types });
       alert('All documents are valid and ready for submission! (Check the console for data)');
     } else {
       alert('Please ensure every row has a document name and an uploaded file.');
