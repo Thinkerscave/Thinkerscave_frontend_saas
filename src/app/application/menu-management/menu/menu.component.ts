@@ -14,19 +14,22 @@ import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { CardModule } from 'primeng/card';
+import { DialogModule } from 'primeng/dialog';
 interface MenuItem {
   slNo: number;
   name: string;
+  description: string;
 }
 @Component({
   selector: 'app-menu',
   imports: [
     CommonModule,
     FormsModule,
+    DialogModule,
     TabViewModule,
     RadioButtonModule,
     FieldsetModule,
-     CommonModule,
+    CommonModule,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -41,7 +44,8 @@ interface MenuItem {
 export class MenuComponent {
   title = '';
   menuItems: MenuItem[] = []; // Array to hold your menu data
-
+  displayEditModal: boolean = false;
+  editingMenuItem: MenuItem | null = null;
   // For displaying messages within the component
   currentMessage: { severity: 'success' | 'info' | 'warn' | 'error', summary: string, detail: string } | null = null;
 
@@ -54,31 +58,41 @@ export class MenuComponent {
   loadDummyData(): void {
     // Static dummy data
     this.menuItems = [
-      { slNo: 1, name: 'Dashboard' },
-      { slNo: 2, name: 'User Management' },
-      { slNo: 3, name: 'Product Catalog' },
-      { slNo: 4, name: 'Order Processing' },
-      { slNo: 5, name: 'Analytics Reports' },
-      { slNo: 6, name: 'Settings' },
-      { slNo: 7, name: 'Notifications' },
-      { slNo: 8, name: 'Reports' },
-      { slNo: 9, name: 'Help & Support' },
-      { slNo: 10, name: 'Logout' },
+      { slNo: 1, name: 'Dashboard', description: 'dashboarddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd' },
+      { slNo: 2, name: 'User Management', description: 'user management' },
+      { slNo: 3, name: 'Product Catalog', description: 'product catalog' },
+      { slNo: 4, name: 'Order Processing', description: 'order processing' },
+      { slNo: 5, name: 'Analytics Reports', description: 'analytics report' },
+      { slNo: 6, name: 'Settings', description: 'settings' },
+      { slNo: 7, name: 'Notifications', description: 'notification' },
+      { slNo: 8, name: 'Reports', description: 'report' },
+      { slNo: 9, name: 'Help & Support', description: 'help and support' },
+      { slNo: 10, name: 'Logout', description: 'logout' },
     ];
   }
 
-  onEdit(menuItem: MenuItem): void {
-    this.currentMessage = {
-      severity: 'info',
-      summary: 'Edit Clicked',
-      detail: `Initiating edit for: ${menuItem.name}`
-    };
-    console.log('Edit clicked for:', menuItem);
+  onEdit(menuItem: MenuItem) {
+    // Create a copy of the menu item to avoid modifying the original data directly
+    this.editingMenuItem = { ...menuItem };
+    // Show the dialog
+    this.displayEditModal = true;
+  }
+  onSave() {
+    if (this.editingMenuItem) {
+      // Find the index of the item to update in the main array
+      const index = this.menuItems.findIndex(item => item.slNo === this.editingMenuItem!.slNo);
+      if (index !== -1) {
+        // Update the item in the array with the edited data
+        this.menuItems[index] = this.editingMenuItem;
+      }
 
-    // Simulate clearing the message after a short delay
-    setTimeout(() => {
-      this.currentMessage = null;
-    }, 3000);
+      // Here you would typically also call a service to save the changes to the backend
+      console.log('Saving:', this.editingMenuItem);
+
+      // Hide the dialog
+      this.displayEditModal = false;
+      this.editingMenuItem = null;
+    }
   }
 
   onDelete(menuItem: MenuItem): void {

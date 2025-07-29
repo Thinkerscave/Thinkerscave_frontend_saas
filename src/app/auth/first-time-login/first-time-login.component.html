@@ -1,1 +1,31 @@
-<p>first-time-login works!</p>
+<form (ngSubmit)="save()" class="p-fluid text-center fade-in">
+
+    <h2 class="text-900 mb-4">Set New Password</h2>
+    <div class="field mb-3">
+        <label for="currentPassword" class="block font-semibold mb-2 text-left w-full">Current Password</label>
+        <p-password id="currentPassword" name="currentPassword" [(ngModel)]="currentPassword" [feedback]="false"
+            [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" required
+            placeholder="Enter Current Password"></p-password>
+    </div>
+    <div class="field mb-3">
+        <label for="newPassword" class="block font-semibold mb-2 text-left w-full">New Password</label>
+        <p-password id="newPassword" name="newPassword" [(ngModel)]="newPassword" [feedback]="false" [toggleMask]="true"
+            styleClass="w-full" inputStyleClass="w-full" required placeholder="Enter New Password"></p-password>
+    </div>
+
+    <div class="field mb-3">
+        <label for="confirmPassword" class="block font-semibold mb-2 text-left w-full">Confirm
+            Password</label>
+        <p-password id="confirmPassword" name="confirmPassword" [(ngModel)]="retypePassword" [feedback]="false"
+            [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" required
+            placeholder="ReType your Password"></p-password>
+    </div>
+    <button pButton type="submit" label="Save" class="p-button-sm w-6 mx-auto mb-3 p-button-rounded"></button>
+
+    <div class="text-right   mt-3">
+        <a routerLink="/login"
+            class="text-sm text-gray-800 hover:text-blue-600 transition-colors duration-300 cursor-pointer no-underline">
+            ← Back to Login
+        </a>
+    </div>
+</form>

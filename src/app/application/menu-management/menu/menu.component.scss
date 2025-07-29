@@ -107,3 +107,9 @@
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important; /* Optional glow effect */
     outline: 0 none !important; /* Remove the default browser outline */
 }
+.truncate-text {
+  max-width: 250px; /* Adjust this width as needed */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
