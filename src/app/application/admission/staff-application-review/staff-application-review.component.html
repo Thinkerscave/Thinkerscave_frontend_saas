@@ -1,0 +1,98 @@
+ <div class="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+      <p-toast></p-toast>
+      <p-card>
+        <ng-template pTemplate="title">
+          <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-800">Admission Applications</h2>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <!-- Filters -->
+          <div class="mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input pInputText placeholder="Search by Name/ID..." (input)="dt.filterGlobal($event.target, 'contains')" class="w-full">
+            <p-dropdown [options]="programFilters" placeholder="Filter by Program" [showClear]="true" optionLabel="name"></p-dropdown>
+            <p-dropdown [options]="statusFilters" placeholder="Filter by Status" [showClear]="true" optionLabel="name"></p-dropdown>
+          </div>
+
+          <!-- Applications Table -->
+          <p-table #dt [value]="applications" [paginator]="true" [rows]="5" [globalFilterFields]="['applicant_name', 'application_id']" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="applicant_name">Applicant Name <p-sortIcon field="applicant_name"></p-sortIcon></th>
+                <th pSortableColumn="application_id">Application ID <p-sortIcon field="application_id"></p-sortIcon></th>
+                <th pSortableColumn="applying_for_school">Program <p-sortIcon field="applying_for_school"></p-sortIcon></th>
+                <th pSortableColumn="submission_date">Date <p-sortIcon field="submission_date"></p-sortIcon></th>
+                <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-app>
+              <tr>
+                <td>{{ app.applicant_name }}</td>
+                <td>{{ app.application_id }}</td>
+                <td>{{ app.applying_for_school }}</td>
+                <td>{{ app.submission_date | date: 'dd/MM/yyyy' }}</td>
+                <td>
+                  <p-tag [value]="app.status" [severity]="getStatusSeverity(app.status)"></p-tag>
+                </td>
+                <td>
+                  <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-info" (click)="reviewApplication(app)"></button>
+                </td>
+              </tr>
+            </ng-template>
+             <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center">No applications found.</td>
+                </tr>
+            </ng-template>
+          </p-table>
+        </ng-template>
+      </p-card>
+
+      <!-- Review Dialog -->
+      <p-dialog header="Review Application: {{ selectedApplication?.application_id }}" [(visible)]="displayDialog" [modal]="true" [style]="{width: '70vw'}" [draggable]="false" [resizable]="false">
+        <div *ngIf="selectedApplication">
+          <p-tabView>
+            <p-tabPanel header="Applicant Details">
+              <div class="p-6 grid grid-cols-2 gap-4 text-sm">
+                  <div><span class="font-semibold">Full Name:</span> {{ selectedApplication.details.applicant_name }}</div>
+                  <div><span class="font-semibold">Date of Birth:</span> {{ selectedApplication.details.date_of_birth | date:'dd/MM/yyyy' }}</div>
+                  <div><span class="font-semibold">Gender:</span> {{ selectedApplication.details.gender }}</div>
+                  <div><span class="font-semibold">Program:</span> {{ selectedApplication.details.applying_for_school }}</div>
+                  <hr class="col-span-2 my-2">
+                  <div><span class="font-semibold">Parent's Name:</span> {{ selectedApplication.details.parent_name }}</div>
+                  <div><span class="font-semibold">Contact Email:</span> {{ selectedApplication.details.email }}</div>
+                  <div><span class="font-semibold">Contact Phone:</span> {{ selectedApplication.details.contact_number }}</div>
+              </div>
+            </p-tabPanel>
+            <p-tabPanel header="Uploaded Documents">
+              <div class="p-6">
+                <ul>
+                  <li class="mb-2"><a href="#" class="text-blue-600 hover:underline">Applicant_Photograph.jpg</a></li>
+                  <li class="mb-2"><a href="#" class="text-blue-600 hover:underline">Birth_Certificate.pdf</a></li>
+                </ul>
+              </div>
+            </p-tabPanel>
+          </p-tabView>
+
+          <!-- Admin Actions -->
+          <div class="mt-6 p-4 border-t" [formGroup]="reviewForm">
+            <h4 class="text-lg font-semibold mb-4">Admin Actions</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <label class="mb-2 font-medium">Update Status</label>
+                <p-dropdown [options]="statusOptions" formControlName="status" placeholder="Change status"></p-dropdown>
+              </div>
+              <div class="flex flex-col">
+                <label class="mb-2 font-medium">Internal Comments</label>
+                <textarea pInputTextarea formControlName="internal_comments" rows="3" placeholder="Add notes for internal records..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template pTemplate="footer">
+          <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="displayDialog=false"></button>
+          <button pButton pRipple label="Update Application" icon="pi pi-check" (click)="updateApplication()"></button>
+        </ng-template>
+      </p-dialog>
+    </div>

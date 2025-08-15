@@ -1,0 +1,225 @@
+ <!-- Main container with a modern background color -->
+    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div class="w-full max-w-5xl">
+        <p-toast></p-toast>
+        <p-card styleClass="shadow-lg rounded-xl">
+          <ng-template pTemplate="title">
+            <div class="text-2xl font-bold text-gray-800">New Admission Application - 2025</div>
+          </ng-template>
+          <ng-template pTemplate="subtitle">
+            Please fill out the form carefully, following all the steps.
+          </ng-template>
+
+          <ng-template pTemplate="content">
+            <!-- Stepper -->
+            <p-steps [model]="items" [(activeIndex)]="activeIndex" [readonly]="true" styleClass="mb-8"></p-steps>
+
+            <!-- Form -->
+            <form [formGroup]="admissionForm">
+
+              <!-- Step 0: Welcome & Guidelines -->
+              <div *ngIf="activeIndex === 0" class="px-4 py-8">
+                  <h3 class="text-xl font-semibold mb-6 text-gray-800">Admission Guidelines & Instructions</h3>
+                  <div class="space-y-6 text-gray-700">
+                    <p>Welcome to the Thinkerscave Admission Portal for the 2025 academic year. Please read the following guidelines carefully before proceeding:</p>
+                    <ul class="list-disc list-inside space-y-2 pl-4">
+                        <li>Ensure all information provided is accurate and truthful.</li>
+                        <li>Keep scanned copies of all required documents ready for upload (PDF or JPG, max 2MB each).</li>
+                        <li>The application fee of ₹500 is non-refundable.</li>
+                        <li>An application ID will be generated upon successful submission. Please save it for future reference.</li>
+                    </ul>
+                    <p>Click 'Next' to begin your application.</p>
+                  </div>
+              </div>
+
+              <!-- Step 1: Basic Information -->
+              <div *ngIf="activeIndex === 1">
+                <h3 class="text-xl font-semibold mb-6">1. Applicant's Basic Information</h3>
+                <div class="form-grid" formGroupName="basicInfo">
+                  <div class="form-field">
+                    <label for="first_name">First Name</label>
+                    <input pInputText id="first_name" formControlName="first_name" placeholder="John" />
+                  </div>
+                  <div class="form-field">
+                    <label for="last_name">Last Name</label>
+                    <input pInputText id="last_name" formControlName="last_name" placeholder="Doe" />
+                  </div>
+                  <div class="form-field">
+                    <label for="date_of_birth">Date of Birth</label>
+                    <p-calendar id="date_of_birth" formControlName="date_of_birth" [showIcon]="true" dateFormat="dd/mm/yy" styleClass="w-full"></p-calendar>
+                  </div>
+                  <div class="form-field">
+                    <label for="gender">Gender</label>
+                    <p-dropdown id="gender" [options]="genderOptions" formControlName="gender" placeholder="Select Gender" optionLabel="name" styleClass="w-full"></p-dropdown>
+                  </div>
+                  <div class="form-field col-span-full">
+                    <label for="applying_for_school">Applying for Class/Program</label>
+                    <p-dropdown id="applying_for_school" [options]="programOptions" formControlName="applying_for_school" placeholder="Select Program" optionLabel="name" styleClass="w-full"></p-dropdown>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2: Parent/Guardian Details -->
+              <div *ngIf="activeIndex === 2">
+                <h3 class="text-xl font-semibold mb-6">2. Parent/Guardian Details</h3>
+                <div class="form-grid" formGroupName="parentDetails">
+                    <div class="form-field">
+                      <label for="parent_name">Parent's Name</label>
+                      <input pInputText id="parent_name" formControlName="parent_name" placeholder="Michael Doe" />
+                    </div>
+                    <div class="form-field">
+                      <label for="guardian_name">Guardian's Name (Optional)</label>
+                      <input pInputText id="guardian_name" formControlName="guardian_name" placeholder="If applicable" />
+                    </div>
+                    <div class="form-field">
+                      <label for="email">Contact Email</label>
+                      <input pInputText id="email" type="email" formControlName="email" placeholder="parent@example.com" />
+                    </div>
+                    <div class="form-field">
+                      <label for="contact_number">Contact Phone Number</label>
+                      <input pInputText id="contact_number" type="tel" formControlName="contact_number" placeholder="+91 9876543210" />
+                    </div>
+                </div>
+              </div>
+
+              <!-- Step 3: Address & Emergency Contact -->
+              <div *ngIf="activeIndex === 3">
+                  <h3 class="text-xl font-semibold mb-6">3. Address & Emergency Contact</h3>
+                  <div class="space-y-8">
+                      <div class="form-grid" formGroupName="address">
+                        <div class="form-field col-span-full">
+                          <label>Street Address</label>
+                          <textarea pInputTextarea id="address" formControlName="street" rows="3" placeholder="123 Main St, Anytown..."></textarea>
+                        </div>
+                        <div class="form-field">
+                          <label for="city">City</label>
+                          <input pInputText id="city" formControlName="city" placeholder="New Delhi" />
+                        </div>
+                        <div class="form-field">
+                          <label for="state">State</label>
+                          <input pInputText id="state" formControlName="state" placeholder="Delhi" />
+                        </div>
+                        <div class="form-field col-span-full md:col-span-1">
+                          <label for="pincode">Pincode</label>
+                          <input pInputText id="pincode" formControlName="pincode" placeholder="110001" />
+                        </div>
+                      </div>
+                      <div class="pt-6 border-t" formGroupName="emergencyContact">
+                          <h4 class="text-lg font-semibold mb-4">Emergency Contact</h4>
+                          <div class="form-grid">
+                              <div class="form-field">
+                                  <label for="emergency_contact_name">Contact Person Name</label>
+                                  <input pInputText id="emergency_contact_name" formControlName="name" placeholder="Relative's Name" />
+                              </div>
+                              <div class="form-field">
+                                  <label for="emergency_contact_number">Contact Person Number</label>
+                                  <input pInputText id="emergency_contact_number" formControlName="number" placeholder="+91 9876543211" />
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Step 4: Document Upload -->
+              <div *ngIf="activeIndex === 4">
+                <h3 class="text-xl font-semibold mb-2">4. Upload Required Documents</h3>
+                <p class="text-sm text-gray-500 mb-6">Upload files in PDF, JPG, or JPEG format (max 2MB each).</p>
+                <div formArrayName="documents">
+                  <div *ngFor="let doc of documents.controls; let i=index" [formGroupName]="i" class="mb-4">
+                    <div class="flex items-center gap-4">
+                      <div class="flex-grow form-field">
+                        <label>Document Name</label>
+                        <input pInputText formControlName="fileName" placeholder="e.g., Birth Certificate" />
+                      </div>
+                      <div class="form-field">
+                        <label>&nbsp;</label> <!-- Spacer for alignment -->
+                        <input type="file" [id]="'file-upload-' + i" (change)="onFileSelect($event, i)" class="hidden" accept="application/pdf,image/jpeg,image/jpg">
+                        <p-button label="Upload" icon="pi pi-upload" styleClass="p-button-secondary" (click)="triggerFileUpload(i)"></p-button>
+                      </div>
+                      <div class="form-field">
+                         <label>&nbsp;</label>
+                         <p-button icon="pi pi-trash" styleClass="p-button-danger" (click)="removeDocument(i)" [disabled]="documents.length === 1"></p-button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p-button label="Add Document" icon="pi pi-plus" (click)="addDocument()" styleClass="p-button-text"></p-button>
+              </div>
+
+              <!-- Step 5: Payment -->
+              <div *ngIf="activeIndex === 5">
+                  <h3 class="text-xl font-semibold mb-6">5. Application Fee Payment</h3>
+                  <div class="p-4 border rounded-lg bg-blue-50 border-blue-200" formGroupName="payment">
+                      <div class="flex items-center justify-between">
+                          <div>
+                              <div class="font-bold text-lg text-blue-800">Application Fee</div>
+                              <div class="text-gray-600">A one-time non-refundable fee.</div>
+                          </div>
+                          <div class="text-2xl font-bold text-blue-800">₹500.00</div>
+                      </div>
+                      <hr class="my-4">
+                      <div class="flex items-center gap-2">
+                          <p-checkbox formControlName="application_fee_paid" [binary]="true" inputId="fee_paid"></p-checkbox>
+                          <label for="fee_paid" class="font-medium">I have completed the payment.</label>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-2">This is a simulation. In a real application, you would be redirected to a payment gateway.</p>
+                  </div>
+              </div>
+
+              <!-- Step 6: Review and Submit -->
+              <div *ngIf="activeIndex === 6">
+                <h3 class="text-xl font-semibold mb-6">6. Review Your Application</h3>
+                <div class="p-4 bg-gray-50 rounded-lg border space-y-6">
+                  <div *ngFor="let section of reviewSections" class="pt-6 first:pt-0 border-t first:border-none">
+                      <div class="font-bold text-lg mb-4 text-blue-700">{{ section.title }}</div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                          <div *ngFor="let field of section.fields">
+                              <span class="font-semibold text-gray-600">{{ field.label }}:</span> {{ field.value || 'N/A' }}
+                          </div>
+                      </div>
+                  </div>
+                </div>
+                <div class="mt-8 flex items-center gap-2" formGroupName="finalDeclaration">
+                  <p-checkbox formControlName="declaration" [binary]="true" inputId="declaration"></p-checkbox>
+                  <label for="declaration" class="ml-2">I hereby declare that all the information provided is true and correct.</label>
+                </div>
+              </div>
+            </form>
+          </ng-template>
+
+          <ng-template pTemplate="footer">
+            <div class="flex justify-between items-center mt-8 pt-6 border-t">
+              <!-- Back Button (Left) -->
+              <div class="flex-initial">
+                <p-button label="Back" icon="pi pi-arrow-left" (click)="prevStep()" [disabled]="activeIndex === 0" styleClass="p-button-secondary"></p-button>
+              </div>
+              
+              <!-- Save as Draft Button (Center) -->
+              <div class="flex-initial">
+                <p-button *ngIf="activeIndex > 0 && activeIndex < items.length - 1" 
+                          label="Save as Draft" 
+                          icon="pi pi-save" 
+                          (click)="saveAsDraft()" 
+                          styleClass="p-button-info p-button-outlined"></p-button>
+              </div>
+              
+              <!-- Right-aligned Buttons -->
+              <div class="flex-initial">
+                <p-button *ngIf="activeIndex < items.length - 1" 
+                          label="Save & Continue" 
+                          icon="pi pi-arrow-right" 
+                          iconPos="right" 
+                          (click)="nextStep()"></p-button>
+                
+                <p-button *ngIf="activeIndex === items.length - 1" 
+                          label="Submit Application" 
+                          icon="pi pi-check" 
+                          (click)="submitApplication()" 
+                          [disabled]="admissionForm.invalid" 
+                          styleClass="p-button-success"></p-button>
+              </div>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+    </div>

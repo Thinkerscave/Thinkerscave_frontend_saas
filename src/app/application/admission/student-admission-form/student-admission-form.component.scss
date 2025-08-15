@@ -1,0 +1,27 @@
+:host ::ng-deep .form-grid {
+      display: grid;
+      grid-template-columns: 1fr; /* Default to single column */
+      gap: 1.75rem 2rem; /* Vertical and horizontal gap */
+    }
+
+    /* On medium screens and up, switch to two columns */
+    @media (min-width: 768px) {
+      :host ::ng-deep .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    :host ::ng-deep .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .form-field label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #374151; /* text-gray-700 */
+    }
+    
+    :host ::ng-deep .col-span-full {
+        grid-column: 1 / -1;
+    }

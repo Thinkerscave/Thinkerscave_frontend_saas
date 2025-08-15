@@ -19,6 +19,14 @@ export const routes: Routes = [
             }
         ]
     },
+    {
+        path: 'public/admission',
+        loadComponent: () => import('./application/admission/student-admission-form/student-admission-form.component').then(m => m.StudentAdmissionFormComponent)
+    },
+    {
+        path: 'public/admission/review',
+        loadComponent: () => import('./application/admission/staff-application-review/staff-application-review.component').then(m => m.StaffApplicationReviewComponent)
+    },
 
     // Wildcard (optional)
     { path: '**', redirectTo: 'login' }
