@@ -8,6 +8,11 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
+import { LoginService } from '../../services/login.service';
+import { CheckboxModule } from 'primeng/checkbox';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-login',
@@ -18,21 +23,42 @@ import { DividerModule } from 'primeng/divider';
     PasswordModule,
     ButtonModule,
     CardModule,
-    DividerModule],
+    DividerModule, CheckboxModule, FloatLabelModule, ToastModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
   username = '';
   password = '';
+  rememberMe: boolean = false;
+  firstTimeLogin: boolean = true;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private loginService: LoginService, private messageService: MessageService) { }
 
-  onLogin() {
-    if (this.username === 'first') {
-      this.router.navigate(['/first-time-login']);
-    } else {
-      this.router.navigate(['/app']);
+  login() {
+    const loginPayload = {
+      username: this.username,
+      password: this.password
+    };
+    if (this.firstTimeLogin) {
+      // Save data if needed
+      localStorage.setItem('username', this.username);
+      this.router.navigate(['/auth/first-time-login']);
     }
+    this.loginService.generateToken(loginPayload).subscribe({
+      next: (res: any) => {
+        this.loginService.loginUser(res.token);
+        this.router.navigate(['/app']);
+      },
+      error: (e) => {
+        console.error(e);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Login Failed',
+          detail: 'Invalid username or password',
+          life: 5000
+        });
+      }
+    });
   }
 }
