@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../environment/environment';
 import { loginApi } from '../shared/constants/api.endpoint';
 
@@ -11,9 +11,42 @@ export class LoginService {
 
   public loginStatusSubject=new Subject<boolean>();
   
-
+   private passwordUrl= environment.baseUrl;
   constructor(private http: HttpClient) { }
   //generate token
+
+
+  /**
+   * Step 1: Requests the backend to generate and send an OTP to the user's email.
+   * @param email The user's email address.
+   * @returns An Observable for the API call.
+   */
+  requestPasswordOtp(email: string): Observable<any> {
+    const params = new HttpParams().set('email', email);
+    return this.http.post(`${this.passwordUrl}/password/forgot`, null, { params: params });
+  }
+
+  /**
+   * Step 2: Sends the OTP to the backend for verification.
+   * @param email The user's email address.
+   * @param otp The 6-digit OTP entered by the user.
+   * @returns An Observable for the API call.
+   */
+  verifyPasswordOtp(email: string, otp: string): Observable<any> {
+    const params = new HttpParams()
+      .set('email', email)
+      .set('otp', otp.trim());
+    return this.http.post(`${this.passwordUrl}/password/verify-otp`, null, { params: params });
+  }
+
+  /**
+   * Step 3: Sends the final request to reset the password.
+   * @param payload An object containing the email, OTP, and newPassword.
+   * @returns An Observable for the API call.
+   */
+  resetPasswordWithOtp(payload: { email: string; otp: string; newPassword: string }): Observable<any> {
+    return this.http.post(`${this.passwordUrl}/password/reset`, payload);
+  }
   public generateToken(loginData: any) {
     return this.http.post(loginApi.loginUrl, loginData);
   }

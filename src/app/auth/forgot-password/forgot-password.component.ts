@@ -11,6 +11,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
+import { LoginService } from '../../services/login.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -26,77 +27,125 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './forgot-password.component.scss'
 })
 export class ForgotPasswordComponent {
-  step: number = 1;
+step: number = 1;
 
-  username: string = '';
+  // --- MODIFICATION: Changed from 'username' to 'email' ---
+  email: string = '';
   otp: string = '';
   newPassword: string = '';
   confirmPassword: string = '';
 
-  constructor(private router: Router, private messageService: MessageService) { }
+  // Inject your service to make API calls
+  constructor(
+    private router: Router,
+    private messageService: MessageService,
+    private loginService: LoginService // Assuming password methods are in LoginService
+  ) {}
 
-  // Step 1: Send OTP
+  /**
+   * Step 1: Calls the backend to send an OTP to the provided email.
+   */
   sendOtp() {
-    if (!this.username) return;
-    // Simulate backend call
-    this.messageService.add({
-      severity: 'success',
-      summary: 'OTP Sent',
-      detail: `OTP sent to mobile number ending with 1234`,
-      life: 3000
-    });
-    this.step = 2;
-  }
-
-  // Step 2: Verify OTP
-  verifyOtp() {
-    if (this.otp === '123456') {
-      this.step = 3;
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Invalid OTP',
-        detail: 'Please enter a valid OTP',
-        life: 3000
-      });
-    }
-  }
-
-  // Step 3: Submit new password
-  resetPassword() {
-    if (this.newPassword !== this.confirmPassword) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Password Mismatch',
-        detail: 'New and confirm password must match',
-        life: 3000
-      });
+    if (!this.email) {
+      this.showError('Please enter your email address.');
       return;
     }
 
-    // Simulate reset password success
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Password Updated',
-      detail: 'You will be redirected to login',
-      life: 3000
+    this.loginService.requestPasswordOtp(this.email).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'OTP Sent',
+          detail: `An OTP has been sent to your email.`,
+          life: 3000
+        });
+        this.step = 2; // Move to the next step
+      },
+      error: (err) => {
+        // For security, still show a positive message even if the email doesn't exist
+        this.messageService.add({
+            severity: 'success',
+            summary: 'OTP Sent',
+            detail: `If an account exists, an OTP has been sent to your email.`,
+            life: 3000
+          });
+        this.step = 2;
+      }
     });
-
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 3000);
   }
 
+  /**
+   * Step 2: Calls the backend to verify the OTP.
+   */
+  verifyOtp() {
+    if (!this.otp) {
+        this.showError('Please enter the OTP.');
+        return;
+    }
+    this.loginService.verifyPasswordOtp(this.email, this.otp).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'OTP Verified',
+          detail: 'You can now set a new password.',
+          life: 2000
+        });
+        this.step = 3; // OTP is correct, move to the final step
+      },
+      error: (err) => {
+        this.showError(err.error?.message || 'Invalid or expired OTP.');
+      }
+    });
+  }
+
+  /**
+   * Step 3: Calls the backend to reset the password with the new credentials.
+   */
+  resetPassword() {
+    if (this.newPassword !== this.confirmPassword) {
+      this.showError('Passwords do not match.');
+      return;
+    }
+    if (!this.newPassword) {
+        this.showError('Please enter a new password.');
+        return;
+    }
+
+    const payload = {
+      email: this.email,
+      otp: this.otp,
+      newPassword: this.newPassword
+    };
+
+    this.loginService.resetPasswordWithOtp(payload).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Password Updated',
+          detail: 'Your password has been changed. Redirecting to login...',
+          life: 3000
+        });
+        setTimeout(() => this.router.navigate(['/login']), 3000);
+      },
+      error: (err) => {
+        this.showError(err.error?.message || 'Could not reset password. The OTP may have expired.');
+      }
+    });
+  }
+
+  /**
+   * Resends the OTP by calling the sendOtp method again.
+   */
   resendOtp() {
-    // Simulate another OTP being sent
+    this.sendOtp();
+  }
+
+  private showError(message: string) {
     this.messageService.add({
-      severity: 'info',
-      summary: 'OTP Resent',
-      detail: `OTP has been resent to your registered mobile number.`,
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
       life: 3000
     });
-
-    // Optional: reset otp input field
-    this.otp = '';
   }
 }
