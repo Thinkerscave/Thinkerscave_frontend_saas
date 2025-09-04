@@ -1,90 +1,115 @@
-<p-tabView>
-    <p-tabPanel header="Add">
-        <p-card> <ng-template pTemplate="header">
-            </ng-template>
-
-            <div class="p-fluid p-formgrid grid gap-4">
-                <div class="col-12 md:col-4">
-                    <label for="menuName" class="mb-2 block">Menu Name</label>
-                    <input id="menuName" type="text" pInputText [(ngModel)]="menuName" class="w-full" />
-                </div>
-                <div class="col-12 md:col-4 ml-6">
-                    <label for="menuDescription" class="mb-2 block ">Menu Description</label>
-                    <textarea id="menuDescription" pInputTextarea [(ngModel)]="menuDescription" [rows]="4"
-                        class="w-full p-3 custom-textarea "></textarea>
-                </div>
-                <div class="col-4">
-                    <div class="flex gap-3 flex-start">
-                        <button pButton label="Cancel" class="p-button-secondary" (click)="cancel()"></button>
-                        <button pButton label="Submit" class="p-button-success" (click)="submit()"></button>
-                    </div>
-                </div>
-            </div>
-        </p-card>
-    </p-tabPanel>
-    <p-tabPanel header="View">
-        <div class="menu-list-container p-fluid">
-            <p-message *ngIf="currentMessage" [ngClass]="{'message-fade-out': !currentMessage}"></p-message>
-
-
-
-            <p-table [value]="menuItems" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [rowsPerPageOptions]="[5, 10, 20]" styleClass="p-datatable-sm p-datatable-gridlines">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 5rem;">Sl. No</th>
-                        <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
-
-                        <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
-                                field="description"></p-sortIcon></th>
-
-                        <th style="width: 8rem; text-align: center;">Actions</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-menuItem let-i="rowIndex">
-                    <tr>
-                        <td>{{ i + 1 }}</td>
-                        <td>{{ menuItem.name }}</td>
-
-                        <td class="truncate-text">{{ menuItem.description }}</td>
-
-                        <td style="text-align: center;">
-                            <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
-                                (onClick)="onEdit(menuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
-                            <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-sm p-button-danger"
-                                (onClick)="onDelete(menuItem)" pTooltip="Delete" tooltipPosition="top"></p-button>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="4" class="text-center">No menus found.</td>
-                    </tr>
-                </ng-template>
-            </p-table>`
+<p-toast></p-toast>
+<p-tabView [(activeIndex)]="activeTabIndex">
+  <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
+    <p-card>
+      <div class="p-fluid p-formgrid grid gap-4">
+        <div class="col-12 md:col-4">
+          <label for="menuName" class="mb-2 block">Menu Name</label>
+          <input id="menuName" type="text" pInputText [(ngModel)]="menuName" placeholder="Enter menu name"
+            class="w-full" />
         </div>
-    </p-tabPanel>
+
+        <div class="col-12 md:col-4 ml-2">
+          <label for="menuDescription" class="mb-2 block">Menu Description</label>
+          <textarea id="menuDescription" pInputTextarea [(ngModel)]="menuDescription" [rows]="2"
+            placeholder="Enter menu description" class="w-full p-3"></textarea>
+        </div>
+        <div class="col-4">
+          <div class="flex gap-2 flex-start">
+            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" (click)="resetForm()"></button>
+            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" (click)="cancelEdit()"></button>
+            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
+              (click)="submit()"></button>
+          </div>
+        </div>
+      </div>
+    </p-card>
+  </p-tabPanel>
+
+  <p-tabPanel header="View">
+    <div class="menu-list-container p-fluid">
+      <p-message *ngIf="currentMessage" [ngClass]="{'message-fade-out': !currentMessage}"></p-message>
+
+      <p-table #dt1 [value]="menuItems" [loading]="loading" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['name','description','createdBy']"
+        styleClass="p-datatable-sm p-datatable-gridlines">
+
+        <!-- 🔍 Search Bar -->
+        <ng-template pTemplate="caption">
+          <div class="flex justify-content-end">
+            <p-iconfield iconPosition="left">
+              <p-inputicon>
+                <i class="pi pi-search"></i>
+              </p-inputicon>
+              <input #gb pInputText type="text" (input)="dt1.filterGlobal(gb.value, 'contains')"
+                placeholder="Search keyword" />
+            </p-iconfield>
+          </div>
+        </ng-template>
+
+        <!-- 📋 Table Header -->
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 5rem;">Sl. No</th>
+            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
+                field="description"></p-sortIcon></th>
+            <th>Created By</th>
+            <th>Last Updated</th>
+            <th>Status</th>
+            <th style="width: 8rem; text-align: center;">Actions</th>
+          </tr>
+        </ng-template>
+
+        <!-- 📋 Table Body -->
+        <ng-template pTemplate="body" let-menuItem let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>{{ menuItem.name }}</td>
+            <td class="truncate-text">{{ menuItem.description }}</td>
+            <td>{{ menuItem.createdBy }}</td>
+            <td>{{ menuItem.lastModifiedDate | date:'short' }}</td>
+            <td>
+              <p-inputSwitch [(ngModel)]="menuItem.isActive" (onChange)="toggleStatus(menuItem)"></p-inputSwitch>
+            </td>
+            <td style="text-align: center;">
+              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
+                (onClick)="onEdit(menuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <!-- 🚫 Empty Message -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center">No menus found.</td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+
+    </div>
+  </p-tabPanel>
 </p-tabView>
 <p-dialog header="Edit Menu" [(visible)]="displayEditModal" [modal]="true" [style]="{width: '50vw'}">
-    <ng-container *ngIf="editingMenuItem">
-        <div class="p-fluid grid">
-            <div class="field col-6">
-                <label for="editMenuName">Menu Name</label>
-                <input id="editMenuName" type="text" pInputText [(ngModel)]="editingMenuItem.name" />
-            </div>
+  <ng-container *ngIf="editingMenuItem">
+    <div class="p-fluid grid">
+      <div class="field col-6">
+        <label for="editMenuName">Menu Name</label>
+        <input id="editMenuName" type="text" pInputText [(ngModel)]="editingMenuItem.name" />
+      </div>
 
-            <div class="field col-6">
-                <label for="editMenuDescription" >Menu Description</label>
-                <textarea id="editMenuDescription" pInputTextarea [(ngModel)]="editingMenuItem.description"
-                    [rows]="4"></textarea>
-            </div>
-        </div>
-    </ng-container>
+      <div class="field col-6">
+        <label for="editMenuDescription">Menu Description</label>
+        <textarea id="editMenuDescription" pInputTextarea [(ngModel)]="editingMenuItem.description"
+          [rows]="4"></textarea>
+      </div>
+    </div>
+  </ng-container>
 
-    <ng-template pTemplate="footer">
-        <button pButton label="Cancel" icon="pi pi-times" class="p-button-text"
-            (click)="displayEditModal=false"></button>
-        <button pButton label="Save" icon="pi pi-check" class="p-button-success" (click)="onSave()"></button>
-    </ng-template>
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" icon="pi pi-times" class="p-button-text" (click)="displayEditModal=false"></button>
+    <button pButton label="Save" icon="pi pi-check" class="p-button-success"></button>
+  </ng-template>
 </p-dialog>
