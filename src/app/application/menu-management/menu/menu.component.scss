@@ -113,3 +113,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+:host ::ng-deep .p-paginator {
+  justify-content: flex-end !important;
+}

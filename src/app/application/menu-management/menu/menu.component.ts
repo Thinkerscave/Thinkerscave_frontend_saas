@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
 import { FieldsetModule } from 'primeng/fieldset';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
+import { ToastModule, Toast } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -15,11 +15,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
-interface MenuItem {
-  slNo: number;
-  name: string;
-  description: string;
-}
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { MenuService, MenuItem } from '../../services/menu.service';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+
 @Component({
   selector: 'app-menu',
   imports: [
@@ -36,103 +36,119 @@ interface MenuItem {
     InputTextModule,
     TooltipModule,
     FloatLabelModule,
-    CardModule
+    CardModule,
+    ToastModule,
+    InputSwitchModule,
+    IconFieldModule,
+    InputIconModule
   ],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.scss'
+  styleUrl: './menu.component.scss',
+  providers: [MessageService]
 })
 export class MenuComponent {
   title = '';
-  menuItems: MenuItem[] = []; // Array to hold your menu data
+  menuItems: MenuItem[] = [];
+  loading: boolean = false;
+  isEditMode: boolean = false;
+  activeTabIndex: number = 0;
+  editMenuId: number | null = null;
   displayEditModal: boolean = false;
   editingMenuItem: MenuItem | null = null;
-  // For displaying messages within the component
   currentMessage: { severity: 'success' | 'info' | 'warn' | 'error', summary: string, detail: string } | null = null;
 
-  constructor() { } // No service injections
+  constructor(private menuService: MenuService,
+    private messageService: MessageService
+  ) { }
 
   ngOnInit(): void {
-    this.loadDummyData();
+    this.loadMenus();
   }
 
-  loadDummyData(): void {
-    // Static dummy data
-    this.menuItems = [
-      { slNo: 1, name: 'Dashboard', description: 'dashboarddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd' },
-      { slNo: 2, name: 'User Management', description: 'user management' },
-      { slNo: 3, name: 'Product Catalog', description: 'product catalog' },
-      { slNo: 4, name: 'Order Processing', description: 'order processing' },
-      { slNo: 5, name: 'Analytics Reports', description: 'analytics report' },
-      { slNo: 6, name: 'Settings', description: 'settings' },
-      { slNo: 7, name: 'Notifications', description: 'notification' },
-      { slNo: 8, name: 'Reports', description: 'report' },
-      { slNo: 9, name: 'Help & Support', description: 'help and support' },
-      { slNo: 10, name: 'Logout', description: 'logout' },
-    ];
-  }
-
-  onEdit(menuItem: MenuItem) {
-    // Create a copy of the menu item to avoid modifying the original data directly
-    this.editingMenuItem = { ...menuItem };
-    // Show the dialog
-    this.displayEditModal = true;
-  }
-  onSave() {
-    if (this.editingMenuItem) {
-      // Find the index of the item to update in the main array
-      const index = this.menuItems.findIndex(item => item.slNo === this.editingMenuItem!.slNo);
-      if (index !== -1) {
-        // Update the item in the array with the edited data
-        this.menuItems[index] = this.editingMenuItem;
+  loadMenus(): void {
+    this.loading = true;
+    this.menuService.getAllMenus().subscribe({
+      next: (menus) => {
+        this.menuItems = menus;
+        this.loading = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load menus. Please try again.'
+        });
+        this.loading = false;
       }
-
-      // Here you would typically also call a service to save the changes to the backend
-      console.log('Saving:', this.editingMenuItem);
-
-      // Hide the dialog
-      this.displayEditModal = false;
-      this.editingMenuItem = null;
-    }
+    });
   }
 
-  onDelete(menuItem: MenuItem): void {
-    // Use standard browser confirmation dialog
-    const confirmed = window.confirm(`Are you sure you want to delete '${menuItem.name}'?`);
-
-    if (confirmed) {
-      // User confirmed deletion
-      this.currentMessage = {
-        severity: 'success',
-        summary: 'Confirmed',
-        detail: `'${menuItem.name}' deleted successfully.`
-      };
-      // Filter out the deleted item from the local array
-      this.menuItems = this.menuItems.filter(item => item.slNo !== menuItem.slNo);
-      console.log('Deleted:', menuItem);
-    } else {
-      // User rejected deletion
-      this.currentMessage = {
-        severity: 'info',
-        summary: 'Rejected',
-        detail: 'Deletion cancelled.'
-      };
+  submit(): void {
+    if (!this.menuName || !this.menuDescription) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Failed',
+        detail: 'Both Menu Name and Description are required.'
+      });
+      return;
     }
 
-    // Simulate clearing the message after a short delay
-    setTimeout(() => {
-      this.currentMessage = null;
-    }, 3000);
+    const menuData: MenuItem = {
+      slNo: this.editMenuId || undefined,
+      menuCode: this.isEditMode ? this.editingMenuItem?.menuCode : undefined, // ✅ include menuCode
+      name: this.menuName.trim(),
+      description: this.menuDescription.trim()
+    };
+
+
+
+    this.menuService.saveMenu(menuData).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.isEditMode ? 'Menu Updated' : 'Menu Created',
+          detail: `'${menuData.name}' has been ${this.isEditMode ? 'updated' : 'added'} successfully.`
+        });
+
+        this.loadMenus();   // reload list
+        this.clearForm();
+        this.isEditMode = false;
+        this.activeTabIndex = 1;  // go back to View tab
+      },
+      error: (err) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.error?.message || 'Failed to save menu. Try again later.'
+        });
+      }
+    });
   }
+
+
+  onEdit(menuItem: MenuItem): void {
+    this.isEditMode = true;
+    this.activeTabIndex = 0;  // switch to first tab (form tab)
+
+    this.editMenuId = menuItem.slNo || null;
+    this.menuName = menuItem.name;
+    this.menuDescription = menuItem.description;
+
+    // ✅ Keep menuCode for update
+    this.editingMenuItem = { ...menuItem };
+  }
+
+
   selectedGroupOption: string = 'Yes'; // Default to 'Yes'
   menuName: string = '';
   menuDescription: string = '';
 
-  submit(): void {
-    console.log('Menu Submitted:', this.menuName, this.menuDescription);
-    this.clearForm();
-  }
+  // submit(): void {
+  //   console.log('Menu Submitted:', this.menuName, this.menuDescription);
+  //   this.clearForm();
+  // }
 
-  cancel(): void {
+  resetForm(): void {
     console.log('Menu Creation Cancelled');
     this.clearForm();
   }
@@ -141,4 +157,34 @@ export class MenuComponent {
     this.menuName = '';
     this.menuDescription = '';
   }
+
+  cancelEdit(): void {
+
+  }
+
+  toggleStatus(menuItem: MenuItem): void {
+    if (!menuItem.menuCode) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Menu',
+        detail: 'Menu code is missing, cannot update status.'
+      });
+      return;
+    }
+
+    this.menuService.updateStatus(menuItem.menuCode, menuItem.isActive ?? false).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Status Updated',
+          detail: `Menu '${menuItem.name}' is now ${menuItem.isActive ? 'Active' : 'Inactive'}.`
+        });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status.' });
+        menuItem.isActive = !menuItem.isActive; // revert UI
+      }
+    });
+  }
+
 }
