@@ -14,7 +14,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'manage-sub-menu',
     loadComponent: () =>
-      import('./menu-management/sub-menu/sub-menu.component').then(m => m.SubMenuComponent),
+      import('./menu-management/sub-menu/sub-menu.component').then(m => m.SubmenuComponent),
   },
   {
     path: 'menu-sequence',

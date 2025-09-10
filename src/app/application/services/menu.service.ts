@@ -77,7 +77,16 @@ export class MenuService {
   }
 
   getAllMenus(): Observable<MenuItem[]> {
-    return this.http.get<MenuItem[]>(menuApi.getMenusUrl).pipe(
+    return this.http.get<MenuItem[]>(menuApi.getAllMenusUrl).pipe(
+      catchError(error => {
+        console.error('Failed to load menus:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getAllActiveMenus(): Observable<any[]> {
+    return this.http.get<any[]>(menuApi.getActiveMenusUrl).pipe(
       catchError(error => {
         console.error('Failed to load menus:', error);
         return throwError(() => error);

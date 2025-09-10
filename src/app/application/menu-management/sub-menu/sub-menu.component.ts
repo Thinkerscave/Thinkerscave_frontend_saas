@@ -1,84 +1,159 @@
-import { Component, Input } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-
-// Import PrimeNG Standalone Modules
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputTextModule } from 'primeng/inputtext';
-import { FileUploadModule } from 'primeng/fileupload';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
-import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 
+import { TabViewModule } from 'primeng/tabview';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { TooltipModule } from 'primeng/tooltip';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { SubmenuItem, SubMenuService } from '../../services/sub-menu.service';
+import { MenuService } from '../../services/menu.service';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
-  selector: 'app-sub-menu',
-  imports: [CommonModule,
-    ReactiveFormsModule,
-    DropdownModule,
-    InputTextModule,
-    FileUploadModule,
-    ButtonModule,HttpClientModule,
-    ToastModule],
+  selector: 'app-submenu',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, TabViewModule, CardModule, InputTextModule,
+    ButtonModule, TableModule, DropdownModule, InputSwitchModule, TooltipModule,
+    IconFieldModule, InputIconModule,ToastModule
+  ],
   templateUrl: './sub-menu.component.html',
-  styleUrl: './sub-menu.component.scss'
+  styleUrl: './sub-menu.component.scss',
+  providers: [MessageService]
 })
-export class SubMenuComponent {
-  @Input() isEditMode: boolean = false;
-  @Input() submenuData: any = null; // To pre-fill the form in edit mode
+export class SubmenuComponent {
+  submenuItems: SubmenuItem[] = [];
+  menuOptions: any[] = []; // { menuId, name, menuCode }
+  loading = false;
+  isEditMode = false;
+  activeTabIndex = 0;
 
-  submenuForm!: FormGroup;
-  parentMenus: any[] = []; // This would be populated by a service call
+  // Form model
+  editingSubmenu?: SubmenuItem | null = null;
+  selectedMenuId?: any | null;
+  subMenuName = '';
+  subMenuDescription = '';
+  submenuUrl = '';
+  submenuActive = true;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private subMenuService: SubMenuService,
+              private menuService: MenuService,
+              private messageService: MessageService) {}
 
   ngOnInit(): void {
-    // Mock data for parent menus dropdown.
-    this.parentMenus = [
-      { name: 'Dashboard', id: 1 },
-      { name: 'Academics', id: 2 },
-      { name: 'Human Resources', id: 3 },
-      { name: 'Finance', id: 4 }
-    ];
+    this.loadSubmenus();
+    this.loadMenusForDropdown();
+  }
 
-    this.submenuForm = this.fb.group({
-      menuId: [null, [Validators.required]],
-      submenuName: ['', [Validators.required]],
-      submenuCode: [{ value: '', disabled: true }], // Always disabled
-      submenuDescription: [''],
-      submenuUrl: ['', [Validators.required]],
-      submenuLogo: [null]
+  loadSubmenus(): void {
+    this.loading = true;
+    this.subMenuService.getAllSubmenus().subscribe({
+      next: (data) => { this.submenuItems = data || []; this.loading = false; },
+      error: (err) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load submenus' });
+      }
     });
+  }
 
-    // If in edit mode, patch the form with existing data
-    if (this.isEditMode && this.submenuData) {
-      this.submenuForm.patchValue(this.submenuData);
+  loadMenusForDropdown(): void {
+    this.menuService.getAllActiveMenus().subscribe({
+      next: menus => {
+        // Normalize to dropdown format
+        this.menuOptions = menus.map(m => ({ menuId: m.menuId, menuCode: m.menuCode, name: m.name }));
+      },
+      error: () => {
+        this.menuOptions = [];
+      }
+    });
+  }
+
+  submit(): void {
+    if (!this.selectedMenuId) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please select a menu.'});
+      return;
     }
-  }
-
-  onLogoUpload(event: any) {
-    // Handle the file upload logic
-    const file = event.files[0];
-    this.submenuForm.patchValue({ submenuLogo: file });
-    this.submenuForm.get('submenuLogo')?.updateValueAndValidity();
-  }
-
-  onSubmit(): void {
-    if (this.submenuForm.invalid) {
-      // You can add a simple console log for validation feedback
-      console.warn('Form is invalid. Please fill all required fields.');
+    if (!this.subMenuName || this.subMenuName.trim().length < 2) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Submenu name is required (min 2 chars).' });
       return;
     }
 
-    // Use FormData to send form values + file to a server
-    const formData = new FormData();
-    Object.keys(this.submenuForm.controls).forEach(key => {
-      formData.append(key, this.submenuForm.get(key)?.value);
+    const payload: SubmenuItem = {
+      subMenuId: this.editingSubmenu?.subMenuId,
+      subMenuCode: this.editingSubmenu?.subMenuCode,
+      subMenuName: this.subMenuName.trim(),
+      subMenuDescription: this.subMenuDescription?.trim(),
+      subMenuUrl: this.submenuUrl?.trim(),
+      menuId: this.selectedMenuId,
+      subMenuIsActive: this.submenuActive
+    };
+
+    this.subMenuService.saveSubmenu(payload).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: this.isEditMode ? 'Updated' : 'Created', detail: `Submenu ${payload.subMenuName} saved`});
+        this.loadSubmenus();
+        this.clearForm();
+        this.isEditMode = false;
+        this.activeTabIndex = 1;
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message || 'Failed to save submenu' });
+      }
     });
+  }
 
-    console.log('Form Submitted:', this.submenuForm.value);
+  onEdit(item: SubmenuItem): void {
+    this.isEditMode = true;
+    this.activeTabIndex = 0;
+    this.editingSubmenu = { ...item };
+    this.selectedMenuId = item.menuId || null;
+    this.subMenuName = item.subMenuName;
+    this.subMenuDescription = item.subMenuDescription || '';
+    this.submenuUrl = item.subMenuUrl || '';
+    this.submenuActive = item.subMenuIsActive ?? true;
+  }
 
-    // Here you would typically call an API service
-    // e.g., this.apiService.saveSubmenu(formData).subscribe(...)
+  cancelEdit(): void {
+    this.clearForm();
+    this.isEditMode = false;
+    this.activeTabIndex = 1;
+  }
+
+  resetForm(): void {
+    this.clearForm();
+  }
+
+  clearForm(): void {
+    this.editingSubmenu = null;
+    this.selectedMenuId = null;
+    this.subMenuName = '';
+    this.subMenuDescription = '';
+    this.submenuUrl = '';
+    this.submenuActive = true;
+  }
+
+  toggleStatus(item: SubmenuItem): void {
+    if (!item.subMenuCode) {
+      this.messageService.add({ severity: 'warn', summary: 'Invalid', detail: 'Submenu code missing.'});
+      item.subMenuIsActive = !item.subMenuIsActive; // revert visually
+      return;
+    }
+    this.subMenuService.updateStatus(item.subMenuCode, item.subMenuIsActive ?? false).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `${item.subMenuName} is now ${item.subMenuIsActive ? 'Active' : 'Inactive'}`});
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status' });
+        item.subMenuIsActive = !item.subMenuIsActive; // rollback
+      }
+    });
   }
 }

@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { BreadCrumbService } from '../../services/bread-crumb.service';
 
 @Component({
   selector: 'app-breadcrumb',
@@ -10,13 +11,13 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
   styleUrl: './breadcrumb.component.scss'
 })
 export class BreadcrumbComponent {
-  @Input() menuLabel: string = '';
-  @Input() subMenuLabel: string = '';
-
   items: MenuItem[] = [];
   home: MenuItem = {};
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private breadcrumbService: BreadCrumbService
+  ) {}
 
   ngOnInit() {
     this.home = {
@@ -25,9 +26,15 @@ export class BreadcrumbComponent {
       styleClass: 'text-color',
     };
 
-    this.items = [
-      { label: this.menuLabel },
-      { label: this.subMenuLabel }
-    ];
+    this.breadcrumbService.breadcrumb$.subscribe(breadcrumb => {
+      if (breadcrumb) {
+        this.items = [
+          { label: breadcrumb.menu },
+          { label: breadcrumb.subMenu }
+        ];
+      } else {
+        this.items = [];
+      }
+    });
   }
 }

@@ -1,49 +1,111 @@
-<div class="card">
-    <h3 class="mb-4">{{ isEditMode ? 'Edit Submenu' : 'Create Submenu' }}</h3>
+<p-toast></p-toast>
+<p-tabView [(activeIndex)]="activeTabIndex">
+    <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
+        <p-card>
+            <div class="p-fluid p-formgrid grid gap-4">
+                <div class="col-12 md:col-4">
+                    <label for="menu" class="mb-2 block">Select Menu</label>
+                    <p-dropdown id="menu" [options]="menuOptions" optionLabel="name" optionValue="menuId"
+                        placeholder="Choose Menu" [(ngModel)]="selectedMenuId" class="w-full">
+                    </p-dropdown>
+                </div>
+                <div class="col-12 md:col-4">
+                    <label for="subMenuName" class="mb-2 block">Sub-Menu Name</label>
+                    <input id="subMenuName" type="text" pInputText [(ngModel)]="subMenuName"
+                        placeholder="Enter sub-menu name" class="w-full" />
+                </div>
 
-    <form [formGroup]="submenuForm" (ngSubmit)="onSubmit()">
-        <div class="formgrid grid">
-            
-            <div class="field col-12 md:col-6">
-                <label for="menuId">Menu Name</label>
-                <p-dropdown id="menuId" [options]="parentMenus" formControlName="menuId"
-                    optionLabel="name" optionValue="id" placeholder="Select a  Menu"
-                    styleClass="w-full"></p-dropdown>
+                <div class="col-12 md:col-4">
+                    <label for="subMenuUrl" class="mb-2 block">Sub-Menu URL</label>
+                    <input id="subMenuUrl" type="text" pInputText [(ngModel)]="submenuUrl"
+                        placeholder="Enter sub-menu URL" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-4 ml-2">
+                    <label for="subMenuDescription" class="mb-2 block">Sub-Menu Description</label>
+                    <textarea id="subMenuDescription" pInputTextarea [(ngModel)]="subMenuDescription" [rows]="2"
+                        placeholder="Enter Sub-menu description" class="w-full p-3"></textarea>
+                </div>
+                <div class="col-4">
+                    <div class="flex gap-2 flex-start">
+                        <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger"
+                            (click)="resetForm()"></button>
+                        <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger"
+                            (click)="cancelEdit()"></button>
+                        <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
+                            (click)="submit()"></button>
+                    </div>
+                </div>
             </div>
+        </p-card>
+    </p-tabPanel>
 
-            <div class="field col-12 md:col-6">
-                <label for="submenuName">Submenu Name</label>
-                <input id="submenuName" type="text" pInputText formControlName="submenuName" class="w-full" />
-            </div>
+    <p-tabPanel header="View">
+    <div class="menu-list-container p-fluid">
 
-            <div *ngIf="isEditMode" class="field col-12 md:col-6">
-                <label for="submenuCode">Submenu Code</label>
-                <input id="submenuCode" type="text" pInputText formControlName="submenuCode" class="w-full" />
-            </div>
+      <p-table #dt1 [value]="submenuItems" [loading]="loading" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['subMenuName','menuName','subMenuDescription','createdBy']"
+        styleClass="p-datatable-sm p-datatable-gridlines">
 
-            <div class="field col-12 md:col-6">
-                <label for="submenuUrl">Submenu URL</label>
-                <input id="submenuUrl" type="text" pInputText formControlName="submenuUrl" placeholder="/dashboard/analytics" class="w-full" />
-            </div>
+        <!-- 🔍 Search Bar -->
+        <ng-template pTemplate="caption">
+          <div class="flex justify-content-end">
+            <p-iconfield iconPosition="left">
+              <p-inputicon>
+                <i class="pi pi-search"></i>
+              </p-inputicon>
+              <input #gb pInputText type="text" (input)="dt1.filterGlobal(gb.value, 'contains')"
+                placeholder="Search keyword" />
+            </p-iconfield>
+          </div>
+        </ng-template>
 
-            <div class="field col-12 md:col-6">
-                <label for="submenuDescription">Submenu Description</label>
-                <textarea id="submenuDescription" pInputTextarea formControlName="submenuDescription" rows="3" class="w-full"></textarea>
-            </div>
-            
-            <div class="field col-12">
-                <label for="submenuLogo">Submenu Logo</label>
-                <p-fileUpload name="submenuLogo[]" (onSelect)="onLogoUpload($event)"
-                    [multiple]="false" accept="image/*" [maxFileSize]="1000000"
-                    chooseIcon="pi pi-upload" chooseLabel="Choose Logo">
-                </p-fileUpload>
-            </div>
+        <!-- 📋 Table Header -->
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 5rem;">Sl. No</th>
+            <th pSortableColumn="name">Sub-Menu Name <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="name">Sub-Menu URL <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
+                field="description"></p-sortIcon></th>
+            <th>Created By</th>
+            <th>Last Updated</th>
+            <th>Status</th>
+            <th style="width: 8rem; text-align: center;">Actions</th>
+          </tr>
+        </ng-template>
 
-        </div>
+        <!-- 📋 Table Body -->
+        <ng-template pTemplate="body" let-subMenuItem let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>{{ subMenuItem.subMenuName }}</td>
+            <td>{{ subMenuItem.menuName }}</td>
+            <td>{{ subMenuItem.subMenuUrl ? (subMenuItem.subMenuUrl.startsWith('/') ? subMenuItem.subMenuUrl : '/' + subMenuItem.subMenuUrl) : '' }}</td>
+            <td class="truncate-text">{{ subMenuItem.subMenuDescription }}</td>
+            <td>{{ subMenuItem.createdBy }}</td>
+            <td>{{ subMenuItem.lastUpdatedOn | date:'short' }}</td>
+            <td>
+              <p-inputSwitch [(ngModel)]="subMenuItem.subMenuIsActive" (onChange)="toggleStatus(subMenuItem)"></p-inputSwitch>
+            </td>
+            <td style="text-align: center;">
+              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
+                (onClick)="onEdit(subMenuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
+            </td>
+          </tr>
+        </ng-template>
 
-        <div class="flex justify-content-end mt-4">
-            <p-button [label]="isEditMode ? 'Update Submenu' : 'Create Submenu'" 
-                icon="pi pi-check" type="submit" [disabled]="submenuForm.invalid"></p-button>
-        </div>
-    </form>
-</div>
+        <!-- 🚫 Empty Message -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center">No menus found.</td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+
+    </div>
+  </p-tabPanel>
+</p-tabView>

@@ -1,9 +1,9 @@
 <div class="flex justify-content-between align-items-center mb-2 px-3 py-2 border-bottom-1 surface-border">
-  <!-- Left Side -->
+  <!-- Left Side (Dynamic SubMenu Title) -->
   <div class="text-xl font-medium text-primary">
-    {{ subMenuLabel }}
+    {{ items.length > 0 ? items[items.length - 1].label : '' }}
   </div>
 
-  <!-- Right Side -->
+  <!-- Right Side (Breadcrumb Trail) -->
   <p-breadcrumb [model]="items" [home]="home" class="p-text-sm"></p-breadcrumb>
 </div>

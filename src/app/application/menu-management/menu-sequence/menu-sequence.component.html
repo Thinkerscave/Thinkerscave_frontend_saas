@@ -1,12 +1,12 @@
-<p-card header="Menu Sequence Management" class="mb-4">
+<p-card class="mb-4">
   <div class="grid">
     <!-- Menu Reordering -->
     <div class="col-12 md:col-6">
       <h5 class="mb-3">Reorder Menus</h5>
-      <p-orderList [value]="menus" dragdrop="true" [listStyle]="{ height: '300px' }" (onReorder)="onMenuReorder($event)">
+      <p-orderList [value]="menus" dragdrop="true" [listStyle]="{ height: '300px' }" (onReorder)="onMenuReorder()">
         <ng-template let-menu pTemplate="item">
           <div class="flex justify-content-between align-items-center">
-            <span class="font-medium" (click)="onMenuClick(menu)">{{ menu.label }}</span>
+            <span class="font-medium" (click)="onMenuClick(menu)">{{ menu.menuName }}</span>
             <!-- <i class="pi pi-bars text-gray-500"></i> -->
           </div>
         </ng-template>
@@ -21,10 +21,10 @@
         [value]="selectedSubmenus" 
         dragdrop="true" 
         [listStyle]="{ height: '300px' }" 
-        (onReorder)="onSubMenuReorder($event)">
+        (onReorder)="onSubMenuReorder()">
         <ng-template let-submenu pTemplate="item">
           <div class="flex justify-content-between align-items-center">
-            <span>{{ submenu.label }}</span>
+            <span>{{ submenu.subMenuName }}</span>
             <!-- <i class="pi pi-bars text-gray-500"></i> -->
           </div>
         </ng-template>

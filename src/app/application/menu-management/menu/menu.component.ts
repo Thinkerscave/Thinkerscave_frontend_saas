@@ -55,7 +55,6 @@ export class MenuComponent {
   editMenuId: number | null = null;
   displayEditModal: boolean = false;
   editingMenuItem: MenuItem | null = null;
-  currentMessage: { severity: 'success' | 'info' | 'warn' | 'error', summary: string, detail: string } | null = null;
 
   constructor(private menuService: MenuService,
     private messageService: MessageService
