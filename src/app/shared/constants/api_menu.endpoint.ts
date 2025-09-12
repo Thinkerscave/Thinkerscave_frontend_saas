@@ -18,7 +18,8 @@ export const subMenuApi = {
   savesubMenuUrl: `${subMenuBaseUrl}`,
   getAllSubMenusUrl: `${subMenuBaseUrl}`,
   getSubMenuByCodeUrl: `${subMenuBaseUrl}/`,
-  updateStatus:`${subMenuBaseUrl}/updateStatus`
+  updateStatus:`${subMenuBaseUrl}/updateStatus`,
+  getPrivilegesUrl: `${subMenuBaseUrl}/getPrivileges`,
 };
 
 export const menuSequenceApi = {

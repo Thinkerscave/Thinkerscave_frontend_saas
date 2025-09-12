@@ -14,6 +14,8 @@ export interface SubmenuItem {
   subMenuOrder?: number | null;
   subMenuIsActive?: boolean;
 
+  privilegeIds?: number[];
+
   // related parent menu (for display / dropdown)
   menuId?: number | null;
   menuCode?: string | null;
@@ -44,5 +46,9 @@ export class SubMenuService {
   updateStatus(submenuCode: string, status: boolean): Observable<any> {
     return this.http.put(`${subMenuApi.updateStatus}/${encodeURIComponent(submenuCode)}?status=${status}`, {})
       .pipe(catchError(err => { console.error('Toggle submenu status failed', err); return throwError(() => err); }));
+  }
+
+  getAllPrivileges(): Observable<any[]> {
+    return this.http.get<any[]>(subMenuApi.getPrivilegesUrl);
   }
 }

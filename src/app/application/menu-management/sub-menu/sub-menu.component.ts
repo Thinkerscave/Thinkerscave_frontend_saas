@@ -16,6 +16,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { SubmenuItem, SubMenuService } from '../../services/sub-menu.service';
 import { MenuService } from '../../services/menu.service';
 import { ToastModule } from 'primeng/toast';
+import { MultiSelect } from 'primeng/multiselect';
 
 @Component({
   selector: 'app-submenu',
@@ -23,7 +24,7 @@ import { ToastModule } from 'primeng/toast';
   imports: [
     CommonModule, FormsModule, TabViewModule, CardModule, InputTextModule,
     ButtonModule, TableModule, DropdownModule, InputSwitchModule, TooltipModule,
-    IconFieldModule, InputIconModule,ToastModule
+    IconFieldModule, InputIconModule, ToastModule, MultiSelect
   ],
   templateUrl: './sub-menu.component.html',
   styleUrl: './sub-menu.component.scss',
@@ -43,14 +44,17 @@ export class SubmenuComponent {
   subMenuDescription = '';
   submenuUrl = '';
   submenuActive = true;
+  privilegeOptions: any[] = [];
+  selectedPrivilegeIds: number[] = [];
 
   constructor(private subMenuService: SubMenuService,
-              private menuService: MenuService,
-              private messageService: MessageService) {}
+    private menuService: MenuService,
+    private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.loadSubmenus();
     this.loadMenusForDropdown();
+    this.loadPrivileges();
   }
 
   loadSubmenus(): void {
@@ -76,9 +80,20 @@ export class SubmenuComponent {
     });
   }
 
+  loadPrivileges(): void {
+    this.subMenuService.getAllPrivileges().subscribe({
+      next: (data) => {
+        this.privilegeOptions = data || [];
+      },
+      error: () => {
+        this.privilegeOptions = [];
+      }
+    });
+  }
+
   submit(): void {
     if (!this.selectedMenuId) {
-      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please select a menu.'});
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please select a menu.' });
       return;
     }
     if (!this.subMenuName || this.subMenuName.trim().length < 2) {
@@ -93,12 +108,13 @@ export class SubmenuComponent {
       subMenuDescription: this.subMenuDescription?.trim(),
       subMenuUrl: this.submenuUrl?.trim(),
       menuId: this.selectedMenuId,
-      subMenuIsActive: this.submenuActive
+      subMenuIsActive: this.submenuActive,
+      privilegeIds: this.selectedPrivilegeIds
     };
 
     this.subMenuService.saveSubmenu(payload).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: this.isEditMode ? 'Updated' : 'Created', detail: `Submenu ${payload.subMenuName} saved`});
+        this.messageService.add({ severity: 'success', summary: this.isEditMode ? 'Updated' : 'Created', detail: `Submenu ${payload.subMenuName} saved` });
         this.loadSubmenus();
         this.clearForm();
         this.isEditMode = false;
@@ -142,13 +158,13 @@ export class SubmenuComponent {
 
   toggleStatus(item: SubmenuItem): void {
     if (!item.subMenuCode) {
-      this.messageService.add({ severity: 'warn', summary: 'Invalid', detail: 'Submenu code missing.'});
+      this.messageService.add({ severity: 'warn', summary: 'Invalid', detail: 'Submenu code missing.' });
       item.subMenuIsActive = !item.subMenuIsActive; // revert visually
       return;
     }
     this.subMenuService.updateStatus(item.subMenuCode, item.subMenuIsActive ?? false).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `${item.subMenuName} is now ${item.subMenuIsActive ? 'Active' : 'Inactive'}`});
+        this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `${item.subMenuName} is now ${item.subMenuIsActive ? 'Active' : 'Inactive'}` });
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status' });

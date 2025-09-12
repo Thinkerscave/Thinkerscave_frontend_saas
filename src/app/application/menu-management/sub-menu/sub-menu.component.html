@@ -1,51 +1,59 @@
 <p-toast></p-toast>
 <p-tabView [(activeIndex)]="activeTabIndex">
-    <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
-        <p-card>
-            <div class="p-fluid p-formgrid grid gap-4">
-                <div class="col-12 md:col-4">
-                    <label for="menu" class="mb-2 block">Select Menu</label>
-                    <p-dropdown id="menu" [options]="menuOptions" optionLabel="name" optionValue="menuId"
-                        placeholder="Choose Menu" [(ngModel)]="selectedMenuId" class="w-full">
-                    </p-dropdown>
-                </div>
-                <div class="col-12 md:col-4">
-                    <label for="subMenuName" class="mb-2 block">Sub-Menu Name</label>
-                    <input id="subMenuName" type="text" pInputText [(ngModel)]="subMenuName"
-                        placeholder="Enter sub-menu name" class="w-full" />
-                </div>
+  <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
+    <p-card>
+      <div class="p-fluid p-formgrid grid gap-4">
+        <div class="col-12 md:col-4">
+          <label for="menu" class="mb-2 block">Select Menu</label>
+          <p-dropdown id="menu" [options]="menuOptions" optionLabel="name" optionValue="menuId"
+            placeholder="Choose Menu" [(ngModel)]="selectedMenuId" class="w-full">
+          </p-dropdown>
+        </div>
+        <div class="col-12 md:col-4">
+          <label for="subMenuName" class="mb-2 block">Sub-Menu Name</label>
+          <input id="subMenuName" type="text" pInputText [(ngModel)]="subMenuName" placeholder="Enter sub-menu name"
+            class="w-full" />
+        </div>
 
-                <div class="col-12 md:col-4">
-                    <label for="subMenuUrl" class="mb-2 block">Sub-Menu URL</label>
-                    <input id="subMenuUrl" type="text" pInputText [(ngModel)]="submenuUrl"
-                        placeholder="Enter sub-menu URL" class="w-full" />
-                </div>
+        <div class="col-12 md:col-4">
+          <label for="subMenuUrl" class="mb-2 block">Sub-Menu URL</label>
+          <input id="subMenuUrl" type="text" pInputText [(ngModel)]="submenuUrl" placeholder="Enter sub-menu URL"
+            class="w-full" />
+        </div>
 
-                <div class="col-12 md:col-4 ml-2">
-                    <label for="subMenuDescription" class="mb-2 block">Sub-Menu Description</label>
-                    <textarea id="subMenuDescription" pInputTextarea [(ngModel)]="subMenuDescription" [rows]="2"
-                        placeholder="Enter Sub-menu description" class="w-full p-3"></textarea>
-                </div>
-                <div class="col-4">
-                    <div class="flex gap-2 flex-start">
-                        <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger"
-                            (click)="resetForm()"></button>
-                        <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger"
-                            (click)="cancelEdit()"></button>
-                        <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
-                            (click)="submit()"></button>
-                    </div>
-                </div>
-            </div>
-        </p-card>
-    </p-tabPanel>
+        <div class="col-12 md:col-4">
+          <label for="privileges" class="mb-2 block">Select Privileges</label>
+          <p-multiSelect [options]="privilegeOptions" [(ngModel)]="selectedPrivilegeIds" optionLabel="privilegeName"
+            optionValue="privilegeId" placeholder="Choose Privileges" display="chip" class="w-full">
+          </p-multiSelect>
+        </div>
 
-    <p-tabPanel header="View">
+        <div class="col-12 md:col-4 ml-2">
+          <label for="subMenuDescription" class="mb-2 block">Sub-Menu Description</label>
+          <textarea id="subMenuDescription" pInputTextarea [(ngModel)]="subMenuDescription" [rows]="2"
+            placeholder="Enter Sub-menu description" class="w-full p-3"></textarea>
+        </div>
+
+
+        <div class="col-12">
+          <div class="flex gap-2 flex-start">
+            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" (click)="resetForm()"></button>
+            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" (click)="cancelEdit()"></button>
+            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
+              (click)="submit()"></button>
+          </div>
+        </div>
+      </div>
+    </p-card>
+  </p-tabPanel>
+
+  <p-tabPanel header="View">
     <div class="menu-list-container p-fluid">
 
-      <p-table #dt1 [value]="submenuItems" [loading]="loading" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['subMenuName','menuName','subMenuDescription','createdBy']"
+      <p-table #dt1 [value]="submenuItems" [loading]="loading" [paginator]="true" [rows]="5"
+        [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        [globalFilterFields]="['subMenuName','menuName','subMenuDescription','createdBy']"
         styleClass="p-datatable-sm p-datatable-gridlines">
 
         <!-- 🔍 Search Bar -->
@@ -68,6 +76,7 @@
             <th pSortableColumn="name">Sub-Menu Name <p-sortIcon field="name"></p-sortIcon></th>
             <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
             <th pSortableColumn="name">Sub-Menu URL <p-sortIcon field="name"></p-sortIcon></th>
+            <th>Privileges</th>
             <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
                 field="description"></p-sortIcon></th>
             <th>Created By</th>
@@ -83,12 +92,20 @@
             <td>{{ i + 1 }}</td>
             <td>{{ subMenuItem.subMenuName }}</td>
             <td>{{ subMenuItem.menuName }}</td>
-            <td>{{ subMenuItem.subMenuUrl ? (subMenuItem.subMenuUrl.startsWith('/') ? subMenuItem.subMenuUrl : '/' + subMenuItem.subMenuUrl) : '' }}</td>
+            <td>{{ subMenuItem.subMenuUrl ? (subMenuItem.subMenuUrl.startsWith('/') ? subMenuItem.subMenuUrl : '/' +
+              subMenuItem.subMenuUrl) : '' }}</td>
+            <td>
+              <span *ngFor="let p of subMenuItem.privileges" class="p-tag p-tag-rounded small-privilege p-tag-info">
+                {{ p.privilegeName }}
+              </span>
+            </td>
+
             <td class="truncate-text">{{ subMenuItem.subMenuDescription }}</td>
             <td>{{ subMenuItem.createdBy }}</td>
             <td>{{ subMenuItem.lastUpdatedOn | date:'short' }}</td>
             <td>
-              <p-inputSwitch [(ngModel)]="subMenuItem.subMenuIsActive" (onChange)="toggleStatus(subMenuItem)"></p-inputSwitch>
+              <p-inputSwitch [(ngModel)]="subMenuItem.subMenuIsActive"
+                (onChange)="toggleStatus(subMenuItem)"></p-inputSwitch>
             </td>
             <td style="text-align: center;">
               <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"

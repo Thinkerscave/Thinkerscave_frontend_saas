@@ -91,24 +91,3 @@
     </div>
   </p-tabPanel>
 </p-tabView>
-<p-dialog header="Edit Menu" [(visible)]="displayEditModal" [modal]="true" [style]="{width: '50vw'}">
-  <ng-container *ngIf="editingMenuItem">
-    <div class="p-fluid grid">
-      <div class="field col-6">
-        <label for="editMenuName">Menu Name</label>
-        <input id="editMenuName" type="text" pInputText [(ngModel)]="editingMenuItem.name" />
-      </div>
-
-      <div class="field col-6">
-        <label for="editMenuDescription">Menu Description</label>
-        <textarea id="editMenuDescription" pInputTextarea [(ngModel)]="editingMenuItem.description"
-          [rows]="4"></textarea>
-      </div>
-    </div>
-  </ng-container>
-
-  <ng-template pTemplate="footer">
-    <button pButton label="Cancel" icon="pi pi-times" class="p-button-text" (click)="displayEditModal=false"></button>
-    <button pButton label="Save" icon="pi pi-check" class="p-button-success"></button>
-  </ng-template>
-</p-dialog>
