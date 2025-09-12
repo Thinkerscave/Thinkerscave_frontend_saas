@@ -1,78 +1,148 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TabsModule } from 'primeng/tabs';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
-import { TagModule } from 'primeng/tag';
 import { TableModule } from 'primeng/table';
-interface Permission {
-  label: string;
-  value: string;
-}
-interface Role {
-  id: string;
-  name: string;
-  roleDescription:string;
-  permissions: string[];
-}
+import { Role, RoleService } from '../../services/role.service';
+import { MessageService } from 'primeng/api';
+import { TabViewModule } from 'primeng/tabview';
+import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+
 @Component({
   selector: 'app-manage-role',
-  imports: [TabsModule,CardModule,ButtonModule,MultiSelectModule,InputTextModule,CommonModule,ReactiveFormsModule,TagModule,TableModule],
+  imports: [CommonModule,
+    FormsModule,
+    TabViewModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    TooltipModule,
+    CardModule,
+    ToastModule,
+    InputSwitchModule,
+    IconFieldModule,
+    InputIconModule],
   templateUrl: './manage-role.component.html',
-  styleUrl: './manage-role.component.scss'
+  styleUrl: './manage-role.component.scss',
+  providers: [MessageService]
 })
 export class ManageRoleComponent {
-  @Output() roleAdded = new EventEmitter<Role>();
+  roles: Role[] = [];
+  loading = false;
+  isEditMode = false;
+  activeTabIndex = 0;
+  editRoleId: number | null = null;
+  editingRole: Role | null = null;
 
-  roleForm!: FormGroup;
-  submitted = false;
-  permissions: Permission[] = [];
+  // form fields
+  roleName: string = '';
+  roleDescription: string = '';
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private roleService: RoleService, private messageService: MessageService) {}
 
   ngOnInit(): void {
-    this.permissions = [
-      { label: 'Create User', value: 'create-user' },
-      { label: 'Edit User', value: 'edit-user' },
-      { label: 'Delete User', value: 'delete-user' },
-      { label: 'View Reports', value: 'view-reports' },
-      { label: 'Manage Settings', value: 'manage-settings' }
-    ];
+    this.loadRoles();
+  }
 
-    this.roleForm = this.fb.group({
-      name: ['', Validators.required],
-      roleDescription: [''],
-      permissions: [[], Validators.required]
+  loadRoles(): void {
+    this.loading = true;
+    this.roleService.getAllRoles().subscribe({
+      next: (data) => {
+        this.roles = data;
+        this.loading = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load roles.' });
+        this.loading = false;
+      }
     });
   }
 
-  onSubmit(): void {
-    this.submitted = true;
-    if (this.roleForm.invalid) {
+  submit(): void {
+    if (!this.roleName || !this.roleDescription) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Failed',
+        detail: 'Both Role Name and Description are required.'
+      });
       return;
     }
 
-    const newRole: Role = {
-      id: this.createId(),
-      name: this.roleForm.value.name,
-      roleDescription: this.roleForm.value.roleDescription,
-      permissions: this.roleForm.value.permissions
+    const roleData: Role = {
+      roleId: this.editRoleId || undefined,
+      roleName: this.roleName.trim(),
+      description: this.roleDescription.trim()
     };
 
-    this.roleAdded.emit(newRole);
-    this.onReset();
+    this.roleService.saveOrUpdateRole(roleData).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.isEditMode ? 'Role Updated' : 'Role Created',
+          detail: `'${roleData.roleName}' has been ${this.isEditMode ? 'updated' : 'added'} successfully.`
+        });
+
+        this.loadRoles();
+        this.clearForm();
+        this.isEditMode = false;
+        this.activeTabIndex = 1;
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to save role.' });
+      }
+    });
   }
 
-  onReset(): void {
-    this.submitted = false;
-    this.roleForm.reset();
+  onEdit(role: Role): void {
+    this.isEditMode = true;
+    this.activeTabIndex = 0;
+    this.editRoleId = role.roleId || null;
+    this.roleName = role.roleName;
+    this.roleDescription = role.description!;
+    this.editingRole = { ...role };
   }
 
-  private createId(): string {
-    return Math.random().toString(36).substring(2, 9);
+  toggleStatus(role: Role): void {
+    if (!role.roleId) {
+      this.messageService.add({ severity: 'warn', summary: 'Invalid Role', detail: 'Role ID is missing.' });
+      return;
+    }
+
+    this.roleService.updateStatus(role.roleId, role.isActive ?? false).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Status Updated',
+          detail: `Role '${role.roleName}' is now ${role.isActive ? 'Active' : 'Inactive'}.`
+        });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status.' });
+        role.isActive = !role.isActive; // revert
+      }
+    });
   }
-  
+
+  resetForm(): void {
+    this.clearForm();
+  }
+
+  clearForm(): void {
+    this.roleName = '';
+    this.roleDescription = '';
+    this.editRoleId = null;
+    this.editingRole = null;
+  }
+
+  cancelEdit(): void {
+    this.clearForm();
+    this.isEditMode = false;
+    this.activeTabIndex = 1; // back to View
+  }
 }
