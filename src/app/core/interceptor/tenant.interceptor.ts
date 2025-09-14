@@ -1,5 +1,7 @@
 import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { inject } from '@angular/core';
+import { NgxUiLoaderService } from 'ngx-ui-loader';
+import { finalize, Observable } from 'rxjs';
 
 /**
  * A functional HTTP interceptor that adds the X-Tenant-ID header to outgoing requests.
@@ -8,7 +10,11 @@ import { Observable } from 'rxjs';
  * @returns An Observable of the event stream.
  */
 export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
-  
+  const loader = inject(NgxUiLoaderService);
+
+  // Start loader
+  loader.start();
+
   // In a real application, you would get the tenant ID from a service
   // after the user has logged in. For now, we can hardcode it for testing.
   const tenantId = 'public'; // Example tenant ID. Replace with your actual tenant identifier.
@@ -19,6 +25,8 @@ export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, 
   });
 
   // Pass the cloned request to the next handler in the chain.
-  return next(modifiedRequest);
+  return next(modifiedRequest).pipe(
+    finalize(() => loader.stop())
+  );
 };
 

@@ -40,11 +40,11 @@ export class LoginComponent {
       username: this.username,
       password: this.password
     };
-    if (this.firstTimeLogin) {
-      // Save data if needed
-      localStorage.setItem('username', this.username);
-      this.router.navigate(['/auth/first-time-login']);
-    }
+    // if (this.firstTimeLogin) {
+    //   // Save data if needed
+    //   localStorage.setItem('username', this.username);
+    //   this.router.navigate(['/auth/first-time-login']);
+    // }
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
         this.loginService.loginUser(res.token);

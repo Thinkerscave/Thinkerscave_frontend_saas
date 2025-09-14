@@ -6,7 +6,7 @@ import { BreadCrumbService } from '../../services/bread-crumb.service';
 
 @Component({
   selector: 'app-breadcrumb',
-  imports: [ BreadcrumbModule],
+  imports: [BreadcrumbModule],
   templateUrl: './breadcrumb.component.html',
   styleUrl: './breadcrumb.component.scss'
 })
@@ -17,7 +17,7 @@ export class BreadcrumbComponent {
   constructor(
     private router: Router,
     private breadcrumbService: BreadCrumbService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.home = {
@@ -28,13 +28,15 @@ export class BreadcrumbComponent {
 
     this.breadcrumbService.breadcrumb$.subscribe(breadcrumb => {
       if (breadcrumb) {
-        this.items = [
-          { label: breadcrumb.menu },
-          { label: breadcrumb.subMenu }
-        ];
+        this.items = [{ label: breadcrumb.menu }];
+
+        if (breadcrumb.subMenu && breadcrumb.subMenu.trim() !== '') {
+          this.items.push({ label: breadcrumb.subMenu });
+        }
       } else {
         this.items = [];
       }
     });
+
   }
 }

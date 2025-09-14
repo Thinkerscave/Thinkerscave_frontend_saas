@@ -1,12 +1,13 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
+import { NgxUiLoaderHttpModule, NgxUiLoaderModule } from 'ngx-ui-loader';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +22,10 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: Aura
       }
-    })
+    }),
+    importProvidersFrom(
+      NgxUiLoaderModule, // core loader
+      NgxUiLoaderHttpModule.forRoot({ showForeground: true }) // auto show on HTTP
+    )
   ]
 };
