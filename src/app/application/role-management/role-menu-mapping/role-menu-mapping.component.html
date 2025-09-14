@@ -1,27 +1,38 @@
-<p-card header="Role-Menu Mapping">
+<p-card class="shadow-3 border-round-lg">
+  <p-toast></p-toast>
+
+  <!-- Role Selection -->
   <div class="grid mb-3">
     <div class="col-12 md:col-4">
-      <label class="block mb-1">Select Role</label>
-      <p-dropdown 
-        [options]="roles" 
-        [(ngModel)]="selectedRole"
-        placeholder="Select a Role"
-        class="w-full">
+      <label class="block mb-2 font-medium">Select Role</label>
+      <p-dropdown [options]="roles" [(ngModel)]="selectedRole" placeholder="Choose a Role" class="w-full">
       </p-dropdown>
     </div>
   </div>
 
+  <!-- Menu Tree -->
   <p-tree 
     [value]="menuTree" 
     selectionMode="checkbox" 
     [(selection)]="selectedNodes"
-    [propagateSelectionUp]="false"
+    [propagateSelectionUp]="true"
     [propagateSelectionDown]="true"
-    class="w-full mt-2">
+    class="w-full mt-3 surface-50 border-round-lg p-3">
+
+    <ng-template let-node pTemplate="default">
+      <span [ngClass]="{
+        'font-bold text-base': node.key.startsWith('menu-'),
+        'ml-2 font-medium text-gray-800': node.key.startsWith('submenu-'),
+        'text-sm text-purple-600 ml-4': node.key.startsWith('privilege-')
+      }">
+        {{ node.label }}
+      </span>
+    </ng-template>
   </p-tree>
 
-  <div class="flex justify-content-end gap-2 mt-4">
+  <!-- Actions -->
+  <div class="flex justify-content-end gap-3 mt-4">
     <button pButton label="Cancel" class="p-button-secondary"></button>
-    <button pButton label="Submit" class="p-button-success" (click)="submit()"></button>
+    <button pButton label="Assign" class="p-button-success" (click)="submit()"></button>
   </div>
 </p-card>

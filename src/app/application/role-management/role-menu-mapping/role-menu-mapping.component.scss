@@ -1,0 +1,75 @@
+/* container tweaks */
+.menu-tree {
+  .p-tree-container {
+    padding: 0;
+  }
+}
+
+/* Menu label */
+.menu-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.menu-icon {
+  font-size: 1.05rem;
+}
+
+/* Submenu block — keep the default tree spacing, then add privileges below */
+.submenu-block {
+  margin-bottom: 10px;
+}
+
+/* Align text of submenu with the tree content (checkbox area handled by p-tree) */
+.submenu-line {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.submenu-text {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Privileges row: indent so it sits under the submenu label/checkbox area */
+.privileges-row {
+  margin-left: 2rem;   /* keeps it inline with submenu checkbox */
+  margin-top: 4px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
+/* Individual privilege chip (looks like small badge with checkbox + label) */
+.privilege-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f5f7fb;     /* subtle bg */
+  border: 1px solid #e8eef8;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+/* smaller label spacing */
+.priv-label {
+  margin: 0;
+  line-height: 1;
+  font-size: 0.875rem;
+}
+
+/* small responsive tweak to reduce margin on narrow screens */
+@media (max-width: 640px) {
+  .privileges-row {
+    margin-left: 1.6rem;
+  }
+  .privilege-chip { padding: 5px 6px; font-size: 0.82rem; }
+}

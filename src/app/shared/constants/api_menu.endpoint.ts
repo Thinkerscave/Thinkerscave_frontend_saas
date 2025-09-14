@@ -28,7 +28,9 @@ export const menuSequenceApi = {
 };
 
 export const menuMappingeApi = {
-  getSideMenuUrl: `${menuMappingUrl}`
+  getSideMenuUrl: `${menuMappingUrl}`,
+  getMenuTreeUrl: `${menuMappingUrl}/getActiveMenuTree`,
+  assignRoleMenuPrivilegeUrl: `${menuMappingUrl}/assign`
 };
 
 export const roleApi = {
