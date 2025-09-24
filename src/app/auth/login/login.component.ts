@@ -40,15 +40,34 @@ export class LoginComponent {
       username: this.username,
       password: this.password
     };
-    // if (this.firstTimeLogin) {
-    //   // Save data if needed
-    //   localStorage.setItem('username', this.username);
-    //   this.router.navigate(['/auth/first-time-login']);
-    // }
+
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
-        this.loginService.loginUser(res.token);
-        this.router.navigate(['/app']);
+        // 1. Store token
+        this.loginService.loginUser(res.accessToken);
+
+        // 2. Fetch current user details
+        this.loginService.getCurrentUser().subscribe({
+          next: (user: any) => {
+            this.loginService.setUser(user);
+
+            // 3. Redirect based on firstTimeLogin
+            if (user.firstTimeLogin) {
+              this.router.navigate(['/auth/first-time-login']);
+            } else {
+              this.router.navigate(['/app']);
+            }
+          },
+          error: (err) => {
+            console.error("Failed to fetch user details", err);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to fetch user details',
+              life: 5000
+            });
+          }
+        });
       },
       error: (e) => {
         console.error(e);
@@ -61,4 +80,5 @@ export class LoginComponent {
       }
     });
   }
+
 }

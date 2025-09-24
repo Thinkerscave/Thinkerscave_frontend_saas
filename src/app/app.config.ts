@@ -8,6 +8,8 @@ import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
 import { NgxUiLoaderHttpModule, NgxUiLoaderModule } from 'ngx-ui-loader';
+import { authInterceptor } from './core/interceptor/auth.interceptor';
+import { MessageService } from 'primeng/api';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,7 +17,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(
-      withInterceptors([tenantInterceptor])
+      withInterceptors([
+        tenantInterceptor,
+        authInterceptor
+      ])
     ),
 
     providePrimeNG({
@@ -26,6 +31,7 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       NgxUiLoaderModule, // core loader
       NgxUiLoaderHttpModule.forRoot({ showForeground: true }) // auto show on HTTP
-    )
+    ),
+    MessageService
   ]
 };

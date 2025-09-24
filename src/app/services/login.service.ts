@@ -9,9 +9,9 @@ import { loginApi } from '../shared/constants/api.endpoint';
 })
 export class LoginService {
 
-  public loginStatusSubject=new Subject<boolean>();
-  
-   private passwordUrl= environment.baseUrl;
+  public loginStatusSubject = new Subject<boolean>();
+
+  private passwordUrl = environment.baseUrl;
   constructor(private http: HttpClient) { }
   //generate token
 
@@ -51,61 +51,59 @@ export class LoginService {
     return this.http.post(loginApi.loginUrl, loginData);
   }
 
-  public getCurrentUser(){
-    console.log("Comming to get current user");
-    return this.http.get(`${environment.baseUrl}/current-user`);
+  public getCurrentUser() {
+    return this.http.get(loginApi.currentUserInfo);
   }
 
   //login user : set token in localStorage
-  public loginUser(token : any){
-    localStorage.setItem('token',token);
+  public loginUser(token: any) {
+    localStorage.setItem('token', token);
     return true;
   }
 
   //is login
-  public isLoggedIn(){
-    
-    let tokenStr=localStorage.getItem("token");
-    if(tokenStr==undefined || tokenStr == '' || tokenStr == null){
+  public isLoggedIn() {
+
+    let tokenStr = localStorage.getItem("token");
+    if (tokenStr == undefined || tokenStr == '' || tokenStr == null) {
       return false;
     }
-    else{
+    else {
       return true;
     }
   }
 
   // logout : remove token from localstorage
-  public logOut(){
+  public logOut() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     return true;
   }
 
   //get token
-  public getToken(){
+  public getToken() {
     return localStorage.getItem('token');
   }
 
   //set userDetail
-  public setUser(user:any){
-    localStorage.setItem('user',JSON.stringify(user));
+  public setUser(user: any) {
+    localStorage.setItem('user', JSON.stringify(user));
   }
 
   //getUser
-  public getUser(){
-    let userStr= localStorage.getItem('user');
-    if(userStr != null){
+  public getUser() {
+    let userStr = localStorage.getItem('user');
+    if (userStr != null) {
       return JSON.parse(userStr);
     }
-    else{
+    else {
       this.logOut();
       return null;
     }
   }
 
-  //get the user role
-  public getUserRole(){
-   let user= this.getUser();
-   return user.authorities[0].authority;
+  public getUserRole() {
+    let user = this.getUser();
+    return user?.roles || [];
   }
 }
