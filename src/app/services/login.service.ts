@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { from, Observable, Subject, switchMap } from 'rxjs';
 import { environment } from '../environment/environment';
 import { loginApi } from '../shared/constants/api.endpoint';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ export class LoginService {
   public loginStatusSubject = new Subject<boolean>();
 
   private passwordUrl = environment.baseUrl;
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,private router: Router) { }
   //generate token
 
 
@@ -56,15 +57,16 @@ export class LoginService {
   }
 
   //login user : set token in localStorage
-  public loginUser(token: any) {
-    localStorage.setItem('token', token);
+  public loginUser(accessToken: string, refreshToken: string) {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
     return true;
   }
 
   //is login
   public isLoggedIn() {
 
-    let tokenStr = localStorage.getItem("token");
+    let tokenStr = localStorage.getItem("accessToken");
     if (tokenStr == undefined || tokenStr == '' || tokenStr == null) {
       return false;
     }
@@ -73,16 +75,17 @@ export class LoginService {
     }
   }
 
-  // logout : remove token from localstorage
-  public logOut() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    return true;
+  //get token
+  public getAccessToken() {
+    return localStorage.getItem('accessToken');
   }
 
-  //get token
-  public getToken() {
-    return localStorage.getItem('token');
+  public setAccessToken(accessToken: string) {
+    localStorage.setItem('accessToken', accessToken);
+  }
+
+  public getRefreshToken() {
+    return localStorage.getItem('refreshToken');
   }
 
   //set userDetail
@@ -106,4 +109,36 @@ export class LoginService {
     let user = this.getUser();
     return user?.roles || [];
   }
+
+  public logOut() {
+    const refreshToken = this.getRefreshToken();
+    if (refreshToken) {
+      this.http.post(loginApi.logOutUrl, { token: refreshToken })
+        .subscribe({ next: () => { }, error: () => { } });
+    }
+
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sideMenu');
+    localStorage.removeItem('app-breadcrumb');
+    this.loginStatusSubject.next(false);
+    return true;
+  }
+
+  logOutAndRedirect(): void {
+    this.logOut();
+    this.router.navigate(['/auth/login']); // Redirect to login
+  }
+
+  public refreshAccessToken(refreshToken: string): Observable<string> {
+    return this.http.post<any>(loginApi.refreshTokenUrl,{ token: refreshToken }
+    ).pipe(
+      switchMap((res: any) => {
+        this.setAccessToken(res.accessToken); // update local storage
+        return from([res.accessToken]); // return new access token
+      })
+    );
+  }
+
 }

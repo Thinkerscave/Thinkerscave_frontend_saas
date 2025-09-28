@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-top-bar',
-  imports: [MenuModule,CommonModule],
+  imports: [MenuModule, CommonModule],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })
@@ -20,7 +20,7 @@ export class TopBarComponent {
     private loginService: LoginService,
     private router: Router,
     private messageService: MessageService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const user = this.loginService.getUser();
@@ -51,17 +51,24 @@ export class TopBarComponent {
   }
 
   getInitials(name: string): string {
-  const names = name.split(' ');
-  if (names.length === 1) {
-    return names[0].charAt(0).toUpperCase();
-  } else {
-    return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+    const names = name.split(' ');
+    if (names.length === 1) {
+      return names[0].charAt(0).toUpperCase();
+    } else {
+      return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+    }
   }
-}
 
   logout() {
-    this.loginService.logOut();
-    this.messageService.add({ severity: 'success', summary: 'Logged out', detail: 'You have been logged out successfully' });
-    this.router.navigate(['/login']);
+    // Clear storage and redirect to login
+    this.loginService.logOutAndRedirect();
+
+    // Show success message
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Logged out',
+      detail: 'You have been logged out successfully'
+    });
   }
+
 }

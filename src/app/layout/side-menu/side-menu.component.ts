@@ -14,8 +14,8 @@ export class SideMenuComponent {
   items: MenuItem[] = [];
 
   constructor(private sideMenuService: MenuMappingService,
-              private breadcrumbService: BreadCrumbService
-  ) {}
+    private breadcrumbService: BreadCrumbService
+  ) { }
 
   ngOnInit(): void {
     this.loadMenu();

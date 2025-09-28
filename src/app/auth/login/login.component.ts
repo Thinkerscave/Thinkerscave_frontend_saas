@@ -35,6 +35,11 @@ export class LoginComponent {
 
   constructor(private router: Router, private loginService: LoginService, private messageService: MessageService) { }
 
+  ngOnInit(): void {
+    // Clear local storage every time the login page is loaded
+    this.loginService.logOut();
+  }
+  
   login() {
     const loginPayload = {
       username: this.username,
@@ -44,7 +49,7 @@ export class LoginComponent {
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
         // 1. Store token
-        this.loginService.loginUser(res.accessToken);
+        this.loginService.loginUser(res.accessToken,res.token);
 
         // 2. Fetch current user details
         this.loginService.getCurrentUser().subscribe({
