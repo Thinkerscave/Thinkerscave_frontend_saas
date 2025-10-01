@@ -47,6 +47,12 @@ import { InputIconModule } from 'primeng/inputicon';
   providers: [MessageService]
 })
 export class MenuComponent {
+toggleOrganizationStatus(_t143: any) {
+throw new Error('Method not implemented.');
+}
+editOrganization(_t143: any) {
+throw new Error('Method not implemented.');
+}
   title = '';
   menuItems: MenuItem[] = [];
   loading: boolean = false;

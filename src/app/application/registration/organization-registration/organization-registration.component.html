@@ -154,5 +154,18 @@
             </p-tabpanels>
         </p-tabs>
     </p-card>
+    
+
+    <p-dialog header="Edit Organization" [(visible)]="displayEditDialog" [modal]="true" 
+              [style]="{width: '60vw'}" (onHide)="handleUpdateComplete(false)">
+     
+        <app-edit-organization 
+            *ngIf="selectedOrgForEdit" 
+            [organization]="selectedOrgForEdit" 
+            (updateComplete)="handleUpdateComplete($event)">
+        </app-edit-organization>
+    </p-dialog>
+
+
 </div>
 

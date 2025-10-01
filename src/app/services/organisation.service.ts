@@ -27,8 +27,7 @@ export interface OrgRequest {
  * This should match the response DTO from your backend.
  */
 export interface Organisation {
-  isGroup: any;
-  parentOrgId: any;
+ 
   orgId: number;
   orgCode: string;
   orgName: string;
@@ -40,10 +39,13 @@ export interface Organisation {
   state: string;
   establishDate: string | Date | null; // Dates often come back as strings
   subscriptionType:string;
+
   ownerName: string;
   ownerEmail: string;
   ownerMobile: string;
   isActive: boolean;
+   isGroup: any;
+  parentOrgId: any;
 }
 @Injectable({
   providedIn: 'root'
@@ -68,7 +70,7 @@ export class OrganisationService {
    * @returns An Observable containing an array of Organisation objects.
    */
   getOrganizations(): Observable<Organisation[]> {
-    return this.http.get<Organisation[]>(this.apiUrl);
+    return this.http.get<Organisation[]>(`${this.apiUrl}/all`);
   }
 
   /**

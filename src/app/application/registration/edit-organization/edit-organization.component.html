@@ -1,0 +1,85 @@
+<!-- 
+  This form is the content of the dialog. 
+  It is only rendered when the 'organization' @Input has received data.
+  The 'editData' object is a local copy of that data.
+-->
+<form *ngIf="editData" #editOrgForm="ngForm" (ngSubmit)="onUpdateSubmit()">
+
+    <!-- A message to the user -->
+    <span class="text-surface-500 dark:text-surface-400 block mb-4">
+        You are editing the details for <strong>{{ editData.orgName }}</strong>.
+    </span>
+
+    <!-- 
+      The main container for the form fields, using PrimeNG's grid system for layout.
+      The 'p-fluid' class makes form elements fill the available width.
+    -->
+    <div class="grid p-fluid gap-4">
+        
+        <!-- Is a Group -->
+        <div class="field col-12 md:col-6">
+            <label class="font-bold mb-2 block">Is a Group</label>
+            <div class="flex gap-3 align-items-center" aria-readonly="true">
+                <p-radioButton name="editIsGroup" [value]="true" [(ngModel)]="editData.isGroup" inputId="editIsYes"></p-radioButton>
+                <label for="editIsYes">Yes</label>
+                <p-radioButton name="editIsGroup" [value]="false" [(ngModel)]="editData.isGroup" inputId="editIsNo"></p-radioButton>
+                <label for="editIsNo">No</label>
+            </div>
+        </div>
+
+        <!-- Organization Name -->
+        <div class="field col-12 md:col-6">
+            <label for="editOrgName" class="mb-2 block">Organization Name</label>
+            <input id="editOrgName" type="text" pInputText [(ngModel)]="editData.orgName" name="editOrgName" required />
+        </div>
+        
+        <!-- Brand Name -->
+        <div class="field col-12 md:col-6">
+            <label for="editBrandName" class="mb-2 block">Brand Name</label>
+            <input id="editBrandName" type="text" pInputText [(ngModel)]="editData.brandName" name="editBrandName" />
+        </div>
+
+        <!-- Organization URL -->
+        <div class="field col-12 md:col-6">
+            <label for="editOrgUrl" class="mb-2 block">Organization URL</label>
+            <input id="editOrgUrl" type="text" pInputText [(ngModel)]="editData.orgUrl" name="editOrgUrl" />
+        </div>
+
+        <!-- Organization Type -->
+        <div class="field col-12 md:col-6">
+            <label for="editOrgType" class="mb-2 block">Organization Type</label>
+            <p-dropdown inputId="editOrgType" [options]="organizationTypes" [(ngModel)]="editData.orgType"
+                placeholder="Select Type" optionLabel="label" optionValue="value" name="editOrgType"></p-dropdown>
+        </div>
+
+        <!-- Establishment Date -->
+        <div class="field col-12 md:col-6">
+            <label for="editEstDate" class="mb-2 block">Establishment Date</label>
+            <p-calendar id="editEstDate" [(ngModel)]="editData.establishDate" dateFormat="dd/mm/yy" name="editEstDate"></p-calendar>
+        </div>
+        
+        <div class="col-12"><hr class="my-2" /></div>
+
+        <!-- Owner Details -->
+        <div class="field col-12 md:col-6">
+            <label for="editOwnerName" class="mb-2 block">Owner Name</label>
+            <input id="editOwnerName" type="text" pInputText [(ngModel)]="editData.ownerName" name="editOwnerName" required />
+        </div>
+        <div class="field col-12 md:col-6">
+            <label for="editOwnerEmail" class="mb-2 block">Owner Email</label>
+            <input id="editOwnerEmail" type="email" pInputText [(ngModel)]="editData.ownerEmail" name="editOwnerEmail" required />
+        </div>
+        <div class="field col-12 md:col-6">
+            <label for="editOwnerMobile" class="mb-2 block">Owner Mobile</label>
+            <input id="editOwnerMobile" type="text" pInputText [(ngModel)]="editData.ownerMobile" name="editOwnerMobile" />
+        </div>
+        
+
+    </div>
+
+    <!-- Action Buttons in the Footer -->
+    <div class="flex justify-content-end gap-2 mt-5">
+        <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Update" (click)="onUpdateSubmit()" [outlined]="true" severity="success"></p-button>
+    </div>
+</form>
