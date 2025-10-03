@@ -6,7 +6,7 @@
 
     <div class="grid p-fluid gap-4">
 
-        <div class="field col-12 md:col-6">
+        <div class="field col-12 md:col-6 " [hidden]="true">
             <label for="editOrgId" class="mb-2 block">Organization ID</label>
             <input id="editOrgId" type="text" pInputText [(ngModel)]="editData.orgId" name="id" [readonly]="true" />
         </div>

@@ -34,8 +34,7 @@ import { Organisation, OrganisationService, OrgRequest, ParentOrg } from '../../
 export class OrganizationRegistrationComponent implements OnInit {
   // --- Form State for the "Add" Form ---
   isGroup: boolean = false;
-  selectedParentOrg: 
-  { id: number, name: string } | null = null;
+  selectedParentOrg: number | null = null;
   orgName: string = '';
   brandName: string = '';
   orgUrl: string = '';
@@ -102,7 +101,7 @@ export class OrganizationRegistrationComponent implements OnInit {
 
     const payload: OrgRequest = {
       isAGroup: this.isGroup,
-      parentOrgId:  !this.isGroup ? this.selectedParentOrg?.id : null,
+      parentOrgId: !this.isGroup ? this.selectedParentOrg : null,
       orgName: this.orgName,
       brandName: this.brandName,
       orgUrl: this.orgUrl,
@@ -115,7 +114,7 @@ export class OrganizationRegistrationComponent implements OnInit {
       ownerEmail: this.ownerEmail,
       ownerMobile: this.ownerMobile,
     };
-    
+
 
     // For simplicity, we assume this is always a create call in the "Add" tab.
     this.organizationService.createOrganization(payload).subscribe({
@@ -130,14 +129,14 @@ export class OrganizationRegistrationComponent implements OnInit {
       }
     });
   }
-   /**
-   * This method is called by the (onChange) event from the p-dropdown.
-   * It manually captures the selected ID and stores it.
-   * @param event The change event object from PrimeNG, which contains the selected value.
-   */
+  /**
+  * This method is called by the (onChange) event from the p-dropdown.
+  * It manually captures the selected ID and stores it.
+  * @param event The change event object from PrimeNG, which contains the selected value.
+  */
   onParentOrgChange(event: any): void {
     // The selected ID is in the 'value' property of the event object
-    this.selectedParentOrg = event.value; 
+    this.selectedParentOrg = event.value;
     console.log('Parent Organization ID selected:', this.selectedParentOrg);
   }
 
