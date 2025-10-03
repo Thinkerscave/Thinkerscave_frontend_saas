@@ -8,7 +8,7 @@ import { HttpClient } from '@angular/common/http';
  */
 export interface OrgRequest {
   isAGroup: boolean;
-  parentOrgId: number | null | undefined;
+  parentOrgId: number | null;
   orgName: string;
   brandName: string;
   orgUrl: string;
