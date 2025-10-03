@@ -8,7 +8,7 @@ import { HttpClient } from '@angular/common/http';
  */
 export interface OrgRequest {
   isAGroup: boolean;
-  parentOrgId: number | null;
+  parentOrgId: number | null | undefined;
   orgName: string;
   brandName: string;
   orgUrl: string;
@@ -47,6 +47,10 @@ export interface Organisation {
    isGroup: any;
   parentOrgId: any;
 }
+export interface ParentOrg{
+  id:number;
+  name:string;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -71,6 +75,13 @@ export class OrganisationService {
    */
   getOrganizations(): Observable<Organisation[]> {
     return this.http.get<Organisation[]>(`${this.apiUrl}/all`);
+  }
+  /**
+   * 
+   * 
+   */
+  getParentOrganizations():Observable<ParentOrg[]>{
+    return this.http.get<ParentOrg[]>(`${this.apiUrl}/groups`)
   }
 
   /**
