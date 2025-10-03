@@ -163,28 +163,33 @@ export class OrganizationRegistrationComponent implements OnInit {
    * Toggles the active status of an organization.
    */
   toggleOrganizationStatus(orgToToggle: Organisation) {
-    const action = orgToToggle.isActive ? 'disable' : 'enable';
-    if (confirm(`Are you sure you want to ${action} ${orgToToggle.orgName}?`)) {
-      // In a real app, you would call a dedicated service method here
-      // For now, we simulate the change locally and show a message
-      orgToToggle.isActive = !orgToToggle.isActive;
-      this.messageService.add({ severity: 'info', summary: 'Status Updated', detail: `Organization has been ${action}d.` });
-    }
-  }
+     const action = orgToToggle.isActive ? 'enable' : 'disable';
+    const originalStatus = !orgToToggle.isActive; // The status *before* the user clicked the toggle
 
-  deleteOrganization(orgToDelete: Organisation) {
-    if (confirm(`Are you sure you want to delete ${orgToDelete.orgName}?`)) {
-      this.organizationService.deleteOrganization(orgToDelete.orgId).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'warn', summary: 'Deleted', detail: `${orgToDelete.orgName} has been removed.` });
-          this.loadOrganizations();
+    this.organizationService.deleteOrganization(orgToToggle.orgCode).subscribe({
+        next: (updatedOrg) => {
+            // Success: The backend has confirmed the change.
+            this.messageService.add({ 
+                severity: 'success', 
+                summary: 'Status Updated', 
+                detail: `${orgToToggle.orgName} has been ${action}d.` 
+            });
+            // Refresh the parent org dropdown in case a group's status changed.
+            this.loadParentOrganizations();
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete organization.' });
+            // Error: The API call failed. Revert the toggle switch on the UI to its original state.
+            orgToToggle.isActive = originalStatus; 
+            this.messageService.add({ 
+                severity: 'error', 
+                summary: 'Update Failed', 
+                detail: `Could not change status for ${orgToToggle.orgName}.` 
+            });
         }
-      });
-    }
+    });
   }
+
+  
 
   resetForm() {
     this.isGroup = false;

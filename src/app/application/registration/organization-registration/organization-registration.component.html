@@ -135,11 +135,13 @@
                                 <th>Owner Name</th>
                                 <th>Owner Email</th>
                                 <th>Owner Mobile</th>
+                                <th>Status</th> <!-- NEW: Header for the Status column -->
                                 <th>Actions</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-org>
-                            <tr>
+                            <!-- Add a class binding to the <tr> for the fade-out effect -->
+                            <tr [class.disabled-row]="!org.isActive">
                                 <td>{{ org.orgName }}</td>
                                 <td>{{ org.brandName }}</td>
                                 <td>{{ org.orgUrl }}</td>
@@ -151,15 +153,18 @@
                                 <td>{{ org.ownerEmail }}</td>
                                 <td>{{ org.ownerMobile }}</td>
                                 <td>
+                                    <!-- NEW: The toggle switch for status -->
+                                    <p-inputSwitch [(ngModel)]="org.isActive" (onChange)="toggleOrganizationStatus(org)"
+                                        pTooltip="{{ org.isActive ? 'Disable' : 'Enable' }} Organization">
+                                    </p-inputSwitch>
+                                </td>
+                                <td>
                                     <div class="flex gap-2">
                                         <button pButton icon="pi pi-pencil"
                                             class="p-button-rounded p-button-warning p-button-sm"
                                             (click)="editOrganization(org)" pTooltip="Edit">
                                         </button>
-                                        <button pButton icon="pi pi-trash"
-                                            class="p-button-rounded p-button-danger p-button-sm"
-                                            (click)="deleteOrganization(org)" pTooltip="Delete">
-                                        </button>
+                                        <!-- The delete button has been removed -->
                                     </div>
                                 </td>
                             </tr>
@@ -176,7 +181,7 @@
 
         <app-edit-organization *ngIf="selectedOrgForEdit" [organization]="selectedOrgForEdit"
             (updateComplete)="handleUpdateComplete($event)">
-         </app-edit-organization>
+        </app-edit-organization>
     </p-dialog>
 
 

@@ -101,9 +101,8 @@ export class OrganisationService {
    * @param orgId The ID of the organization to delete.
    * @returns An Observable with the backend's response.
    */
-  deleteOrganization(orgId: number): Observable<any> {
-    const deleteUrl = `${this.apiUrl}/${orgId}`;
-    return this.http.delete<any>(deleteUrl);
+  deleteOrganization(orgCode: string): Observable<any> {
+    return this.http.patch<Organisation>(`${this.apiUrl}/${orgCode}`, {});
   }
 
 }
