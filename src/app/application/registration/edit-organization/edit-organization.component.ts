@@ -80,20 +80,19 @@ export class EditOrganizationComponent {
     // 2. Call the update method in your service, passing the id and the payload.
     this.organizationService.updateOrganization(orgId, orgData).subscribe({
       next: (response) => {
-        // Handle a successful response from the server
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Organization updated successfully!'
-        });
-        // You might want to close a dialog or navigate away here.
+        // The success message will now be displayed by the parent component's toast.
+        // We will signal the parent that the update was successful.
+
+        // --- KEY CHANGE: Emit the event on success ---
+        // This tells the parent component to close the dialog and refresh the data.
+        this.updateComplete.emit(true);
       },
       error: (err) => {
-        // Handle an error response from the server
+        // Show the error message directly in this component's toast.
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to update organization. Please try again.'
+          summary: 'Update Failed',
+          detail: err.error?.message || 'Failed to update organization. Please try again.'
         });
         console.error('Update failed:', err);
       }
