@@ -25,12 +25,20 @@
                             </div>
 
                             <!-- Parent Organization -->
-                            <div class="field col-6 md:col-4" *ngIf="!isGroup">
-                                <label for="parentOrg" class="mb-2 block">Parent Organization</label>
-                                <p-dropdown inputId="parentOrg" [options]="parentOrganizations"
-                                    [(ngModel)]="selectedParentOrg" placeholder="Select Parent Organization"
-                                    optionLabel="name" name="parentOrg" class="w-full"></p-dropdown>
-                            </div>
+                            <div class="field col-12 md:col-4" *ngIf="!isGroup">
+            <label for="parentOrg" class="mb-2 block">Parent Organization</label>
+            <p-dropdown 
+                inputId="parentOrg"
+                name="parentOrg"
+                [options]="dropdowmParentOrgs" 
+                [(ngModel)]="selectedParentOrg"
+                 (onChange)="onParentOrgChange($event)"
+                placeholder="Select Parent Organization"
+                optionLabel="name"
+                optionValue="id"
+                [showClear]="true">
+            </p-dropdown>
+        </div>
 
                             <!-- Organization Section -->
                             <div class="col-12">
@@ -162,7 +170,8 @@
         <app-edit-organization 
             *ngIf="selectedOrgForEdit" 
             [organization]="selectedOrgForEdit" 
-            (updateComplete)="handleUpdateComplete($event)">
+             (onUpdateSuccess)="handleUpdateSuccess()"
+            >
         </app-edit-organization>
     </p-dialog>
 

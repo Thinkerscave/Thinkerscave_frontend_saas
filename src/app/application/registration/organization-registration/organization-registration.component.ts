@@ -17,7 +17,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 // --- Import your Edit Component and Service ---
 import { EditOrganizationComponent } from '../edit-organization/edit-organization.component';
-import { Organisation, OrganisationService, OrgRequest } from '../../../services/organisation.service';
+import { Organisation, OrganisationService, OrgRequest, ParentOrg } from '../../../services/organisation.service';
 
 @Component({
   selector: 'app-organization-registration',
@@ -34,7 +34,8 @@ import { Organisation, OrganisationService, OrgRequest } from '../../../services
 export class OrganizationRegistrationComponent implements OnInit {
   // --- Form State for the "Add" Form ---
   isGroup: boolean = false;
-  selectedParentOrg: { id: number, name: string } | null = null;
+  selectedParentOrg: 
+  { id: number, name: string } | null = null;
   orgName: string = '';
   brandName: string = '';
   orgUrl: string = '';
@@ -51,6 +52,7 @@ export class OrganizationRegistrationComponent implements OnInit {
   // --- State for Controlling the Edit Dialog ---
   displayEditDialog: boolean = false;
   selectedOrgForEdit: Organisation | null = null;
+  dropdowmParentOrgs: ParentOrg[] = [];
 
   // --- Data for Dropdowns and Table ---
   organizations: Organisation[] = [];
@@ -62,17 +64,23 @@ export class OrganizationRegistrationComponent implements OnInit {
   ];
   subscriptionTypes = ['Free', 'Paid', 'Premium'];
   genderOptions = ['Male', 'Female', 'Other'];
-isEditing: any;
+  isEditing: any;
 
   constructor(
     private messageService: MessageService,
     private organizationService: OrganisationService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadOrganizations();
+    this.loadParentOrganizations();
   }
-
+  // --- NEW: This method efficiently loads data for the dropdown ---
+  loadParentOrganizations() {
+    this.organizationService.getParentOrganizations().subscribe(data => {
+      this.dropdowmParentOrgs = data;
+    });
+  }
   loadOrganizations() {
     this.organizationService.getOrganizations().subscribe(data => {
       this.organizations = data;
@@ -91,10 +99,10 @@ isEditing: any;
       this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Organization Name and Owner Email are required.' });
       return;
     }
-    
+
     const payload: OrgRequest = {
       isAGroup: this.isGroup,
-      parentOrgId: !this.isGroup ? this.selectedParentOrg?.id ?? null : null,
+      parentOrgId:  !this.isGroup ? this.selectedParentOrg?.id : null,
       orgName: this.orgName,
       brandName: this.brandName,
       orgUrl: this.orgUrl,
@@ -107,6 +115,7 @@ isEditing: any;
       ownerEmail: this.ownerEmail,
       ownerMobile: this.ownerMobile,
     };
+    
 
     // For simplicity, we assume this is always a create call in the "Add" tab.
     this.organizationService.createOrganization(payload).subscribe({
@@ -114,22 +123,33 @@ isEditing: any;
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Organization created successfully!' });
         this.resetForm();
         this.loadOrganizations();
+        this.loadParentOrganizations();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'API Error', detail: err.error?.message || 'An unexpected error occurred.' });
       }
     });
   }
+   /**
+   * This method is called by the (onChange) event from the p-dropdown.
+   * It manually captures the selected ID and stores it.
+   * @param event The change event object from PrimeNG, which contains the selected value.
+   */
+  onParentOrgChange(event: any): void {
+    // The selected ID is in the 'value' property of the event object
+    this.selectedParentOrg = event.value; 
+    console.log('Parent Organization ID selected:', this.selectedParentOrg);
+  }
 
   /**
    * Sets the data for the selected organization and opens the edit dialog.
    */
   editOrganization(orgToEdit: Organisation) {
-    
+
     this.selectedOrgForEdit = orgToEdit;
     this.displayEditDialog = true;
   }
-  
+
   /**
    * Listens for the 'updateComplete' event from the child edit component.
    */
@@ -166,7 +186,7 @@ isEditing: any;
       });
     }
   }
-  
+
   resetForm() {
     this.isGroup = false;
     this.selectedParentOrg = null;
@@ -192,5 +212,11 @@ isEditing: any;
     const day = dateObj.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
+  // This is the event handler for our new event
+  handleUpdateSuccess(): void {
+    this.displayEditDialog = false; // Close the dialog
+    this.loadOrganizations(); // Re-fetch the data to get the latest changes
+  }
+
 }
 
