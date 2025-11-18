@@ -1,6 +1,15 @@
-<div class="flex justify-content-center align-items-center min-h-screen login-bg">
-    <p-toast></p-toast>
-    <p-card class="glass-card w-full sm:w-10 md:w-6 lg:w-4 xl:w-3">
-        <router-outlet></router-outlet>
-    </p-card>
+<div class="auth-shell">
+  <p-toast></p-toast>
+  <div class="auth-card">
+    <div class="auth-pane auth-pane--form">
+      <span class="brand-pill">ThinkerScave</span>
+      <router-outlet></router-outlet>
+    </div>
+    <div class="auth-pane auth-pane--preview">
+      <div class="preview-hero">
+        <img src="assets/images/2.jpg" alt="Team collaboration illustration" />
+        <div class="preview-hero__overlay"></div>
+      </div>
+    </div>
+  </div>
 </div>

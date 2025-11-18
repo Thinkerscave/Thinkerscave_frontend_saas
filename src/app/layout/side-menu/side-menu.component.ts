@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { MenuItem } from 'primeng/api';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
@@ -12,6 +12,7 @@ import { BreadCrumbService } from '../../services/bread-crumb.service';
 })
 export class SideMenuComponent {
   items: MenuItem[] = [];
+  @Input() collapsed = false;
 
   constructor(private sideMenuService: MenuMappingService,
     private breadcrumbService: BreadCrumbService
