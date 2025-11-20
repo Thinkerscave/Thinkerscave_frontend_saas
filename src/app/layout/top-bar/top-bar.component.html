@@ -1,5 +1,14 @@
 <div class="topbar-container">
-  <div class="app-name">ThinkerScave</div>
+  <div class="topbar-left">
+    <button class="hamburger-btn" type="button" (click)="onToggleSidebar()"
+      [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      [class.is-active]="!isSidebarCollapsed">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="app-name">ThinkerScave</div>
+  </div>
 
   <div class="profile-wrapper" *ngIf="userName">
     <!-- Profile Button -->

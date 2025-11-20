@@ -1,75 +1,105 @@
-/* container tweaks */
-.menu-tree {
-  .p-tree-container {
-    padding: 0;
+.role-grid-wrapper {
+  width: 100%;
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.role-grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+
+  th,
+  td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    tr {
+      background: #f3f4f6;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      box-shadow: inset 0 -1px 0 #e5e7eb;
+    }
+  }
+
+  tbody {
+    background: #fff;
+  }
+
+  tbody tr {
+    background: #fff;
+  }
+
+  tbody tr:hover {
+    background: #fafafa;
   }
 }
 
-/* Menu label */
-.menu-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.menu-name {
   font-weight: 600;
-  font-size: 1.05rem;
-  margin-bottom: 8px;
+  color: #433878;
+  width: 18%;
 }
 
-.menu-icon {
-  font-size: 1.05rem;
-}
-
-/* Submenu block — keep the default tree spacing, then add privileges below */
-.submenu-block {
-  margin-bottom: 10px;
-}
-
-/* Align text of submenu with the tree content (checkbox area handled by p-tree) */
-.submenu-line {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-}
-
-.submenu-text {
+.submenu-name {
   font-weight: 500;
-  color: #333;
+  color: #1f2937;
+  width: 18%;
 }
 
-/* Privileges row: indent so it sits under the submenu label/checkbox area */
-.privileges-row {
-  margin-left: 2rem;   /* keeps it inline with submenu checkbox */
-  margin-top: 4px;
+.privilege-pills {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
-
-/* Individual privilege chip (looks like small badge with checkbox + label) */
-.privilege-chip {
+.privilege-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: #f5f7fb;     /* subtle bg */
-  border: 1px solid #e8eef8;
-  font-size: 0.875rem;
-  color: #334155;
+  gap: 0.4rem;
+  background: #f4f0ff;
+  border: 1px solid #e0d7ff;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  color: #4c1d95;
 }
 
-/* smaller label spacing */
-.priv-label {
-  margin: 0;
-  line-height: 1;
-  font-size: 0.875rem;
+.text-center {
+  text-align: center;
 }
 
-/* small responsive tweak to reduce margin on narrow screens */
-@media (max-width: 640px) {
-  .privileges-row {
-    margin-left: 1.6rem;
+@media (max-width: 768px) {
+  .role-grid {
+    min-width: 560px;
+
+    th,
+    td {
+      padding: 0.75rem;
+    }
   }
-  .privilege-chip { padding: 5px 6px; font-size: 0.82rem; }
+
+  .privilege-pill {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
 }

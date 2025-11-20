@@ -1,17 +1,27 @@
 import { Component } from '@angular/core';
-import { MenuService } from '../../services/menu.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TreeNode, MessageService } from 'primeng/api';
-import { TreeModule } from 'primeng/tree';
+import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { PRIMENG_STANDALONE_IMPORTS } from '../../../shared/primeng';
 import { RoleMenuMappingService } from '../../services/role-menu-mapping.service';
 import { RoleService } from '../../services/role.service';
+import { CheckboxModule } from 'primeng/checkbox';
+
+type MenuGridRow = {
+  menuId: number;
+  menuName: string;
+  subMenuId: number;
+  subMenuName: string;
+  privileges: {
+    privilegeId: number;
+    privilegeName: string;
+  }[];
+};
 
 @Component({
   selector: 'app-role-menu-mapping',
-  imports: [...PRIMENG_STANDALONE_IMPORTS, TreeModule, ToastModule, FormsModule, CommonModule],
+  imports: [...PRIMENG_STANDALONE_IMPORTS, ToastModule, FormsModule, CommonModule, CheckboxModule],
   providers: [MessageService],
   templateUrl: './role-menu-mapping.component.html',
   styleUrl: './role-menu-mapping.component.scss'
@@ -20,8 +30,8 @@ export class RoleMenuMappingComponent {
   roles: any[] = [];
   selectedRole: any = null;
 
-  menuTree: TreeNode[] = [];
-  selectedNodes: TreeNode[] = [];
+  menuGridRows: MenuGridRow[] = [];
+  selectedPrivileges = new Map<number, Set<number>>();
 
   constructor(
     private roleMenuMappingService: RoleMenuMappingService,
@@ -32,25 +42,19 @@ export class RoleMenuMappingComponent {
   ngOnInit() {
     this.loadRoles();
     this.roleMenuMappingService.getActiveMenuTree().subscribe((data: any[]) => {
-      this.menuTree = data.map(menu => ({
-        key: 'menu-' + menu.menuId,
-        label: menu.menuName,
-        selectable: true,
-        expanded: true,
-        children: menu.subMenus.map((sub: any) => ({
-          key: 'submenu-' + sub.subMenuId,
-          label: sub.subMenuName,
-          data: { url: sub.subMenuUrl },
-          selectable: true,
-          children: sub.privileges.map((p: any) => ({
-            // 🔑 unique key: submenu + privilege
-            key: `privilege-${sub.subMenuId}-${p.privilegeId}`,
-            label: p.privilegeName,
-            selectable: true,
-            data: { privilegeId: p.privilegeId, subMenuId: sub.subMenuId }
+      this.menuGridRows = data.flatMap(menu =>
+        menu.subMenus.map((sub: any) => ({
+          menuId: menu.menuId,
+          menuName: menu.menuName,
+          subMenuId: sub.subMenuId,
+          subMenuName: sub.subMenuName,
+          privileges: sub.privileges.map((p: any) => ({
+            privilegeId: p.privilegeId,
+            privilegeName: p.privilegeName
           }))
         }))
-      }));
+      );
+      this.selectedPrivileges.clear();
     });
   }
 
@@ -69,35 +73,12 @@ export class RoleMenuMappingComponent {
       return;
     }
 
-    const subMenuPrivileges: { subMenuId: number, privilegeIds: number[] }[] = [];
-
-    // Collect selected submenus & privileges
-    this.selectedNodes.forEach(node => {
-      if (node.key?.startsWith("submenu-")) {
-        const subMenuId = +node.key.replace("submenu-", "");
-        const privilegeIds: number[] = [];
-
-        node.children?.forEach(child => {
-          if (child.key?.startsWith("privilege-")) {
-            privilegeIds.push(child.data.privilegeId);
-          }
-        });
-
-        subMenuPrivileges.push({ subMenuId, privilegeIds });
-      }
-
-      if (node.key?.startsWith("privilege-")) {
-        const { subMenuId, privilegeId } = node.data;
-        let existing = subMenuPrivileges.find(s => s.subMenuId === subMenuId);
-        if (!existing) {
-          existing = { subMenuId, privilegeIds: [] };
-          subMenuPrivileges.push(existing);
-        }
-        if (!existing.privilegeIds.includes(privilegeId)) {
-          existing.privilegeIds.push(privilegeId);
-        }
-      }
-    });
+    const subMenuPrivileges = Array.from(this.selectedPrivileges.entries())
+      .map(([subMenuId, privilegeIds]) => ({
+        subMenuId,
+        privilegeIds: Array.from(privilegeIds)
+      }))
+      .filter(entry => entry.privilegeIds.length > 0);
 
     const payload = {
       roleId: this.selectedRole,
@@ -112,5 +93,61 @@ export class RoleMenuMappingComponent {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error while assigning privileges' });
       }
     });
+  }
+
+  isPrivilegeSelected(subMenuId: number, privilegeId: number): boolean {
+    return this.selectedPrivileges.get(subMenuId)?.has(privilegeId) ?? false;
+  }
+
+  togglePrivilege(subMenuId: number, privilegeId: number, checked: boolean): void {
+    const set = this.ensurePrivilegeSet(subMenuId);
+    if (checked) {
+      set.add(privilegeId);
+    } else {
+      set.delete(privilegeId);
+      if (set.size === 0) {
+        this.selectedPrivileges.delete(subMenuId);
+      }
+    }
+  }
+
+  toggleSubMenu(row: MenuGridRow, checked: boolean): void {
+    if (!row.privileges.length) {
+      return;
+    }
+
+    const set = this.ensurePrivilegeSet(row.subMenuId);
+    if (checked) {
+      row.privileges.forEach(priv => set.add(priv.privilegeId));
+    } else {
+      row.privileges.forEach(priv => set.delete(priv.privilegeId));
+      if (set.size === 0) {
+        this.selectedPrivileges.delete(row.subMenuId);
+      }
+    }
+  }
+
+  isSubMenuFullySelected(row: MenuGridRow): boolean {
+    const set = this.selectedPrivileges.get(row.subMenuId);
+    if (!set || !row.privileges.length) {
+      return false;
+    }
+    return row.privileges.every(priv => set.has(priv.privilegeId));
+  }
+
+  isSubMenuPartiallySelected(row: MenuGridRow): boolean {
+    const set = this.selectedPrivileges.get(row.subMenuId);
+    if (!set || !row.privileges.length) {
+      return false;
+    }
+    const selectedCount = row.privileges.filter(priv => set.has(priv.privilegeId)).length;
+    return selectedCount > 0 && selectedCount < row.privileges.length;
+  }
+
+  private ensurePrivilegeSet(subMenuId: number): Set<number> {
+    if (!this.selectedPrivileges.has(subMenuId)) {
+      this.selectedPrivileges.set(subMenuId, new Set<number>());
+    }
+    return this.selectedPrivileges.get(subMenuId)!;
   }
 }

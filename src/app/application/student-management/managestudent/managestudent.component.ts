@@ -58,6 +58,7 @@ export class ManagestudentComponent {
 
   documents: DocumentData[] = [];
   profilePicture: File | null = null;
+  lastSavedAt: Date | null = null;
 
   countries: string[] = [];
   states: any[] = [];
@@ -283,6 +284,13 @@ alert(isSame)
         alert('Please select a valid image file (e.g., .jpg, .png)');
       }
     }
+  }
+
+  onSaveDraft(): void {
+    const draft = this.form.getRawValue();
+    console.log('Draft payload:', draft);
+    this.lastSavedAt = new Date();
+    alert('Draft saved locally.');
   }
 
   // Collect data and send to backend

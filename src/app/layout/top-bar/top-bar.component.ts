@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { LoginService } from '../../services/login.service';
@@ -15,6 +15,8 @@ import { CommonModule } from '@angular/common';
 export class TopBarComponent {
   userName: string = '';
   profileItems: MenuItem[] = [];
+  @Input() isSidebarCollapsed = false;
+  @Output() toggleSidebar = new EventEmitter<void>();
 
   constructor(
     private loginService: LoginService,
@@ -57,6 +59,10 @@ export class TopBarComponent {
     } else {
       return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
     }
+  }
+
+  onToggleSidebar(): void {
+    this.toggleSidebar.emit();
   }
 
   logout() {
