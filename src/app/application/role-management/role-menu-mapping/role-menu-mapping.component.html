@@ -10,25 +10,51 @@
     </div>
   </div>
 
-  <!-- Menu Tree -->
-  <p-tree 
-    [value]="menuTree" 
-    selectionMode="checkbox" 
-    [(selection)]="selectedNodes"
-    [propagateSelectionUp]="true"
-    [propagateSelectionDown]="true"
-    class="w-full mt-3 surface-50 border-round-lg p-3">
+<!-- Menu Grid -->
+<div class="role-grid-wrapper mt-3" *ngIf="menuGridRows.length; else noData">
+  <table class="role-grid">
+    <thead>
+      <tr>
+        <th>Menu</th>
+        <th>Sub-Menu</th>
+        <th class="text-center">All Privileges</th>
+        <th>Individual Privileges</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of menuGridRows">
+        <td class="menu-name">{{ row.menuName }}</td>
+        <td class="submenu-name">{{ row.subMenuName }}</td>
+        <td class="text-center">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="isSubMenuFullySelected(row)"
+            [indeterminate]="isSubMenuPartiallySelected(row)"
+            (onChange)="toggleSubMenu(row, $event.checked)">
+          </p-checkbox>
+        </td>
+        <td>
+          <div class="privilege-pills">
+            <label class="privilege-pill" *ngFor="let privilege of row.privileges">
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="isPrivilegeSelected(row.subMenuId, privilege.privilegeId)"
+                (onChange)="togglePrivilege(row.subMenuId, privilege.privilegeId, $event.checked)">
+              </p-checkbox>
+              <span>{{ privilege.privilegeName }}</span>
+            </label>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-    <ng-template let-node pTemplate="default">
-      <span [ngClass]="{
-        'font-bold text-base': node.key.startsWith('menu-'),
-        'ml-2 font-medium text-gray-800': node.key.startsWith('submenu-'),
-        'text-sm text-purple-600 ml-4': node.key.startsWith('privilege-')
-      }">
-        {{ node.label }}
-      </span>
-    </ng-template>
-  </p-tree>
+<ng-template #noData>
+  <div class="surface-100 border-round-lg p-4 text-center text-500">
+    No menu definitions available.
+  </div>
+</ng-template>
 
   <!-- Actions -->
   <div class="flex justify-content-end gap-3 mt-4">

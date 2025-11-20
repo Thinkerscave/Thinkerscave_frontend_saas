@@ -1,302 +1,370 @@
-<form [formGroup]="form">
-    <p-tabs value="0">
+<form [formGroup]="form" class="manage-student-view">
+    <!-- <div class="page-header">
+        <div>
+            <p class="eyebrow">Admissions · 2024/25</p>
+            <h2>Student Onboarding Workspace</h2>
+            <p class="lead">Review every section below to capture a complete student profile before saving.</p>
+        </div>
+        <div class="header-summary">
+            <div>
+                <span class="label">Draft status</span>
+                <strong>{{ form.dirty ? 'In progress' : 'Not started' }}</strong>
+            </div>
+            <div>
+                <span class="label">Last updated</span>
+                <strong>{{ lastSavedAt ? (lastSavedAt | date: 'medium') : '—' }}</strong>
+            </div>
+        </div>
+    </div> -->
+
+    <p-tabs value="0" class="manage-student-tabs">
         <p-tablist>
-            <p-tab value="0" header="Add" headerStyleClass="custom-tab"><i class="pi pi-plus"></i>Add</p-tab>
-            <p-tab value="1"><i class="pi pi-search"></i>View</p-tab>
+            <p-tab value="0" header="Add" headerStyleClass="custom-tab">
+                <i class="pi pi-plus"></i>
+                <span>Add New Student</span>
+            </p-tab>
+            <p-tab value="1">
+                <i class="pi pi-search"></i>
+                <span>View Records</span>
+            </p-tab>
         </p-tablist>
+
         <p-tabpanels>
             <p-tabpanel value="0">
-                <p-accordion [activeIndex]="activeAccordionIndexes" (activeIndexChange)="onAccordionChange($event)"
-                    [multiple]="true">
+                <div class="layout-shell">
+                    <p-accordion [activeIndex]="activeAccordionIndexes" [multiple]="true"
+                        (activeIndexChange)="onAccordionChange($event)">
 
-                    <!-- Basic Information -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-user"></i>&nbsp; Basic Information</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <div class="form-container">
-                                <div class="form-field">
-                                    <label for="first-name">Student First Name</label>
-                                    <input id="first-name" type="text" pInputText formControlName="firstName" />
+                        <!-- Basic Information -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-primary">
+                                        <i class="pi pi-user"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Basic Information</h3>
+                                        <p>Personal identifiers, contact information and enrollment metadata.</p>
+                                    </div>
                                 </div>
-                                <div class="form-field">
-                                    <label for="middle-name">Middle Name</label>
-                                    <input id="middle-name" type="text" pInputText formControlName="middleName" />
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="section-grid two-col">
+                                    <div class="form-field">
+                                        <label for="first-name">Student First Name</label>
+                                        <input id="first-name" type="text" pInputText formControlName="firstName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="middle-name">Middle Name</label>
+                                        <input id="middle-name" type="text" pInputText formControlName="middleName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="last-name">Last Name</label>
+                                        <input id="last-name" type="text" pInputText formControlName="lastName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="gender">Gender</label>
+                                        <select id="gender" formControlName="gender">
+                                            <option value="" disabled>Select Gender</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="dob">DOB</label>
+                                        <input id="dob" type="date" formControlName="dateOfBirth" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="enrollmentDate">Enrollment Date</label>
+                                        <input id="enrollmentDate" type="date" formControlName="enrollmentDate" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="email">Email</label>
+                                        <input id="email" type="email" pInputText formControlName="email" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="phone-number">Phone Number</label>
+                                        <input id="phone-number" type="text" pInputText formControlName="mobileNumber" />
+                                    </div>
+                                    <div class="form-field span-two">
+                                        <label for="photo">Upload Photo</label>
+                                        <input type="file" id="photo" (change)="onProfileSelected($event)" />
+                                        <small class="hint">PNG or JPG, max 3MB</small>
+                                    </div>
                                 </div>
-                                <div class="form-field">
-                                    <label for="last-name">Last Name</label>
-                                    <input id="last-name" type="text" pInputText formControlName="lastName" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="gender">Gender</label>
-                                    <select id="gender" formControlName="gender">
-                                        <option value="" disabled>Select Gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-field">
-                                    <label for="dob">DOB</label>
-                                    <input id="dob" type="date" formControlName="dateOfBirth" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="enrollementDate">Enrollment Date</label>
-                                    <input id="dob" type="date" formControlName="enrollmentDate" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="email">Email</label>
-                                    <input id="email" type="email" pInputText formControlName="email" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="phone-number">Phone Number</label>
-                                    <input id="phone-number" type="text" pInputText formControlName="mobileNumber" />
-                                </div>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-                                <div class="form-field">
-                                    <label for="photo">Upload Photo</label>
-                                    <input type="file" id="photo" (change)="onProfileSelected($event)" />
+                        <!-- Parent Information -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-secondary">
+                                        <i class="pi pi-users"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Parent & Guardian</h3>
+                                        <p>Capture guardian contact and relationship details.</p>
+                                    </div>
                                 </div>
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="section-grid two-col">
+                                    <div class="form-field">
+                                        <label for="guardianFirstName">Parent First Name</label>
+                                        <input id="guardianFirstName" type="text" pInputText
+                                            formControlName="guardianFirstName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="guardianMiddleName">Parent Middle Name</label>
+                                        <input id="guardianMiddleName" type="text" pInputText
+                                            formControlName="guardianMiddleName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="guardianLastName">Parent Last Name</label>
+                                        <input id="guardianLastName" type="text" pInputText
+                                            formControlName="guardianLastName" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="relation">Relation</label>
+                                        <select id="relation" formControlName="guardianRelation">
+                                            <option value="" disabled>Select</option>
+                                            <option value="father">Father</option>
+                                            <option value="mother">Mother</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="parent-mobile">Mobile No</label>
+                                        <input type="text" id="parent-mobile" pInputText
+                                            formControlName="guardianPhoneNumber" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="parent-email">Email (optional)</label>
+                                        <input type="email" id="parent-email" pInputText
+                                            formControlName="guardianEmail" />
+                                    </div>
+                                    <div class="form-field span-two">
+                                        <label for="guardianAddress">Address</label>
+                                        <textarea id="guardianAddress" pInputTextarea formControlName="guardianAddress"
+                                            rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-                            </div>
-                        </p-accordion-content>
-                    </p-accordion-panel>
+                        <!-- Present Address -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-teal">
+                                        <i class="pi pi-map-marker"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Present Address</h3>
+                                        <p>Location details for current residence.</p>
+                                    </div>
+                                </div>
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="section-grid two-col">
+                                    <div class="form-field span-two">
+                                        <label for="currentAddressLine">Address</label>
+                                        <textarea id="currentAddressLine" pInputTextarea
+                                            formControlName="currentAddressLine" rows="3"></textarea>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="currentCountry">Country</label>
+                                        <select id="currentCountry" formControlName="currentCountry"
+                                            (change)="onCountryChange('current')">
+                                            <option value="">Select Country</option>
+                                            <option *ngFor="let country of currentcountries" [ngValue]="country">{{
+                                                country }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="currentState">State</label>
+                                        <select id="currentState" class="p-inputtext" formControlName="currentState"
+                                            (change)="onStateChange('current')">
+                                            <option value="" disabled>Select State</option>
+                                            <option *ngFor="let state of currentStates" [value]="state.name">{{
+                                                state.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="currentCity">City</label>
+                                        <select id="currentCity" class="p-inputtext" formControlName="currentCity">
+                                            <option value="" disabled>Select City</option>
+                                            <option *ngFor="let city of currentCities" [value]="city">{{ city }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="currentZipCode">Zip Code</label>
+                                        <input type="text" id="currentZipCode" pInputText
+                                            formControlName="currentZipCode" />
+                                    </div>
+                                </div>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-                    <!-- Parent Information -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-users"></i>&nbsp; Parent Information</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <div class=" form-container">
-                                <div class="form-field">
-                                    <label for="parent-name">Parent First Name</label>
-                                    <input type="text" id="parent-name" pInputText
-                                        formControlName="guardianFirstName" />
+                        <!-- Same address toggle -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-gold">
+                                        <i class="pi pi-copy"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Address Sync</h3>
+                                        <p>Mirror current address into permanent details automatically.</p>
+                                    </div>
                                 </div>
-                                <div class="form-field">
-                                    <label for="parent-name">Parent Middle Name</label>
-                                    <input type="text" id="parent-name" pInputText
-                                        formControlName="guardianMiddleName" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="parent-name">Parent Last Name</label>
-                                    <input type="text" id="parent-name" pInputText formControlName="guardianLastName" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="relation">Relation</label>
-                                    <select id="relation" formControlName="guardianRelation">
-                                        <option value="" disabled>Select</option>
-                                        <option value="father">Father</option>
-                                        <option value="mother">Mother</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-field">
-                                    <label for="parent-mobile">Mobile No</label>
-                                    <input type="text" id="parent-mobile" pInputText
-                                        formControlName="guardianPhoneNumber" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="parent-email">Email (optional)</label>
-                                    <input type="email" id="parent-email" pInputText formControlName="guardianEmail" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="address">Address</label>
-                                    <textarea id="guardianAddress" pInputTextarea formControlName="guardianAddress"
-                                        rows="3"></textarea>
-                                </div>
-                            </div>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-
-
-                    <!-- Present Address -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-map-marker"></i>&nbsp;Present Address</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <div class="form-container">
-                                <div class="form-field">
-                                    <label for="currentAddressLine">Address</label>
-
-                                    <textarea id="currentAddressLine" pInputTextarea
-                                        formControlName="currentAddressLine" rows="3"></textarea>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="currentCountry">Country</label>
-                                    <select id="currentCountry" formControlName="currentCountry"
-                                        (change)="onCountryChange('current')">
-                                        <option value="">Select Country</option>
-                                        <option *ngFor="let country of currentcountries" [ngValue]="country">{{ country
-                                            }}</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="currentState">State</label>
-                                    <select id="currentState" class="p-inputtext" formControlName="currentState"
-                                        (change)="onStateChange('current')">
-                                        <option value="" disabled>Select State</option>
-                                        <option *ngFor="let state of currentStates" [value]="state.name">{{ state.name
-                                            }}</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="currentCity">City</label>
-                                    <select id="currentCity" class="p-inputtext" formControlName="currentCity">
-                                        <option value="" disabled>Select City</option>
-                                        <option *ngFor="let city of currentCities" [value]="city">{{ city }}</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="currentZipCode">Zip Code</label>
-                                    <input type="text" id="currentZipCode" pInputText
-                                        formControlName="currentZipCode" />
-                                </div>
-                            </div>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-copy"></i>&nbsp; IS SAME Address</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <p-card>
-                                <div class="p-field-checkbox">
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="toggle-card">
                                     <p-checkbox formControlName="isSameAddress" binary="true" inputId="isSameAddress"
                                         (onChange)="onSameAddressToggle()"></p-checkbox>
-                                    <label for="isSameAddress" class="p-checkbox-label">&nbsp; Same as Current
-                                        Address</label>
+                                    <label for="isSameAddress">Same as Current Address</label>
                                 </div>
-                            </p-card>
-                        </p-accordion-content></p-accordion-panel>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-
-                    <!-- Permanent Address -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-home"></i>&nbsp; Permanent Address</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <div class="form-container">
-                                <div class="form-field">
-                                    <label for="permanentAddressLine">Address</label>
-
-                                    <textarea id="permanentAddressLine" pInputTextarea
-                                        formControlName="permanentAddressLine" rows="3"></textarea>
+                        <!-- Permanent Address -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-blue">
+                                        <i class="pi pi-home"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Permanent Address</h3>
+                                        <p>Fallback residence information for correspondence.</p>
+                                    </div>
                                 </div>
-
-                                <div class="form-field">
-                                    <label for="permanentCountry">Country</label>
-                                    <select id="permanentCountry" formControlName="permanentCountry"
-                                        (change)="onCountryChange('permanent')">
-                                        <option value="">Select Country</option>
-                                        <option *ngFor="let country of permanentcountries" [ngValue]="country">{{
-                                            country}}</option>
-                                    </select>
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="section-grid two-col">
+                                    <div class="form-field span-two">
+                                        <label for="permanentAddressLine">Address</label>
+                                        <textarea id="permanentAddressLine" pInputTextarea
+                                            formControlName="permanentAddressLine" rows="3"></textarea>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="permanentCountry">Country</label>
+                                        <select id="permanentCountry" formControlName="permanentCountry"
+                                            (change)="onCountryChange('permanent')">
+                                            <option value="">Select Country</option>
+                                            <option *ngFor="let country of permanentcountries" [ngValue]="country">{{
+                                                country }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="permanentState">State</label>
+                                        <select id="permanentState" class="p-inputtext" formControlName="permanentState"
+                                            (change)="onStateChange('permanent')">
+                                            <option value="" disabled>Select State</option>
+                                            <option *ngFor="let state of permanentStates" [value]="state.name">{{
+                                                state.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="permanentCity">City</label>
+                                        <select id="permanentCity" class="p-inputtext" formControlName="permanentCity">
+                                            <option value="" disabled>Select City</option>
+                                            <option *ngFor="let city of permanentCities" [value]="city">{{ city }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="permanentZipCode">Zip Code</label>
+                                        <input type="text" id="permanentZipCode" pInputText
+                                            formControlName="permanentZipCode" />
+                                    </div>
                                 </div>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-                                <div class="form-field">
-                                    <label for="permanentState">State</label>
-                                    <select id="permanentState" class="p-inputtext" formControlName="permanentState"
-                                        (change)="onStateChange('permanent')">
-                                        <option value="" disabled>Select State</option>
-                                        <option *ngFor="let state of permanentStates" [value]="state.name">{{ state.name
-                                            }}</option>
-                                    </select>
+                        <!-- School Information -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-purple">
+                                        <i class="pi pi-book"></i>
+                                    </span>
+                                    <div>
+                                        <h3>School Information</h3>
+                                        <p>Academic placement, roll number and internal notes.</p>
+                                    </div>
                                 </div>
-
-                                <div class="form-field">
-                                    <label for="permanentCity">City</label>
-                                    <select id="permanentCity" class="p-inputtext" formControlName="permanentCity">
-                                        <option value="" disabled>Select City</option>
-                                        <option *ngFor="let city of permanentCities" [value]="city">{{ city }}</option>
-                                    </select>
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <div class="section-grid two-col">
+                                    <div class="form-field">
+                                        <label for="class">Class</label>
+                                        <select id="class" formControlName="classId" (change)="onClassChange()">
+                                            <option value="">Select Class</option>
+                                            <option *ngFor="let cls of classes" [value]="cls.classId">{{
+                                                cls.className }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="section">Section</label>
+                                        <select id="section" formControlName="sectionId">
+                                            <option value="">Select Section</option>
+                                            <option *ngFor="let sec of sections" [value]="sec.sectionId">{{ sec.sectionName
+                                                }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="roll-number">Roll Number</label>
+                                        <input id="roll-number" type="text" pInputText formControlName="rollNumber" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="remarks">Remarks</label>
+                                        <input id="remarks" type="text" pInputText formControlName="remarks" />
+                                    </div>
                                 </div>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
-                                <div class="form-field">
-                                    <label for="permanentZipCode">Zip Code</label>
-                                    <input type="text" id="permanentZipCode" pInputText
-                                        formControlName="permanentZipCode" />
+                        <!-- Document Information -->
+                        <p-accordion-panel>
+                            <p-accordion-header>
+                                <div class="section-title">
+                                    <span class="icon-wrapper gradient-slate">
+                                        <i class="pi pi-file"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Document Information</h3>
+                                        <p>Upload birth certificate, transfer certificate and other attachments.</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </p-accordion-content>
-                    </p-accordion-panel>
+                            </p-accordion-header>
+                            <p-accordion-content>
+                                <app-file-uploader (documentsReady)="onDocumentsReady($event)"></app-file-uploader>
+                            </p-accordion-content>
+                        </p-accordion-panel>
 
+                    </p-accordion>
+                </div>
 
-
-
-                    <!-- School Information -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-book"></i>&nbsp; School Information</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <div class="form-row">
-                                <div class="form-field">
-                                    <label for="class">Class</label>
-                                    <select id="class" formControlName="classId" (change)="onClassChange()">
-                                        <option value="">Select Class</option>
-                                        <option *ngFor="let cls of classes" [value]="cls.classId">{{ cls.className }}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="section">Section</label>
-                                    <select id="section" formControlName="sectionId">
-                                        <!-- [disabled]="sections.length === 0" -->
-                                        <option value="">Select Section</option>
-                                        <option *ngFor="let sec of sections" [value]="sec.sectionId">{{ sec.sectionName
-                                            }}</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-field">
-                                    <label for="roll-number">Roll Number</label>
-                                    <input id="roll-number" type="text" pInputText formControlName="rollNumber" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="remarks">Remarks</label>
-                                    <input id="remarks" type="text" pInputText formControlName="remarks" />
-                                </div>
-                            </div>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-                    <!-- Document Information -->
-                    <p-accordion-panel>
-                        <p-accordion-header>
-                            <h3><i class="pi pi-file"></i>&nbsp; Document Information</h3>
-                        </p-accordion-header>
-                        <p-accordion-content>
-                            <app-file-uploader (documentsReady)="onDocumentsReady($event)">
-                            </app-file-uploader>
-
-
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-                </p-accordion>
-
-                <!-- Submit Buttons -->
-                <div class="form-actions" style="margin-top: 20px;">
-                    <button pButton type="button" label="Submit" class="p-button-success" (click)="onSubmit()"></button>
+                <div class="form-actions">
+                    <button pButton type="button" label="Save Draft" class="p-button-outlined"
+                        (click)="onSaveDraft()"></button>
+                    <button pButton type="button" label="Submit" class="p-button-success"
+                        (click)="onSubmit()"></button>
                     <button pButton type="reset" label="Reset" class="p-button-secondary"></button>
                 </div>
             </p-tabpanel>
 
-            <!-- View Tab -->
             <p-tabpanel value="1">
-                <app-view-students></app-view-students>
+                <div class="view-panel">
+                    <!-- <h3>Student Directory</h3>
+                    <p>Search and manage previously registered students.</p> -->
+                    <app-view-students></app-view-students>
+                </div>
             </p-tabpanel>
         </p-tabpanels>
     </p-tabs>
