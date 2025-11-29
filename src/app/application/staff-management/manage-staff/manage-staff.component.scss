@@ -6,32 +6,140 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.section-header {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 0.5rem;
-    color: var(--primary-color); // Uses PrimeNG theme color
-}
-
-// Add some space below each form field
-.field {
+.staff-form-card {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem; // This adds the space between the label and the input. Adjust value as needed.
-    margin-bottom: 1rem; // This keeps the space between the different form fields.
+    gap: 1.5rem;
 }
 
-// Style for validation error messages
+.form-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, #eef2ff, #f5faff);
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    color: #818cf8;
+    margin: 0;
+}
+
+.form-hero h3 {
+    margin: 0.35rem 0;
+    color: #111827;
+}
+
+.form-hero p {
+    margin: 0;
+    color: #475569;
+}
+
+.form-meta {
+    min-width: 140px;
+    border: 1px solid #c7d2fe;
+    background: #eef2ff;
+    padding: 0.8rem 1rem;
+    border-radius: 1rem;
+    text-align: center;
+
+    .label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6366f1;
+    }
+
+    strong {
+        display: block;
+        font-size: 1.8rem;
+        color: #111827;
+    }
+}
+
+.staff-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    background: #fff;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 1.25rem;
+
+        h4 {
+            margin: 0;
+            color: #0f172a;
+        }
+
+        span {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    label {
+        font-weight: 600;
+        color: #0f172a;
+    }
+}
+
+.form-field input,
+.form-field textarea,
+.form-field :where(p-dropdown) {
+    width: 100%;
+}
+
+.span-two {
+    grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+    .span-two {
+        grid-column: span 1;
+    }
+
+    .form-hero {
+        flex-direction: column;
+    }
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
 .p-error {
     display: block;
     color:rosybrown;
     margin-top: 0.25rem;
     font-size: 0.875rem;
-}
-
-// Ensure the first section header has no top margin
-.section-header:first-of-type {
-    margin-top: 0;
 }

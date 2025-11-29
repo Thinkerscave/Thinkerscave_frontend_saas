@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
@@ -24,7 +24,7 @@ export interface Student {
 })
 export class ViewStudentsComponent {
   students: Student[] = [];
-
+  @Output() editRequested = new EventEmitter<Student>();
   constructor() { }
 
   // 3. Populate the array with dummy data when the component initializes.
@@ -46,7 +46,7 @@ export class ViewStudentsComponent {
   // 4. Define placeholder methods for button actions.
   editStudent(student: Student) {
     console.log('Editing student:', student.studentName);
-    // In a real app, you would navigate to an edit form or open a modal.
+    this.editRequested.emit(student);
   }
 
   deleteStudent(student: Student) {

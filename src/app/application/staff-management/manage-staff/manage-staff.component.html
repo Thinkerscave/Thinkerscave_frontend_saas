@@ -1,162 +1,262 @@
-<p-tabs value="0">
+<p-tabs [(value)]="activeTab">
     <p-tablist>
         <p-tab value="0">Add</p-tab>
         <p-tab value="1">View</p-tab>
     </p-tablist>
     <p-tabpanels>
         <p-tabpanel value="0">
-            <div class="card">
-                <form [formGroup]="staffForm" (ngSubmit)="onSubmit()">
-                    <div class="p-fluid p-formgrid grid">
+            <div class="card staff-form-card">
+                <div class="form-hero">
+                    <div>
+                        <p class="eyebrow">People Operations</p>
+                        <h3>Register a Staff Member</h3>
+                        <p>Capture personal, employment, and statutory details in one pass.</p>
+                    </div>
+                    <div class="form-meta">
+                        <span class="label">Active staff</span>
+                        <strong>{{ staffList.length }}</strong>
+                    </div>
+                </div>
 
-                        <div class="col-12">
-                            <h5 class="section-header">Personal Information</h5>
+                <form [formGroup]="staffForm" (ngSubmit)="onSubmit()" class="staff-form-grid">
+                    <section class="form-section">
+                        <header>
+                            <h4>Personal Information</h4>
+                            <span>Identity and contact</span>
+                        </header>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="fullName">Full Name</label>
+                                <input pInputText id="fullName" type="text" formControlName="fullName" />
+                                <small class="p-error"
+                                    *ngIf="f['fullName'].touched && f['fullName'].errors?.['required']">
+                                    Full Name is required.
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="dob">Date of Birth</label>
+                                <p-calendar id="dob" dateFormat="dd/mm/yy" [showIcon]="true"
+                                    formControlName="dob"></p-calendar>
+                                <small class="p-error" *ngIf="f['dob'].touched && f['dob'].errors?.['required']">
+                                    Date of Birth is required.
+                                </small>
+                            </div>
                         </div>
 
-                        <div class="field col-12 md:col-6">
-                            <label for="fullName">Full Name</label>
-                            <input pInputText id="fullName" type="text" formControlName="fullName" />
-                            <small class="p-error" *ngIf="f['fullName'].touched && f['fullName'].errors?.['required']">
-                                Full Name is required.
-                            </small>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="gender">Gender</label>
+                                <p-dropdown id="gender" [options]="genderOptions" placeholder="Select a Gender"
+                                    formControlName="gender"></p-dropdown>
+                                <small class="p-error"
+                                    *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
+                                    Gender is required.
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="mobileNumber">Mobile Number</label>
+                                <p-inputMask id="mobileNumber" mask="(+91) 99999-99999"
+                                    formControlName="mobileNumber"></p-inputMask>
+                                <small class="p-error"
+                                    *ngIf="f['mobileNumber'].touched && f['mobileNumber'].errors?.['required']">
+                                    Mobile number is required.
+                                </small>
+                            </div>
                         </div>
 
-                        <div class="field col-12 md:col-6">
-                            <label for="dob">Date of Birth</label>
-                            <p-calendar id="dob" dateFormat="dd/mm/yy" [showIcon]="true"
-                                formControlName="dob"></p-calendar>
-                            <small class="p-error" *ngIf="f['dob'].touched && f['dob'].errors?.['required']">
-                                Date of Birth is required.
-                            </small>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="email">Personal Email</label>
+                                <input pInputText id="email" type="email" formControlName="email" />
+                                <small class="p-error" *ngIf="f['email'].touched && f['email'].errors?.['required']">
+                                    Email is required.
+                                </small>
+                                <small class="p-error" *ngIf="f['email'].errors?.['email']">
+                                    Please enter a valid email address.
+                                </small>
+                            </div>
                         </div>
 
-                        <div class="field col-12 md:col-6">
-                            <label for="gender">Gender</label>
-                            <p-dropdown id="gender" [options]="genderOptions" placeholder="Select a Gender"
-                                formControlName="gender"></p-dropdown>
-                            <small class="p-error" *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
-                                Gender is required.
-                            </small>
+                        <div class="form-row">
+                            <div class="form-field span-two">
+                                <label for="currentAddress">Current Address</label>
+                                <textarea id="currentAddress" pInputTextarea rows="3"
+                                    formControlName="currentAddress"></textarea>
+                                <small class="p-error"
+                                    *ngIf="f['currentAddress'].touched && f['currentAddress'].errors?.['required']">
+                                    Address is required.
+                                </small>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <header>
+                            <h4>Employment Details</h4>
+                            <span>Role, department, and IDs</span>
+                        </header>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="employeeId">Employee ID</label>
+                                <input pInputText id="employeeId" type="text" formControlName="employeeId" />
+                                <small class="p-error"
+                                    *ngIf="f['employeeId'].touched && f['employeeId'].errors?.['required']">
+                                    Employee ID is required.
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="doj">Date of Joining</label>
+                                <p-calendar id="doj" dateFormat="dd/mm/yy" [showIcon]="true"
+                                    formControlName="dateOfJoining"></p-calendar>
+                                <small class="p-error"
+                                    *ngIf="f['dateOfJoining'].touched && f['dateOfJoining'].errors?.['required']">
+                                    Date of Joining is required.
+                                </small>
+                            </div>
                         </div>
 
-                        <div class="field col-12 md:col-6">
-                            <label for="mobileNumber">Mobile Number</label>
-                            <p-inputMask id="mobileNumber" mask="(+91) 99999-99999"
-                                formControlName="mobileNumber"></p-inputMask>
-                            <small class="p-error"
-                                *ngIf="f['mobileNumber'].touched && f['mobileNumber'].errors?.['required']">
-                                Mobile number is required.
-                            </small>
-                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="jobTitle">Job Title / Designation</label>
+                                <input pInputText id="jobTitle" type="text" formControlName="jobTitle" />
+                                <small class="p-error"
+                                    *ngIf="f['jobTitle'].touched && f['jobTitle'].errors?.['required']">
+                                    Job Title is required.
+                                </small>
+                            </div>
 
-                        <div class="field col-12">
-                            <label for="email">Personal Email</label>
-                            <input pInputText id="email" type="email" formControlName="email" />
-                            <small class="p-error" *ngIf="f['email'].touched && f['email'].errors?.['required']">
-                                Email is required.
-                            </small>
-                            <small class="p-error" *ngIf="f['email'].errors?.['email']">
-                                Please enter a valid email address.
-                            </small>
+                            <div class="form-field">
+                                <label for="department">Department</label>
+                                <p-dropdown id="department" [options]="departmentOptions"
+                                    placeholder="Select a Department" formControlName="department"></p-dropdown>
+                                <small class="p-error"
+                                    *ngIf="f['department'].touched && f['department'].errors?.['required']">
+                                    Department is required.
+                                </small>
+                            </div>
                         </div>
+                    </section>
 
-                        <div class="field col-12">
-                            <label for="currentAddress">Current Address</label>
-                            <textarea id="currentAddress" pInputTextarea rows="3"
-                                formControlName="currentAddress"></textarea>
-                            <small class="p-error"
-                                *ngIf="f['currentAddress'].touched && f['currentAddress'].errors?.['required']">
-                                Address is required.
-                            </small>
+                    <section class="form-section">
+                        <header>
+                            <h4>Financial & Statutory Details</h4>
+                            <span>Compliance identifiers</span>
+                        </header>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="panNumber">PAN Number</label>
+                                <input pInputText id="panNumber" type="text" formControlName="panNumber"
+                                    style="text-transform: uppercase;" />
+                                <small class="p-error"
+                                    *ngIf="f['panNumber'].touched && f['panNumber'].errors?.['required']">
+                                    PAN Number is required.
+                                </small>
+                                <small class="p-error" *ngIf="f['panNumber'].errors?.['pattern']">
+                                    Invalid PAN format.
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="aadhaarNumber">Aadhaar Number</label>
+                                <p-inputMask id="aadhaarNumber" mask="9999-9999-9999"
+                                    formControlName="aadhaarNumber"></p-inputMask>
+                                <small class="p-error"
+                                    *ngIf="f['aadhaarNumber'].touched && f['aadhaarNumber'].errors?.['required']">
+                                    Aadhaar Number is required.
+                                </small>
+                            </div>
                         </div>
+                    </section>
 
-                        <div class="col-12">
-                            <h5 class="section-header">Employment Details</h5>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="employeeId">Employee ID</label>
-                            <input pInputText id="employeeId" type="text" formControlName="employeeId" />
-                            <small class="p-error"
-                                *ngIf="f['employeeId'].touched && f['employeeId'].errors?.['required']">
-                                Employee ID is required.
-                            </small>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="doj">Date of Joining</label>
-                            <p-calendar id="doj" dateFormat="dd/mm/yy" [showIcon]="true"
-                                formControlName="dateOfJoining"></p-calendar>
-                            <small class="p-error"
-                                *ngIf="f['dateOfJoining'].touched && f['dateOfJoining'].errors?.['required']">
-                                Date of Joining is required.
-                            </small>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="jobTitle">Job Title / Designation</label>
-                            <input pInputText id="jobTitle" type="text" formControlName="jobTitle" />
-                            <small class="p-error" *ngIf="f['jobTitle'].touched && f['jobTitle'].errors?.['required']">
-                                Job Title is required.
-                            </small>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="department">Department</label>
-                            <p-dropdown id="department" [options]="departmentOptions" placeholder="Select a Department"
-                                formControlName="department"></p-dropdown>
-                            <small class="p-error"
-                                *ngIf="f['department'].touched && f['department'].errors?.['required']">
-                                Department is required.
-                            </small>
-                        </div>
-
-                        <div class="col-12">
-                            <h5 class="section-header">Financial & Statutory Details</h5>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="panNumber">PAN Number</label>
-                            <input pInputText id="panNumber" type="text" formControlName="panNumber"
-                                style="text-transform: uppercase;" />
-                            <small class="p-error"
-                                *ngIf="f['panNumber'].touched && f['panNumber'].errors?.['required']">
-                                PAN Number is required.
-                            </small>
-                            <small class="p-error" *ngIf="f['panNumber'].errors?.['pattern']">
-                                Invalid PAN format.
-                            </small>
-                        </div>
-
-                        <div class="field col-12 md:col-6">
-                            <label for="aadhaarNumber">Aadhaar Number</label>
-                            <p-inputMask id="aadhaarNumber" mask="9999-9999-9999"
-                                formControlName="aadhaarNumber"></p-inputMask>
-                            <small class="p-error"
-                                *ngIf="f['aadhaarNumber'].touched && f['aadhaarNumber'].errors?.['required']">
-                                Aadhaar Number is required.
-                            </small>
-                        </div>
-
-                        <div class="col-12 mt-4 flex justify-content-end">
-                            <p-button label="Add Staff" icon="pi pi-check" type="submit"
+                    <div class="form-actions">
+                        <ng-container *ngIf="!isEditing; else updateButtons">
+                            <p-button label="Add Staff" icon="pi pi-plus" type="submit"
                                 [disabled]="staffForm.invalid"></p-button>
-                        </div>
+                        </ng-container>
+                        <ng-template #updateButtons>
+                            <p-button label="Update Staff" icon="pi pi-save" type="button" (click)="onUpdateStaff()"
+                                [disabled]="staffForm.invalid"></p-button>
+                            <p-button label="Cancel" icon="pi pi-times" class="p-button-text p-button-plain"
+                                type="button" (click)="resetEdit()"></p-button>
+                        </ng-template>
                     </div>
                 </form>
             </div>
         </p-tabpanel>
         <p-tabpanel value="1">
-            <p class="m-0">
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam
-                rem
-                aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt
-                explicabo.
-                Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni
-                dolores eos qui ratione voluptatem sequi nesciunt. Consectetur, adipisci velit, sed quia non numquam
-                eius
-                modi.
-            </p>
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">Staff Directory</h5>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" placeholder="Search staff..."
+                            [value]="globalFilterValue" (input)="onGlobalFilter(dt, $event)" />
+                    </span>
+                </div>
+                <p-table #dt [value]="staffList" dataKey="id" [globalFilterFields]="['employeeId','fullName','department','jobTitle','email','mobileNumber']"
+                    styleClass="p-datatable-striped" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]" sortMode="multiple">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th pSortableColumn="employeeId">
+                                Employee ID
+                                <p-sortIcon field="employeeId"></p-sortIcon>
+                            </th>
+                            <th pSortableColumn="fullName">
+                                Full Name
+                                <p-sortIcon field="fullName"></p-sortIcon>
+                            </th>
+                            <th pSortableColumn="department">
+                                Department
+                                <p-sortIcon field="department"></p-sortIcon>
+                            </th>
+                            <th pSortableColumn="jobTitle">
+                                Job Title
+                                <p-sortIcon field="jobTitle"></p-sortIcon>
+                            </th>
+                            <th pSortableColumn="email">
+                                Email
+                                <p-sortIcon field="email"></p-sortIcon>
+                            </th>
+                            <th pSortableColumn="mobileNumber">
+                                Mobile
+                                <p-sortIcon field="mobileNumber"></p-sortIcon>
+                            </th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-staff>
+                        <tr>
+                            <td>{{ staff.employeeId }}</td>
+                            <td>{{ staff.fullName }}</td>
+                            <td>{{ staff.department }}</td>
+                            <td>{{ staff.jobTitle }}</td>
+                            <td>{{ staff.email }}</td>
+                            <td>{{ staff.mobileNumber }}</td>
+                            <td class="text-center flex justify-content-center gap-2">
+                                <button pButton type="button" icon="pi pi-pencil"
+                                    class="p-button-rounded p-button-text p-button-primary" pTooltip="Edit Staff"
+                                    (click)="onEditStaff(staff)">
+                                </button>
+                                <button pButton type="button" icon="pi pi-trash"
+                                    class="p-button-rounded p-button-text p-button-danger" pTooltip="Delete Staff"
+                                    (click)="onDeleteStaff(staff)">
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center">No staff records found.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
         </p-tabpanel>
 
     </p-tabpanels>

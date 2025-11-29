@@ -7,7 +7,7 @@ import { FormBuilder, FormGroup, FormsModule, NgModel, ReactiveFormsModule, Vali
 import { CommonModule } from '@angular/common';
 import { FileUploaderComponent } from '../file-uploader/file-uploader.component';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { ViewStudentsComponent } from '../view-students/view-students.component';
+import { Student, ViewStudentsComponent } from '../view-students/view-students.component';
 import { LocationService } from '../location.service';
 import { Class, ClassService } from '../class.service';
 import { Section, SectionService } from '../section.service';
@@ -37,10 +37,11 @@ export class ManagestudentComponent {
   form!: FormGroup;
 
   activeAccordionIndexes: number[] = [0, 1, 2, 3, 4, 5];
+  activeTabIndex = '0';
 
 
   onAccordionChange(event: any) {
-    alert('Accordion changed!');
+   // alert('Accordion changed!');
     console.log('Event:', event);
 
     const newIndexes = Array.isArray(event) ? event : [event];
@@ -187,7 +188,7 @@ export class ManagestudentComponent {
 
   onSameAddressToggle() {
     const isSame = this.form.get('isSameAddress')?.value;
-alert(isSame)
+//alert(isSame)
     if (isSame) {
       // Copy current address to permanent address
       this.form.patchValue({
@@ -231,7 +232,7 @@ alert(isSame)
 
   loadClasses() {
     this.classService.getClasses().subscribe(res => {
-       alert(JSON.stringify(res));
+      // alert(JSON.stringify(res));
       this.classes = res;
     });
   }
@@ -291,6 +292,33 @@ alert(isSame)
     console.log('Draft payload:', draft);
     this.lastSavedAt = new Date();
     alert('Draft saved locally.');
+  }
+
+  onEditStudent(student: Student): void {
+    const nameParts = student.studentName.split(' ');
+    const firstName = nameParts.shift() ?? '';
+    const lastName = nameParts.pop() ?? '';
+    const middleName = nameParts.join(' ');
+
+    const parentParts = student.parentName.split(' ');
+    const guardianFirstName = parentParts.shift() ?? '';
+    const guardianLastName = parentParts.pop() ?? '';
+    const guardianMiddleName = parentParts.join(' ');
+
+    this.form.patchValue({
+      firstName,
+      middleName,
+      lastName: lastName || firstName,
+      guardianFirstName,
+      guardianMiddleName,
+      guardianLastName: guardianLastName || guardianFirstName,
+      rollNumber: student.rollNo,
+      remarks: `Editing record #${student.id}`,
+    });
+
+    this.form.get('sectionId')?.enable();
+    this.activeTabIndex = '0';
+    this.form.markAsDirty();
   }
 
   // Collect data and send to backend

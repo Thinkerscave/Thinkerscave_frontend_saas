@@ -17,7 +17,7 @@
         </div>
     </div> -->
 
-    <p-tabs value="0" class="manage-student-tabs">
+    <p-tabs [(value)]="activeTabIndex" class="manage-student-tabs">
         <p-tablist>
             <p-tab value="0" header="Add" headerStyleClass="custom-tab">
                 <i class="pi pi-plus"></i>
@@ -363,7 +363,7 @@
                 <div class="view-panel">
                     <!-- <h3>Student Directory</h3>
                     <p>Search and manage previously registered students.</p> -->
-                    <app-view-students></app-view-students>
+                    <app-view-students (editRequested)="onEditStudent($event)"></app-view-students>
                 </div>
             </p-tabpanel>
         </p-tabpanels>

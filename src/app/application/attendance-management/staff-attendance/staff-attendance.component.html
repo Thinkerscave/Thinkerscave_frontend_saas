@@ -1,1 +1,145 @@
-<p>staff-attendance works!</p>
+<p-tabs [(value)]="activeTab">
+  <p-tablist>
+    <p-tab value="0">Add</p-tab>
+    <p-tab value="1">View</p-tab>
+  </p-tablist>
+
+  <p-tabpanels>
+    <p-tabpanel value="0">
+      <div class="card form-shell">
+        <div class="form-header">
+          <div>
+            <p class="eyebrow">Faculty · Daily log</p>
+            <h3>Staff Attendance Capture</h3>
+            <p>Track shifts, WFH, or leave notes for your internal teams.</p>
+          </div>
+          <div class="form-meta">
+            <span class="label">Logged staff</span>
+            <strong>{{ records.length }}</strong>
+          </div>
+        </div>
+
+        <form [formGroup]="attendanceForm" (ngSubmit)="onSubmit()">
+          <div class="form-grid two-col">
+            <div class="form-field">
+              <label>Staff Name</label>
+              <input pInputText formControlName="staffName" placeholder="Enter staff name" />
+            </div>
+
+            <div class="form-field">
+              <label>Department</label>
+              <input pInputText formControlName="department" placeholder="Department" />
+            </div>
+
+            <div class="form-field">
+              <label>Date</label>
+              <input pInputText type="date" formControlName="date" />
+            </div>
+
+            <div class="form-field">
+              <label>Shift</label>
+              <p-dropdown [options]="shiftOptions" formControlName="shift"></p-dropdown>
+            </div>
+
+            <div class="form-field span-two">
+              <label>Status</label>
+              <p-dropdown [options]="statusOptions" formControlName="status"></p-dropdown>
+            </div>
+
+            <div class="form-field span-two">
+              <label>Remarks</label>
+              <textarea pInputTextarea rows="3" formControlName="remarks"
+                placeholder="Lecture topics, leave reason, remote work, etc."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <ng-container *ngIf="!isEditing; else staffUpdateButtons">
+              <p-button label="Add Attendance" icon="pi pi-check" type="submit"
+                [disabled]="attendanceForm.invalid"></p-button>
+            </ng-container>
+            <ng-template #staffUpdateButtons>
+              <p-button label="Update Entry" icon="pi pi-save" type="button" (click)="onUpdateRecord()"
+                [disabled]="attendanceForm.invalid"></p-button>
+              <p-button label="Cancel" icon="pi pi-times" type="button" class="p-button-text" (click)="resetForm()">
+              </p-button>
+            </ng-template>
+          </div>
+        </form>
+      </div>
+    </p-tabpanel>
+
+    <p-tabpanel value="1">
+      <div class="card">
+        <div class="table-toolbar">
+          <h5>Staff Attendance Records</h5>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" placeholder="Search..." [value]="globalFilterValue"
+              (input)="onGlobalFilter(dt, $event)" />
+          </span>
+        </div>
+
+        <p-table #dt [value]="records" dataKey="id"
+          [globalFilterFields]="['staffName','department','date','shift','status','remarks']"
+          styleClass="p-datatable-striped" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]"
+          sortMode="multiple">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="staffName">
+                Staff
+                <p-sortIcon field="staffName"></p-sortIcon>
+              </th>
+              <th pSortableColumn="department">
+                Department
+                <p-sortIcon field="department"></p-sortIcon>
+              </th>
+              <th pSortableColumn="date">
+                Date
+                <p-sortIcon field="date"></p-sortIcon>
+              </th>
+              <th pSortableColumn="shift">
+                Shift
+                <p-sortIcon field="shift"></p-sortIcon>
+              </th>
+              <th pSortableColumn="status">
+                Status
+                <p-sortIcon field="status"></p-sortIcon>
+              </th>
+              <th>Remarks</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-record>
+            <tr>
+              <td>{{ record.staffName }}</td>
+              <td>{{ record.department }}</td>
+              <td>{{ record.date }}</td>
+              <td>{{ record.shift }}</td>
+              <td>
+                <span class="status-chip"
+                  [ngClass]="'status-' + record.status.toLowerCase().replace(' ', '-')">
+                  {{ record.status }}
+                </span>
+              </td>
+              <td>{{ record.remarks }}</td>
+              <td class="text-center">
+                <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-primary"
+                  pTooltip="Edit" (click)="onEditRecord(record)"></button>
+                <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
+                  pTooltip="Delete" (click)="onDeleteRecord(record)"></button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="text-center">No staff attendance available.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>

@@ -1,1 +1,110 @@
-<h2>DashBoard</h2>
+<section class="student-dashboard">
+  <header class="dashboard-header">
+    <div>
+      <p class="eyebrow">Multi-campus overview</p>
+      <h2>Student Performance Operations</h2>
+      <p class="lead">Monitor attendance, academics, and interventions across all student cohorts.</p>
+    </div>
+    <div class="header-meta">
+      <span>Synced 5 minutes ago</span>
+      <button pButton type="button" icon="pi pi-refresh" label="Refresh snapshot"></button>
+    </div>
+  </header>
+
+  <div class="summary-grid">
+    <article class="summary-card" *ngFor="let card of campusSummary">
+      <div class="card-icon">
+        <i [class]="card.icon"></i>
+      </div>
+      <div class="card-content">
+        <p class="label">{{ card.label }}</p>
+        <h3>{{ card.value }}</h3>
+        <p class="trend">{{ card.delta }} <span>{{ card.detail }}</span></p>
+      </div>
+    </article>
+  </div>
+
+  <section class="panel filter-panel">
+    <div class="filter-group">
+      <label>Campus</label>
+      <p-dropdown [options]="filterOptions.campuses" [(ngModel)]="selectedCampus"></p-dropdown>
+    </div>
+    <div class="filter-group">
+      <label>Grade</label>
+      <p-dropdown [options]="filterOptions.grades" [(ngModel)]="selectedGrade"></p-dropdown>
+    </div>
+    <div class="filter-group">
+      <label>Cohort</label>
+      <p-dropdown [options]="filterOptions.cohorts" [(ngModel)]="selectedCohort"></p-dropdown>
+    </div>
+    <div class="filter-group actions">
+      <button pButton type="button" icon="pi pi-filter" label="Apply filters"></button>
+      <button pButton type="button" class="p-button-text" label="Reset"></button>
+    </div>
+  </section>
+
+  <div class="content-grid">
+    <section class="panel span-two">
+      <header>
+        <h4>Student snapshot</h4>
+        <span>{{ studentSnapshots.length }} students · sorted by risk</span>
+      </header>
+      <div class="student-table">
+        <div class="table-head">
+          <span>Student</span>
+          <span>Grade / Cohort</span>
+          <span>Attendance</span>
+          <span>GPA</span>
+          <span>Behavior</span>
+          <span>Risk Level</span>
+          <span>Next Action</span>
+        </div>
+        <div class="table-row" *ngFor="let student of studentSnapshots">
+          <div>
+            <p class="title">{{ student.name }}</p>
+            <p class="meta">ID #{{ student.name | slice:0:3 | uppercase }}-{{ student.grade }}</p>
+          </div>
+          <div>
+            <p class="title">Grade {{ student.grade }}</p>
+            <p class="meta">{{ student.cohort }}</p>
+          </div>
+          <div>
+            <p class="title">{{ student.attendance }}</p>
+            <p class="meta">Rolling 30 days</p>
+          </div>
+          <div>
+            <p class="title">{{ student.gpa }}</p>
+            <p class="meta">Cumulative</p>
+          </div>
+          <div>
+            <p class="title">{{ student.offenses }} incidents</p>
+            <p class="meta">current term</p>
+          </div>
+          <div>
+            <span class="chip" [ngClass]="'risk-' + student.risk.toLowerCase()">{{ student.risk }}</span>
+          </div>
+          <div>
+            <p class="meta">{{ student.nextAction }}</p>
+            <button pButton type="button" class="p-button-text p-button-sm" label="View record"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel alerts">
+      <header>
+        <h4>Intervention alerts</h4>
+        <span>Prioritize follow-ups</span>
+      </header>
+      <ul>
+        <li *ngFor="let alert of alertFeed" [ngClass]="alert.severity">
+          <div>
+            <p class="title">{{ alert.title }}</p>
+            <p class="meta">{{ alert.detail }}</p>
+          </div>
+          <i class="pi pi-arrow-up-right"></i>
+        </li>
+      </ul>
+    </section>
+  </div>
+</section>
