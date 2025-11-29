@@ -1,1 +1,122 @@
-<p>class-attendance works!</p>
+<p-tabs [(value)]="activeTab" class="attendance-tabs">
+  <p-tablist>
+    <p-tab value="0">Add</p-tab>
+    <p-tab value="1">View</p-tab>
+  </p-tablist>
+
+  <p-tabpanels>
+    <p-tabpanel value="0">
+      <div class="card form-shell">
+        <div class="form-header">
+          <div>
+            <p class="eyebrow">Classroom · Today</p>
+            <h3>Capture Class Attendance</h3>
+            <p>Log presence, absences and quick remarks for each student.</p>
+          </div>
+          <div class="form-meta">
+            <span class="label">Total records</span>
+            <strong>{{ records.length }}</strong>
+          </div>
+        </div>
+
+        <form [formGroup]="attendanceForm" (ngSubmit)="onSubmit()">
+          <div class="form-grid two-col">
+            <div class="form-field span-two">
+              <label>Student Name</label>
+              <input pInputText type="text" formControlName="name" placeholder="Enter student name" />
+            </div>
+
+            <div class="form-field">
+              <label>Date</label>
+              <input pInputText type="date" formControlName="date" />
+            </div>
+
+            <div class="form-field">
+              <label>Status</label>
+              <p-dropdown [options]="statusOptions" formControlName="status" placeholder="Select status">
+              </p-dropdown>
+            </div>
+
+            <div class="form-field span-two">
+              <label>Remarks</label>
+              <textarea pInputTextarea formControlName="remarks" rows="3" placeholder="Add context or notes"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <ng-container *ngIf="!isEditing; else updateButtons">
+              <p-button label="Add Attendance" icon="pi pi-check" type="submit"
+                [disabled]="attendanceForm.invalid"></p-button>
+            </ng-container>
+            <ng-template #updateButtons>
+              <p-button label="Update Entry" icon="pi pi-save" type="button" (click)="onUpdateRecord()"
+                [disabled]="attendanceForm.invalid">
+              </p-button>
+              <p-button label="Cancel" icon="pi pi-times" type="button" class="p-button-text" (click)="resetForm()">
+              </p-button>
+            </ng-template>
+          </div>
+        </form>
+      </div>
+    </p-tabpanel>
+
+    <p-tabpanel value="1">
+      <div class="card">
+        <div class="table-toolbar">
+          <h5>Class Attendance Records</h5>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" placeholder="Search..." [value]="globalFilterValue"
+              (input)="onGlobalFilter(dt, $event)" />
+          </span>
+        </div>
+
+        <p-table #dt [value]="records" dataKey="id" [globalFilterFields]="['name','date','status','remarks']"
+          styleClass="p-datatable-striped" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]"
+          sortMode="multiple">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="name">
+                Student
+                <p-sortIcon field="name"></p-sortIcon>
+              </th>
+              <th pSortableColumn="date">
+                Date
+                <p-sortIcon field="date"></p-sortIcon>
+              </th>
+              <th pSortableColumn="status">
+                Status
+                <p-sortIcon field="status"></p-sortIcon>
+              </th>
+              <th>Remarks</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-record>
+            <tr>
+              <td>{{ record.name }}</td>
+              <td>{{ record.date }}</td>
+              <td>
+                <span class="status-chip status-{{ record.status | lowercase }}">{{ record.status }}</span>
+              </td>
+              <td>{{ record.remarks }}</td>
+              <td class="text-center">
+                <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-primary"
+                  pTooltip="Edit" (click)="onEditRecord(record)"></button>
+                <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
+                  pTooltip="Delete" (click)="onDeleteRecord(record)"></button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5" class="text-center">No attendance records found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>
