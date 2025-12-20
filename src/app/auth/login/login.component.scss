@@ -214,3 +214,21 @@
   }
 }
 
+.form-field input {
+  background: #fff;
+  color: #2a243d;
+}
+
+.form-field input::placeholder {
+  color: rgba(42, 36, 61, 0.5);
+}
+
+:host ::ng-deep .login-password__input {
+  background: #fff;
+  color: #2a243d;
+}
+
+:host ::ng-deep .login-password__input::placeholder {
+  color: rgba(42, 36, 61, 0.5);
+}
+
