@@ -1,0 +1,60 @@
+/* Light yellow full-page background */
+.session-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #fffbe6; // soft yellow
+  }
+  
+  /* Bigger, more readable card */
+  .session-card {
+    width: 460px;
+    padding: 2.5rem;
+    text-align: center;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Icon container */
+  .icon-box {
+    background: #fff3cd;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 1.8rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Warning icon */
+  .warning-icon {
+    font-size: 2.8rem;
+    color: #d39e00;
+  }
+  
+  /* Title */
+  h2 {
+    margin-bottom: 1rem;
+    color: #856404;
+    font-weight: 600;
+  }
+  
+  /* Message text */
+  .message {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 2.2rem;
+    line-height: 1.6;
+  }
+  
+  /* Login button */
+  .login-btn {
+    width: 100%;
+    font-size: 1.05rem;
+    padding: 0.9rem;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  

@@ -141,4 +141,17 @@ export class LoginService {
     );
   }
 
+  public clearTokens(): void {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sideMenu');
+    localStorage.removeItem('app-breadcrumb');
+    this.loginStatusSubject.next(false);
+  }
+
+  public redirectToSessionExpired(): void {
+    this.router.navigate(['/session-expired']);
+  }
+
 }

@@ -4,11 +4,17 @@ import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.
 import { FirstTimeLoginComponent } from './auth/first-time-login/first-time-login.component';
 import { LayoutComponent } from './layout/layout/layout.component';
 import { AuthLayoutComponent } from './auth/auth-layout/auth-layout.component';
+import { SessionExpiredComponent } from './shared/pages/session-expired/session-expired.component';
 
 export const routes: Routes = [
     {
         path: '',
         redirectTo: 'auth/login',
+        pathMatch: 'full'
+    },
+    {
+        path: 'session-expired',
+        component : SessionExpiredComponent,
         pathMatch: 'full'
     },
     {

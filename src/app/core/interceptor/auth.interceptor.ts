@@ -5,10 +5,18 @@ import {
   HttpHandlerFn,
   HttpErrorResponse
 } from '@angular/common/http';
-import { catchError, switchMap, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  filter,
+  switchMap,
+  take,
+  throwError
+} from 'rxjs';
 import { LoginService } from '../../services/login.service';
 
-let isRefreshing = false; // global flag to avoid multiple refresh attempts
+let isRefreshing = false;
+const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<any>,
@@ -26,38 +34,61 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // 🚫 Skip refresh logic if this is the refreshToken call itself
+
+      // 🚫 If refresh API itself fails
       if (req.url.includes('/refreshToken')) {
+        loginService.clearTokens();
+        loginService.redirectToSessionExpired();
         return throwError(() => error);
       }
 
-      if ((error.status === 401 || error.status === 403) && !isRefreshing) {
-        isRefreshing = true;
+      if (error.status === 401 || error.status === 403) {
 
-        const refreshToken = loginService.getRefreshToken();
-        if (refreshToken) {
+        // 🔵 First request triggers refresh
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshTokenSubject.next(null);
+
+          const refreshToken = loginService.getRefreshToken();
+          if (!refreshToken) {
+            loginService.clearTokens();
+            loginService.redirectToSessionExpired();
+            return throwError(() => error);
+          }
+
           return loginService.refreshAccessToken(refreshToken).pipe(
             switchMap((newToken: string) => {
               isRefreshing = false;
-
-              // save the new token
               loginService.setAccessToken(newToken);
+              refreshTokenSubject.next(newToken);
 
-              // retry original request with new token
-              const retryReq = req.clone({
-                setHeaders: { Authorization: `Bearer ${newToken}` }
-              });
-              return next(retryReq);
+              return next(
+                req.clone({
+                  setHeaders: { Authorization: `Bearer ${newToken}` }
+                })
+              );
             }),
             catchError(err => {
               isRefreshing = false;
-              loginService.logOut();
+              loginService.clearTokens();
+              loginService.redirectToSessionExpired();
               return throwError(() => err);
             })
           );
-        } else {
-          loginService.logOut();
         }
+
+        // 🟡 Other requests WAIT here
+        return refreshTokenSubject.pipe(
+          filter(token => token !== null),
+          take(1),
+          switchMap(token =>
+            next(
+              req.clone({
+                setHeaders: { Authorization: `Bearer ${token!}` }
+              })
+            )
+          )
+        );
       }
 
       return throwError(() => error);
