@@ -1,0 +1,20 @@
+/* Custom scrollbar for interactions list */
+.custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--surface-100, #f1f1f1);
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--surface-400, #c1c1c1);
+        border-radius: 4px;
+
+        &:hover {
+            background: var(--surface-500, #a8a8a8);
+        }
+    }
+}

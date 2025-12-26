@@ -25,6 +25,10 @@ export const authInterceptor: HttpInterceptorFn = (
   const loginService = inject(LoginService);
   const token = loginService.getAccessToken();
 
+  // Check if this is a mock token (for counsellor demo)
+  const isMockToken = token && token.startsWith('mock_jwt_token_');
+  console.log('[AUTH INTERCEPTOR] Token type:', isMockToken ? 'MOCK' : 'REAL');
+
   let authReq = req;
   if (token && !req.url.includes('/refreshToken')) {
     authReq = req.clone({
@@ -34,6 +38,12 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+
+      // Skip token refresh for mock tokens
+      if (isMockToken) {
+        console.log('[AUTH INTERCEPTOR] Mock token - bypassing refresh logic');
+        return throwError(() => error);
+      }
 
       // 🚫 If refresh API itself fails
       if (req.url.includes('/refreshToken')) {

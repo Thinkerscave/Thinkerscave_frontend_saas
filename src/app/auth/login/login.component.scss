@@ -232,3 +232,49 @@
   color: rgba(42, 36, 61, 0.5);
 }
 
+/* Counsellor Demo Section */
+.counsellor-demo-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: white;
+
+  .demo-label {
+    margin: 0 0 0.75rem 0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.9;
+  }
+
+  .demo-credentials {
+    margin: 0 0 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+
+    strong {
+      font-weight: 600;
+      color: #fff;
+    }
+  }
+
+  button {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-weight: 500;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+

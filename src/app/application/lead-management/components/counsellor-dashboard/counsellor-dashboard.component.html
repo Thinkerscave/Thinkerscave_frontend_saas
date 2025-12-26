@@ -1,0 +1,344 @@
+<div class="flex flex-column h-screen surface-ground">
+  <!-- Header -->
+  <div *ngIf="activeMenu === 'overview'" class="flex justify-content-between align-items-center px-4 py-3 shadow-2"
+    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="flex align-items-center gap-3">
+      <i class="pi pi-chart-line text-3xl text-white"></i>
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold text-white m-0">Welcome back, {{ counsellorName }}! 👋</h1>
+        <p class="text-white-alpha-80 m-0 text-sm">Manage your leads efficiently</p>
+      </div>
+    </div>
+    <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="refreshDashboard()" [loading]="loading"
+      class="p-button-rounded p-button-text text-white hover:surface-white transition-colors hover:text-primary">
+    </button>
+  </div>
+
+  <p-toast></p-toast>
+
+  <div class="flex flex-1 overflow-hidden relative" *ngIf="!loading; else loadingState">
+    <!-- Sidebar -->
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-3 md:p-5 relative">
+      <!-- All Leads Tab -->
+      <div *ngIf="activeMenu === 'all-leads'" class="animation-fade-in h-full">
+        <app-lead-list [embedded]="true" (back)="goBack()"></app-lead-list>
+      </div>
+
+      <!-- Overview Tab -->
+      <div *ngIf="activeMenu === 'overview'" class="animation-fade-in">
+        <div class="grid" *ngIf="stats">
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-blue-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3">Total Leads</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.totalLeads }}</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-blue-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-inbox text-blue-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-pink-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3">New Leads</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.newLeads }}</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-pink-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-star-fill text-pink-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-cyan-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3">Today's Follow-ups</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.todayFollowups }}</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-cyan-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-calendar-today text-cyan-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-orange-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3 text-orange-500">Overdue Follow-ups</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.overdueFollowups }}</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-orange-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-exclamation-triangle text-orange-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-purple-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3">Interested Leads</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.interestedLeads }}</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-purple-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-heart-fill text-purple-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+            <div class="surface-card shadow-1 p-3 border-round border-left-3 border-teal-500 h-full">
+              <div class="flex justify-content-between mb-3">
+                <div>
+                  <span class="block text-500 font-medium mb-3">Conversion Rate</span>
+                  <div class="text-900 font-medium text-xl">{{ stats.conversionRate }}%</div>
+                </div>
+                <div class="flex align-items-center justify-content-center bg-teal-100 border-round"
+                  style="width:2.5rem;height:2.5rem">
+                  <i class="pi pi-chart-bar text-teal-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="grid mt-4" *ngIf="chartData">
+          <div class="col-12">
+            <div class="card shadow-1 border-round surface-card p-4">
+              <h5 class="text-xl font-bold text-900 mb-3">Lead Status Distribution</h5>
+              <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="300px"></p-chart>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Follow-ups Tab -->
+      <div *ngIf="activeMenu === 'today-followups'" class="animation-fade-in">
+        <div class="flex align-items-center gap-3 mb-4">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+          <h2 class="text-2xl font-bold text-900 m-0">Today's Follow-ups</h2>
+        </div>
+
+        <div class="card shadow-1 surface-card border-round p-3">
+          <p-table [value]="todayFollowups" [paginator]="true" [rows]="10" responsiveLayout="scroll"
+            styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th pSortableColumn="phoneNumber">Phone <p-sortIcon field="phoneNumber"></p-sortIcon></th>
+                <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                <th pSortableColumn="course">Course <p-sortIcon field="course"></p-sortIcon></th>
+                <th pSortableColumn="nextFollowUpDate">Date <p-sortIcon field="nextFollowUpDate"></p-sortIcon></th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-lead>
+              <tr>
+                <td class="font-medium">{{ lead.name }}</td>
+                <td>{{ lead.phoneNumber }}</td>
+                <td><p-tag [value]="lead.status" [severity]="getSeverity(lead.status)"></p-tag></td>
+                <td>{{ lead.course }}</td>
+                <td>{{ formatDate(lead.nextFollowUpDate) }}</td>
+                <td>
+                  <div class="flex gap-2">
+                    <button pButton icon="pi pi-phone"
+                      class="p-button-rounded p-button-success p-button-text p-button-sm" title="Call"></button>
+                    <button pButton icon="pi pi-eye" class="p-button-rounded p-button-info p-button-text p-button-sm"
+                      [routerLink]="['/app/lead-detail', lead.id]" title="View"></button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center p-4 text-500">No follow-ups due today</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+
+      <!-- Overdue Follow-ups Tab -->
+      <div *ngIf="activeMenu === 'overdue-followups'" class="animation-fade-in">
+        <div class="flex align-items-center gap-3 mb-4">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+          <h2 class="text-2xl font-bold text-orange-500 m-0">Overdue Follow-ups</h2>
+        </div>
+
+        <div class="card shadow-1 surface-card border-round p-3">
+          <p-table [value]="overdueFollowups" [paginator]="true" [rows]="10" responsiveLayout="scroll"
+            styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th pSortableColumn="phoneNumber">Phone <p-sortIcon field="phoneNumber"></p-sortIcon></th>
+                <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                <th pSortableColumn="course">Course <p-sortIcon field="course"></p-sortIcon></th>
+                <th pSortableColumn="nextFollowUpDate">Date <p-sortIcon field="nextFollowUpDate"></p-sortIcon></th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-lead>
+              <tr class="bg-orange-50">
+                <td class="font-medium text-900">{{ lead.name }}</td>
+                <td>{{ lead.phoneNumber }}</td>
+                <td><p-tag [value]="lead.status" [severity]="getSeverity(lead.status)"></p-tag></td>
+                <td>{{ lead.course }}</td>
+                <td class="text-orange-600 font-bold">{{ formatDate(lead.nextFollowUpDate) }}</td>
+                <td>
+                  <button pButton icon="pi pi-arrow-right" label="Action"
+                    class="p-button-rounded p-button-warning p-button-sm"
+                    [routerLink]="['/app/lead-detail', lead.id]"></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center p-4 text-500">No overdue follow-ups</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+
+      <!-- Interested Leads Tab -->
+      <div *ngIf="activeMenu === 'interested-leads'" class="animation-fade-in">
+        <div class="flex align-items-center gap-3 mb-4">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+          <h2 class="text-2xl font-bold text-900 m-0">Interested Leads</h2>
+        </div>
+
+        <div class="card shadow-1 surface-card border-round p-3">
+          <p-table [value]="interestedLeads" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th pSortableColumn="phoneNumber">Phone</th>
+                <th pSortableColumn="status">Status</th>
+                <th pSortableColumn="course">Course</th>
+                <th pSortableColumn="nextFollowUpDate">Follow-up</th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-lead>
+              <tr>
+                <td class="font-medium">{{ lead.name }}</td>
+                <td>{{ lead.phoneNumber }}</td>
+                <td><p-tag [value]="lead.status" [severity]="getSeverity(lead.status)"></p-tag></td>
+                <td>{{ lead.course }}</td>
+                <td>{{ formatDate(lead.nextFollowUpDate) }}</td>
+                <td>
+                  <button pButton icon="pi pi-check" label="Convert" class="p-button-success p-button-sm"
+                    [routerLink]="['/app/lead-detail', lead.id]"></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center p-4 text-500">No interested leads found</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+
+      <!-- New Leads Tab -->
+      <div *ngIf="activeMenu === 'new-leads'" class="animation-fade-in">
+        <div class="flex align-items-center gap-3 mb-4">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+          <h2 class="text-2xl font-bold text-900 m-0">New Leads</h2>
+        </div>
+
+        <div class="card shadow-1 surface-card border-round p-3">
+          <p-table [value]="newLeads" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th pSortableColumn="phoneNumber">Phone</th>
+                <th pSortableColumn="status">Status</th>
+                <th pSortableColumn="course">Course</th>
+                <th pSortableColumn="createdDate">Created</th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-lead>
+              <tr>
+                <td class="font-medium">{{ lead.name }}</td>
+                <td>{{ lead.phoneNumber }}</td>
+                <td><p-tag [value]="lead.status" [severity]="getSeverity(lead.status)"></p-tag></td>
+                <td>{{ lead.course }}</td>
+                <td>{{ formatDate(lead.createdDate) }}</td>
+                <td>
+                  <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text"
+                    [routerLink]="['/app/lead-detail', lead.id]"></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center p-4 text-500">No new leads found</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+
+      <!-- Statistics Tab -->
+      <div *ngIf="activeMenu === 'lead-statistics'" class="animation-fade-in">
+        <div class="flex align-items-center gap-3 mb-4">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+          <h2 class="text-2xl font-bold text-900 m-0">Detailed Statistics</h2>
+        </div>
+
+        <div class="card shadow-1 surface-card border-round p-4" *ngIf="stats">
+          <div class="grid">
+            <div class="col-12 sm:col-6 md:col-4 lg:col-2" *ngFor="let item of [
+                            {label: 'Total Leads', value: stats.totalLeads, color: 'blue'},
+                            {label: 'New Leads', value: stats.newLeads, color: 'pink'},
+                            {label: 'Today\'s Follow-ups', value: stats.todayFollowups, color: 'cyan'},
+                            {label: 'Overdue', value: stats.overdueFollowups, color: 'orange'},
+                            {label: 'Interested', value: stats.interestedLeads, color: 'purple'},
+                            {label: 'Conversion', value: stats.conversionRate + '%', color: 'teal'}
+                       ]">
+              <div class="text-center p-3 border-1 surface-border border-round hover:shadow-1 transition-duration-200">
+                <div class="text-500 font-medium text-sm mb-2">{{item.label}}</div>
+                <div class="text-2xl font-bold" [class]="'text-' + item.color + '-500'">{{item.value}}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="400px"></p-chart>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <ng-template #loadingState>
+    <div class="flex flex-column align-items-center justify-content-center flex-1">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+      <p class="text-600 font-medium">Loading dashboard data...</p>
+    </div>
+  </ng-template>
+</div>
