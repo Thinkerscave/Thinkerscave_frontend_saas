@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { LEAD_MANAGEMENT_ROUTES } from './lead-management/lead-management.routes';
 
 export const APPLICATION_ROUTES: Routes = [
   {
@@ -62,5 +63,9 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'role/manage',
     loadComponent: () => import('./role-management/manage-role/manage-role.component').then(m => m.ManageRoleComponent)
+  },
+  {
+    path: '',
+    children: LEAD_MANAGEMENT_ROUTES
   }
 ];

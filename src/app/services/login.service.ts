@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { from, Observable, Subject, switchMap } from 'rxjs';
+import { from, Observable, Subject, switchMap, of } from 'rxjs';
 import { environment } from '../environment/environment';
 import { loginApi } from '../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
+import { delay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -154,4 +155,52 @@ export class LoginService {
     this.router.navigate(['/session-expired']);
   }
 
+  /**
+   * Mock counsellor login for demo purposes
+   * Credentials: counsellor / Counsellor@123
+   */
+  public counsellorLogin(username: string, password: string): Observable<any> {
+    // Hardcoded counsellor credentials
+    const COUNSELLOR_USERNAME = 'counsellor';
+    const COUNSELLOR_PASSWORD = 'Counsellor@123';
+    const COUNSELLOR_ID = 'C001';
+
+    const normalizedUsername = (username || '').trim().toLowerCase();
+    const normalizedPassword = (password || '').trim();
+
+    console.log('[MOCK LOGIN] Attempting login with username:', normalizedUsername);
+    console.log('[MOCK LOGIN] Expected:', COUNSELLOR_USERNAME);
+    console.log('[MOCK LOGIN] Password match:', normalizedPassword === COUNSELLOR_PASSWORD);
+
+    if (normalizedUsername === COUNSELLOR_USERNAME && normalizedPassword === COUNSELLOR_PASSWORD) {
+      const mockToken = 'mock_jwt_token_' + Date.now();
+      const mockUser = {
+        id: COUNSELLOR_ID,
+        username: normalizedUsername,
+        name: 'Priya Sharma',
+        roles: ['COUNSELLOR'],
+        role: 'COUNSELLOR',
+        phoneNumber: '9876543210',
+        firstTimeLogin: false
+      };
+
+      console.log('[MOCK LOGIN] Login successful, returning mock token and user');
+
+      return of({
+        accessToken: mockToken,
+        refreshToken: 'mock_refresh_token_' + Date.now(),
+        user: mockUser
+      }).pipe(delay(300)); // Simulate API call
+    }
+
+    console.log('[MOCK LOGIN] Login failed - invalid credentials');
+
+    // Return error if credentials don't match
+    return of({
+      error: 'Invalid credentials',
+      message: 'Username or password is incorrect'
+    }).pipe(delay(300));
+  }
+
 }
+

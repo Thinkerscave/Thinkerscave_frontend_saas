@@ -1,0 +1,167 @@
+<div class="surface-section px-4 py-5 md:px-6 lg:px-8" *ngIf="!loading">
+  <!-- Header Section -->
+  <div class="flex align-items-center gap-3 mb-4">
+    <button pButton type="button" icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+            (click)="goBack()"></button>
+    <div class="flex flex-column">
+      <h1 class="text-3xl font-bold text-900 m-0">{{ lead?.name }}</h1>
+      <span class="text-500 text-sm mt-1" *ngIf="lead?.email">{{ lead?.email }}</span>
+    </div>
+    <div class="ml-auto">
+        <p-tag *ngIf="lead?.status" [value]="lead?.status" [severity]="getSeverity(lead?.status || '')" styleClass="text-base px-3 py-1"></p-tag>
+    </div>
+  </div>
+
+  <p-toast></p-toast>
+
+  <div class="grid p-fluid">
+    <!-- Left Column: Lead Details & Quick Actions -->
+    <div class="col-12 lg:col-8">
+      <!-- Lead Information -->
+      <p-card styleClass="mb-4 shadow-1">
+        <ng-template pTemplate="header">
+          <div class="flex align-items-center justify-content-between px-4 pt-4 pb-2">
+            <h3 class="text-xl font-bold m-0 text-800">Lead Information</h3>
+            <button pButton icon="pi pi-pencil" class="p-button-text p-button-sm p-button-rounded p-button-secondary"></button>
+          </div>
+        </ng-template>
+
+        <div class="grid formgrid p-2">
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Phone Number</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.phoneNumber || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Email</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.email || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">City</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.city || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Course</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.course || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Source</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.source || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Assigned Counsellor</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.counsellorName || '-' }}</div>
+            </div>
+            <div class="col-12 md:col-6 mb-3">
+                <label class="text-500 font-medium block mb-2">Next Follow-up</label>
+                <div class="text-900 font-medium text-lg" [ngClass]="{'text-orange-500': lead?.nextFollowUpDate}">
+                    {{ lead?.nextFollowUpDate ? formatDate(lead?.nextFollowUpDate!) : '-' }}
+                </div>
+            </div>
+            <div class="col-12 md:col-6 mb-3" *ngIf="lead?.lostReason">
+                <label class="text-red-500 font-medium block mb-2">Lost Reason</label>
+                <div class="text-900 font-medium text-lg">{{ lead?.lostReason }}</div>
+            </div>
+        </div>
+      </p-card>
+
+      <!-- Quick Actions -->
+      <p-card styleClass="shadow-1">
+        <ng-template pTemplate="header">
+          <div class="px-4 pt-4 pb-2">
+            <h3 class="text-xl font-bold m-0 text-800">Quick Actions</h3>
+          </div>
+        </ng-template>
+        <div class="grid p-2">
+            <div class="col-12 sm:col-6 md:col-3">
+                <button pButton label="Call" icon="pi pi-phone" class="p-button-outlined p-button-success w-full"></button>
+            </div>
+            <div class="col-12 sm:col-6 md:col-3">
+                <button pButton label="WhatsApp" icon="pi pi-whatsapp" class="p-button-outlined p-button-success w-full"></button>
+            </div>
+            <div class="col-12 sm:col-6 md:col-3">
+                <button pButton label="Email" icon="pi pi-envelope" class="p-button-outlined p-button-help w-full"></button>
+            </div>
+            <div class="col-12 sm:col-6 md:col-3">
+                <button pButton label="Admit" icon="pi pi-check" class="p-button-success w-full"></button>
+            </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Right Column: Status & Interactions -->
+    <div class="col-12 lg:col-4">
+      <!-- Status Update -->
+      <p-card styleClass="mb-4 shadow-1">
+        <ng-template pTemplate="header">
+          <div class="px-4 pt-4 pb-2">
+            <h3 class="text-xl font-bold m-0 text-800">Update Status</h3>
+          </div>
+        </ng-template>
+
+        <div class="flex flex-column gap-3 p-2">
+          <div class="flex flex-column gap-2">
+            <label class="font-medium text-600">New Status</label>
+            <p-dropdown [options]="statusOptions" [(ngModel)]="selectedStatus"
+                        optionLabel="label" optionValue="value" placeholder="Select Status"
+                        styleClass="w-full">
+            </p-dropdown>
+          </div>
+
+          <div class="flex flex-column gap-2" *ngIf="selectedStatus === 'LOST'">
+            <label class="font-medium text-red-600">Reason for Lost</label>
+            <p-dropdown [options]="lostReasonOptions"
+                        [(ngModel)]="selectedLostReason"
+                        optionLabel="label" optionValue="value" placeholder="Select Reason"
+                        styleClass="w-full">
+            </p-dropdown>
+          </div>
+
+          <button pButton label="Update Status" icon="pi pi-check"
+                  (click)="updateStatus()" class="p-button-primary mt-2">
+          </button>
+        </div>
+      </p-card>
+
+      <!-- Interaction History -->
+      <p-card styleClass="shadow-1">
+        <ng-template pTemplate="header">
+          <div class="flex align-items-center justify-content-between px-4 pt-4 pb-2">
+            <h3 class="text-xl font-bold m-0 text-800">History</h3>
+            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                    pTooltip="Add Interaction" tooltipPosition="left"
+                    (click)="showInteractionForm = !showInteractionForm">
+            </button>
+          </div>
+        </ng-template>
+
+        <div class="flex flex-column gap-3 p-2 h-30rem overflow-y-auto custom-scrollbar">
+          <div *ngFor="let interaction of interactions" class="surface-ground p-3 border-round-md shadow-1">
+            <div class="flex align-items-center justify-content-between mb-2">
+              <span class="font-bold text-primary">{{ interaction.interactionType }}</span>
+              <span class="text-xs text-500">{{ formatDate(interaction.interactionDate) }}</span>
+            </div>
+            <p class="m-0 text-700 line-height-3 text-sm">{{ interaction.notes }}</p>
+            <div class="mt-2 flex align-items-center justify-content-between">
+              <span class="text-xs text-500 flex align-items-center gap-1">
+                  <i class="pi pi-user text-xs"></i> {{ interaction.counsellorName }}
+              </span>
+              <span *ngIf="interaction.nextFollowUpDate" class="text-xs text-orange-500 font-medium">
+                <i class="pi pi-calendar text-xs mr-1"></i> {{ formatDate(interaction.nextFollowUpDate) }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="interactions.length === 0" class="text-center p-4 text-500">
+            <i class="pi pi-comments text-4xl mb-3 block"></i>
+            No interactions recorded yet.
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+</div>
+
+<div class="flex flex-column align-items-center justify-content-center h-screen" *ngIf="loading">
+  <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+  <p class="text-lg text-600 font-medium">Loading lead details...</p>
+</div>

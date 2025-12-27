@@ -29,7 +29,18 @@
 
     <button pButton type="submit" label="Submit" class="accent-button"></button>
   </form>
-<!-- 
+
+  <!-- Demo Counsellor Login -->
+  <div class="counsellor-demo-section">
+    <p class="demo-label">Demo Access (Counsellor)</p>
+    <p class="demo-credentials">
+      <strong>Username:</strong> counsellor<br>
+      <strong>Password:</strong> Counsellor&#64;123
+    </p>
+    <button pButton type="button" label="Login as Counsellor" icon="pi pi-user"
+            (click)="counsellorQuickLogin()" class="p-button-secondary"></button>
+  </div>
+<!--
   <div class="login-panel__divider">
     <span></span>
     or continue with

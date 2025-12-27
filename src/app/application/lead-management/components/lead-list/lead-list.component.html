@@ -1,0 +1,164 @@
+<div [class]="embedded ? 'h-full' : 'p-3 md:p-5'" [ngClass]="{'p-0': embedded}">
+  <!-- Header-->
+  <div class="flex align-items-center justify-content-between mb-4">
+    <div class="flex align-items-center gap-3">
+      <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded"
+        (click)="showAddLeadForm ? cancelAddLead() : goBack()"></button>
+      <h2 class="text-2xl font-bold text-900 m-0">{{ showAddLeadForm ? 'Add New Lead' : 'Manage Leads' }}</h2>
+    </div>
+    <button pButton type="button" [label]="showAddLeadForm ? 'Back to List' : 'Add New Lead'"
+      [icon]="showAddLeadForm ? 'pi pi-list' : 'pi pi-plus'" (click)="toggleAddLead()" class="p-button-primary">
+    </button>
+  </div>
+
+  <div class="card shadow-2 surface-card border-round p-4 h-full">
+    <p-toast></p-toast>
+
+    <!-- LEAD LIST VIEW -->
+    <div *ngIf="!showAddLeadForm" class="fadein animation-duration-300">
+      <!-- Filters -->
+      <!-- Filters -->
+      <div class="flex flex-column md:flex-row gap-3 md:align-items-end mb-4">
+        <div class="flex-none">
+          <label class="block font-medium mb-2">Status</label>
+          <p-dropdown [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label" optionValue="value"
+            placeholder="Select Status" (onChange)="onFilterChange()" [style]="{'width':'200px'}">
+          </p-dropdown>
+        </div>
+
+        <div class="flex-none">
+          <label class="block font-medium mb-2">Course</label>
+          <p-dropdown [options]="courses" [(ngModel)]="selectedCourse" placeholder="Select Course"
+            (onChange)="onFilterChange()" [style]="{'width':'200px'}">
+          </p-dropdown>
+        </div>
+
+        <div class="flex-grow-1">
+          <label class="block font-medium mb-2">Search</label>
+          <input pInputText type="text" placeholder="Search by name, phone, email" [(ngModel)]="searchTerm"
+            (input)="onFilterChange()" class="w-full">
+        </div>
+      </div>
+
+      <!-- Table -->
+      <p-table [value]="filteredLeads" [loading]="loading" responsiveLayout="scroll" [paginator]="true" [rows]="10"
+        [globalFilterFields]="['name', 'phoneNumber', 'email']" styleClass="p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="phoneNumber">Phone <p-sortIcon field="phoneNumber"></p-sortIcon></th>
+            <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
+            <th pSortableColumn="course">Course <p-sortIcon field="course"></p-sortIcon></th>
+            <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+            <th pSortableColumn="nextFollowUpDate">Follow-up Date <p-sortIcon field="nextFollowUpDate"></p-sortIcon>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-lead>
+          <tr>
+            <td><span class="font-medium">{{ lead.name }}</span></td>
+            <td>{{ lead.phoneNumber }}</td>
+            <td>{{ lead.email }}</td>
+            <td>{{ lead.course }}</td>
+            <td>
+              <p-tag [value]="lead.status" [severity]="getSeverity(lead.status)"></p-tag>
+            </td>
+            <td>{{ formatDate(lead.nextFollowUpDate) }}</td>
+            <td>
+              <div class="flex gap-2">
+                <button pButton type="button" icon="pi pi-eye"
+                  class="p-button-rounded p-button-info p-button-text p-button-sm"
+                  [routerLink]="['/app/lead-detail', lead.id]" title="View Details">
+                </button>
+                <button pButton type="button" icon="pi pi-phone"
+                  class="p-button-rounded p-button-success p-button-text p-button-sm" title="Make a call">
+                </button>
+                <button pButton type="button" icon="pi pi-trash"
+                  class="p-button-rounded p-button-danger p-button-text p-button-sm" title="Delete">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center p-4">No leads found</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- ADD LEAD FORM VIEW -->
+    <div *ngIf="showAddLeadForm" class="fadein animation-duration-300">
+      <div class="px-2 pb-4">
+        <form [formGroup]="leadForm" (ngSubmit)="saveLead()">
+          <div class="grid p-fluid">
+            <div class="col-12 md:col-6 mb-3">
+              <label for="name" class="font-medium mb-2 block text-900">Full Name <span
+                  class="text-red-500">*</span></label>
+              <input pInputText id="name" formControlName="name" placeholder="Enter Full Name" />
+              <small class="p-error block mt-1"
+                *ngIf="leadForm.get('name')?.invalid && leadForm.get('name')?.touched">Name is required (min 3
+                chars)</small>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+              <label for="phoneNumber" class="font-medium mb-2 block text-900">Phone Number <span
+                  class="text-red-500">*</span></label>
+              <input pInputText id="phoneNumber" formControlName="phoneNumber"
+                placeholder="Enter 10-digit Phone Number" />
+              <small class="p-error block mt-1"
+                *ngIf="leadForm.get('phoneNumber')?.invalid && leadForm.get('phoneNumber')?.touched">Valid 10-digit
+                number required</small>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+              <label for="email" class="font-medium mb-2 block text-900">Email Address</label>
+              <input pInputText id="email" formControlName="email" placeholder="Enter Email Address" />
+              <small class="p-error block mt-1"
+                *ngIf="leadForm.get('email')?.invalid && leadForm.get('email')?.touched">Invalid email format</small>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+              <label for="city" class="font-medium mb-2 block text-900">City <span class="text-red-500">*</span></label>
+              <p-dropdown id="city" [options]="cities" formControlName="city" placeholder="Select or Type City"
+                [editable]="true"></p-dropdown>
+              <small class="p-error block mt-1"
+                *ngIf="leadForm.get('city')?.invalid && leadForm.get('city')?.touched">City is required</small>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+              <label for="course" class="font-medium mb-2 block text-900">Interested Course <span
+                  class="text-red-500">*</span></label>
+              <p-dropdown id="course" [options]="courses" formControlName="course" placeholder="Select or Type Course"
+                [editable]="true"></p-dropdown>
+              <small class="p-error block mt-1"
+                *ngIf="leadForm.get('course')?.invalid && leadForm.get('course')?.touched">Course is required</small>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+              <label for="source" class="font-medium mb-2 block text-900">Source <span
+                  class="text-red-500">*</span></label>
+              <p-dropdown id="source" [options]="sourceOptions" formControlName="source" placeholder="Select Source"
+                optionLabel="label" optionValue="value"></p-dropdown>
+            </div>
+
+            <div class="col-12 mb-4">
+              <label for="notes" class="font-medium mb-2 block text-900">Notes / Remarks</label>
+              <textarea pInputText id="notes" formControlName="notes" rows="4"
+                placeholder="Enter initial notes/remarks..." class="w-full" style="resize:vertical"></textarea>
+            </div>
+
+            <div class="col-12 flex justify-content-end gap-3 pt-3 border-top-1 border-gray-200">
+              <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary w-8rem"
+                (click)="cancelAddLead()"></button>
+              <button pButton type="submit" label="Save Lead" icon="pi pi-check" class="w-8rem"
+                [loading]="savingLead"></button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
