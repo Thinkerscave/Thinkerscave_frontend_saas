@@ -65,6 +65,11 @@ export const APPLICATION_ROUTES: Routes = [
     loadComponent: () => import('./role-management/manage-role/manage-role.component').then(m => m.ManageRoleComponent)
   },
   {
+    path: 'inquiry/manage',
+    loadComponent: () => import('./inquiry-management/components/manage-inquiry/manage-inquiry.component').then(m => m.ManageInquiryComponent),
+    data: { breadcrumb: 'Inquiry Management' }
+  },
+  {
     path: '',
     children: LEAD_MANAGEMENT_ROUTES
   }

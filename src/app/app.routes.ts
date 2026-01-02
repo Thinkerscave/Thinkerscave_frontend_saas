@@ -14,7 +14,7 @@ export const routes: Routes = [
     },
     {
         path: 'session-expired',
-        component : SessionExpiredComponent,
+        component: SessionExpiredComponent,
         pathMatch: 'full'
     },
     {
@@ -54,6 +54,10 @@ export const routes: Routes = [
     {
         path: 'public/admission/review',
         loadComponent: () => import('./application/admission/staff-application-review/staff-application-review.component').then(m => m.StaffApplicationReviewComponent)
+    },
+    {
+        path: 'public/inquiry',
+        loadComponent: () => import('./common/public-inquiry/public-inquiry.component').then(m => m.PublicInquiryComponent)
     },
 
     // Wildcard (optional)

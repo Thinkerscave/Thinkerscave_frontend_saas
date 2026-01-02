@@ -1,0 +1,80 @@
+// Manage Inquiry Component Styles
+
+:host {
+    display: block;
+}
+
+// Form Styling
+.p-fluid .p-formgrid {
+    .p-error {
+        display: block;
+        margin-top: 0.25rem;
+    }
+}
+
+// Table Styling
+.inquiry-list-container {
+    .truncate-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    ::ng-deep {
+        .p-datatable {
+            .p-datatable-thead>tr>th {
+                background: var(--surface-100);
+                font-weight: 600;
+            }
+
+            .p-datatable-tbody>tr:hover {
+                background: var(--surface-hover);
+            }
+        }
+
+        // Responsive adjustments
+        @media (max-width: 768px) {
+            .p-datatable-wrapper {
+                overflow-x: auto;
+            }
+        }
+    }
+}
+
+// Tag Styling
+::ng-deep .p-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+// Action buttons
+.flex.gap-1 {
+    gap: 0.25rem;
+}
+
+// Form card padding
+::ng-deep .p-card .p-card-body {
+    padding: 1.5rem;
+}
+
+// Caption bar styling
+::ng-deep .p-datatable .p-datatable-header {
+    background: transparent;
+    border: none;
+    padding: 1rem 0;
+}
+
+// Filter dropdown wrappers
+.filter-dropdown-wrapper {
+    display: inline-block;
+}
+
+::ng-deep {
+    .filter-class-dropdown {
+        width: 140px;
+    }
+
+    .filter-source-dropdown {
+        width: 130px;
+    }
+}

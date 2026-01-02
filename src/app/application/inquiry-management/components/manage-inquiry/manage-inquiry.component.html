@@ -1,0 +1,245 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<p-tabView [(activeIndex)]="activeTabIndex">
+    <!-- Add/Edit Form Tab -->
+    <p-tabPanel [header]="isEditMode ? 'Edit Inquiry' : 'Add Inquiry'">
+        <p-card>
+            <form [formGroup]="inquiryForm" (ngSubmit)="onSubmit()">
+                <div class="p-fluid p-formgrid grid">
+                    <!-- Row 1: Name & Mobile -->
+                    <div class="col-12 md:col-6">
+                        <label for="name" class="mb-2 block font-medium">
+                            Name <span class="text-red-500">*</span>
+                        </label>
+                        <input id="name" type="text" pInputText formControlName="name"
+                            placeholder="Enter student/parent name" class="w-full" />
+                        <small *ngIf="isInvalid('name')" class="p-error">
+                            Name is required (min 2 characters)
+                        </small>
+                    </div>
+
+                    <div class="col-12 md:col-6">
+                        <label for="mobileNumber" class="mb-2 block font-medium">
+                            Mobile Number <span class="text-red-500">*</span>
+                        </label>
+                        <input id="mobileNumber" type="tel" pInputText formControlName="mobileNumber"
+                            placeholder="Enter 10-digit mobile number" maxlength="10" class="w-full" />
+                        <small *ngIf="isInvalid('mobileNumber')" class="p-error">
+                            Valid 10-digit mobile number required
+                        </small>
+                    </div>
+
+                    <!-- Row 2: Email & Class -->
+                    <div class="col-12 md:col-6 mt-3">
+                        <label for="email" class="mb-2 block font-medium">
+                            Email ID <span class="text-red-500">*</span>
+                        </label>
+                        <input id="email" type="email" pInputText formControlName="email"
+                            placeholder="Enter email address" class="w-full" />
+                        <small *ngIf="isInvalid('email')" class="p-error">
+                            Valid email is required
+                        </small>
+                    </div>
+
+                    <div class="col-12 md:col-6 mt-3">
+                        <label for="classInterested" class="mb-2 block font-medium">
+                            Class Interested In <span class="text-red-500">*</span>
+                        </label>
+                        <p-dropdown id="classInterested" formControlName="classInterested" [options]="classOptions"
+                            optionLabel="label" optionValue="value" placeholder="Select Class" [showClear]="true"
+                            [filter]="true" filterPlaceholder="Search..." styleClass="w-full">
+                        </p-dropdown>
+                        <small *ngIf="isInvalid('classInterested')" class="p-error">
+                            Class selection is required
+                        </small>
+                    </div>
+
+                    <!-- Row 3: Address (full width) -->
+                    <div class="col-12 mt-3">
+                        <label for="address" class="mb-2 block font-medium">
+                            Address <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="address" pTextarea formControlName="address" rows="2"
+                            placeholder="Enter complete address" class="w-full"></textarea>
+                        <small *ngIf="isInvalid('address')" class="p-error">
+                            Address is required (min 5 characters)
+                        </small>
+                    </div>
+
+                    <!-- Row 4: Inquiry Source & Referred By -->
+                    <div class="col-12 md:col-6 mt-3">
+                        <label for="inquirySource" class="mb-2 block font-medium">
+                            Inquiry Source <span class="text-red-500">*</span>
+                        </label>
+                        <p-dropdown id="inquirySource" formControlName="inquirySource" [options]="inquirySources"
+                            optionLabel="label" optionValue="value" placeholder="Select Source" [showClear]="true"
+                            styleClass="w-full">
+                        </p-dropdown>
+                        <small *ngIf="isInvalid('inquirySource')" class="p-error">
+                            Inquiry source is required
+                        </small>
+                    </div>
+
+                    <div class="col-12 md:col-6 mt-3">
+                        <label for="referredBy" class="mb-2 block font-medium">
+                            Referred By
+                        </label>
+                        <input id="referredBy" type="text" pInputText formControlName="referredBy"
+                            placeholder="Enter referrer name (if any)" class="w-full" />
+                    </div>
+
+                    <!-- Row 5: Comments (full width) -->
+                    <div class="col-12 mt-3">
+                        <label for="comments" class="mb-2 block font-medium">
+                            Comments
+                        </label>
+                        <textarea id="comments" pTextarea formControlName="comments" rows="3"
+                            placeholder="Add any additional comments or notes..." class="w-full"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12 mt-4">
+                        <div class="flex gap-2 flex-wrap">
+                            <button pButton type="button" [label]="isEditMode ? 'Cancel' : 'Reset'"
+                                class="p-button-outlined p-button-secondary"
+                                [icon]="isEditMode ? 'pi pi-times' : 'pi pi-refresh'"
+                                (click)="isEditMode ? cancelEdit() : resetForm()">
+                            </button>
+                            <button pButton type="submit" [label]="isEditMode ? 'Update Inquiry' : 'Save Inquiry'"
+                                class="p-button-success" [icon]="isEditMode ? 'pi pi-check' : 'pi pi-save'">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </p-card>
+    </p-tabPanel>
+
+    <!-- View Inquiries Tab -->
+    <p-tabPanel header="View Inquiries">
+        <div class="inquiry-list-container">
+            <p-table #dt [value]="inquiries" [loading]="loading" [paginator]="true" [rows]="10"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [rowsPerPageOptions]="[5, 10, 20, 50]"
+                [globalFilterFields]="['name', 'mobileNumber', 'email', 'classInterested', 'assignedCounselor', 'inquirySource']"
+                styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped" [responsiveLayout]="'scroll'">
+
+                <!-- Search & Filter Bar -->
+                <ng-template pTemplate="caption">
+                    <div class="flex flex-wrap gap-3 align-items-center justify-content-between">
+                        <div class="flex flex-wrap gap-2 align-items-center">
+                            <!-- Name Filter -->
+                            <input pInputText type="text" [(ngModel)]="filterName"
+                                (input)="dt.filterGlobal(filterName, 'contains')" placeholder="Search by name..."
+                                class="p-inputtext-sm" style="width: 150px;" />
+
+                            <!-- Mobile Filter -->
+                            <input pInputText type="text" [(ngModel)]="filterMobile"
+                                (input)="dt.filter(filterMobile, 'mobileNumber', 'contains')" placeholder="Mobile..."
+                                class="p-inputtext-sm" style="width: 120px;" />
+
+                            <!-- Class Filter -->
+                            <div class="filter-dropdown-wrapper">
+                                <p-dropdown [(ngModel)]="filterClass" [options]="classOptions" optionLabel="label"
+                                    optionValue="value"
+                                    (onChange)="dt.filter($event.value, 'classInterested', 'equals')"
+                                    placeholder="Class" [showClear]="true"
+                                    styleClass="p-dropdown-sm filter-class-dropdown">
+                                </p-dropdown>
+                            </div>
+
+                            <!-- Source Filter -->
+                            <div class="filter-dropdown-wrapper">
+                                <p-dropdown [(ngModel)]="filterSource" [options]="inquirySources" optionLabel="label"
+                                    optionValue="value" (onChange)="dt.filter($event.value, 'inquirySource', 'equals')"
+                                    placeholder="Source" [showClear]="true"
+                                    styleClass="p-dropdown-sm filter-source-dropdown">
+                                </p-dropdown>
+                            </div>
+
+                            <!-- Clear Filters -->
+                            <button pButton type="button" icon="pi pi-filter-slash"
+                                class="p-button-outlined p-button-secondary p-button-sm" pTooltip="Clear Filters"
+                                tooltipPosition="top" (click)="clearFilters(); dt.clear()">
+                            </button>
+                        </div>
+
+                        <!-- Refresh Button -->
+                        <button pButton type="button" icon="pi pi-refresh" label="Refresh"
+                            class="p-button-outlined p-button-sm" (click)="loadInquiries()">
+                        </button>
+                    </div>
+                </ng-template>
+
+                <!-- Table Header -->
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 4rem;">Sl.</th>
+                        <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                        <th pSortableColumn="mobileNumber">Mobile <p-sortIcon field="mobileNumber"></p-sortIcon></th>
+                        <th>Email</th>
+                        <th pSortableColumn="classInterested">Class <p-sortIcon field="classInterested"></p-sortIcon>
+                        </th>
+                        <th pSortableColumn="assignedCounselor">Counselor <p-sortIcon
+                                field="assignedCounselor"></p-sortIcon></th>
+                        <th pSortableColumn="inquirySource">Source <p-sortIcon field="inquirySource"></p-sortIcon></th>
+                        <th>Status</th>
+                        <th style="width: 8rem; text-align: center;">Actions</th>
+                    </tr>
+                </ng-template>
+
+                <!-- Table Body -->
+                <ng-template pTemplate="body" let-inquiry let-i="rowIndex">
+                    <tr>
+                        <td>{{ i + 1 }}</td>
+                        <td>
+                            <span class="font-medium">{{ inquiry.name }}</span>
+                        </td>
+                        <td>{{ inquiry.mobileNumber }}</td>
+                        <td class="truncate-text" style="max-width: 180px;" [pTooltip]="inquiry.email">
+                            {{ inquiry.email }}
+                        </td>
+                        <td>
+                            <p-tag [value]="getClassLabel(inquiry.classInterested)" severity="info" [rounded]="true">
+                            </p-tag>
+                        </td>
+                        <td>{{ inquiry.assignedCounselor || '-' }}</td>
+                        <td>
+                            <p-tag [value]="getSourceLabel(inquiry.inquirySource)" severity="secondary"
+                                [rounded]="true">
+                            </p-tag>
+                        </td>
+                        <td>
+                            <p-tag [value]="inquiry.status || 'New'" [severity]="getStatusSeverity(inquiry.status)">
+                            </p-tag>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="flex gap-1 justify-content-center">
+                                <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info"
+                                    (onClick)="onEdit(inquiry)" pTooltip="Edit" tooltipPosition="top">
+                                </p-button>
+                                <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-sm p-button-danger"
+                                    (onClick)="onDelete(inquiry)" pTooltip="Delete" tooltipPosition="top">
+                                </p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <!-- Empty Message -->
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="9" class="text-center p-4">
+                            <div class="flex flex-column align-items-center gap-2">
+                                <i class="pi pi-inbox text-4xl text-gray-400"></i>
+                                <span class="text-gray-500">No inquiries found.</span>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </p-tabPanel>
+</p-tabView>
