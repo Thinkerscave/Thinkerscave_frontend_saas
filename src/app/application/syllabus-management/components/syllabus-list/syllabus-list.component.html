@@ -1,0 +1,31 @@
+<div class="card">
+    <div class="flex justify-content-between mb-3">
+        <h2>Syllabus Management</h2>
+        <button pButton label="Create New" icon="pi pi-plus" [routerLink]="['create']"></button>
+    </div>
+    <p-table [value]="syllabi" [loading]="loading">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Code</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Approved Date</th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-syllabus>
+            <tr>
+                <td>{{ syllabus.syllabusCode }}</td>
+                <td>{{ syllabus.version }}</td>
+                <td><p-tag [value]="syllabus.status" [severity]="getSeverity(syllabus.status)"></p-tag></td>
+                <td>{{ syllabus.approvedDate | date }}</td>
+                <td>
+                    <button pButton icon="pi pi-pencil" class="p-button-text mr-2"
+                        [routerLink]="['edit', syllabus.id]"></button>
+                    <button pButton icon="pi pi-clock" class="p-button-text p-button-secondary"
+                        [routerLink]="['history', syllabus.id]"></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

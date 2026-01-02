@@ -1,0 +1,29 @@
+<div class="card">
+  <div class="flex justify-content-between mb-3">
+    <h2>Academic Structure</h2>
+    <button pButton label="Add New" icon="pi pi-plus" [routerLink]="['create']"></button>
+  </div>
+  <p-table [value]="containers" [loading]="loading" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Code</th>
+        <th>Level</th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-container>
+      <tr>
+        <td>{{ container.containerName }}</td>
+        <td>{{ container.containerType }}</td>
+        <td>{{ container.containerCode }}</td>
+        <td>{{ container.level }}</td>
+        <td>
+          <button pButton icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" [routerLink]="['edit', container.id]"></button>
+          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

@@ -1,0 +1,34 @@
+<div class="card">
+    <div class="flex justify-content-between mb-3">
+        <h2>Syllabus Version History</h2>
+        <button pButton label="Create New Version" icon="pi pi-copy" (click)="createNewVersion()"></button>
+    </div>
+    <p-table [value]="history" [rowHover]="true">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Created Date</th>
+                <th>Approved Date</th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ver>
+            <tr>
+                <td>{{ ver.version }}</td>
+                <td><p-tag [value]="ver.status"></p-tag></td>
+                <td>{{ ver.createdDate | date }}</td>
+                <td>{{ ver.approvedDate | date:'medium' }}</td>
+                <td>
+                    <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text"
+                        [routerLink]="['/app/academics/syllabus/edit', ver.id]"></button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5">No history found.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
