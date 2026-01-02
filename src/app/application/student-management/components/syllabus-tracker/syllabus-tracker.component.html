@@ -1,0 +1,35 @@
+<div class="card">
+    <div class="mb-3">
+        <h2>My Syllabus Progress</h2>
+        <app-progress-bar [value]="progress"></app-progress-bar>
+        <p class="text-right mt-1 text-500 font-bold">{{ progress }}% Completed</p>
+    </div>
+
+    <div *ngIf="loading" class="flex justify-content-center">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+
+    <div *ngIf="!loading && syllabus">
+        <h3 class="mb-3">{{ syllabus.syllabusCode }}</h3>
+        <p-accordion [multiple]="true">
+            <p-accordionTab *ngFor="let chapter of syllabus.chapters" [header]="chapter.name">
+                <div class="flex flex-column gap-3">
+                    <div *ngFor="let topic of chapter.topics"
+                        class="flex align-items-center p-2 border-bottom-1 surface-border">
+                        <div class="flex-grow-1 flex align-items-center gap-2">
+                            <p-checkbox [binary]="true" [ngModel]="isTopicCompleted(topic.id!)"
+                                (onChange)="toggleTopic(topic, chapter.id!)"></p-checkbox>
+                            <span [ngClass]="{'line-through text-500': isTopicCompleted(topic.id!)}">{{ topic.name
+                                }}</span>
+                        </div>
+                        <span class="text-sm text-500">{{ topic.estimatedMinutes }} mins</span>
+                    </div>
+                </div>
+            </p-accordionTab>
+        </p-accordion>
+    </div>
+
+    <div *ngIf="!loading && !syllabus" class="text-center p-4">
+        <p>No syllabus currently assigned.</p>
+    </div>
+</div>

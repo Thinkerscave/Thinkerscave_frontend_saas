@@ -70,6 +70,55 @@ export const APPLICATION_ROUTES: Routes = [
     data: { breadcrumb: 'Inquiry Management' }
   },
   {
+    path: 'academics',
+    children: [
+      {
+        path: 'structure',
+        loadComponent: () => import('./academic-structure/components/structure-list/structure-list.component').then(m => m.StructureListComponent)
+      },
+      {
+        path: 'structure/create',
+        loadComponent: () => import('./academic-structure/components/structure-form/structure-form.component').then(m => m.StructureFormComponent)
+      },
+      {
+        path: 'structure/edit/:id',
+        loadComponent: () => import('./academic-structure/components/structure-form/structure-form.component').then(m => m.StructureFormComponent)
+      },
+      {
+        path: 'courses',
+        loadComponent: () => import('./course-management/components/course-list/course-list.component').then(m => m.CourseListComponent)
+      },
+      {
+        path: 'subjects',
+        loadComponent: () => import('./course-management/components/subject-mapping/subject-mapping.component').then(m => m.SubjectMappingComponent)
+      },
+      {
+        path: 'years',
+        loadComponent: () => import('./course-management/components/academic-year-config/academic-year-config.component').then(m => m.AcademicYearConfigComponent)
+      },
+      {
+        path: 'syllabus',
+        loadComponent: () => import('./syllabus-management/components/syllabus-list/syllabus-list.component').then(m => m.SyllabusListComponent)
+      },
+      {
+        path: 'syllabus/create',
+        loadComponent: () => import('./syllabus-management/components/syllabus-editor/syllabus-editor.component').then(m => m.SyllabusEditorComponent)
+      },
+      {
+        path: 'syllabus/edit/:id',
+        loadComponent: () => import('./syllabus-management/components/syllabus-editor/syllabus-editor.component').then(m => m.SyllabusEditorComponent)
+      },
+      {
+        path: 'syllabus/history/:id',
+        loadComponent: () => import('./syllabus-management/components/syllabus-version-history/syllabus-version-history.component').then(m => m.SyllabusVersionHistoryComponent)
+      },
+      {
+        path: 'tracker',
+        loadComponent: () => import('./student-management/components/syllabus-tracker/syllabus-tracker.component').then(m => m.SyllabusTrackerComponent)
+      }
+    ]
+  },
+  {
     path: '',
     children: LEAD_MANAGEMENT_ROUTES
   }

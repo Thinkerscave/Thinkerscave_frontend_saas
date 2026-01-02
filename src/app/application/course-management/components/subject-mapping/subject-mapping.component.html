@@ -1,0 +1,25 @@
+<div class="card p-4">
+    <h2>Subject Mapping</h2>
+    <form [formGroup]="mappingForm" (ngSubmit)="onSubmit()">
+        <div class="grid">
+            <div class="col-12 md:col-6 field">
+                <label>Academic Year</label>
+                <p-dropdown [options]="academicYears" formControlName="academicYearId" placeholder="Select Year"
+                    class="w-full"></p-dropdown>
+            </div>
+            <div class="col-12 md:col-6 field">
+                <label>Container (Class/Branch)</label>
+                <p-dropdown [options]="containers" optionLabel="containerName" optionValue="id"
+                    formControlName="containerId" placeholder="Select Container" class="w-full"></p-dropdown>
+            </div>
+            <div class="col-12 md:col-6 field">
+                <label>Subject</label>
+                <p-dropdown [options]="subjects" optionLabel="name" optionValue="id" formControlName="subjectId"
+                    placeholder="Select Subject" class="w-full"></p-dropdown>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button pButton label="Save Mapping" type="submit"></button>
+        </div>
+    </form>
+</div>

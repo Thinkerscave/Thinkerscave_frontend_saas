@@ -1,0 +1,29 @@
+<div class="card p-4">
+    <h2>{{ isEditMode ? 'Edit' : 'Create' }} Academic Container</h2>
+    <form [formGroup]="structureForm" (ngSubmit)="onSubmit()">
+        <div class="grid">
+            <div class="col-12 md:col-6 field">
+                <label for="name">Name</label>
+                <input pInputText id="name" formControlName="containerName" class="w-full" />
+            </div>
+            <div class="col-12 md:col-6 field">
+                <label for="code">Code</label>
+                <input pInputText id="code" formControlName="containerCode" class="w-full" />
+            </div>
+            <div class="col-12 md:col-6 field">
+                <label for="type">Type</label>
+                <p-dropdown [options]="containerTypes" formControlName="containerType" placeholder="Select Type"
+                    class="w-full"></p-dropdown>
+            </div>
+            <div class="col-12 md:col-6 field">
+                <label for="level">Level</label>
+                <input pInputText type="number" id="level" formControlName="level" class="w-full" />
+            </div>
+        </div>
+        <div class="flex justify-content-end gap-2 mt-4">
+            <button pButton label="Cancel" type="button" class="p-button-secondary"
+                [routerLink]="['/app/academic-structure']"></button>
+            <button pButton label="Save" type="submit"></button>
+        </div>
+    </form>
+</div>

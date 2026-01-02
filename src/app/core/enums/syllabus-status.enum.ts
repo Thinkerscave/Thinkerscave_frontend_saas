@@ -1,0 +1,7 @@
+export enum SyllabusStatus {
+    DRAFT = 'DRAFT',
+    PENDING_APPROVAL = 'PENDING_APPROVAL',
+    APPROVED = 'APPROVED',
+    PUBLISHED = 'PUBLISHED',
+    ARCHIVED = 'ARCHIVED'
+}
