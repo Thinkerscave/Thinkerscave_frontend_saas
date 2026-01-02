@@ -1,18 +1,196 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .side-menu-wrapper {
   width: 100%;
   height: 100%;
-  transition: width 0.3s ease, transform 0.3s ease;
+  transition: width 0.3s ease;
   background-color: #f4f6f8;
-  overflow: hidden;
+  overflow: hidden; // Changed to hidden to clip text
 
   &.is-collapsed {
-    width: 0;
-    min-width: 0;
-    transform: translateX(-100%);
-
+    overflow: hidden !important; // Ensure text is clipped
+    // Icons will still be visible, just text hidden
     .side-menu {
-      pointer-events: none;
-      opacity: 0;
+      ::ng-deep {
+        // AGGRESSIVE APPROACH: Hide ALL text, show ONLY icons
+        .p-panelmenu-header-link {
+          font-size: 0 !important;
+          line-height: 0 !important;
+          justify-content: center !important;
+          align-items: center !important;
+          padding: 0.75rem 0.5rem !important;
+          min-height: 44px;
+          width: 100%;
+          overflow: hidden !important;
+          text-overflow: clip !important;
+          
+          // Hide text labels and all text-containing elements - MULTIPLE TECHNIQUES
+          .p-panelmenu-header-label,
+          span.p-panelmenu-header-label,
+          .p-panelmenu-header-content .p-panelmenu-header-label,
+          .p-panelmenu-header-content > span,
+          span:not([class*="pi-"]):not([class*="icon"]),
+          .p-panelmenu-header-content span:not([class*="pi-"]):not([class*="icon"]),
+          [class*="p-panelmenu-header-label"] {
+            display: none !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            text-indent: -9999px !important;
+            clip-path: inset(0 100% 0 0) !important;
+            position: absolute !important;
+            left: -9999px !important;
+            white-space: nowrap !important;
+            text-overflow: clip !important;
+          }
+          
+          // Hide any text nodes using text-indent technique
+          .p-panelmenu-header-content {
+            text-indent: -9999px !important;
+            overflow: hidden !important;
+            
+            // But restore for icons
+            i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+              text-indent: 0 !important;
+            }
+          }
+          
+          // Hide chevron icons
+          .p-panelmenu-header-icon,
+          i.pi-chevron-right,
+          i.pi-chevron-down,
+          i[class*="chevron"] {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+          
+          // Show ONLY menu item icons (pi-home, pi-list, etc.)
+          i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+            display: inline-block !important;
+            font-size: 1.25rem !important;
+            line-height: 1.25rem !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            margin: 0 auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 1.25rem !important;
+            min-height: 1.25rem !important;
+            max-width: none !important;
+            max-height: none !important;
+            text-indent: 0 !important;
+            clip-path: none !important;
+            position: relative !important;
+            left: auto !important;
+          }
+          
+          // Center content container
+          .p-panelmenu-header-content {
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            flex: none !important;
+            display: flex !important;
+            font-size: 0 !important;
+            overflow: visible !important;
+            
+            // Hide all text inside content
+            > span:not([class*="pi-"]):not([class*="icon"]),
+            span:not([class*="pi-"]):not([class*="icon"]) {
+              display: none !important;
+              width: 0 !important;
+              opacity: 0 !important;
+              visibility: hidden !important;
+            }
+            
+            // Ensure icons inside content are visible
+            > i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon),
+            i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+              display: inline-block !important;
+              font-size: 1.25rem !important;
+              line-height: 1.25rem !important;
+              opacity: 1 !important;
+              visibility: visible !important;
+              width: auto !important;
+              height: auto !important;
+              text-indent: 0 !important;
+              clip-path: none !important;
+            }
+          }
+        }
+        
+        // Hide submenu content when collapsed
+        .p-panelmenu-content-wrapper,
+        .p-panelmenu-content {
+          display: none !important;
+          height: 0 !important;
+          overflow: hidden !important;
+        }
+      }
+    }
+    
+    // Additional targeting when collapsed class is on panelmenu itself
+    .collapsed-menu {
+      ::ng-deep {
+        // Same aggressive approach for collapsed-menu class
+        .p-panelmenu-header-link {
+          font-size: 0 !important;
+          overflow: hidden !important;
+          justify-content: center !important;
+          
+          // Hide everything first
+          * {
+            font-size: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            clip-path: inset(0 100% 0 0) !important;
+          }
+          
+          // Show only menu icons
+          i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+            display: inline-block !important;
+            font-size: 1.25rem !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            width: auto !important;
+            height: auto !important;
+            clip-path: none !important;
+          }
+          
+          // Active state when collapsed - show green background
+          &.p-highlight,
+          &.active-menu-item,
+          &.router-link-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+            
+            i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+              color: white !important;
+            }
+          }
+        }
+        
+        .p-panelmenu-header-content {
+          justify-content: center !important;
+          align-items: center !important;
+          display: flex !important;
+        }
+      }
     }
   }
 }
@@ -22,4 +200,106 @@
   background-color: #f4f6f8;
   border-right: 1px solid #e0e0e0;
   padding: 0.5rem;
+  overflow: hidden;
+  
+  // When collapsed, ensure text is hidden
+  :host-context(.is-collapsed) & {
+    overflow: hidden !important;
+  }
+
+  ::ng-deep {
+    // Active menu item styling
+    .p-panelmenu-panel {
+
+      
+      .p-panelmenu-header-link {
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        transition: all 0.2s ease;
+        
+        // Active state (when menu item is clicked and route is active)
+        &.p-highlight,
+        &.active-menu-item,
+        &.router-link-active,
+        &[class*="router-link-active"] {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; // Green gradient for active state
+          color: white !important;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+          border-left: 4px solid #047857 !important;
+
+          .p-panelmenu-header-icon {
+            color: white !important;
+          }
+
+          i[class*="pi-"]:not(.p-panelmenu-header-icon) {
+            color: white !important;
+          }
+
+          .p-panelmenu-header-label {
+            color: white !important;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          }
+
+          &:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+          }
+        }
+
+        // Parent menu item when child is active
+        &.parent-active {
+          background-color: #d1fae5 !important; // Light green for parent
+          border-left: 3px solid #10b981 !important;
+          
+          .p-panelmenu-header-label {
+            color: #047857 !important;
+            font-weight: 600;
+          }
+          
+          i[class*="pi-"]:not(.p-panelmenu-header-icon) {
+            color: #047857 !important;
+          }
+        }
+
+        &:hover:not(.p-highlight):not(.active-menu-item):not(.router-link-active):not([class*="router-link-active"]) {
+          background-color: #e5e7eb; // Light gray on hover
+        }
+      }
+
+      // Active submenu items
+      .p-panelmenu-content {
+        .p-menuitem-link {
+          border-radius: 6px;
+          margin-bottom: 0.125rem;
+          transition: all 0.2s ease;
+
+          &.router-link-active,
+          &[class*="router-link-active"],
+          &.active-submenu-item {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: white !important;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3) !important;
+            border-left: 3px solid #047857 !important;
+            font-weight: 600 !important;
+
+            .p-menuitem-icon,
+            .p-menuitem-text {
+              color: white !important;
+              font-weight: 600 !important;
+            }
+
+            &:hover {
+              background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+              box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4) !important;
+            }
+          }
+
+          &:hover:not(.router-link-active):not([class*="router-link-active"]):not(.active-submenu-item) {
+            background-color: #f3f4f6;
+          }
+        }
+      }
+    }
+  }
 }

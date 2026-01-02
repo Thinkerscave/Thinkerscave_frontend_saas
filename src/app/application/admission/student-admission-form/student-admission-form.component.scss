@@ -1,27 +1,148 @@
-:host ::ng-deep .form-grid {
-      display: grid;
-      grid-template-columns: 1fr; /* Default to single column */
-      gap: 1.75rem 2rem; /* Vertical and horizontal gap */
-    }
-
-    /* On medium screens and up, switch to two columns */
-    @media (min-width: 768px) {
-      :host ::ng-deep .form-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    :host ::ng-deep .form-field {
-      display: flex;
-      flex-direction: column;
-    }
-
-    :host ::ng-deep .form-field label {
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-      color: #374151; /* text-gray-700 */
-    }
+:host ::ng-deep {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.75rem 2rem;
     
-    :host ::ng-deep .col-span-full {
-        grid-column: 1 / -1;
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
     }
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-field label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+    font-size: 0.95rem;
+  }
+
+  .required-label::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: bold;
+  }
+
+  .col-span-full {
+    grid-column: 1 / -1;
+  }
+
+  /* Form input focus styles */
+  .p-inputtext:enabled:focus, 
+  .p-dropdown:not(.p-disabled).p-focus, 
+  .p-calendar:not(.p-disabled).p-focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    border-color: #3b82f6 !important;
+  }
+
+  /* Error states */
+  .border-red-500 {
+    border-color: #ef4444 !important;
+  }
+
+  .border-red-500:focus {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+    border-color: #ef4444 !important;
+  }
+
+  .error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .error-message::before {
+    content: "⚠";
+    font-size: 0.875rem;
+  }
+
+  /* Step indicator styles */
+  .p-steps .p-steps-item.p-highlight .p-steps-number {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  }
+
+  .p-steps .p-steps-item:before {
+    border-top: 2px solid #e5e7eb;
+  }
+
+  .p-steps .p-steps-item.p-highlight:before {
+    border-top: 2px solid #3b82f6;
+  }
+
+  /* Button enhancements */
+  .p-button {
+    transition: all 0.3s ease;
+  }
+
+  .p-button:enabled:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .p-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Card styles */
+  .p-card {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .p-card .p-card-title {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .p-card .p-card-subtitle {
+    color: #6b7280;
+    font-size: 1.125rem;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+}
+
+/* Animation for form steps */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+div[ngIf] {
+  animation: fadeIn 0.3s ease-out;
+}

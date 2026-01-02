@@ -5,3 +5,49 @@
 html {
     color-scheme: light;
 }
+
+// Global styles for collapsed sidebar - hide text, show only icons
+.side-menu-wrapper.is-collapsed {
+  .side-menu,
+  .collapsed-menu {
+    .p-panelmenu-header-link {
+      font-size: 0 !important;
+      
+      // Hide ALL text content
+      .p-panelmenu-header-label,
+      span.p-panelmenu-header-label,
+      .p-panelmenu-header-content .p-panelmenu-header-label,
+      .p-panelmenu-header-content > span,
+      span:not([class*="pi-"]):not([class*="icon"]) {
+        display: none !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        font-size: 0 !important;
+        text-indent: -9999px !important;
+        position: absolute !important;
+        left: -9999px !important;
+      }
+      
+      // Hide chevrons
+      .p-panelmenu-header-icon,
+      i[class*="chevron"] {
+        display: none !important;
+      }
+      
+      // Show ONLY menu icons
+      i[class*="pi-"]:not([class*="chevron"]):not(.p-panelmenu-header-icon) {
+        display: inline-block !important;
+        font-size: 1.25rem !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+      
+      .p-panelmenu-header-content {
+        justify-content: center !important;
+        font-size: 0 !important;
+      }
+    }
+  }
+}

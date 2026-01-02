@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { StepsModule } from 'primeng/steps';
 import { CardModule } from 'primeng/card';
@@ -18,6 +18,7 @@ import { AdmissionService } from '../../../services/admission.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     StepsModule,
     CardModule,
     InputTextModule,
@@ -33,9 +34,11 @@ import { AdmissionService } from '../../../services/admission.service';
   providers: [MessageService]
 })
 export class StudentAdmissionFormComponent {
- items: MenuItem[] = [];
+  items: MenuItem[] = [];
   activeIndex: number = 0;
   admissionForm!: FormGroup;
+  reviewConfirmed: boolean = false;
+  reviewFormTouched: boolean = false;
 
   // Options for dropdowns
   genderOptions = [{ name: 'Male' }, { name: 'Female' }, { name: 'Other' }];
@@ -44,7 +47,7 @@ export class StudentAdmissionFormComponent {
     { name: 'Class X' }, { name: 'Class XII - Science' }
   ];
 
-  // For the final review step
+  // For the review step
   reviewSections: any[] = [];
 
   // Maps the active step index to the corresponding form group name
@@ -54,13 +57,14 @@ export class StudentAdmissionFormComponent {
     'parentDetails',
     'address', // 'address' and 'emergencyContact' are validated together
     'documents',
-    'payment'
+    '', // Step 5 is review, no form group
+    'payment' // Step 6 is payment (was step 5)
   ];
 
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
-    private admissionService: AdmissionService // Inject the service
+    private admissionService: AdmissionService
   ) { }
 
   ngOnInit() {
@@ -70,8 +74,8 @@ export class StudentAdmissionFormComponent {
       { label: 'Parent Details' },
       { label: 'Address' },
       { label: 'Documents' },
-      { label: 'Payment' },
-      { label: 'Review & Submit' }
+      { label: 'Review' }, // Moved before payment
+      { label: 'Payment' }  // Now the last step
     ];
 
     // Initialize the reactive form with all its groups and validators
@@ -156,6 +160,21 @@ export class StudentAdmissionFormComponent {
     // Validate the current step's form group before proceeding
     if (this.activeIndex > 0 && this.activeIndex < 6) {
       const groupName = this.stepFormGroupMap[this.activeIndex];
+      
+      // Special handling for review step (step 5)
+      if (this.activeIndex === 5) {
+        this.reviewFormTouched = true;
+        if (!this.reviewConfirmed) {
+          this.showError('Please confirm your review before proceeding to payment.');
+          return;
+        }
+        // If review is confirmed, proceed to payment
+        if (this.activeIndex < this.items.length - 1) {
+          this.activeIndex++;
+        }
+        return;
+      }
+
       const currentGroup = this.admissionForm.get(groupName);
 
       if (currentGroup) {
@@ -182,7 +201,7 @@ export class StudentAdmissionFormComponent {
     if (this.activeIndex < this.items.length - 1) {
       this.activeIndex++;
       // If we are now on the review step, prepare the data for display
-      if (this.activeIndex === this.items.length - 1) {
+      if (this.activeIndex === 5) { // Changed to 5 for review step
         this.prepareReviewData();
       }
     }
@@ -190,6 +209,10 @@ export class StudentAdmissionFormComponent {
 
   // Navigation to the previous step
   prevStep() {
+    if (this.activeIndex === 6) { // If on payment step, clear review confirmation
+      this.reviewConfirmed = false;
+      this.reviewFormTouched = false;
+    }
     if (this.activeIndex > 0) {
       this.activeIndex--;
     }
@@ -226,11 +249,7 @@ export class StudentAdmissionFormComponent {
             summary: 'Application Submitted!',
             detail: `Your Application ID is ${response.applicationId}. A confirmation has been sent.`
           });
-          this.admissionForm.reset();
-          while (this.documents.length !== 1) {
-            this.documents.removeAt(0);
-          }
-          this.activeIndex = 0;
+          this.resetForm();
         },
         error: (err) => this.showError(err.error?.message || 'Submission failed. Please try again.')
       });
@@ -239,15 +258,26 @@ export class StudentAdmissionFormComponent {
     }
   }
 
+  // Reset form after submission
+  resetForm() {
+    this.admissionForm.reset();
+    while (this.documents.length !== 1) {
+      this.documents.removeAt(0);
+    }
+    this.reviewConfirmed = false;
+    this.reviewFormTouched = false;
+    this.activeIndex = 0;
+  }
+
   // Prepares data from the form to be displayed in the review section
   prepareReviewData() {
-    const formValue = this.admissionForm.getRawValue(); // Use getRawValue to include disabled fields if any
+    const formValue = this.admissionForm.getRawValue();
     this.reviewSections = [
       {
         title: 'Basic Information',
         fields: [
           { label: 'Full Name', value: `${formValue.basicInfo.first_name} ${formValue.basicInfo.last_name}` },
-          { label: 'Date of Birth', value: new Date(formValue.basicInfo.date_of_birth).toLocaleDateString('en-GB') },
+          { label: 'Date of Birth', value: formValue.basicInfo.date_of_birth ? new Date(formValue.basicInfo.date_of_birth).toLocaleDateString('en-GB') : 'Not provided' },
           { label: 'Gender', value: formValue.basicInfo.gender?.name },
           { label: 'Program', value: formValue.basicInfo.applying_for_school?.name }
         ]
@@ -256,7 +286,7 @@ export class StudentAdmissionFormComponent {
         title: 'Parent/Guardian Details',
         fields: [
           { label: "Parent's Name", value: formValue.parentDetails.parent_name },
-          { label: "Guardian's Name", value: formValue.parentDetails.guardian_name || 'N/A' },
+          { label: "Guardian's Name", value: formValue.parentDetails.guardian_name || 'Not provided' },
           { label: 'Email', value: formValue.parentDetails.email },
           { label: 'Phone', value: formValue.parentDetails.contact_number }
         ]
@@ -281,5 +311,30 @@ export class StudentAdmissionFormComponent {
   // Helper method for showing error toasts
   private showError(message: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
+  }
+
+  // Form group getters for template
+  get basicInfo() {
+    return this.admissionForm.get('basicInfo') as FormGroup;
+  }
+
+  get parentDetails() {
+    return this.admissionForm.get('parentDetails') as FormGroup;
+  }
+
+  get address() {
+    return this.admissionForm.get('address') as FormGroup;
+  }
+
+  get emergencyContact() {
+    return this.admissionForm.get('emergencyContact') as FormGroup;
+  }
+
+  get payment() {
+    return this.admissionForm.get('payment') as FormGroup;
+  }
+
+  get finalDeclaration() {
+    return this.admissionForm.get('finalDeclaration') as FormGroup;
   }
 }

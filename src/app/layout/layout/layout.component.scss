@@ -44,9 +44,9 @@
 .layout-container.sidebar-collapsed {
   .main-content {
     .sidemenu {
-      width: 0;
-      transform: translateX(-100%);
-      border-right: none;
+      width: 70px; // Show icons only, keep sidebar visible
+      // transform: translateX(-100%); // Remove this to keep sidebar visible
+      border-right: 1px solid #ddd;
     }
   }
 }
@@ -74,7 +74,8 @@
   .layout-container.sidebar-collapsed {
     .main-content {
       .sidemenu {
-        box-shadow: none;
+        width: 70px; // Keep icons visible on mobile too
+        box-shadow: 8px 0 24px rgba(0, 0, 0, 0.1); // Keep shadow for visibility
       }
     }
   }

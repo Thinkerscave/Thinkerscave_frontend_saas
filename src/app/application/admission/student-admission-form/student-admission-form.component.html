@@ -1,225 +1,354 @@
- <!-- Main container with a modern background color -->
-    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div class="w-full max-w-5xl">
-        <p-toast></p-toast>
-        <p-card styleClass="shadow-lg rounded-xl">
-          <ng-template pTemplate="title">
-            <div class="text-2xl font-bold text-gray-800">New Admission Application - 2025</div>
-          </ng-template>
-          <ng-template pTemplate="subtitle">
-            Please fill out the form carefully, following all the steps.
-          </ng-template>
+<!-- Main container with a modern background color -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
+  <div class="w-full max-w-5xl">
+    <p-toast></p-toast>
+    <p-card styleClass="shadow-xl rounded-2xl border-0">
+      <ng-template pTemplate="title">
+        <div class="text-3xl font-bold text-gray-900">New Admission Application - 2025</div>
+      </ng-template>
+      <ng-template pTemplate="subtitle">
+        <div class="text-gray-600">Please fill out the form carefully, following all the steps. <span class="text-red-500">*</span> indicates required fields</div>
+      </ng-template>
 
-          <ng-template pTemplate="content">
-            <!-- Stepper -->
-            <p-steps [model]="items" [(activeIndex)]="activeIndex" [readonly]="true" styleClass="mb-8"></p-steps>
+      <ng-template pTemplate="content">
+        <!-- Stepper with updated labels -->
+        <p-steps [model]="items" [(activeIndex)]="activeIndex" [readonly]="true" styleClass="mb-10"></p-steps>
 
-            <!-- Form -->
-            <form [formGroup]="admissionForm">
+        <!-- Form -->
+        <form [formGroup]="admissionForm">
 
-              <!-- Step 0: Welcome & Guidelines -->
-              <div *ngIf="activeIndex === 0" class="px-4 py-8">
-                  <h3 class="text-xl font-semibold mb-6 text-gray-800">Admission Guidelines & Instructions</h3>
-                  <div class="space-y-6 text-gray-700">
-                    <p>Welcome to the Thinkerscave Admission Portal for the 2025 academic year. Please read the following guidelines carefully before proceeding:</p>
-                    <ul class="list-disc list-inside space-y-2 pl-4">
-                        <li>Ensure all information provided is accurate and truthful.</li>
-                        <li>Keep scanned copies of all required documents ready for upload (PDF or JPG, max 2MB each).</li>
-                        <li>The application fee of ₹500 is non-refundable.</li>
-                        <li>An application ID will be generated upon successful submission. Please save it for future reference.</li>
-                    </ul>
-                    <p>Click 'Next' to begin your application.</p>
-                  </div>
-              </div>
-
-              <!-- Step 1: Basic Information -->
-              <div *ngIf="activeIndex === 1">
-                <h3 class="text-xl font-semibold mb-6">1. Applicant's Basic Information</h3>
-                <div class="form-grid" formGroupName="basicInfo">
-                  <div class="form-field">
-                    <label for="first_name">First Name</label>
-                    <input pInputText id="first_name" formControlName="first_name" placeholder="John" />
-                  </div>
-                  <div class="form-field">
-                    <label for="last_name">Last Name</label>
-                    <input pInputText id="last_name" formControlName="last_name" placeholder="Doe" />
-                  </div>
-                  <div class="form-field">
-                    <label for="date_of_birth">Date of Birth</label>
-                    <p-calendar id="date_of_birth" formControlName="date_of_birth" [showIcon]="true" dateFormat="dd/mm/yy" styleClass="w-full"></p-calendar>
-                  </div>
-                  <div class="form-field">
-                    <label for="gender">Gender</label>
-                    <p-dropdown id="gender" [options]="genderOptions" formControlName="gender" placeholder="Select Gender" optionLabel="name" styleClass="w-full"></p-dropdown>
-                  </div>
-                  <div class="form-field col-span-full">
-                    <label for="applying_for_school">Applying for Class/Program</label>
-                    <p-dropdown id="applying_for_school" [options]="programOptions" formControlName="applying_for_school" placeholder="Select Program" optionLabel="name" styleClass="w-full"></p-dropdown>
-                  </div>
+          <!-- Step 0: Welcome & Guidelines -->
+          <div *ngIf="activeIndex === 0" class="px-6 py-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+              <h3 class="text-2xl font-bold mb-6 text-gray-900">Admission Guidelines & Instructions</h3>
+              <div class="space-y-6 text-gray-700">
+                <p class="text-lg">Welcome to the Thinkerscave Admission Portal for the 2025 academic year. Please read the following guidelines carefully before proceeding:</p>
+                <ul class="list-disc list-inside space-y-3 pl-5 text-gray-700">
+                    <li>Ensure all information provided is accurate and truthful.</li>
+                    <li>Keep scanned copies of all required documents ready for upload (PDF or JPG, max 2MB each).</li>
+                    <li>The application fee of ₹500 is non-refundable.</li>
+                    <li>An application ID will be generated upon successful submission. Please save it for future reference.</li>
+                    <li class="font-semibold text-red-600">Fields marked with <span class="text-red-500">*</span> are mandatory.</li>
+                </ul>
+                <div class="bg-blue-100 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-blue-800 font-medium">Click 'Next' to begin your application.</p>
                 </div>
               </div>
+          </div>
 
-              <!-- Step 2: Parent/Guardian Details -->
-              <div *ngIf="activeIndex === 2">
-                <h3 class="text-xl font-semibold mb-6">2. Parent/Guardian Details</h3>
-                <div class="form-grid" formGroupName="parentDetails">
-                    <div class="form-field">
-                      <label for="parent_name">Parent's Name</label>
-                      <input pInputText id="parent_name" formControlName="parent_name" placeholder="Michael Doe" />
-                    </div>
-                    <div class="form-field">
-                      <label for="guardian_name">Guardian's Name (Optional)</label>
-                      <input pInputText id="guardian_name" formControlName="guardian_name" placeholder="If applicable" />
-                    </div>
-                    <div class="form-field">
-                      <label for="email">Contact Email</label>
-                      <input pInputText id="email" type="email" formControlName="email" placeholder="parent@example.com" />
-                    </div>
-                    <div class="form-field">
-                      <label for="contact_number">Contact Phone Number</label>
-                      <input pInputText id="contact_number" type="tel" formControlName="contact_number" placeholder="+91 9876543210" />
-                    </div>
+          <!-- Step 1: Basic Information -->
+          <div *ngIf="activeIndex === 1" class="px-2">
+            <h3 class="text-2xl font-bold mb-8 text-gray-900">1. Applicant's Basic Information</h3>
+            <div class="form-grid" formGroupName="basicInfo">
+              <div class="form-field">
+                <label for="first_name" class="required-label">First Name</label>
+                <input pInputText id="first_name" formControlName="first_name" placeholder="John" 
+                       [class.border-red-500]="basicInfo.get('first_name')?.invalid && basicInfo.get('first_name')?.touched" />
+                <div class="error-message" *ngIf="basicInfo.get('first_name')?.invalid && basicInfo.get('first_name')?.touched">
+                  First name is required
                 </div>
               </div>
-
-              <!-- Step 3: Address & Emergency Contact -->
-              <div *ngIf="activeIndex === 3">
-                  <h3 class="text-xl font-semibold mb-6">3. Address & Emergency Contact</h3>
-                  <div class="space-y-8">
-                      <div class="form-grid" formGroupName="address">
-                        <div class="form-field col-span-full">
-                          <label>Street Address</label>
-                          <textarea pInputTextarea id="address" formControlName="street" rows="3" placeholder="123 Main St, Anytown..."></textarea>
-                        </div>
-                        <div class="form-field">
-                          <label for="city">City</label>
-                          <input pInputText id="city" formControlName="city" placeholder="New Delhi" />
-                        </div>
-                        <div class="form-field">
-                          <label for="state">State</label>
-                          <input pInputText id="state" formControlName="state" placeholder="Delhi" />
-                        </div>
-                        <div class="form-field col-span-full md:col-span-1">
-                          <label for="pincode">Pincode</label>
-                          <input pInputText id="pincode" formControlName="pincode" placeholder="110001" />
-                        </div>
-                      </div>
-                      <div class="pt-6 border-t" formGroupName="emergencyContact">
-                          <h4 class="text-lg font-semibold mb-4">Emergency Contact</h4>
-                          <div class="form-grid">
-                              <div class="form-field">
-                                  <label for="emergency_contact_name">Contact Person Name</label>
-                                  <input pInputText id="emergency_contact_name" formControlName="name" placeholder="Relative's Name" />
-                              </div>
-                              <div class="form-field">
-                                  <label for="emergency_contact_number">Contact Person Number</label>
-                                  <input pInputText id="emergency_contact_number" formControlName="number" placeholder="+91 9876543211" />
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- Step 4: Document Upload -->
-              <div *ngIf="activeIndex === 4">
-                <h3 class="text-xl font-semibold mb-2">4. Upload Required Documents</h3>
-                <p class="text-sm text-gray-500 mb-6">Upload files in PDF, JPG, or JPEG format (max 2MB each).</p>
-                <div formArrayName="documents">
-                  <div *ngFor="let doc of documents.controls; let i=index" [formGroupName]="i" class="mb-4">
-                    <div class="flex items-center gap-4">
-                      <div class="flex-grow form-field">
-                        <label>Document Name</label>
-                        <input pInputText formControlName="fileName" placeholder="e.g., Birth Certificate" />
-                      </div>
-                      <div class="form-field">
-                        <label>&nbsp;</label> <!-- Spacer for alignment -->
-                        <input type="file" [id]="'file-upload-' + i" (change)="onFileSelect($event, i)" class="hidden" accept="application/pdf,image/jpeg,image/jpg">
-                        <p-button label="Upload" icon="pi pi-upload" styleClass="p-button-secondary" (click)="triggerFileUpload(i)"></p-button>
-                      </div>
-                      <div class="form-field">
-                         <label>&nbsp;</label>
-                         <p-button icon="pi pi-trash" styleClass="p-button-danger" (click)="removeDocument(i)" [disabled]="documents.length === 1"></p-button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <p-button label="Add Document" icon="pi pi-plus" (click)="addDocument()" styleClass="p-button-text"></p-button>
-              </div>
-
-              <!-- Step 5: Payment -->
-              <div *ngIf="activeIndex === 5">
-                  <h3 class="text-xl font-semibold mb-6">5. Application Fee Payment</h3>
-                  <div class="p-4 border rounded-lg bg-blue-50 border-blue-200" formGroupName="payment">
-                      <div class="flex items-center justify-between">
-                          <div>
-                              <div class="font-bold text-lg text-blue-800">Application Fee</div>
-                              <div class="text-gray-600">A one-time non-refundable fee.</div>
-                          </div>
-                          <div class="text-2xl font-bold text-blue-800">₹500.00</div>
-                      </div>
-                      <hr class="my-4">
-                      <div class="flex items-center gap-2">
-                          <p-checkbox formControlName="application_fee_paid" [binary]="true" inputId="fee_paid"></p-checkbox>
-                          <label for="fee_paid" class="font-medium">I have completed the payment.</label>
-                      </div>
-                      <p class="text-xs text-gray-500 mt-2">This is a simulation. In a real application, you would be redirected to a payment gateway.</p>
-                  </div>
-              </div>
-
-              <!-- Step 6: Review and Submit -->
-              <div *ngIf="activeIndex === 6">
-                <h3 class="text-xl font-semibold mb-6">6. Review Your Application</h3>
-                <div class="p-4 bg-gray-50 rounded-lg border space-y-6">
-                  <div *ngFor="let section of reviewSections" class="pt-6 first:pt-0 border-t first:border-none">
-                      <div class="font-bold text-lg mb-4 text-blue-700">{{ section.title }}</div>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                          <div *ngFor="let field of section.fields">
-                              <span class="font-semibold text-gray-600">{{ field.label }}:</span> {{ field.value || 'N/A' }}
-                          </div>
-                      </div>
-                  </div>
-                </div>
-                <div class="mt-8 flex items-center gap-2" formGroupName="finalDeclaration">
-                  <p-checkbox formControlName="declaration" [binary]="true" inputId="declaration"></p-checkbox>
-                  <label for="declaration" class="ml-2">I hereby declare that all the information provided is true and correct.</label>
+              <div class="form-field">
+                <label for="last_name" class="required-label">Last Name</label>
+                <input pInputText id="last_name" formControlName="last_name" placeholder="Doe" 
+                       [class.border-red-500]="basicInfo.get('last_name')?.invalid && basicInfo.get('last_name')?.touched" />
+                <div class="error-message" *ngIf="basicInfo.get('last_name')?.invalid && basicInfo.get('last_name')?.touched">
+                  Last name is required
                 </div>
               </div>
-            </form>
-          </ng-template>
-
-          <ng-template pTemplate="footer">
-            <div class="flex justify-between items-center mt-8 pt-6 border-t">
-              <!-- Back Button (Left) -->
-              <div class="flex-initial">
-                <p-button label="Back" icon="pi pi-arrow-left" (click)="prevStep()" [disabled]="activeIndex === 0" styleClass="p-button-secondary"></p-button>
+              <div class="form-field">
+                <label for="date_of_birth" class="required-label">Date of Birth</label>
+                <p-calendar id="date_of_birth" formControlName="date_of_birth" [showIcon]="true" dateFormat="dd/mm/yy" 
+                          [styleClass]="basicInfo.get('date_of_birth')?.invalid && basicInfo.get('date_of_birth')?.touched ? 'w-full border-red-500' : 'w-full'"></p-calendar>
+                <div class="error-message" *ngIf="basicInfo.get('date_of_birth')?.invalid && basicInfo.get('date_of_birth')?.touched">
+                  Date of birth is required
+                </div>
               </div>
-              
-              <!-- Save as Draft Button (Center) -->
-              <div class="flex-initial">
-                <p-button *ngIf="activeIndex > 0 && activeIndex < items.length - 1" 
-                          label="Save as Draft" 
-                          icon="pi pi-save" 
-                          (click)="saveAsDraft()" 
-                          styleClass="p-button-info p-button-outlined"></p-button>
+              <div class="form-field">
+                <label for="gender" class="required-label">Gender</label>
+                <p-dropdown id="gender" [options]="genderOptions" formControlName="gender" placeholder="Select Gender" 
+                          optionLabel="name" [styleClass]="basicInfo.get('gender')?.invalid && basicInfo.get('gender')?.touched ? 'w-full border-red-500' : 'w-full'"></p-dropdown>
+                <div class="error-message" *ngIf="basicInfo.get('gender')?.invalid && basicInfo.get('gender')?.touched">
+                  Please select gender
+                </div>
               </div>
-              
-              <!-- Right-aligned Buttons -->
-              <div class="flex-initial">
-                <p-button *ngIf="activeIndex < items.length - 1" 
-                          label="Save & Continue" 
-                          icon="pi pi-arrow-right" 
-                          iconPos="right" 
-                          (click)="nextStep()"></p-button>
-                
-                <p-button *ngIf="activeIndex === items.length - 1" 
-                          label="Submit Application" 
-                          icon="pi pi-check" 
-                          (click)="submitApplication()" 
-                          [disabled]="admissionForm.invalid" 
-                          styleClass="p-button-success"></p-button>
+              <div class="form-field col-span-full">
+                <label for="applying_for_school" class="required-label">Applying for Class/Program</label>
+                <p-dropdown id="applying_for_school" [options]="programOptions" formControlName="applying_for_school" 
+                          placeholder="Select Program" optionLabel="name" [styleClass]="basicInfo.get('applying_for_school')?.invalid && basicInfo.get('applying_for_school')?.touched ? 'w-full border-red-500' : 'w-full'"></p-dropdown>
+                <div class="error-message" *ngIf="basicInfo.get('applying_for_school')?.invalid && basicInfo.get('applying_for_school')?.touched">
+                  Please select program
+                </div>
               </div>
             </div>
-          </ng-template>
-        </p-card>
-      </div>
-    </div>
+          </div>
+
+          <!-- Step 2: Parent/Guardian Details -->
+          <div *ngIf="activeIndex === 2" class="px-2">
+            <h3 class="text-2xl font-bold mb-8 text-gray-900">2. Parent/Guardian Details</h3>
+            <div class="form-grid" formGroupName="parentDetails">
+                <div class="form-field">
+                  <label for="parent_name" class="required-label">Parent's Name</label>
+                  <input pInputText id="parent_name" formControlName="parent_name" placeholder="Michael Doe" 
+                         [class.border-red-500]="parentDetails.get('parent_name')?.invalid && parentDetails.get('parent_name')?.touched" />
+                  <div class="error-message" *ngIf="parentDetails.get('parent_name')?.invalid && parentDetails.get('parent_name')?.touched">
+                    Parent's name is required
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label for="guardian_name">Guardian's Name (Optional)</label>
+                  <input pInputText id="guardian_name" formControlName="guardian_name" placeholder="If applicable" />
+                </div>
+                <div class="form-field">
+                  <label for="email" class="required-label">Contact Email</label>
+                  <input pInputText id="email" type="email" formControlName="email" placeholder="parent@example.com" 
+                         [class.border-red-500]="parentDetails.get('email')?.invalid && parentDetails.get('email')?.touched" />
+                  <div class="error-message" *ngIf="parentDetails.get('email')?.errors?.['required'] && parentDetails.get('email')?.touched">
+                    Email is required
+                  </div>
+                  <div class="error-message" *ngIf="parentDetails.get('email')?.errors?.['email'] && parentDetails.get('email')?.touched">
+                    Please enter a valid email
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label for="contact_number" class="required-label">Contact Phone Number</label>
+                  <input pInputText id="contact_number" type="tel" formControlName="contact_number" placeholder="+91 9876543210" 
+                         [class.border-red-500]="parentDetails.get('contact_number')?.invalid && parentDetails.get('contact_number')?.touched" />
+                  <div class="error-message" *ngIf="parentDetails.get('contact_number')?.errors?.['required'] && parentDetails.get('contact_number')?.touched">
+                    Phone number is required
+                  </div>
+                  <div class="error-message" *ngIf="parentDetails.get('contact_number')?.errors?.['pattern'] && parentDetails.get('contact_number')?.touched">
+                    Please enter 10-15 digits only
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Address & Emergency Contact -->
+          <div *ngIf="activeIndex === 3" class="px-2">
+              <h3 class="text-2xl font-bold mb-8 text-gray-900">3. Address & Emergency Contact</h3>
+              <div class="space-y-8">
+                  <div class="form-grid" formGroupName="address">
+                    <div class="form-field col-span-full">
+                      <label class="required-label">Street Address</label>
+                      <textarea pInputTextarea id="address" formControlName="street" rows="3" placeholder="123 Main St, Anytown..."
+                                [class.border-red-500]="address.get('street')?.invalid && address.get('street')?.touched"></textarea>
+                      <div class="error-message" *ngIf="address.get('street')?.invalid && address.get('street')?.touched">
+                        Street address is required
+                      </div>
+                    </div>
+                    <div class="form-field">
+                      <label for="city" class="required-label">City</label>
+                      <input pInputText id="city" formControlName="city" placeholder="New Delhi" 
+                             [class.border-red-500]="address.get('city')?.invalid && address.get('city')?.touched" />
+                      <div class="error-message" *ngIf="address.get('city')?.invalid && address.get('city')?.touched">
+                        City is required
+                      </div>
+                    </div>
+                    <div class="form-field">
+                      <label for="state" class="required-label">State</label>
+                      <input pInputText id="state" formControlName="state" placeholder="Delhi" 
+                             [class.border-red-500]="address.get('state')?.invalid && address.get('state')?.touched" />
+                      <div class="error-message" *ngIf="address.get('state')?.invalid && address.get('state')?.touched">
+                        State is required
+                      </div>
+                    </div>
+                    <div class="form-field col-span-full md:col-span-1">
+                      <label for="pincode" class="required-label">Pincode</label>
+                      <input pInputText id="pincode" formControlName="pincode" placeholder="110001" 
+                             [class.border-red-500]="address.get('pincode')?.invalid && address.get('pincode')?.touched" />
+                      <div class="error-message" *ngIf="address.get('pincode')?.errors?.['required'] && address.get('pincode')?.touched">
+                        Pincode is required
+                      </div>
+                      <div class="error-message" *ngIf="address.get('pincode')?.errors?.['pattern'] && address.get('pincode')?.touched">
+                        Please enter 6 digits only
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pt-8 border-t" formGroupName="emergencyContact">
+                      <h4 class="text-xl font-semibold mb-6 text-gray-900">Emergency Contact</h4>
+                      <div class="form-grid">
+                          <div class="form-field">
+                              <label for="emergency_contact_name" class="required-label">Contact Person Name</label>
+                              <input pInputText id="emergency_contact_name" formControlName="name" placeholder="Relative's Name" 
+                                     [class.border-red-500]="emergencyContact.get('name')?.invalid && emergencyContact.get('name')?.touched" />
+                              <div class="error-message" *ngIf="emergencyContact.get('name')?.invalid && emergencyContact.get('name')?.touched">
+                                Emergency contact name is required
+                              </div>
+                          </div>
+                          <div class="form-field">
+                              <label for="emergency_contact_number" class="required-label">Contact Person Number</label>
+                              <input pInputText id="emergency_contact_number" formControlName="number" placeholder="+91 9876543211" 
+                                     [class.border-red-500]="emergencyContact.get('number')?.invalid && emergencyContact.get('number')?.touched" />
+                              <div class="error-message" *ngIf="emergencyContact.get('number')?.errors?.['required'] && emergencyContact.get('number')?.touched">
+                                Emergency contact number is required
+                              </div>
+                              <div class="error-message" *ngIf="emergencyContact.get('number')?.errors?.['pattern'] && emergencyContact.get('number')?.touched">
+                                Please enter 10-15 digits only
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Step 4: Document Upload -->
+          <div *ngIf="activeIndex === 4" class="px-2">
+            <h3 class="text-2xl font-bold mb-2 text-gray-900">4. Upload Required Documents</h3>
+            <p class="text-sm text-gray-500 mb-6">Upload files in PDF, JPG, or JPEG format (max 2MB each). <span class="text-red-500">*</span> indicates required documents</p>
+            <div formArrayName="documents">
+              <div *ngFor="let doc of documents.controls; let i=index" [formGroupName]="i" class="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                  <div class="flex-grow form-field">
+                    <label class="required-label">Document Name</label>
+                    <input pInputText formControlName="fileName" placeholder="e.g., Birth Certificate" 
+                           [class.border-red-500]="doc.get('fileName')?.invalid && doc.get('fileName')?.touched" />
+                    <div class="error-message" *ngIf="doc.get('fileName')?.invalid && doc.get('fileName')?.touched">
+                      Document name is required
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label class="required-label">&nbsp;</label> <!-- Spacer for alignment -->
+                    <input type="file" [id]="'file-upload-' + i" (change)="onFileSelect($event, i)" class="hidden" accept="application/pdf,image/jpeg,image/jpg">
+                    <p-button label="Upload" icon="pi pi-upload" styleClass="p-button-secondary" (click)="triggerFileUpload(i)"></p-button>
+                    <div class="error-message" *ngIf="doc.get('file')?.invalid && doc.get('file')?.touched">
+                      Please upload a file
+                    </div>
+                  </div>
+                  <div class="form-field self-end">
+                     <label>&nbsp;</label>
+                     <p-button icon="pi pi-trash" styleClass="p-button-danger p-button-outlined" (click)="removeDocument(i)" [disabled]="documents.length === 1"></p-button>
+                  </div>
+                </div>
+                <div *ngIf="doc.get('file')?.value" class="mt-2 text-sm text-green-600">
+                  <i class="pi pi-check-circle mr-2"></i>File uploaded: {{ doc.get('file')?.value?.name }}
+                </div>
+              </div>
+            </div>
+            <p-button label="Add Document" icon="pi pi-plus" (click)="addDocument()" styleClass="p-button-text p-button-sm mt-2"></p-button>
+          </div>
+
+          <!-- Step 5: Review and Submit (Changed from Step 6) -->
+          <div *ngIf="activeIndex === 5" class="px-2">
+            <h3 class="text-2xl font-bold mb-8 text-gray-900">5. Review Your Application</h3>
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div class="flex items-center gap-3">
+                <i class="pi pi-info-circle text-blue-600 text-xl"></i>
+                <p class="text-blue-800">Please review all the information below carefully before proceeding to payment.</p>
+              </div>
+            </div>
+            <div class="p-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 space-y-8 shadow-sm">
+              <div *ngFor="let section of reviewSections" class="pt-8 first:pt-0 border-t border-gray-300 first:border-none">
+                  <div class="font-bold text-xl mb-6 text-blue-900">{{ section.title }}</div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                      <div *ngFor="let field of section.fields" class="py-3 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                          <span class="font-semibold text-gray-700 block mb-1">{{ field.label }}:</span> 
+                          <span class="text-gray-900">{{ field.value || 'Not provided' }}</span>
+                      </div>
+                  </div>
+              </div>
+            </div>
+            <div class="mt-10 p-6 border-2 border-blue-200 rounded-xl bg-blue-50">
+              <div class="flex items-start gap-4">
+                <p-checkbox [(ngModel)]="reviewConfirmed" [binary]="true" inputId="reviewConfirmation" 
+                            [ngModelOptions]="{standalone: true}"></p-checkbox>
+                <div class="flex-1">
+                  <label for="reviewConfirmation" class="font-medium text-gray-900 text-lg">Review Confirmation <span class="text-red-500">*</span></label>
+                  <p class="text-gray-700 mt-2">I have reviewed all the information provided and confirm that it is accurate and complete. I am ready to proceed to payment.</p>
+                  <div class="error-message mt-2" *ngIf="!reviewConfirmed && reviewFormTouched">
+                    You must confirm your review to proceed
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Payment (Changed from Step 5) -->
+          <div *ngIf="activeIndex === 6" class="px-2">
+              <h3 class="text-2xl font-bold mb-8 text-gray-900">6. Application Fee Payment</h3>
+              <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <i class="pi pi-check-circle text-green-600 text-xl"></i>
+                  <p class="text-green-800">All information has been reviewed and confirmed. You can now proceed with the payment.</p>
+                </div>
+              </div>
+              <div class="p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50" formGroupName="payment">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                      <div class="mb-4 md:mb-0">
+                          <div class="font-bold text-2xl text-blue-900">Application Fee</div>
+                          <div class="text-gray-700">A one-time non-refundable fee.</div>
+                      </div>
+                      <div class="text-3xl font-bold text-blue-900">₹500.00</div>
+                  </div>
+                  <hr class="my-6 border-blue-300">
+                  <div class="flex items-center gap-3">
+                      <p-checkbox formControlName="application_fee_paid" [binary]="true" inputId="fee_paid" 
+                                  [ngClass]="{'border-red-500': payment.get('application_fee_paid')?.invalid && payment.get('application_fee_paid')?.touched}"></p-checkbox>
+                      <label for="fee_paid" class="font-medium text-gray-900">I have completed the payment. <span class="text-red-500">*</span></label>
+                  </div>
+                  <div class="error-message mt-2" *ngIf="payment.get('application_fee_paid')?.invalid && payment.get('application_fee_paid')?.touched">
+                    You must confirm payment to proceed
+                  </div>
+                  <div class="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p class="text-sm text-yellow-800"><i class="pi pi-info-circle mr-2"></i>This is a simulation. In a real application, you would be redirected to a payment gateway.</p>
+                  </div>
+              </div>
+              
+              <!-- Final Declaration moved here -->
+              <div class="mt-10 p-6 border-2 border-blue-200 rounded-xl bg-blue-50">
+                <div class="flex items-start gap-4" formGroupName="finalDeclaration">
+                  <p-checkbox formControlName="declaration" [binary]="true" inputId="declaration" 
+                              [ngClass]="{'border-red-500': finalDeclaration.get('declaration')?.invalid && finalDeclaration.get('declaration')?.touched}"></p-checkbox>
+                  <div class="flex-1">
+                    <label for="declaration" class="font-medium text-gray-900 text-lg">Final Declaration <span class="text-red-500">*</span></label>
+                    <p class="text-gray-700 mt-2">I hereby declare that all the information provided is true and correct to the best of my knowledge. I understand that any false information may lead to cancellation of admission.</p>
+                    <div class="error-message mt-2" *ngIf="finalDeclaration.get('declaration')?.invalid && finalDeclaration.get('declaration')?.touched">
+                      You must agree to the declaration to submit
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </form>
+      </ng-template>
+
+      <ng-template pTemplate="footer">
+        <div class="flex flex-col md:flex-row justify-between items-center mt-10 pt-8 border-t border-gray-200">
+          <!-- Back Button (Left) -->
+          <div class="w-full md:w-auto mb-4 md:mb-0">
+            <p-button label="Back" icon="pi pi-arrow-left" (click)="prevStep()" [disabled]="activeIndex === 0" 
+                      styleClass="p-button-secondary p-button-outlined w-full md:w-auto"></p-button>
+          </div>
+          
+          <!-- Save as Draft Button (Center) -->
+          <div class="w-full md:w-auto mb-4 md:mb-0">
+            <p-button *ngIf="activeIndex > 0 && activeIndex < items.length - 1" 
+                      label="Save as Draft" 
+                      icon="pi pi-save" 
+                      (click)="saveAsDraft()" 
+                      styleClass="p-button-info p-button-outlined w-full md:w-auto"></p-button>
+          </div>
+          
+          <!-- Right-aligned Buttons -->
+          <div class="w-full md:w-auto">
+            <p-button *ngIf="activeIndex < items.length - 1" 
+                      [label]="activeIndex === 5 ? 'Proceed to Payment' : 'Save & Continue'" 
+                      [icon]="activeIndex === 5 ? 'pi pi-credit-card' : 'pi pi-arrow-right'" 
+                      iconPos="right" 
+                      (click)="nextStep()"
+                      styleClass="bg-gradient-to-r from-blue-600 to-indigo-600 border-0 hover:from-blue-700 hover:to-indigo-700 w-full md:w-auto"></p-button>
+            
+            <p-button *ngIf="activeIndex === items.length - 1" 
+                      label="Submit Application" 
+                      icon="pi pi-check" 
+                      (click)="submitApplication()" 
+                      [disabled]="admissionForm.invalid" 
+                      styleClass="p-button-success bg-gradient-to-r from-green-600 to-emerald-600 border-0 hover:from-green-700 hover:to-emerald-700 w-full md:w-auto"></p-button>
+          </div>
+        </div>
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-500">Step {{ activeIndex + 1 }} of {{ items.length }}</p>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>
