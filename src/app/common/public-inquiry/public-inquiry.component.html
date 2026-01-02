@@ -1,0 +1,194 @@
+<div class="inquiry-page">
+    <p-toast position="top-right"></p-toast>
+
+    <!-- Animated Background Elements -->
+    <div class="bg-decorations">
+        <div class="decoration decoration--1"></div>
+        <div class="decoration decoration--2"></div>
+        <div class="decoration decoration--3"></div>
+        <div class="decoration decoration--4"></div>
+    </div>
+
+    <div class="inquiry-container">
+        <!-- Header Section with Logo -->
+        <header class="inquiry-header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i class="pi pi-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <h1 class="institute-name">ThinkersCave</h1>
+                    <p class="institute-tagline">Empowering Minds, Shaping Futures</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Form Card -->
+        <div class="form-card" [class.form-card--success]="isSubmitted">
+
+            <!-- Success State -->
+            <div *ngIf="isSubmitted" class="success-state fade-in">
+                <div class="success-icon-wrapper">
+                    <i class="pi pi-check-circle success-icon"></i>
+                </div>
+                <h2 class="success-title">Inquiry Submitted Successfully!</h2>
+                <p class="success-message">
+                    Thank you for your interest in ThinkersCave. Our admissions team has received your inquiry
+                    and will contact you within 24-48 hours.
+                </p>
+                <div class="success-details">
+                    <div class="success-detail-item">
+                        <i class="pi pi-phone"></i>
+                        <span>Expect a call from our team</span>
+                    </div>
+                    <div class="success-detail-item">
+                        <i class="pi pi-envelope"></i>
+                        <span>Check your email for confirmation</span>
+                    </div>
+                </div>
+                <button pButton pRipple type="button" label="Submit Another Inquiry" icon="pi pi-plus"
+                    class="p-button-outlined submit-another-btn" (click)="submitAnotherInquiry()">
+                </button>
+            </div>
+
+            <!-- Form State -->
+            <div *ngIf="!isSubmitted" class="form-state">
+                <!-- Form Header -->
+                <div class="form-header">
+                    <div class="header-badge">
+                        <i class="pi pi-book"></i>
+                    </div>
+                    <h2 class="form-title">Admission Inquiry</h2>
+                    <p class="form-subtitle">
+                        Fill in the details below and our team will reach out to you with more information about
+                        admissions.
+                    </p>
+                </div>
+
+                <p-divider styleClass="form-divider"></p-divider>
+
+                <!-- Inquiry Form -->
+                <form [formGroup]="inquiryForm" (ngSubmit)="onSubmit()" class="inquiry-form">
+
+                    <!-- Name Field -->
+                    <div class="form-field">
+                        <label for="name" class="field-label">
+                            <i class="pi pi-user"></i>
+                            Full Name <span class="required-star">*</span>
+                        </label>
+                        <input id="name" type="text" pInputText formControlName="name"
+                            placeholder="Enter student's full name" [class.ng-invalid]="isInvalid('name')"
+                            [class.ng-dirty]="inquiryForm.get('name')?.dirty" />
+                        <small *ngIf="isInvalid('name')" class="field-error">
+                            <i class="pi pi-exclamation-circle"></i>
+                            {{ getErrorMessage('name') }}
+                        </small>
+                    </div>
+
+                    <!-- Mobile Number Field -->
+                    <div class="form-field">
+                        <label for="mobileNumber" class="field-label">
+                            <i class="pi pi-phone"></i>
+                            Mobile Number <span class="required-star">*</span>
+                        </label>
+                        <div class="mobile-input-wrapper">
+                            <span class="country-code">+91</span>
+                            <input id="mobileNumber" type="tel" pInputText formControlName="mobileNumber"
+                                placeholder="Enter 10-digit mobile number" maxlength="10"
+                                [class.ng-invalid]="isInvalid('mobileNumber')"
+                                [class.ng-dirty]="inquiryForm.get('mobileNumber')?.dirty" />
+                        </div>
+                        <small *ngIf="isInvalid('mobileNumber')" class="field-error">
+                            <i class="pi pi-exclamation-circle"></i>
+                            {{ getErrorMessage('mobileNumber') }}
+                        </small>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="form-field">
+                        <label for="email" class="field-label">
+                            <i class="pi pi-envelope"></i>
+                            Email ID <span class="required-star">*</span>
+                        </label>
+                        <input id="email" type="email" pInputText formControlName="email"
+                            placeholder="Enter parent's email address" [class.ng-invalid]="isInvalid('email')"
+                            [class.ng-dirty]="inquiryForm.get('email')?.dirty" />
+                        <small *ngIf="isInvalid('email')" class="field-error">
+                            <i class="pi pi-exclamation-circle"></i>
+                            {{ getErrorMessage('email') }}
+                        </small>
+                    </div>
+
+                    <!-- Class Interested Dropdown -->
+                    <div class="form-field">
+                        <label for="classInterested" class="field-label">
+                            <i class="pi pi-book"></i>
+                            Class Interested In <span class="required-star">*</span>
+                        </label>
+                        <p-dropdown id="classInterested" formControlName="classInterested" [options]="classOptions"
+                            optionLabel="label" optionValue="value" placeholder="Select a class"
+                            styleClass="inquiry-dropdown" [showClear]="true" [filter]="true"
+                            filterPlaceholder="Search class..." [class.ng-invalid]="isInvalid('classInterested')"
+                            [class.ng-dirty]="inquiryForm.get('classInterested')?.dirty">
+                        </p-dropdown>
+                        <small *ngIf="isInvalid('classInterested')" class="field-error">
+                            <i class="pi pi-exclamation-circle"></i>
+                            {{ getErrorMessage('classInterested') }}
+                        </small>
+                    </div>
+
+                    <!-- Address Field -->
+                    <div class="form-field">
+                        <label for="address" class="field-label">
+                            <i class="pi pi-map-marker"></i>
+                            Address <span class="required-star">*</span>
+                        </label>
+                        <textarea id="address" pTextarea formControlName="address"
+                            placeholder="Enter complete residential address" rows="3"
+                            [class.ng-invalid]="isInvalid('address')"
+                            [class.ng-dirty]="inquiryForm.get('address')?.dirty">
+            </textarea>
+                        <small *ngIf="isInvalid('address')" class="field-error">
+                            <i class="pi pi-exclamation-circle"></i>
+                            {{ getErrorMessage('address') }}
+                        </small>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button pButton pRipple type="submit" label="Submit Inquiry" icon="pi pi-send" iconPos="right"
+                            class="submit-btn" [loading]="isSubmitting" [disabled]="isSubmitting">
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Privacy Note -->
+                <div class="privacy-note">
+                    <i class="pi pi-shield"></i>
+                    <span>Your information is secure and will only be used for admission purposes.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="inquiry-footer">
+            <div class="footer-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="pi pi-phone"></i>
+                        <span>+91 98765 43210</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="pi pi-envelope"></i>
+                        <span>admissions&#64;thinkerscave.edu</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="pi pi-map-marker"></i>
+                        <span>123 Education Street, Knowledge City</span>
+                    </div>
+                </div>
+                <p class="copyright">© 2025 ThinkersCave Institute. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+</div>
