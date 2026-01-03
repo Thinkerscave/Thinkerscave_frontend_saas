@@ -10,7 +10,7 @@ export interface MenuItem {
   name: string;
   description: string;
   url?: string;
-  icon?: string;
+  icon: string;
   order?: number;
   isActive?: boolean; // maps to isActive
 }

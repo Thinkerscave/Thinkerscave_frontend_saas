@@ -272,55 +272,49 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewChecked {
   //   });
   // }
 
-  private loadMenu(): void {
-    this.sideMenuService.loadMenu().subscribe({
-      next: (menus) => {
-        this.items = menus.map((menu: any) => {
-          const isActive = this.isRouteActive(menu.routerLink, menu.queryParams);
-          
-          // Check if any submenu item is active
-          let hasActiveSubmenu = false;
-          if (menu.items) {
-            hasActiveSubmenu = menu.items.some((sub: any) => 
-              this.isRouteActive(sub.routerLink, sub.queryParams)
-            );
-          }
-          
-          // Special handling for "Manage Menu" - check by label/text
-          const isManageMenu = menu.label === 'Manage Menu' || menu.label === 'Manage Menu';
-          const manageMenuActive = this.currentRoute.includes('/manage-menu') || 
-                                  this.currentRoute.includes('/menu/manage');
-          
-          return {
-            ...menu,
-            expanded: isActive || hasActiveSubmenu || (isManageMenu && manageMenuActive),
-            styleClass: isActive || (isManageMenu && manageMenuActive) ? 
-              'p-highlight active-menu-item router-link-active' : 
-              (hasActiveSubmenu ? 'parent-active' : ''),
-            command: menu.routerLink
-              ? () => this.breadcrumbService.setBreadcrumb(menu.label, '')
-              : undefined,
-            items: menu.items?.map((sub: any) => {
-              const isSubActive = this.isRouteActive(sub.routerLink, sub.queryParams);
-              
-              // Special styling for active submenu items
-              return {
-                ...sub,
-                styleClass: isSubActive ? 'router-link-active active-submenu-item' : '',
-                command: () =>
-                  this.breadcrumbService.setBreadcrumb(menu.label, sub.label)
-              };
-            })
-          };
-        });
+private loadMenu(): void {
+  this.sideMenuService.loadMenu().subscribe({
+    next: (menus) => {
+      this.items = menus.map((menu: any) => {
+        const isActive = this.isRouteActive(menu.routerLink, menu.queryParams);
         
-        // Update active state after menu is loaded
-        setTimeout(() => {
-          this.updateActiveMenuItems();
-          this.updateActiveMenuItemsInDOM();
-        }, 100);
-      },
-      error: (err) => console.error('Error loading menu:', err)
-    });
-  }
+        // Check if any submenu item is active
+        let hasActiveSubmenu = false;
+        if (menu.items) {
+          hasActiveSubmenu = menu.items.some((sub: any) => 
+            this.isRouteActive(sub.routerLink, sub.queryParams)
+          );
+        }
+        
+        return {
+          ...menu,
+          expanded: isActive || hasActiveSubmenu,
+          styleClass: isActive ? 
+            'p-highlight active-menu-item router-link-active' : 
+            (hasActiveSubmenu ? 'parent-active' : ''),
+          command: menu.routerLink
+            ? () => this.breadcrumbService.setBreadcrumb(menu.label, '')
+            : undefined,
+          items: menu.items?.map((sub: any) => {
+            const isSubActive = this.isRouteActive(sub.routerLink, sub.queryParams);
+            
+            return {
+              ...sub,
+              styleClass: isSubActive ? 'router-link-active active-submenu-item' : '',
+              command: () =>
+                this.breadcrumbService.setBreadcrumb(menu.label, sub.label)
+            };
+          })
+        };
+      });
+      
+      // Update active state after menu is loaded
+      setTimeout(() => {
+        this.updateActiveMenuItems();
+        this.updateActiveMenuItemsInDOM();
+      }, 100);
+    },
+    error: (err) => console.error('Error loading menu:', err)
+  });
+}
 }

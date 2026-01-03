@@ -62,6 +62,10 @@ throw new Error('Method not implemented.');
   displayEditModal: boolean = false;
   editingMenuItem: MenuItem | null = null;
 
+    selectedGroupOption: string = 'Yes'; // Default to 'Yes'
+  menuName: string = '';
+  menuDescription: string = '';
+  menuIcon: string = '';
   constructor(private menuService: MenuService,
     private messageService: MessageService
   ) { }
@@ -89,7 +93,7 @@ throw new Error('Method not implemented.');
   }
 
   submit(): void {
-    if (!this.menuName || !this.menuDescription) {
+    if (!this.menuName || !this.menuDescription || !this.menuIcon) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Validation Failed',
@@ -102,7 +106,8 @@ throw new Error('Method not implemented.');
       slNo: this.editMenuId || undefined,
       menuCode: this.isEditMode ? this.editingMenuItem?.menuCode : undefined, // ✅ include menuCode
       name: this.menuName.trim(),
-      description: this.menuDescription.trim()
+      description: this.menuDescription.trim(),
+      icon:this.menuIcon.trim()
     };
 
 
@@ -138,15 +143,13 @@ throw new Error('Method not implemented.');
     this.editMenuId = menuItem.slNo || null;
     this.menuName = menuItem.name;
     this.menuDescription = menuItem.description;
+    this.menuIcon = menuItem.icon;
 
     // ✅ Keep menuCode for update
     this.editingMenuItem = { ...menuItem };
   }
 
 
-  selectedGroupOption: string = 'Yes'; // Default to 'Yes'
-  menuName: string = '';
-  menuDescription: string = '';
 
   // submit(): void {
   //   console.log('Menu Submitted:', this.menuName, this.menuDescription);
