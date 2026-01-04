@@ -14,6 +14,7 @@ import { RippleModule } from 'primeng/ripple';
 import { DividerModule } from 'primeng/divider';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputMaskModule } from 'primeng/inputmask';
+import { PublicInquiryService } from '../../services/public-inquiry.service';
 
 interface ClassOption {
     label: string;
@@ -71,7 +72,8 @@ export class PublicInquiryComponent implements OnInit {
 
     constructor(
         private fb: FormBuilder,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private inquiryService: PublicInquiryService 
     ) { }
 
     ngOnInit(): void {
@@ -87,41 +89,42 @@ export class PublicInquiryComponent implements OnInit {
             address: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
         });
     }
-
     onSubmit(): void {
         if (this.inquiryForm.invalid) {
-            // Mark all fields as touched to show validation
-            Object.keys(this.inquiryForm.controls).forEach(key => {
-                const control = this.inquiryForm.get(key);
-                control?.markAsTouched();
-                control?.markAsDirty();
-            });
-
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Validation Error',
-                detail: 'Please fill in all required fields correctly.',
-                life: 4000
-            });
+            this.inquiryForm.markAllAsTouched();
             return;
         }
-
+    
         this.isSubmitting = true;
-
-        // Simulate API call
-        setTimeout(() => {
-            console.log('Inquiry submitted:', this.inquiryForm.value);
-
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Inquiry Submitted!',
-                detail: 'Thank you for your interest. Our team will contact you shortly.',
-                life: 6000
-            });
-
-            this.isSubmitting = false;
-            this.isSubmitted = true;
-        }, 1500);
+    
+        const payload = {
+            name: this.inquiryForm.value.name,
+            mobileNumber: this.inquiryForm.value.mobileNumber,
+            email: this.inquiryForm.value.email,
+            classInterestedIn: this.inquiryForm.value.classInterested,
+            address: this.inquiryForm.value.address
+        };
+    
+        this.inquiryService.submitInquiry(payload).subscribe({
+            next: () => {
+                this.isSubmitted = true;
+                this.isSubmitting = false;
+    
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Inquiry Submitted',
+                    detail: 'Our team will contact you shortly'
+                });
+            },
+            error: () => {
+                this.isSubmitting = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Submission Failed',
+                    detail: 'Please try again later'
+                });
+            }
+        });
     }
 
     submitAnotherInquiry(): void {
