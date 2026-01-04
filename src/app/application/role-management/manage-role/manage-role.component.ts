@@ -4,21 +4,20 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { TableModule, Table } from 'primeng/table';
 import { Role, RoleService } from '../../services/role.service';
 import { MessageService } from 'primeng/api';
-import { TabViewModule } from 'primeng/tabview';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
+import { TabsModule } from 'primeng/tabs';
+import { TagModule } from 'primeng/tag';
 
 @Component({
   selector: 'app-manage-role',
-  imports: [CommonModule,
+  imports: [
+    CommonModule,
     FormsModule,
-    TabViewModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -26,8 +25,9 @@ import { InputIconModule } from 'primeng/inputicon';
     CardModule,
     ToastModule,
     InputSwitchModule,
-    IconFieldModule,
-    InputIconModule],
+    TabsModule,
+    TagModule
+  ],
   templateUrl: './manage-role.component.html',
   styleUrl: './manage-role.component.scss',
   providers: [MessageService]
@@ -39,15 +39,43 @@ export class ManageRoleComponent {
   activeTabIndex = 0;
   editRoleId: number | null = null;
   editingRole: Role | null = null;
+  globalFilterValue: string = '';
 
   // form fields
   roleName: string = '';
   roleDescription: string = '';
 
+  // Validation tracking
+  formSubmitted: boolean = false;
+  roleNameTouched: boolean = false;
+  roleDescriptionTouched: boolean = false;
+
   constructor(private roleService: RoleService, private messageService: MessageService) {}
 
   ngOnInit(): void {
     this.loadRoles();
+  }
+
+  // Validation helpers
+  get roleNameInvalid(): boolean {
+    return !this.roleName.trim();
+  }
+
+  get roleDescriptionInvalid(): boolean {
+    return !this.roleDescription.trim();
+  }
+
+  get isFormValid(): boolean {
+    return !this.roleNameInvalid && !this.roleDescriptionInvalid;
+  }
+
+  // Touch handlers
+  onRoleNameBlur(): void {
+    this.roleNameTouched = true;
+  }
+
+  onRoleDescriptionBlur(): void {
+    this.roleDescriptionTouched = true;
   }
 
   loadRoles(): void {
@@ -65,11 +93,17 @@ export class ManageRoleComponent {
   }
 
   submit(): void {
-    if (!this.roleName || !this.roleDescription) {
+    this.formSubmitted = true;
+    
+    // Mark all fields as touched for validation display
+    this.roleNameTouched = true;
+    this.roleDescriptionTouched = true;
+    
+    if (!this.isFormValid) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Validation Failed',
-        detail: 'Both Role Name and Description are required.'
+        detail: 'Please fill all required fields correctly.'
       });
       return;
     }
@@ -77,24 +111,30 @@ export class ManageRoleComponent {
     const roleData: Role = {
       roleId: this.editRoleId || undefined,
       roleName: this.roleName.trim(),
-      description: this.roleDescription.trim()
+      description: this.roleDescription.trim(),
+      isActive: this.isEditMode ? this.editingRole?.isActive : true
     };
 
     this.roleService.saveOrUpdateRole(roleData).subscribe({
       next: () => {
+        const action = this.isEditMode ? 'updated' : 'created';
         this.messageService.add({
           severity: 'success',
-          summary: this.isEditMode ? 'Role Updated' : 'Role Created',
-          detail: `'${roleData.roleName}' has been ${this.isEditMode ? 'updated' : 'added'} successfully.`
+          summary: `Role ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+          detail: `Role '${roleData.roleName}' has been ${action} successfully.`
         });
 
         this.loadRoles();
-        this.clearForm();
+        this.resetForm();
         this.isEditMode = false;
         this.activeTabIndex = 1;
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to save role.' });
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: err.error?.message || 'Failed to save role. Please try again.' 
+        });
       }
     });
   }
@@ -106,11 +146,20 @@ export class ManageRoleComponent {
     this.roleName = role.roleName;
     this.roleDescription = role.description!;
     this.editingRole = { ...role };
+    
+    // Reset validation states
+    this.formSubmitted = false;
+    this.roleNameTouched = false;
+    this.roleDescriptionTouched = false;
   }
 
   toggleStatus(role: Role): void {
     if (!role.roleId) {
-      this.messageService.add({ severity: 'warn', summary: 'Invalid Role', detail: 'Role ID is missing.' });
+      this.messageService.add({ 
+        severity: 'warn', 
+        summary: 'Invalid Role', 
+        detail: 'Role ID is missing. Cannot update status.' 
+      });
       return;
     }
 
@@ -123,7 +172,11 @@ export class ManageRoleComponent {
         });
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status.' });
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Failed to update status. Please try again.' 
+        });
         role.isActive = !role.isActive; // revert
       }
     });
@@ -131,6 +184,10 @@ export class ManageRoleComponent {
 
   resetForm(): void {
     this.clearForm();
+    this.formSubmitted = false;
+    this.roleNameTouched = false;
+    this.roleDescriptionTouched = false;
+    this.isEditMode = false;
   }
 
   clearForm(): void {
@@ -141,8 +198,13 @@ export class ManageRoleComponent {
   }
 
   cancelEdit(): void {
-    this.clearForm();
-    this.isEditMode = false;
-    this.activeTabIndex = 1; // back to View
+    this.resetForm();
+    this.activeTabIndex = 1;
+  }
+
+  onGlobalFilter(table: Table, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.globalFilterValue = value;
+    table.filterGlobal(value, 'contains');
   }
 }

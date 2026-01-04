@@ -1,5 +1,3 @@
-
-
 .card {
     padding: 2rem;
     border-radius: 8px;
@@ -111,6 +109,50 @@
     }
 }
 
+// Required field indicator
+.required::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: bold;
+}
+
+// Invalid field styling
+.invalid-field {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    
+    &.p-calendar .p-inputtext {
+        border-color: #ef4444 !important;
+    }
+    
+    &.p-dropdown .p-dropdown-label {
+        border-color: #ef4444 !important;
+    }
+}
+
+// PrimeNG specific invalid styling
+:host ::ng-deep {
+    .p-inputtext.invalid-field {
+        border-color: #ef4444 !important;
+    }
+    
+    .p-calendar.invalid-field .p-inputtext {
+        border-color: #ef4444 !important;
+    }
+    
+    .p-dropdown.invalid-field {
+        border-color: #ef4444 !important;
+        
+        .p-dropdown-label {
+            border-color: #ef4444 !important;
+        }
+    }
+    
+    .p-inputmask.invalid-field {
+        border-color: #ef4444 !important;
+    }
+}
+
 .form-field input,
 .form-field textarea,
 .form-field :where(p-dropdown) {
@@ -139,7 +181,69 @@
 
 .p-error {
     display: block;
-    color:rosybrown;
+    color: #ef4444;
     margin-top: 0.25rem;
     font-size: 0.875rem;
+}
+
+// PrimeNG Table customizations
+:host ::ng-deep {
+    .p-datatable .p-datatable-thead > tr > th {
+        background-color: #f8fafc;
+        font-weight: 600;
+    }
+    
+    .p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+}
+
+// Flex utilities for table header
+.flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.m-0 {
+    margin: 0;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+// Input icon styles
+.p-input-icon-left {
+    position: relative;
+    
+    i {
+        position: absolute;
+        top: 50%;
+        left: 0.75rem;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+    
+    input {
+        padding-left: 2.5rem;
+    }
 }

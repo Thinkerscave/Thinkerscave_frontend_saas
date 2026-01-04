@@ -1,31 +1,13 @@
 <form [formGroup]="form" class="manage-student-view">
-    <!-- <div class="page-header">
-        <div>
-            <p class="eyebrow">Admissions · 2024/25</p>
-            <h2>Student Onboarding Workspace</h2>
-            <p class="lead">Review every section below to capture a complete student profile before saving.</p>
-        </div>
-        <div class="header-summary">
-            <div>
-                <span class="label">Draft status</span>
-                <strong>{{ form.dirty ? 'In progress' : 'Not started' }}</strong>
-            </div>
-            <div>
-                <span class="label">Last updated</span>
-                <strong>{{ lastSavedAt ? (lastSavedAt | date: 'medium') : '—' }}</strong>
-            </div>
-        </div>
-    </div> -->
-
     <p-tabs [(value)]="activeTabIndex" class="manage-student-tabs">
         <p-tablist>
             <p-tab value="0" header="Add" headerStyleClass="custom-tab">
-                <i class="pi pi-plus"></i>
-                <span>Add New Student</span>
+                <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus'"></i>
+                <span>{{ isEditMode ? 'Edit Student' : 'Add' }}</span>
             </p-tab>
             <p-tab value="1">
-                <i class="pi pi-search"></i>
-                <span>View Records</span>
+                <i class="pi pi-list"></i>
+                <span>View</span>
             </p-tab>
         </p-tablist>
 
@@ -51,41 +33,96 @@
                             <p-accordion-content>
                                 <div class="section-grid two-col">
                                     <div class="form-field">
-                                        <label for="first-name">Student First Name</label>
-                                        <input id="first-name" type="text" pInputText formControlName="firstName" />
+                                        <label for="first-name" class="required">Student First Name</label>
+                                        <input id="first-name" type="text" pInputText formControlName="firstName" 
+                                               [ngClass]="{'invalid-field': form.get('firstName')?.invalid && (form.get('firstName')?.dirty || form.get('firstName')?.touched)}" />
+                                        <div *ngIf="form.get('firstName')?.invalid && (form.get('firstName')?.dirty || form.get('firstName')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('firstName')?.errors?.['required']">
+                                                First name is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
                                         <label for="middle-name">Middle Name</label>
                                         <input id="middle-name" type="text" pInputText formControlName="middleName" />
                                     </div>
                                     <div class="form-field">
-                                        <label for="last-name">Last Name</label>
-                                        <input id="last-name" type="text" pInputText formControlName="lastName" />
+                                        <label for="last-name" class="required">Last Name</label>
+                                        <input id="last-name" type="text" pInputText formControlName="lastName" 
+                                               [ngClass]="{'invalid-field': form.get('lastName')?.invalid && (form.get('lastName')?.dirty || form.get('lastName')?.touched)}" />
+                                        <div *ngIf="form.get('lastName')?.invalid && (form.get('lastName')?.dirty || form.get('lastName')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('lastName')?.errors?.['required']">
+                                                Last name is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="gender">Gender</label>
-                                        <select id="gender" formControlName="gender">
+                                        <label for="gender" class="required">Gender</label>
+                                        <select id="gender" formControlName="gender"
+                                                [ngClass]="{'invalid-field': form.get('gender')?.invalid && (form.get('gender')?.dirty || form.get('gender')?.touched)}">
                                             <option value="" disabled>Select Gender</option>
                                             <option value="male">Male</option>
                                             <option value="female">Female</option>
                                             <option value="other">Other</option>
                                         </select>
+                                        <div *ngIf="form.get('gender')?.invalid && (form.get('gender')?.dirty || form.get('gender')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('gender')?.errors?.['required']">
+                                                Gender is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="dob">DOB</label>
-                                        <input id="dob" type="date" formControlName="dateOfBirth" />
+                                        <label for="dob" class="required">DOB</label>
+                                        <input id="dob" type="date" formControlName="dateOfBirth" 
+                                               [ngClass]="{'invalid-field': form.get('dateOfBirth')?.invalid && (form.get('dateOfBirth')?.dirty || form.get('dateOfBirth')?.touched)}" />
+                                        <div *ngIf="form.get('dateOfBirth')?.invalid && (form.get('dateOfBirth')?.dirty || form.get('dateOfBirth')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('dateOfBirth')?.errors?.['required']">
+                                                Date of birth is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="enrollmentDate">Enrollment Date</label>
-                                        <input id="enrollmentDate" type="date" formControlName="enrollmentDate" />
+                                        <label for="enrollmentDate" class="required">Enrollment Date</label>
+                                        <input id="enrollmentDate" type="date" formControlName="enrollmentDate" 
+                                               [ngClass]="{'invalid-field': form.get('enrollmentDate')?.invalid && (form.get('enrollmentDate')?.dirty || form.get('enrollmentDate')?.touched)}" />
+                                        <div *ngIf="form.get('enrollmentDate')?.invalid && (form.get('enrollmentDate')?.dirty || form.get('enrollmentDate')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('enrollmentDate')?.errors?.['required']">
+                                                Enrollment date is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="email">Email</label>
-                                        <input id="email" type="email" pInputText formControlName="email" />
+                                        <label for="email" class="required">Email</label>
+                                        <input id="email" type="email" pInputText formControlName="email" 
+                                               [ngClass]="{'invalid-field': form.get('email')?.invalid && (form.get('email')?.dirty || form.get('email')?.touched)}" />
+                                        <div *ngIf="form.get('email')?.invalid && (form.get('email')?.dirty || form.get('email')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('email')?.errors?.['required']">
+                                                Email is required
+                                            </small>
+                                            <small *ngIf="form.get('email')?.errors?.['email']">
+                                                Please enter a valid email
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="phone-number">Phone Number</label>
-                                        <input id="phone-number" type="text" pInputText formControlName="mobileNumber" />
+                                        <label for="phone-number" class="required">Phone Number</label>
+                                        <input id="phone-number" type="text" pInputText formControlName="mobileNumber" 
+                                               [ngClass]="{'invalid-field': form.get('mobileNumber')?.invalid && (form.get('mobileNumber')?.dirty || form.get('mobileNumber')?.touched)}" />
+                                        <div *ngIf="form.get('mobileNumber')?.invalid && (form.get('mobileNumber')?.dirty || form.get('mobileNumber')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('mobileNumber')?.errors?.['required']">
+                                                Phone number is required
+                                            </small>
+                                            <small *ngIf="form.get('mobileNumber')?.errors?.['pattern']">
+                                                Please enter a valid 10-digit phone number
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field span-two">
                                         <label for="photo">Upload Photo</label>
@@ -112,9 +149,16 @@
                             <p-accordion-content>
                                 <div class="section-grid two-col">
                                     <div class="form-field">
-                                        <label for="guardianFirstName">Parent First Name</label>
+                                        <label for="guardianFirstName" class="required">Parent First Name</label>
                                         <input id="guardianFirstName" type="text" pInputText
-                                            formControlName="guardianFirstName" />
+                                            formControlName="guardianFirstName" 
+                                            [ngClass]="{'invalid-field': form.get('guardianFirstName')?.invalid && (form.get('guardianFirstName')?.dirty || form.get('guardianFirstName')?.touched)}" />
+                                        <div *ngIf="form.get('guardianFirstName')?.invalid && (form.get('guardianFirstName')?.dirty || form.get('guardianFirstName')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianFirstName')?.errors?.['required']">
+                                                Parent first name is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
                                         <label for="guardianMiddleName">Parent Middle Name</label>
@@ -122,33 +166,74 @@
                                             formControlName="guardianMiddleName" />
                                     </div>
                                     <div class="form-field">
-                                        <label for="guardianLastName">Parent Last Name</label>
+                                        <label for="guardianLastName" class="required">Parent Last Name</label>
                                         <input id="guardianLastName" type="text" pInputText
-                                            formControlName="guardianLastName" />
+                                            formControlName="guardianLastName" 
+                                            [ngClass]="{'invalid-field': form.get('guardianLastName')?.invalid && (form.get('guardianLastName')?.dirty || form.get('guardianLastName')?.touched)}" />
+                                        <div *ngIf="form.get('guardianLastName')?.invalid && (form.get('guardianLastName')?.dirty || form.get('guardianLastName')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianLastName')?.errors?.['required']">
+                                                Parent last name is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="relation">Relation</label>
-                                        <select id="relation" formControlName="guardianRelation">
+                                        <label for="relation" class="required">Relation</label>
+                                        <select id="relation" formControlName="guardianRelation"
+                                                [ngClass]="{'invalid-field': form.get('guardianRelation')?.invalid && (form.get('guardianRelation')?.dirty || form.get('guardianRelation')?.touched)}">
                                             <option value="" disabled>Select</option>
                                             <option value="father">Father</option>
                                             <option value="mother">Mother</option>
                                             <option value="other">Other</option>
                                         </select>
+                                        <div *ngIf="form.get('guardianRelation')?.invalid && (form.get('guardianRelation')?.dirty || form.get('guardianRelation')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianRelation')?.errors?.['required']">
+                                                Relation is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="parent-mobile">Mobile No</label>
+                                        <label for="parent-mobile" class="required">Mobile No</label>
                                         <input type="text" id="parent-mobile" pInputText
-                                            formControlName="guardianPhoneNumber" />
+                                            formControlName="guardianPhoneNumber" 
+                                            [ngClass]="{'invalid-field': form.get('guardianPhoneNumber')?.invalid && (form.get('guardianPhoneNumber')?.dirty || form.get('guardianPhoneNumber')?.touched)}" />
+                                        <div *ngIf="form.get('guardianPhoneNumber')?.invalid && (form.get('guardianPhoneNumber')?.dirty || form.get('guardianPhoneNumber')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianPhoneNumber')?.errors?.['required']">
+                                                Parent phone number is required
+                                            </small>
+                                            <small *ngIf="form.get('guardianPhoneNumber')?.errors?.['pattern']">
+                                                Please enter a valid 10-digit phone number
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="parent-email">Email (optional)</label>
+                                        <label for="parent-email" class="required">Email</label>
                                         <input type="email" id="parent-email" pInputText
-                                            formControlName="guardianEmail" />
+                                            formControlName="guardianEmail" 
+                                            [ngClass]="{'invalid-field': form.get('guardianEmail')?.invalid && (form.get('guardianEmail')?.dirty || form.get('guardianEmail')?.touched)}" />
+                                        <div *ngIf="form.get('guardianEmail')?.invalid && (form.get('guardianEmail')?.dirty || form.get('guardianEmail')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianEmail')?.errors?.['required']">
+                                                Parent email is required
+                                            </small>
+                                            <small *ngIf="form.get('guardianEmail')?.errors?.['email']">
+                                                Please enter a valid email
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field span-two">
-                                        <label for="guardianAddress">Address</label>
+                                        <label for="guardianAddress" class="required">Address</label>
                                         <textarea id="guardianAddress" pInputTextarea formControlName="guardianAddress"
-                                            rows="3"></textarea>
+                                            rows="3" 
+                                            [ngClass]="{'invalid-field': form.get('guardianAddress')?.invalid && (form.get('guardianAddress')?.dirty || form.get('guardianAddress')?.touched)}"></textarea>
+                                        <div *ngIf="form.get('guardianAddress')?.invalid && (form.get('guardianAddress')?.dirty || form.get('guardianAddress')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('guardianAddress')?.errors?.['required']">
+                                                Parent address is required
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </p-accordion-content>
@@ -170,40 +255,78 @@
                             <p-accordion-content>
                                 <div class="section-grid two-col">
                                     <div class="form-field span-two">
-                                        <label for="currentAddressLine">Address</label>
+                                        <label for="currentAddressLine" class="required">Address</label>
                                         <textarea id="currentAddressLine" pInputTextarea
-                                            formControlName="currentAddressLine" rows="3"></textarea>
+                                            formControlName="currentAddressLine" rows="3"
+                                            [ngClass]="{'invalid-field': form.get('currentAddressLine')?.invalid && (form.get('currentAddressLine')?.dirty || form.get('currentAddressLine')?.touched)}"></textarea>
+                                        <div *ngIf="form.get('currentAddressLine')?.invalid && (form.get('currentAddressLine')?.dirty || form.get('currentAddressLine')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('currentAddressLine')?.errors?.['required']">
+                                                Current address is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="currentCountry">Country</label>
+                                        <label for="currentCountry" class="required">Country</label>
                                         <select id="currentCountry" formControlName="currentCountry"
-                                            (change)="onCountryChange('current')">
+                                            (change)="onCountryChange('current')"
+                                            [ngClass]="{'invalid-field': form.get('currentCountry')?.invalid && (form.get('currentCountry')?.dirty || form.get('currentCountry')?.touched)}">
                                             <option value="">Select Country</option>
                                             <option *ngFor="let country of currentcountries" [ngValue]="country">{{
                                                 country }}</option>
                                         </select>
+                                        <div *ngIf="form.get('currentCountry')?.invalid && (form.get('currentCountry')?.dirty || form.get('currentCountry')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('currentCountry')?.errors?.['required']">
+                                                Country is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="currentState">State</label>
+                                        <label for="currentState" class="required">State</label>
                                         <select id="currentState" class="p-inputtext" formControlName="currentState"
-                                            (change)="onStateChange('current')">
+                                            (change)="onStateChange('current')"
+                                            [ngClass]="{'invalid-field': form.get('currentState')?.invalid && (form.get('currentState')?.dirty || form.get('currentState')?.touched)}">
                                             <option value="" disabled>Select State</option>
                                             <option *ngFor="let state of currentStates" [value]="state.name">{{
                                                 state.name }}</option>
                                         </select>
+                                        <div *ngIf="form.get('currentState')?.invalid && (form.get('currentState')?.dirty || form.get('currentState')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('currentState')?.errors?.['required']">
+                                                State is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="currentCity">City</label>
-                                        <select id="currentCity" class="p-inputtext" formControlName="currentCity">
+                                        <label for="currentCity" class="required">City</label>
+                                        <select id="currentCity" class="p-inputtext" formControlName="currentCity"
+                                            [ngClass]="{'invalid-field': form.get('currentCity')?.invalid && (form.get('currentCity')?.dirty || form.get('currentCity')?.touched)}">
                                             <option value="" disabled>Select City</option>
                                             <option *ngFor="let city of currentCities" [value]="city">{{ city }}
                                             </option>
                                         </select>
+                                        <div *ngIf="form.get('currentCity')?.invalid && (form.get('currentCity')?.dirty || form.get('currentCity')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('currentCity')?.errors?.['required']">
+                                                City is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="currentZipCode">Zip Code</label>
+                                        <label for="currentZipCode" class="required">Zip Code</label>
                                         <input type="text" id="currentZipCode" pInputText
-                                            formControlName="currentZipCode" />
+                                            formControlName="currentZipCode" 
+                                            [ngClass]="{'invalid-field': form.get('currentZipCode')?.invalid && (form.get('currentZipCode')?.dirty || form.get('currentZipCode')?.touched)}" />
+                                        <div *ngIf="form.get('currentZipCode')?.invalid && (form.get('currentZipCode')?.dirty || form.get('currentZipCode')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('currentZipCode')?.errors?.['required']">
+                                                Zip code is required
+                                            </small>
+                                            <small *ngIf="form.get('currentZipCode')?.errors?.['pattern']">
+                                                Please enter a valid 5 or 6 digit zip code
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </p-accordion-content>
@@ -247,40 +370,78 @@
                             <p-accordion-content>
                                 <div class="section-grid two-col">
                                     <div class="form-field span-two">
-                                        <label for="permanentAddressLine">Address</label>
+                                        <label for="permanentAddressLine" class="required">Address</label>
                                         <textarea id="permanentAddressLine" pInputTextarea
-                                            formControlName="permanentAddressLine" rows="3"></textarea>
+                                            formControlName="permanentAddressLine" rows="3"
+                                            [ngClass]="{'invalid-field': form.get('permanentAddressLine')?.invalid && (form.get('permanentAddressLine')?.dirty || form.get('permanentAddressLine')?.touched)}"></textarea>
+                                        <div *ngIf="form.get('permanentAddressLine')?.invalid && (form.get('permanentAddressLine')?.dirty || form.get('permanentAddressLine')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('permanentAddressLine')?.errors?.['required']">
+                                                Permanent address is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="permanentCountry">Country</label>
+                                        <label for="permanentCountry" class="required">Country</label>
                                         <select id="permanentCountry" formControlName="permanentCountry"
-                                            (change)="onCountryChange('permanent')">
+                                            (change)="onCountryChange('permanent')"
+                                            [ngClass]="{'invalid-field': form.get('permanentCountry')?.invalid && (form.get('permanentCountry')?.dirty || form.get('permanentCountry')?.touched)}">
                                             <option value="">Select Country</option>
                                             <option *ngFor="let country of permanentcountries" [ngValue]="country">{{
                                                 country }}</option>
                                         </select>
+                                        <div *ngIf="form.get('permanentCountry')?.invalid && (form.get('permanentCountry')?.dirty || form.get('permanentCountry')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('permanentCountry')?.errors?.['required']">
+                                                Country is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="permanentState">State</label>
+                                        <label for="permanentState" class="required">State</label>
                                         <select id="permanentState" class="p-inputtext" formControlName="permanentState"
-                                            (change)="onStateChange('permanent')">
+                                            (change)="onStateChange('permanent')"
+                                            [ngClass]="{'invalid-field': form.get('permanentState')?.invalid && (form.get('permanentState')?.dirty || form.get('permanentState')?.touched)}">
                                             <option value="" disabled>Select State</option>
                                             <option *ngFor="let state of permanentStates" [value]="state.name">{{
                                                 state.name }}</option>
                                         </select>
+                                        <div *ngIf="form.get('permanentState')?.invalid && (form.get('permanentState')?.dirty || form.get('permanentState')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('permanentState')?.errors?.['required']">
+                                                State is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="permanentCity">City</label>
-                                        <select id="permanentCity" class="p-inputtext" formControlName="permanentCity">
+                                        <label for="permanentCity" class="required">City</label>
+                                        <select id="permanentCity" class="p-inputtext" formControlName="permanentCity"
+                                            [ngClass]="{'invalid-field': form.get('permanentCity')?.invalid && (form.get('permanentCity')?.dirty || form.get('permanentCity')?.touched)}">
                                             <option value="" disabled>Select City</option>
                                             <option *ngFor="let city of permanentCities" [value]="city">{{ city }}
                                             </option>
                                         </select>
+                                        <div *ngIf="form.get('permanentCity')?.invalid && (form.get('permanentCity')?.dirty || form.get('permanentCity')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('permanentCity')?.errors?.['required']">
+                                                City is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="permanentZipCode">Zip Code</label>
+                                        <label for="permanentZipCode" class="required">Zip Code</label>
                                         <input type="text" id="permanentZipCode" pInputText
-                                            formControlName="permanentZipCode" />
+                                            formControlName="permanentZipCode" 
+                                            [ngClass]="{'invalid-field': form.get('permanentZipCode')?.invalid && (form.get('permanentZipCode')?.dirty || form.get('permanentZipCode')?.touched)}" />
+                                        <div *ngIf="form.get('permanentZipCode')?.invalid && (form.get('permanentZipCode')?.dirty || form.get('permanentZipCode')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('permanentZipCode')?.errors?.['required']">
+                                                Zip code is required
+                                            </small>
+                                            <small *ngIf="form.get('permanentZipCode')?.errors?.['pattern']">
+                                                Please enter a valid 5 or 6 digit zip code
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </p-accordion-content>
@@ -302,24 +463,45 @@
                             <p-accordion-content>
                                 <div class="section-grid two-col">
                                     <div class="form-field">
-                                        <label for="class">Class</label>
-                                        <select id="class" formControlName="classId" (change)="onClassChange()">
+                                        <label for="class" class="required">Class</label>
+                                        <select id="class" formControlName="classId" (change)="onClassChange()"
+                                                [ngClass]="{'invalid-field': form.get('classId')?.invalid && (form.get('classId')?.dirty || form.get('classId')?.touched)}">
                                             <option value="">Select Class</option>
                                             <option *ngFor="let cls of classes" [value]="cls.classId">{{
                                                 cls.className }}</option>
                                         </select>
+                                        <div *ngIf="form.get('classId')?.invalid && (form.get('classId')?.dirty || form.get('classId')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('classId')?.errors?.['required']">
+                                                Class is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="section">Section</label>
-                                        <select id="section" formControlName="sectionId">
+                                        <label for="section" class="required">Section</label>
+                                        <select id="section" formControlName="sectionId"
+                                                [ngClass]="{'invalid-field': form.get('sectionId')?.invalid && (form.get('sectionId')?.dirty || form.get('sectionId')?.touched)}">
                                             <option value="">Select Section</option>
                                             <option *ngFor="let sec of sections" [value]="sec.sectionId">{{ sec.sectionName
                                                 }}</option>
                                         </select>
+                                        <div *ngIf="form.get('sectionId')?.invalid && (form.get('sectionId')?.dirty || form.get('sectionId')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('sectionId')?.errors?.['required']">
+                                                Section is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="roll-number">Roll Number</label>
-                                        <input id="roll-number" type="text" pInputText formControlName="rollNumber" />
+                                        <label for="roll-number" class="required">Roll Number</label>
+                                        <input id="roll-number" type="text" pInputText formControlName="rollNumber" 
+                                               [ngClass]="{'invalid-field': form.get('rollNumber')?.invalid && (form.get('rollNumber')?.dirty || form.get('rollNumber')?.touched)}" />
+                                        <div *ngIf="form.get('rollNumber')?.invalid && (form.get('rollNumber')?.dirty || form.get('rollNumber')?.touched)"
+                                             class="validation-error">
+                                            <small *ngIf="form.get('rollNumber')?.errors?.['required']">
+                                                Roll number is required
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="form-field">
                                         <label for="remarks">Remarks</label>
@@ -353,16 +535,15 @@
                 <div class="form-actions">
                     <button pButton type="button" label="Save Draft" class="p-button-outlined"
                         (click)="onSaveDraft()"></button>
-                    <button pButton type="button" label="Submit" class="p-button-success"
-                        (click)="onSubmit()"></button>
-                    <button pButton type="reset" label="Reset" class="p-button-secondary"></button>
+                    <button pButton type="button" label="{{ isEditMode ? 'Update' : 'Submit' }}" 
+                            class="p-button-success" (click)="onSubmit()"></button>
+                    <button pButton type="button" label="Reset" class="p-button-secondary" 
+                            (click)="resetForm()"></button>
                 </div>
             </p-tabpanel>
 
             <p-tabpanel value="1">
                 <div class="view-panel">
-                    <!-- <h3>Student Directory</h3>
-                    <p>Search and manage previously registered students.</p> -->
                     <app-view-students (editRequested)="onEditStudent($event)"></app-view-students>
                 </div>
             </p-tabpanel>

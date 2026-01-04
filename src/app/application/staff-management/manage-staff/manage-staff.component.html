@@ -1,6 +1,6 @@
 <p-tabs [(value)]="activeTab">
     <p-tablist>
-        <p-tab value="0">Add</p-tab>
+        <p-tab value="0">{{ isEditing ? 'Edit' : 'Add' }}</p-tab>
         <p-tab value="1">View</p-tab>
     </p-tablist>
     <p-tabpanels>
@@ -9,8 +9,8 @@
                 <div class="form-hero">
                     <div>
                         <p class="eyebrow">People Operations</p>
-                        <h3>Register a Staff Member</h3>
-                        <p>Capture personal, employment, and statutory details in one pass.</p>
+                        <h3>{{ isEditing ? 'Update Staff Member' : 'Register a Staff Member' }}</h3>
+                        <p>{{ isEditing ? 'Update personal, employment, and statutory details.' : 'Capture personal, employment, and statutory details in one pass.' }}</p>
                     </div>
                     <div class="form-meta">
                         <span class="label">Active staff</span>
@@ -27,18 +27,23 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="fullName">Full Name</label>
-                                <input pInputText id="fullName" type="text" formControlName="fullName" />
+                                <label for="fullName" class="required">Full Name</label>
+                                <input pInputText id="fullName" type="text" formControlName="fullName" 
+                                       [ngClass]="{'invalid-field': f['fullName'].touched && f['fullName'].invalid}" />
                                 <small class="p-error"
                                     *ngIf="f['fullName'].touched && f['fullName'].errors?.['required']">
                                     Full Name is required.
                                 </small>
+                                <small class="p-error"
+                                    *ngIf="f['fullName'].touched && f['fullName'].errors?.['minlength']">
+                                    Full Name must be at least 3 characters.
+                                </small>
                             </div>
 
                             <div class="form-field">
-                                <label for="dob">Date of Birth</label>
+                                <label for="dob" class="required">Date of Birth</label>
                                 <p-calendar id="dob" dateFormat="dd/mm/yy" [showIcon]="true"
-                                    formControlName="dob"></p-calendar>
+                                    formControlName="dob" [ngClass]="{'invalid-field': f['dob'].touched && f['dob'].invalid}"></p-calendar>
                                 <small class="p-error" *ngIf="f['dob'].touched && f['dob'].errors?.['required']">
                                     Date of Birth is required.
                                 </small>
@@ -47,9 +52,9 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="gender">Gender</label>
+                                <label for="gender" class="required">Gender</label>
                                 <p-dropdown id="gender" [options]="genderOptions" placeholder="Select a Gender"
-                                    formControlName="gender"></p-dropdown>
+                                    formControlName="gender" [ngClass]="{'invalid-field': f['gender'].touched && f['gender'].invalid}"></p-dropdown>
                                 <small class="p-error"
                                     *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
                                     Gender is required.
@@ -57,9 +62,9 @@
                             </div>
 
                             <div class="form-field">
-                                <label for="mobileNumber">Mobile Number</label>
+                                <label for="mobileNumber" class="required">Mobile Number</label>
                                 <p-inputMask id="mobileNumber" mask="(+91) 99999-99999"
-                                    formControlName="mobileNumber"></p-inputMask>
+                                    formControlName="mobileNumber" [ngClass]="{'invalid-field': f['mobileNumber'].touched && f['mobileNumber'].invalid}"></p-inputMask>
                                 <small class="p-error"
                                     *ngIf="f['mobileNumber'].touched && f['mobileNumber'].errors?.['required']">
                                     Mobile number is required.
@@ -69,8 +74,9 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="email">Personal Email</label>
-                                <input pInputText id="email" type="email" formControlName="email" />
+                                <label for="email" class="required">Personal Email</label>
+                                <input pInputText id="email" type="email" formControlName="email" 
+                                       [ngClass]="{'invalid-field': f['email'].touched && f['email'].invalid}" />
                                 <small class="p-error" *ngIf="f['email'].touched && f['email'].errors?.['required']">
                                     Email is required.
                                 </small>
@@ -82,9 +88,9 @@
 
                         <div class="form-row">
                             <div class="form-field span-two">
-                                <label for="currentAddress">Current Address</label>
+                                <label for="currentAddress" class="required">Current Address</label>
                                 <textarea id="currentAddress" pInputTextarea rows="3"
-                                    formControlName="currentAddress"></textarea>
+                                    formControlName="currentAddress" [ngClass]="{'invalid-field': f['currentAddress'].touched && f['currentAddress'].invalid}"></textarea>
                                 <small class="p-error"
                                     *ngIf="f['currentAddress'].touched && f['currentAddress'].errors?.['required']">
                                     Address is required.
@@ -101,8 +107,9 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="employeeId">Employee ID</label>
-                                <input pInputText id="employeeId" type="text" formControlName="employeeId" />
+                                <label for="employeeId" class="required">Employee ID</label>
+                                <input pInputText id="employeeId" type="text" formControlName="employeeId" 
+                                       [ngClass]="{'invalid-field': f['employeeId'].touched && f['employeeId'].invalid}" />
                                 <small class="p-error"
                                     *ngIf="f['employeeId'].touched && f['employeeId'].errors?.['required']">
                                     Employee ID is required.
@@ -110,9 +117,9 @@
                             </div>
 
                             <div class="form-field">
-                                <label for="doj">Date of Joining</label>
+                                <label for="doj" class="required">Date of Joining</label>
                                 <p-calendar id="doj" dateFormat="dd/mm/yy" [showIcon]="true"
-                                    formControlName="dateOfJoining"></p-calendar>
+                                    formControlName="dateOfJoining" [ngClass]="{'invalid-field': f['dateOfJoining'].touched && f['dateOfJoining'].invalid}"></p-calendar>
                                 <small class="p-error"
                                     *ngIf="f['dateOfJoining'].touched && f['dateOfJoining'].errors?.['required']">
                                     Date of Joining is required.
@@ -122,8 +129,9 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="jobTitle">Job Title / Designation</label>
-                                <input pInputText id="jobTitle" type="text" formControlName="jobTitle" />
+                                <label for="jobTitle" class="required">Job Title / Designation</label>
+                                <input pInputText id="jobTitle" type="text" formControlName="jobTitle" 
+                                       [ngClass]="{'invalid-field': f['jobTitle'].touched && f['jobTitle'].invalid}" />
                                 <small class="p-error"
                                     *ngIf="f['jobTitle'].touched && f['jobTitle'].errors?.['required']">
                                     Job Title is required.
@@ -131,9 +139,10 @@
                             </div>
 
                             <div class="form-field">
-                                <label for="department">Department</label>
+                                <label for="department" class="required">Department</label>
                                 <p-dropdown id="department" [options]="departmentOptions"
-                                    placeholder="Select a Department" formControlName="department"></p-dropdown>
+                                    placeholder="Select a Department" formControlName="department" 
+                                    [ngClass]="{'invalid-field': f['department'].touched && f['department'].invalid}"></p-dropdown>
                                 <small class="p-error"
                                     *ngIf="f['department'].touched && f['department'].errors?.['required']">
                                     Department is required.
@@ -150,22 +159,22 @@
 
                         <div class="form-row">
                             <div class="form-field">
-                                <label for="panNumber">PAN Number</label>
+                                <label for="panNumber" class="required">PAN Number</label>
                                 <input pInputText id="panNumber" type="text" formControlName="panNumber"
-                                    style="text-transform: uppercase;" />
+                                    style="text-transform: uppercase;" [ngClass]="{'invalid-field': f['panNumber'].touched && f['panNumber'].invalid}" />
                                 <small class="p-error"
                                     *ngIf="f['panNumber'].touched && f['panNumber'].errors?.['required']">
                                     PAN Number is required.
                                 </small>
                                 <small class="p-error" *ngIf="f['panNumber'].errors?.['pattern']">
-                                    Invalid PAN format.
+                                    Invalid PAN format (e.g., ABCDE1234F).
                                 </small>
                             </div>
 
                             <div class="form-field">
-                                <label for="aadhaarNumber">Aadhaar Number</label>
+                                <label for="aadhaarNumber" class="required">Aadhaar Number</label>
                                 <p-inputMask id="aadhaarNumber" mask="9999-9999-9999"
-                                    formControlName="aadhaarNumber"></p-inputMask>
+                                    formControlName="aadhaarNumber" [ngClass]="{'invalid-field': f['aadhaarNumber'].touched && f['aadhaarNumber'].invalid}"></p-inputMask>
                                 <small class="p-error"
                                     *ngIf="f['aadhaarNumber'].touched && f['aadhaarNumber'].errors?.['required']">
                                     Aadhaar Number is required.

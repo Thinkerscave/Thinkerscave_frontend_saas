@@ -1,120 +1,154 @@
 <p-toast></p-toast>
-<p-tabView [(activeIndex)]="activeTabIndex">
-  <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
-    <p-card>
-      <div class="p-fluid p-formgrid grid gap-4">
-        <!-- Menu Name -->
-        <div class="col-12 md:col-4">
-          <label for="menuName" class="block mb-2">
-            Menu Name
-          </label>
-          <input id="menuName" type="text" pInputText [(ngModel)]="menuName" placeholder="Enter menu name"
-            class="w-full" />
-        </div>
 
+<p-tabs [(value)]="activeTabIndex" class="manage-menu-tabs">
+    <p-tablist>
+        <p-tab [value]="0">
+            <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus'"></i>
+            <span>{{ isEditMode ? 'Edit' : 'Add' }}</span>
+        </p-tab>
+        <p-tab [value]="1">
+            <i class="pi pi-list"></i>
+            <span>View</span>
+        </p-tab>
+    </p-tablist>
 
+    <p-tabpanels>
+        <p-tabpanel [value]="0">
+            <div class="card menu-form-card">
+                <!-- <div class="form-hero">
+                    <div>
+                        <p class="eyebrow">Menu Management</p>
+                        <h3>{{ isEditMode ? 'Edit Menu Item' : 'Create New Menu' }}</h3>
+                        <p>{{ isEditMode ? 'Update menu details and settings.' : 'Add new menu items to the navigation system.' }}</p>
+                    </div>
+                </div> -->
 
-        <!-- Menu Icon -->
-        <div class="col-12 md:col-4">
-          <label for="menuIcon" class="block mb-2 font-medium">
-            Menu Icon
-          </label>
-          <input id="menuIcon" type="text" pInputText [(ngModel)]="menuIcon" placeholder="e.g. pi pi-list"
-            class="w-full" />
-          <small class="text-500">
-            Enter PrimeIcon class name
-          </small>
-        </div>
+                <div class="p-fluid p-formgrid grid gap-4 mt-4">
+                    <!-- Menu Name -->
+                    <div class="col-12 md:col-4">
+                        <label for="menuName" class="block mb-2 required">
+                            Menu Name
+                        </label>
+                        <input id="menuName" type="text" pInputText [(ngModel)]="menuName" 
+                               placeholder="Enter menu name" class="w-full"
+                               [ngClass]="{'invalid-field': menuNameInvalid && (menuNameTouched || formSubmitted)}" 
+                               (blur)="onMenuNameBlur()" />
+                        <div *ngIf="menuNameInvalid && (menuNameTouched || formSubmitted)" class="validation-error">
+                            <small>Menu Name is required</small>
+                        </div>
+                    </div>
 
-        <!-- Menu Description -->
-        <div class="col-12 md:col-4">
-          <label for="menuDescription" class="block mb-2">
-            Menu Description
-          </label>
-          <textarea id="menuDescription" pInputTextarea [(ngModel)]="menuDescription" rows="2"
-            placeholder="Enter menu description" class="w-full"></textarea>
-        </div>
+                    <!-- Menu Icon -->
+                    <div class="col-12 md:col-4">
+                        <label for="menuIcon" class="block mb-2 required">
+                            Menu Icon
+                        </label>
+                        <input id="menuIcon" type="text" pInputText [(ngModel)]="menuIcon" 
+                               placeholder="e.g. pi pi-list" class="w-full"
+                               [ngClass]="{'invalid-field': menuIconInvalid && (menuIconTouched || formSubmitted)}" 
+                               (blur)="onMenuIconBlur()" />
+                        <small class="text-500">Enter PrimeIcon class name (e.g., pi pi-home, pi pi-list)</small>
+                        <div *ngIf="menuIconInvalid && (menuIconTouched || formSubmitted)" class="validation-error">
+                            <small>Menu Icon is required</small>
+                        </div>
+                    </div>
 
-        <!-- Buttons (UNCHANGED COLORS) -->
-        <div class="col-12 mt-3">
-          <div class="flex justify-content-start gap-2">
-            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" (click)="resetForm()"></button>
+                    <!-- Menu Description -->
+                    <div class="col-12 md:col-4">
+                        <label for="menuDescription" class="block mb-2 required">
+                            Menu Description
+                        </label>
+                        <textarea id="menuDescription" pInputTextarea [(ngModel)]="menuDescription" rows="3"
+                            placeholder="Enter menu description" class="w-full custom-textarea"
+                            [ngClass]="{'invalid-field': menuDescriptionInvalid && (menuDescriptionTouched || formSubmitted)}"
+                            (blur)="onMenuDescriptionBlur()"></textarea>
+                        <div *ngIf="menuDescriptionInvalid && (menuDescriptionTouched || formSubmitted)" class="validation-error">
+                            <small>Menu Description is required</small>
+                        </div>
+                    </div>
 
-            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" (click)="cancelEdit()"></button>
+                    <!-- Action Buttons -->
+                    <div class="col-12 mt-4">
+                        <div class="flex justify-content-end gap-2">
+                            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" 
+                                    type="button" (click)="resetForm()"></button>
 
-            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
-              (click)="submit()"></button>
-          </div>
-        </div>
+                            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" 
+                                    type="button" (click)="cancelEdit()"></button>
 
-      </div>
-    </p-card>
-  </p-tabPanel>
+                            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" 
+                                    class="p-button-success" type="button" (click)="submit()"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </p-tabpanel>
 
-  <p-tabPanel header="View">
-    <div class="menu-list-container p-fluid">
+        <p-tabpanel [value]="1">
+            <div class="card menu-list-container">
+                <div class="flex justify-content-between align-items-center mb-4">
+                    <h3 class="m-0">Menu List</h3>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" placeholder="Search menus..."
+                            [value]="globalFilterValue" (input)="onGlobalFilter(dt1, $event)" />
+                    </span>
+                </div>
 
-      <p-table #dt1 [value]="menuItems" [loading]="loading" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['name','description','createdBy']"
-        styleClass="p-datatable-sm p-datatable-gridlines">
+                <p-table #dt1 [value]="menuItems" [loading]="loading" [paginator]="true" [rows]="5" 
+                        [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['name','description','createdBy','icon']"
+                        styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
+                    
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 5rem;">Sl. No</th>
+                            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
+                            <th>Icon</th>
+                            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon field="description"></p-sortIcon></th>
+                            <th pSortableColumn="createdBy">Created By <p-sortIcon field="createdBy"></p-sortIcon></th>
+                            <th pSortableColumn="lastModifiedDate">Last Updated <p-sortIcon field="lastModifiedDate"></p-sortIcon></th>
+                            <th>Status</th>
+                            <th style="width: 8rem; text-align: center;">Actions</th>
+                        </tr>
+                    </ng-template>
 
-        <!-- 🔍 Search Bar -->
-        <ng-template pTemplate="caption">
-          <div class="flex justify-content-end">
-            <p-iconfield iconPosition="left">
-              <p-inputicon>
-                <i class="pi pi-search"></i>
-              </p-inputicon>
-              <input #gb pInputText type="text" (input)="dt1.filterGlobal(gb.value, 'contains')"
-                placeholder="Search keyword" />
-            </p-iconfield>
-          </div>
-        </ng-template>
+                    <ng-template pTemplate="body" let-menuItem let-i="rowIndex">
+                        <tr>
+                            <td>{{ (dt1.first || 0) + i + 1 }}</td>
+                            <td>{{ menuItem.name }}</td>
+                            <td>
+                                <i [class]="menuItem.icon" class="mr-2"></i>
+                                <small class="text-500">{{ menuItem.icon }}</small>
+                            </td>
+                            <td class="truncate-text">{{ menuItem.description }}</td>
+                            <td>{{ menuItem.createdBy || 'System' }}</td>
+                            <td>{{ menuItem.lastModifiedDate | date:'medium' }}</td>
+                            <td>
+                                <p-tag [value]="menuItem.isActive ? 'Active' : 'Inactive'" 
+                                      [severity]="menuItem.isActive ? 'success' : 'danger'"
+                                      styleClass="mr-2"></p-tag>
+                                <p-inputSwitch [(ngModel)]="menuItem.isActive" 
+                                              (onChange)="toggleStatus(menuItem)"></p-inputSwitch>
+                            </td>
+                            <td style="text-align: center;">
+                                <button pButton icon="pi pi-pencil" 
+                                        class="p-button-rounded p-button-sm p-button-text p-button-primary p-mr-2"
+                                        (click)="onEdit(menuItem)" pTooltip="Edit" tooltipPosition="top"></button>
+                            </td>
+                        </tr>
+                    </ng-template>
 
-        <!-- 📋 Table Header -->
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 5rem;">Sl. No</th>
-            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
-                    <th>Icon Name</th>
-            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
-                field="description"></p-sortIcon></th>
-            <th>Created By</th>
-            <th>Last Updated</th>
-            <th>Status</th>
-            <th style="width: 8rem; text-align: center;">Actions</th>
-          </tr>
-        </ng-template>
-
-        <!-- 📋 Table Body -->
-        <ng-template pTemplate="body" let-menuItem let-i="rowIndex">
-          <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ menuItem.name }}</td>
-            <td>{{ menuItem.icon }}</td>
-            <td class="truncate-text">{{ menuItem.description }}</td>
-            <td>{{ menuItem.createdBy }}</td>
-            <td>{{ menuItem.lastModifiedDate | date:'short' }}</td>
-            <td>
-              <p-inputSwitch [(ngModel)]="menuItem.isActive" (onChange)="toggleStatus(menuItem)"></p-inputSwitch>
-            </td>
-            <td style="text-align: center;">
-              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
-                (onClick)="onEdit(menuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
-            </td>
-          </tr>
-        </ng-template>
-
-        <!-- 🚫 Empty Message -->
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7" class="text-center">No menus found.</td>
-          </tr>
-        </ng-template>
-
-      </p-table>
-
-    </div>
-  </p-tabPanel>
-</p-tabView>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="8" class="text-center p-4">
+                                <i class="pi pi-inbox text-400" style="font-size: 2rem;"></i>
+                                <p class="mt-2 text-500">No menus found.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabpanel>
+    </p-tabpanels>
+</p-tabs>

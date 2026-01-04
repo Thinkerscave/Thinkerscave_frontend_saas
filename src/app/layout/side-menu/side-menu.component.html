@@ -1,3 +1,5 @@
 <div class="side-menu-wrapper" [class.is-collapsed]="collapsed">
-  <p-panelmenu [model]="items" [styleClass]="'side-menu' + (collapsed ? ' collapsed-menu' : '')"></p-panelmenu>
+  <div class="menu-scroll-container">
+    <p-panelmenu [model]="items" [styleClass]="'side-menu' + (collapsed ? ' collapsed-menu' : '')"></p-panelmenu>
+  </div>
 </div>

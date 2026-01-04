@@ -1,100 +1,132 @@
 <p-toast></p-toast>
-<p-tabView [(activeIndex)]="activeTabIndex">
-  <!-- Add/Edit Form -->
-  <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
-    <p-card>
-      <div class="p-fluid p-formgrid grid gap-4">
-        <!-- Role Name -->
-        <div class="col-12 md:col-4">
-          <label for="roleName" class="mb-2 block">Role Name</label>
-          <input id="roleName" type="text" pInputText [(ngModel)]="roleName"
-                 placeholder="Enter role name" class="w-full" />
-        </div>
 
-        <!-- Role Description -->
-        <div class="col-12 md:col-4 ml-2">
-          <label for="roleDescription" class="mb-2 block">Role Description</label>
-          <textarea id="roleDescription" pInputTextarea [(ngModel)]="roleDescription" 
-                    [rows]="2" placeholder="Enter role description" class="w-full p-3"></textarea>
-        </div>
+<p-tabs [(value)]="activeTabIndex" class="manage-role-tabs">
+    <p-tablist>
+        <p-tab [value]="0">
+            <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus'"></i>
+            <span>{{ isEditMode ? 'Edit' : 'Add' }}</span>
+        </p-tab>
+        <p-tab [value]="1">
+            <i class="pi pi-list"></i>
+            <span>View</span>
+        </p-tab>
+    </p-tablist>
 
-        <!-- Buttons -->
-        <div class="col-4">
-          <div class="flex gap-2 flex-start">
-            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" (click)="resetForm()"></button>
-            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" (click)="cancelEdit()"></button>
-            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
-                    (click)="submit()"></button>
-          </div>
-        </div>
-      </div>
-    </p-card>
-  </p-tabPanel>
+    <p-tabpanels>
+        <!-- Add/Edit Form -->
+        <p-tabpanel [value]="0">
+            <div class="card role-form-card">
+                <!-- <div class="form-hero">
+                    <div>
+                        <p class="eyebrow">Role Management</p>
+                        <h3>{{ isEditMode ? 'Edit Role' : 'Create New Role' }}</h3>
+                        <p>{{ isEditMode ? 'Update role details and permissions.' : 'Add new roles with specific access privileges.' }}</p>
+                    </div>
+                </div> -->
 
-  <!-- View List -->
-  <p-tabPanel header="View">
-    <div class="role-list-container p-fluid">
+                <div class="p-fluid p-formgrid grid gap-4 mt-4">
+                    <!-- Role Name -->
+                    <div class="col-12 md:col-6">
+                        <label for="roleName" class="mb-2 block required">Role Name</label>
+                        <input id="roleName" type="text" pInputText [(ngModel)]="roleName"
+                               placeholder="Enter role name" class="w-full"
+                               [ngClass]="{'invalid-field': roleNameInvalid && (roleNameTouched || formSubmitted)}"
+                               (blur)="onRoleNameBlur()" />
+                        <div *ngIf="roleNameInvalid && (roleNameTouched || formSubmitted)" class="validation-error">
+                            <small>Role Name is required</small>
+                        </div>
+                    </div>
 
-      <p-table #dt [value]="roles" [loading]="loading" [paginator]="true" [rows]="5"
-               [showCurrentPageReport]="true"
-               currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-               [rowsPerPageOptions]="[5, 10, 20]" 
-               [globalFilterFields]="['roleName','description','createdBy']"
-               styleClass="p-datatable-sm p-datatable-gridlines">
+                    <!-- Role Description -->
+                    <div class="col-12 md:col-6">
+                        <label for="roleDescription" class="mb-2 block required">Role Description</label>
+                        <textarea id="roleDescription" pInputTextarea [(ngModel)]="roleDescription" 
+                                  [rows]="3" placeholder="Enter role description" 
+                                  class="w-full custom-textarea"
+                                  [ngClass]="{'invalid-field': roleDescriptionInvalid && (roleDescriptionTouched || formSubmitted)}"
+                                  (blur)="onRoleDescriptionBlur()"></textarea>
+                        <div *ngIf="roleDescriptionInvalid && (roleDescriptionTouched || formSubmitted)" class="validation-error">
+                            <small>Role Description is required</small>
+                        </div>
+                    </div>
 
-        <!-- 🔍 Search Bar -->
-        <ng-template pTemplate="caption">
-          <div class="flex justify-content-end">
-            <p-iconfield iconPosition="left">
-              <p-inputicon>
-                <i class="pi pi-search"></i>
-              </p-inputicon>
-              <input #gb pInputText type="text" 
-                     (input)="dt.filterGlobal(gb.value, 'contains')" 
-                     placeholder="Search keyword" />
-            </p-iconfield>
-          </div>
-        </ng-template>
+                    <!-- Buttons -->
+                    <div class="col-12 mt-4">
+                        <div class="flex justify-content-end gap-2">
+                            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" 
+                                    type="button" (click)="resetForm()"></button>
+                            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" 
+                                    type="button" (click)="cancelEdit()"></button>
+                            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" 
+                                    class="p-button-success" type="button" (click)="submit()"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </p-tabpanel>
 
-        <!-- 📋 Table Header -->
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 5rem;">Sl. No</th>
-            <th pSortableColumn="roleName">Role Name <p-sortIcon field="roleName"></p-sortIcon></th>
-            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon field="description"></p-sortIcon></th>
-            <th>Created By</th>
-            <th>Last Updated</th>
-            <th>Status</th>
-            <th style="width: 8rem; text-align: center;">Actions</th>
-          </tr>
-        </ng-template>
+        <!-- View List -->
+        <p-tabpanel [value]="1">
+            <div class="card role-list-container">
+                <div class="flex justify-content-between align-items-center mb-4">
+                    <h3 class="m-0">Role List</h3>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" placeholder="Search roles..."
+                            [value]="globalFilterValue" (input)="onGlobalFilter(dt, $event)" />
+                    </span>
+                </div>
 
-        <!-- 📋 Table Body -->
-        <ng-template pTemplate="body" let-role let-i="rowIndex">
-          <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ role.roleName }}</td>
-            <td class="truncate-text">{{ role.description }}</td>
-            <td>{{ role.createdBy }}</td>
-            <td>{{ role.lastModifiedDate | date:'short' }}</td>
-            <td>
-              <p-inputSwitch [(ngModel)]="role.isActive" (onChange)="toggleStatus(role)"></p-inputSwitch>
-            </td>
-            <td style="text-align: center;">
-              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
-                        (onClick)="onEdit(role)" pTooltip="Edit" tooltipPosition="top"></p-button>
-            </td>
-          </tr>
-        </ng-template>
+                <p-table #dt [value]="roles" [loading]="loading" [paginator]="true" [rows]="5"
+                         [showCurrentPageReport]="true"
+                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                         [rowsPerPageOptions]="[5, 10, 20]" 
+                         [globalFilterFields]="['roleName','description','createdBy']"
+                         styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
 
-        <!-- 🚫 Empty Message -->
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7" class="text-center">No roles found.</td>
-          </tr>
-        </ng-template>
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 5rem;">Sl. No</th>
+                            <th pSortableColumn="roleName">Role Name <p-sortIcon field="roleName"></p-sortIcon></th>
+                            <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
+                            <th pSortableColumn="createdBy">Created By <p-sortIcon field="createdBy"></p-sortIcon></th>
+                            <th pSortableColumn="lastModifiedDate">Last Updated <p-sortIcon field="lastModifiedDate"></p-sortIcon></th>
+                            <th>Status</th>
+                            <th style="width: 8rem; text-align: center;">Actions</th>
+                        </tr>
+                    </ng-template>
 
-      </p-table>
-    </div>
-  </p-tabPanel>
-</p-tabView>
+                    <ng-template pTemplate="body" let-role let-i="rowIndex">
+                        <tr>
+                            <td>{{ (dt.first || 0) + i + 1 }}</td>
+                            <td>{{ role.roleName }}</td>
+                            <td class="truncate-text">{{ role.description }}</td>
+                            <td>{{ role.createdBy || 'System' }}</td>
+                            <td>{{ role.lastModifiedDate | date:'medium' }}</td>
+                            <td>
+                                <p-tag [value]="role.isActive ? 'Active' : 'Inactive'" 
+                                      [severity]="role.isActive ? 'success' : 'danger'"
+                                      styleClass="mr-2"></p-tag>
+                                <p-inputSwitch [(ngModel)]="role.isActive" (onChange)="toggleStatus(role)"></p-inputSwitch>
+                            </td>
+                            <td style="text-align: center;">
+                                <button pButton icon="pi pi-pencil" 
+                                        class="p-button-rounded p-button-sm p-button-text p-button-primary p-mr-2"
+                                        (click)="onEdit(role)" pTooltip="Edit" tooltipPosition="top"></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center p-4">
+                                <i class="pi pi-inbox text-400" style="font-size: 2rem;"></i>
+                                <p class="mt-2 text-500">No roles found.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabpanel>
+    </p-tabpanels>
+</p-tabs>

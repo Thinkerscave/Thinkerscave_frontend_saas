@@ -1,0 +1,168 @@
+// Add these styles to your manage-role.component.scss
+
+// Required field indicator
+.required::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: bold;
+}
+
+// Validation error styles
+.validation-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.invalid-field {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    
+    &:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+    }
+}
+
+// Tabs styling
+.manage-role-tabs ::ng-deep {
+    .p-tablist {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0 1rem;
+    }
+    
+    .p-tab {
+        padding: 1rem 1.5rem;
+        
+        &:hover {
+            background-color: #f8fafc;
+        }
+        
+        &.p-highlight {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+    }
+}
+
+// Card and form styling
+.card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.role-form-card {
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+.form-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #eef2ff, #f5faff);
+    margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    color: #818cf8;
+    margin: 0;
+}
+
+.form-hero h3 {
+    margin: 0.35rem 0;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+.form-hero p {
+    margin: 0;
+    color: #475569;
+}
+
+// Table styling
+.role-list-container {
+    background: #ffffff;
+}
+
+// Textarea styling
+.custom-textarea {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    resize: vertical;
+    padding: 0.75rem;
+}
+
+.custom-textarea:focus {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+    outline: 0 none !important;
+}
+
+// Add these utility classes if not already present
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.p-mr-2 {
+    margin-right: 0.5rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.m-0 {
+    margin: 0;
+}
+
+.p-4 {
+    padding: 1.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-400 {
+    color: #9ca3af;
+}
+
+.text-500 {
+    color: #6b7280;
+}
+
+// Input icon styling
+.p-input-icon-left {
+    position: relative;
+    
+    i {
+        position: absolute;
+        top: 50%;
+        left: 0.75rem;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+    
+    input {
+        padding-left: 2.5rem;
+        border-radius: 6px;
+    }
+}

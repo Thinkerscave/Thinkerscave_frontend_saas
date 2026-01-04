@@ -1,14 +1,12 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 import { Tab, TabsModule } from 'primeng/tabs';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
-import { FileUploadModule } from 'primeng/fileupload';
-import { FormBuilder, FormGroup, FormsModule, NgModel, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputMaskModule } from 'primeng/inputmask';
-import { InputTextarea } from 'primeng/inputtextarea';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { Table } from 'primeng/table';
@@ -22,7 +20,14 @@ interface Staff {
   jobTitle: string;
   email: string;
   mobileNumber: string;
+  dob?: Date;
+  gender?: string;
+  currentAddress?: string;
+  dateOfJoining?: Date;
+  panNumber?: string;
+  aadhaarNumber?: string;
 }
+
 @Component({
   selector: 'app-manage-staff',
   imports: [ReactiveFormsModule, TabsModule, Tab,
@@ -97,6 +102,12 @@ export class ManageStaffComponent {
         jobTitle: 'Software Engineer',
         email: 'ananya.kumar@example.com',
         mobileNumber: '(+91) 98765-43210',
+        dob: new Date('1995-06-15'),
+        gender: 'Female',
+        currentAddress: '123 Tech Street, Bangalore',
+        dateOfJoining: new Date('2020-03-01'),
+        panNumber: 'ABCDE1234F',
+        aadhaarNumber: '1234-5678-9012'
       },
       {
         id: 2,
@@ -106,6 +117,12 @@ export class ManageStaffComponent {
         jobTitle: 'HR Manager',
         email: 'rohit.sharma@example.com',
         mobileNumber: '(+91) 91234-56789',
+        dob: new Date('1990-08-22'),
+        gender: 'Male',
+        currentAddress: '456 HR Avenue, Mumbai',
+        dateOfJoining: new Date('2018-07-15'),
+        panNumber: 'FGHIJ5678K',
+        aadhaarNumber: '2345-6789-0123'
       },
       {
         id: 3,
@@ -115,34 +132,13 @@ export class ManageStaffComponent {
         jobTitle: 'Finance Analyst',
         email: 'sneha.patel@example.com',
         mobileNumber: '(+91) 99887-66554',
-      },
-      {
-        id: 4,
-        fullName: 'Ananya Kumar',
-        employeeId: 'EMP001',
-        department: 'Technology',
-        jobTitle: 'Software Engineer',
-        email: 'ananya.kumar@example.com',
-        mobileNumber: '(+91) 98765-43210',
-      },
-      {
-        id: 5,
-        fullName: 'Rohit Sharma',
-        employeeId: 'EMP002',
-        department: 'Human Resources',
-        jobTitle: 'HR Manager',
-        email: 'rohit.sharma@example.com',
-        mobileNumber: '(+91) 91234-56789',
-      },
-      {
-        id: 6,
-        fullName: 'Sneha Patel',
-        employeeId: 'EMP003',
-        department: 'Finance',
-        jobTitle: 'Finance Analyst',
-        email: 'sneha.patel@example.com',
-        mobileNumber: '(+91) 99887-66554',
-      },
+        dob: new Date('1992-11-10'),
+        gender: 'Female',
+        currentAddress: '789 Finance Road, Delhi',
+        dateOfJoining: new Date('2019-05-20'),
+        panNumber: 'KLMNO9012P',
+        aadhaarNumber: '3456-7890-1234'
+      }
     ];
   }
 
@@ -151,6 +147,8 @@ export class ManageStaffComponent {
     this.editingStaffId = staff.id;
     this.isEditing = true;
     this.activeTab = '0';
+    
+    // Patch all form values including dates
     this.staffForm.patchValue({
       fullName: staff.fullName,
       employeeId: staff.employeeId,
@@ -158,6 +156,12 @@ export class ManageStaffComponent {
       jobTitle: staff.jobTitle,
       email: staff.email,
       mobileNumber: staff.mobileNumber,
+      dob: staff.dob ? new Date(staff.dob) : null,
+      gender: staff.gender,
+      currentAddress: staff.currentAddress,
+      dateOfJoining: staff.dateOfJoining ? new Date(staff.dateOfJoining) : null,
+      panNumber: staff.panNumber,
+      aadhaarNumber: staff.aadhaarNumber
     });
   }
 
@@ -175,12 +179,17 @@ export class ManageStaffComponent {
       jobTitle: this.staffForm.value.jobTitle,
       email: this.staffForm.value.email,
       mobileNumber: this.staffForm.value.mobileNumber,
+      dob: this.staffForm.value.dob,
+      gender: this.staffForm.value.gender,
+      currentAddress: this.staffForm.value.currentAddress,
+      dateOfJoining: this.staffForm.value.dateOfJoining,
+      panNumber: this.staffForm.value.panNumber,
+      aadhaarNumber: this.staffForm.value.aadhaarNumber
     };
 
     this.staffList = [...this.staffList, newStaff];
-    this.staffForm.reset();
-    this.staffForm.markAsPristine();
-    this.staffForm.markAsUntouched();
+    this.resetForm();
+    this.activeTab = '1'; // Switch to view tab after adding
   }
 
   onUpdateStaff(): void {
@@ -197,6 +206,12 @@ export class ManageStaffComponent {
       jobTitle: this.staffForm.value.jobTitle,
       email: this.staffForm.value.email,
       mobileNumber: this.staffForm.value.mobileNumber,
+      dob: this.staffForm.value.dob,
+      gender: this.staffForm.value.gender,
+      currentAddress: this.staffForm.value.currentAddress,
+      dateOfJoining: this.staffForm.value.dateOfJoining,
+      panNumber: this.staffForm.value.panNumber,
+      aadhaarNumber: this.staffForm.value.aadhaarNumber
     };
 
     this.staffList = this.staffList.map(staff =>
@@ -204,15 +219,26 @@ export class ManageStaffComponent {
     );
 
     this.resetEdit();
+    this.activeTab = '1'; // Switch to view tab after updating
   }
 
   resetEdit(): void {
     this.isEditing = false;
     this.editingStaffId = null;
     this.selectedStaff = null;
+    this.resetForm();
+  }
+
+  resetForm(): void {
     this.staffForm.reset();
     this.staffForm.markAsPristine();
     this.staffForm.markAsUntouched();
+    
+    // Reset dropdowns to null
+    this.staffForm.patchValue({
+      gender: null,
+      department: null
+    });
   }
 
   onGlobalFilter(table: Table, event: Event): void {
@@ -222,7 +248,7 @@ export class ManageStaffComponent {
   }
 
   onDeleteStaff(staff: Staff): void {
-    const confirmed = confirm(`Delete ${staff.fullName}'s record?`);
+    const confirmed = confirm(`Are you sure you want to delete ${staff.fullName}'s record?`);
     if (!confirmed) {
       return;
     }

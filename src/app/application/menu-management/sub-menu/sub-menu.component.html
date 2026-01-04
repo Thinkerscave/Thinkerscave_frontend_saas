@@ -1,128 +1,192 @@
 <p-toast></p-toast>
-<p-tabView [(activeIndex)]="activeTabIndex">
-  <p-tabPanel [header]="isEditMode ? 'Edit' : 'Add'">
-    <p-card>
-      <div class="p-fluid p-formgrid grid gap-4">
-        <div class="col-12 md:col-4">
-          <label for="menu" class="mb-2 block">Select Menu</label>
-          <p-dropdown id="menu" [options]="menuOptions" optionLabel="name" optionValue="menuId"
-            placeholder="Choose Menu" [(ngModel)]="selectedMenuId" class="w-full">
-          </p-dropdown>
-        </div>
-        <div class="col-12 md:col-4">
-          <label for="subMenuName" class="mb-2 block">Sub-Menu Name</label>
-          <input id="subMenuName" type="text" pInputText [(ngModel)]="subMenuName" placeholder="Enter sub-menu name"
-            class="w-full" />
-        </div>
 
-        <div class="col-12 md:col-4">
-          <label for="subMenuUrl" class="mb-2 block">Sub-Menu URL</label>
-          <input id="subMenuUrl" type="text" pInputText [(ngModel)]="submenuUrl" placeholder="Enter sub-menu URL"
-            class="w-full" />
-        </div>
+<p-tabs [(value)]="activeTabIndex" class="manage-submenu-tabs">
+    <p-tablist>
+        <p-tab [value]="0">
+            <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus'"></i>
+            <span>{{ isEditMode ? 'Edit' : 'Add' }}</span>
+        </p-tab>
+        <p-tab [value]="1">
+            <i class="pi pi-list"></i>
+            <span>View</span>
+        </p-tab>
+    </p-tablist>
 
-        <div class="col-12 md:col-4">
-          <label for="privileges" class="mb-2 block">Select Privileges</label>
-          <p-multiSelect [options]="privilegeOptions" [(ngModel)]="selectedPrivilegeIds" optionLabel="privilegeName"
-            optionValue="privilegeId" placeholder="Choose Privileges" display="chip" class="w-full">
-          </p-multiSelect>
-        </div>
+    <p-tabpanels>
+        <p-tabpanel [value]="0">
+            <div class="card submenu-form-card">
+                <!-- <div class="form-hero">
+                    <div>
+                        <p class="eyebrow">Navigation Management</p>
+                        <h3>{{ isEditMode ? 'Edit Sub-Menu' : 'Create New Sub-Menu' }}</h3>
+                        <p>{{ isEditMode ? 'Update sub-menu details and permissions.' : 'Add new sub-menu items with specific privileges.' }}</p>
+                    </div>
+                </div> -->
 
-        <div class="col-12 md:col-4 ml-2">
-          <label for="subMenuDescription" class="mb-2 block">Sub-Menu Description</label>
-          <textarea id="subMenuDescription" pInputTextarea [(ngModel)]="subMenuDescription" [rows]="2"
-            placeholder="Enter Sub-menu description" class="w-full p-3"></textarea>
-        </div>
+                <div class="p-fluid p-formgrid grid gap-4 mt-4">
+                    <!-- Select Menu -->
+                    <div class="col-12 md:col-4">
+                        <label for="menu" class="mb-2 block required">Select Menu</label>
+                        <p-dropdown id="menu" [options]="menuOptions" optionLabel="name" optionValue="menuId"
+                            placeholder="Choose Menu" [(ngModel)]="selectedMenuId" class="w-full"
+                            [ngClass]="{'invalid-field': selectedMenuInvalid && formSubmitted}">
+                        </p-dropdown>
+                        <div *ngIf="selectedMenuInvalid && formSubmitted" class="validation-error">
+                            <small>Please select a menu</small>
+                        </div>
+                    </div>
 
+                    <!-- Sub-Menu Name -->
+                    <div class="col-12 md:col-4">
+                        <label for="subMenuName" class="mb-2 block required">Sub-Menu Name</label>
+                        <input id="subMenuName" type="text" pInputText [(ngModel)]="subMenuName" 
+                               placeholder="Enter sub-menu name" class="w-full"
+                               [ngClass]="{'invalid-field': subMenuNameInvalid && (subMenuNameTouched || formSubmitted)}"
+                               (blur)="onSubMenuNameBlur()" />
+                        <div *ngIf="subMenuNameInvalid && (subMenuNameTouched || formSubmitted)" class="validation-error">
+                            <small *ngIf="!subMenuName.trim()">Sub-Menu Name is required</small>
+                            <small *ngIf="subMenuName.trim().length < 2 && subMenuName.trim()">Sub-Menu Name must be at least 2 characters</small>
+                        </div>
+                    </div>
 
-        <div class="col-12">
-          <div class="flex gap-2 flex-start">
-            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" (click)="resetForm()"></button>
-            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" (click)="cancelEdit()"></button>
-            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" class="p-button-success"
-              (click)="submit()"></button>
-          </div>
-        </div>
-      </div>
-    </p-card>
-  </p-tabPanel>
+                    <!-- Sub-Menu URL -->
+                    <div class="col-12 md:col-4">
+                        <label for="subMenuUrl" class="mb-2 block required">Sub-Menu URL</label>
+                        <input id="subMenuUrl" type="text" pInputText [(ngModel)]="submenuUrl" 
+                               placeholder="Enter sub-menu URL (e.g., /dashboard)" class="w-full"
+                               [ngClass]="{'invalid-field': subMenuUrlInvalid && (subMenuUrlTouched || formSubmitted)}"
+                               (blur)="onSubMenuUrlBlur()" />
+                        <div *ngIf="subMenuUrlInvalid && (subMenuUrlTouched || formSubmitted)" class="validation-error">
+                            <small>Sub-Menu URL is required</small>
+                        </div>
+                    </div>
 
-  <p-tabPanel header="View">
-    <div class="menu-list-container p-fluid">
+                    <!-- Select Privileges -->
+                    <div class="col-12 md:col-4">
+                        <label for="privileges" class="mb-2 block required">Select Privileges</label>
+                        <p-multiSelect [options]="privilegeOptions" [(ngModel)]="selectedPrivilegeIds" 
+                                       optionLabel="privilegeName" optionValue="privilegeId" 
+                                       placeholder="Choose Privileges" display="chip" class="w-full"
+                                       [ngClass]="{'invalid-field': privilegesInvalid && formSubmitted}">
+                        </p-multiSelect>
+                        <div *ngIf="privilegesInvalid && formSubmitted" class="validation-error">
+                            <small>Please select at least one privilege</small>
+                        </div>
+                    </div>
 
-      <p-table #dt1 [value]="submenuItems" [loading]="loading" [paginator]="true" [rows]="5"
-        [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [rowsPerPageOptions]="[5, 10, 20]"
-        [globalFilterFields]="['subMenuName','menuName','subMenuDescription','createdBy']"
-        styleClass="p-datatable-sm p-datatable-gridlines">
+                    <!-- Sub-Menu Description -->
+                    <div class="col-12 md:col-4">
+                        <label for="subMenuDescription" class="mb-2 block required">Sub-Menu Description</label>
+                        <textarea id="subMenuDescription" pInputTextarea [(ngModel)]="subMenuDescription" 
+                                  [rows]="3" placeholder="Enter Sub-menu description" 
+                                  class="w-full custom-textarea"
+                                  [ngClass]="{'invalid-field': subMenuDescriptionInvalid && (subMenuDescriptionTouched || formSubmitted)}"
+                                  (blur)="onSubMenuDescriptionBlur()"></textarea>
+                        <div *ngIf="subMenuDescriptionInvalid && (subMenuDescriptionTouched || formSubmitted)" class="validation-error">
+                            <small>Sub-Menu Description is required</small>
+                        </div>
+                    </div>
 
-        <!-- 🔍 Search Bar -->
-        <ng-template pTemplate="caption">
-          <div class="flex justify-content-end">
-            <p-iconfield iconPosition="left">
-              <p-inputicon>
-                <i class="pi pi-search"></i>
-              </p-inputicon>
-              <input #gb pInputText type="text" (input)="dt1.filterGlobal(gb.value, 'contains')"
-                placeholder="Search keyword" />
-            </p-iconfield>
-          </div>
-        </ng-template>
+                    <!-- Action Buttons -->
+                    <div class="col-12 mt-4">
+                        <div class="flex justify-content-end gap-2">
+                            <button pButton *ngIf="!isEditMode" label="Reset" class="p-button-danger" 
+                                    type="button" (click)="resetForm()"></button>
 
-        <!-- 📋 Table Header -->
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 5rem;">Sl. No</th>
-            <th pSortableColumn="name">Sub-Menu Name <p-sortIcon field="name"></p-sortIcon></th>
-            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
-            <th pSortableColumn="name">Sub-Menu URL <p-sortIcon field="name"></p-sortIcon></th>
-            <th>Privileges</th>
-            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
-                field="description"></p-sortIcon></th>
-            <th>Created By</th>
-            <th>Last Updated</th>
-            <th>Status</th>
-            <th style="width: 8rem; text-align: center;">Actions</th>
-          </tr>
-        </ng-template>
+                            <button pButton *ngIf="isEditMode" label="Cancel" class="p-button-danger" 
+                                    type="button" (click)="cancelEdit()"></button>
 
-        <!-- 📋 Table Body -->
-        <ng-template pTemplate="body" let-subMenuItem let-i="rowIndex">
-          <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ subMenuItem.subMenuName }}</td>
-            <td>{{ subMenuItem.menuName }}</td>
-            <td>{{ subMenuItem.subMenuUrl ? (subMenuItem.subMenuUrl.startsWith('/') ? subMenuItem.subMenuUrl : '/' +
-              subMenuItem.subMenuUrl) : '' }}</td>
-            <td>
-              <span *ngFor="let p of subMenuItem.privileges" class="p-tag p-tag-rounded small-privilege p-tag-info">
-                {{ p.privilegeName }}
-              </span>
-            </td>
+                            <button pButton [label]="isEditMode ? 'Update' : 'Submit'" 
+                                    class="p-button-success" type="button" (click)="submit()"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </p-tabpanel>
 
-            <td class="truncate-text">{{ subMenuItem.subMenuDescription }}</td>
-            <td>{{ subMenuItem.createdBy }}</td>
-            <td>{{ subMenuItem.lastUpdatedOn | date:'short' }}</td>
-            <td>
-              <p-inputSwitch [(ngModel)]="subMenuItem.subMenuIsActive"
+        <p-tabpanel [value]="1">
+            <div class="card submenu-list-container">
+                <div class="flex justify-content-between align-items-center mb-4">
+                    <h3 class="m-0">Sub-Menu List</h3>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" placeholder="Search sub-menus..."
+                            [value]="globalFilterValue" (input)="onGlobalFilter(dt1, $event)" />
+                    </span>
+                </div>
+
+                <p-table #dt1 [value]="submenuItems" [loading]="loading" [paginator]="true" [rows]="5"
+                    [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                    [rowsPerPageOptions]="[5, 10, 20]"
+                    [globalFilterFields]="['subMenuName','menuName','subMenuDescription','createdBy','subMenuUrl']"
+                    styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
+
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 5rem;">Sl. No</th>
+                            <th pSortableColumn="subMenuName">Sub-Menu Name <p-sortIcon field="subMenuName"></p-sortIcon></th>
+                            <th pSortableColumn="menuName">Menu Name <p-sortIcon field="menuName"></p-sortIcon></th>
+                            <th pSortableColumn="subMenuUrl">Sub-Menu URL <p-sortIcon field="subMenuUrl"></p-sortIcon></th>
+                            <th>Privileges</th>
+                            <th pSortableColumn="subMenuDescription">Description <p-sortIcon field="subMenuDescription"></p-sortIcon></th>
+                            <th pSortableColumn="createdBy">Created By <p-sortIcon field="createdBy"></p-sortIcon></th>
+                            <th pSortableColumn="lastUpdatedOn">Last Updated <p-sortIcon field="lastUpdatedOn"></p-sortIcon></th>
+                            <th>Status</th>
+                            <th style="width: 8rem; text-align: center;">Actions</th>
+                        </tr>
+                    </ng-template>
+
+               <!-- In the table body section -->
+<ng-template pTemplate="body" let-subMenuItem let-i="rowIndex">
+    <tr>
+        <td>{{ (dt1.first || 0) + i + 1 }}</td>
+        <td>
+            <strong>{{ subMenuItem.subMenuName }}</strong>
+        </td>
+        <td>
+            <span class="p-tag p-tag-rounded p-tag-secondary">{{ subMenuItem.menuName }}</span>
+        </td>
+        <td>
+            <code class="text-sm">{{ subMenuItem.subMenuUrl }}</code>
+        </td>
+        <td>
+            <!-- Updated: Use transformed privileges array -->
+            <ng-container *ngIf="subMenuItem.privileges && subMenuItem.privileges.length > 0; else noPrivileges">
+                <span *ngFor="let p of subMenuItem.privileges" class="p-tag p-tag-rounded small-privilege p-tag-info mr-1 mb-1">
+                    {{ p.privilegeName }}
+                </span>
+            </ng-container>
+            <ng-template #noPrivileges>
+                <span class="text-500 text-sm">No privileges</span>
+            </ng-template>
+        </td>
+        <td class="truncate-text">{{ subMenuItem.subMenuDescription }}</td>
+        <td>{{ subMenuItem.createdBy || 'System' }}</td>
+        <td>{{ subMenuItem.lastUpdatedOn | date:'medium' }}</td>
+        <td>
+            <p-tag [value]="subMenuItem.subMenuIsActive ? 'Active' : 'Inactive'" 
+                  [severity]="subMenuItem.subMenuIsActive ? 'success' : 'danger'"
+                  styleClass="mr-2"></p-tag>
+            <p-inputSwitch [(ngModel)]="subMenuItem.subMenuIsActive"
                 (onChange)="toggleStatus(subMenuItem)"></p-inputSwitch>
-            </td>
-            <td style="text-align: center;">
-              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
-                (onClick)="onEdit(subMenuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
-            </td>
-          </tr>
-        </ng-template>
-
-        <!-- 🚫 Empty Message -->
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7" class="text-center">No menus found.</td>
-          </tr>
-        </ng-template>
-
-      </p-table>
-
-    </div>
-  </p-tabPanel>
-</p-tabView>
+        </td>
+        <td style="text-align: center;">
+            <button pButton icon="pi pi-pencil" 
+                    class="p-button-rounded p-button-sm p-button-text p-button-primary p-mr-2"
+                    (click)="onEdit(subMenuItem)" pTooltip="Edit" tooltipPosition="top"></button>
+        </td>
+    </tr>
+</ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="10" class="text-center p-4">
+                                <i class="pi pi-inbox text-400" style="font-size: 2rem;"></i>
+                                <p class="mt-2 text-500">No sub-menus found.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabpanel>
+    </p-tabpanels>
+</p-tabs>

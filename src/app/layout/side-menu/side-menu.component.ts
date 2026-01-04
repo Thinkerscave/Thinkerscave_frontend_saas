@@ -1,14 +1,15 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, AfterViewChecked, ChangeDetectorRef, ElementRef } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, AfterViewChecked, ChangeDetectorRef, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { MenuItem } from 'primeng/api';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { BreadCrumbService } from '../../services/bread-crumb.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-side-menu',
-  imports: [PanelMenuModule],
+  imports: [CommonModule, PanelMenuModule],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })
@@ -16,6 +17,12 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewChecked {
   items: MenuItem[] = [];
   @Input() collapsed = false;
   currentRoute: string = '';
+  @ViewChild('scrollContainer', { static: false }) scrollContainer?: ElementRef;
+  
+  // Scroll state
+  isScrolled = false;
+  isAtBottom = false;
+  isAtTop = true;
 
   constructor(
     private sideMenuService: MenuMappingService,
@@ -27,21 +34,93 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewChecked {
 
   ngOnInit(): void {
     this.loadMenu();
-    this.setupRouteTracking();
+
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.currentRoute = this.router.url;
+        this.updateActiveMenuItems();
+        
+        // Auto-scroll to active menu item after navigation
+        setTimeout(() => this.scrollToActiveItem(), 100);
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['collapsed']) {
       // Wait for view to update, then hide/show text
-      setTimeout(() => this.toggleTextVisibility(), 100);
+      setTimeout(() => {
+        this.toggleTextVisibility();
+        // Reset scroll position when collapsing/expanding
+        this.resetScroll();
+      }, 100);
     }
   }
 
   ngAfterViewChecked(): void {
-    // Ensure text visibility is correct
-    this.toggleTextVisibility();
-    // Update active menu items on every view check
-    this.updateActiveMenuItemsInDOM();
+    // Check scroll position after view updates
+    this.checkScrollPosition();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScrollPosition();
+  }
+
+  private resetScroll(): void {
+    if (this.scrollContainer?.nativeElement) {
+      this.scrollContainer.nativeElement.scrollTop = 0;
+      this.isAtTop = true;
+      this.isAtBottom = false;
+      this.isScrolled = false;
+    }
+  }
+
+  private checkScrollPosition(): void {
+    if (!this.scrollContainer?.nativeElement) return;
+    
+    const element = this.scrollContainer.nativeElement;
+    const scrollTop = element.scrollTop;
+    const scrollHeight = element.scrollHeight;
+    const clientHeight = element.clientHeight;
+    
+    // Update scroll state
+    this.isScrolled = scrollTop > 0;
+    this.isAtTop = scrollTop === 0;
+    this.isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 1;
+    
+    // Update CSS classes for shadow effects
+    if (element.classList) {
+      element.classList.toggle('scrolled-top', !this.isAtTop);
+      element.classList.toggle('scrolled-bottom', !this.isAtBottom);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  onScroll(event: Event): void {
+    this.checkScrollPosition();
+  }
+
+  private scrollToActiveItem(): void {
+    if (!this.scrollContainer?.nativeElement) return;
+    
+    const container = this.scrollContainer.nativeElement;
+    const activeItem = container.querySelector('.p-highlight, .active-menu-item, .router-link-active');
+    
+    if (activeItem) {
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+      
+      // Calculate scroll position to center the active item
+      const scrollTop = itemRect.top - containerRect.top + container.scrollTop - (containerRect.height / 2) + (itemRect.height / 2);
+      
+      // Smooth scroll to position
+      container.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }
   }
 
   private toggleTextVisibility(): void {
@@ -91,108 +170,35 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewChecked {
     });
   }
 
-  private updateActiveMenuItemsInDOM(): void {
-    if (!this.el?.nativeElement) return;
-    
-    // Remove active classes from all menu items first
-    const allLinks = this.el.nativeElement.querySelectorAll('.p-panelmenu-header-link, .p-menuitem-link');
-    allLinks.forEach((link: Element) => {
-      const linkElement = link as HTMLElement;
-      linkElement.classList.remove('active-menu-item', 'active-submenu-item', 'router-link-active');
-    });
-    
-    // Add active classes based on current route
-    this.items.forEach(item => {
-      if (item.routerLink && this.isRouteActive(item.routerLink, item.queryParams)) {
-        // Find the corresponding DOM element
-        const menuLinks = this.el.nativeElement.querySelectorAll('.p-panelmenu-header-link');
-        menuLinks.forEach((link: Element) => {
-          const linkElement = link as HTMLElement;
-          const label = linkElement.querySelector('.p-panelmenu-header-label');
-          if (label && label.textContent?.trim() === item.label) {
-            linkElement.classList.add('active-menu-item', 'router-link-active');
-          }
-        });
-      }
-      
-      // Check submenu items
-      if (item.items) {
-        item.items.forEach(subItem => {
-          if (subItem.routerLink && this.isRouteActive(subItem.routerLink, subItem.queryParams)) {
-            const subLinks = this.el.nativeElement.querySelectorAll('.p-menuitem-link');
-            subLinks.forEach((link: Element) => {
-              const linkElement = link as HTMLElement;
-              const text = linkElement.querySelector('.p-menuitem-text');
-              if (text && text.textContent?.trim() === subItem.label) {
-                linkElement.classList.add('active-submenu-item', 'router-link-active');
-                // Also mark parent as active
-                const parentLink = linkElement.closest('.p-panelmenu-panel')?.querySelector('.p-panelmenu-header-link');
-                if (parentLink) {
-                  (parentLink as HTMLElement).classList.add('parent-active');
-                }
-              }
-            });
-          }
-        });
-      }
-    });
-  }
-
-  private setupRouteTracking(): void {
-    // Track current route for active state
-    this.currentRoute = this.router.url;
-    
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.currentRoute = event.url;
-        setTimeout(() => {
-          this.updateActiveMenuItems();
-          this.updateActiveMenuItemsInDOM();
-        }, 50);
-      });
-  }
-
   private updateActiveMenuItems(): void {
-    // Update menu items to reflect active state
-    this.items.forEach(item => {
-      if (item.routerLink) {
-        const isActive = this.isRouteActive(item.routerLink, item.queryParams);
-        
-        // Clean existing active classes
-        let currentStyleClass = (item.styleClass || '').replace(/p-highlight|active-menu-item|router-link-active/g, '').trim();
-        
-        // Set expanded state if active (for panel menu)
-        if (isActive) {
-          item.styleClass = (currentStyleClass + ' p-highlight active-menu-item router-link-active').trim();
-          item.expanded = true; // Auto-expand active menu
-        } else {
-          item.styleClass = currentStyleClass;
-        }
+    this.items.forEach(menu => {
+      let parentActive = false;
+
+      // MAIN MENU
+      if (menu.routerLink && this.isRouteActive(menu.routerLink)) {
+        menu.styleClass = 'p-highlight active-menu-item';
+        menu.expanded = true;
+        parentActive = true;
+      } else {
+        menu.styleClass = '';
       }
 
-      // Update submenu items
-      if (item.items) {
-        item.items.forEach(subItem => {
-          if (subItem.routerLink) {
-            const isSubActive = this.isRouteActive(subItem.routerLink, subItem.queryParams);
-            
-            // Clean existing active classes
-            let subCurrentStyleClass = (subItem.styleClass || '').replace(/router-link-active|active-submenu-item/g, '').trim();
-            
-            if (isSubActive) {
-              subItem.styleClass = (subCurrentStyleClass + ' router-link-active active-submenu-item').trim();
-              // Expand parent if child is active
-              if (item.routerLink) {
-                item.expanded = true;
-                let parentStyleClass = (item.styleClass || '').replace(/parent-active/g, '').trim();
-                item.styleClass = (parentStyleClass + ' parent-active').trim();
-              }
-            } else {
-              subItem.styleClass = subCurrentStyleClass;
-            }
+      // SUB MENU
+      if (menu.items) {
+        menu.items.forEach(sub => {
+          if (sub.routerLink && this.isRouteActive(sub.routerLink)) {
+            sub.styleClass = 'router-link-active active-submenu-item';
+            parentActive = true;
+            menu.expanded = true;
+          } else {
+            sub.styleClass = '';
           }
         });
+      }
+
+      // PARENT ACTIVE (when child selected)
+      if (parentActive && !menu.styleClass?.includes('p-highlight')) {
+        menu.styleClass = 'parent-active';
       }
     });
   }
@@ -228,93 +234,28 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewChecked {
     return false;
   }
 
-  // private loadMenu(): void {
-  //   this.sideMenuService.loadMenu().subscribe({
-  //     next: (menus) => {
-  //       this.items = menus.map((menu: any) => {
-  //         const isActive = this.isRouteActive(menu.routerLink, menu.queryParams);
-          
-  //         // Check if any submenu item is active
-  //         let hasActiveSubmenu = false;
-  //         if (menu.items) {
-  //           hasActiveSubmenu = menu.items.some((sub: any) => 
-  //             this.isRouteActive(sub.routerLink, sub.queryParams)
-  //           );
-  //         }
-          
-  //         return {
-  //           ...menu,
-  //           expanded: isActive || hasActiveSubmenu, // Auto-expand if active
-  //           styleClass: isActive ? 'p-highlight active-menu-item' : (hasActiveSubmenu ? 'parent-active' : ''),
-  //           command: menu.routerLink
-  //             ? () => this.breadcrumbService.setBreadcrumb(menu.label, '')
-  //             : undefined,
-  //           items: menu.items?.map((sub: any) => {
-  //             const isSubActive = this.isRouteActive(sub.routerLink, sub.queryParams);
-              
-  //             return {
-  //               ...sub,
-  //               styleClass: isSubActive ? 'router-link-active active-submenu-item' : '',
-  //               command: () =>
-  //                 this.breadcrumbService.setBreadcrumb(menu.label, sub.label)
-  //             };
-  //           })
-  //         };
-  //       });
-        
-  //       // Update active state after menu is loaded
-  //       setTimeout(() => {
-  //         this.updateActiveMenuItems();
-  //         this.updateActiveMenuItemsInDOM();
-  //       }, 100);
-  //     },
-  //     error: (err) => console.error('Error loading menu:', err)
-  //   });
-  // }
-
-private loadMenu(): void {
-  this.sideMenuService.loadMenu().subscribe({
-    next: (menus) => {
-      this.items = menus.map((menu: any) => {
-        const isActive = this.isRouteActive(menu.routerLink, menu.queryParams);
-        
-        // Check if any submenu item is active
-        let hasActiveSubmenu = false;
-        if (menu.items) {
-          hasActiveSubmenu = menu.items.some((sub: any) => 
-            this.isRouteActive(sub.routerLink, sub.queryParams)
-          );
-        }
-        
-        return {
-          ...menu,
-          expanded: isActive || hasActiveSubmenu,
-          styleClass: isActive ? 
-            'p-highlight active-menu-item router-link-active' : 
-            (hasActiveSubmenu ? 'parent-active' : ''),
+  private loadMenu(): void {
+    this.sideMenuService.loadMenu().subscribe({
+      next: (menus) => {
+        this.items = menus.map((menu: any) => ({
+          ...menu, // keep API response as-is
           command: menu.routerLink
             ? () => this.breadcrumbService.setBreadcrumb(menu.label, '')
             : undefined,
-          items: menu.items?.map((sub: any) => {
-            const isSubActive = this.isRouteActive(sub.routerLink, sub.queryParams);
-            
-            return {
-              ...sub,
-              styleClass: isSubActive ? 'router-link-active active-submenu-item' : '',
-              command: () =>
-                this.breadcrumbService.setBreadcrumb(menu.label, sub.label)
-            };
-          })
-        };
-      });
-      
-      // Update active state after menu is loaded
-      setTimeout(() => {
-        this.updateActiveMenuItems();
-        this.updateActiveMenuItemsInDOM();
-      }, 100);
-    },
-    error: (err) => console.error('Error loading menu:', err)
-  });
-}
+          items: menu.items?.map((sub: any) => ({
+            ...sub,
+            command: () =>
+              this.breadcrumbService.setBreadcrumb(menu.label, sub.label)
+          }))
+        }));
+        
+        // After menu loads, check scroll position
+        setTimeout(() => {
+          this.checkScrollPosition();
+          this.scrollToActiveItem();
+        }, 200);
+      },
+      error: (err) => console.error('Error loading menu:', err)
+    });
+  }
 }
