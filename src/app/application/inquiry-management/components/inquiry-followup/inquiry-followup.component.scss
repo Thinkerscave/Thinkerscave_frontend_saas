@@ -1,0 +1,34 @@
+// Inquiry Follow-Up Component Styles
+// Uses PrimeFlex utility classes for most styling
+
+:host {
+    display: block;
+}
+
+// Minimal custom styles - most styling is done via PrimeFlex classes
+
+// Animation for tab changes
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animation-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    ::ng-deep {
+        .p-datatable-wrapper {
+            overflow-x: auto;
+        }
+    }
+}

@@ -1,0 +1,104 @@
+// Inquiry Detail Component Styles
+// Uses PrimeFlex utility classes for most styling
+
+:host {
+    display: block;
+}
+
+// ============================================
+// Timeline Styles (matching reference design)
+// ============================================
+.timeline-container {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    position: relative;
+    width: 28px;
+    flex-shrink: 0;
+}
+
+// Outer ring with border
+.timeline-outer-ring {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid;
+    background-color: transparent;
+    position: relative;
+    z-index: 2;
+}
+
+// Inner filled dot
+.timeline-inner-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+// Connecting vertical line
+.timeline-line {
+    width: 2px;
+    flex: 1;
+    min-height: 50px;
+    background-color: #E5E7EB;
+    margin-top: 4px;
+    margin-bottom: -4px;
+}
+
+// ============================================
+// Sticky form on desktop
+// ============================================
+@media (min-width: 992px) {
+    .sticky {
+        position: sticky;
+        top: 1rem;
+    }
+}
+
+// ============================================
+// Animation
+// ============================================
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animation-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+// ============================================
+// Responsive adjustments
+// ============================================
+@media (max-width: 768px) {
+    .grid {
+        margin: 0;
+    }
+
+    .timeline-marker {
+        width: 24px;
+        margin-right: 0.75rem !important;
+    }
+
+    .timeline-outer-ring {
+        width: 18px;
+        height: 18px;
+    }
+
+    .timeline-inner-dot {
+        width: 10px;
+        height: 10px;
+    }
+}

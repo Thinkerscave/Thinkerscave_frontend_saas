@@ -67,7 +67,17 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'inquiry/manage',
     loadComponent: () => import('./inquiry-management/components/manage-inquiry/manage-inquiry.component').then(m => m.ManageInquiryComponent),
-    data: { breadcrumb: 'Inquiry Management' }
+    data: { breadcrumb: 'Manage Inquiries' }
+  },
+  {
+    path: 'inquiry/followup',
+    loadComponent: () => import('./inquiry-management/components/inquiry-followup/inquiry-followup.component').then(m => m.InquiryFollowupComponent),
+    data: { breadcrumb: 'Inquiry Follow-Up' }
+  },
+  {
+    path: 'inquiry/detail/:id',
+    loadComponent: () => import('./inquiry-management/components/inquiry-detail/inquiry-detail.component').then(m => m.InquiryDetailComponent),
+    data: { breadcrumb: 'Inquiry Details' }
   },
   {
     path: 'academics',
