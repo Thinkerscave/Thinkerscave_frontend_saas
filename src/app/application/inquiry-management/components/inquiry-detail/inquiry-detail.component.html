@@ -1,0 +1,218 @@
+<p-toast></p-toast>
+
+<div class="surface-ground" *ngIf="!loading && inquiry">
+    <!-- Header -->
+    <div class="flex align-items-center justify-content-between px-3 py-3 mb-3 shadow-1 surface-card border-round">
+        <div class="flex align-items-center gap-3">
+            <button pButton type="button" icon="pi pi-arrow-left" label="Back" class="p-button-text p-button-secondary"
+                (click)="goBack()">
+            </button>
+            <span class="text-300">|</span>
+            <h2 class="text-xl font-bold text-900 m-0">Inquiry Details</h2>
+        </div>
+        <div class="flex align-items-center gap-2">
+            <p-avatar [label]="getInitials(inquiry.name)" shape="circle" size="normal"
+                [style]="{'background-color': getAvatarColor(inquiry.name), 'color': '#fff'}">
+            </p-avatar>
+            <p-tag [value]="inquiry.status" [severity]="getStatusSeverity(inquiry.status)">
+            </p-tag>
+        </div>
+    </div>
+
+    <div class="grid mx-2">
+        <!-- Left Column: Summary & History -->
+        <div class="col-12 lg:col-7 xl:col-8">
+            <!-- Inquiry Summary Card -->
+            <div class="surface-card shadow-1 border-round overflow-hidden mb-3">
+                <div class="px-4 py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="flex justify-content-between align-items-center">
+                        <h3 class="text-white font-bold m-0">Inquiry Summary</h3>
+                        <p-tag [value]="inquiry.status" severity="contrast"></p-tag>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <div class="grid">
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Name</span>
+                            <span class="text-900 font-bold">{{ inquiry.name }}</span>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Mobile</span>
+                            <div class="flex align-items-center gap-2">
+                                <span class="text-900">{{ inquiry.mobileNumber }}</span>
+                                <a href="tel:{{ inquiry.mobileNumber }}"
+                                    class="p-button p-button-rounded p-button-text p-button-info p-button-sm" pRipple>
+                                    <i class="pi pi-phone"></i>
+                                </a>
+                                <a href="https://wa.me/91{{ inquiry.mobileNumber }}" target="_blank"
+                                    class="p-button p-button-rounded p-button-text p-button-success p-button-sm"
+                                    pRipple>
+                                    <i class="pi pi-whatsapp"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Email</span>
+                            <a href="mailto:{{ inquiry.email }}" class="text-primary no-underline">
+                                {{ inquiry.email }}
+                            </a>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Class Interested</span>
+                            <span class="text-900">{{ getClassLabel(inquiry.classInterested) }}</span>
+                        </div>
+                        <div class="col-12 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Address</span>
+                            <span class="text-900">{{ inquiry.address }}</span>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Source</span>
+                            <span class="text-primary font-medium">{{ getSourceLabel(inquiry.inquirySource) }}</span>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border"
+                            *ngIf="inquiry.assignedCounselor">
+                            <span class="text-500 font-medium block mb-1">Counselor</span>
+                            <span class="text-900">{{ inquiry.assignedCounselor }}</span>
+                        </div>
+                        <div class="col-12 md:col-6 py-2 border-bottom-1 surface-border">
+                            <span class="text-500 font-medium block mb-1">Created On</span>
+                            <span class="text-900">{{ inquiry.createdDate | date:'dd MMM yyyy' }}</span>
+                        </div>
+                        <div class="col-12 md:col-6 py-2">
+                            <span class="text-500 font-medium block mb-1">Current Status</span>
+                            <p-tag [value]="inquiry.status" [severity]="getStatusSeverity(inquiry.status)"
+                                [rounded]="true">
+                            </p-tag>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow-Up History Timeline -->
+            <div class="surface-card shadow-1 border-round overflow-hidden" *ngIf="followUpHistory.length > 0">
+                <div class="px-4 py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3 class="text-white font-bold m-0">Follow-Up History</h3>
+                </div>
+
+                <div class="p-4">
+                    <div class="timeline-container">
+                        <div *ngFor="let followUp of followUpHistory; let i = index; let last = last"
+                            class="timeline-item flex">
+                            <!-- Timeline Marker with outer ring -->
+                            <div class="timeline-marker flex flex-column align-items-center mr-4">
+                                <!-- Outer ring -->
+                                <div class="timeline-outer-ring flex align-items-center justify-content-center"
+                                    [style.border-color]="getTimelineColor(followUp.status)">
+                                    <!-- Inner dot -->
+                                    <div class="timeline-inner-dot"
+                                        [style.background-color]="getTimelineColor(followUp.status)">
+                                    </div>
+                                </div>
+                                <!-- Connecting line -->
+                                <div *ngIf="!last" class="timeline-line"></div>
+                            </div>
+
+                            <!-- Timeline Content -->
+                            <div class="flex-1 pb-4">
+                                <div class="flex flex-wrap align-items-center gap-2 mb-2">
+                                    <span class="font-bold text-900">
+                                        {{ followUp.followUpDate | date:'dd MMM yyyy' }}
+                                    </span>
+                                    <p-tag [value]="followUp.followUpType"
+                                        [style]="{'background-color': getFollowUpTypeColor(followUp.followUpType)}">
+                                    </p-tag>
+                                    <p-tag [value]="followUp.status" [severity]="getStatusSeverity(followUp.status)"
+                                        class="ml-auto">
+                                    </p-tag>
+                                </div>
+                                <p class="text-600 m-0 line-height-3" *ngIf="followUp.remarks">
+                                    {{ followUp.remarks }}
+                                </p>
+                                <p class="text-500 text-sm mt-2 m-0" *ngIf="followUp.nextFollowUpDate">
+                                    <strong>Next Follow-Up:</strong> {{ followUp.nextFollowUpDate | date:'dd MMM yyyy'
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty History State -->
+            <div class="surface-card shadow-1 border-round p-5 text-center" *ngIf="followUpHistory.length === 0">
+                <i class="pi pi-clock text-5xl text-300 mb-3"></i>
+                <p class="text-500 m-0">No follow-up history yet.</p>
+            </div>
+        </div>
+
+        <!-- Right Column: Add Follow-Up Form -->
+        <div class="col-12 lg:col-5 xl:col-4">
+            <div class="surface-card shadow-1 border-round overflow-hidden sticky" style="top: 1rem;">
+                <div class="px-4 py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3 class="text-white font-bold m-0">Add Follow-Up</h3>
+                </div>
+
+                <form [formGroup]="followUpForm" class="p-4">
+                    <!-- Follow-Up Type -->
+                    <div class="field mb-4">
+                        <label for="followUpType" class="block text-900 font-medium mb-2">
+                            Follow-Up Type <span class="text-red-500">*</span>
+                        </label>
+                        <p-dropdown id="followUpType" formControlName="followUpType" [options]="followUpTypes"
+                            optionLabel="label" optionValue="value" placeholder="Select type" styleClass="w-full"
+                            [class.ng-invalid]="isInvalid('followUpType')"
+                            [class.ng-dirty]="followUpForm.get('followUpType')?.dirty">
+                        </p-dropdown>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="field mb-4">
+                        <label for="status" class="block text-900 font-medium mb-2">
+                            Status <span class="text-red-500">*</span>
+                        </label>
+                        <p-dropdown id="status" formControlName="status" [options]="followUpStatuses"
+                            optionLabel="label" optionValue="value" placeholder="Select status" styleClass="w-full"
+                            [class.ng-invalid]="isInvalid('status')"
+                            [class.ng-dirty]="followUpForm.get('status')?.dirty">
+                        </p-dropdown>
+                    </div>
+
+                    <!-- Next Follow-Up Date -->
+                    <div class="field mb-4">
+                        <label for="nextFollowUpDate" class="block text-900 font-medium mb-2">
+                            Next Follow-Up Date
+                        </label>
+                        <p-datepicker id="nextFollowUpDate" formControlName="nextFollowUpDate" [showIcon]="true"
+                            [minDate]="today" placeholder="Select date" dateFormat="dd M yy" styleClass="w-full">
+                        </p-datepicker>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="field mb-4">
+                        <label for="remarks" class="block text-900 font-medium mb-2">Remarks</label>
+                        <textarea id="remarks" pTextarea formControlName="remarks" rows="3"
+                            placeholder="Add notes about this follow-up..." class="w-full"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-column gap-2">
+                        <button pButton type="button" label="Save" icon="pi pi-check" class="p-button-primary w-full"
+                            [loading]="submitting" [disabled]="submitting" (click)="onSaveFollowUp()">
+                        </button>
+                        <button pButton type="button" label="Save & Convert" icon="pi pi-check-circle"
+                            class="p-button-success w-full" [loading]="submitting" [disabled]="submitting"
+                            (click)="onSaveAndConvert()">
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div class="flex flex-column align-items-center justify-content-center" style="min-height: 400px;" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+    <p class="text-600 font-medium">Loading inquiry details...</p>
+</div>
