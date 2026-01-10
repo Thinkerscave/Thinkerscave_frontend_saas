@@ -111,57 +111,53 @@ export class ManageInquiryComponent implements OnInit {
     loadInquiries(): void {
         this.loading = true;
         this.inquiryService.getAllInquiries().subscribe({
-            next: (data) => {
+            next: data => {
                 this.inquiries = data;
                 this.loading = false;
             },
-            error: (err) => {
+            error: message => {
+                this.loading = false;
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to load inquiries.'
+                    detail: message
                 });
-                this.loading = false;
             }
         });
     }
 
     onSubmit(): void {
         if (this.inquiryForm.invalid) {
-            Object.keys(this.inquiryForm.controls).forEach(key => {
-                const control = this.inquiryForm.get(key);
-                control?.markAsTouched();
-                control?.markAsDirty();
-            });
+            this.inquiryForm.markAllAsTouched();
             this.messageService.add({
                 severity: 'warn',
-                summary: 'Validation Failed',
+                summary: 'Validation Error',
                 detail: 'Please fill all required fields correctly.'
             });
             return;
         }
 
-        const inquiryData: Inquiry = {
+        const payload: Inquiry = {
             ...this.inquiryForm.value,
             inquiryId: this.editInquiryId || undefined
         };
 
-        this.inquiryService.saveOrUpdateInquiry(inquiryData).subscribe({
+        this.inquiryService.saveOrUpdateInquiry(payload).subscribe({
             next: () => {
                 this.messageService.add({
                     severity: 'success',
                     summary: this.isEditMode ? 'Inquiry Updated' : 'Inquiry Created',
-                    detail: `Inquiry for '${inquiryData.name}' has been ${this.isEditMode ? 'updated' : 'added'} successfully.`
+                    detail: 'Inquiry saved successfully.'
                 });
-                this.loadInquiries();
                 this.resetForm();
-                this.activeTabIndex = 1; // Switch to View tab
+                this.loadInquiries();
+                this.activeTabIndex = 1;
             },
-            error: (err) => {
+            error: message => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: err.error?.message || 'Failed to save inquiry.'
+                    detail: message
                 });
             }
         });
@@ -172,69 +168,39 @@ export class ManageInquiryComponent implements OnInit {
         this.activeTabIndex = 0;
         this.editInquiryId = inquiry.inquiryId || null;
 
-        this.inquiryForm.patchValue({
-            name: inquiry.name,
-            mobileNumber: inquiry.mobileNumber,
-            email: inquiry.email,
-            classInterested: inquiry.classInterested,
-            address: inquiry.address,
-            inquirySource: inquiry.inquirySource,
-            referredBy: inquiry.referredBy || '',
-            comments: inquiry.comments || ''
-        });
+        this.inquiryForm.patchValue(inquiry);
     }
 
     onDelete(inquiry: Inquiry): void {
         this.confirmationService.confirm({
-            message: `Are you sure you want to delete the inquiry for "${inquiry.name}"?`,
+            message: `Delete inquiry for "${inquiry.name}"?`,
             header: 'Confirm Delete',
             icon: 'pi pi-exclamation-triangle',
-            acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
-                if (inquiry.inquiryId) {
-                    this.inquiryService.deleteInquiry(inquiry.inquiryId).subscribe({
-                        next: () => {
-                            this.messageService.add({
-                                severity: 'success',
-                                summary: 'Deleted',
-                                detail: `Inquiry for "${inquiry.name}" has been deleted.`
-                            });
-                            this.loadInquiries();
-                        },
-                        error: () => {
-                            this.messageService.add({
-                                severity: 'error',
-                                summary: 'Error',
-                                detail: 'Failed to delete inquiry.'
-                            });
-                        }
-                    });
-                }
+                if (!inquiry.inquiryId) return;
+
+                this.inquiryService.deleteInquiry(inquiry.inquiryId).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Deleted',
+                            detail: 'Inquiry deleted successfully.'
+                        });
+                        this.loadInquiries();
+                    },
+                    error: message => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: message
+                        });
+                    }
+                });
             }
         });
     }
 
-    toggleStatus(inquiry: Inquiry): void {
-        if (!inquiry.inquiryId) return;
 
-        this.inquiryService.updateStatus(inquiry.inquiryId, inquiry.isActive ?? false).subscribe({
-            next: () => {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Status Updated',
-                    detail: `Inquiry is now ${inquiry.isActive ? 'Active' : 'Inactive'}.`
-                });
-            },
-            error: () => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to update status.'
-                });
-                inquiry.isActive = !inquiry.isActive; // Revert
-            }
-        });
-    }
 
     resetForm(): void {
         this.inquiryForm.reset();
