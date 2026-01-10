@@ -1,0 +1,183 @@
+<p-toast></p-toast>
+
+<div class="surface-ground">
+    <!-- Header -->
+    <div class="flex justify-content-between align-items-center px-4 py-3 mb-3 shadow-1 surface-card border-round">
+        <div class="flex align-items-center gap-3">
+            <i class="pi pi-comments text-2xl text-primary"></i>
+            <h2 class="text-xl font-bold text-900 m-0">Inquiry Follow-Up</h2>
+        </div>
+        <div class="flex align-items-center gap-2">
+            <button pButton type="button" icon="pi pi-refresh" label="Refresh" class="p-button-outlined p-button-sm"
+                (click)="refresh()">
+            </button>
+            <p-menu #moreMenu [model]="moreMenuItems" [popup]="true"></p-menu>
+            <button pButton type="button" icon="pi pi-ellipsis-v" class="p-button-text p-button-rounded p-button-sm"
+                (click)="moreMenu.toggle($event)">
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Pills using PrimeNG SelectButton style -->
+    <div class="flex flex-wrap gap-2 mb-3 mx-2 pl-3">
+        <button pButton type="button" [label]="'Today'"
+            [class]="activeTab === 'today' ? 'p-button-primary' : 'p-button-outlined p-button-secondary'"
+            class="p-button-sm" (click)="onTabChange('today')">
+        </button>
+        <button pButton type="button"
+            [class]="activeTab === 'overdue' ? 'p-button-danger' : 'p-button-outlined p-button-danger'"
+            class="p-button-sm" (click)="onTabChange('overdue')">
+            <span>Overdue</span>
+            <span *ngIf="tabCounts['overdue'] > 0"
+                class="ml-2 bg-white text-red-500 border-round px-2 py-1 text-xs font-bold">
+                {{ tabCounts['overdue'] }}
+            </span>
+        </button>
+        <button pButton type="button"
+            [class]="activeTab === 'upcoming' ? 'p-button-warning' : 'p-button-outlined p-button-warning'"
+            class="p-button-sm" (click)="onTabChange('upcoming')">
+            <span>Upcoming</span>
+            <span *ngIf="tabCounts['upcoming'] > 0"
+                class="ml-2 bg-white text-orange-500 border-round px-2 py-1 text-xs font-bold">
+                {{ tabCounts['upcoming'] }}
+            </span>
+        </button>
+        <button pButton type="button" [label]="'Converted'"
+            [class]="activeTab === 'converted' ? 'p-button-success' : 'p-button-outlined p-button-success'"
+            class="p-button-sm" (click)="onTabChange('converted')">
+        </button>
+        <button pButton type="button" [label]="'Lost'"
+            [class]="activeTab === 'lost' ? 'p-button-secondary' : 'p-button-outlined p-button-secondary'"
+            class="p-button-sm" (click)="onTabChange('lost')">
+        </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="surface-card shadow-1 border-round p-3 mb-3 mx-2">
+        <div class="flex flex-wrap gap-3 align-items-center justify-content-between">
+            <div class="flex flex-wrap gap-2 align-items-center">
+                <!-- Search -->
+                <input pInputText type="text" [(ngModel)]="searchText" placeholder="Search..." class="p-inputtext-sm"
+                    style="width: 160px;" />
+
+                <!-- Filters Dropdown -->
+                <p-dropdown [options]="[{label: 'All Filters', value: null}]" placeholder="Filters"
+                    styleClass="p-dropdown-sm">
+                </p-dropdown>
+
+                <!-- Counselor Filter -->
+                <p-dropdown [(ngModel)]="selectedCounselor" [options]="counselors" optionLabel="label"
+                    optionValue="value" placeholder="Counselor" [showClear]="true" styleClass="p-dropdown-sm">
+                </p-dropdown>
+
+                <!-- Date Filter -->
+                <p-datepicker [(ngModel)]="selectedDate" [showIcon]="true" placeholder="Date" dateFormat="dd M yy"
+                    styleClass="p-inputtext-sm">
+                </p-datepicker>
+            </div>
+
+            <div class="flex align-items-center gap-2">
+                <button pButton type="button" label="Clear" icon="pi pi-times"
+                    class="p-button-text p-button-secondary p-button-sm" (click)="clearFilters()">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="surface-card shadow-1 border-round p-3 mx-2">
+        <p-table #dt [value]="filteredInquiries" [loading]="loading" [paginator]="true" [rows]="10"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [rowsPerPageOptions]="[5, 10, 20, 50]"
+            [globalFilterFields]="['name', 'mobileNumber', 'classInterested', 'assignedCounselor']"
+            styleClass="p-datatable-sm p-datatable-striped" [responsiveLayout]="'scroll'">
+
+            <!-- Table Header -->
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 3rem;">#</th>
+                    <th pSortableColumn="name" style="min-width: 180px;">
+                        Student Name <p-sortIcon field="name"></p-sortIcon>
+                    </th>
+                    <th>Mobile</th>
+                    <th pSortableColumn="classInterested">
+                        Class <p-sortIcon field="classInterested"></p-sortIcon>
+                    </th>
+                    <th *ngIf="activeTab !== 'converted' && activeTab !== 'lost'">
+                        Follow-Up Type
+                    </th>
+                    <th *ngIf="activeTab !== 'converted' && activeTab !== 'lost'" pSortableColumn="nextFollowUpDate">
+                        Next Follow-Up <p-sortIcon field="nextFollowUpDate"></p-sortIcon>
+                    </th>
+                    <th>Status</th>
+                    <th style="width: 10rem; text-align: center;">Action</th>
+                </tr>
+            </ng-template>
+
+            <!-- Table Body -->
+            <ng-template pTemplate="body" let-inquiry let-i="rowIndex">
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                        <div class="flex align-items-center gap-2">
+                            <p-avatar [label]="getInitials(inquiry.name)" shape="circle" size="normal"
+                                [style]="{'background-color': getAvatarColor(inquiry.name), 'color': '#fff'}">
+                            </p-avatar>
+                            <span class="font-medium text-primary">{{ inquiry.name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ inquiry.mobileNumber }}</td>
+                    <td>{{ getClassLabel(inquiry.classInterested) }}</td>
+                    <td *ngIf="activeTab !== 'converted' && activeTab !== 'lost'">
+                        <p-tag [value]="inquiry.followUpType || '-'"
+                            [severity]="getFollowUpTypeSeverity(inquiry.followUpType)" [rounded]="true">
+                        </p-tag>
+                    </td>
+                    <td *ngIf="activeTab !== 'converted' && activeTab !== 'lost'">
+                        <p-tag [value]="getDaysText(inquiry.daysUntilFollowUp)"
+                            [severity]="getDaysSeverity(inquiry.daysUntilFollowUp)">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <p-tag [value]="inquiry.status" [severity]="getStatusSeverity(inquiry.status)">
+                        </p-tag>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="flex gap-2 justify-content-center">
+                            <!-- For Converted tab -->
+                            <ng-container *ngIf="activeTab === 'converted'">
+                                <button pButton type="button" label="Proceed to Admission"
+                                    class="p-button-sm p-button-success" (click)="onProceedToAdmission(inquiry)">
+                                </button>
+                            </ng-container>
+
+                            <!-- For other tabs -->
+                            <ng-container *ngIf="activeTab !== 'converted'">
+                                <button pButton type="button" label="View"
+                                    class="p-button-sm p-button-outlined p-button-info" (click)="onView(inquiry)">
+                                </button>
+                                <button pButton type="button" label="Update" class="p-button-sm p-button-primary"
+                                    (click)="onUpdate(inquiry)" *ngIf="activeTab !== 'lost'">
+                                </button>
+                            </ng-container>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- Empty Message -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="activeTab === 'converted' || activeTab === 'lost' ? 6 : 8"
+                        class="text-center p-5">
+                        <div class="flex flex-column align-items-center gap-3">
+                            <i class="pi pi-inbox text-5xl text-300"></i>
+                            <p class="text-500 m-0">No inquiries found for this filter.</p>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
