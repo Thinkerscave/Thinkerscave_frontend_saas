@@ -79,6 +79,10 @@ export const APPLICATION_ROUTES: Routes = [
     loadComponent: () => import('./inquiry-management/components/inquiry-detail/inquiry-detail.component').then(m => m.InquiryDetailComponent),
     data: { breadcrumb: 'Inquiry Details' }
   },
+   {
+        path: 'public/admission',
+        loadComponent: () => import('./admission/student-admission-form/student-admission-form.component').then(m => m.StudentAdmissionFormComponent)
+    },
   {
     path: 'academics',
     children: [
