@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LEAD_MANAGEMENT_ROUTES } from './lead-management/lead-management.routes';
+import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
 
 export const APPLICATION_ROUTES: Routes = [
   {
@@ -117,6 +118,13 @@ export const APPLICATION_ROUTES: Routes = [
         loadComponent: () => import('./student-management/components/syllabus-tracker/syllabus-tracker.component').then(m => m.SyllabusTrackerComponent)
       }
     ]
+  },
+  // ============================================
+  // FEE MANAGEMENT MODULE
+  // ============================================
+  {
+    path: 'fees',
+    children: FEE_MANAGEMENT_ROUTES
   },
   {
     path: '',

@@ -51,6 +51,13 @@ export class LoginComponent {
       return;
     }
 
+    // Check if this is an admin mock login attempt
+    if (trimmedUsername === 'admin') {
+      console.log('[LOGIN COMPONENT] Detected admin login - using mock data');
+      this.adminLogin();
+      return;
+    }
+
     console.log('[LOGIN COMPONENT] Attempting regular backend login with:', trimmedUsername);
 
     const loginPayload = {
@@ -180,6 +187,65 @@ export class LoginComponent {
       },
       error: (err) => {
         console.error('[LOGIN COMPONENT] Counsellor login error:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'An error occurred during login',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  /**
+   * Admin login with mock credentials for testing fee management
+   */
+  private adminLogin() {
+    const trimmedUsername = this.username.trim().toLowerCase();
+    const trimmedPassword = this.password.trim();
+
+    console.log('[LOGIN COMPONENT] Starting admin login with:', trimmedUsername);
+    this.loginService.mockAdminLogin(trimmedUsername, trimmedPassword).subscribe({
+      next: (res: any) => {
+        console.log('[LOGIN COMPONENT] Admin login response:', res);
+
+        if (res.error) {
+          console.error('[LOGIN COMPONENT] Login error:', res.message);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Login Failed',
+            detail: res.message || 'Invalid credentials',
+            life: 5000
+          });
+          return;
+        }
+
+        console.log('[LOGIN COMPONENT] Admin login successful, storing tokens...');
+
+        // 1. Store tokens
+        this.loginService.loginUser(res.accessToken, res.refreshToken);
+
+        // 2. Store user data
+        this.loginService.setUser(res.user);
+
+        console.log('[LOGIN COMPONENT] Tokens and user stored, showing success message...');
+
+        // 3. Navigate to fee management dashboard
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Admin login successful!',
+          life: 2000
+        });
+
+        console.log('[LOGIN COMPONENT] Navigating to fee management...');
+
+        setTimeout(() => {
+          this.router.navigate(['/app/fees']);
+        }, 500);
+      },
+      error: (err) => {
+        console.error('[LOGIN COMPONENT] Admin login error:', err);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

@@ -1,7 +1,38 @@
 @import "../node_modules/primeicons/primeicons.css";
 @import "../node_modules/primeflex/primeflex.css";
 
-
 html {
     color-scheme: light;
+}
+
+/* Ensure consistent light theme across the app */
+:root {
+    --surface-ground: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-border: #e2e8f0;
+    --text-color: #1e293b;
+    --text-color-secondary: #64748b;
+    --primary-color: #6366f1;
+    --primary-color-text: #ffffff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--surface-ground);
+    color: var(--text-color);
+}
+
+/* Fix for stat cards ensuring text is always visible */
+.stat-card .stat-value {
+    color: #1e293b !important;
+}
+
+.stat-card .stat-label {
+    color: #64748b !important;
+}
+
+.stat-card .stat-period {
+    color: #94a3b8 !important;
 }

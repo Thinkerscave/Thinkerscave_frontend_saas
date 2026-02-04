@@ -14,7 +14,7 @@ export class LoginService {
   public loginStatusSubject = new Subject<boolean>();
 
   private passwordUrl = environment.baseUrl;
-  constructor(private http: HttpClient,private router: Router) { }
+  constructor(private http: HttpClient, private router: Router) { }
   //generate token
 
 
@@ -133,7 +133,7 @@ export class LoginService {
   }
 
   public refreshAccessToken(refreshToken: string): Observable<string> {
-    return this.http.post<any>(loginApi.refreshTokenUrl,{ token: refreshToken }
+    return this.http.post<any>(loginApi.refreshTokenUrl, { token: refreshToken }
     ).pipe(
       switchMap((res: any) => {
         this.setAccessToken(res.accessToken); // update local storage
@@ -196,6 +196,51 @@ export class LoginService {
     console.log('[MOCK LOGIN] Login failed - invalid credentials');
 
     // Return error if credentials don't match
+    return of({
+      error: 'Invalid credentials',
+      message: 'Username or password is incorrect'
+    }).pipe(delay(300));
+  }
+
+  /**
+   * Mock admin login for testing fee management without backend
+   * Credentials: admin / Admin@123
+   */
+  public mockAdminLogin(username: string, password: string): Observable<any> {
+    const ADMIN_USERNAME = 'admin';
+    const ADMIN_PASSWORD = 'Admin@123';
+    const ADMIN_ID = 'A001';
+
+    const normalizedUsername = (username || '').trim().toLowerCase();
+    const normalizedPassword = (password || '').trim();
+
+    console.log('[MOCK ADMIN LOGIN] Attempting login with username:', normalizedUsername);
+
+    if (normalizedUsername === ADMIN_USERNAME && normalizedPassword === ADMIN_PASSWORD) {
+      const mockToken = 'mock_admin_jwt_token_' + Date.now();
+      const mockUser = {
+        id: ADMIN_ID,
+        username: normalizedUsername,
+        firstName: 'System',
+        lastName: 'Admin',
+        name: 'System Admin',
+        roles: ['INSTITUTION_ADMIN'],
+        role: 'INSTITUTION_ADMIN',
+        phoneNumber: '9876543210',
+        firstTimeLogin: false
+      };
+
+      console.log('[MOCK ADMIN LOGIN] Login successful');
+
+      return of({
+        accessToken: mockToken,
+        refreshToken: 'mock_admin_refresh_token_' + Date.now(),
+        user: mockUser
+      }).pipe(delay(300));
+    }
+
+    console.log('[MOCK ADMIN LOGIN] Login failed - invalid credentials');
+
     return of({
       error: 'Invalid credentials',
       message: 'Username or password is incorrect'
