@@ -5,3 +5,31 @@
 html {
     color-scheme: light;
 }
+
+/* Global Card Style for Admin Dashboard */
+.card {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f3f4f6;
+}
+
+/* Typography Utilities Override (optional for premium feel) */
+body {
+    font-family: var(--font-family);
+    background-color: #f9fafb;
+    /* Light sleek gray background */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-top: 0;
+    color: #111827;
+    /* Darker text for headings */
+}

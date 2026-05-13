@@ -13,6 +13,9 @@ import { ToastModule } from 'primeng/toast';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { LoginService } from '../../../services/login.service';
 
 @Component({
   selector: 'app-manage-role',
@@ -27,7 +30,8 @@ import { InputIconModule } from 'primeng/inputicon';
     ToastModule,
     InputSwitchModule,
     IconFieldModule,
-    InputIconModule],
+    InputIconModule,
+    StandardListViewComponent],
   templateUrl: './manage-role.component.html',
   styleUrl: './manage-role.component.scss',
   providers: [MessageService]
@@ -44,7 +48,51 @@ export class ManageRoleComponent {
   roleName: string = '';
   roleDescription: string = '';
 
-  constructor(private roleService: RoleService, private messageService: MessageService) {}
+  constructor(private roleService: RoleService, private messageService: MessageService, private loginService: LoginService) { }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Registered Roles',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search keyword...',
+      loading: this.loading,
+      columns: [
+        { field: 'roleName', header: 'Role Name', type: 'text', sortable: true },
+        { field: 'description', header: 'Description', type: 'text', sortable: true, width: '30%' },
+        { field: 'createdBy', header: 'Created By', type: 'text', sortable: true },
+        { field: 'lastModifiedDate', header: 'Last Updated', type: 'date', sortable: true },
+        {
+          field: 'isActive',
+          header: 'Status',
+          type: 'badge',
+          sortable: true,
+          valueGetter: (role) => role.isActive ? 'Active' : 'Inactive'
+        }
+      ],
+      rowActions: [
+        {
+          label: 'Edit',
+          icon: 'pi pi-pencil',
+          isPrimary: true,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('MANAGE_ROLES_EDIT'),
+          actionFn: (role) => this.onEdit(role)
+        },
+        {
+          label: 'Deactivate',
+          icon: 'pi pi-ban',
+          visibleFn: (role) => role.isActive && this.loginService.getUserPrivileges().includes('MANAGE_ROLES_EDIT'),
+          actionFn: (role) => this.toggleStatus(role)
+        },
+        {
+          label: 'Activate',
+          icon: 'pi pi-check-circle',
+          visibleFn: (role) => !role.isActive && this.loginService.getUserPrivileges().includes('MANAGE_ROLES_EDIT'),
+          actionFn: (role) => this.toggleStatus(role)
+        }
+      ]
+    };
+  }
 
   ngOnInit(): void {
     this.loadRoles();

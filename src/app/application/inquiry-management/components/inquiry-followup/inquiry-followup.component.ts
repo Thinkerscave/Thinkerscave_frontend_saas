@@ -23,6 +23,8 @@ import { MessageService, MenuItem } from 'primeng/api';
 import { FollowUpService } from '../../services/followup.service';
 import { InquiryWithFollowUp, FollowUpStatus } from '../../models/followup.model';
 import { InquiryService } from '../../services/inquiry.service';
+import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig, ListViewColumn, ListViewAction } from '../../../../shared/components/standard-list-view/list-view-models';
 
 type TabType = 'today' | 'overdue' | 'upcoming' | 'converted' | 'lost';
 
@@ -44,7 +46,8 @@ type TabType = 'today' | 'overdue' | 'upcoming' | 'converted' | 'lost';
         MenuModule,
         IconFieldModule,
         InputIconModule,
-        DatePickerModule
+        DatePickerModule,
+        StandardListViewComponent
     ],
     providers: [MessageService],
     templateUrl: './inquiry-followup.component.html',
@@ -97,6 +100,68 @@ export class InquiryFollowupComponent implements OnInit {
     // More menu
     moreMenuItems: MenuItem[] = [];
 
+    listViewConfig!: ListViewConfig;
+
+    updateListViewConfig(): void {
+        const isTerminalTab = this.activeTab === 'converted' || this.activeTab === 'lost';
+
+        // Use assertion to cast columns
+        let columns = [
+            { field: 'name', header: 'Student Name', type: 'text', sortable: true },
+            { field: 'mobileNumber', header: 'Mobile', type: 'text', sortable: true },
+            { field: 'classInterested', header: 'Class', type: 'text', sortable: true, valueGetter: (i: InquiryWithFollowUp) => this.getClassLabel(i.classInterested) }
+        ] as ListViewColumn[];
+
+        if (!isTerminalTab) {
+            columns.push({ field: 'followUpType', header: 'Follow-Up Type', type: 'badge', sortable: true });
+            columns.push({ field: 'nextFollowUpDate', header: 'Next Follow-Up', type: 'text', sortable: true, valueGetter: (i: InquiryWithFollowUp) => i.nextFollowUpDate ? new Date(i.nextFollowUpDate).toLocaleDateString() : '-' });
+        }
+
+        columns.push({ field: 'status', header: 'Status', type: 'badge', sortable: true });
+
+        // Use assertion to cast rowActions
+        let rowActions = [] as ListViewAction[];
+        if (this.activeTab === 'converted') {
+            rowActions.push({
+                label: 'Proceed to Admission',
+                icon: 'pi pi-check',
+                isPrimary: true,
+                color: 'success',
+                actionFn: (inquiry: InquiryWithFollowUp) => this.onProceedToAdmission(inquiry)
+            });
+        } else {
+            rowActions.push({
+                label: 'View',
+                icon: 'pi pi-eye',
+                isPrimary: true,
+                color: 'info',
+                actionFn: (inquiry: InquiryWithFollowUp) => this.onView(inquiry)
+            });
+            if (this.activeTab !== 'lost') {
+                rowActions.push({
+                    label: 'Update',
+                    icon: 'pi pi-pencil',
+                    isPrimary: true,
+                    actionFn: (inquiry: InquiryWithFollowUp) => this.onUpdate(inquiry)
+                });
+            }
+        }
+
+        this.listViewConfig = {
+            title: '', // Replaced by parent UI
+            isClientSide: true,
+            showSearch: true,
+            searchPlaceholder: 'Search inquiries...',
+            loading: this.loading,
+            columns: columns,
+            rowActions: rowActions,
+            secondaryActions: [
+                { label: 'Export', icon: 'pi pi-file-excel', actionFn: () => this.exportToExcel() },
+                { label: 'Print', icon: 'pi pi-print', actionFn: () => this.print() }
+            ]
+        };
+    }
+
     constructor(
         private followUpService: FollowUpService,
         private inquiryService: InquiryService,
@@ -105,6 +170,7 @@ export class InquiryFollowupComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.updateListViewConfig();
         this.loadDropdownOptions();
         this.loadTabCounts();
         this.loadInquiries();
@@ -199,6 +265,7 @@ export class InquiryFollowupComponent implements OnInit {
 
     onTabChange(tab: TabType): void {
         this.activeTab = tab;
+        this.updateListViewConfig();
         this.loadInquiries();
     }
 

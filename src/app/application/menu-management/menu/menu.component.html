@@ -29,64 +29,8 @@
   <p-tabPanel header="View">
     <div class="menu-list-container p-fluid">
 
-      <p-table #dt1 [value]="menuItems" [loading]="loading" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [rowsPerPageOptions]="[5, 10, 20]" [globalFilterFields]="['name','description','createdBy']"
-        styleClass="p-datatable-sm p-datatable-gridlines">
-
-        <!-- 🔍 Search Bar -->
-        <ng-template pTemplate="caption">
-          <div class="flex justify-content-end">
-            <p-iconfield iconPosition="left">
-              <p-inputicon>
-                <i class="pi pi-search"></i>
-              </p-inputicon>
-              <input #gb pInputText type="text" (input)="dt1.filterGlobal(gb.value, 'contains')"
-                placeholder="Search keyword" />
-            </p-iconfield>
-          </div>
-        </ng-template>
-
-        <!-- 📋 Table Header -->
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 5rem;">Sl. No</th>
-            <th pSortableColumn="name">Menu Name <p-sortIcon field="name"></p-sortIcon></th>
-            <th pSortableColumn="description" style="min-width: 15rem;">Description <p-sortIcon
-                field="description"></p-sortIcon></th>
-            <th>Created By</th>
-            <th>Last Updated</th>
-            <th>Status</th>
-            <th style="width: 8rem; text-align: center;">Actions</th>
-          </tr>
-        </ng-template>
-
-        <!-- 📋 Table Body -->
-        <ng-template pTemplate="body" let-menuItem let-i="rowIndex">
-          <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ menuItem.name }}</td>
-            <td class="truncate-text">{{ menuItem.description }}</td>
-            <td>{{ menuItem.createdBy }}</td>
-            <td>{{ menuItem.lastModifiedDate | date:'short' }}</td>
-            <td>
-              <p-inputSwitch [(ngModel)]="menuItem.isActive" (onChange)="toggleStatus(menuItem)"></p-inputSwitch>
-            </td>
-            <td style="text-align: center;">
-              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm p-button-info p-mr-2"
-                (onClick)="onEdit(menuItem)" pTooltip="Edit" tooltipPosition="top"></p-button>
-            </td>
-          </tr>
-        </ng-template>
-
-        <!-- 🚫 Empty Message -->
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7" class="text-center">No menus found.</td>
-          </tr>
-        </ng-template>
-
-      </p-table>
+      <app-standard-list-view [config]="listViewConfig" [data]="menuItems">
+      </app-standard-list-view>
 
     </div>
   </p-tabPanel>

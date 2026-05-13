@@ -19,6 +19,9 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { MenuService, MenuItem } from '../../services/menu.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { LoginService } from '../../../services/login.service';
 
 @Component({
   selector: 'app-menu',
@@ -40,19 +43,20 @@ import { InputIconModule } from 'primeng/inputicon';
     ToastModule,
     InputSwitchModule,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    StandardListViewComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss',
   providers: [MessageService]
 })
 export class MenuComponent {
-toggleOrganizationStatus(_t143: any) {
-throw new Error('Method not implemented.');
-}
-editOrganization(_t143: any) {
-throw new Error('Method not implemented.');
-}
+  toggleOrganizationStatus(_t143: any) {
+    throw new Error('Method not implemented.');
+  }
+  editOrganization(_t143: any) {
+    throw new Error('Method not implemented.');
+  }
   title = '';
   menuItems: MenuItem[] = [];
   loading: boolean = false;
@@ -63,8 +67,53 @@ throw new Error('Method not implemented.');
   editingMenuItem: MenuItem | null = null;
 
   constructor(private menuService: MenuService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private loginService: LoginService
   ) { }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Registered Menus',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search menus...',
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Menu Name', type: 'text', sortable: true },
+        { field: 'description', header: 'Description', type: 'text', sortable: true, width: '30%' },
+        { field: 'createdBy', header: 'Created By', type: 'text', sortable: true },
+        { field: 'lastModifiedDate', header: 'Last Updated', type: 'date', sortable: true },
+        {
+          field: 'isActive',
+          header: 'Status',
+          type: 'badge',
+          sortable: true,
+          valueGetter: (menu) => menu.isActive ? 'Active' : 'Inactive'
+        }
+      ],
+      rowActions: [
+        {
+          label: 'Edit',
+          icon: 'pi pi-pencil',
+          isPrimary: true,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('MANAGE_MENUS_EDIT'),
+          actionFn: (menu) => this.onEdit(menu)
+        },
+        {
+          label: 'Deactivate',
+          icon: 'pi pi-ban',
+          visibleFn: (menu) => menu.isActive && this.loginService.getUserPrivileges().includes('MANAGE_MENUS_EDIT'),
+          actionFn: (menu) => this.toggleStatus(menu)
+        },
+        {
+          label: 'Activate',
+          icon: 'pi pi-check-circle',
+          visibleFn: (menu) => !menu.isActive && this.loginService.getUserPrivileges().includes('MANAGE_MENUS_EDIT'),
+          actionFn: (menu) => this.toggleStatus(menu)
+        }
+      ]
+    };
+  }
 
   ngOnInit(): void {
     this.loadMenus();

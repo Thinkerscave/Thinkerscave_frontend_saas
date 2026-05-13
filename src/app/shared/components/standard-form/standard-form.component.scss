@@ -1,0 +1,26 @@
+.standard-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .section-title {
+        color: var(--surface-900);
+        letter-spacing: -0.01em;
+    }
+
+    .form-actions {
+        border-top: 1px solid var(--surface-border);
+        padding-top: 2rem;
+    }
+
+    .field {
+        label {
+            font-size: 0.875rem;
+            color: var(--surface-700);
+        }
+    }
+}
+
+// Custom responsive grid gap adjustment
+.grid.gap-y-4 {
+    row-gap: 1.5rem !important;
+}

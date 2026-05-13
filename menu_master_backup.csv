@@ -1,0 +1,11 @@
+menu_id,name,description,icon,url,menu_code,menu_order,is_active,created_by,created_date,last_modified_by,last_modified_date
+39,Student Management,Student Management,pi pi-users,,MENU_STUDENT_MANAGEMENT,5,t,SYSTEM,2025-10-19 12:23:10.675272,SYSTEM,2025-10-19 12:23:10.675272
+40,Staff Management,Staff Management,pi pi-id-card,,MENU_STAFF_MANAGEMENT,6,t,SYSTEM,2025-10-19 12:23:10.675272,SYSTEM,2025-10-19 12:23:10.675272
+41,Attendance Management,Attendance Management,pi pi-calendar,,MENU_ATTENDANCE_MANAGEMENT,7,t,SYSTEM,2025-10-19 12:23:10.675272,SYSTEM,2025-10-19 12:23:10.675272
+37,Role Management,Role Management,pi pi-lock,,MENU_ROLE_MANAGEMENT,3,t,SYSTEM,2025-10-19 12:23:10.675272,souravdash,2025-10-29 23:39:12.688
+38,Organization Management,Organization Management,pi pi-building,,MENU_ORG_MANAGEMENT,4,t,SYSTEM,2025-10-19 12:23:10.675272,souravdash,2025-10-29 23:39:21.31
+42,Menu Management,Menu Management,pi pi-table,,MENU_MENU_MANAGEMENT,,t,SYSTEM,2025-10-19 12:25:09.174594,souravdash,2026-01-04 00:54:27.411
+45,Public,Public Admission,pi pi-list,,MENU_PUBLIC_F7500,,t,souravdash,2026-01-04 01:10:28.606,souravdash,2026-01-04 01:10:28.606
+46,Academy Management Demo,Academy Management Demo for testing,,,MENU_ACADEMY_MANAGEMENT_DEMO_72948,,t,souravdash,2026-01-04 09:35:12.447,souravdash,2026-01-04 09:35:12.447
+43,Enquiry Management,For Enquiry Management,pi pi-question-circle,,MENU_ENQUIRY_MANAGEMENT_321E2,1,t,Soumya,2026-01-02 17:02:15.784,souravdash,2026-01-04 01:44:50.992
+44,Academic Management,"Management of Courses, Subjects, Syllabi and Academic Structures",pi pi-building,"",MENU_ACADEMICS,10,t,SYSTEM,2026-01-02 11:43:01.648835,souravdash,2025-10-29 23:39:21.31

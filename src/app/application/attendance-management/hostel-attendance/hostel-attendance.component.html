@@ -44,13 +44,15 @@
 
             <div class="form-field span-two">
               <label>Remarks</label>
-              <textarea pInputTextarea formControlName="remarks" rows="3" placeholder="Gate notes, approvals, etc."></textarea>
+              <textarea pInputTextarea formControlName="remarks" rows="3"
+                placeholder="Gate notes, approvals, etc."></textarea>
             </div>
           </div>
 
           <div class="form-actions">
             <ng-container *ngIf="!isEditing; else hostelUpdateButtons">
-              <p-button label="Add Entry" icon="pi pi-check" type="submit" [disabled]="attendanceForm.invalid"></p-button>
+              <p-button label="Add Entry" icon="pi pi-check" type="submit"
+                [disabled]="attendanceForm.invalid"></p-button>
             </ng-container>
             <ng-template #hostelUpdateButtons>
               <p-button label="Update Entry" icon="pi pi-save" type="button" (click)="onUpdateRecord()"
@@ -64,66 +66,9 @@
     </p-tabpanel>
 
     <p-tabpanel value="1">
-      <div class="card">
-        <div class="table-toolbar">
-          <h5>Hostel Attendance Records</h5>
-          <span class="p-input-icon-left">
-            <i class="pi pi-search"></i>
-            <input pInputText type="text" placeholder="Search..." [value]="globalFilterValue"
-              (input)="onGlobalFilter(dt, $event)" />
-          </span>
-        </div>
-
-        <p-table #dt [value]="records" dataKey="id"
-          [globalFilterFields]="['residentName','roomNumber','date','status','remarks']" styleClass="p-datatable-striped"
-          [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]" sortMode="multiple">
-          <ng-template pTemplate="header">
-            <tr>
-              <th pSortableColumn="residentName">
-                Resident
-                <p-sortIcon field="residentName"></p-sortIcon>
-              </th>
-              <th pSortableColumn="roomNumber">
-                Room
-                <p-sortIcon field="roomNumber"></p-sortIcon>
-              </th>
-              <th pSortableColumn="date">
-                Date
-                <p-sortIcon field="date"></p-sortIcon>
-              </th>
-              <th pSortableColumn="status">
-                Status
-                <p-sortIcon field="status"></p-sortIcon>
-              </th>
-              <th>Remarks</th>
-              <th class="text-center">Actions</th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-record>
-            <tr>
-              <td>{{ record.residentName }}</td>
-              <td>{{ record.roomNumber }}</td>
-              <td>{{ record.date }}</td>
-              <td>
-                <span class="status-chip status-{{ record.status | lowercase }}">{{ record.status }}</span>
-              </td>
-              <td>{{ record.remarks }}</td>
-              <td class="text-center">
-                <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-primary"
-                  pTooltip="Edit" (click)="onEditRecord(record)"></button>
-                <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
-                  pTooltip="Delete" (click)="onDeleteRecord(record)"></button>
-              </td>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="6" class="text-center">No hostel attendance data found.</td>
-            </tr>
-          </ng-template>
-        </p-table>
+      <div class="card p-0 shadow-none border-none">
+        <app-standard-list-view [config]="listViewConfig" [data]="records">
+        </app-standard-list-view>
       </div>
     </p-tabpanel>
   </p-tabpanels>

@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-
-// PrimeNG Modules
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,133 +9,145 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
-interface SalaryDetails {
-  basic: number;
-  hra: number;
-  specialAllowance: number;
-  professionalTax: number;
-  incomeTax: number;
-  providentFund: number;
-}
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { PayrollDTO, PayrollService } from '../../../services/payroll.service';
 
-interface StaffSalary {
-  id: string;
-  name: string;
-  department: string;
-  ctc: number;
-  salaryDetails: SalaryDetails;
-}
 @Component({
   selector: 'app-manage-salary',
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    TableModule,
-    ButtonModule,
-    InputTextModule,
-    DialogModule,
-    InputNumberModule,
-    ConfirmDialogModule,
-    ToastModule
+    CommonModule, ReactiveFormsModule, TableModule, ButtonModule,
+    InputTextModule, DialogModule, InputNumberModule,
+    ConfirmDialogModule, ToastModule, StandardListViewComponent
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './manage-salary.component.html',
   styleUrl: './manage-salary.component.scss'
 })
-export class ManageSalaryComponent {
-  staffSalaries: StaffSalary[] = [];
+export class ManageSalaryComponent implements OnInit {
+  staffSalaries: PayrollDTO[] = [];
   salaryDialogVisible = false;
   salaryForm!: FormGroup;
-
-  private selectedStaffId: string | null = null;
+  loading = false;
+  private selectedPayroll: PayrollDTO | null = null;
 
   constructor(
     private fb: FormBuilder,
+    private payrollService: PayrollService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
-    // --- Mock Data ---
-    this.staffSalaries = [
-      { id: 'S-001', name: 'Priya Sharma', department: 'Technology', ctc: 1200000, salaryDetails: { basic: 50000, hra: 25000, specialAllowance: 15000, professionalTax: 200, incomeTax: 5000, providentFund: 6000 } },
-      { id: 'S-002', name: 'Rohan Gupta', department: 'Sales', ctc: 950000, salaryDetails: { basic: 40000, hra: 20000, specialAllowance: 10000, professionalTax: 200, incomeTax: 3500, providentFund: 4800 } },
-      { id: 'S-003', name: 'Anjali Verma', department: 'Human Resources', ctc: 700000, salaryDetails: { basic: 30000, hra: 15000, specialAllowance: 8000, professionalTax: 200, incomeTax: 2000, providentFund: 3600 } }
-    ];
+    this.initForm();
+    this.loadPayroll();
+  }
 
-    // --- Initialize Salary Form ---
+  private initForm(): void {
     this.salaryForm = this.fb.group({
-      // Earnings
       basic: [0, Validators.required],
       hra: [0, Validators.required],
       specialAllowance: [0, Validators.required],
       academicAllowance: [0, Validators.required],
       medicalAllowance: [0, Validators.required],
       travelAllowance: [0, Validators.required],
-      otherAllowance: [0, Validators.required],
       dearnessAllowance: [0, Validators.required],
-
-      // Deductions
+      otherAllowance: [0, Validators.required],
       professionalTax: [0, Validators.required],
       incomeTax: [0, Validators.required],
       providentFund: [0, Validators.required],
     });
   }
 
-  // --- Calculated Getters for Real-time Summary ---
+  private loadPayroll(): void {
+    this.loading = true;
+    this.payrollService.getAllPayroll().subscribe({
+      next: (data) => { this.staffSalaries = data; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Manage Employee Salaries',
+      isClientSide: true, showSearch: true, searchPlaceholder: 'Search...', loading: this.loading,
+      primaryAction: {
+        label: 'Run Payroll', icon: 'pi pi-cog', color: 'secondary',
+        actionFn: () => this.runPayroll()
+      },
+      columns: [
+        { field: 'staffName', header: 'Name', type: 'text', sortable: true },
+        { field: 'staffId', header: 'Employee ID', type: 'text', sortable: true },
+        { field: 'department', header: 'Department', type: 'text', sortable: true },
+        {
+          field: 'ctcAnnual', header: 'CTC (Annual)', type: 'text', sortable: true,
+          valueGetter: (p: PayrollDTO) => p.ctcAnnual
+            ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p.ctcAnnual)
+            : '—'
+        },
+        {
+          field: 'netSalary', header: 'Net Salary', type: 'text', sortable: true,
+          valueGetter: (p: PayrollDTO) => p.netSalary
+            ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p.netSalary)
+            : '—'
+        }
+      ],
+      rowActions: [
+        { label: 'Edit', icon: 'pi pi-pencil', isPrimary: true, actionFn: (p: PayrollDTO) => this.editSalary(p) }
+      ]
+    };
+  }
+
   get grossSalary(): number {
-    const { basic, hra, specialAllowance } = this.salaryForm.value;
-    return (basic || 0) + (hra || 0) + (specialAllowance || 0);
+    const v = this.salaryForm.value;
+    return (v.basic || 0) + (v.hra || 0) + (v.specialAllowance || 0) + (v.academicAllowance || 0) + (v.medicalAllowance || 0) + (v.travelAllowance || 0) + (v.dearnessAllowance || 0) + (v.otherAllowance || 0);
   }
 
   get totalDeductions(): number {
-    const { professionalTax, incomeTax, providentFund } = this.salaryForm.value;
-    return (professionalTax || 0) + (incomeTax || 0) + (providentFund || 0);
+    const v = this.salaryForm.value;
+    return (v.professionalTax || 0) + (v.incomeTax || 0) + (v.providentFund || 0);
   }
 
-  get netSalary(): number {
-    return this.grossSalary - this.totalDeductions;
-  }
+  get netSalary(): number { return this.grossSalary - this.totalDeductions; }
 
-  // --- Component Methods ---
-  editSalary(staff: StaffSalary): void {
-    this.selectedStaffId = staff.id;
-    this.salaryForm.patchValue(staff.salaryDetails);
+  editSalary(payroll: PayrollDTO): void {
+    this.selectedPayroll = payroll;
+    this.salaryForm.patchValue(payroll);
     this.salaryDialogVisible = true;
   }
 
-  hideDialog(): void {
-    this.salaryDialogVisible = false;
-    this.selectedStaffId = null;
-  }
+  hideDialog(): void { this.salaryDialogVisible = false; this.selectedPayroll = null; }
 
   saveSalary(): void {
-    if (this.salaryForm.invalid || !this.selectedStaffId) {
-      return;
-    }
-    // In a real app, you would send this to a service.
-    // Here, we update the local mock data.
-    const index = this.staffSalaries.findIndex(s => s.id === this.selectedStaffId);
-    if (index !== -1) {
-      this.staffSalaries[index].salaryDetails = this.salaryForm.value;
-    }
-
-    this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Salary details updated successfully.' });
-    this.hideDialog();
+    if (this.salaryForm.invalid || !this.selectedPayroll) return;
+    const dto: PayrollDTO = { ...this.selectedPayroll, ...this.salaryForm.value };
+    this.payrollService.saveOrUpdate(dto).subscribe({
+      next: (updated) => {
+        this.staffSalaries = this.staffSalaries.map(p => p.staffId === updated.staffId ? updated : p);
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Salary updated successfully' });
+        this.hideDialog();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save salary' })
+    });
   }
 
   runPayroll(): void {
-    const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
-    const currentYear = currentDate.getFullYear();
-
+    const now = new Date();
+    const monthYear = now.toLocaleString('default', { month: 'long' }) + ' ' + now.getFullYear();
     this.confirmationService.confirm({
-      message: `Are you sure you want to run payroll for ${currentMonth} ${currentYear}? This action cannot be undone.`,
+      message: `Run payroll for ${monthYear}? This will calculate net pay for all staff.`,
       header: 'Confirm Payroll Run',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        // Placeholder for payroll logic
-        this.messageService.add({ severity: 'info', summary: 'Processing', detail: 'Payroll run has been initiated.' });
+        this.payrollService.runPayroll().subscribe({
+          next: (result) => {
+            this.messageService.add({
+              severity: 'success', summary: 'Payroll Processed',
+              detail: `${result.totalStaff} staff processed. Total net: ₹${result.totalNet?.toLocaleString('en-IN')}`
+            });
+          },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Payroll run failed' })
+        });
       }
     });
   }

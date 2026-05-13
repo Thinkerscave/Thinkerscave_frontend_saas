@@ -1,10 +1,11 @@
-import { environment } from "../../environment/environment";
+import { environment } from "../../../environments/environment";
 
 /**
  * Base URLs
  */
 const PUBLIC_INQUIRY_BASE = `${environment.baseUrl}/public/inquiries`;
-const STAFF_INQUIRY_BASE  = `${environment.baseUrl}/staff/inquiries`;
+// Previously /staff/inquiries — renamed to /inquiries after URL versioning fix
+const STAFF_INQUIRY_BASE = `${environment.baseUrl}/inquiries`;
 
 export const inquiryUrl = {
 

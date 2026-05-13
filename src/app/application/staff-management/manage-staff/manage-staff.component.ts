@@ -12,7 +12,9 @@ import { InputTextarea } from 'primeng/inputtextarea';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { Table } from 'primeng/table';
-import { ButtonModule as PrimeButton } from 'primeng/button';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { LoginService } from '../../../services/login.service';
 
 interface Staff {
   id: number;
@@ -27,7 +29,8 @@ interface Staff {
   selector: 'app-manage-staff',
   imports: [ReactiveFormsModule, TabsModule, Tab,
     AccordionModule, ButtonModule, FormsModule, CommonModule, CalendarModule,
-    DropdownModule, InputMaskModule, InputTextModule, TableModule, PrimeButton
+    DropdownModule, InputMaskModule, InputTextModule, TableModule,
+    StandardListViewComponent
   ],
   templateUrl: './manage-staff.component.html',
   styleUrl: './manage-staff.component.scss'
@@ -56,7 +59,7 @@ export class ManageStaffComponent {
     { label: 'Finance', value: 'Finance' }
   ];
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private loginService: LoginService) { }
 
   ngOnInit(): void {
     this.staffForm = this.fb.group({
@@ -80,6 +83,47 @@ export class ManageStaffComponent {
     });
 
     this.seedStaff();
+  }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Staff Directory',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search staff...',
+      loading: false,
+      primaryAction: {
+        label: 'Register Staff',
+        icon: 'pi pi-plus',
+        visibleFn: () => this.loginService.getUserPrivileges().includes('STAFF_DIRECTORY_ADD'),
+        actionFn: () => this.activeTab = '0'
+      },
+      columns: [
+        { field: 'employeeId', header: 'Employee ID', type: 'text', sortable: true },
+        { field: 'fullName', header: 'Full Name', type: 'text', sortable: true },
+        { field: 'department', header: 'Department', type: 'text', sortable: true },
+        { field: 'jobTitle', header: 'Job Title', type: 'text', sortable: true },
+        { field: 'email', header: 'Email', type: 'text', sortable: true },
+        { field: 'mobileNumber', header: 'Mobile', type: 'text', sortable: true }
+      ],
+      rowActions: [
+        {
+          label: 'Edit',
+          icon: 'pi pi-pencil',
+          isPrimary: true,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STAFF_DIRECTORY_EDIT'),
+          actionFn: (staff: Staff) => this.onEditStaff(staff)
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          isPrimary: true,
+          color: 'danger',
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STAFF_DIRECTORY_DELETE'),
+          actionFn: (staff: Staff) => this.onDeleteStaff(staff)
+        }
+      ]
+    };
   }
 
   // Helper method to easily access form controls in the template

@@ -1,0 +1,39 @@
+Component HMR has been enabled, see https://angular.dev/hmr for more info.
+❯ Building...
+✔ Building...
+Initial chunk files | Names                               |  Raw size
+styles.css          | styles                              | 464.86 kB | 
+main.js             | main                                | 127.56 kB | 
+polyfills.js        | polyfills                           |  89.77 kB | 
+chunk-JO5VFL3F.js   | -                                   |   8.82 kB | 
+chunk-DUQGKU2R.js   | -                                   |   1.79 kB | 
+chunk-P5ZQBWVC.js   | -                                   |   1.61 kB | 
+chunk-653SOEEV.js   | -                                   |   1.51 kB | 
+chunk-74I3RVXY.js   | -                                   | 233 bytes | 
+
+                    | Initial total                       | 696.15 kB
+
+Lazy chunk files    | Names                               |  Raw size
+chunk-UCNZTUHB.js   | managestudent-component             | 111.13 kB | 
+chunk-CUYWRFCE.js   | organization-registration-component |  81.36 kB | 
+chunk-27BLR2XZ.js   | public-inquiry-component            |  79.73 kB | 
+chunk-6G5OMUTD.js   | student-admission-form-component    |  66.66 kB | 
+chunk-FGUTUJ5H.js   | counsellor-dashboard-component      |  65.48 kB | 
+chunk-5XZZBL6J.js   | manage-staff-component              |  54.61 kB | 
+chunk-RK667RQV.js   | manage-inquiry-component            |  51.53 kB | 
+chunk-4ZHTAA5W.js   | academic-year-config-component      |  48.45 kB | 
+chunk-E43ORNHR.js   | inquiry-detail-component            |  47.77 kB | 
+chunk-YMROJAMA.js   | -                                   |  44.35 kB | 
+chunk-QFRWFAJV.js   | inquiry-followup-component          |  43.73 kB | 
+chunk-TDA6ZBBR.js   | lead-detail-component               |  36.98 kB | 
+chunk-7PFQJIVQ.js   | sub-menu-component                  |  35.04 kB | 
+chunk-CWSNWPK4.js   | dashboard-component                 |  34.52 kB | 
+chunk-T6TNLY6I.js   | staff-attendance-component          |  32.57 kB | 
+...and 32 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [4.666 seconds]
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  ➜  Local:   http://localhost:4200/
+  ➜  press h + enter to show help

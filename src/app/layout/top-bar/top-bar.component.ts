@@ -27,19 +27,22 @@ export class TopBarComponent {
   ngOnInit(): void {
     const user = this.loginService.getUser();
     if (user) {
-      this.userName = `${user.firstName} ${user.lastName}`;
+      const first = user.firstName || '';
+      const last = user.lastName || '';
+      // Show full name if available, fall back to username
+      this.userName = (first + ' ' + last).trim() || user.userName || 'User';
     }
 
     this.profileItems = [
       {
         label: 'Profile',
         icon: 'pi pi-user-edit',
-        command: () => this.router.navigate(['/profile'])
+        command: () => this.router.navigate(['/app/profile'])
       },
       {
         label: 'Settings',
         icon: 'pi pi-cog',
-        command: () => this.router.navigate(['/settings'])
+        command: () => this.router.navigate(['/app/settings'])
       },
       {
         separator: true
@@ -53,7 +56,8 @@ export class TopBarComponent {
   }
 
   getInitials(name: string): string {
-    const names = name.split(' ');
+    if (!name || !name.trim()) return 'U';
+    const names = name.trim().split(' ').filter(n => n.length > 0);
     if (names.length === 1) {
       return names[0].charAt(0).toUpperCase();
     } else {

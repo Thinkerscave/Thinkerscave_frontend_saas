@@ -1,25 +1,176 @@
 .side-menu-wrapper {
   width: 100%;
   height: 100%;
-  transition: width 0.3s ease, transform 0.3s ease;
-  background-color: #f4f6f8;
-  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #ffffff;
+  overflow-y: auto;
+  border-right: 1px solid #e2e8f0;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+  }
 
   &.is-collapsed {
     width: 0;
     min-width: 0;
     transform: translateX(-100%);
-
-    .side-menu {
-      pointer-events: none;
-      opacity: 0;
-    }
+    opacity: 0;
+    pointer-events: none;
   }
 }
 
 .side-menu {
+  display: block;
   min-height: 100%;
-  background-color: #f4f6f8;
-  border-right: 1px solid #e0e0e0;
-  padding: 0.5rem;
+  background-color: transparent;
+  padding: 1.5rem 0.5rem;
+
+  ::ng-deep {
+    .p-panelmenu {
+      gap: 0.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Main Panel Headers */
+    .p-panelmenu .p-panelmenu-header>a {
+      border: none;
+      background: transparent;
+      color: #64748b;
+      padding: 0.75rem 1rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      border-radius: 0.375rem;
+
+      &:hover {
+        background-color: #f8fafc;
+        color: #1e293b;
+      }
+
+      .p-menuitem-icon {
+        color: #94a3b8;
+        margin-right: 0.875rem;
+        font-size: 1.1rem;
+        width: 1.5rem;
+        text-align: center;
+        transition: color 0.2s ease;
+      }
+
+      &:hover .p-menuitem-icon {
+        color: #6366f1;
+      }
+
+      .p-panelmenu-icon {
+        margin-left: auto;
+        color: #cbd5e1;
+        font-size: 0.75rem;
+        transition: transform 0.2s ease, color 0.2s ease;
+      }
+
+      &:hover .p-panelmenu-icon {
+        color: #94a3b8;
+      }
+    }
+
+    /* Active/Expanded Header */
+    .p-panelmenu .p-panelmenu-header.p-highlight>a {
+      background-color: transparent;
+      color: #0f172a;
+      font-weight: 600;
+
+      .p-menuitem-icon {
+        color: #4f46e5;
+      }
+
+      .p-panelmenu-icon {
+        color: #4f46e5;
+      }
+    }
+
+    /* Content Area (Submenus) */
+    .p-panelmenu .p-panelmenu-content {
+      border: none;
+      background: transparent;
+      padding: 0 0 0.5rem 0;
+      margin: 0;
+    }
+
+    /* Submenu Items wrapper to create a left track line */
+    .p-panelmenu .p-panelmenu-content .p-menu {
+      position: relative;
+      margin-left: 1.75rem;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 1px;
+        background-color: #e2e8f0;
+      }
+    }
+
+    /* Submenu Items */
+    .p-panelmenu .p-menuitem {
+      margin: 0;
+
+      .p-menuitem-link {
+        padding: 0.5rem 1rem 0.5rem 1.5rem;
+        border-radius: 0;
+        color: #64748b;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        background: transparent;
+
+        /* Indication dot on track line */
+        &::before {
+          content: '';
+          position: absolute;
+          left: -1px;
+          top: 50%;
+          transform: translateY(-50%);
+          height: 100%;
+          width: 2px;
+          background-color: transparent;
+          transition: background-color 0.2s ease;
+        }
+
+        &:hover {
+          color: #0f172a;
+          background: transparent;
+
+          &::before {
+            background-color: #cbd5e1;
+          }
+        }
+
+        .p-menuitem-icon {
+          display: none;
+        }
+      }
+
+      /* Active Submenu Item */
+      .p-menuitem-link.router-link-active,
+      .p-menuitem-link.p-menuitem-link-active {
+        color: #4f46e5;
+        font-weight: 600;
+
+        &::before {
+          background-color: #4f46e5;
+        }
+      }
+    }
+  }
 }

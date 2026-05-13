@@ -2,6 +2,7 @@ import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angul
 import { inject } from '@angular/core';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
 import { finalize, Observable } from 'rxjs';
+import { LoginService } from '../../services/login.service';
 
 /**
  * A functional HTTP interceptor that adds the X-Tenant-ID header to outgoing requests.
@@ -11,17 +12,24 @@ import { finalize, Observable } from 'rxjs';
  */
 export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
   const loader = inject(NgxUiLoaderService);
+  const loginService = inject(LoginService);
 
   // Start loader
   loader.start();
 
-  // In a real application, you would get the tenant ID from a service
-  // after the user has logged in. For now, we can hardcode it for testing.
-  const tenantId = 'public'; // Example tenant ID. Replace with your actual tenant identifier.
+  // Get tenant ID from current user context
+  const tenantId = loginService.getTenant();
+  const orgId = loginService.getCurrentOrganizationId();
 
   // Clone the request to add the new header.
+  let headers = req.headers.set('X-Tenant-ID', tenantId || ''); // Should we send 'public' or empty? existing code sent tenantId.toString()
+
+  if (orgId) {
+    headers = headers.set('X-Organization-ID', orgId);
+  }
+
   const modifiedRequest = req.clone({
-    headers: req.headers.set('X-Tenant-ID', tenantId)
+    headers: headers
   });
 
   // Pass the cloned request to the next handler in the chain.

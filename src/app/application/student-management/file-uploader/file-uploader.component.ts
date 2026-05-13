@@ -67,11 +67,11 @@ export class FileUploaderComponent {
    * @param index The index of the row where the file was selected.
    */
   onFileSelect(event: any, index: number): void {
-    const file: File = event.target.files[0];
-    if (file) { 
-      // Update the 'file' property of the correct document object in the array.
+    // PrimeNG p-fileUpload (onSelect) emits { files: File[], originalEvent: Event }
+    // NOT a native DOM event — so event.target is undefined.
+    const file: File = event?.files?.[0] ?? event?.currentFiles?.[0];
+    if (file) {
       this.documents[index].file = file;
-      
     }
   }
 
@@ -86,18 +86,10 @@ export class FileUploaderComponent {
     const isValid = this.documents.every(doc => doc.docName.trim() !== '' && doc.file !== null);
 
     if (isValid) {
-      // In a real application, you would use a service to send this data
-      // to your server, likely as multipart/form-data.
-
       const files = this.documents.map(doc => doc.file!) as File[];
       const types = this.documents.map(doc => doc.docName.trim());
-
-      alert(types)
-      alert(files)
-
       // Emit to parent
       this.documentsReady.emit({ files, types });
-      alert('All documents are valid and ready for submission! (Check the console for data)');
     } else {
       alert('Please ensure every row has a document name and an uploaded file.');
     }

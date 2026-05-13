@@ -14,6 +14,11 @@ import { Section, SectionService } from '../section.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { environment } from '../../../../environments/environment';
+
+
 
 interface State {
   name: string;
@@ -27,7 +32,8 @@ interface DocumentData {
 
 @Component({
   selector: 'app-managestudent',
-  imports: [ViewStudentsComponent, TabsModule, Tab, AccordionModule, HttpClientModule, ButtonModule, FileUploaderComponent, CommonModule, FormsModule, ReactiveFormsModule, CheckboxModule,CardModule,DropdownModule,FileUploadModule],
+  imports: [ViewStudentsComponent, TabsModule, Tab, AccordionModule, HttpClientModule, ButtonModule, FileUploaderComponent, CommonModule, FormsModule, ReactiveFormsModule, CheckboxModule, CardModule, DropdownModule, FileUploadModule, ToastModule],
+  providers: [MessageService],
   templateUrl: './managestudent.component.html',
   styleUrl: './managestudent.component.scss'
 })
@@ -41,7 +47,7 @@ export class ManagestudentComponent {
 
 
   onAccordionChange(event: any) {
-   // alert('Accordion changed!');
+    // alert('Accordion changed!');
     console.log('Event:', event);
 
     const newIndexes = Array.isArray(event) ? event : [event];
@@ -72,123 +78,122 @@ export class ManagestudentComponent {
   permanentCities: any[] = [];
 
 
- constructor(private fb: FormBuilder, private http: HttpClient, private locationService: LocationService, private classService: ClassService,
-    private sectionService: SectionService) {
+  constructor(private fb: FormBuilder, private http: HttpClient, private locationService: LocationService, private classService: ClassService,
+    private sectionService: SectionService, private messageService: MessageService) {
     this.form = this.fb.group({
-       // User Info
-  firstName: ['', Validators.required],
-  middleName: [''],
-  lastName: ['', Validators.required],
-  email: ['', [Validators.required, Validators.email]],
-  mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-  age:['10'],
+      // User Info
+      firstName: ['', Validators.required],
+      middleName: [''],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      age: ['10'],
 
-  // Student Info
-  gender: ['', Validators.required],
-  remarks: [''],
-  rollNumber: ['', Validators.required],
-  dateOfBirth: ['', Validators.required],
-  enrollmentDate: ['', Validators.required],
-  isSameAddress: [false],
+      // Student Info
+      gender: ['', Validators.required],
+      remarks: [''],
+      rollNumber: ['', Validators.required],
+      dateOfBirth: ['', Validators.required],
+      enrollmentDate: ['', Validators.required],
+      isSameAddress: [false],
 
-  // Current Address
-  currentCountry: ['', Validators.required],
-  currentState: ['', Validators.required],
-  currentCity: ['', Validators.required],
-  currentZipCode: ['', [Validators.required, Validators.pattern('^[0-9]{5,6}$')]],
-  currentAddressLine: ['', Validators.required],
+      // Current Address
+      currentCountry: ['', Validators.required],
+      currentState: ['', Validators.required],
+      currentCity: ['', Validators.required],
+      currentZipCode: ['', [Validators.required, Validators.pattern('^[0-9]{5,6}$')]],
+      currentAddressLine: ['', Validators.required],
 
-  // Permanent Address
-  permanentCountry: ['', Validators.required],
-  permanentState: ['', Validators.required],
-  permanentCity: ['', Validators.required],
-  permanentZipCode: ['', [Validators.required, Validators.pattern('^[0-9]{5,6}$')]],
-  permanentAddressLine: ['', Validators.required],
+      // Permanent Address
+      permanentCountry: ['', Validators.required],
+      permanentState: ['', Validators.required],
+      permanentCity: ['', Validators.required],
+      permanentZipCode: ['', [Validators.required, Validators.pattern('^[0-9]{5,6}$')]],
+      permanentAddressLine: ['', Validators.required],
 
-  // School Relation Info
-  classId: ['', Validators.required],
-  sectionId: [{ value: '', disabled: true }, Validators.required],
+      // School Relation Info
+      classId: ['', Validators.required],
+      sectionId: [{ value: '', disabled: true }, Validators.required],
 
-  // Guardian Info
-  guardianFirstName: ['', Validators.required],
-  guardianMiddleName: [''],
-  guardianLastName: ['', Validators.required],
-  guardianRelation: ['', Validators.required],
-  guardianEmail: ['', [Validators.required, Validators.email]],
-  guardianPhoneNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-  guardianAddress: ['', Validators.required]
-
-
+      // Guardian Info
+      guardianFirstName: ['', Validators.required],
+      guardianMiddleName: [''],
+      guardianLastName: ['', Validators.required],
+      guardianRelation: ['', Validators.required],
+      guardianEmail: ['', [Validators.required, Validators.email]],
+      guardianPhoneNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      guardianAddress: ['', Validators.required]
     });
+  }
 
+  showSuccess(detail: string) {
+    this.messageService.add({ severity: 'success', summary: 'Success', detail });
+  }
+
+  showError(detail: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail });
+  }
+
+  showInfo(detail: string) {
+    this.messageService.add({ severity: 'info', summary: 'Information', detail });
   }
 
 
 
 
   ngOnInit() {
-    this.locationService.getCountries().subscribe(res => {
-      console.log(res)
-      this.countries = res.data.map(c => c.name);
-      this.currentcountries = res.data.map(c => c.name);
-      this.permanentcountries = res.data.map(c => c.name);
+    // getCountryNames() now returns string[] directly (sorted)
+    this.locationService.getCountryNames().subscribe(names => {
+      this.countries = names;
+      this.currentcountries = names;
+      this.permanentcountries = names;
     });
 
     //For Loading Class
     this.loadClasses();
   }
 
-  statesJson: string = '';
   onCountryChange(addressType: 'current' | 'permanent') {
-    const countryControl = this.form.get(`${addressType}Country`);
-    const selectedCountry = countryControl?.value;
+    const selectedCountry = this.form.get(`${addressType}Country`)?.value;
+    if (!selectedCountry) return;
 
-    console.log(`${addressType} selected country:`, selectedCountry);
-
-    if (selectedCountry) {
-      this.locationService.getStates(selectedCountry).subscribe(res => {
-        this.states = res.data;
-        this.statesJson = JSON.stringify(this.states);
-        const countryData: { name: string; iso2: string; iso3: string; states: State[] } = JSON.parse(this.statesJson);
-
-        if (addressType === 'current') {
-          this.currentStates = countryData.states;
-          this.form.get('currentState')?.reset();  // Reset state/city if country changes
-          this.form.get('currentCity')?.reset();
-        } else {
-          this.permanentStates = countryData.states;
-          this.form.get('permanentState')?.reset();
-          this.form.get('permanentCity')?.reset();
-        }
-      });
-    }
+    // getStates() now returns StateItem[] directly (unwrapped inside service)
+    this.locationService.getStates(selectedCountry).subscribe(states => {
+      if (addressType === 'current') {
+        this.currentStates = states;
+        this.form.get('currentState')?.reset();
+        this.form.get('currentCity')?.reset();
+        this.currentCities = [];
+      } else {
+        this.permanentStates = states;
+        this.form.get('permanentState')?.reset();
+        this.form.get('permanentCity')?.reset();
+        this.permanentCities = [];
+      }
+    });
   }
 
 
   onStateChange(addressType: 'current' | 'permanent') {
     const country = this.form.get(`${addressType}Country`)?.value;
     const state = this.form.get(`${addressType}State`)?.value;
+    if (!country || !state) return;
 
-    console.log(`${addressType} selected state:`, state);
-
-    if (country && state) {
-      this.locationService.getCities(country, state).subscribe(res => {
-        const cities = res.data;
-
-        if (addressType === 'current') {
-          this.currentCities = cities;
-          this.form.get('currentCity')?.reset();
-        } else {
-          this.permanentCities = cities;
-          this.form.get('permanentCity')?.reset();
-        }
-      });
-    }
+    // getCities() now returns CityItem[] ({ name: string }) directly (unwrapped inside service)
+    this.locationService.getCities(country, state).subscribe(cities => {
+      if (addressType === 'current') {
+        this.currentCities = cities;
+        this.form.get('currentCity')?.reset();
+      } else {
+        this.permanentCities = cities;
+        this.form.get('permanentCity')?.reset();
+      }
+    });
   }
 
   onSameAddressToggle() {
     const isSame = this.form.get('isSameAddress')?.value;
-//alert(isSame)
+    //alert(isSame)
     if (isSame) {
       // Copy current address to permanent address
       this.form.patchValue({
@@ -244,30 +249,26 @@ export class ManagestudentComponent {
         this.sections = res;
 
         if (this.sections.length > 0) {
-        this.form.get('sectionId')?.enable();   // ✅ Enable field
-      } else {
-        this.form.get('sectionId')?.disable();  // ❌ No sections, so disable it
-      }
+          this.form.get('sectionId')?.enable();   // ✅ Enable field
+        } else {
+          this.form.get('sectionId')?.disable();  // ❌ No sections, so disable it
+        }
 
-         alert(JSON.stringify(res));
         // this.form.get('sectionId')?.reset();
       });
     } else {
       this.sections = [];
-    this.form.get('sectionId')?.reset();
-    this.form.get('sectionId')?.disable();  // Reset and disable
+      this.form.get('sectionId')?.reset();
+      this.form.get('sectionId')?.disable();  // Reset and disable
     }
   }
-
-
 
   onDocumentsReady(event: { files: File[], types: string[] }) {
     this.documents = event.files.map((file, index) => ({
       file,
       name: event.types[index]
-
     }));
-    alert("IN student onDocumentsReady Method")
+    this.showSuccess("Documents staged for upload successfully.");
   }
 
 
@@ -278,11 +279,11 @@ export class ManagestudentComponent {
       const file = input.files[0];
 
       if (file.type.startsWith('image/')) {
-        alert("Profile Selected")
+        this.showSuccess("Profile photo selected successfully.");
         this.profilePicture = file;
         console.log('Selected photo:', file.name);
       } else {
-        alert('Please select a valid image file (e.g., .jpg, .png)');
+        this.showError('Please select a valid image file (e.g., .jpg, .png)');
       }
     }
   }
@@ -291,7 +292,7 @@ export class ManagestudentComponent {
     const draft = this.form.getRawValue();
     console.log('Draft payload:', draft);
     this.lastSavedAt = new Date();
-    alert('Draft saved locally.');
+    this.showInfo('Application draft saved locally.');
   }
 
   onEditStudent(student: Student): void {
@@ -312,7 +313,7 @@ export class ManagestudentComponent {
       guardianFirstName,
       guardianMiddleName,
       guardianLastName: guardianLastName || guardianFirstName,
-      rollNumber: student.rollNo,
+      rollNumber: student.rollNumber,
       remarks: `Editing record #${student.id}`,
     });
 
@@ -323,22 +324,29 @@ export class ManagestudentComponent {
 
   // Collect data and send to backend
   onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.showError('Please fill all required fields correctly before submitting.');
+      return;
+    }
+
     const formData = new FormData();
-    debugger;
+
     // Wrap and append your student DTO
     const studentDTO = {
       firstName: this.form.get('firstName')?.value,
-      middleName: this.form.get('middleName')?.value,
+      middleName: this.form.get('middleName')?.value || '',
       lastName: this.form.get('lastName')?.value,
       email: this.form.get('email')?.value,
       mobileNumber: this.form.get('mobileNumber')?.value,
+      age: this.form.get('age')?.value || '10',
 
       gender: this.form.get('gender')?.value,
       rollNumber: this.form.get('rollNumber')?.value,
       dateOfBirth: this.form.get('dateOfBirth')?.value,
       enrollmentDate: this.form.get('enrollmentDate')?.value,
 
-      isSameAddress: this.form.get('isSameAddress')?.value, // or get from a checkbox
+      isSameAddress: this.form.get('isSameAddress')?.value || false,
 
       currentCountry: this.form.get('currentCountry')?.value,
       currentState: this.form.get('currentState')?.value,
@@ -352,74 +360,50 @@ export class ManagestudentComponent {
       permanentZipCode: this.form.get('permanentZipCode')?.value,
       permanentAddressLine: this.form.get('permanentAddressLine')?.value,
 
-      classId: this.form.get('classId')?.value,
-      sectionId: this.form.get('sectionId')?.value,
+      classId: this.form.get('classId')?.value ? Number(this.form.get('classId')?.value) : null,
+      sectionId: this.form.get('sectionId')?.value ? Number(this.form.get('sectionId')?.value) : null,
 
       guardianFirstName: this.form.get('guardianFirstName')?.value,
-      guardianMiddleName: this.form.get('guardianMiddleName')?.value,
+      guardianMiddleName: this.form.get('guardianMiddleName')?.value || '',
       guardianLastName: this.form.get('guardianLastName')?.value,
       guardianRelation: this.form.get('guardianRelation')?.value,
       guardianEmail: this.form.get('guardianEmail')?.value,
       guardianPhoneNumber: this.form.get('guardianPhoneNumber')?.value,
       guardianAddress: this.form.get('guardianAddress')?.value,
 
-      remarks: this.form.get('remarks')?.value
-
-
+      remarks: this.form.get('remarks')?.value || ''
     };
-    console.log('Student DTO JSON:', JSON.stringify(studentDTO, null, 2));
 
+    console.log('Publishing Student DTO JSON:', JSON.stringify(studentDTO, null, 2));
 
     formData.append('studentData', new Blob([JSON.stringify(studentDTO)], { type: 'application/json' }));
 
-
-
-
     // Profile Picture
     if (this.profilePicture) {
-
       formData.append('photo', this.profilePicture);
     }
 
-
-
     // Append document files
-    // this.documents.forEach((doc, index) => {
-    //   formData.append('documents', doc.file);
-    // });
+    if (this.documents && this.documents.length > 0) {
+      this.documents.forEach((doc) => {
+        formData.append('documents', doc.file);
+        formData.append('types', doc.name);
+      });
+    }
 
-  //    if (this.documents?.length) {
-  //     alert("In document ")
-  //   this.documents.forEach((doc, index) => {
-  //     formData.append('documents', doc.file);
-  //   });
-  // }
-  //
-  //   // Append names as a list named "names"
-  //   this.documents.forEach((doc, index) => {
-  //     formData.append('types', doc.name);
-  //   });
-
-
-    // this.documents.forEach((doc, index) => {
-    //   formData.append(`documents[${index}].file`, doc.file);
-    //   formData.append(`documents[${index}].type`, doc.name);
-    // });
-
-
-    console.log('FormData entries:hhhhhhhhhhhhhhhhhhhh');
-
+    console.log('Sending formData to backend...');
 
     // Send to backend
-    this.http.post('http://localhost:8181/api/students/register', formData)
+    this.http.post(`${environment.baseUrl}/students/registerStudent`, formData)
       .subscribe({
         next: (res) => {
           console.log('Student registered successfully:', res);
-          alert('Student saved successfully.');
+          this.showSuccess('Registration completed successfully! The student record has been saved.');
+          this.form.reset();
         },
         error: (err) => {
           console.error('Error saving student:', err);
-          alert('Error occurred during save.');
+          this.showError('An error occurred during submission. Please verify the backend service is running and try again.');
         }
       });
   }

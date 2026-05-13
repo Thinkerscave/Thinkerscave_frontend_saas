@@ -18,6 +18,14 @@ import { LoginService } from '../../services/login.service';
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
+/**
+ * Attaches the JWT Bearer token to every outgoing HTTP request.
+ *
+ * On 401 / 403:
+ *   - Skips refresh for public/login endpoints
+ *   - Triggers token refresh exactly once (concurrent requests queue and retry)
+ *   - On refresh failure: clears tokens and redirects to session-expired
+ */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<any>,
   next: HttpHandlerFn
@@ -25,10 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (
   const loginService = inject(LoginService);
   const token = loginService.getAccessToken();
 
-  // Check if this is a mock token (for counsellor demo)
-  const isMockToken = token && token.startsWith('mock_jwt_token_');
-  console.log('[AUTH INTERCEPTOR] Token type:', isMockToken ? 'MOCK' : 'REAL');
-
+  // Attach Bearer token to all non-refresh requests
   let authReq = req;
   if (token && !req.url.includes('/refreshToken')) {
     authReq = req.clone({
@@ -39,22 +44,21 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
 
-      // Skip token refresh for mock tokens
-      if (isMockToken) {
-        console.log('[AUTH INTERCEPTOR] Mock token - bypassing refresh logic');
-        return throwError(() => error);
-      }
-
-      // 🚫 If refresh API itself fails
+      // 🚫 If refresh API itself fails — clear and redirect
       if (req.url.includes('/refreshToken')) {
         loginService.clearTokens();
         loginService.redirectToSessionExpired();
         return throwError(() => error);
       }
 
+      // Public API calls and login endpoint — do not redirect to session-expired
+      const isPublicApi = req.url.includes('/public/') || req.url.includes('/password/');
       if (error.status === 401 || error.status === 403) {
+        if (isPublicApi || req.url.includes('/login')) {
+          return throwError(() => error);
+        }
 
-        // 🔵 First request triggers refresh
+        // 🔵 First 401 triggers refresh
         if (!isRefreshing) {
           isRefreshing = true;
           refreshTokenSubject.next(null);
@@ -87,7 +91,7 @@ export const authInterceptor: HttpInterceptorFn = (
           );
         }
 
-        // 🟡 Other requests WAIT here
+        // 🟡 Other requests wait for refresh to complete then retry
         return refreshTokenSubject.pipe(
           filter(token => token !== null),
           take(1),

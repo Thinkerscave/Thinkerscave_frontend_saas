@@ -1,38 +1,54 @@
 import { SubjectCategory } from '../../core/enums/subject-category.enum';
 
 export interface Course {
-    id?: number;
-    name: string;
-    code: string;
+    courseId?: number;
+    courseCode: string;
+    courseName: string;
     description?: string;
-    organisationId: number;
+    organisationId?: number;
+    category?: string;
+    durationYears?: number;
+    totalSemesters?: number;
+    eligibilityCriteria?: string;
+    fees?: number;
+    isActive?: boolean;
 }
 
 export interface Subject {
-    id?: number;
-    name: string;
-    code: string;
-    category: SubjectCategory;
+    subjectId?: number;
+    subjectCode: string;
+    subjectName: string;
     description?: string;
+    organisationId?: number;
+    category?: string;
+    credits?: number;
+    theoryHours?: number;
+    labHours?: number;
+    practicalHours?: number;
+    isActive?: boolean;
 }
 
 export interface AcademicYear {
+    academicYearId?: number;
     id?: number;
-    name: string; // e.g. "2024-2025"
+    organizationId?: number;
+    yearCode: string;
+    yearName?: string;
     startDate: string;
     endDate: string;
+    isCurrent?: boolean;
     isActive: boolean;
 }
 
 export interface SubjectContainerMapping {
     id?: number;
     subjectId: number;
-    subjectName?: string; // Optional helper
+    subjectName?: string;
     containerId: number;
     academicYearId: number;
-    semester?: number;
-    year?: number;
+    semester?: number; // 1, 2, 3...
     isMandatory: boolean;
-    credits?: number;
+    credits?: number; // Override default subject credits if needed
     hoursPerWeek?: number;
 }
+

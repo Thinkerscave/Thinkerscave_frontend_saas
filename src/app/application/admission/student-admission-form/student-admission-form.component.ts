@@ -12,6 +12,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { CommonModule } from '@angular/common';
 import { ToastModule } from 'primeng/toast';
 import { AdmissionService } from '../../../services/admission.service';
+import { LoginService } from '../../../services/login.service';
+import { TenantConfigService, TenantConfig } from '../../../services/tenant-config.service';
 
 @Component({
   selector: 'app-student-admission-form',
@@ -33,16 +35,17 @@ import { AdmissionService } from '../../../services/admission.service';
   providers: [MessageService]
 })
 export class StudentAdmissionFormComponent {
- items: MenuItem[] = [];
+  items: MenuItem[] = [];
   activeIndex: number = 0;
   admissionForm!: FormGroup;
 
   // Options for dropdowns
   genderOptions = [{ name: 'Male' }, { name: 'Female' }, { name: 'Other' }];
-  programOptions = [
-    { name: 'Class I' }, { name: 'Class II' }, { name: 'Class III' },
-    { name: 'Class X' }, { name: 'Class XII - Science' }
-  ];
+  programOptions: any[] = [];
+  programLabel: string = 'Class/Program';
+  dynamicFields: any[] = [];
+  formConfig: any;
+  tenantConfig: TenantConfig | null = null;
 
   // For the final review step
   reviewSections: any[] = [];
@@ -60,10 +63,17 @@ export class StudentAdmissionFormComponent {
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
-    private admissionService: AdmissionService // Inject the service
+    private admissionService: AdmissionService,
+    private loginService: LoginService,
+    private tenantConfigService: TenantConfigService
   ) { }
 
   ngOnInit() {
+    this.tenantConfig = this.tenantConfigService.getConfig();
+    if (this.tenantConfig) {
+      this.programLabel = this.tenantConfig.courseLabel;
+    }
+
     this.items = [
       { label: 'Guidelines' },
       { label: 'Basic Info' },
@@ -74,14 +84,14 @@ export class StudentAdmissionFormComponent {
       { label: 'Review & Submit' }
     ];
 
-    // Initialize the reactive form with all its groups and validators
+    // Default structure for static fields
     this.admissionForm = this.fb.group({
       basicInfo: this.fb.group({
         first_name: ['', Validators.required],
         last_name: ['', Validators.required],
         date_of_birth: [null, Validators.required],
-        gender: [null, Validators.required],
-        applying_for_school: [null, Validators.required]
+        gender: [null, Validators.required]
+        // applying_for_program will be added dynamically if not present
       }),
       parentDetails: this.fb.group({
         parent_name: ['', Validators.required],
@@ -107,7 +117,42 @@ export class StudentAdmissionFormComponent {
         declaration: [false, Validators.requiredTrue]
       })
     });
+
+    this.fetchFormConfig();
   }
+
+  fetchFormConfig() {
+    this.admissionService.getFormConfig().subscribe({
+      next: (config) => {
+        this.formConfig = config;
+        this.dynamicFields = config.fields || [];
+        this.applyConfig();
+      },
+      error: (err) => {
+        console.error('Failed to fetch form config', err);
+      }
+    });
+  }
+
+  applyConfig() {
+    const basicInfo = this.admissionForm.get('basicInfo') as FormGroup;
+
+    this.dynamicFields.forEach(field => {
+      if (field.fieldName === 'applying_for_program') {
+        this.programLabel = field.fieldLabel;
+        this.programOptions = (field.options || []).map((opt: string) => ({ name: opt }));
+      }
+
+      const validators = [];
+      if (field.isRequired) validators.push(Validators.required);
+      if (field.validationPattern) validators.push(Validators.pattern(field.validationPattern));
+
+      if (!basicInfo.contains(field.fieldName)) {
+        basicInfo.addControl(field.fieldName, this.fb.control('', validators));
+      }
+    });
+  }
+
 
   // Helper to create a document form group
   createDocumentGroup(): FormGroup {
@@ -170,7 +215,7 @@ export class StudentAdmissionFormComponent {
             return;
           }
         }
-        
+
         if (currentGroup.invalid) {
           this.showError('Please fill all required fields in this step.');
           return;
@@ -217,7 +262,7 @@ export class StudentAdmissionFormComponent {
       this.showError('You must agree to the declaration to submit.');
       return;
     }
-    
+
     if (this.admissionForm.valid) {
       this.admissionService.submitAdmission(this.admissionForm.value).subscribe({
         next: (response) => {
@@ -242,15 +287,26 @@ export class StudentAdmissionFormComponent {
   // Prepares data from the form to be displayed in the review section
   prepareReviewData() {
     const formValue = this.admissionForm.getRawValue(); // Use getRawValue to include disabled fields if any
+
+    const basicInfoFields = [
+      { label: 'Full Name', value: `${formValue.basicInfo.first_name} ${formValue.basicInfo.last_name}` },
+      { label: 'Date of Birth', value: formValue.basicInfo.date_of_birth ? new Date(formValue.basicInfo.date_of_birth).toLocaleDateString('en-GB') : 'N/A' },
+      { label: 'Gender', value: formValue.basicInfo.gender?.name }
+    ];
+
+    // Add dynamic fields to review
+    this.dynamicFields.forEach(field => {
+      const val = formValue.basicInfo[field.fieldName];
+      if (val) {
+        const displayVal = field.fieldType === 'DROPDOWN' ? val.name : val;
+        basicInfoFields.push({ label: field.fieldLabel, value: displayVal });
+      }
+    });
+
     this.reviewSections = [
       {
         title: 'Basic Information',
-        fields: [
-          { label: 'Full Name', value: `${formValue.basicInfo.first_name} ${formValue.basicInfo.last_name}` },
-          { label: 'Date of Birth', value: new Date(formValue.basicInfo.date_of_birth).toLocaleDateString('en-GB') },
-          { label: 'Gender', value: formValue.basicInfo.gender?.name },
-          { label: 'Program', value: formValue.basicInfo.applying_for_school?.name }
-        ]
+        fields: basicInfoFields
       },
       {
         title: 'Parent/Guardian Details',

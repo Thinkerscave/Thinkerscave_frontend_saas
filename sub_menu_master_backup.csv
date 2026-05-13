@@ -1,0 +1,22 @@
+sub_menu_id,sub_menu_name,sub_menu_code,sub_menu_description,sub_menu_url,sub_menu_icon,sub_menu_order,is_active,menu_id,created_by,created_date,last_modified_by,last_modified_date
+45,Manage Menu,SUB_MENU_MANAGE_MENU,Manage Menu,/app/manage-menu,,1,t,42,SYSTEM,2025-10-19 12:25:23.693212,SYSTEM,2025-10-19 12:25:23.693212
+46,Manage Sub-menu,SUB_MENU_MANAGE_SUBMENU,Manage Sub-menu,/app/manage-sub-menu,,2,t,42,SYSTEM,2025-10-19 12:25:23.693212,SYSTEM,2025-10-19 12:25:23.693212
+47,Menu Sequence,SUB_MENU_SEQUENCE,Menu Sequence,/app/menu-sequence,,3,t,42,SYSTEM,2025-10-19 12:25:23.693212,SYSTEM,2025-10-19 12:25:23.693212
+48,Manage Role,SUB_MENU_MANAGE_ROLE,Manage Role,/app/role/manage,,1,t,37,SYSTEM,2025-10-19 12:25:35.032607,SYSTEM,2025-10-19 12:25:35.032607
+49,Role-Menu Mapping,SUB_MENU_ROLE_MENU_MAPPING,Role-Menu Mapping,/app/role-menu-mapping,,2,t,37,SYSTEM,2025-10-19 12:25:35.032607,SYSTEM,2025-10-19 12:25:35.032607
+50,Role-Privilege Mapping,SUB_MENU_ROLE_PRIV_MAPPING,Role-Privilege Mapping,/role/privilege-mapping,,3,t,37,SYSTEM,2025-10-19 12:25:35.032607,SYSTEM,2025-10-19 12:25:35.032607
+51,Manage Organization,SUB_MENU_MANAGE_ORG,Manage Organization,/app/organization-registration,,1,t,38,SYSTEM,2025-10-19 12:25:50.617554,SYSTEM,2025-10-19 12:25:50.617554
+52,Manage Student,SUB_MENU_MANAGE_STUDENT,Manage Student,/app/managestudent,,1,t,39,SYSTEM,2025-10-19 12:25:50.617554,SYSTEM,2025-10-19 12:25:50.617554
+53,Manage Staff,SUB_MENU_MANAGE_STAFF,Manage Staff,/app/staff,,1,t,40,SYSTEM,2025-10-19 12:25:50.617554,SYSTEM,2025-10-19 12:25:50.617554
+54,Manage Salary,SUB_MENU_MANAGE_SALARY,Manage Salary,/app/salary,,2,t,40,SYSTEM,2025-10-19 12:25:50.617554,SYSTEM,2025-10-19 12:25:50.617554
+55,Leave Management,SUB_MENU_LEAVE_MANAGEMENT,Leave Management,/app/leave,,3,t,40,SYSTEM,2025-10-19 12:25:50.617554,SYSTEM,2025-10-19 12:25:50.617554
+56,Class Attendance,SUB_MENU_CLASS_ATTENDANCE,Class Attendance,/app/attendance/class,,1,t,41,SYSTEM,2025-10-19 12:25:59.831632,SYSTEM,2025-10-19 12:25:59.831632
+57,Hostel Attendance,SUB_MENU_HOSTEL_ATTENDANCE,Hostel Attendance,/app/attendance/hostel,,2,t,41,SYSTEM,2025-10-19 12:25:59.831632,SYSTEM,2025-10-19 12:25:59.831632
+59,Manage Enquiry,SUB_SUBMENU_ACA77,"",/app/inquiry/manage,,,t,43,Soumya,2026-01-02 17:04:18.062,Soumya,2026-01-02 17:04:18.062
+58,Staff Attendance,SUB_MENU_STAFF_ATTENDANCE,Staff Attendance,/app/attendance/staff,,,t,41,SYSTEM,2025-10-19 12:25:59.831632,souravdash,2026-01-02 18:38:35.416
+61,Course Management,SUB_MENU_COURSE,Manage courses and departmental offerings,/app/academics/courses,,,t,44,,2026-01-02 11:43:02.414099,souravdash,2026-01-02 19:01:27.162
+63,Academic Structure,SUB_MENU_STRUCTURE,Manage hierarchical academic structure,/app/academics/structure,,,t,44,,2026-01-02 11:43:03.054066,souravdash,2026-01-02 19:02:09.25
+62,Subject Management,SUB_MENU_SUBJECT,Manage subjects and curriculum,/app/academics/subjects,,,t,44,,2026-01-02 11:43:02.733844,souravdash,2026-01-02 19:02:51.871
+60,Syllabus Management,SUB_MENU_SYLLABUS,"Manage syllabi, chapters and topics",/app/academics/syllabus,,,t,44,,2026-01-02 11:43:02.0191,souravdash,2026-01-02 19:03:36.386
+65,Demo submenu academy,SUB_SUBMENU_12856,new submenu for testing purpose,/academy-demo,,,t,46,souravdash,2026-01-04 09:39:01.16,souravdash,2026-01-04 09:39:01.16
+64,Admission,SUB_SUBMENU_CC7C0,admission details,/app/public/admission,,,t,45,souravdash,2026-01-04 01:11:38.949,souravdash,2026-01-10 19:57:27.474

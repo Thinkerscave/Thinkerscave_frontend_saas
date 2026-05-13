@@ -1,4 +1,4 @@
-import { environment } from "../../environment/environment";
+import { environment } from "../../../environments/environment";
 
 const menuBaseUrl = `${environment.baseUrl}/menu`;
 const subMenuBaseUrl = `${environment.baseUrl}/sub-menus`;
@@ -10,7 +10,7 @@ export const menuApi = {
   saveMenuUrl: `${menuBaseUrl}/saveMenu`,
   getAllMenusUrl: `${menuBaseUrl}/getAllMenus`,
   getMenuByCodeUrl: `${menuBaseUrl}/`,
-  updateStatus:`${menuBaseUrl}/updateStatus`,
+  updateStatus: `${menuBaseUrl}/updateStatus`,
   getActiveMenusUrl: `${menuBaseUrl}/activeMenus`,
 };
 
@@ -18,7 +18,7 @@ export const subMenuApi = {
   savesubMenuUrl: `${subMenuBaseUrl}`,
   getAllSubMenusUrl: `${subMenuBaseUrl}`,
   getSubMenuByCodeUrl: `${subMenuBaseUrl}/`,
-  updateStatus:`${subMenuBaseUrl}/updateStatus`,
+  updateStatus: `${subMenuBaseUrl}/updateStatus`,
   getPrivilegesUrl: `${subMenuBaseUrl}/getPrivileges`,
 };
 

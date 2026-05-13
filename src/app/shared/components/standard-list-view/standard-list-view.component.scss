@@ -1,0 +1,87 @@
+.standard-list-view {
+    // We use PrimeNG's built-in flex, padding, and surface classes for the wrapper, 
+    // so this styling is minimal, focusing on specific table overrides.
+
+    ::ng-deep {
+        .p-datatable {
+            .p-datatable-header {
+                background: transparent;
+                border: none;
+                padding: 0;
+            }
+
+            .p-datatable-thead>tr>th {
+                background: #f8fafc;
+                border-top: none;
+                border-bottom: 2px solid #e2e8f0;
+                padding: 1rem;
+            }
+
+            .p-datatable-tbody>tr>td {
+                padding: 0.875rem 1rem;
+                border-bottom: 1px solid #f1f5f9;
+
+                &.sticky-right {
+                    position: sticky;
+                    right: 0;
+                    background: inherit;
+                    z-index: 1;
+                    // Slight shadow to show it's sticky when scrolling horizontally
+                    box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.05);
+                }
+            }
+
+            .p-datatable-tbody>tr {
+                background: #ffffff;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    td {
+                        background: #f8fafc;
+                    }
+                }
+            }
+        }
+
+        // Clean up input field
+        .p-input-icon-left {
+            position: relative;
+            display: flex;
+            align-items: center;
+
+            >i {
+                position: absolute;
+                left: 0.875rem;
+                color: #94a3b8;
+                top: 50%;
+                transform: translateY(-50%);
+                margin-top: 0;
+                z-index: 1;
+            }
+
+            .p-inputtext {
+                padding-left: 2.5rem;
+                border-color: #cbd5e1;
+
+                &:focus {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 2px #e0e7ff;
+                }
+            }
+        }
+
+        // Clean up paginator
+        .p-paginator {
+            background: transparent;
+            border: none;
+            padding-top: 1rem;
+            justify-content: flex-end;
+
+            .p-paginator-current {
+                margin-right: auto;
+                color: #64748b;
+                font-size: 0.875rem;
+            }
+        }
+    }
+}

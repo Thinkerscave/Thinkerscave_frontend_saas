@@ -1,47 +1,9 @@
 <p-toast></p-toast>
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
-<div class="card">
-    <p-table #dt [value]="staffSalaries" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['name','id','department']" responsiveLayout="scroll">
-        <ng-template pTemplate="caption">
-            <div class="flex flex-column md:flex-row justify-content-between align-items-center">
-                <h3 class="m-0">Manage Employee Salaries</h3>
-                <div class="mt-3 md:mt-0">
-                    <span class="p-input-icon-left mr-2">
-                        <i class="pi pi-search"></i>
-                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-                            placeholder="Search..." />
-                    </span>
-                    <p-button label="Run Payroll" icon="pi pi-cog" styleClass="p-button-help"
-                        (click)="runPayroll()"></p-button>
-                </div>
-            </div>
-        </ng-template>
-
-        <ng-template pTemplate="header">
-            <tr>
-                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
-                <th pSortableColumn="id">Employee ID <p-sortIcon field="id"></p-sortIcon></th>
-                <th pSortableColumn="department">Department <p-sortIcon field="department"></p-sortIcon></th>
-                <th pSortableColumn="ctc">CTC (Annual) <p-sortIcon field="ctc"></p-sortIcon></th>
-                <th>Actions</th>
-            </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-staff>
-            <tr>
-                <td>{{staff.name}}</td>
-                <td>{{staff.id}}</td>
-                <td>{{staff.department}}</td>
-                <td>{{staff.ctc | currency:'INR':'symbol':'1.0-0'}}</td>
-                <td>
-                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-info"
-                        (click)="editSalary(staff)"></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+<div class="card p-0 shadow-none border-none">
+    <app-standard-list-view [config]="listViewConfig" [data]="staffSalaries">
+    </app-standard-list-view>
 </div>
 
 
@@ -54,15 +16,18 @@
                 <h5 class="section-header">Earnings</h5>
                 <div class="field">
                     <label for="basic">Basic Salary</label>
-                    <p-inputNumber id="basic" formControlName="basic" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="basic" formControlName="basic" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field">
                     <label for="hra">House Rent Allowance (HRA)</label>
-                    <p-inputNumber id="hra" formControlName="hra" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="hra" formControlName="hra" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field">
                     <label for="specialAllowance">Special Allowance</label>
-                    <p-inputNumber id="specialAllowance" formControlName="specialAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="specialAllowance" formControlName="specialAllowance" mode="currency"
+                        currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
             </div>
 
@@ -70,15 +35,18 @@
                 <h5 class="section-header">Deductions</h5>
                 <div class="field">
                     <label for="providentFund">Provident Fund (PF)</label>
-                    <p-inputNumber id="providentFund" formControlName="providentFund" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="providentFund" formControlName="providentFund" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field">
                     <label for="professionalTax">Professional Tax</label>
-                    <p-inputNumber id="professionalTax" formControlName="professionalTax" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="professionalTax" formControlName="professionalTax" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field">
                     <label for="incomeTax">Income Tax (TDS)</label>
-                    <p-inputNumber id="incomeTax" formControlName="incomeTax" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="incomeTax" formControlName="incomeTax" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
             </div>
         </div>
@@ -88,23 +56,28 @@
             <div class="formgrid grid">
                 <div class="field col-12 md:col-4">
                     <label for="academicAllowance">Academic Allowance</label>
-                    <p-inputNumber id="academicAllowance" formControlName="academicAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="academicAllowance" formControlName="academicAllowance" mode="currency"
+                        currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field col-12 md:col-4">
                     <label for="travelAllowance">Travel Allowance</label>
-                    <p-inputNumber id="travelAllowance" formControlName="travelAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="travelAllowance" formControlName="travelAllowance" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field col-12 md:col-4">
                     <label for="dearnessAllowance">Dearness Allowance</label>
-                    <p-inputNumber id="dearnessAllowance" formControlName="dearnessAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="dearnessAllowance" formControlName="dearnessAllowance" mode="currency"
+                        currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field col-12 md:col-4">
                     <label for="medicalAllowance">Medical Allowance</label>
-                    <p-inputNumber id="medicalAllowance" formControlName="medicalAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="medicalAllowance" formControlName="medicalAllowance" mode="currency"
+                        currency="INR" locale="en-IN"></p-inputNumber>
                 </div>
                 <div class="field col-12 md:col-4">
                     <label for="otherAllowance">Other Allowance</label>
-                    <p-inputNumber id="otherAllowance" formControlName="otherAllowance" mode="currency" currency="INR" locale="en-IN"></p-inputNumber>
+                    <p-inputNumber id="otherAllowance" formControlName="otherAllowance" mode="currency" currency="INR"
+                        locale="en-IN"></p-inputNumber>
                 </div>
             </div>
         </div>

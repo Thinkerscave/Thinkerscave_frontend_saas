@@ -1,23 +1,41 @@
 <div class="card">
-    <h2>Academic Years</h2>
-    <p-table [value]="years">
-        <ng-template pTemplate="header">
-            <tr>
-                <th>Name</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Active</th>
-            </tr>
+    <app-standard-list-view [config]="listViewConfig" [data]="years">
+    </app-standard-list-view>
+
+    <p-dialog [(visible)]="yearDialog" [style]="{width: '450px'}" header="Academic Year Details" [modal]="true"
+        class="p-fluid">
+        <ng-template pTemplate="content">
+            <div class="field">
+                <label for="yearCode">Year Code</label>
+                <input type="text" pInputText id="yearCode" [(ngModel)]="year.yearCode" required autofocus
+                    placeholder="e.g. AY-2024-25" />
+                <small class="p-error" *ngIf="submitted && !year.yearCode">Year Code is required.</small>
+            </div>
+            <div class="formgrid grid">
+                <div class="field col">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" pInputText id="startDate" [(ngModel)]="year.startDate" />
+                </div>
+                <div class="field col">
+                    <label for="endDate">End Date</label>
+                    <input type="date" pInputText id="endDate" [(ngModel)]="year.endDate" />
+                </div>
+            </div>
         </ng-template>
-        <ng-template pTemplate="body" let-year>
-            <tr>
-                <td>{{ year.name }}</td>
-                <td>{{ year.startDate }}</td>
-                <td>{{ year.endDate }}</td>
-                <td><i class="pi"
-                        [ngClass]="{'pi-check text-green-500': year.isActive, 'pi-times text-red-500': !year.isActive}"></i>
-                </td>
-            </tr>
+
+        <ng-template pTemplate="footer">
+            <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text"
+                (click)="hideDialog()"></button>
+            <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="saveYear()"></button>
         </ng-template>
-    </p-table>
+    </p-dialog>
+
+    <p-dialog [(visible)]="semestersDialog" [style]="{width: '800px'}" [header]="'Manage Semesters'" [modal]="true"
+        [maximizable]="true">
+        <ng-template pTemplate="content">
+            <app-semester-list *ngIf="selectedYearForSemesters && selectedYearForSemesters.id"
+                [academicYearId]="selectedYearForSemesters.id" [academicYearName]="selectedYearForSemesters.yearCode">
+            </app-semester-list>
+        </ng-template>
+    </p-dialog>
 </div>

@@ -1,182 +1,132 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Tab, TabsModule } from 'primeng/tabs';
-import { Table, TableModule } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { ButtonModule } from 'primeng/button';
-
-interface HostelAttendanceRecord {
-  id: number;
-  residentName: string;
-  roomNumber: string;
-  date: string;
-  status: 'Present' | 'Absent' | 'Late' | 'Night-Out';
-  remarks: string;
-}
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { AttendanceRecord, AttendanceService } from '../../../services/attendance.service';
 
 @Component({
   selector: 'app-hostel-attendance',
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    TabsModule,
-    Tab,
-    TableModule,
-    InputTextModule,
-    DropdownModule,
-    InputTextarea,
-    ButtonModule,
+    CommonModule, ReactiveFormsModule, TabsModule, Tab,
+    TableModule, InputTextModule, DropdownModule, InputTextarea,
+    ButtonModule, ToastModule, StandardListViewComponent
   ],
+  providers: [MessageService],
   templateUrl: './hostel-attendance.component.html',
   styleUrl: './hostel-attendance.component.scss'
 })
-export class HostelAttendanceComponent {
+export class HostelAttendanceComponent implements OnInit {
   attendanceForm!: FormGroup;
-  records: HostelAttendanceRecord[] = [];
-  statusOptions = ['Present', 'Absent', 'Late', 'Night-Out'];
+  records: AttendanceRecord[] = [];
+  statusOptions = [
+    { label: 'Present', value: 'PRESENT' },
+    { label: 'Absent', value: 'ABSENT' },
+    { label: 'Late', value: 'LATE' },
+    { label: 'Night-Out', value: 'NIGHT_OUT' }
+  ];
   activeTab = '0';
   isEditing = false;
   editingRecordId: number | null = null;
-  globalFilterValue = '';
+  loading = false;
+  today = new Date().toISOString().split('T')[0];
 
-  constructor(private fb: FormBuilder) {
-    this.initForm();
-    this.seedRecords();
+  constructor(
+    private fb: FormBuilder,
+    private attendanceService: AttendanceService,
+    private messageService: MessageService
+  ) { this.initForm(); }
+
+  ngOnInit(): void { this.loadRecords(); }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Hostel Attendance Records',
+      isClientSide: true, showSearch: true, searchPlaceholder: 'Search...', loading: this.loading,
+      columns: [
+        { field: 'referenceName', header: 'Resident', type: 'text', sortable: true },
+        { field: 'roomNumber', header: 'Room', type: 'text', sortable: true },
+        { field: 'attendanceDate', header: 'Date', type: 'date', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'remarks', header: 'Remarks', type: 'text', sortable: false }
+      ],
+      rowActions: [
+        { label: 'Edit', icon: 'pi pi-pencil', isPrimary: true, actionFn: (r: AttendanceRecord) => this.onEditRecord(r) },
+        { label: 'Delete', icon: 'pi pi-trash', isPrimary: true, color: 'danger', actionFn: (r: AttendanceRecord) => this.onDeleteRecord(r) }
+      ]
+    };
+  }
+
+  private loadRecords(): void {
+    this.loading = true;
+    this.attendanceService.getTodayHostelAttendance().subscribe({
+      next: (data) => { this.records = data; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
   }
 
   private initForm(): void {
     this.attendanceForm = this.fb.group({
-      residentName: ['', Validators.required],
+      referenceName: ['', Validators.required],
       roomNumber: ['', Validators.required],
-      date: ['', Validators.required],
-      status: ['Present', Validators.required],
+      attendanceDate: [this.today, Validators.required],
+      status: ['PRESENT', Validators.required],
       remarks: [''],
     });
   }
 
-  private seedRecords(): void {
-    this.records = [
-      {
-        id: 1,
-        residentName: 'Rahul Menon',
-        roomNumber: 'B203',
-        date: '2024-11-15',
-        status: 'Present',
-        remarks: 'Checked-in at 9 PM',
-      },
-      {
-        id: 2,
-        residentName: 'Sneha R',
-        roomNumber: 'B110',
-        date: '2024-11-15',
-        status: 'Late',
-        remarks: 'Returned at 11 PM',
-      },
-      {
-        id: 3,
-        residentName: 'Vikram Singh',
-        roomNumber: 'A305',
-        date: '2024-11-15',
-        status: 'Night-Out',
-        remarks: 'Approved by warden',
-      },
-      {
-        id: 4,
-        residentName: 'Lakshmi Rao',
-        roomNumber: 'C101',
-        date: '2024-11-14',
-        status: 'Absent',
-        remarks: 'Weekend home visit',
-      },
-      {
-        id: 5,
-        residentName: 'Arjun Das',
-        roomNumber: 'B207',
-        date: '2024-11-14',
-        status: 'Present',
-        remarks: 'Lights out at 10 PM',
-      },
-    ];
-  }
-
   onSubmit(): void {
-    if (this.attendanceForm.invalid) {
-      this.attendanceForm.markAllAsTouched();
-      return;
-    }
-
-    const newRecord: HostelAttendanceRecord = {
-      id: this.generateId(),
-      ...this.attendanceForm.value,
-    };
-
-    this.records = [...this.records, newRecord];
-    this.resetForm();
+    if (this.attendanceForm.invalid) { this.attendanceForm.markAllAsTouched(); return; }
+    const payload: AttendanceRecord = { ...this.attendanceForm.value, attendanceType: 'HOSTEL' };
+    this.attendanceService.save(payload).subscribe({
+      next: (saved) => {
+        this.records = [...this.records, saved];
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Attendance recorded' });
+        this.resetForm();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save' })
+    });
   }
 
-  onEditRecord(record: HostelAttendanceRecord): void {
-    this.attendanceForm.patchValue(record);
-    this.editingRecordId = record.id;
-    this.isEditing = true;
-    this.activeTab = '0';
+  onEditRecord(record: AttendanceRecord): void {
+    this.attendanceForm.patchValue({
+      referenceName: record.referenceName, roomNumber: record.roomNumber,
+      attendanceDate: record.attendanceDate, status: record.status, remarks: record.remarks
+    });
+    this.editingRecordId = record.id!; this.isEditing = true; this.activeTab = '0';
   }
 
   onUpdateRecord(): void {
     if (!this.isEditing || this.editingRecordId === null || this.attendanceForm.invalid) {
-      this.attendanceForm.markAllAsTouched();
-      return;
+      this.attendanceForm.markAllAsTouched(); return;
     }
-
-    const updatedRecord: HostelAttendanceRecord = {
-      id: this.editingRecordId,
-      ...this.attendanceForm.value,
-    };
-
-    this.records = this.records.map(record =>
-      record.id === this.editingRecordId ? updatedRecord : record
-    );
-
-    this.resetForm();
+    this.attendanceService.update(this.editingRecordId, this.attendanceForm.value).subscribe({
+      next: (updated) => {
+        this.records = this.records.map(r => r.id === this.editingRecordId ? updated : r);
+        this.messageService.add({ severity: 'success', summary: 'Updated' });
+        this.resetForm();
+      }
+    });
   }
 
-  onDeleteRecord(record: HostelAttendanceRecord): void {
-    const confirmed = confirm(`Delete attendance for ${record.residentName}?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.records = this.records.filter(item => item.id !== record.id);
-
-    if (this.editingRecordId === record.id) {
-      this.resetForm();
-    }
-  }
-
-  onGlobalFilter(table: Table, event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.globalFilterValue = value;
-    table.filterGlobal(value, 'contains');
+  onDeleteRecord(record: AttendanceRecord): void {
+    if (!confirm(`Delete attendance for ${record.referenceName}?`)) return;
+    this.attendanceService.delete(record.id!).subscribe({
+      next: () => { this.records = this.records.filter(r => r.id !== record.id); }
+    });
   }
 
   resetForm(): void {
-    this.attendanceForm.reset({
-      residentName: '',
-      roomNumber: '',
-      date: '',
-      status: 'Present',
-      remarks: '',
-    });
-    this.attendanceForm.markAsPristine();
-    this.attendanceForm.markAsUntouched();
-    this.isEditing = false;
-    this.editingRecordId = null;
-  }
-
-  private generateId(): number {
-    return this.records.length ? Math.max(...this.records.map(record => record.id)) + 1 : 1;
+    this.attendanceForm.reset({ referenceName: '', roomNumber: '', attendanceDate: this.today, status: 'PRESENT', remarks: '' });
+    this.isEditing = false; this.editingRecordId = null;
   }
 }

@@ -50,8 +50,7 @@
                                 <label for="gender">Gender</label>
                                 <p-dropdown id="gender" [options]="genderOptions" placeholder="Select a Gender"
                                     formControlName="gender"></p-dropdown>
-                                <small class="p-error"
-                                    *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
+                                <small class="p-error" *ngIf="f['gender'].touched && f['gender'].errors?.['required']">
                                     Gender is required.
                                 </small>
                             </div>
@@ -190,72 +189,9 @@
             </div>
         </p-tabpanel>
         <p-tabpanel value="1">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-3">
-                    <h5 class="m-0">Staff Directory</h5>
-                    <span class="p-input-icon-left">
-                        <i class="pi pi-search"></i>
-                        <input pInputText type="text" placeholder="Search staff..."
-                            [value]="globalFilterValue" (input)="onGlobalFilter(dt, $event)" />
-                    </span>
-                </div>
-                <p-table #dt [value]="staffList" dataKey="id" [globalFilterFields]="['employeeId','fullName','department','jobTitle','email','mobileNumber']"
-                    styleClass="p-datatable-striped" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]" sortMode="multiple">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th pSortableColumn="employeeId">
-                                Employee ID
-                                <p-sortIcon field="employeeId"></p-sortIcon>
-                            </th>
-                            <th pSortableColumn="fullName">
-                                Full Name
-                                <p-sortIcon field="fullName"></p-sortIcon>
-                            </th>
-                            <th pSortableColumn="department">
-                                Department
-                                <p-sortIcon field="department"></p-sortIcon>
-                            </th>
-                            <th pSortableColumn="jobTitle">
-                                Job Title
-                                <p-sortIcon field="jobTitle"></p-sortIcon>
-                            </th>
-                            <th pSortableColumn="email">
-                                Email
-                                <p-sortIcon field="email"></p-sortIcon>
-                            </th>
-                            <th pSortableColumn="mobileNumber">
-                                Mobile
-                                <p-sortIcon field="mobileNumber"></p-sortIcon>
-                            </th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-staff>
-                        <tr>
-                            <td>{{ staff.employeeId }}</td>
-                            <td>{{ staff.fullName }}</td>
-                            <td>{{ staff.department }}</td>
-                            <td>{{ staff.jobTitle }}</td>
-                            <td>{{ staff.email }}</td>
-                            <td>{{ staff.mobileNumber }}</td>
-                            <td class="text-center flex justify-content-center gap-2">
-                                <button pButton type="button" icon="pi pi-pencil"
-                                    class="p-button-rounded p-button-text p-button-primary" pTooltip="Edit Staff"
-                                    (click)="onEditStaff(staff)">
-                                </button>
-                                <button pButton type="button" icon="pi pi-trash"
-                                    class="p-button-rounded p-button-text p-button-danger" pTooltip="Delete Staff"
-                                    (click)="onDeleteStaff(staff)">
-                                </button>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td colspan="7" class="text-center">No staff records found.</td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+            <div class="card p-0 shadow-none border-none">
+                <app-standard-list-view [config]="listViewConfig" [data]="staffList">
+                </app-standard-list-view>
             </div>
         </p-tabpanel>
 

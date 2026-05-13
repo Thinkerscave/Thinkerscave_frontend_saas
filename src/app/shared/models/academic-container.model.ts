@@ -1,11 +1,11 @@
 import { ContainerType } from '../../core/enums/container-type.enum';
 
 export interface AcademicContainer {
-    id?: number;
+    containerId?: number;
     containerType: ContainerType;
     containerCode: string;
     containerName: string;
-    organisationId: number; // Keeping ID reference to avoid circular dependencies or heavy objects
+    organisationId: number;
     academicYearId: number;
     courseId?: number;
     parentContainerId?: number;
@@ -13,4 +13,15 @@ export interface AcademicContainer {
     level: number;
     capacity?: number;
     currentStrength?: number;
+}
+
+export interface StructureTemplate {
+    rootType: ContainerType;
+    rootPrefix: string;
+    rootStartRange: number;
+    rootEndRange: number;
+
+    childType: ContainerType;
+    childPrefix: string;
+    childNames: string[];
 }

@@ -1,0 +1,3 @@
+role_id,role_name,role_code,role_type,description,organization_id,is_active,created_by,created_date,last_modified_by,last_modified_date
+1,Admin,Admin,SCHOOL,Administrator role with organisation-level privileges,,t,SYSTEM,2025-10-19 12:11:50.721,SYSTEM,2025-10-19 12:11:50.721
+11,SUPER_ADMIN,SUPER_ADMIN,SCHOOL,,,t,SYSTEM,2026-02-07 10:29:43.555,SYSTEM,2026-02-07 10:29:43.555

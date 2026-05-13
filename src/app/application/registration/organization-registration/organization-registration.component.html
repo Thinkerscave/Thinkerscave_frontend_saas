@@ -1,175 +1,26 @@
 <div class="org-container">
     <p-toast></p-toast> <!-- Add this to display messages from the MessageService -->
     <p-card class="mb-5">
-        <p-tabs value="0">
+        <p-tabs [(value)]="activeTabIndex">
             <p-tablist>
                 <!-- FIX: The header text goes inside the p-tab tag. A 'value' is used to link to the panel. -->
-                <p-tab value="0">{{ isEditing ? 'Edit Organization' : 'Add Organization' }}</p-tab>
-                <p-tab value="1">View Organizations</p-tab>
+                <p-tab value="0">{{ isEditing ? 'Edit' : 'Add' }}</p-tab>
+                <p-tab value="1">View</p-tab>
             </p-tablist>
             <p-tabpanels>
                 <p-tabpanel value="0">
-                    <!-- FIX: Wrap the entire input section in a <form> tag -->
-                    <!-- The (ngSubmit) event calls your onSubmit() method -->
-                    <form #orgForm="ngForm" (ngSubmit)="onSubmit()">
-                        <div class="grid p-fluid gap-4">
-                            <!-- Is a Group -->
-                            <div class="field col-6 md:col-4">
-                                <label class="font-bold mb-2 block">Is a Group</label>
-                                <div class="flex gap-3 align-items-center">
-                                    <p-radioButton name="isGroup" [value]="true" [(ngModel)]="isGroup"
-                                        inputId="isYes"></p-radioButton>
-                                    <label for="isYes">Yes</label>
-                                    <p-radioButton name="isGroup" [value]="false" [(ngModel)]="isGroup"
-                                        inputId="isNo"></p-radioButton>
-                                    <label for="isNo">No</label>
-                                </div>
-                            </div>
-
-                            <!-- Parent Organization -->
-                            <div class="field col-12 md:col-4" *ngIf="!isGroup">
-                                <label for="parentOrg" class="mb-2 block">Parent Organization</label>
-                                <p-dropdown inputId="parentOrg" name="parentOrg" [options]="dropdowmParentOrgs"
-                                    [(ngModel)]="selectedParentOrg" placeholder="Select Parent Organization"
-                                    optionLabel="name" optionValue="id" [showClear]="true">
-                                </p-dropdown>
-                            </div>
-
-                            <!-- Organization Section -->
-                            <div class="col-12">
-                                <h5 class="mt-3 mb-2 border-bottom-1 surface-border pb-2 font-semibold text-lg">
-                                    Organization Details
-                                </h5>
-                            </div>
-
-                            <div class="field col-12 md:col-4">
-                                <label for="orgName" class="mb-2 block">Organization Name</label>
-                                <input id="orgName" type="text" pInputText [(ngModel)]="orgName" name="orgName"
-                                    class="w-full" required />
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="brandName" class="mb-2 block">Brand Name</label>
-                                <input id="brandName" type="text" pInputText [(ngModel)]="brandName" name="brandName"
-                                    class="w-full" />
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="orgUrl" class="mb-2 block">Organization URL</label>
-                                <input id="orgUrl" type="text" pInputText [(ngModel)]="orgUrl" name="orgUrl"
-                                    class="w-full" />
-                            </div>
-                            <div class="field col-12 md:col-4">
-                                <label for="orgType" class="mb-2 block">Organization Type</label>
-                                <p-dropdown inputId="orgType" [options]="organizationTypes"
-                                    [(ngModel)]="selectedOrgType" placeholder="Select Type" optionLabel="label"
-                                    optionValue="value" name="orgType" class="w-full"></p-dropdown>
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="city" class="mb-2 block">City</label>
-                                <input id="city" type="text" pInputText [(ngModel)]="city" name="city" class="w-full" />
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="state" class="mb-2 block">State</label>
-                                <input id="state" type="text" pInputText [(ngModel)]="state" name="state"
-                                    class="w-full" />
-                            </div>
-                            <div class="field col-12 md:col-4">
-                                <label for="estDate" class="mb-2 block">Establishment Date</label>
-                                <p-calendar id="estDate" [(ngModel)]="establishDate" dateFormat="dd/mm/yy"
-                                    name="estDate" class="w-full"></p-calendar>
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="subscription" class="mb-2 block">Subscription Type</label>
-                                <p-dropdown inputId="subscription" [options]="subscriptionTypes" name="subscription"
-                                    [(ngModel)]="selectedSubscription" placeholder="Select Subscription"
-                                    class="w-full"></p-dropdown>
-                            </div>
-
-                            <!-- Owner Section -->
-                            <div class="col-12">
-                                <h5 class="mt-3 mb-2 border-bottom-1 surface-border pb-2 font-semibold text-lg">Owner
-                                    Details</h5>
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="ownerName" class="mb-2 block">Owner Name</label>
-                                <input id="ownerName" type="text" pInputText [(ngModel)]="ownerName" name="ownerName"
-                                    class="w-full" />
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="ownerEmail" class="mb-2 block">Owner Email</label>
-                                <input id="ownerEmail" type="email" pInputText [(ngModel)]="ownerEmail"
-                                    name="ownerEmail" class="w-full" required />
-                            </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="ownerMobile" class="mb-2 block">Owner Mobile</label>
-                                <input id="ownerMobile" type="text" pInputText [(ngModel)]="ownerMobile"
-                                    name="ownerMobile" class="w-full" />
-                            </div>
-
-                            <div class="col-12 mt-4">
-                                <div class="flex gap-3">
-                                    <!-- This button now triggers the form's (ngSubmit) event -->
-                                    <button pButton [label]="isEditing ? 'Update' : 'Submit'" class="p-button-success"
-                                        type="submit"></button>
-                                    <button pButton label="Cancel" class="p-button-secondary" type="button"
-                                        (click)="resetForm()"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                    <div class="mt-4">
+                        <app-standard-form [config]="formConfig" [model]="addFormModel" (onSubmit)="onSubmit()"
+                            (onReset)="resetForm()">
+                        </app-standard-form>
+                    </div>
                 </p-tabpanel>
 
                 <p-tabpanel value="1">
-                    <p-table [value]="organizations" [paginator]="true" [rows]="5" responsiveLayout="scroll"
-                        [showCurrentPageReport]="true"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                        class="p-datatable-sm">
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th>Organization Name</th>
-                                <th>Brand Name</th>
-                                <th>URL</th>
-                                <th>Type</th>
-                                <th>City</th>
-                                <th>State</th>
-                                <th>Est. Date</th>
-                                <th>Owner Name</th>
-                                <th>Owner Email</th>
-                                <th>Owner Mobile</th>
-                                <th>Status</th> <!-- NEW: Header for the Status column -->
-                                <th>Actions</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-org>
-                            <!-- Add a class binding to the <tr> for the fade-out effect -->
-                            <tr [class.disabled-row]="!org.isActive">
-                                <td>{{ org.orgName }}</td>
-                                <td>{{ org.brandName }}</td>
-                                <td>{{ org.orgUrl }}</td>
-                                <td>{{ org.orgType }}</td>
-                                <td>{{ org.city }}</td>
-                                <td>{{ org.state }}</td>
-                                <td>{{ org.establishDate | date: 'dd/MM/yyyy' }}</td>
-                                <td>{{ org.ownerName }}</td>
-                                <td>{{ org.ownerEmail }}</td>
-                                <td>{{ org.ownerMobile }}</td>
-                                <td>
-                                    <!-- NEW: The toggle switch for status -->
-                                    <p-inputSwitch [(ngModel)]="org.isActive" (onChange)="toggleOrganizationStatus(org)"
-                                        pTooltip="{{ org.isActive ? 'Disable' : 'Enable' }} Organization">
-                                    </p-inputSwitch>
-                                </td>
-                                <td>
-                                    <div class="flex gap-2">
-                                        <button pButton icon="pi pi-pencil"
-                                            class="p-button-rounded p-button-warning p-button-sm"
-                                            (click)="editOrganization(org)" pTooltip="Edit">
-                                        </button>
-                                        <!-- The delete button has been removed -->
-                                    </div>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
+                    <div class="mt-3">
+                        <app-standard-list-view [config]="listViewConfig" [data]="organizations">
+                        </app-standard-list-view>
+                    </div>
                 </p-tabpanel>
             </p-tabpanels>
         </p-tabs>
@@ -183,6 +34,92 @@
             (updateComplete)="handleUpdateComplete($event)">
         </app-edit-organization>
     </p-dialog>
+
+
+    <!-- Tenant Health/Status Dialog -->
+    <p-dialog header="Tenant Health Profile" [(visible)]="displayStatusDialog" [modal]="true" [style]="{width: '450px'}"
+        [draggable]="false" [resizable]="false">
+        <div *ngIf="loadingStatus" class="flex justify-content-center align-items-center py-4">
+            <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+            <span class="ml-2">Fetching health data...</span>
+        </div>
+
+        <div *ngIf="!loadingStatus && tenantStatus" class="p-3">
+            <div class="flex flex-column gap-3">
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Tenant Name</span>
+                    <span>{{tenantStatus.tenantName}}</span>
+                </div>
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Subdomain</span>
+                    <p-badge [value]="tenantStatus.subdomain || 'N/A'" severity="info"></p-badge>
+                </div>
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Status</span>
+                    <p-tag [value]="tenantStatus.isActive ? 'ACTIVE' : 'INACTIVE'"
+                        [severity]="tenantStatus.isActive ? 'success' : 'danger'">
+                    </p-tag>
+                </div>
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Health Status</span>
+                    <p-tag [value]="tenantStatus.healthStatus"
+                        [severity]="tenantStatus.healthStatus === 'HEALTHY' ? 'success' : (tenantStatus.healthStatus === 'WARNING' ? 'warning' : 'danger')">
+                    </p-tag>
+                </div>
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Users</span>
+                    <span>{{tenantStatus.currentUserCount}} / {{tenantStatus.maxUsers}}</span>
+                </div>
+                <div class="flex justify-content-between align-items-center border-bottom-1 surface-border pb-2">
+                    <span class="font-bold">Storage</span>
+                    <span>{{tenantStatus.storageUsedMb}} / {{tenantStatus.storageLimitMb}} MB</span>
+                </div>
+                <div class="flex justify-content-between align-items-center">
+                    <span class="font-bold">Created At</span>
+                    <span>{{tenantStatus.createdAt | date:'mediumDate'}}</span>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Close" class="p-button-text" (click)="displayStatusDialog = false"></button>
+        </ng-template>
+    </p-dialog>
+
+
+    <!-- Update Owner Details Dialog -->
+    <p-dialog header="Update Owner Details" [(visible)]="displayOwnerDialog" [modal]="true" [style]="{width: '500px'}">
+        <div class="p-fluid">
+            <div class="field mb-3">
+                <label for="newOwnerName" class="mb-2 block">Owner Name</label>
+                <input id="newOwnerName" pInputText [(ngModel)]="ownerEditData.ownerName" />
+            </div>
+            <div class="field mb-3">
+                <label for="newOwnerEmail" class="mb-2 block">Owner Email</label>
+                <input id="newOwnerEmail" pInputText [(ngModel)]="ownerEditData.mailId" />
+            </div>
+            <div class="field mb-3">
+                <label for="newOwnerMobile" class="mb-2 block">Owner Mobile</label>
+                <input id="newOwnerMobile" pInputText [(ngModel)]="ownerEditData.phoneNumber" />
+            </div>
+            <div class="field mb-3">
+                <label for="newOwnerCity" class="mb-2 block">City</label>
+                <input id="newOwnerCity" pInputText [(ngModel)]="ownerEditData.city" />
+            </div>
+            <div class="field mb-3">
+                <label for="newOwnerState" class="mb-2 block">State</label>
+                <input id="newOwnerState" pInputText [(ngModel)]="ownerEditData.state" />
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text"
+                (click)="displayOwnerDialog = false"></button>
+            <button pButton label="Update Owner" icon="pi pi-check" class="p-button-success"
+                (click)="submitOwnerUpdate()"></button>
+        </ng-template>
+    </p-dialog>
+
+
 
 
 </div>

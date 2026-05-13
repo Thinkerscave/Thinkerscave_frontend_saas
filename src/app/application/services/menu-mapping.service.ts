@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { catchError, Observable, of, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { menuApi, menuMappingeApi } from '../../shared/constants/api_menu.endpoint';
 
 @Injectable({
@@ -13,7 +13,7 @@ export class MenuMappingService {
   constructor(private http: HttpClient) { }
 
   loadMenu(): Observable<MenuItem[]> {
-    // 1. Check for specific roles (e.g., Counsellor) using localStorage to avoid circular dependency
+    // 1. Check for specific roles (e.g., Counsellor)
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
@@ -66,23 +66,23 @@ export class MenuMappingService {
       }
     }
 
-    // 2. Return in-memory cache if available
+    // 2. Return in-memory cache only (no localStorage — always fetch fresh on page reload)
     if (this.menuCache.length) {
       return of(this.menuCache);
     }
 
-    // 3. Check localStorage
-    const storedMenu = localStorage.getItem('sideMenu');
-    if (storedMenu) {
-      this.menuCache = JSON.parse(storedMenu);
-      return of(this.menuCache);
-    }
-
-    // 4. Fetch from API
-    return this.http.get<MenuItem[]>(menuMappingeApi.getSideMenuUrl).pipe(
-      tap(menu => {
-        this.menuCache = menu;
-        localStorage.setItem('sideMenu', JSON.stringify(menu));
+    // 3. Fetch from API (always fresh — localStorage cache removed to prevent stale menus)
+    return this.http.get<any>(menuMappingeApi.getSideMenuUrl).pipe(
+      map((response: any) => {
+        // Backend wraps response in ApiResponse<T>: { success, message, data: [...] }
+        // Handle both a raw array and the wrapped ApiResponse format.
+        const menus: MenuItem[] = Array.isArray(response) ? response : (response?.data ?? []);
+        return menus;
+      }),
+      tap(menus => {
+        this.menuCache = menus;
+        // NOTE: intentionally NOT caching to localStorage so refreshing the page
+        // always gets the latest role-menu mapping from the backend.
       }),
       catchError(err => {
         console.error('Failed to load side menus:', err);
@@ -90,6 +90,7 @@ export class MenuMappingService {
       })
     );
   }
+
 
   clearMenuCache(): void {
     this.menuCache = [];

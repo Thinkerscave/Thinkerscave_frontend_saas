@@ -13,6 +13,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { NgxUiLoaderService } from 'ngx-ui-loader';
+import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
+import { TenantConfigService } from '../../services/tenant-config.service';
 
 @Component({
   selector: 'app-login',
@@ -33,7 +36,14 @@ export class LoginComponent {
   rememberMe: boolean = false;
   firstTimeLogin: boolean = true;
 
-  constructor(private router: Router, private loginService: LoginService, private messageService: MessageService) { }
+  constructor(
+    private router: Router,
+    private loginService: LoginService,
+    private messageService: MessageService,
+    private loader: NgxUiLoaderService,
+    private idleTimeoutService: IdleTimeoutService,
+    private tenantConfigService: TenantConfigService
+  ) { }
 
   ngOnInit(): void {
     // Clear local storage every time the login page is loaded
@@ -44,29 +54,25 @@ export class LoginComponent {
     const trimmedUsername = this.username.trim().toLowerCase();
     console.log('[LOGIN COMPONENT] Login attempt with username:', trimmedUsername);
 
-    // Check if this is a counsellor login attempt
-    if (trimmedUsername === 'counsellor') {
-      console.log('[LOGIN COMPONENT] Detected counsellor login - using mock data');
-      this.counsellorLogin();
-      return;
-    }
-
     console.log('[LOGIN COMPONENT] Attempting regular backend login with:', trimmedUsername);
 
     const loginPayload = {
-      username: this.username,
+      userName: this.username,
       password: this.password
     };
 
+    this.loader.start('login-flow');
+
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
-        console.log('[LOGIN COMPONENT] Backend login response:', res);
+        console.log('[LOGIN COMPONENT] Backend login response:', res.data);
 
-        const accessToken = res.accessToken || res.token;
-        const refreshToken = res.refreshToken;
+        const accessToken = res.data.accessToken || res.data.token;
+        const refreshToken = res.data.refreshToken;
 
         if (!accessToken) {
           console.error('[LOGIN COMPONENT] No access token found in response');
+          this.loader.stop('login-flow');
           this.messageService.add({
             severity: 'error',
             summary: 'Login Error',
@@ -76,28 +82,31 @@ export class LoginComponent {
           return;
         }
 
-        // 1. Store token
-        this.loginService.loginUser(accessToken, refreshToken);
+        // 1. Store token and tenant (pass rememberMe preference)
+        this.loginService.loginUser(accessToken, refreshToken, res.tenantId, res.user?.orgType, res.user?.organizations, this.rememberMe);
         console.log('[LOGIN COMPONENT] Tokens stored. Access Token:', accessToken ? 'Yes' : 'No');
 
         // 2. Fetch current user details
         console.log('[LOGIN COMPONENT] Fetching current user details...');
         this.loginService.getCurrentUser().subscribe({
-          next: (user: any) => {
+          next: (res: any) => {
+            // Backend wraps response in ApiResponse<T>: { success, message, data: {...} }
+            const user = res?.data ?? res;
             console.log('[LOGIN COMPONENT] User details fetched:', user);
             this.loginService.setUser(user);
 
-            // 3. Redirect based on firstTimeLogin
-            if (user.firstTimeLogin) {
-              console.log('[LOGIN COMPONENT] First time login detected, redirecting...');
-              this.router.navigate(['/auth/first-time-login']);
-            } else {
-              console.log('[LOGIN COMPONENT] Redirecting to app dashboard...');
-              this.router.navigate(['/app']);
-            }
+            // 3. Fetch Tenant Config
+            this.tenantConfigService.fetchConfigFromServer().subscribe({
+              next: () => this.redirectUser(user),
+              error: (err) => {
+                console.error('[LOGIN COMPONENT] Failed to fetch tenant config', err);
+                this.redirectUser(user);
+              }
+            });
           },
-          error: (err) => {
-            console.error("[LOGIN COMPONENT] Failed to fetch user details", err);
+          error: (err: any) => {
+            console.error('[LOGIN COMPONENT] Error fetching user details:', err);
+            this.loader.stop('login-flow');
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -107,86 +116,42 @@ export class LoginComponent {
           }
         });
       },
-      error: (e) => {
-        console.error('[LOGIN COMPONENT] Backend login error:', e);
+      error: (e: any) => {
+        console.error('[LOGIN COMPONENT] Login generation error:', e);
+        this.loader.stop('login-flow');
+
+        // Extract error message from backend response or use default
+        const errorMessage = e.error?.message || e.error?.detail || 'Invalid username or password or server error';
+
         this.messageService.add({
           severity: 'error',
           summary: 'Login Failed',
-          detail: 'Invalid username or password or server error',
+          detail: errorMessage,
           life: 5000
         });
       }
     });
   }
 
-  /**
-   * Quick counsellor login with hardcoded credentials
-   */
-  counsellorQuickLogin() {
-    console.log('[LOGIN COMPONENT] Quick counsellor login initiated');
-    this.username = 'counsellor';
-    this.password = 'Counsellor@123';
-
-    // Directly call the counsellor login without form submission
-    this.counsellorLogin();
-  }
-
-  /**
-   * Counsellor login with mock credentials
-   */
-  private counsellorLogin() {
-    const trimmedUsername = this.username.trim().toLowerCase();
-    const trimmedPassword = this.password.trim();
-
-    console.log('[LOGIN COMPONENT] Starting counsellor login with:', trimmedUsername);
-    this.loginService.counsellorLogin(trimmedUsername, trimmedPassword).subscribe({
-      next: (res: any) => {
-        console.log('[LOGIN COMPONENT] Counsellor login response:', res);
-
-        if (res.error) {
-          console.error('[LOGIN COMPONENT] Login error:', res.message);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Login Failed',
-            detail: res.message || 'Invalid credentials',
-            life: 5000
-          });
-          return;
+  private redirectUser(user: any) {
+    this.loader.stop('login-flow');
+    if (user.firstTimeLogin) {
+      console.log('[LOGIN COMPONENT] First time login detected, redirecting to /auth/first-time-login...');
+      this.router.navigate(['/auth/first-time-login']).then(success => {
+        console.log('[LOGIN COMPONENT] Navigation to first-time-login result:', success);
+        if (!success) {
+          console.error('[LOGIN COMPONENT] Navigation failed!');
+          this.messageService.add({ severity: 'error', summary: 'Navigation Error', detail: 'Could not redirect to first time login page.' });
         }
-
-        console.log('[LOGIN COMPONENT] Login successful, storing tokens...');
-
-        // 1. Store tokens
-        this.loginService.loginUser(res.accessToken, res.refreshToken);
-
-        // 2. Store user data
-        this.loginService.setUser(res.user);
-
-        console.log('[LOGIN COMPONENT] Tokens and user stored, showing success message...');
-
-        // 3. Navigate to counsellor dashboard
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Login successful!',
-          life: 2000
-        });
-
-        console.log('[LOGIN COMPONENT] Navigating to counsellor dashboard...');
-
-        setTimeout(() => {
-          this.router.navigate(['/app/counsellor-dashboard']);
-        }, 500);
-      },
-      error: (err) => {
-        console.error('[LOGIN COMPONENT] Counsellor login error:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An error occurred during login',
-          life: 5000
-        });
-      }
-    });
+      });
+    } else {
+      console.log('[LOGIN COMPONENT] Redirecting to app dashboard...');
+      this.idleTimeoutService.start();
+      this.router.navigate(['/app']).then(success => {
+        console.log('[LOGIN COMPONENT] Navigation to app dashboard result:', success);
+      });
+    }
   }
+
 }
+

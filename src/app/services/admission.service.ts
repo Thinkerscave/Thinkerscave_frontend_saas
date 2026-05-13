@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../environment/environment';
+import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,14 +7,21 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AdmissionService {
- 
-     
+
+
   private apiUrl = `${environment.baseUrl}/admissions`;
+  // Public endpoints live at /api/v1/public/... — baseUrl already includes /api/v1
+  private publicApiUrl = `${environment.baseUrl}/public/admissions`;
 
   constructor(private http: HttpClient) { }
 
+  getFormConfig(): Observable<any> {
+    return this.http.get(`${this.publicApiUrl}/form-config`);
+  }
+
   submitAdmission(formValue: any): Observable<any> {
-    const submissionUrl = `${this.apiUrl}/submit`;
+    // Backend: POST /api/v1/admissions (root POST — no /submit suffix)
+    const submissionUrl = this.apiUrl;
     const preparedPayload = this.preparePayload(formValue);
 
     const formData = new FormData();
@@ -23,7 +30,7 @@ export class AdmissionService {
     delete applicationData.documents;
 
     formData.append(
-      'applicationData', 
+      'applicationData',
       new Blob([JSON.stringify(applicationData)], { type: 'application/json' })
     );
 
@@ -57,17 +64,17 @@ export class AdmissionService {
 
     // --- FIX IS HERE ---
     // Convert the date object to an ISO string and remove the trailing 'Z' for UTC.
-    const dateOfBirth = basicInfo.date_of_birth 
-      ? new Date(basicInfo.date_of_birth).toISOString().slice(0, -1) 
+    const dateOfBirth = basicInfo.date_of_birth
+      ? new Date(basicInfo.date_of_birth).toISOString().slice(0, -1)
       : null;
 
-    const payload = {
+    const payload: any = {
       // Use the applicationId from the form if it exists (for updating drafts)
-      applicationId: formValue.applicationId, 
+      applicationId: formValue.applicationId,
       applicantName: `${basicInfo.first_name || ''} ${basicInfo.last_name || ''}`.trim(),
       dateOfBirth: dateOfBirth, // Use the formatted date string
       gender: basicInfo.gender?.name,
-      applyingForSchoolOrCollege: basicInfo.applying_for_school?.name,
+      applyingForSchoolOrCollege: basicInfo.applying_for_program?.name, // Updated from applying_for_school
       parentName: parentDetails.parent_name,
       guardianName: parentDetails.guardian_name,
       contactNumber: parentDetails.contact_number,
@@ -82,8 +89,11 @@ export class AdmissionService {
         name: emergencyContact.name,
         number: emergencyContact.number
       },
+      // Dynamic fields - collect all other fields from basicInfo
+      ...this.collectDynamicFields(basicInfo),
+
       // Keep original documents array for final submission
-      documents: formValue.documents || [] 
+      documents: formValue.documents || []
     };
 
     // For drafts, we only want the file names, not the file objects
@@ -95,5 +105,29 @@ export class AdmissionService {
     }
 
     return payload;
+  }
+
+  private collectDynamicFields(basicInfo: any): any {
+    const staticFields = ['first_name', 'last_name', 'date_of_birth', 'gender'];
+    const dynamicFields: any = {};
+
+    Object.keys(basicInfo).forEach(key => {
+      if (!staticFields.includes(key)) {
+        // Map common fields to backend names if necessary, otherwise pass as is
+        const mappedKey = this.mapToBackendKey(key);
+        dynamicFields[mappedKey] = basicInfo[key]?.name !== undefined ? basicInfo[key].name : basicInfo[key];
+      }
+    });
+
+    return dynamicFields;
+  }
+
+  private mapToBackendKey(key: string): string {
+    const mapping: { [key: string]: string } = {
+      'clinical_experience': 'clinicalExperience',
+      'major_subject': 'majorSubject',
+      'applying_for_program': 'applyingForSchoolOrCollege'
+    };
+    return mapping[key] || key;
   }
 }

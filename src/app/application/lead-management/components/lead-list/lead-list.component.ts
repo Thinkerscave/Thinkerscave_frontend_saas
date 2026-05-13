@@ -15,6 +15,8 @@ import { LeadService } from '../../services/lead.service';
 import { LoginService } from '../../../../services/login.service';
 import { Lead, FilterOptions } from '../../models/lead.model';
 import { LeadStatus, LeadSource } from '../../models/lead-status.enum';
+import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
 
 @Component({
   selector: 'app-lead-list',
@@ -30,7 +32,8 @@ import { LeadStatus, LeadSource } from '../../models/lead-status.enum';
     DropdownModule,
     InputTextModule,
     ToastModule,
-    RouterModule
+    RouterModule,
+    StandardListViewComponent
   ],
   templateUrl: './lead-list.component.html',
   styleUrl: './lead-list.component.scss',
@@ -77,6 +80,47 @@ export class LeadListComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder
   ) { }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: this.embedded ? '' : 'Manage Leads',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search leads...',
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Name', type: 'text', sortable: true },
+        { field: 'phoneNumber', header: 'Phone', type: 'text', sortable: true },
+        { field: 'email', header: 'Email', type: 'text', sortable: true },
+        { field: 'course', header: 'Course', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'nextFollowUpDate', header: 'Follow-up Date', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
+      ],
+      rowActions: [
+        {
+          label: 'View',
+          icon: 'pi pi-eye',
+          isPrimary: true,
+          color: 'info',
+          actionFn: (lead: Lead) => this.router.navigate(['/app/lead-detail', lead.id])
+        },
+        {
+          label: 'Call',
+          icon: 'pi pi-phone',
+          isPrimary: true,
+          color: 'success',
+          actionFn: (lead: Lead) => console.log('Call action', lead)
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          isPrimary: true,
+          color: 'danger',
+          actionFn: (lead: Lead) => console.log('Delete action', lead)
+        }
+      ]
+    };
+  }
 
   ngOnInit(): void {
     this.counsellorId = this.loginService.getUser()?.id || 'C001';

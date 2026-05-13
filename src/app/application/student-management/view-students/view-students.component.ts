@@ -4,13 +4,20 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { LoginService } from '../../../services/login.service';
+import { StudentService } from '../student.service';
+import { MessageService } from 'primeng/api';
+
 export interface Student {
   id: number;
   studentName: string;
   parentName: string;
-  class: string;
-  section: string;
-  rollNo: number;
+  className: string;
+  sectionName: string;
+  rollNumber: string;
+  originalData?: any;
 }
 @Component({
   selector: 'app-view-students',
@@ -18,41 +25,112 @@ export interface Student {
     TableModule,
     ButtonModule,
     TooltipModule,
-    RippleModule],
+    RippleModule,
+    StandardListViewComponent
+  ],
   templateUrl: './view-students.component.html',
   styleUrl: './view-students.component.scss'
 })
 export class ViewStudentsComponent {
   students: Student[] = [];
-  @Output() editRequested = new EventEmitter<Student>();
-  constructor() { }
+  @Output() editRequested = new EventEmitter<any>();
+  constructor(
+    private loginService: LoginService,
+    private studentService: StudentService,
+    private messageService: MessageService
+  ) { }
 
-  // 3. Populate the array with dummy data when the component initializes.
   ngOnInit(): void {
-    this.students = [
-      { id: 101, studentName: 'Aarav Sharma', parentName: 'Rohan Sharma', class: '10th', section: 'A', rollNo: 1 },
-      { id: 102, studentName: 'Vivaan Patel', parentName: 'Mehul Patel', class: '10th', section: 'B', rollNo: 2 },
-      { id: 103, studentName: 'Aditya Singh', parentName: 'Vikram Singh', class: '9th', section: 'A', rollNo: 5 },
-      { id: 104, studentName: 'Diya Gupta', parentName: 'Sanjay Gupta', class: '11th', section: 'C', rollNo: 3 },
-      { id: 105, studentName: 'Isha Verma', parentName: 'Anil Verma', class: '10th', section: 'A', rollNo: 4 },
-      { id: 106, studentName: 'Kabir Kumar', parentName: 'Sunil Kumar', class: '12th', section: 'B', rollNo: 1 },
-      { id: 107, studentName: 'Myra Reddy', parentName: 'Prakash Reddy', class: '9th', section: 'C', rollNo: 8 },
-      { id: 108, studentName: 'Rhea Mishra', parentName: 'Dinesh Mishra', class: '11th', section: 'A', rollNo: 6 },
-      { id: 109, studentName: 'Sai Joshi', parentName: 'Nitin Joshi', class: '10th', section: 'B', rollNo: 7 },
-      { id: 110, studentName: 'Zara Khan', parentName: 'Imran Khan', class: '12th', section: 'A', rollNo: 2 },
-    ];
+    this.loadStudents();
+  }
+
+  loadStudents(): void {
+    this.studentService.getStudents().subscribe({
+      next: (data) => {
+        this.students = data.map(s => ({
+          id: s.studentId,
+          studentName: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+          parentName: s.parentName || 'N/A',
+          className: s.className || 'N/A',
+          sectionName: s.sectionName || 'N/A',
+          rollNumber: s.rollNumber || 'N/A',
+          originalData: s
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load students:', err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load students' });
+      }
+    });
+  }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Student Records',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search students...',
+      loading: false,
+      columns: [
+        { field: 'studentName', header: 'Student Name', type: 'text', sortable: true },
+        { field: 'parentName', header: 'Parent Name', type: 'text', sortable: true },
+        { field: 'className', header: 'Class', type: 'text', sortable: true },
+        { field: 'sectionName', header: 'Section', type: 'text', sortable: true },
+        { field: 'rollNumber', header: 'Roll No.', type: 'text', sortable: true }
+      ],
+      rowActions: [
+        {
+          label: 'Edit',
+          icon: 'pi pi-pencil',
+          isPrimary: true,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STUDENT_ADMISSIONS_EDIT'),
+          actionFn: (student: Student) => this.editStudent(student)
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          isPrimary: true,
+          color: 'danger',
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STUDENT_ADMISSIONS_DELETE'),
+          actionFn: (student: Student) => this.deleteStudent(student)
+        },
+        {
+          label: 'Download Info',
+          icon: 'pi pi-download',
+          isPrimary: false,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STUDENT_ADMISSIONS_VIEW'),
+          actionFn: (student: Student) => this.downloadInfo(student)
+        },
+        {
+          label: 'Show Details',
+          icon: 'pi pi-eye',
+          isPrimary: false,
+          visibleFn: () => this.loginService.getUserPrivileges().includes('STUDENT_ADMISSIONS_VIEW'),
+          actionFn: (student: Student) => this.showMore(student)
+        }
+      ]
+    };
   }
 
   // 4. Define placeholder methods for button actions.
   editStudent(student: Student) {
     console.log('Editing student:', student.studentName);
-    this.editRequested.emit(student);
+    this.editRequested.emit(student.originalData);
   }
 
   deleteStudent(student: Student) {
-    console.log('Deleting student:', student.studentName);
-    // In a real app, you would show a confirmation dialog before deleting.
-    // Example: this.students = this.students.filter(s => s.id !== student.id);
+    if (confirm(`Are you sure you want to delete ${student.studentName}?`)) {
+      this.studentService.deleteStudent(student.id).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Student deleted successfully' });
+          this.loadStudents();
+        },
+        error: (err) => {
+          console.error('Failed to delete student:', err);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete student' });
+        }
+      });
+    }
   }
 
   downloadInfo(student: Student) {

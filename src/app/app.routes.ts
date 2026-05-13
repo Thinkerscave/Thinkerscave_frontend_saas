@@ -5,8 +5,29 @@ import { FirstTimeLoginComponent } from './auth/first-time-login/first-time-logi
 import { LayoutComponent } from './layout/layout/layout.component';
 import { AuthLayoutComponent } from './auth/auth-layout/auth-layout.component';
 import { SessionExpiredComponent } from './shared/pages/session-expired/session-expired.component';
+import { PublicLayoutComponent } from './layout/public-layout/public-layout.component';
+import { authGuard } from './core/guard/auth.guard';
+import { UnauthorizedComponent } from './shared/pages/unauthorized/unauthorized.component';
 
 export const routes: Routes = [
+    {
+        path: 'public',
+        component: PublicLayoutComponent,
+        children: [
+            {
+                path: 'admission',
+                loadComponent: () => import('./application/admission/student-admission-form/student-admission-form.component').then(m => m.StudentAdmissionFormComponent)
+            },
+            {
+                path: 'admission/review',
+                loadComponent: () => import('./application/admission/staff-application-review/staff-application-review.component').then(m => m.StaffApplicationReviewComponent)
+            },
+            {
+                path: 'inquiry',
+                loadComponent: () => import('./common/public-inquiry/public-inquiry.component').then(m => m.PublicInquiryComponent)
+            }
+        ]
+    },
     {
         path: '',
         redirectTo: 'auth/login',
@@ -15,6 +36,11 @@ export const routes: Routes = [
     {
         path: 'session-expired',
         component: SessionExpiredComponent,
+        pathMatch: 'full'
+    },
+    {
+        path: 'unauthorized',
+        component: UnauthorizedComponent,
         pathMatch: 'full'
     },
     {
@@ -39,6 +65,7 @@ export const routes: Routes = [
     {
         path: 'app',
         component: LayoutComponent,
+        canActivate: [authGuard],
         children: [
             {
                 path: '',
@@ -46,18 +73,6 @@ export const routes: Routes = [
                     import('./application/application.route').then(m => m.APPLICATION_ROUTES)
             }
         ]
-    },
-    {
-        path: 'public/admission',
-        loadComponent: () => import('./application/admission/student-admission-form/student-admission-form.component').then(m => m.StudentAdmissionFormComponent)
-    },
-    {
-        path: 'public/admission/review',
-        loadComponent: () => import('./application/admission/staff-application-review/staff-application-review.component').then(m => m.StaffApplicationReviewComponent)
-    },
-    {
-        path: 'public/inquiry',
-        loadComponent: () => import('./common/public-inquiry/public-inquiry.component').then(m => m.PublicInquiryComponent)
     },
 
     // Wildcard (optional)

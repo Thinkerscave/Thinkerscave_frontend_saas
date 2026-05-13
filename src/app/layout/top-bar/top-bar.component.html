@@ -10,7 +10,7 @@
     <div class="app-name">ThinkerScave</div>
   </div>
 
-  <div class="profile-wrapper" *ngIf="userName">
+  <div class="profile-wrapper">
     <!-- Profile Button -->
     <button pButton type="button" class="profile-btn" (click)="profileMenu.toggle($event)">
       <div class="profile-initials">{{ getInitials(userName) }}</div>

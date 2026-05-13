@@ -1,204 +1,94 @@
-.manage-student-view {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.page-header {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background: linear-gradient(135deg, #f8fafc, #eef2ff);
-    padding: 1.75rem;
-    border-radius: 1.25rem;
-    border: 1px solid #e0e7ff;
-}
-
-.eyebrow {
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    font-size: 0.75rem;
-    color: #818cf8;
-    margin-bottom: 0.25rem;
-}
-
-.lead {
-    margin: 0.25rem 0 0;
-    color: #4b5563;
-}
-
-.header-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-    background: #fff;
-    border-radius: 1rem;
-    padding: 1rem 1.25rem;
-    border: 1px solid #e5e7eb;
-}
-
-.header-summary .label {
+:host {
     display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #9ca3af;
 }
 
+/* Main Container */
+.page-wrapper {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.04);
+}
+
+/* Form Section Blocks */
+.form-section {
+    background: #ffffff;
+    border: 1px solid var(--surface-border);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.2s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+    border-bottom: 1px solid var(--surface-border);
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.section-header h4 {
+    letter-spacing: -0.01em;
+}
+
+/* Clean Tab Styles */
 .manage-student-tabs ::ng-deep .p-tablist {
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--surface-border);
+    margin-bottom: 1.5rem;
 }
 
-.layout-shell {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 1.25rem;
-    padding: 1.5rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+.manage-student-tabs ::ng-deep .p-tablist .p-tab {
+    color: var(--text-color-secondary);
+    padding: 1rem 0.5rem;
+    margin-right: 1.5rem;
+    transition: all 0.2s ease;
 }
 
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+.manage-student-tabs ::ng-deep .p-tablist .p-highlight {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
 }
 
-.icon-wrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 1rem;
-}
+/* Inputs, Dropdowns, Toggles */
+::ng-deep {
 
-.gradient-primary {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-}
-
-.gradient-secondary {
-    background: linear-gradient(135deg, #ec4899, #f97316);
-}
-
-.gradient-teal {
-    background: linear-gradient(135deg, #14b8a6, #06b6d4);
-}
-
-.gradient-gold {
-    background: linear-gradient(135deg, #fbbf24, #f97316);
-}
-
-.gradient-blue {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-
-.gradient-purple {
-    background: linear-gradient(135deg, #a855f7, #6d28d9);
-}
-
-.gradient-slate {
-    background: linear-gradient(135deg, #475569, #0f172a);
-}
-
-.section-grid {
-    display: grid;
-    gap: 1.25rem;
-}
-
-.section-grid.two-col {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.form-field label {
-    font-weight: 600;
-    color: #1f2937;
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 0.65rem;
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
-    transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-    outline: none;
-    border-color: #7c3aed;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
-}
-
-.form-field textarea {
-    resize: vertical;
-}
-
-.form-field .hint {
-    font-size: 0.8rem;
-    color: #6b7280;
-}
-
-.span-two {
-    grid-column: span 2;
-}
-
-@media (max-width: 768px) {
-    .span-two {
-        grid-column: span 1;
+    .p-inputtext,
+    .p-dropdown,
+    .p-calendar {
+        border-radius: 0.75rem;
+        background-color: var(--surface-ground);
+        border: 1px solid var(--surface-border);
+        transition: all 0.25s ease;
     }
 
-    .page-header {
-        padding: 1.25rem;
+    .p-inputtext:enabled:focus,
+    .p-dropdown:not(.p-disabled).p-focus,
+    .p-inputtext:enabled:hover {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+        border-color: var(--primary-color);
     }
 
-    .layout-shell {
-        padding: 1.25rem;
+    .p-inputtext-lg {
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
     }
-}
 
-.toggle-card {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 1rem 1.2rem;
-    border-radius: 1rem;
-    border: 1px dashed #c4b5fd;
-    background: #f5f3ff;
-}
+    .p-button {
+        transition: transform 0.15s ease, box-shadow 0.25s ease;
+        border-radius: 0.75rem;
+    }
 
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
+    .p-button:active {
+        transform: scale(0.97);
+    }
 
-.view-panel {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 1.25rem;
-    padding: 1.5rem;
-    box-shadow: 0 20px 25px rgba(15, 23, 42, 0.05);
-}
-
-.view-panel h3 {
-    margin-bottom: 0.25rem;
-}
-
-.view-panel p {
-    margin-bottom: 1rem;
-    color: #6b7280;
+    /* File Uploader Container Fixes */
+    .p-fileupload {
+        border-radius: 1rem;
+        border: 1px dashed var(--surface-border);
+    }
 }

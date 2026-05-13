@@ -18,6 +18,8 @@ import { LoginService } from '../../../../services/login.service';
 import { Lead, CounsellorDashboardStats } from '../../models/lead.model';
 import { LeadStatus } from '../../models/lead-status.enum';
 import { LeadListComponent } from '../lead-list/lead-list.component';
+import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
 
 @Component({
   selector: 'app-counsellor-dashboard',
@@ -35,7 +37,8 @@ import { LeadListComponent } from '../lead-list/lead-list.component';
     ToastModule,
     RouterModule,
     RippleModule,
-    LeadListComponent
+    LeadListComponent,
+    StandardListViewComponent
   ],
   templateUrl: './counsellor-dashboard.component.html',
   styleUrl: './counsellor-dashboard.component.scss',
@@ -74,6 +77,83 @@ export class CounsellorDashboardComponent implements OnInit {
     private messageService: MessageService,
     private route: ActivatedRoute
   ) { }
+
+  get todayFollowupsConfig(): ListViewConfig {
+    return {
+      title: '',
+      isClientSide: true,
+      showSearch: false,
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Name', type: 'text', sortable: true },
+        { field: 'phoneNumber', header: 'Phone', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'course', header: 'Course', type: 'text', sortable: true },
+        { field: 'nextFollowUpDate', header: 'Date', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
+      ],
+      rowActions: [
+        { label: 'Call', icon: 'pi pi-phone', isPrimary: true, color: 'success', actionFn: () => { } },
+        { label: 'View', icon: 'pi pi-eye', isPrimary: true, color: 'info', actionFn: () => { } } // Note: Assuming Router handle locally
+      ]
+    };
+  }
+
+  get overdueFollowupsConfig(): ListViewConfig {
+    return {
+      title: '',
+      isClientSide: true,
+      showSearch: false,
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Name', type: 'text', sortable: true },
+        { field: 'phoneNumber', header: 'Phone', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'course', header: 'Course', type: 'text', sortable: true },
+        { field: 'nextFollowUpDate', header: 'Date', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
+      ],
+      rowActions: [
+        { label: 'Action', icon: 'pi pi-arrow-right', isPrimary: true, color: 'warning', actionFn: () => { } }
+      ]
+    };
+  }
+
+  get interestedLeadsConfig(): ListViewConfig {
+    return {
+      title: '',
+      isClientSide: true,
+      showSearch: false,
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Name', type: 'text', sortable: true },
+        { field: 'phoneNumber', header: 'Phone', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'course', header: 'Course', type: 'text', sortable: true },
+        { field: 'nextFollowUpDate', header: 'Follow-up', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
+      ],
+      rowActions: [
+        { label: 'Convert', icon: 'pi pi-check', isPrimary: true, color: 'success', actionFn: () => { } }
+      ]
+    };
+  }
+
+  get newLeadsConfig(): ListViewConfig {
+    return {
+      title: '',
+      isClientSide: true,
+      showSearch: false,
+      loading: this.loading,
+      columns: [
+        { field: 'name', header: 'Name', type: 'text', sortable: true },
+        { field: 'phoneNumber', header: 'Phone', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true },
+        { field: 'course', header: 'Course', type: 'text', sortable: true },
+        { field: 'createdDate', header: 'Created', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.createdDate as Date) }
+      ],
+      rowActions: [
+        { label: 'View', icon: 'pi pi-eye', isPrimary: true, color: 'secondary', actionFn: () => { } }
+      ]
+    };
+  }
 
   ngOnInit(): void {
     this.loadCounsellorInfo();

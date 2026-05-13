@@ -22,6 +22,8 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 // Services & Models
 import { InquiryService } from '../../services/inquiry.service';
 import { Inquiry, InquirySource, ClassOption } from '../../models/inquiry.model';
+import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
 
 @Component({
     selector: 'app-manage-inquiry',
@@ -43,7 +45,8 @@ import { Inquiry, InquirySource, ClassOption } from '../../models/inquiry.model'
         IconFieldModule,
         InputIconModule,
         ConfirmDialogModule,
-        TagModule
+        TagModule,
+        StandardListViewComponent
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './manage-inquiry.component.html',
@@ -80,6 +83,60 @@ export class ManageInquiryComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService
     ) { }
+
+    get listViewConfig(): ListViewConfig {
+        return {
+            title: 'Manage Inquiries',
+            isClientSide: true,
+            showSearch: true,
+            searchPlaceholder: 'Search inquiries...',
+            loading: this.loading,
+            columns: [
+                { field: 'name', header: 'Name', type: 'text', sortable: true },
+                { field: 'mobileNumber', header: 'Mobile', type: 'text', sortable: true },
+                { field: 'email', header: 'Email', type: 'text', sortable: false },
+                {
+                    field: 'classInterested',
+                    header: 'Class',
+                    type: 'text',
+                    sortable: true,
+                    valueGetter: (inquiry: Inquiry) => this.getClassLabel(inquiry.classInterested)
+                },
+                { field: 'assignedCounselor', header: 'Counselor', type: 'text', sortable: true },
+                {
+                    field: 'inquirySource',
+                    header: 'Source',
+                    type: 'text',
+                    sortable: true,
+                    valueGetter: (inquiry: Inquiry) => this.getSourceLabel(inquiry.inquirySource)
+                },
+                { field: 'status', header: 'Status', type: 'badge', sortable: true }
+            ],
+            secondaryActions: [
+                {
+                    label: 'Refresh',
+                    icon: 'pi pi-refresh',
+                    actionFn: () => this.loadInquiries()
+                }
+            ],
+            rowActions: [
+                {
+                    label: 'Edit',
+                    icon: 'pi pi-pencil',
+                    isPrimary: true,
+                    color: 'info',
+                    actionFn: (inquiry: Inquiry) => this.onEdit(inquiry)
+                },
+                {
+                    label: 'Delete',
+                    icon: 'pi pi-trash',
+                    isPrimary: true,
+                    color: 'danger',
+                    actionFn: (inquiry: Inquiry) => this.onDelete(inquiry)
+                }
+            ]
+        };
+    }
 
     ngOnInit(): void {
         this.initForm();

@@ -1,115 +1,176 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
-export interface LeaveRequest {
-  id: number;
-  employeeName: string;
-  leaveType: string;
-  startDate: Date;
-  endDate: Date;
-  days: number;
-  status: 'Pending' | 'Approved' | 'Rejected';
-}
+import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
+
+import { MessageService } from 'primeng/api';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { LeaveResponseDTO, LeaveService, LeaveRequestDTO, LeaveType } from '../../../services/leave.service';
+import { LoginService } from '../../../services/login.service';
+
 @Component({
   selector: 'app-leave-management',
-  imports: [TableModule,
-    CardModule,
-    ButtonModule,
-    TagModule,
-    InputTextModule,
-    DropdownModule,
-    CommonModule,
-    FormsModule,
-    TooltipModule
+  imports: [
+    TableModule, CardModule, ButtonModule, TagModule, InputTextModule,
+    DropdownModule, CommonModule, FormsModule, ReactiveFormsModule,
+    TooltipModule, ToastModule, StandardListViewComponent, DialogModule
   ],
+  providers: [MessageService],
   templateUrl: './leave-management.component.html',
   styleUrl: './leave-management.component.scss'
 })
-export class LeaveManagementComponent {
-  // --- ADD THIS LINE ---
-  // Get a reference to the p-table component in the template.
-  // The '#dt' in the HTML corresponds to this.
+export class LeaveManagementComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
-  leaveRequests: LeaveRequest[] = [];
-  statuses: any[] = [];
+  leaveRequests: LeaveResponseDTO[] = [];
+  loading = false;
+  applyDialogVisible = false;
+  applyForm!: FormGroup;
+  isAdmin = false;
 
-  constructor() { }
-  // --- ADD THIS FUNCTION ---
-  /**
-   * Handles the global filter event from the search input.
-   * @param event The input event.
-   */
-  onGlobalFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dt?.filterGlobal(filterValue, 'contains');
-  }
+  leaveTypeOptions = [
+    { label: 'Vacation', value: 'VACATION' },
+    { label: 'Sick Leave', value: 'SICK' },
+    { label: 'Personal Leave', value: 'PERSONAL' },
+    { label: 'Maternity', value: 'MATERNITY' },
+    { label: 'Paternity', value: 'PATERNITY' },
+    { label: 'Compensatory', value: 'COMPENSATORY' },
+    { label: 'Casual Leave', value: 'CASUAL' }
+  ];
+
+  constructor(
+    private leaveService: LeaveService,
+    private loginService: LoginService,
+    private messageService: MessageService,
+    private fb: FormBuilder
+  ) { }
+
   ngOnInit(): void {
-    // Populate with mock data
-    this.leaveRequests = [
-      { id: 1, employeeName: 'John Doe', leaveType: 'Vacation', startDate: new Date('2025-07-15'), endDate: new Date('2025-07-20'), days: 6, status: 'Pending' },
-      { id: 2, employeeName: 'Jane Smith', leaveType: 'Sick Leave', startDate: new Date('2025-07-10'), endDate: new Date('2025-07-11'), days: 2, status: 'Approved' },
-      { id: 3, employeeName: 'Peter Jones', leaveType: 'Personal Leave', startDate: new Date('2025-08-01'), endDate: new Date('2025-08-01'), days: 1, status: 'Rejected' },
-      { id: 4, employeeName: 'Mary Johnson', leaveType: 'Vacation', startDate: new Date('2025-09-10'), endDate: new Date('2025-09-15'), days: 6, status: 'Pending' },
-      { id: 5, employeeName: 'David Williams', leaveType: 'Maternity Leave', startDate: new Date('2025-07-20'), endDate: new Date('2025-10-20'), days: 92, status: 'Approved' },
-      { id: 6, employeeName: 'Sarah Miller', leaveType: 'Sick Leave', startDate: new Date('2025-07-22'), endDate: new Date('2025-07-22'), days: 1, status: 'Approved' },
-      { id: 7, employeeName: 'Chris Brown', leaveType: 'Vacation', startDate: new Date('2025-10-05'), endDate: new Date('2025-10-10'), days: 6, status: 'Rejected' },
-    ];
-
-    // Status options for the dropdown filter
-    this.statuses = [
-      { label: 'Pending', value: 'Pending' },
-      { label: 'Approved', value: 'Approved' },
-      { label: 'Rejected', value: 'Rejected' }
-    ];
+    const roles: string[] = this.loginService.getUserRole();
+    this.isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+    this.initForm();
+    this.loadLeaveRequests();
   }
 
-  /**
-   * Returns the severity color for the status tag.
-   * @param status The status string.
-   * @returns 'success' for Approved, 'warning' for Pending, 'danger' for Rejected.
-   */
-  getStatusSeverity(status: string): 'success' | 'warning' | 'danger' | undefined {
-    switch (status) {
-      case 'Approved':
-        return 'success';
-      case 'Pending':
-        return 'warning';
-      case 'Rejected':
-        return 'danger';
-      default:
-        return undefined;
-    }
+  private initForm(): void {
+    this.applyForm = this.fb.group({
+      staffName: ['', Validators.required],
+      department: [''],
+      leaveType: [null, Validators.required],
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required],
+      reason: ['']
+    });
   }
 
-  /**
-   * Logic to approve a leave request.
-   * In a real app, this would call a service to update the backend.
-   * @param request The leave request to approve.
-   */
-  approveRequest(request: LeaveRequest): void {
-    request.status = 'Approved';
-    console.log(`Request ID ${request.id} for ${request.employeeName} has been approved.`);
-    // Here you would typically call a service: this.leaveService.updateRequest(request);
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Employee Leave Requests',
+      isClientSide: true, showSearch: true,
+      searchPlaceholder: 'Search requests...',
+      loading: this.loading,
+      primaryAction: this.isAdmin ? undefined : {
+        label: 'Apply Leave', icon: 'pi pi-plus', color: 'primary',
+        actionFn: () => this.openApplyDialog()
+      },
+      columns: [
+        { field: 'staffName', header: 'Employee Name', type: 'text', sortable: true },
+        { field: 'leaveType', header: 'Leave Type', type: 'text', sortable: true },
+        { field: 'startDate', header: 'Start Date', type: 'date', sortable: true },
+        { field: 'endDate', header: 'End Date', type: 'date', sortable: true },
+        { field: 'days', header: 'Days', type: 'text', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true }
+      ],
+      rowActions: this.isAdmin ? [
+        {
+          label: 'Approve', icon: 'pi pi-check', isPrimary: true, color: 'success',
+          visibleFn: (req: LeaveResponseDTO) => req.status === 'PENDING',
+          actionFn: (req: LeaveResponseDTO) => this.approveRequest(req)
+        },
+        {
+          label: 'Reject', icon: 'pi pi-times', isPrimary: true, color: 'danger',
+          visibleFn: (req: LeaveResponseDTO) => req.status === 'PENDING',
+          actionFn: (req: LeaveResponseDTO) => this.rejectRequest(req)
+        }
+      ] : [
+        {
+          label: 'Cancel', icon: 'pi pi-ban', isPrimary: true, color: 'danger',
+          visibleFn: (req: LeaveResponseDTO) => req.status === 'PENDING',
+          actionFn: (req: LeaveResponseDTO) => this.cancelRequest(req)
+        }
+      ]
+    };
   }
 
-  /**
-   * Logic to reject a leave request.
-   * In a real app, this would call a service to update the backend.
-   * @param request The leave request to reject.
-   */
-  rejectRequest(request: LeaveRequest): void {
-    request.status = 'Rejected';
-    console.log(`Request ID ${request.id} for ${request.employeeName} has been rejected.`);
-    // Here you would typically call a service: this.leaveService.updateRequest(request);
+  private loadLeaveRequests(): void {
+    this.loading = true;
+    const obs = this.isAdmin ? this.leaveService.getAllLeaveRequests() : this.leaveService.getMyLeaveRequests();
+    obs.subscribe({
+      next: (data) => { this.leaveRequests = data; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  openApplyDialog(): void { this.applyDialogVisible = true; }
+
+  submitApply(): void {
+    if (this.applyForm.invalid) { this.applyForm.markAllAsTouched(); return; }
+    const dto: LeaveRequestDTO = {
+      staffName: this.applyForm.value.staffName,
+      department: this.applyForm.value.department,
+      leaveType: this.applyForm.value.leaveType as LeaveType,
+      startDate: this.applyForm.value.startDate,
+      endDate: this.applyForm.value.endDate,
+      reason: this.applyForm.value.reason
+    };
+    this.leaveService.applyLeave(dto).subscribe({
+      next: (saved) => {
+        this.leaveRequests = [saved, ...this.leaveRequests];
+        this.messageService.add({ severity: 'success', summary: 'Applied', detail: 'Leave request submitted' });
+        this.applyDialogVisible = false;
+        this.applyForm.reset();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to apply for leave' })
+    });
+  }
+
+  approveRequest(request: LeaveResponseDTO): void {
+    this.leaveService.approveLeave(request.id).subscribe({
+      next: (updated) => {
+        this.leaveRequests = this.leaveRequests.map(r => r.id === updated.id ? updated : r);
+        this.messageService.add({ severity: 'success', summary: 'Approved', detail: `Leave approved for ${request.staffName}` });
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to approve' })
+    });
+  }
+
+  rejectRequest(request: LeaveResponseDTO): void {
+    const reason = prompt('Enter rejection reason (optional):') || '';
+    this.leaveService.rejectLeave(request.id, reason).subscribe({
+      next: (updated) => {
+        this.leaveRequests = this.leaveRequests.map(r => r.id === updated.id ? updated : r);
+        this.messageService.add({ severity: 'warn', summary: 'Rejected', detail: `Leave rejected for ${request.staffName}` });
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to reject' })
+    });
+  }
+
+  cancelRequest(request: LeaveResponseDTO): void {
+    if (!confirm('Cancel this leave request?')) return;
+    this.leaveService.cancelLeave(request.id).subscribe({
+      next: () => {
+        this.leaveRequests = this.leaveRequests.map(r => r.id === request.id ? { ...r, status: 'CANCELLED' as any } : r);
+        this.messageService.add({ severity: 'info', summary: 'Cancelled' });
+      }
+    });
   }
 }

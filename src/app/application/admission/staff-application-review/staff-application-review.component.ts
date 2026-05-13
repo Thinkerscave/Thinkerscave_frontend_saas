@@ -11,6 +11,8 @@ import { TableModule } from 'primeng/table';
 import { TabViewModule } from 'primeng/tabview';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
 interface Application {
   application_id: string;
   applicant_name: string;
@@ -35,6 +37,7 @@ interface Application {
     TagModule,
     ToastModule,
     InputTextModule,
+    StandardListViewComponent
   ],
   providers: [MessageService],
   templateUrl: './staff-application-review.component.html',
@@ -56,6 +59,32 @@ export class StaffApplicationReviewComponent {
     { label: 'Accepted', value: 'ACCEPTED' },
     { label: 'Rejected', value: 'REJECTED' }
   ];
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Admission Applications',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search by Name/ID...',
+      loading: false,
+      columns: [
+        { field: 'applicant_name', header: 'Applicant Name', type: 'text', sortable: true },
+        { field: 'application_id', header: 'Application ID', type: 'text', sortable: true },
+        { field: 'applying_for_school', header: 'Program', type: 'text', sortable: true },
+        { field: 'submission_date', header: 'Date', type: 'date', sortable: true },
+        { field: 'status', header: 'Status', type: 'badge', sortable: true }
+      ],
+      rowActions: [
+        {
+          label: 'Review',
+          icon: 'pi pi-eye',
+          isPrimary: true,
+          color: 'info',
+          actionFn: (app: Application) => this.reviewApplication(app)
+        }
+      ]
+    };
+  }
 
   constructor(private fb: FormBuilder, private messageService: MessageService) {
     this.reviewForm = this.fb.group({

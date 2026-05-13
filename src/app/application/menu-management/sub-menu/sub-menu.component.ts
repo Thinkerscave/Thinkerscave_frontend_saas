@@ -17,6 +17,8 @@ import { SubmenuItem, SubMenuService } from '../../services/sub-menu.service';
 import { MenuService } from '../../services/menu.service';
 import { ToastModule } from 'primeng/toast';
 import { MultiSelect } from 'primeng/multiselect';
+import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
+import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
 
 @Component({
   selector: 'app-submenu',
@@ -24,7 +26,7 @@ import { MultiSelect } from 'primeng/multiselect';
   imports: [
     CommonModule, FormsModule, TabViewModule, CardModule, InputTextModule,
     ButtonModule, TableModule, DropdownModule, InputSwitchModule, TooltipModule,
-    IconFieldModule, InputIconModule, ToastModule, MultiSelect
+    IconFieldModule, InputIconModule, ToastModule, MultiSelect, StandardListViewComponent
   ],
   templateUrl: './sub-menu.component.html',
   styleUrl: './sub-menu.component.scss',
@@ -50,6 +52,63 @@ export class SubmenuComponent {
   constructor(private subMenuService: SubMenuService,
     private menuService: MenuService,
     private messageService: MessageService) { }
+
+  get listViewConfig(): ListViewConfig {
+    return {
+      title: 'Registered Sub-Menus',
+      isClientSide: true,
+      showSearch: true,
+      searchPlaceholder: 'Search sub-menus...',
+      loading: this.loading,
+      columns: [
+        { field: 'subMenuName', header: 'Sub-Menu Name', type: 'text', sortable: true },
+        { field: 'menuName', header: 'Menu Name', type: 'text', sortable: true },
+        {
+          field: 'subMenuUrl',
+          header: 'Sub-Menu URL',
+          type: 'text',
+          sortable: true,
+          valueGetter: (sub) => sub.subMenuUrl ? (sub.subMenuUrl.startsWith('/') ? sub.subMenuUrl : '/' + sub.subMenuUrl) : ''
+        },
+        {
+          field: 'privileges',
+          header: 'Privileges',
+          type: 'tags',
+          tagsGetter: (sub) => (sub.privileges || []).map((p: any) => p.privilegeName)
+        },
+        { field: 'subMenuDescription', header: 'Description', type: 'text', sortable: true, width: '25%' },
+        { field: 'createdBy', header: 'Created By', type: 'text', sortable: true },
+        { field: 'lastUpdatedOn', header: 'Last Updated', type: 'date', sortable: true },
+        {
+          field: 'subMenuIsActive',
+          header: 'Status',
+          type: 'badge',
+          sortable: true,
+          valueGetter: (sub) => sub.subMenuIsActive ? 'Active' : 'Inactive'
+        }
+      ],
+      rowActions: [
+        {
+          label: 'Edit',
+          icon: 'pi pi-pencil',
+          isPrimary: true,
+          actionFn: (sub) => this.onEdit(sub)
+        },
+        {
+          label: 'Deactivate',
+          icon: 'pi pi-ban',
+          visibleFn: (sub) => sub.subMenuIsActive,
+          actionFn: (sub) => this.toggleStatus(sub)
+        },
+        {
+          label: 'Activate',
+          icon: 'pi pi-check-circle',
+          visibleFn: (sub) => !sub.subMenuIsActive,
+          actionFn: (sub) => this.toggleStatus(sub)
+        }
+      ]
+    };
+  }
 
   ngOnInit(): void {
     this.loadSubmenus();
