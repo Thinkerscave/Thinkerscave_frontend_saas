@@ -1,0 +1,165 @@
+.tc-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-6);
+}
+
+.tc-surface,
+.tc-card,
+.card {
+  background: var(--tc-surface-card);
+  color: var(--tc-text);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  box-shadow: var(--tc-shadow-sm);
+}
+
+.tc-card,
+.card {
+  padding: var(--tc-space-6);
+  margin-bottom: var(--tc-space-6);
+}
+
+.tc-card--elevated {
+  background: var(--tc-surface-elevated);
+  box-shadow: var(--tc-shadow-md);
+}
+
+.tc-section-title,
+.section-title {
+  color: var(--tc-heading);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.tc-muted,
+.muted-text {
+  color: var(--tc-text-muted);
+}
+
+.tc-soft-panel {
+  background: var(--tc-surface-hover);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
+}
+
+.tc-accent-text {
+  color: var(--tc-accent-500);
+}
+
+.tc-theme-dark .bg-white,
+.tc-theme-dark .surface-card,
+.tc-theme-dark .surface-ground,
+.tc-theme-dark .surface-section {
+  background-color: var(--tc-surface-card-solid) !important;
+  color: var(--tc-text) !important;
+}
+
+.tc-theme-dark .page-wrapper,
+.tc-theme-dark .form-section,
+.tc-theme-dark .form-meta,
+.tc-theme-dark .form-hero,
+.tc-theme-dark .staff-form-card,
+.tc-theme-dark .dashboard-card,
+.tc-theme-dark .metric-card,
+.tc-theme-dark .stat-card,
+.tc-theme-dark .summary-card,
+.tc-theme-dark .panel,
+.tc-theme-dark .content-card,
+.tc-theme-dark .info-card,
+.tc-theme-dark .details-card,
+.tc-theme-dark .review-card,
+.tc-theme-dark .section-card,
+.tc-theme-dark .toolbar-card,
+.tc-theme-dark .list-card,
+.tc-theme-dark .setup-card,
+.tc-theme-dark .fee-card,
+.tc-theme-dark .timeline-card,
+.tc-theme-dark .receipt-card,
+.tc-theme-dark .report-card,
+.tc-theme-dark .priority-card,
+.tc-theme-dark .mapping-container,
+.tc-theme-dark .mapping-card,
+.tc-theme-dark .role-menu-mapping,
+.tc-theme-dark .student-table .table-row,
+.tc-theme-dark .student-table .table-head,
+.tc-theme-dark .card {
+  background: var(--tc-surface-card-solid) !important;
+  color: var(--tc-text) !important;
+  border-color: var(--tc-border) !important;
+  box-shadow: var(--tc-shadow-sm) !important;
+}
+
+.tc-theme-dark [style*="background: #ffffff"],
+.tc-theme-dark [style*="background:#ffffff"],
+.tc-theme-dark [style*="background: white"],
+.tc-theme-dark [style*="background:white"],
+.tc-theme-dark [style*="background-color: #ffffff"],
+.tc-theme-dark [style*="background-color:#ffffff"],
+.tc-theme-dark [style*="background-color: white"],
+.tc-theme-dark [style*="background-color:white"] {
+  background: var(--tc-surface-card-solid) !important;
+  color: var(--tc-text) !important;
+}
+
+.tc-theme-dark .form-hero {
+  background: linear-gradient(135deg, var(--tc-surface-active), rgba(251, 146, 60, 0.08)) !important;
+}
+
+.tc-theme-dark .form-meta,
+.tc-theme-dark .section-header,
+.tc-theme-dark .table-toolbar {
+  border-color: var(--tc-border) !important;
+}
+
+.tc-theme-dark .form-hero h3,
+.tc-theme-dark .form-hero h4,
+.tc-theme-dark .form-section h4,
+.tc-theme-dark .form-section strong,
+.tc-theme-dark .form-field label,
+.tc-theme-dark .section-header h4,
+.tc-theme-dark .title,
+.tc-theme-dark .page-content h1,
+.tc-theme-dark .page-content h2,
+.tc-theme-dark .page-content h3,
+.tc-theme-dark .page-content h4,
+.tc-theme-dark .page-content h5,
+.tc-theme-dark .page-content h6,
+.tc-theme-dark .page-content strong,
+.tc-theme-dark .card h1,
+.tc-theme-dark .card h2,
+.tc-theme-dark .card h3,
+.tc-theme-dark .card h4 {
+  color: var(--tc-heading) !important;
+}
+
+.tc-theme-dark .form-hero p,
+.tc-theme-dark .form-section span,
+.tc-theme-dark .meta,
+.tc-theme-dark .label,
+.tc-theme-dark .page-content small,
+.tc-theme-dark .page-content .subtitle,
+.tc-theme-dark .page-content .description,
+.tc-theme-dark .page-content .hint,
+.tc-theme-dark .page-content .helper-text {
+  color: var(--tc-text-muted) !important;
+}
+
+.tc-theme-dark .status-chip,
+.tc-theme-dark .chip,
+.tc-theme-dark .badge {
+  border-color: var(--tc-border) !important;
+}
+
+.tc-theme-dark .text-color,
+.tc-theme-dark .text-900,
+.tc-theme-dark .text-800,
+.tc-theme-dark .text-700 {
+  color: var(--tc-text) !important;
+}
+
+.tc-theme-dark .text-color-secondary,
+.tc-theme-dark .text-600,
+.tc-theme-dark .text-500 {
+  color: var(--tc-text-muted) !important;
+}

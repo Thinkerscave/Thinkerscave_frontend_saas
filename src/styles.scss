@@ -1,26 +1,24 @@
-@import "../node_modules/primeicons/primeicons.css";
-@import "../node_modules/primeflex/primeflex.css";
+@use "./styles/theme/tokens";
+@use "./styles/theme/utilities";
+@use "./styles/theme/primeng-overrides";
 
-
-html {
-    color-scheme: light;
+* {
+    box-sizing: border-box;
 }
 
-/* Global Card Style for Admin Dashboard */
-.card {
-    background: #ffffff;
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid #f3f4f6;
-}
-
-/* Typography Utilities Override (optional for premium feel) */
+html,
 body {
-    font-family: var(--font-family);
-    background-color: #f9fafb;
-    /* Light sleek gray background */
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: var(--tc-font-family);
+    background: var(--tc-bg-gradient);
+    color: var(--tc-text);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
@@ -30,6 +28,22 @@ h4,
 h5,
 h6 {
     margin-top: 0;
-    color: #111827;
-    /* Darker text for headings */
+    color: var(--tc-heading);
+    letter-spacing: 0;
+}
+
+a {
+    color: var(--tc-primary-600);
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: inherit;
+}
+
+::selection {
+    background: var(--highlight-bg);
+    color: var(--highlight-text-color);
 }

@@ -3,8 +3,8 @@
     margin: 0 auto;
 
     .section-title {
-        color: var(--surface-900);
-        letter-spacing: -0.01em;
+        color: var(--tc-heading);
+        letter-spacing: 0;
     }
 
     .form-actions {
@@ -15,7 +15,7 @@
     .field {
         label {
             font-size: 0.875rem;
-            color: var(--surface-700);
+            color: var(--tc-text-muted);
         }
     }
 }

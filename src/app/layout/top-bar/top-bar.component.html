@@ -10,7 +10,14 @@
     <div class="app-name">ThinkerScave</div>
   </div>
 
-  <div class="profile-wrapper">
+  <div class="topbar-actions">
+    <button class="theme-toggle" type="button" (click)="toggleTheme()"
+      [attr.aria-label]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'"
+      [attr.title]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'">
+      <i class="pi" [ngClass]="isDarkTheme() ? 'pi-sun' : 'pi-moon'"></i>
+    </button>
+
+    <div class="profile-wrapper">
     <!-- Profile Button -->
     <button pButton type="button" class="profile-btn" (click)="profileMenu.toggle($event)">
       <div class="profile-initials">{{ getInitials(userName) }}</div>
@@ -20,5 +27,6 @@
 
     <!-- Profile Menu -->
     <p-menu #profileMenu [popup]="true" [model]="profileItems"></p-menu>
+    </div>
   </div>
 </div>

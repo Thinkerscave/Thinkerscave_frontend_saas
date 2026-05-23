@@ -4,10 +4,10 @@
   align-items: center;
   padding: 0 1.5rem;
   height: 60px;
-  //background: #1e1e2f;
-  background: #615dac;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: var(--tc-topbar-bg);
+  color: var(--tc-topbar-text);
+  box-shadow: var(--tc-shadow-md);
+  border-bottom: 1px solid var(--tc-topbar-border);
 
   .topbar-left {
     display: flex;
@@ -18,8 +18,8 @@
   .hamburger-btn {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--tc-radius-md);
+    border: 1px solid var(--tc-topbar-border);
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -33,35 +33,22 @@
       display: block;
       width: 100%;
       height: 2px;
-      background: #fff;
+      background: var(--tc-topbar-text);
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.6);
+      background: var(--tc-topbar-hover);
+      border-color: rgba(255, 255, 255, 0.32);
     }
-
-    // &.is-active {
-    //   span:nth-child(1) {
-    //     transform: translateY(7px) rotate(45deg);
-    //   }
-    //   span:nth-child(2) {
-    //     opacity: 0;
-    //   }
-    //   span:nth-child(3) {
-    //     transform: translateY(-7px) rotate(-45deg);
-    //   }
-    // }
   }
 
   .profile-initials {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: #615dac;
-    /* You can change the color */
-    color: #fff;
+    background: var(--tc-button-accent-bg);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,7 +58,38 @@
 
   .app-name {
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--tc-radius-pill);
+    border: 1px solid var(--tc-topbar-border);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--tc-topbar-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background: var(--tc-topbar-hover);
+      border-color: rgba(255, 255, 255, 0.32);
+      transform: translateY(-1px);
+    }
+
+    i {
+      font-size: 1rem;
+    }
   }
 
   .profile-wrapper {
@@ -81,17 +99,17 @@
     .profile-btn {
       display: flex;
       align-items: center;
-      background: transparent;
-      border: none;
-      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--tc-topbar-border);
+      color: var(--tc-topbar-text);
       cursor: pointer;
       font-size: 1rem;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
+      border-radius: var(--tc-radius-pill);
       transition: background 0.2s;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--tc-topbar-hover);
       }
 
       .user-name {
@@ -102,6 +120,20 @@
       i.pi-chevron-down {
         font-size: 0.8rem;
       }
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-container {
+    padding: 0 1rem;
+
+    .app-name {
+      font-size: 1.1rem;
+    }
+
+    .profile-btn .user-name {
+      display: none;
     }
   }
 }

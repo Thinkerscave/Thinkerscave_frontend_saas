@@ -1,20 +1,27 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { ButtonModule } from 'primeng/button';
 import { LoginService } from '../../services/login.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../shared/theme/theme.service';
 
 
 @Component({
   selector: 'app-top-bar',
-  imports: [MenuModule, CommonModule],
+  imports: [MenuModule, ButtonModule, CommonModule],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })
 export class TopBarComponent {
+  private readonly themeService = inject(ThemeService);
+
   userName: string = '';
   profileItems: MenuItem[] = [];
+  readonly themeMode = this.themeService.themeMode;
+  readonly isDarkTheme = this.themeService.isDarkTheme;
+
   @Input() isSidebarCollapsed = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
@@ -67,6 +74,10 @@ export class TopBarComponent {
 
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   logout() {

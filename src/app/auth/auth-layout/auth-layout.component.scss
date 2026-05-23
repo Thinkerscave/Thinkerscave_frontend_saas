@@ -7,7 +7,7 @@
 .auth-shell {
   min-height: 100vh;
   padding: 2rem;
-  background: radial-gradient(circle at 10% 20%, #fbe3b5 0%, #e4d1f7 35%, #d1d8ff 70%, #c9d0ff 100%);
+  background: var(--tc-bg-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,9 +15,10 @@
 
 .auth-card {
   width: min(1180px, 100%);
-  border-radius: 32px;
-  background: #ffffff;
-  box-shadow: 0 24px 80px rgba(68, 55, 107, 0.18);
+  border-radius: var(--tc-radius-xl);
+  background: var(--tc-surface-card-solid);
+  box-shadow: var(--tc-shadow-lg);
+  border: 1px solid var(--tc-border);
   display: flex;
   overflow: hidden;
 }
@@ -28,7 +29,7 @@
 }
 
 .auth-pane--form {
-  background: linear-gradient(180deg, #fffefa 0%, #fff6e2 100%);
+  background: var(--tc-surface-card-solid);
   padding: 2.5rem 3rem;
   display: flex;
   flex-direction: column;
@@ -37,20 +38,20 @@
 
 .brand-pill {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--tc-surface-hover);
   padding: 0.35rem 1.5rem;
-  border-radius: 999px;
+  border-radius: var(--tc-radius-pill);
   font-weight: 600;
   font-size: 0.95rem;
-  color: #2f2a3c;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  letter-spacing: 0.05em;
+  color: var(--tc-heading);
+  border: 1px solid var(--tc-border);
+  letter-spacing: 0;
 }
 
 .auth-pane--preview {
   position: relative;
   padding: 0;
-  background: linear-gradient(135deg, #1f1b2c 0%, #2d254a 60%, #433875 100%);
+  background: var(--tc-topbar-bg);
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -74,7 +75,7 @@
 .preview-hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(20, 16, 32, 0.05) 0%, rgba(20, 16, 32, 0.55) 100%);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.58) 100%);
 }
 
 @media (max-width: 1024px) {

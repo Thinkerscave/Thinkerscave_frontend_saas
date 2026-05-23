@@ -11,33 +11,33 @@
             }
 
             .p-datatable-thead>tr>th {
-                background: #f8fafc;
+                background: var(--tc-table-header-bg);
                 border-top: none;
-                border-bottom: 2px solid #e2e8f0;
+                border-bottom: 2px solid var(--tc-table-border);
                 padding: 1rem;
+                color: var(--tc-text-muted);
             }
 
             .p-datatable-tbody>tr>td {
                 padding: 0.875rem 1rem;
-                border-bottom: 1px solid #f1f5f9;
+                border-bottom: 1px solid var(--tc-table-border);
 
                 &.sticky-right {
                     position: sticky;
                     right: 0;
                     background: inherit;
                     z-index: 1;
-                    // Slight shadow to show it's sticky when scrolling horizontally
-                    box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.05);
+                    box-shadow: -4px 0 8px -4px rgba(15, 23, 42, 0.18);
                 }
             }
 
             .p-datatable-tbody>tr {
-                background: #ffffff;
+                background: var(--tc-table-row-bg);
                 transition: background-color 0.2s;
 
                 &:hover {
                     td {
-                        background: #f8fafc;
+                        background: var(--tc-table-row-hover-bg);
                     }
                 }
             }
@@ -52,7 +52,7 @@
             >i {
                 position: absolute;
                 left: 0.875rem;
-                color: #94a3b8;
+                color: var(--tc-text-soft);
                 top: 50%;
                 transform: translateY(-50%);
                 margin-top: 0;
@@ -61,11 +61,11 @@
 
             .p-inputtext {
                 padding-left: 2.5rem;
-                border-color: #cbd5e1;
+                border-color: var(--tc-input-border);
 
                 &:focus {
-                    border-color: #6366f1;
-                    box-shadow: 0 0 0 2px #e0e7ff;
+                    border-color: var(--tc-input-focus-border);
+                    box-shadow: var(--tc-focus-ring);
                 }
             }
         }
@@ -79,7 +79,7 @@
 
             .p-paginator-current {
                 margin-right: auto;
-                color: #64748b;
+                color: var(--tc-text-muted);
                 font-size: 0.875rem;
             }
         }
