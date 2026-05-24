@@ -1,9 +1,10 @@
-<div class="layout-container" [class.sidebar-collapsed]="isSidebarCollapsed">
-  <app-top-bar class="topbar" [isSidebarCollapsed]="isSidebarCollapsed"
+<div class="layout-container" [class.sidebar-expanded]="isSidebarExpanded">
+  <app-top-bar class="topbar" [isSidebarExpanded]="isSidebarExpanded"
     (toggleSidebar)="toggleSidebar()"></app-top-bar>
 
   <div class="main-content">
-    <app-side-menu class="sidemenu" [collapsed]="isSidebarCollapsed"></app-side-menu>
+    <app-side-menu class="sidemenu" [expanded]="isSidebarExpanded"></app-side-menu>
+    <button class="sidebar-backdrop" type="button" aria-label="Close sidebar" (click)="toggleSidebar()"></button>
 
     <div class="page-content">
       <!-- 🧭 Add Breadcrumb Here -->

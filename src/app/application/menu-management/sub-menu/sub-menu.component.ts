@@ -15,10 +15,12 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SubmenuItem, SubMenuService } from '../../services/sub-menu.service';
 import { MenuService } from '../../services/menu.service';
+import { MenuMappingService } from '../../services/menu-mapping.service';
 import { ToastModule } from 'primeng/toast';
 import { MultiSelect } from 'primeng/multiselect';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
+import { normalizePrimeIcon } from '../../../shared/utils/prime-icon.util';
 
 @Component({
   selector: 'app-submenu',
@@ -45,13 +47,16 @@ export class SubmenuComponent {
   subMenuName = '';
   subMenuDescription = '';
   submenuUrl = '';
+  submenuIcon = 'pi pi-circle';
+  submenuOrder: number | null = null;
   submenuActive = true;
   privilegeOptions: any[] = [];
   selectedPrivilegeIds: number[] = [];
 
   constructor(private subMenuService: SubMenuService,
     private menuService: MenuService,
-    private messageService: MessageService) { }
+    private messageService: MessageService,
+    private menuMappingService: MenuMappingService) { }
 
   get listViewConfig(): ListViewConfig {
     return {
@@ -63,6 +68,8 @@ export class SubmenuComponent {
       columns: [
         { field: 'subMenuName', header: 'Sub-Menu Name', type: 'text', sortable: true },
         { field: 'menuName', header: 'Menu Name', type: 'text', sortable: true },
+        { field: 'subMenuIcon', header: 'Icon', type: 'icon', sortable: true },
+        { field: 'subMenuOrder', header: 'Order', type: 'number', sortable: true, align: 'center' },
         {
           field: 'subMenuUrl',
           header: 'Sub-Menu URL',
@@ -105,6 +112,12 @@ export class SubmenuComponent {
           icon: 'pi pi-check-circle',
           visibleFn: (sub) => !sub.subMenuIsActive,
           actionFn: (sub) => this.toggleStatus(sub)
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          color: 'danger',
+          actionFn: (sub) => this.deleteSubmenu(sub)
         }
       ]
     };
@@ -166,6 +179,8 @@ export class SubmenuComponent {
       subMenuName: this.subMenuName.trim(),
       subMenuDescription: this.subMenuDescription?.trim(),
       subMenuUrl: this.submenuUrl?.trim(),
+      subMenuIcon: normalizePrimeIcon(this.submenuIcon, 'pi pi-circle'),
+      subMenuOrder: this.submenuOrder ?? undefined,
       menuId: this.selectedMenuId,
       subMenuIsActive: this.submenuActive,
       privilegeIds: this.selectedPrivilegeIds
@@ -175,6 +190,7 @@ export class SubmenuComponent {
       next: () => {
         this.messageService.add({ severity: 'success', summary: this.isEditMode ? 'Updated' : 'Created', detail: `Submenu ${payload.subMenuName} saved` });
         this.loadSubmenus();
+        this.menuMappingService.refreshMenu();
         this.clearForm();
         this.isEditMode = false;
         this.activeTabIndex = 1;
@@ -193,7 +209,10 @@ export class SubmenuComponent {
     this.subMenuName = item.subMenuName;
     this.subMenuDescription = item.subMenuDescription || '';
     this.submenuUrl = item.subMenuUrl || '';
+    this.submenuIcon = item.subMenuIcon || 'pi pi-circle';
+    this.submenuOrder = item.subMenuOrder ?? null;
     this.submenuActive = item.subMenuIsActive ?? true;
+    this.selectedPrivilegeIds = item.privilegeIds || [];
   }
 
   cancelEdit(): void {
@@ -212,7 +231,10 @@ export class SubmenuComponent {
     this.subMenuName = '';
     this.subMenuDescription = '';
     this.submenuUrl = '';
+    this.submenuIcon = 'pi pi-circle';
+    this.submenuOrder = null;
     this.submenuActive = true;
+    this.selectedPrivilegeIds = [];
   }
 
   toggleStatus(item: SubmenuItem): void {
@@ -221,14 +243,37 @@ export class SubmenuComponent {
       item.subMenuIsActive = !item.subMenuIsActive; // revert visually
       return;
     }
-    this.subMenuService.updateStatus(item.subMenuCode, item.subMenuIsActive ?? false).subscribe({
+    const nextStatus = !(item.subMenuIsActive ?? false);
+    this.subMenuService.updateStatus(item.subMenuCode, nextStatus).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `${item.subMenuName} is now ${item.subMenuIsActive ? 'Active' : 'Inactive'}` });
+        item.subMenuIsActive = nextStatus;
+        this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `${item.subMenuName} is now ${nextStatus ? 'Active' : 'Inactive'}` });
+        this.menuMappingService.refreshMenu();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update status' });
-        item.subMenuIsActive = !item.subMenuIsActive; // rollback
       }
+    });
+  }
+
+  deleteSubmenu(item: SubmenuItem): void {
+    if (!item.subMenuCode) {
+      this.messageService.add({ severity: 'warn', summary: 'Invalid', detail: 'Submenu code missing.' });
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete submenu '${item.subMenuName}'? This will hide it from role mapping and navigation.`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.subMenuService.deleteSubmenu(item.subMenuCode).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Sub-menu Deleted', detail: `${item.subMenuName} has been removed from active navigation.` });
+        this.loadSubmenus();
+        this.menuMappingService.refreshMenu();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete submenu' })
     });
   }
 }

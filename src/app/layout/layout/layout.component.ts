@@ -13,9 +13,9 @@ import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
   styleUrl: './layout.component.scss'
 })
 export class LayoutComponent {
-  isSidebarCollapsed = false;
+  isSidebarExpanded = false;
 
   toggleSidebar(): void {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    this.isSidebarExpanded = !this.isSidebarExpanded;
   }
 }

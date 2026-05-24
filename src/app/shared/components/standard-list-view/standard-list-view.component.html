@@ -40,7 +40,7 @@
         (onLazyLoad)="onLazyLoad($event)" [paginator]="true" [rows]="config.rows || 10"
         [totalRecords]="config.totalRecords || data.length" [loading]="config.loading"
         [rowsPerPageOptions]="config.rowsPerPageOptions || [10, 25, 50]" responsiveLayout="scroll"
-        [globalFilterFields]="['orgName', 'ownerEmail', 'ownerName']" styleClass="p-datatable-sm p-datatable-striped"
+        [globalFilterFields]="globalFilterFields" styleClass="p-datatable-sm p-datatable-striped"
         [rowHover]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
         [showCurrentPageReport]="true">
 
@@ -74,6 +74,9 @@
                     <!-- Date Type -->
                     <span *ngIf="col.type === 'date'">{{ getCellData(rowData, col) | date:'mediumDate' }}</span>
 
+                    <!-- Number Type -->
+                    <span *ngIf="col.type === 'number'">{{ getCellData(rowData, col) }}</span>
+
                     <!-- Badge Type -->
                     <p-tag *ngIf="col.type === 'badge'" [value]="getCellData(rowData, col)"
                         [severity]="getBadgeSeverity(getCellData(rowData, col))" [rounded]="true">
@@ -91,6 +94,14 @@
                     <span *ngIf="col.type === 'boolean'">
                         <i class="pi"
                             [ngClass]="{'pi-check-circle text-green-500': getCellData(rowData, col), 'pi-times-circle text-red-500': !getCellData(rowData, col)}"></i>
+                    </span>
+
+                    <!-- Icon Type -->
+                    <span *ngIf="col.type === 'icon'" class="list-icon-cell">
+                        <span class="list-icon-tile" [pTooltip]="getIconClass(rowData, col)" tooltipPosition="top">
+                            <i [ngClass]="getIconClass(rowData, col)"></i>
+                        </span>
+                        <span class="list-icon-code">{{ getIconClass(rowData, col) }}</span>
                     </span>
                 </td>
 

@@ -1,3 +1,53 @@
-<div class="side-menu-wrapper" [class.is-collapsed]="collapsed">
-  <p-panelmenu [model]="items" styleClass="side-menu"></p-panelmenu>
-</div>
+<nav class="side-menu-wrapper" [class.is-expanded]="expanded" aria-label="Primary navigation">
+  <div class="side-brand">
+    <div class="side-brand-mark">
+      <i class="pi pi-compass"></i>
+    </div>
+    <div class="side-brand-copy">
+      <span>Workspace</span>
+      <strong>Navigation</strong>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Main</div>
+
+  <div *ngIf="loading" class="nav-loading">
+    <span class="nav-skeleton" *ngFor="let item of [1,2,3,4,5]"></span>
+  </div>
+
+  <ul class="nav-list" *ngIf="!loading">
+    <li class="nav-item" *ngFor="let item of items" [class.has-children]="hasChildren(item)"
+      [class.is-active-parent]="isMenuActive(item)">
+      <a *ngIf="!hasChildren(item)" class="nav-link" [routerLink]="getRouterLink(item)"
+        [queryParams]="item.queryParams" routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: isExact(item) }" [attr.title]="item.label"
+        (click)="selectItem(null, item)">
+        <span class="nav-icon"><i [ngClass]="item.icon"></i></span>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+
+      <button *ngIf="hasChildren(item)" class="nav-link nav-parent" type="button"
+        [class.is-open]="isGroupOpen(item)" [attr.title]="item.label" (click)="toggleGroup(item)">
+        <span class="nav-icon"><i [ngClass]="item.icon"></i></span>
+        <span class="nav-label">{{ item.label }}</span>
+        <span class="nav-chevron"><i class="pi pi-chevron-right"></i></span>
+      </button>
+
+      <ul class="submenu" *ngIf="hasChildren(item)" [class.is-open]="isGroupOpen(item)">
+        <li class="submenu-item" *ngFor="let child of item.items">
+          <a class="submenu-link" [routerLink]="getRouterLink(child)" [queryParams]="child.queryParams"
+            routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: isExact(child) }"
+            [attr.title]="child.label" (click)="selectItem(item, child)">
+            <span class="submenu-icon"><i [ngClass]="child.icon"></i></span>
+            <span class="submenu-label">{{ child.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <div class="nav-empty" *ngIf="!loading && !items.length">
+    <i class="pi pi-info-circle"></i>
+    <span>No menus available</span>
+  </div>
+</nav>

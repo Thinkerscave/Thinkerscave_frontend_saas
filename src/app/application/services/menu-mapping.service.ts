@@ -1,21 +1,26 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
-import { menuApi, menuMappingeApi } from '../../shared/constants/api_menu.endpoint';
+import { catchError, map, Observable, of, Subject, tap, throwError } from 'rxjs';
+import { menuMappingeApi } from '../../shared/constants/api_menu.endpoint';
+import { unwrapApiList } from '../../shared/utils/api-response.util';
+import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MenuMappingService {
   private menuCache: MenuItem[] = [];
+  private readonly menuRefreshSubject = new Subject<void>();
+
+  readonly menuRefresh$ = this.menuRefreshSubject.asObservable();
 
   constructor(private http: HttpClient) { }
 
   loadMenu(): Observable<MenuItem[]> {
     // 1. Check for specific roles (e.g., Counsellor)
-    const userStr = localStorage.getItem('user');
-    const accessToken = localStorage.getItem('accessToken') || '';
+    const userStr = sessionStorage.getItem('user') ?? localStorage.getItem('user');
+    const accessToken = sessionStorage.getItem('accessToken') ?? localStorage.getItem('accessToken') ?? '';
 
     if (userStr) {
       const user = JSON.parse(userStr);
@@ -66,7 +71,7 @@ export class MenuMappingService {
             queryParams: { tab: 'lead-statistics' }
           }
         ];
-        return of(counsellorMenu);
+        return of(this.normalizeMenuItems(counsellorMenu));
       }
 
       // Mock Institution Admin menu (only for mock login - detected by mock token prefix)
@@ -149,7 +154,7 @@ export class MenuMappingService {
             routerLink: ['/app/fees/audit']
           }
         ];
-        return of(adminFeeMenu);
+        return of(this.normalizeMenuItems(adminFeeMenu));
       }
     }
 
@@ -163,8 +168,7 @@ export class MenuMappingService {
       map((response: any) => {
         // Backend wraps response in ApiResponse<T>: { success, message, data: [...] }
         // Handle both a raw array and the wrapped ApiResponse format.
-        const menus: MenuItem[] = Array.isArray(response) ? response : (response?.data ?? []);
-        return menus;
+        return this.normalizeMenuItems(unwrapApiList<MenuItem>(response));
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -182,5 +186,18 @@ export class MenuMappingService {
   clearMenuCache(): void {
     this.menuCache = [];
     localStorage.removeItem('sideMenu');
+  }
+
+  refreshMenu(): void {
+    this.clearMenuCache();
+    this.menuRefreshSubject.next();
+  }
+
+  private normalizeMenuItems(items: MenuItem[]): MenuItem[] {
+    return (items ?? []).map(item => ({
+      ...item,
+      icon: normalizePrimeIcon(item.icon, 'pi pi-circle'),
+      items: item.items ? this.normalizeMenuItems(item.items) : item.items
+    }));
   }
 }

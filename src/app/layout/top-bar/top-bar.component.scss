@@ -15,31 +15,27 @@
     gap: 1rem;
   }
 
-  .hamburger-btn {
+  .sidebar-toggle {
     width: 40px;
     height: 40px;
     border-radius: var(--tc-radius-md);
     border: 1px solid var(--tc-topbar-border);
     background: transparent;
     display: flex;
-    flex-direction: column;
     justify-content: center;
-    gap: 5px;
-    padding: 0.35rem;
+    padding: 0;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-
-    span {
-      display: block;
-      width: 100%;
-      height: 2px;
-      background: var(--tc-topbar-text);
-      transition: transform 0.2s ease, opacity 0.2s ease;
-    }
+    color: var(--tc-topbar-text);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 
     &:hover {
       background: var(--tc-topbar-hover);
       border-color: rgba(255, 255, 255, 0.32);
+      transform: translateY(-1px);
+    }
+
+    i {
+      font-size: 1rem;
     }
   }
 

@@ -2,6 +2,34 @@
   font-family: var(--tc-font-family);
 }
 
+.pi,
+.p-button-icon,
+.p-menuitem-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  min-width: 1em;
+  height: 1em;
+  min-height: 1em;
+  flex: 0 0 auto;
+  line-height: 1;
+  font-family: "primeicons";
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+}
+
+.pi::before,
+.p-button-icon::before,
+.p-menuitem-icon::before {
+  display: block;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  text-align: center;
+}
+
 .p-card,
 .p-dialog,
 .p-popover,
@@ -189,6 +217,38 @@
 .p-tag {
   border-radius: var(--tc-radius-pill);
   font-weight: 700;
+}
+
+.p-tabview .p-tabview-nav,
+.p-tabs .p-tablist,
+.p-orderlist .p-orderlist-list,
+.p-orderlist .p-orderlist-controls,
+.p-checkbox-box {
+  background: var(--tc-surface-card-solid);
+  border-color: var(--tc-border);
+  color: var(--tc-text);
+}
+
+.p-tabview .p-tabview-nav li .p-tabview-nav-link,
+.p-tabs .p-tab {
+  color: var(--tc-text-muted);
+  border-color: var(--tc-border);
+}
+
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link,
+.p-tabs .p-tab.p-tab-active {
+  color: var(--tc-primary-600);
+  border-color: var(--tc-primary-600);
+}
+
+.p-orderlist .p-orderlist-item {
+  color: var(--tc-text);
+  border-radius: var(--tc-radius-md);
+}
+
+.p-orderlist .p-orderlist-item:not(.p-highlight):hover {
+  background: var(--tc-surface-hover);
+  color: var(--tc-heading);
 }
 
 .p-tooltip .p-tooltip-text {

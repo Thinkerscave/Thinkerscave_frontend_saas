@@ -1,13 +1,28 @@
-<p-card class="mb-4">
+<p-toast></p-toast>
+<section class="sequence-page">
+<div class="sequence-header">
+  <div>
+    <span class="eyebrow">Administration</span>
+    <h1>Menu Sequence Management</h1>
+    <p>Control the order of sidebar menu groups and sub-menu items.</p>
+  </div>
+  <div class="header-icon"><i class="pi pi-sort-alt"></i></div>
+</div>
+
+<p-card styleClass="sequence-card">
   <div class="grid">
     <!-- Menu Reordering -->
     <div class="col-12 md:col-6">
-      <h5 class="mb-3">Reorder Menus</h5>
+      <div class="list-title">
+        <i class="pi pi-bars"></i>
+        <h2>Menus</h2>
+      </div>
       <p-orderList [value]="menus" dragdrop="true" [listStyle]="{ height: '300px' }" (onReorder)="onMenuReorder()">
         <ng-template let-menu pTemplate="item">
-          <div class="flex justify-content-between align-items-center">
-            <span class="font-medium" (click)="onMenuClick(menu)">{{ menu.menuName }}</span>
-            <!-- <i class="pi pi-bars text-gray-500"></i> -->
+          <div class="order-item" [class.is-active]="activeMenuId === menu.menuId" (click)="onMenuClick(menu)">
+            <span class="order-index">{{ menu.menuOrder }}</span>
+            <span class="font-medium">{{ menu.menuName }}</span>
+            <i class="pi pi-bars drag-icon"></i>
           </div>
         </ng-template>
       </p-orderList>
@@ -15,7 +30,10 @@
 
     <!-- Submenu Reordering -->
     <div class="col-12 md:col-6">
-      <h5 class="mb-3">Reorder Submenus</h5>
+      <div class="list-title">
+        <i class="pi pi-list-check"></i>
+        <h2>Sub-menus</h2>
+      </div>
 
       <p-orderList 
         [value]="selectedSubmenus" 
@@ -23,9 +41,10 @@
         [listStyle]="{ height: '300px' }" 
         (onReorder)="onSubMenuReorder()">
         <ng-template let-submenu pTemplate="item">
-          <div class="flex justify-content-between align-items-center">
+          <div class="order-item">
+            <span class="order-index">{{ submenu.subMenuOrder }}</span>
             <span>{{ submenu.subMenuName }}</span>
-            <!-- <i class="pi pi-bars text-gray-500"></i> -->
+            <i class="pi pi-bars drag-icon"></i>
           </div>
         </ng-template>
       </p-orderList>
@@ -37,3 +56,4 @@
     <button pButton label="Submit Order" icon="pi pi-save" class="p-button-success" (click)="submitOrder()"></button>
   </div>
 </p-card>
+</section>

@@ -1,4 +1,8 @@
 .layout-container {
+  --tc-sidebar-compact-width: 84px;
+  --tc-sidebar-expanded-width: 280px;
+  --tc-sidebar-current-width: var(--tc-sidebar-compact-width);
+
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -17,11 +21,17 @@
     overflow: hidden;
 
     .sidemenu {
-      width: 260px;
+      width: var(--tc-sidebar-current-width);
       flex-shrink: 0;
       background: var(--tc-sidebar-bg);
       border-right: 1px solid var(--tc-sidebar-border);
-      transition: width 0.3s ease, transform 0.3s ease;
+      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: visible;
+      z-index: 18;
+    }
+
+    .sidebar-backdrop {
+      display: none;
     }
 
     .page-content {
@@ -45,13 +55,13 @@
   }
 }
 
-.layout-container.sidebar-collapsed {
-  .main-content {
-    .sidemenu {
-      width: 0;
-      transform: translateX(-100%);
-      border-right: none;
-    }
+.layout-container.sidebar-expanded {
+  --tc-sidebar-current-width: var(--tc-sidebar-expanded-width);
+}
+
+@media (min-width: 769px) {
+  .layout-container:not(.sidebar-expanded) .main-content .sidemenu:hover {
+    width: var(--tc-sidebar-expanded-width);
   }
 }
 
@@ -64,10 +74,24 @@
         position: absolute;
         top: 0;
         left: 0;
+        width: min(var(--tc-sidebar-expanded-width), calc(100vw - 2rem));
         height: 100%;
         background: var(--tc-sidebar-bg);
         box-shadow: var(--tc-shadow-lg);
         z-index: 1000;
+        transform: translateX(-110%);
+      }
+
+      .sidebar-backdrop {
+        position: absolute;
+        inset: 0;
+        display: block;
+        border: 0;
+        background: rgba(15, 23, 42, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 900;
+        transition: opacity 0.2s ease;
       }
 
       .page-content {
@@ -76,10 +100,15 @@
     }
   }
 
-  .layout-container.sidebar-collapsed {
+  .layout-container.sidebar-expanded {
     .main-content {
       .sidemenu {
-        box-shadow: none;
+        transform: translateX(0);
+      }
+
+      .sidebar-backdrop {
+        opacity: 1;
+        pointer-events: auto;
       }
     }
   }

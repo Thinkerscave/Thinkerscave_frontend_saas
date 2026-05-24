@@ -7,6 +7,7 @@ import { PRIMENG_STANDALONE_IMPORTS } from '../../../shared/primeng';
 import { RoleMenuMappingService } from '../../services/role-menu-mapping.service';
 import { RoleService } from '../../services/role.service';
 import { CheckboxModule } from 'primeng/checkbox';
+import { MenuMappingService } from '../../services/menu-mapping.service';
 
 type MenuGridRow = {
   menuId: number;
@@ -32,18 +33,27 @@ export class RoleMenuMappingComponent {
 
   menuGridRows: MenuGridRow[] = [];
   selectedPrivileges = new Map<number, Set<number>>();
+  loadingTree = false;
+  loadingRolePrivileges = false;
+  saving = false;
 
   constructor(
     private roleMenuMappingService: RoleMenuMappingService,
     private roleService: RoleService,
+    private menuMappingService: MenuMappingService,
     private messageService: MessageService
   ) { }
 
   ngOnInit() {
     this.loadRoles();
+    this.loadMenuTree();
+  }
+
+  loadMenuTree() {
+    this.loadingTree = true;
     this.roleMenuMappingService.getActiveMenuTree().subscribe((data: any[]) => {
-      this.menuGridRows = data.flatMap(menu =>
-        menu.subMenus.map((sub: any) => ({
+      this.menuGridRows = (data || []).flatMap(menu =>
+        (menu.subMenus || []).map((sub: any) => ({
           menuId: menu.menuId,
           menuName: menu.menuName,
           subMenuId: sub.subMenuId,
@@ -55,6 +65,10 @@ export class RoleMenuMappingComponent {
         }))
       );
       this.selectedPrivileges.clear();
+      this.loadingTree = false;
+    }, () => {
+      this.loadingTree = false;
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load menu tree' });
     });
   }
 
@@ -64,6 +78,27 @@ export class RoleMenuMappingComponent {
         label: role.roleName,
         value: role.roleId
       }));
+    });
+  }
+
+  onRoleChange(roleId: number): void {
+    this.selectedPrivileges.clear();
+    if (!roleId) {
+      return;
+    }
+
+    this.loadingRolePrivileges = true;
+    this.roleMenuMappingService.getRoleMenuPrivileges(roleId).subscribe({
+      next: mappings => {
+        mappings.forEach(mapping => {
+          this.selectedPrivileges.set(mapping.subMenuId, new Set(mapping.privilegeIds));
+        });
+        this.loadingRolePrivileges = false;
+      },
+      error: () => {
+        this.loadingRolePrivileges = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load existing role privileges' });
+      }
     });
   }
 
@@ -85,12 +120,16 @@ export class RoleMenuMappingComponent {
       subMenuPrivileges
     };
 
+    this.saving = true;
     this.roleMenuMappingService.assignRoleMenuPrivileges(payload).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Privileges assigned successfully' });
+        this.menuMappingService.refreshMenu();
+        this.saving = false;
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error while assigning privileges' });
+        this.saving = false;
       }
     });
   }

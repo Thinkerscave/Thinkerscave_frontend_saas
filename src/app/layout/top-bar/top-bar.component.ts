@@ -22,7 +22,7 @@ export class TopBarComponent {
   readonly themeMode = this.themeService.themeMode;
   readonly isDarkTheme = this.themeService.isDarkTheme;
 
-  @Input() isSidebarCollapsed = false;
+  @Input() isSidebarExpanded = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
   constructor(

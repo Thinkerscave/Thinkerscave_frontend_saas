@@ -1,118 +1,112 @@
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-
-.block {
-  display: block;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.flex {
+.menu-admin-page {
   display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-5);
 }
 
-.gap-2 {
-  gap: 0.5rem;
+.menu-page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tc-space-4);
+  align-items: center;
+  padding: var(--tc-space-6);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card-solid);
+  box-shadow: var(--tc-shadow-sm);
+
+  h1 {
+    margin: 0.2rem 0;
+    color: var(--tc-heading);
+    font-size: 1.45rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--tc-text-muted);
+  }
 }
 
-.justify-content-end {
+.eyebrow {
+  color: var(--tc-primary-600);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tc-radius-lg);
+  background: color-mix(in srgb, var(--tc-primary-600) 12%, transparent);
+  color: var(--tc-primary-600);
+  border: 1px solid color-mix(in srgb, var(--tc-primary-600) 22%, transparent);
+}
+
+:host ::ng-deep {
+  .menu-form-card .p-card-content {
+    padding-top: 0;
+  }
+
+  .p-tabview-panels {
+    background: transparent;
+    padding: var(--tc-space-4) 0 0;
+  }
+
+  .p-input-icon-left {
+    display: block;
+    position: relative;
+
+    > i {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--tc-text-soft);
+      z-index: 1;
+    }
+
+    .icon-input {
+      padding-left: 2.6rem;
+    }
+  }
+
+  .p-paginator {
+    justify-content: flex-end !important;
+  }
+}
+
+.form-actions {
+  display: flex;
   justify-content: flex-end;
+  gap: var(--tc-space-3);
+  flex-wrap: wrap;
+  padding-top: var(--tc-space-2);
 }
 
 .menu-list-container {
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
-}
-
-/* PrimeNG Table specific adjustments */
-.p-datatable {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  /* Ensures rounded corners apply to content */
-}
-
-.p-datatable .p-datatable-thead>tr>th {
-  background-color: #f5f5f5;
-  color: #555;
-  font-weight: 600;
-  padding: 1rem 0.8rem;
-}
-
-.p-datatable .p-datatable-tbody>tr>td {
-  padding: 0.8rem;
-  vertical-align: middle;
-}
-
-.p-button-sm {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.6rem;
-}
-
-.p-button-rounded {
-  border-radius: 50% !important;
-  /* Ensure perfect roundness */
-  width: 2.2rem;
-  height: 2.2rem;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
   padding: 0;
-  /* Remove default padding for round buttons */
 }
 
-/* Utility classes (similar to PrimeFlex, or add PrimeFlex) */
-.p-mr-2 {
-  margin-right: 0.5rem;
-}
+@media (max-width: 640px) {
+  .menu-page-header {
+    align-items: flex-start;
+    padding: var(--tc-space-4);
+  }
 
-.text-center {
-  text-align: center;
-}
+  .header-icon {
+    display: none;
+  }
 
-/* This rule can stay the same */
-.custom-textarea {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
+  .form-actions {
+    justify-content: stretch;
 
-/* Update the :focus rule to be more specific and forceful.
-  We add !important to ensure our styles are applied.
-*/
-.custom-textarea:focus {
-    border-color: #28a745 !important; /* Green border color on focus */
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important; /* Optional glow effect */
-    outline: 0 none !important; /* Remove the default browser outline */
-}
-.truncate-text {
-  max-width: 250px; /* Adjust this width as needed */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-:host ::ng-deep .p-paginator {
-  justify-content: flex-end !important;
+    button {
+      flex: 1 1 100%;
+    }
+  }
 }

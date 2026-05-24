@@ -85,3 +85,29 @@
         }
     }
 }
+
+.list-icon-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.list-icon-tile {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: var(--tc-radius-sm);
+    color: var(--tc-primary-600);
+    background: color-mix(in srgb, var(--tc-primary-600) 11%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tc-primary-600) 20%, transparent);
+}
+
+.list-icon-code {
+    color: var(--tc-text-muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}

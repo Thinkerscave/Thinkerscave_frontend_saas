@@ -1,7 +1,7 @@
 export interface ListViewColumn {
     field: string;
     header: string;
-    type: 'text' | 'date' | 'number' | 'badge' | 'tags' | 'boolean' | 'custom';
+    type: 'text' | 'date' | 'number' | 'badge' | 'tags' | 'boolean' | 'icon' | 'custom';
     sortable?: boolean;
     width?: string;
     align?: 'left' | 'center' | 'right';

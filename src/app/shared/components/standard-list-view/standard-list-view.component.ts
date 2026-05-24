@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { ListViewConfig, PageRequestParams, ListViewAction, ListViewColumn } from './list-view-models';
+import { normalizePrimeIcon } from '../../utils/prime-icon.util';
 
 @Component({
   selector: 'app-standard-list-view',
@@ -30,6 +31,8 @@ export class StandardListViewComponent {
   @Input() config!: ListViewConfig;
   @Input() data: any[] = [];
 
+  @ViewChild('dt') table?: Table;
+
   @Output() onLoadData = new EventEmitter<PageRequestParams>();
   @Output() onSearch = new EventEmitter<string>();
 
@@ -41,6 +44,12 @@ export class StandardListViewComponent {
 
   get secondaryRowActions() {
     return this.config?.rowActions?.filter(a => !a.isPrimary) || [];
+  }
+
+  get globalFilterFields(): string[] {
+    return this.config?.columns
+      ?.filter(column => column.field && column.type !== 'custom')
+      .map(column => column.field) || [];
   }
 
   getMenuModel(item: any, actions: ListViewAction[]): MenuItem[] {
@@ -66,8 +75,8 @@ export class StandardListViewComponent {
   }
 
   onSearchChange() {
+    this.table?.filterGlobal(this.globalFilter, 'contains');
     this.onSearch.emit(this.globalFilter);
-    // If client side, table handles global filtering via dt.filterGlobal layout
   }
 
   getCellData(item: any, col: any): any {
@@ -91,5 +100,9 @@ export class StandardListViewComponent {
     if (col.tagsGetter) return col.tagsGetter(item);
     if (item[col.field] && Array.isArray(item[col.field])) return item[col.field];
     return [];
+  }
+
+  getIconClass(item: any, col: ListViewColumn): string {
+    return normalizePrimeIcon(this.getCellData(item, col), 'pi pi-circle');
   }
 }

@@ -11,6 +11,7 @@ export const menuApi = {
   getAllMenusUrl: `${menuBaseUrl}/getAllMenus`,
   getMenuByCodeUrl: `${menuBaseUrl}/`,
   updateStatus: `${menuBaseUrl}/updateStatus`,
+  deleteMenuUrl: `${menuBaseUrl}`,
   getActiveMenusUrl: `${menuBaseUrl}/activeMenus`,
 };
 
@@ -19,6 +20,7 @@ export const subMenuApi = {
   getAllSubMenusUrl: `${subMenuBaseUrl}`,
   getSubMenuByCodeUrl: `${subMenuBaseUrl}/`,
   updateStatus: `${subMenuBaseUrl}/updateStatus`,
+  deleteSubMenuUrl: `${subMenuBaseUrl}`,
   getPrivilegesUrl: `${subMenuBaseUrl}/getPrivileges`,
 };
 
@@ -30,6 +32,7 @@ export const menuSequenceApi = {
 export const menuMappingeApi = {
   getSideMenuUrl: `${menuMappingUrl}`,
   getMenuTreeUrl: `${menuMappingUrl}/getActiveMenuTree`,
+  getRoleMenuPrivilegesUrl: `${menuMappingUrl}/role`,
   assignRoleMenuPrivilegeUrl: `${menuMappingUrl}/assign`
 };
 
