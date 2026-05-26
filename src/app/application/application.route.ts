@@ -9,28 +9,46 @@ export const APPLICATION_ROUTES: Routes = [
       import('./dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
   {
+    path: 'navigation-access',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+    loadComponent: () =>
+      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+  },
+  {
+    path: 'system-settings',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+    loadComponent: () =>
+      import('./administration/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
+  },
+  {
+    path: 'audit-activity',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+    loadComponent: () =>
+      import('./administration/audit-activity/audit-activity.component').then(m => m.AuditActivityComponent),
+  },
+  {
     path: 'manage-menu',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     loadComponent: () =>
-      import('./menu-management/menu/menu.component').then(m => m.MenuComponent),
+      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
   },
   {
     path: 'manage-sub-menu',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     loadComponent: () =>
-      import('./menu-management/sub-menu/sub-menu.component').then(m => m.SubmenuComponent),
+      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
   },
   {
     path: 'menu-sequence',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     loadComponent: () =>
-      import('./menu-management/menu-sequence/menu-sequence.component').then(m => m.MenuSequenceComponent),
+      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
   },
   {
     path: 'role-menu-mapping',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     loadComponent: () =>
-      import('./role-management/role-menu-mapping/role-menu-mapping.component').then(m => m.RoleMenuMappingComponent),
+      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
   },
   {
     path: 'organization-registration',
@@ -80,7 +98,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'role/manage',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./role-management/manage-role/manage-role.component').then(m => m.ManageRoleComponent)
+    loadComponent: () => import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent)
   },
   {
     path: 'inquiry/manage',

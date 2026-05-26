@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, tap, catchError } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap, catchError, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface TenantConfig {
@@ -33,7 +33,8 @@ export class TenantConfigService {
     }
 
     public fetchConfigFromServer(): Observable<TenantConfig | null> {
-        return this.http.get<TenantConfig>(`${environment.baseUrl}/tenant-settings/current`).pipe(
+        return this.http.get<TenantConfig | { data: TenantConfig }>(`${environment.baseUrl}/tenant-settings/current`).pipe(
+            map(response => ('data' in response ? response.data : response)),
             tap(config => {
                 this.configSubject.next(config);
                 if (localStorage.getItem('rememberMe') === 'true') {

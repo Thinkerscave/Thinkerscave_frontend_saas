@@ -47,3 +47,30 @@ select {
     background: var(--highlight-bg);
     color: var(--highlight-text-color);
 }
+
+.p-input-icon-left,
+span.p-input-icon-left {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.p-input-icon-left > i:first-child,
+span.p-input-icon-left > i:first-child {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: 0;
+    z-index: 2;
+    color: var(--tc-text-soft);
+    pointer-events: none;
+    line-height: 1;
+}
+
+.p-input-icon-left > input,
+.p-input-icon-left > .p-inputtext,
+span.p-input-icon-left > input,
+span.p-input-icon-left > .p-inputtext {
+    padding-left: 2.5rem !important;
+}

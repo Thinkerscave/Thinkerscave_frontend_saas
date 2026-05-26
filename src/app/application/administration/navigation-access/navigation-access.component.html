@@ -1,0 +1,596 @@
+<div class="workspace-page container-fluid">
+  <!-- Toast feedback -->
+  <p-toast></p-toast>
+
+  <!-- Workspace Header Section -->
+  <div class="workspace-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <i class="pi pi-lock glow-icon"></i>
+      </div>
+      <div class="copy">
+        <span class="eyebrow">Administration Workspace</span>
+        <h1>Navigation & Access Control</h1>
+        <p class="subtitle">Manage sidebar structure, roles, and permissions from one workspace.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <!-- Quick Action Menu -->
+      <div class="quick-dropdown">
+        <button pButton label="Quick Actions" icon="pi pi-bolt" class="p-button-primary p-button-sm glow-btn"></button>
+        <div class="dropdown-content">
+          <a (click)="activeTab = 1; configForm.type='menu'; clearConfigForm()"><i class="pi pi-plus"></i> Add Navigation Section</a>
+          <a (click)="activeTab = 1; configForm.type='submenu'; clearConfigForm()"><i class="pi pi-list"></i> Add Page Link</a>
+          <a (click)="activeTab = 3; openAddRoleDialog()"><i class="pi pi-shield"></i> New Role</a>
+          <a (click)="navigateToExternalRoute('/app/organization-registration')"><i class="pi pi-building"></i> Organization Management</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Workspace Tabs -->
+  <p-tabView [activeIndex]="activeTab" (onChange)="onTabChange($event)" styleClass="workspace-tabs-container">
+    
+    <!-- ============================================================================
+         TAB 0: WORKSPACE OVERVIEW & ANALYTICS DASHBOARD
+         ============================================================================ -->
+    <p-tabPanel header="Workspace Overview">
+      <!-- High fidelity stat cards grid -->
+      <div class="stats-grid mb-5">
+        <div class="stat-card" (click)="activeTab = 1; configForm.type='menu'" pTooltip="Click to design hierarchy" tooltipPosition="top">
+          <div class="card-icon blue">
+            <i class="pi pi-bars"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Visible Sections</span>
+            <h3>{{ activeMenusCount }}</h3>
+            <span class="trend success"><i class="pi pi-check-circle"></i> {{ totalMenus }} total</span>
+          </div>
+          <p class="action-hint">Open Builder <i class="pi pi-arrow-right"></i></p>
+        </div>
+
+        <div class="stat-card" (click)="activeTab = 1; configForm.type='submenu'" pTooltip="Click to manage page links" tooltipPosition="top">
+          <div class="card-icon green">
+            <i class="pi pi-list-check"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Visible Page Links</span>
+            <h3>{{ activeSubMenusCount }}</h3>
+            <span class="trend success"><i class="pi pi-check-circle"></i> {{ totalSubMenus }} total</span>
+          </div>
+          <p class="action-hint">Manage Pages <i class="pi pi-arrow-right"></i></p>
+        </div>
+
+        <div class="stat-card" (click)="activeTab = 3" pTooltip="Click to manage system roles" tooltipPosition="top">
+          <div class="card-icon orange">
+            <i class="pi pi-shield"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Active Roles</span>
+            <h3>{{ activeRolesCount }}</h3>
+            <span class="trend success"><i class="pi pi-check-circle"></i> {{ totalRoles }} total</span>
+          </div>
+          <p class="action-hint">Manage Roles <i class="pi pi-arrow-right"></i></p>
+        </div>
+
+        <div class="stat-card" (click)="activeTab = 2" pTooltip="Click to review permissions" tooltipPosition="top">
+          <div class="card-icon purple">
+            <i class="pi pi-key"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Permission Assignments</span>
+            <h3>{{ totalPermissionAssignments }}</h3>
+            <span class="trend info"><i class="pi pi-sync"></i> Synced from roles</span>
+          </div>
+          <p class="action-hint">Open Access Control <i class="pi pi-arrow-right"></i></p>
+        </div>
+      </div>
+
+      <!-- Navigation preview and permission summary -->
+      <div class="grid layout-split">
+        <!-- Live Sidebar preview -->
+        <div class="col-12 xl:col-5">
+          <div class="preview-panel p-4">
+            <div class="panel-header mb-3">
+              <span class="badge">Navigation Summary</span>
+              <h4>Sidebar Structure</h4>
+              <p>Current menu hierarchy generated from saved navigation data.</p>
+            </div>
+
+            <div class="rendered-sidebar">
+              <div class="sidebar-inner">
+                <div class="sidebar-brand">
+                  <div class="brand-mark"><i class="pi pi-compass"></i></div>
+                  <div class="brand-text"><strong>{{ workspaceBrandName }}</strong><span>Workspace</span></div>
+                </div>
+                <div class="sidebar-section">Saved Navigation</div>
+                <ul class="sidebar-nav">
+                  <li class="sidebar-li" *ngFor="let node of menuTree" [class.is-expanded]="node.expanded">
+                    <div class="sidebar-link" (click)="selectNode('menu', node)">
+                      <span class="li-icon"><i [ngClass]="node.icon || 'pi pi-folder'"></i></span>
+                      <span class="li-label">{{ node.name }}</span>
+                      <span class="li-arrow" *ngIf="node.children?.length"><i class="pi pi-chevron-down"></i></span>
+                    </div>
+                    <ul class="sidebar-submenu" *ngIf="node.children?.length && node.expanded">
+                      <li class="li-sub" *ngFor="let child of node.children" (click)="selectNode('submenu', child)">
+                        <span class="sub-icon"><i [ngClass]="child.subMenuIcon || 'pi pi-circle'"></i></span>
+                        <span class="sub-label">{{ child.subMenuName }}</span>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <button pButton label="Open Builder" icon="pi pi-pencil" 
+              class="p-button-outlined w-full mt-3 p-button-sm" (click)="activeTab = 1"></button>
+          </div>
+        </div>
+
+        <!-- Recent Activity Logs and statistics details -->
+        <div class="col-12 xl:col-7">
+          <!-- Privilege summaries -->
+          <div class="analytics-panel p-4 mb-4">
+            <h4>Permission Summary</h4>
+            <p class="text-sm text-muted mb-4">Granted operations across active roles.</p>
+            
+            <div class="analytics-metrics-row mb-4">
+              <div class="metric">
+                <span class="label">Total Assignments</span>
+                <span class="val">{{ totalPermissionAssignments }}</span>
+              </div>
+              <div class="progress-line">
+                <span *ngFor="let item of getPrivilegeDistribution()" class="bar" [ngClass]="item.className"
+                  [style.width.%]="item.percentage || 1" [pTooltip]="item.name + ' permissions'" tooltipPosition="top"></span>
+              </div>
+              <div class="legend-row mt-3 text-xs flex gap-3 text-muted">
+                <span *ngFor="let item of getPrivilegeDistribution()" class="flex align-items-center gap-1">
+                  <span class="dot" [ngClass]="item.className"></span> {{ item.name }} ({{ item.percentage }}%)
+                </span>
+              </div>
+            </div>
+
+            <div class="privilege-summary-list">
+              <div class="summary-row" *ngFor="let role of roles | slice:0:5">
+                <span class="role-lbl"><i class="pi pi-shield"></i> {{ role.roleName }}</span>
+                <span class="role-stat font-medium text-xs">{{ getRolePermissionCount(role.roleId) }} permissions</span>
+                <span class="role-spark" [class.success]="role.isActive !== false">{{ role.isActive === false ? 'Inactive' : 'Active' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Timeline -->
+          <div class="activity-panel p-4">
+            <div class="panel-header mb-4 flex justify-content-between align-items-center">
+              <div>
+                        <h4>Recent Activity</h4>
+                        <p>Changes from this workspace session appear here.</p>
+              </div>
+                      <span class="badge info">Session</span>
+            </div>
+
+            <div class="empty-state compact" *ngIf="!activities.length">
+              <i class="pi pi-history"></i>
+              <span>No changes recorded in this session.</span>
+            </div>
+
+            <div class="privilege-summary-list" *ngIf="activities.length">
+              <div class="summary-row" *ngFor="let act of activities">
+                <span class="role-lbl">
+                  <i class="pi pi-history"></i>
+                  <span>{{ act.action }} {{ act.entity }}</span>
+                </span>
+                <span class="role-stat font-medium text-xs">{{ act.time }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- ============================================================================
+         TAB 1: INTEGRATED NAVIGATION BUILDER WORKSPACE
+         ============================================================================ -->
+    <p-tabPanel header="Navigation Builder">
+      <div class="grid layout-split">
+        <!-- Visual Menu Tree Left Side Panel -->
+        <div class="col-12 lg:col-5">
+          <div class="workspace-card p-4">
+            <div class="panel-header mb-4 flex justify-content-between align-items-center">
+              <div>
+                <h4>Navigation Structure</h4>
+                <p class="text-xs text-muted">Saved sidebar hierarchy.</p>
+              </div>
+              <span class="badge info" *ngIf="savingSequence">Saving</span>
+              <button pButton icon="pi pi-plus" class="p-button-rounded p-button-sm p-button-text" 
+                pTooltip="Create navigation section" (click)="configForm.type='menu'; clearConfigForm()"></button>
+            </div>
+
+            <!-- Loading overlay or list -->
+            <div class="visual-hierarchy-list">
+              <div *ngFor="let mNode of menuTree; let menuIndex = index" class="node-root"
+                [class.is-selected]="selectedNode?.type === 'menu' && selectedNode?.data?.menuId === mNode.menuId"
+                [class.is-dragging]="draggedMenuIndex === menuIndex"
+                (dragover)="allowMenuDrop($event)"
+                (drop)="dropMenu(menuIndex, $event)"
+                (dragend)="endDrag()">
+                <div class="node-header flex align-items-center justify-content-between p-2" (click)="selectNode('menu', mNode)">
+                  <div class="flex align-items-center gap-2">
+                    <span class="drag-handle" draggable="true" (dragstart)="startMenuDrag(menuIndex, $event)" (click)="$event.stopPropagation()" pTooltip="Reorder section" tooltipPosition="top">
+                      <i class="pi pi-grip-vertical"></i>
+                    </span>
+                    <span class="toggle-arrow" (click)="toggleNode('menu-' + mNode.menuId, $event)">
+                      <i class="pi" [ngClass]="expandedNodes.has('menu-' + mNode.menuId) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                    </span>
+                    <span class="node-icon-tile"><i [ngClass]="mNode.icon || 'pi pi-folder'"></i></span>
+                    <span class="node-name font-semibold">{{ mNode.name }}</span>
+                    <span *ngIf="!mNode.isActive" class="node-badge-inactive">Draft</span>
+                  </div>
+                  
+                  <!-- Shift ordering index directly -->
+                  <div class="actions flex align-items-center gap-1">
+                    <button pButton icon="pi pi-chevron-up" class="p-button-rounded p-button-text p-button-xs" 
+                      (click)="moveNodeUp('menu', mNode, $event)" pTooltip="Move up" tooltipPosition="top"></button>
+                    <button pButton icon="pi pi-chevron-down" class="p-button-rounded p-button-text p-button-xs" 
+                      (click)="moveNodeDown('menu', mNode, $event)" pTooltip="Move down" tooltipPosition="top"></button>
+                    <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-xs" 
+                      (click)="deleteNode('menu', mNode)" pTooltip="Delete section" tooltipPosition="top"></button>
+                  </div>
+                </div>
+
+                <!-- Children submenu nodes -->
+                <div class="node-children-container" *ngIf="expandedNodes.has('menu-' + mNode.menuId)">
+                  <div *ngFor="let sNode of mNode.children; let subIndex = index" class="node-child flex align-items-center justify-content-between p-2 pl-5"
+                    [class.is-selected]="selectedNode?.type === 'submenu' && selectedNode?.data?.subMenuId === sNode.subMenuId"
+                    [class.is-dragging]="draggedSubMenu?.parentMenuId === mNode.menuId && draggedSubMenu?.index === subIndex"
+                    (dragover)="allowSubMenuDrop(mNode.menuId, $event)"
+                    (drop)="dropSubMenu(mNode.menuId, subIndex, $event)"
+                    (dragend)="endDrag()"
+                    (click)="selectNode('submenu', sNode)">
+                    <div class="flex align-items-center gap-2">
+                      <span class="drag-handle child" draggable="true" (dragstart)="startSubMenuDrag(mNode.menuId, subIndex, $event)" (click)="$event.stopPropagation()" pTooltip="Reorder page link" tooltipPosition="top">
+                        <i class="pi pi-grip-vertical"></i>
+                      </span>
+                      <span class="child-bullet"></span>
+                      <span class="child-icon"><i [ngClass]="sNode.subMenuIcon || 'pi pi-circle'"></i></span>
+                      <span class="child-name">{{ sNode.subMenuName }}</span>
+                      <span *ngIf="!sNode.subMenuIsActive" class="node-badge-inactive">Draft</span>
+                    </div>
+
+                    <div class="actions flex align-items-center gap-1">
+                      <button pButton icon="pi pi-chevron-up" class="p-button-rounded p-button-text p-button-xs" 
+                        (click)="moveNodeUp('submenu', sNode, $event)" pTooltip="Move up" tooltipPosition="top"></button>
+                      <button pButton icon="pi pi-chevron-down" class="p-button-rounded p-button-text p-button-xs" 
+                        (click)="moveNodeDown('submenu', sNode, $event)" pTooltip="Move down" tooltipPosition="top"></button>
+                      <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-xs" 
+                        (click)="deleteNode('submenu', sNode)" pTooltip="Delete page link" tooltipPosition="top"></button>
+                    </div>
+                  </div>
+
+                  <!-- Quick empty state -->
+                  <div *ngIf="!mNode.children?.length" class="empty-child-helper text-center text-xs text-muted py-2">
+                    No page links yet. <a (click)="configForm.type='submenu'; clearConfigForm(); configForm.parentId=mNode.menuId" class="text-primary font-bold">Add page</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Panel Right Side Panel -->
+        <div class="col-12 lg:col-7">
+          <div class="workspace-card p-4">
+            <div class="panel-header mb-4 flex justify-content-between align-items-center">
+              <div>
+                <h4>{{ selectedNode ? 'Edit Navigation Item' : 'Create Navigation Item' }}</h4>
+                <p class="text-xs text-muted">Use clear labels and valid application paths.</p>
+              </div>
+              <div class="flex gap-2">
+                <button pButton label="New Section" icon="pi pi-folder" class="p-button-secondary p-button-outlined p-button-sm"
+                  (click)="configForm.type='menu'; clearConfigForm()"></button>
+                <button pButton label="New Page" icon="pi pi-list" class="p-button-secondary p-button-outlined p-button-sm"
+                  (click)="configForm.type='submenu'; clearConfigForm()"></button>
+              </div>
+            </div>
+
+            <!-- Form -->
+            <div class="config-form grid">
+              <!-- Type toggle -->
+              <div class="col-12 mb-3">
+                <label class="block mb-2 font-semibold">Navigation Level</label>
+                <div class="segmented-choice">
+                  <label class="choice" [class.is-active]="configForm.type === 'menu'">
+                    <input type="radio" name="nodeType" [(ngModel)]="configForm.type" value="menu" (change)="clearConfigForm()"/>
+                    <i class="pi pi-folder"></i>
+                    <span>Section</span>
+                  </label>
+                  <label class="choice" [class.is-active]="configForm.type === 'submenu'">
+                    <input type="radio" name="nodeType" [(ngModel)]="configForm.type" value="submenu" (change)="clearConfigForm()"/>
+                    <i class="pi pi-list"></i>
+                    <span>Page Link</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Parent input (if submenu) -->
+              <div class="col-12 md:col-6" *ngIf="configForm.type === 'submenu'">
+                <label class="block mb-2 font-semibold">Navigation Section</label>
+                <p-dropdown [options]="menuTree" [(ngModel)]="configForm.parentId" optionLabel="name" optionValue="menuId"
+                  placeholder="Select section" class="w-full"></p-dropdown>
+              </div>
+
+              <!-- Name -->
+              <div class="col-12 md:col-6">
+                <label class="block mb-2 font-semibold">Name</label>
+                <input pInputText type="text" [(ngModel)]="configForm.name" placeholder="e.g. Student Management" class="w-full border-round-lg"/>
+              </div>
+
+              <!-- Icon selection with active icon feedback & picker dialog launcher -->
+              <div class="col-12 md:col-6">
+                <label class="block mb-2 font-semibold">Icon</label>
+                <div class="p-inputgroup flex gap-2">
+                  <span class="p-inputgroup-addon flex align-items-center justify-content-center border-round-lg border-1 border-300" style="width: 44px; height: 42px;">
+                    <i [ngClass]="configForm.icon" class="text-lg"></i>
+                  </span>
+                  <input pInputText type="text" [(ngModel)]="configForm.icon" placeholder="pi pi-cog" class="flex-1 border-round-lg"/>
+                  <button pButton icon="pi pi-search" class="p-button-primary border-round-lg" (click)="openSelectorIconPicker()" pTooltip="Launch Visual Palette" tooltipPosition="top"></button>
+                </div>
+              </div>
+
+              <!-- Sequence / Display Order -->
+              <div class="col-12 md:col-6">
+                <label class="block mb-2 font-semibold">Display Order</label>
+                <input pInputText type="number" [(ngModel)]="configForm.order" class="w-full border-round-lg"/>
+              </div>
+
+              <!-- Frontend Route path URL -->
+              <div class="col-12" *ngIf="configForm.type === 'submenu'">
+                <label class="block mb-2 font-semibold">Application Path</label>
+                <input pInputText type="text" [(ngModel)]="configForm.url" placeholder="e.g. /app/student/list" class="w-full border-round-lg"/>
+              </div>
+
+              <!-- Description -->
+              <div class="col-12">
+                <label class="block mb-2 font-semibold">Description</label>
+                <input pInputText type="text" [(ngModel)]="configForm.description" placeholder="Short description for administrators" class="w-full border-round-lg" />
+              </div>
+
+              <!-- Visibility / Status toggle -->
+              <div class="col-12 md:col-6 flex align-items-center gap-3">
+                <label class="font-semibold cursor-pointer" for="isActiveToggle">Visible in Sidebar</label>
+                <p-inputSwitch [(ngModel)]="configForm.isActive" inputId="isActiveToggle"></p-inputSwitch>
+              </div>
+
+              <div class="col-12 flex justify-content-end gap-3 mt-4 border-top-1 border-200 pt-4">
+                <button pButton label="Reset" icon="pi pi-refresh" class="p-button-secondary p-button-outlined p-button-sm" (click)="clearConfigForm()"></button>
+                <button pButton label="Save Changes" icon="pi pi-check" class="p-button-success p-button-sm glow-btn" (click)="saveNode()"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- ============================================================================
+         TAB 2: REDESIGNED ACCESS CONTROL WORKSPACE (ROLE PRIVILEGE GRID)
+         ============================================================================ -->
+    <p-tabPanel header="Access Control">
+      <div class="grid layout-split">
+        <!-- Roles Selection Left Panel -->
+        <div class="col-12 lg:col-4">
+          <div class="workspace-card p-4">
+            <div class="panel-header mb-4">
+              <h4>Roles</h4>
+              <p class="text-xs text-muted">Select a role to manage permissions.</p>
+            </div>
+
+            <!-- Search roles -->
+            <div class="p-input-icon-left w-full mb-3">
+              <i class="pi pi-search"></i>
+              <input pInputText type="text" [(ngModel)]="searchRoleQuery" placeholder="Search roles..." class="w-full p-inputtext-sm border-round-lg"/>
+            </div>
+
+            <!-- Role Selector List/Cards -->
+            <div class="role-matrix-selector flex flex-column gap-3">
+              <div *ngFor="let rol of filteredRoles" class="role-picker-card" [style.--role-accent]="getRoleAccent(rol)"
+                [class.is-active]="selectedRoleId === rol.roleId"
+                (click)="selectAccessRole(rol)">
+                <div class="role-badge-row flex justify-content-between align-items-center">
+                    <span class="badge role-tone" [ngStyle]="getRoleBadgeStyle(rol)">{{ rol.roleName }}</span>
+                  <span class="status-indicator" [class.online]="rol.isActive"></span>
+                </div>
+                <p class="desc text-xs mt-2 limit-text">{{ rol.description || 'No custom description' }}</p>
+                <div class="meta flex justify-content-between mt-3 text-xs text-muted">
+                  <span><i class="pi pi-circle-fill"></i> {{ rol.isActive === false ? 'Inactive' : 'Active' }}</span>
+                  <span><i class="pi pi-lock"></i> {{ getRolePermissionCount(rol.roleId) }} permissions</span>
+                </div>
+              </div>
+              <div class="empty-state compact" *ngIf="!filteredRoles.length">
+                <i class="pi pi-search"></i>
+                <span>No roles match your search.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grouped modules privilege selection (Right Panel) -->
+        <div class="col-12 lg:col-8">
+          <div class="workspace-card p-4">
+            <div class="panel-header mb-4 flex justify-content-between align-items-center">
+              <div>
+                <h4>Permission Matrix</h4>
+                <p class="text-xs text-muted">Turn permissions on or off for the selected role.</p>
+              </div>
+              <div class="flex align-items-center gap-2" *ngIf="selectedRoleId">
+                <span class="badge success">{{ getSelectedPermissionsCount(selectedRoleId) }} Active Operations</span>
+              </div>
+            </div>
+
+            <div class="loading-overlay text-center p-5" *ngIf="loadingRolePrivileges">
+              <i class="pi pi-spin pi-spinner text-3xl text-primary mb-3"></i>
+              <p>Loading permissions...</p>
+            </div>
+
+            <!-- Privilege Groups list -->
+            <div class="privilege-module-block-container" *ngIf="!loadingRolePrivileges && menuTree.length">
+              
+              <!-- Accordion style card block per parent module -->
+              <div *ngFor="let module of menuTree" class="module-card-block mb-3 border-1 border-200 border-round-lg overflow-hidden">
+                <div class="card-header flex align-items-center justify-content-between p-3 cursor-pointer"
+                  [style.background]="isModuleExpanded(module.menuId) ? 'var(--tc-surface-100)' : 'var(--tc-surface-card-solid)'"
+                  (click)="toggleModuleExpansion(module.menuId)">
+                  <div class="flex align-items-center gap-2">
+                    <button type="button" class="module-toggle-btn" (click)="toggleModuleExpansion(module.menuId); $event.stopPropagation()" [attr.aria-label]="isModuleExpanded(module.menuId) ? 'Collapse' : 'Expand'">
+                      <i class="pi" [ngClass]="isModuleExpanded(module.menuId) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                    </button>
+                    <span class="icon-holder"><i [ngClass]="module.icon || 'pi pi-folder'"></i></span>
+                    <span class="font-bold text-sm">{{ getModuleTitle(module.name) }}</span>
+                    <span class="badge text-xs ml-2">{{ module.children?.length || 0 }} pages</span>
+                  </div>
+                  <div class="flex align-items-center gap-3" (click)="$event.stopPropagation()">
+                    <!-- Quick action group block -->
+                    <label class="flex align-items-center gap-1 text-xs cursor-pointer select-none">
+                      <p-checkbox [binary]="true" [ngModel]="isModuleFullyChecked(module)" 
+                        (onChange)="toggleModuleGroup(module, $event.checked)"></p-checkbox>
+                      <span class="font-medium text-muted">Toggle All</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="card-body p-3" *ngIf="isModuleExpanded(module.menuId)">
+                  <div class="empty-submenu-warning text-center text-xs py-2 text-muted" *ngIf="!module.children?.length">
+                    No page links in this section.
+                  </div>
+                  
+                  <div *ngFor="let routeRow of module.children" class="route-table-row flex flex-column md:flex-row md:align-items-center justify-content-between py-3 border-bottom-1 border-100 gap-2">
+                    <div class="route-metadata flex-1">
+                      <p class="font-semibold text-xs text-900 m-0"><i [ngClass]="routeRow.subMenuIcon || 'pi pi-circle'"></i> {{ routeRow.subMenuName }}</p>
+                      <span class="text-xs text-muted">{{ routeRow.subMenuUrl || 'No path configured' }}</span>
+                    </div>
+
+                    <!-- Toggle chip privileges -->
+                    <div class="operation-chips flex flex-wrap gap-2">
+                      <label *ngFor="let priv of getRoutePrivileges(routeRow)" class="toggle-chip" 
+                        [class.is-checked]="isAccessChecked(routeRow.subMenuId, priv.privilegeId)">
+                        <input type="checkbox" 
+                          [checked]="isAccessChecked(routeRow.subMenuId, priv.privilegeId)"
+                          (change)="toggleAccessPrivilege(routeRow.subMenuId, priv.privilegeId, $any($event.target).checked)"
+                          style="display: none;"/>
+                        <span class="chip-label">{{ priv.privilegeName }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action submits -->
+            <div class="flex justify-content-end gap-3 mt-4 pt-4 border-top-1 border-200">
+              <button pButton label="Reset" icon="pi pi-sync" class="p-button-secondary p-button-outlined p-button-sm" (click)="selectedRoleId && onAccessControlRoleChange(selectedRoleId)"></button>
+              <button pButton [label]="savingAccessControl ? 'Saving' : 'Save Permissions'" 
+                icon="pi pi-check-circle" class="p-button-success p-button-sm glow-btn" [disabled]="savingAccessControl" (click)="saveAccessMappings()"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- ============================================================================
+         TAB 3: PREMIUM ROLE MANAGEMENT
+         ============================================================================ -->
+    <p-tabPanel header="Roles Dashboard">
+      <div class="panel-header mb-4 flex justify-content-between align-items-center">
+        <div>
+          <h4>Roles Dashboard</h4>
+          <p class="text-xs text-muted">Manage role names, status, and permission coverage.</p>
+        </div>
+        <button pButton label="New Role" icon="pi pi-plus" class="p-button-primary p-button-sm glow-btn" (click)="openAddRoleDialog()"></button>
+      </div>
+
+      <div class="p-input-icon-left role-search mb-4">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchRoleQuery" placeholder="Search roles..." class="w-full p-inputtext-sm border-round-lg"/>
+      </div>
+
+      <div class="grid layout-split">
+        <div *ngFor="let role of filteredRoles" class="col-12 md:col-6 xl:col-4">
+          <div class="role-grid-card" [style.--role-accent]="getRoleAccent(role)">
+            <div class="header-band flex justify-content-between align-items-center mb-3">
+              <span class="badge role-tone" [ngStyle]="getRoleBadgeStyle(role)">{{ role.roleCode }}</span>
+              <p-inputSwitch [ngModel]="role.isActive" (onChange)="toggleRoleStatus(role)"></p-inputSwitch>
+            </div>
+            
+            <h4 class="font-bold text-lg text-900 m-0">{{ role.roleName }}</h4>
+            <p class="desc text-xs text-muted mt-2 limit-text">{{ role.description || 'Standard institutional security descriptor mapping' }}</p>
+            
+            <div class="stats-bar flex justify-content-between mt-4 text-xs font-semibold py-2 border-top-1 border-bottom-1 border-100">
+              <span>Permissions: {{ getRolePermissionCount(role.roleId) }}</span>
+              <span>{{ role.isActive === false ? 'Inactive' : 'Active' }}</span>
+            </div>
+
+            <div class="action-footer flex justify-content-end gap-2 mt-3">
+              <button pButton icon="pi pi-pencil" label="Edit" class="p-button-secondary p-button-text p-button-sm" (click)="openEditRoleDialog(role)"></button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12" *ngIf="!filteredRoles.length">
+          <div class="empty-state">
+            <i class="pi pi-search"></i>
+            <span>No roles match your search.</span>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+  </p-tabView>
+</div>
+
+<!-- ============================================================================
+     DIALOGS & INTERACTIVE OVERLAYS
+     ============================================================================ -->
+
+<!-- Visually Rich Searchable Icon Picker Overlay -->
+<p-dialog [(visible)]="showIconPicker" [modal]="true" header="Icon Palette" [responsive]="true" [style]="{width: '560px', 'max-width': '95vw', 'border-radius': '16px'}" styleClass="custom-workspace-dialog">
+  <div class="icon-picker-panel py-2">
+    <div class="p-input-icon-left w-full mb-4">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchIconQuery" placeholder="Search icon aliases..." class="w-full border-round-lg"/>
+    </div>
+    
+    <div class="icon-grid">
+      <div *ngFor="let ic of getFilteredIcons()" class="icon-cell" (click)="selectIcon(ic.class)" [pTooltip]="ic.name" tooltipPosition="top">
+        <div class="icon-tile">
+          <i [ngClass]="ic.class"></i>
+        </div>
+        <span class="icon-name">{{ ic.name }}</span>
+      </div>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Add / Edit Role dialog -->
+<p-dialog [(visible)]="roleFormVisible" [modal]="true" [header]="roleFormEditMode ? 'Edit Role' : 'New Role'" [responsive]="true" [style]="{width: '450px', 'max-width': '95vw', 'border-radius': '16px'}" styleClass="custom-workspace-dialog">
+  <div class="role-form-dialog grid pt-2">
+    <div class="col-12" *ngIf="!roleFormEditMode">
+      <label class="block mb-2 font-semibold">Role Code</label>
+      <input pInputText type="text" [(ngModel)]="roleForm.roleCode" placeholder="e.g. STUDENT_ADMIN" class="w-full border-round-lg"/>
+    </div>
+    <div class="col-12">
+      <label class="block mb-2 font-semibold">Role Name</label>
+      <input pInputText type="text" [(ngModel)]="roleForm.roleName" placeholder="e.g. Student Administrator" class="w-full border-round-lg"/>
+    </div>
+    <div class="col-12">
+      <label class="block mb-2 font-semibold">Description</label>
+      <input pInputText type="text" [(ngModel)]="roleForm.description" placeholder="Short description for administrators" class="w-full border-round-lg" style="min-height: 80px;"/>
+    </div>
+    <div class="col-12 flex align-items-center gap-3 mt-3">
+      <label class="font-semibold cursor-pointer" for="roleActiveToggle">Active</label>
+      <p-inputSwitch [(ngModel)]="roleForm.isActive" inputId="roleActiveToggle"></p-inputSwitch>
+    </div>
+    
+    <div class="col-12 flex justify-content-end gap-3 mt-4 border-top-1 border-100 pt-4">
+      <button pButton label="Cancel" class="p-button-secondary p-button-outlined p-button-sm" (click)="roleFormVisible = false"></button>
+      <button pButton [label]="roleSaving ? 'Saving' : 'Save Role'" class="p-button-success p-button-sm glow-btn" [disabled]="roleSaving" (click)="saveRole()"></button>
+    </div>
+  </div>
+</p-dialog>
