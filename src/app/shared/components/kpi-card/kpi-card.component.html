@@ -1,0 +1,32 @@
+<article class="kpi-card kpi-card--{{ tone }}" [class.kpi-card--loading]="loading" role="group" [attr.aria-label]="label">
+  <ng-container *ngIf="!loading; else shimmer">
+    <header class="kpi-card__header">
+      <span class="kpi-card__icon"><i [class]="icon" aria-hidden="true"></i></span>
+      <span class="kpi-card__label">{{ label }}</span>
+    </header>
+
+    <div class="kpi-card__value-row">
+      <span class="kpi-card__value">{{ value ?? '—' }}</span>
+      <span *ngIf="delta !== null && delta !== undefined"
+            class="kpi-card__delta kpi-card__delta--{{ deltaSign }}"
+            [attr.aria-label]="'Change ' + deltaLabel">
+        <i class="pi" [class.pi-arrow-up]="deltaSign==='up'" [class.pi-arrow-down]="deltaSign==='down'" [class.pi-minus]="deltaSign==='flat'"></i>
+        {{ deltaLabel }}
+      </span>
+    </div>
+
+    <p *ngIf="hint" class="kpi-card__hint">{{ hint }}</p>
+
+    <a *ngIf="link" class="kpi-card__link" [routerLink]="link">
+      {{ linkLabel }} <i class="pi pi-arrow-right" aria-hidden="true"></i>
+    </a>
+  </ng-container>
+
+  <ng-template #shimmer>
+    <div class="kpi-card__shimmer">
+      <div class="line line--sm"></div>
+      <div class="line line--lg"></div>
+      <div class="line line--md"></div>
+    </div>
+  </ng-template>
+</article>

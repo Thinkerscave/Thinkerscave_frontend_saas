@@ -1,0 +1,73 @@
+<button type="button" class="gs-trigger" (click)="open()" aria-label="Open global search">
+  <i class="pi pi-search" aria-hidden="true"></i>
+  <span>Search</span>
+  <kbd>Ctrl K</kbd>
+</button>
+
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [showHeader]="false"
+    styleClass="gs-dialog"
+    [style]="{ width: '640px' }"
+    (onHide)="close()">
+
+  <div class="gs">
+    <div class="gs__input-row">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input #searchInput type="text"
+             class="gs__input"
+             pInputText
+             placeholder="Search anything…"
+             [ngModel]="term()"
+             (ngModelChange)="onTermChange($event)"
+             (keydown)="onKey($event)"
+             autocomplete="off" />
+      <kbd>Esc</kbd>
+    </div>
+
+    <div class="gs__body">
+      <ng-container *ngIf="loading(); else loaded">
+        <app-skeleton shape="list" [rows]="3"></app-skeleton>
+      </ng-container>
+
+      <ng-template #loaded>
+        <ng-container *ngIf="!results().length; else hasResults">
+          <app-empty-state
+              [compact]="true"
+              icon="pi pi-search"
+              [title]="term().length < 2 ? 'Start typing to search' : 'No matches found'"
+              [message]="term().length < 2 ? 'Press Ctrl K from anywhere to open this palette.' : 'Try different keywords or check your filters.'"></app-empty-state>
+        </ng-container>
+
+        <ng-template #hasResults>
+          <div class="gs__group" *ngFor="let group of groupedResults">
+            <header class="gs__group-header">{{ group.category }}</header>
+            <button type="button" class="gs__item"
+                    *ngFor="let item of group.items"
+                    [class.gs__item--active]="isHighlighted(item)"
+                    (mouseenter)="highlighted.set(results().indexOf(item))"
+                    (click)="select(item)">
+              <span class="gs__item-icon"><i [class]="item.icon || 'pi pi-circle-fill'"></i></span>
+              <span class="gs__item-text">
+                <strong>{{ item.label }}</strong>
+                <small *ngIf="item.description">{{ item.description }}</small>
+              </span>
+              <i class="pi pi-arrow-right gs__item-go"></i>
+            </button>
+          </div>
+        </ng-template>
+      </ng-template>
+    </div>
+
+    <footer class="gs__footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span><kbd>Esc</kbd> close</span>
+    </footer>
+  </div>
+</p-dialog>

@@ -1,0 +1,113 @@
+:host { display: block; }
+
+.ws-header {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--surface-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  &--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+
+  &__crumbs ::ng-deep .p-breadcrumb {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: 0.8rem;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  &__icon {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: rgba(79, 70, 229, 0.10);
+    color: var(--primary-color, #4f46e5);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color, #1f2937);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--text-color-secondary, #6b7280);
+    font-size: 0.95rem;
+  }
+
+  &__desc {
+    margin: 0.15rem 0 0;
+    color: var(--text-color-secondary, #6b7280);
+    font-size: 0.85rem;
+    max-width: 720px;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__filters:empty { display: none; }
+  &__filters {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.ws-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--text-color-secondary, #6b7280);
+
+  &--success { background: rgba(22, 163, 74, 0.12);  color: #15803d; }
+  &--warning { background: rgba(217, 119, 6, 0.12);  color: #b45309; }
+  &--danger  { background: rgba(220, 38, 38, 0.12);  color: #b91c1c; }
+  &--info    { background: rgba(2, 132, 199, 0.12);  color: #075985; }
+}

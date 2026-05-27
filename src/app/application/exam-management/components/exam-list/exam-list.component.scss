@@ -1,0 +1,25 @@
+:host {
+    display: block;
+    padding: var(--tc-space-5);
+}
+
+.tc-kpi-strip {
+    display: grid;
+    gap: var(--tc-space-4);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin: var(--tc-space-5) 0;
+}
+
+.tc-card {
+    background: var(--tc-surface-card-solid);
+    border: 1px solid var(--tc-border);
+    border-radius: var(--tc-radius-lg);
+    padding: var(--tc-space-4);
+    box-shadow: var(--tc-shadow-xs);
+}
+
+.tc-row-actions {
+    display: flex;
+    gap: var(--tc-space-1);
+    justify-content: flex-end;
+}

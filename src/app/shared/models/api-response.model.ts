@@ -3,5 +3,19 @@ export interface ApiResponse<T> {
     message: string;
     data: T;
     timestamp: string;
-  }
-  
+}
+
+/**
+ * Mirrors backend PageResponse<T> wrapper. List endpoints typically return
+ * ApiResponse<PageResponse<T>>; the FE unwraps `data.content` to a flat array.
+ */
+export interface PageResponse<T> {
+    content: T[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+    sort?: string;
+}

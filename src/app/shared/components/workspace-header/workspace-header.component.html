@@ -1,0 +1,26 @@
+<header class="ws-header" [class.ws-header--sticky]="sticky">
+  <p-breadcrumb *ngIf="breadcrumbs?.length" [model]="breadcrumbs" [home]="home" class="ws-header__crumbs"></p-breadcrumb>
+
+  <div class="ws-header__row">
+    <div class="ws-header__heading">
+      <div class="ws-header__title-row">
+        <span *ngIf="icon" class="ws-header__icon" aria-hidden="true">
+          <i [class]="icon"></i>
+        </span>
+        <h1 class="ws-header__title">{{ title }}</h1>
+        <span *ngFor="let tag of tags" class="ws-tag ws-tag--{{ tag.tone || 'default' }}">{{ tag.label }}</span>
+      </div>
+      <p *ngIf="subtitle" class="ws-header__subtitle">{{ subtitle }}</p>
+      <p *ngIf="description" class="ws-header__desc">{{ description }}</p>
+    </div>
+
+    <div class="ws-header__actions">
+      <ng-content select="[actions]"></ng-content>
+      <ng-container *ngIf="actionsTemplate" [ngTemplateOutlet]="actionsTemplate"></ng-container>
+    </div>
+  </div>
+
+  <div class="ws-header__filters">
+    <ng-content select="[filters]"></ng-content>
+  </div>
+</header>

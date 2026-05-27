@@ -1,0 +1,67 @@
+<app-workspace-header
+    title="Academic enrollments"
+    subtitle="Student lifecycle"
+    description="Track active, promoted and withdrawn enrollments across academic years."
+    icon="pi pi-id-card"
+    [breadcrumbs]="[{ label: 'Students' }, { label: 'Enrollments' }]">
+    <ng-container actions>
+        <p-button label="New enrollment" icon="pi pi-plus"
+                  (onClick)="router.navigate(['/app/enrollments/new'])"></p-button>
+    </ng-container>
+</app-workspace-header>
+
+<section class="tc-kpi-strip">
+    <app-kpi-card label="Total"     [value]="enrollments().length"  icon="pi pi-users"        tone="info"></app-kpi-card>
+    <app-kpi-card label="Active"    [value]="countBy('ACTIVE')"     icon="pi pi-check"        tone="success"></app-kpi-card>
+    <app-kpi-card label="Promoted"  [value]="countBy('PROMOTED')"   icon="pi pi-arrow-up"     tone="info"></app-kpi-card>
+    <app-kpi-card label="Withdrawn" [value]="countBy('WITHDRAWN')"  icon="pi pi-times-circle" tone="danger"></app-kpi-card>
+</section>
+
+<section class="tc-card">
+    <ng-container *ngIf="loading(); else loaded">
+        <app-skeleton shape="table" [rows]="6" [columns]="6"></app-skeleton>
+    </ng-container>
+
+    <ng-template #loaded>
+        <ng-container *ngIf="enrollments().length; else empty">
+            <p-table [value]="enrollments()" [paginator]="true" [rows]="10"
+                     styleClass="p-datatable-sm" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Enrollment #</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Section</th>
+                        <th>Roll</th>
+                        <th>Status</th>
+                        <th style="width: 9rem"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td>{{ row.enrollmentNumber || '—' }}</td>
+                        <td>{{ row.studentId }}</td>
+                        <td>{{ row.classId }}</td>
+                        <td>{{ row.sectionId || '—' }}</td>
+                        <td>{{ row.rollNumber || '—' }}</td>
+                        <td><app-status-badge [status]="row.status"></app-status-badge></td>
+                        <td class="tc-row-actions">
+                            <p-button icon="pi pi-pencil" [text]="true" size="small" pTooltip="Edit"
+                                      (onClick)="router.navigate(['/app/enrollments', row.id, 'edit'])"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+
+        <ng-template #empty>
+            <app-empty-state
+                icon="pi pi-id-card"
+                title="No enrollments found"
+                message="Create your first enrollment to begin tracking students for this academic year."
+                actionLabel="New enrollment"
+                actionIcon="pi pi-plus"
+                (action)="router.navigate(['/app/enrollments/new'])"></app-empty-state>
+        </ng-template>
+    </ng-template>
+</section>

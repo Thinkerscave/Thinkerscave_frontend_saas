@@ -7,7 +7,7 @@ import Aura from '@primeng/themes/aura';
 import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
-import { NgxUiLoaderHttpModule, NgxUiLoaderModule } from 'ngx-ui-loader';
+import { NgxUiLoaderModule } from 'ngx-ui-loader';
 import { authInterceptor } from './core/interceptor/auth.interceptor';
 import { MessageService } from 'primeng/api';
 
@@ -31,10 +31,12 @@ export const appConfig: ApplicationConfig = {
         }
       }
     }),
-    importProvidersFrom(
-      NgxUiLoaderModule, // core loader
-      NgxUiLoaderHttpModule.forRoot({ showForeground: true }) // auto show on HTTP
-    ),
+    // Core loader only. The HTTP module is intentionally NOT registered here —
+    // tenantInterceptor already calls loader.start()/stop() per request, so
+    // registering NgxUiLoaderHttpModule too would double-count and the loader
+    // overlay can get stuck when navigation cancels an in-flight request
+    // (only one of the two trackers observes the cancellation).
+    importProvidersFrom(NgxUiLoaderModule),
     MessageService
   ]
 };

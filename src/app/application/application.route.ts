@@ -1,5 +1,10 @@
 import { Routes } from '@angular/router';
 import { LEAD_MANAGEMENT_ROUTES } from './lead-management/lead-management.routes';
+import { EXAM_MANAGEMENT_ROUTES } from './exam-management/exam-management.routes';
+import { COMMUNICATION_ROUTES } from './communication/communication.routes';
+import { ENROLLMENT_MANAGEMENT_ROUTES } from './enrollment-management/enrollment-management.routes';
+import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
+import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
 import { roleGuard } from '../core/guard/role.guard';
 
 export const APPLICATION_ROUTES: Routes = [
@@ -155,6 +160,26 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: '',
     children: LEAD_MANAGEMENT_ROUTES
+  },
+  {
+    path: '',
+    children: EXAM_MANAGEMENT_ROUTES
+  },
+  {
+    path: '',
+    children: COMMUNICATION_ROUTES
+  },
+  {
+    path: '',
+    children: ENROLLMENT_MANAGEMENT_ROUTES
+  },
+  {
+    path: '',
+    children: PROMOTION_MANAGEMENT_ROUTES
+  },
+  {
+    path: '',
+    children: RESPONSIBILITY_MANAGEMENT_ROUTES
   },
   // ─── Master Data ─────────────────────────────────────────────────────────
   {

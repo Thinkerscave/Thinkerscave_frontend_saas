@@ -1,0 +1,28 @@
+<ng-container [ngSwitch]="shape">
+    <span *ngSwitchCase="'line'"   class="sk sk--line"   [style.width]="width" [style.height]="height"></span>
+    <span *ngSwitchCase="'rect'"   class="sk sk--rect"   [style.width]="width" [style.height]="height"></span>
+    <span *ngSwitchCase="'circle'" class="sk sk--circle" [style.width]="size"  [style.height]="size"></span>
+
+    <div *ngSwitchCase="'card'" class="sk-card">
+        <span class="sk sk--rect sk-card__media"></span>
+        <span class="sk sk--line" style="width: 70%"></span>
+        <span class="sk sk--line" style="width: 90%"></span>
+        <span class="sk sk--line" style="width: 50%"></span>
+    </div>
+
+    <div *ngSwitchCase="'list'" class="sk-list">
+        <div class="sk-list__row" *ngFor="let _ of rowsArr">
+            <span class="sk sk--circle" style="width: 36px; height: 36px;"></span>
+            <div class="sk-list__lines">
+                <span class="sk sk--line" style="width: 60%"></span>
+                <span class="sk sk--line" style="width: 40%"></span>
+            </div>
+        </div>
+    </div>
+
+    <div *ngSwitchCase="'table'" class="sk-table">
+        <div class="sk-table__row" *ngFor="let _ of rowsArr">
+            <span class="sk sk--line" *ngFor="let __ of columnsArr" [style.flex]="'1 1 0'"></span>
+        </div>
+    </div>
+</ng-container>

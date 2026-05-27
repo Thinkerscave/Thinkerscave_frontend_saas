@@ -1,0 +1,77 @@
+<app-workspace-header
+    title="Promotion batches"
+    subtitle="Academic year transition"
+    description="Plan, preview and execute student promotions between academic years."
+    icon="pi pi-arrow-up-right"
+    [breadcrumbs]="[{ label: 'Students' }, { label: 'Promotions' }]">
+    <ng-container actions>
+        <p-button label="New batch" icon="pi pi-plus"
+                  (onClick)="router.navigate(['/app/promotions/new'])"></p-button>
+    </ng-container>
+</app-workspace-header>
+
+<section class="tc-kpi-strip">
+    <app-kpi-card label="Total"      [value]="batches().length"      icon="pi pi-list"          tone="info"></app-kpi-card>
+    <app-kpi-card label="Draft"      [value]="countBy('DRAFT')"      icon="pi pi-file-edit"     tone="default"></app-kpi-card>
+    <app-kpi-card label="Previewed"  [value]="countBy('PREVIEWED')"  icon="pi pi-eye"           tone="warning"></app-kpi-card>
+    <app-kpi-card label="Executed"   [value]="countBy('EXECUTED')"   icon="pi pi-check-circle"  tone="success"></app-kpi-card>
+</section>
+
+<section class="tc-card">
+    <ng-container *ngIf="loading(); else loaded">
+        <app-skeleton shape="table" [rows]="6" [columns]="5"></app-skeleton>
+    </ng-container>
+
+    <ng-template #loaded>
+        <ng-container *ngIf="batches().length; else empty">
+            <p-table [value]="batches()" [paginator]="true" [rows]="10"
+                     styleClass="p-datatable-sm" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Batch #</th>
+                        <th>From year</th>
+                        <th>To year</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th style="width: 13rem"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td>{{ row.batchNumber || row.id }}</td>
+                        <td>{{ row.fromAcademicYearId }}</td>
+                        <td>{{ row.toAcademicYearId }}</td>
+                        <td><app-status-badge [status]="row.status"></app-status-badge></td>
+                        <td>{{ row.createdAt ? (row.createdAt | date: 'medium') : '—' }}</td>
+                        <td class="tc-row-actions">
+                            <p-button *ngIf="row.status === 'DRAFT'"
+                                      icon="pi pi-eye" [text]="true" size="small"
+                                      pTooltip="Preview" (onClick)="preview(row)"></p-button>
+                            <p-button *ngIf="row.status === 'PREVIEWED'"
+                                      icon="pi pi-check" [text]="true" size="small"
+                                      pTooltip="Execute" (onClick)="execute(row)"></p-button>
+                            <p-button *ngIf="row.status === 'EXECUTED'"
+                                      icon="pi pi-undo" [text]="true" size="small"
+                                      pTooltip="Roll back" (onClick)="rollback(row)"></p-button>
+                            <p-button *ngIf="row.status === 'DRAFT' || row.status === 'PREVIEWED'"
+                                      icon="pi pi-times" [text]="true" size="small"
+                                      pTooltip="Cancel" (onClick)="cancel(row)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+
+        <ng-template #empty>
+            <app-empty-state
+                icon="pi pi-arrow-up-right"
+                title="No promotion batches yet"
+                message="Create a batch to begin promoting students into the next academic year."
+                actionLabel="New batch"
+                actionIcon="pi pi-plus"
+                (action)="router.navigate(['/app/promotions/new'])"></app-empty-state>
+        </ng-template>
+    </ng-template>
+</section>
+
+<p-confirmDialog></p-confirmDialog>
