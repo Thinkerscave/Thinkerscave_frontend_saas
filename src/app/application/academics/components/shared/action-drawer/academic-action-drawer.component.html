@@ -1,0 +1,271 @@
+<div class="acad-drawer-backdrop" *ngIf="open" (click)="closed.emit()"></div>
+
+<aside class="acad-action-drawer" *ngIf="open" role="dialog" aria-modal="true" [attr.aria-label]="title">
+  <header>
+    <div>
+      <span class="acad-eyebrow"><i class="pi pi-sparkles"></i> Guided workflow</span>
+      <h2>{{ title }}</h2>
+      <p>Fill only the required school-facing details. The workspace will refresh from API data after save.</p>
+    </div>
+    <button type="button" class="acad-icon-button" (click)="closed.emit()" aria-label="Close drawer">
+      <i class="pi pi-times"></i>
+    </button>
+  </header>
+
+  <div class="acad-drawer-progress">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <form [formGroup]="activeForm" (ngSubmit)="submit()">
+    <ng-container [ngSwitch]="mode">
+      <section *ngSwitchCase="'year'" class="acad-form-grid">
+        <label>
+          <span>Academic year code</span>
+          <input formControlName="yearCode" placeholder="AY-2026-27">
+        </label>
+        <label>
+          <span>Start date</span>
+          <input type="date" formControlName="startDate">
+        </label>
+        <label>
+          <span>End date</span>
+          <input type="date" formControlName="endDate">
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'class'" class="acad-form-grid">
+        <label>
+          <span>Class name</span>
+          <input formControlName="className" placeholder="Class 10 - Foundation">
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'section'" class="acad-form-grid">
+        <label>
+          <span>Class</span>
+          <select formControlName="classId">
+            <option *ngFor="let classItem of data?.classes || []" [ngValue]="classItem.classId">{{ classItem.className }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Section name</span>
+          <input formControlName="sectionName" placeholder="Section A">
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'subject'" class="acad-form-grid two-column">
+        <label>
+          <span>Subject code</span>
+          <input formControlName="subjectCode" placeholder="BIO-10">
+        </label>
+        <label>
+          <span>Subject name</span>
+          <input formControlName="subjectName" placeholder="Biology">
+        </label>
+        <label>
+          <span>Category</span>
+          <select formControlName="category">
+            <option value="CORE">Core</option>
+            <option value="ELECTIVE">Elective</option>
+            <option value="LAB">Lab</option>
+            <option value="GENERAL">General</option>
+          </select>
+        </label>
+        <label>
+          <span>Credits</span>
+          <input type="number" formControlName="credits" min="0">
+        </label>
+        <label>
+          <span>Theory hours</span>
+          <input type="number" formControlName="theoryHours" min="0">
+        </label>
+        <label>
+          <span>Lab hours</span>
+          <input type="number" formControlName="labHours" min="0">
+        </label>
+        <label class="full-width">
+          <span>Description</span>
+          <textarea formControlName="description" rows="3" placeholder="Brief learning purpose for school staff."></textarea>
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'allocation'" class="acad-form-grid two-column">
+        <label>
+          <span>Class</span>
+          <select formControlName="classId">
+            <option *ngFor="let classItem of data?.classes || []" [ngValue]="classItem.classId">{{ classItem.className }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Section</span>
+          <select formControlName="sectionId">
+            <option [ngValue]="0">Whole class</option>
+            <option *ngFor="let section of sectionsForSelectedClass" [ngValue]="section.sectionId">{{ section.sectionName }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Subject</span>
+          <select formControlName="subjectId">
+            <option *ngFor="let subject of data?.subjects || []" [ngValue]="subject.subjectId">{{ subject.subjectName }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Teacher</span>
+          <select formControlName="teacherId">
+            <option *ngFor="let staff of data?.staff || []" [ngValue]="staff.staffId || staff.id">{{ teacherLabel(staff) }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Periods per week</span>
+          <input type="number" formControlName="periodsPerWeek" min="1" max="40">
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'class-teacher'" class="acad-form-grid two-column">
+        <label>
+          <span>Class</span>
+          <select formControlName="classId">
+            <option *ngFor="let classItem of data?.classes || []" [ngValue]="classItem.classId">{{ classItem.className }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Section scope</span>
+          <select formControlName="sectionId">
+            <option [ngValue]="0">Whole class</option>
+            <option *ngFor="let section of sectionsForSelectedClass" [ngValue]="section.sectionId">{{ section.sectionName }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Class teacher</span>
+          <select formControlName="teacherId">
+            <option *ngFor="let staff of data?.staff || []" [ngValue]="staff.staffId || staff.id">{{ teacherLabel(staff) }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Effective from</span>
+          <input type="date" formControlName="effectiveFrom">
+        </label>
+        <label class="full-width">
+          <span>Responsibility notes</span>
+          <textarea formControlName="notes" rows="3" placeholder="Parent communication, attendance ownership, student wellbeing notes."></textarea>
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'timetable'" class="acad-form-grid two-column">
+        <label>
+          <span>Class</span>
+          <select formControlName="classId">
+            <option *ngFor="let classItem of data?.classes || []" [ngValue]="classItem.classId">{{ classItem.className }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Section</span>
+          <select formControlName="sectionId">
+            <option [ngValue]="0">Whole class</option>
+            <option *ngFor="let section of sectionsForSelectedClass" [ngValue]="section.sectionId">{{ section.sectionName }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Subject</span>
+          <select formControlName="subjectId">
+            <option *ngFor="let subject of data?.subjects || []" [ngValue]="subject.subjectId">{{ subject.subjectName }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Teacher</span>
+          <select formControlName="teacherId">
+            <option *ngFor="let staff of data?.staff || []" [ngValue]="staff.staffId || staff.id">{{ teacherLabel(staff) }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Day</span>
+          <select formControlName="dayOfWeek">
+            <option *ngFor="let day of days" [value]="day">{{ day }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Period</span>
+          <select formControlName="periodNumber">
+            <option *ngFor="let period of periods" [ngValue]="period.periodNumber">Period {{ period.periodNumber }} · {{ period.startTime }}-{{ period.endTime }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Start time</span>
+          <input type="time" formControlName="startTime">
+        </label>
+        <label>
+          <span>End time</span>
+          <input type="time" formControlName="endTime">
+        </label>
+        <label class="full-width">
+          <span>Room</span>
+          <input formControlName="roomName" placeholder="A-201">
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'calendar-event'" class="acad-form-grid two-column">
+        <label class="full-width">
+          <span>Event title</span>
+          <input formControlName="title" placeholder="Parent teacher meeting">
+        </label>
+        <label>
+          <span>Event type</span>
+          <select formControlName="eventType">
+            <option *ngFor="let eventType of eventTypes" [value]="eventType">{{ eventType }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Start date</span>
+          <input type="date" formControlName="startDate">
+        </label>
+        <label>
+          <span>End date</span>
+          <input type="date" formControlName="endDate">
+        </label>
+        <label class="full-width">
+          <span>Description</span>
+          <textarea formControlName="description" rows="3" placeholder="Who should prepare, attend or be notified?"></textarea>
+        </label>
+      </section>
+
+      <section *ngSwitchCase="'settings'" class="acad-form-grid two-column">
+        <label>
+          <span>Setting key</span>
+          <input formControlName="settingKey" placeholder="MAX_PERIODS_PER_DAY">
+        </label>
+        <label>
+          <span>Value</span>
+          <input formControlName="settingValue" placeholder="8">
+        </label>
+        <label>
+          <span>Value type</span>
+          <select formControlName="valueType">
+            <option value="TEXT">Text</option>
+            <option value="NUMBER">Number</option>
+            <option value="BOOLEAN">Boolean</option>
+            <option value="JSON">JSON</option>
+            <option value="DATE">Date</option>
+          </select>
+        </label>
+        <label>
+          <span>Category</span>
+          <input formControlName="category" placeholder="TIMETABLE">
+        </label>
+        <label class="full-width">
+          <span>Description</span>
+          <textarea formControlName="description" rows="3"></textarea>
+        </label>
+      </section>
+    </ng-container>
+
+    <footer>
+      <button type="button" class="acad-ghost-button" (click)="closed.emit()">Cancel</button>
+      <button type="submit" class="acad-primary-button" [disabled]="saving || activeForm.invalid">
+        <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+        {{ saving ? 'Saving' : 'Save and refresh' }}
+      </button>
+    </footer>
+  </form>
+</aside>

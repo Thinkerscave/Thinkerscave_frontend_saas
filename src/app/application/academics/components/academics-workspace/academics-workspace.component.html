@@ -1,0 +1,142 @@
+<section class="academics-premium-workspace">
+  <app-academic-workspace-nav
+    [groups]="navGroups"
+    [pages]="pages"
+    [activePage]="activePage">
+  </app-academic-workspace-nav>
+
+  <main class="acad-main">
+    <div class="acad-loading-shell" *ngIf="loading">
+      <span></span><span></span><span></span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <app-academic-smart-hero
+        [page]="page"
+        [currentYear]="data.currentYear"
+        [metrics]="metrics"
+        [health]="health"
+        (commandRequested)="commandOpen = true">
+      </app-academic-smart-hero>
+
+      <app-academic-quick-action-bar
+        [actions]="quickActions"
+        (selected)="openQuickAction($event)">
+      </app-academic-quick-action-bar>
+
+      <ng-container [ngSwitch]="activePage">
+        <app-academic-dashboard-page
+          *ngSwitchCase="'dashboard'"
+          [data]="data"
+          [metrics]="metrics"
+          [insights]="insights"
+          [alerts]="alerts"
+          [activities]="activities"
+          [distribution]="distribution"
+          [workloads]="workloads"
+          [actions]="quickActions"
+          (actionRequested)="openQuickAction($event)">
+        </app-academic-dashboard-page>
+
+        <app-academic-years-page
+          *ngSwitchCase="'years'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-years-page>
+
+        <app-academic-classes-page
+          *ngSwitchCase="'classes'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-classes-page>
+
+        <app-academic-subjects-page
+          *ngSwitchCase="'subjects'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-subjects-page>
+
+        <app-academic-curriculum-page
+          *ngSwitchCase="'curriculum'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-curriculum-page>
+
+        <app-academic-syllabus-page
+          *ngSwitchCase="'syllabus'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-syllabus-page>
+
+        <app-academic-allocation-page
+          *ngSwitchCase="'teacher-allocation'"
+          [data]="data"
+          [workloads]="workloads"
+          mode="teacher"
+          (actionRequested)="pageAction($event)">
+        </app-academic-allocation-page>
+
+        <app-academic-allocation-page
+          *ngSwitchCase="'class-teacher-allocation'"
+          [data]="data"
+          [workloads]="workloads"
+          mode="class-teacher"
+          (actionRequested)="pageAction($event)">
+        </app-academic-allocation-page>
+
+        <app-academic-timetable-page
+          *ngSwitchCase="'timetable'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-timetable-page>
+
+        <app-academic-calendar-page
+          *ngSwitchCase="'calendar'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-calendar-page>
+
+        <app-academic-hierarchy-page
+          *ngSwitchCase="'hierarchy'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-hierarchy-page>
+
+        <app-academic-settings-page
+          *ngSwitchCase="'settings'"
+          [data]="data"
+          (actionRequested)="pageAction($event)">
+        </app-academic-settings-page>
+      </ng-container>
+    </ng-container>
+  </main>
+
+  <button type="button" class="acad-refresh-button" (click)="refresh()" aria-label="Refresh academic workspace">
+    <i class="pi pi-refresh"></i>
+  </button>
+
+  <div class="acad-command-overlay" *ngIf="commandOpen" (click)="closeCommand($event)">
+    <section class="acad-command-panel">
+      <header>
+        <i class="pi pi-search"></i>
+        <input [(ngModel)]="commandQuery" placeholder="Search pages, classes, subjects, teachers and events" autofocus>
+        <kbd>Esc</kbd>
+      </header>
+      <div class="acad-command-results">
+        <button *ngFor="let command of commands" type="button" (click)="runCommand(command)">
+          <i [ngClass]="command.icon"></i>
+          <span><strong>{{ command.label }}</strong><small>{{ command.helper }}</small></span>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <app-academic-action-drawer
+    [open]="drawerOpen"
+    [mode]="activeActionMode"
+    [data]="data"
+    [saving]="saving"
+    (closed)="drawerOpen = false"
+    (submitted)="saveDrawer($event)">
+  </app-academic-action-drawer>
+</section>

@@ -124,36 +124,89 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'academics',
     children: [
       {
-        path: 'structure',
-        loadComponent: () => import('./academic-structure/components/structure-list/structure-list.component').then(m => m.StructureListComponent)
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
       },
       {
-        path: 'courses',
-        loadComponent: () => import('./course-management/components/course-list/course-list.component').then(m => m.CourseListComponent)
-      },
-      {
-        path: 'subjects',
-        loadComponent: () => import('./course-management/components/subject-list/subject-list.component').then(m => m.SubjectListComponent)
-      },
-      {
-        path: 'curriculum',
-        loadComponent: () => import('./course-management/components/subject-mapping/subject-mapping.component').then(m => m.SubjectMappingComponent)
+        path: 'dashboard',
+        data: { workspacePage: 'dashboard' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
       },
       {
         path: 'years',
-        loadComponent: () => import('./course-management/components/academic-year-config/academic-year-config.component').then(m => m.AcademicYearConfigComponent)
+        data: { workspacePage: 'years' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'classes',
+        data: { workspacePage: 'classes' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'structure',
+        pathMatch: 'full',
+        redirectTo: 'hierarchy'
+      },
+      {
+        path: 'courses',
+        pathMatch: 'full',
+        redirectTo: 'classes'
+      },
+      {
+        path: 'subjects',
+        data: { workspacePage: 'subjects' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'curriculum',
+        data: { workspacePage: 'curriculum' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
       },
       {
         path: 'syllabus',
-        loadComponent: () => import('./syllabus-management/components/syllabus-list/syllabus-list.component').then(m => m.SyllabusListComponent)
+        data: { workspacePage: 'syllabus' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
       },
       {
         path: 'syllabus/history/:id',
-        loadComponent: () => import('./syllabus-management/components/syllabus-version-history/syllabus-version-history.component').then(m => m.SyllabusVersionHistoryComponent)
+        pathMatch: 'full',
+        redirectTo: 'syllabus'
       },
       {
         path: 'tracker',
-        loadComponent: () => import('./student-management/components/syllabus-tracker/syllabus-tracker.component').then(m => m.SyllabusTrackerComponent)
+        pathMatch: 'full',
+        redirectTo: 'syllabus'
+      },
+      {
+        path: 'teacher-allocation',
+        data: { workspacePage: 'teacher-allocation' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'class-teacher-allocation',
+        data: { workspacePage: 'class-teacher-allocation' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'timetable',
+        data: { workspacePage: 'timetable' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'calendar',
+        data: { workspacePage: 'calendar' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'hierarchy',
+        data: { workspacePage: 'hierarchy' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
+      },
+      {
+        path: 'settings',
+        data: { workspacePage: 'settings' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
       }
     ]
   },
