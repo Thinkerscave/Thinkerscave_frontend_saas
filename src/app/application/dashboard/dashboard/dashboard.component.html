@@ -1,1 +1,15 @@
-<app-student-dashboard></app-student-dashboard>
+<tc-dashboard-layout
+	[workspace]="workspace"
+	[loading]="loading"
+	[error]="errorMessage"
+	[searchQuery]="searchQuery"
+	[searchResults]="searchResults"
+	[searchLoading]="searchLoading"
+	[selectedResult]="selectedResult"
+	(refresh)="loadWorkspace()"
+	(searchChanged)="onSearchChanged($event)"
+	(actionSelected)="onActionSelected($event)"
+	(resultSelected)="onResultSelected($event)"
+	(closeResult)="closeResult()"
+	(openRoute)="openRoute($event)">
+</tc-dashboard-layout>

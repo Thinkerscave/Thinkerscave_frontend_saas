@@ -10,7 +10,7 @@ export interface AttendanceRecord {
     referenceId?: number;
     referenceName: string;
     attendanceDate: string;
-    status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | 'WFH' | 'ON_LEAVE' | 'NIGHT_OUT';
+    status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | 'WFH' | 'ON_LEAVE' | 'NIGHT_OUT' | 'HALF_DAY';
     classId?: number;
     className?: string;
     sectionName?: string;

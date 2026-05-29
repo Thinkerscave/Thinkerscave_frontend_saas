@@ -14,111 +14,140 @@ export const APPLICATION_ROUTES: Routes = [
       import('./dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
   {
-    path: 'navigation-access',
+    path: 'admin',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', data: { adminPage: 'dashboard' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
+      { path: 'organizations', data: { adminPage: 'organizations' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
+      { path: 'access', data: { adminPage: 'access' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
+      { path: 'monitoring', data: { adminPage: 'monitoring' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
+      { path: 'audit', data: { adminPage: 'audit' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) }
+    ]
+  },
+  {
+    path: 'navigation-access',
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
     path: 'system-settings',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/monitoring'
   },
   {
     path: 'audit-activity',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/audit-activity/audit-activity.component').then(m => m.AuditActivityComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/audit'
   },
   {
     path: 'manage-menu',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
     path: 'manage-sub-menu',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
     path: 'menu-sequence',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
     path: 'role-menu-mapping',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
     path: 'organization-registration',
-    canActivate: [roleGuard(['SUPER_ADMIN'])],
-    loadComponent: () =>
-      import('./registration/organization-registration/organization-registration.component').then(m => m.OrganizationRegistrationComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/organizations'
   },
   {
     path: 'academy-demo',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () =>
-      import('./academy-demo/academy-demo.component').then(m => m.AcademyDemoComponent),
+    pathMatch: 'full',
+    redirectTo: 'admin/dashboard'
   },
   {
     path: 'managestudent',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STAFF'])],
-    loadComponent: () => import('./student-management/managestudent/managestudent.component').then(m => m.ManagestudentComponent)
+    pathMatch: 'full',
+    redirectTo: 'students/directory'
   },
   {
     path: 'staff',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./staff-management/manage-staff/manage-staff.component').then(m => m.ManageStaffComponent)
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'HR_MANAGER', 'ACCOUNTANT'])],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./school-operations/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent) },
+      { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./school-operations/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent) },
+      { path: 'operations', data: { workspacePage: 'operations' }, loadComponent: () => import('./school-operations/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent) }
+    ]
   },
   {
     path: 'salary',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./staff-management/manage-salary/manage-salary.component').then(m => m.ManageSalaryComponent)
+    pathMatch: 'full',
+    redirectTo: 'staff/operations'
   },
   {
     path: 'leave',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./staff-management/leave-management/leave-management.component').then(m => m.LeaveManagementComponent)
+    pathMatch: 'full',
+    redirectTo: 'staff/operations'
   },
   {
-    path: 'attendance/class',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'TEACHER'])],
-    loadComponent: () => import('./attendance-management/class-attendance/class-attendance.component').then(m => m.ClassAttendanceComponent)
-  }, {
-    path: 'attendance/hostel',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./attendance-management/hostel-attendance/hostel-attendance.component').then(m => m.HostelAttendanceComponent)
-  }, {
-    path: 'attendance/staff',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./attendance-management/staff-attendance/staff-attendance.component').then(m => m.StaffAttendanceComponent)
+    path: 'attendance',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'HR_MANAGER'])],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./school-operations/components/attendance-workspace/attendance-workspace.component').then(m => m.AttendanceWorkspaceComponent) },
+      { path: 'students', data: { workspacePage: 'students' }, loadComponent: () => import('./school-operations/components/attendance-workspace/attendance-workspace.component').then(m => m.AttendanceWorkspaceComponent) },
+      { path: 'staff', data: { workspacePage: 'staff' }, loadComponent: () => import('./school-operations/components/attendance-workspace/attendance-workspace.component').then(m => m.AttendanceWorkspaceComponent) },
+      { path: 'class', pathMatch: 'full', redirectTo: 'students' },
+      { path: 'hostel', pathMatch: 'full', redirectTo: 'dashboard' }
+    ]
   },
   {
     path: 'role/manage',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./administration/navigation-access/navigation-access.component').then(m => m.NavigationAccessComponent)
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
   },
   {
-    path: 'inquiry/manage',
-    loadComponent: () => import('./inquiry-management/components/manage-inquiry/manage-inquiry.component').then(m => m.ManageInquiryComponent),
-    data: { breadcrumb: 'Manage Inquiries' }
+    path: 'inquiry',
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'pipeline', data: { workspacePage: 'pipeline' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'management', data: { workspacePage: 'management' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'counseling', data: { workspacePage: 'counseling' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'documents', data: { workspacePage: 'documents' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'communication', data: { workspacePage: 'communication' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'analytics', data: { workspacePage: 'analytics' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
+      { path: 'manage', pathMatch: 'full', redirectTo: 'management' },
+      { path: 'followup', pathMatch: 'full', redirectTo: 'follow-ups' },
+      { path: 'detail/:id', pathMatch: 'full', redirectTo: 'pipeline' }
+    ]
   },
   {
-    path: 'inquiry/followup',
-    loadComponent: () => import('./inquiry-management/components/inquiry-followup/inquiry-followup.component').then(m => m.InquiryFollowupComponent),
-    data: { breadcrumb: 'Inquiry Follow-Up' }
-  },
-  {
-    path: 'inquiry/detail/:id',
-    loadComponent: () => import('./inquiry-management/components/inquiry-detail/inquiry-detail.component').then(m => m.InquiryDetailComponent),
-    data: { breadcrumb: 'Inquiry Details' }
+    path: 'students',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'profiles', data: { workspacePage: 'profiles' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'admissions', data: { workspacePage: 'admissions' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'classes', data: { workspacePage: 'classes' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'sections', data: { workspacePage: 'sections' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'promotion', data: { workspacePage: 'promotion' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'transfer', data: { workspacePage: 'transfer' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'documents', data: { workspacePage: 'documents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'parents', data: { workspacePage: 'parents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'id-cards', data: { workspacePage: 'id-cards' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) }
+    ]
   },
   {
     path: 'academics',
@@ -237,23 +266,23 @@ export const APPLICATION_ROUTES: Routes = [
   // ─── Master Data ─────────────────────────────────────────────────────────
   {
     path: 'manage-branch',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./staff-management/manage-branch/manage-branch.component').then(m => m.ManageBranchComponent)
+    redirectTo: 'staff/operations',
+    pathMatch: 'full'
   },
   {
     path: 'manage-department',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./staff-management/manage-department/manage-department.component').then(m => m.ManageDepartmentComponent)
+    redirectTo: 'staff/operations',
+    pathMatch: 'full'
   },
   {
     path: 'manage-class',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./student-management/manage-class/manage-class.component').then(m => m.ManageClassComponent)
+    redirectTo: 'students/classes',
+    pathMatch: 'full'
   },
   {
     path: 'manage-section',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
-    loadComponent: () => import('./student-management/manage-section/manage-section.component').then(m => m.ManageSectionComponent)
+    redirectTo: 'students/sections',
+    pathMatch: 'full'
   },
   // ─── User Profile ────────────────────────────────────────────────────────
   {

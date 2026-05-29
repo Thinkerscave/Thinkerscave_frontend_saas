@@ -1,0 +1,324 @@
+<section class="admin-control-workspace" [attr.data-page]="page">
+  <div class="admin-loading-state" *ngIf="loading">
+    <span><i class="pi pi-spin pi-spinner"></i></span>
+    <strong>Loading Administration Center</strong>
+  </div>
+
+  <ng-container *ngIf="!loading && workspace">
+    <tc-admin-nav [items]="workspace.adminSections"></tc-admin-nav>
+
+    <header class="admin-hero">
+      <div>
+        <span class="admin-eyebrow">Administration</span>
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ pageSubtitle }}</p>
+      </div>
+      <div class="admin-hero-actions">
+        <button type="button" class="admin-command-button" (click)="openAction('create-organization')" title="Create Organization">
+          <i class="pi pi-building"></i><span>Create Organization</span>
+        </button>
+        <button type="button" class="admin-command-button" (click)="openAction('create-user')" title="Create Admin User">
+          <i class="pi pi-user-plus"></i><span>Create Admin User</span>
+        </button>
+        <button type="button" class="admin-command-button" (click)="navigateToAccess()" title="Assign Role">
+          <i class="pi pi-shield"></i><span>Assign Role</span>
+        </button>
+        <a class="admin-command-button" routerLink="/app/admin/audit" title="View Audit Logs">
+          <i class="pi pi-history"></i><span>View Audit Logs</span>
+        </a>
+        <button type="button" class="admin-command-button primary" (click)="runDiagnostics()" [disabled]="actionLoading" title="Run System Diagnostics">
+          <i class="pi" [ngClass]="actionLoading ? 'pi-spin pi-spinner' : 'pi-bolt'"></i><span>Run Diagnostics</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="admin-message success" *ngIf="successMessage"><i class="pi pi-check-circle"></i>{{ successMessage }}</div>
+    <div class="admin-message error" *ngIf="errorMessage"><i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}</div>
+
+    <div [ngSwitch]="page">
+      <ng-container *ngSwitchCase="'dashboard'">
+        <section class="admin-kpi-grid">
+          <tc-admin-kpi-card *ngFor="let metric of workspace.kpis" [metric]="metric"></tc-admin-kpi-card>
+        </section>
+
+        <section class="admin-summary-band">
+          <article><span>Schools</span><strong>{{ workspace.organizationSummary.schools }}</strong></article>
+          <article><span>Branches</span><strong>{{ workspace.organizationSummary.branches }}</strong></article>
+          <article><span>Departments</span><strong>{{ workspace.organizationSummary.departments }}</strong></article>
+          <article><span>Students</span><strong>{{ workspace.organizationSummary.students }}</strong></article>
+          <article><span>Staff</span><strong>{{ workspace.organizationSummary.staff }}</strong></article>
+          <article><span>Parents</span><strong>{{ workspace.organizationSummary.parents }}</strong></article>
+        </section>
+
+        <section class="admin-dashboard-grid">
+          <tc-admin-activity-timeline [items]="workspace.activities"></tc-admin-activity-timeline>
+
+          <section class="admin-panel security-alert-panel">
+            <header class="admin-section-header">
+              <div><span>Security alerts</span><h2>Access Signals</h2></div>
+            </header>
+            <article class="security-alert-row" *ngFor="let event of securityAlerts" (click)="openSecurityEvent(event)">
+              <tc-admin-status-badge [label]="event.severity" [tone]="statusTone(event.severity)" icon="pi pi-shield"></tc-admin-status-badge>
+              <div>
+                <strong>{{ event.eventCode }}</strong>
+                <p>{{ event.message }}</p>
+                <small>{{ event.username || 'System' }} · {{ event.occurredAt | date:'short' }}</small>
+              </div>
+            </article>
+            <div class="admin-empty-state compact" *ngIf="!securityAlerts.length">
+              <span><i class="pi pi-shield"></i></span><strong>No security alerts</strong>
+            </div>
+          </section>
+
+          <section class="admin-panel quick-access-panel">
+            <header class="admin-section-header">
+              <div><span>Quick access</span><h2>Control Areas</h2></div>
+            </header>
+            <a class="quick-access-row" *ngFor="let item of workspace.adminSections" [routerLink]="item.route">
+              <span><i [class]="item.icon"></i></span>
+              <div><strong>{{ item.label }}</strong><small>{{ item.description }}</small></div>
+              <i class="pi pi-arrow-right"></i>
+            </a>
+          </section>
+        </section>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'organizations'">
+        <div class="admin-tab-strip">
+          <button type="button" [class.is-active]="organizationTab === 'overview'" (click)="organizationTab = 'overview'"><i class="pi pi-building"></i>Overview</button>
+          <button type="button" [class.is-active]="organizationTab === 'branches'" (click)="organizationTab = 'branches'"><i class="pi pi-sitemap"></i>Branches</button>
+          <button type="button" [class.is-active]="organizationTab === 'subscription'" (click)="organizationTab = 'subscription'"><i class="pi pi-credit-card"></i>Subscription</button>
+          <button type="button" [class.is-active]="organizationTab === 'branding'" (click)="organizationTab = 'branding'"><i class="pi pi-palette"></i>Branding</button>
+        </div>
+
+        <section class="organization-grid" *ngIf="organizationTab === 'overview'">
+          <article class="organization-card" *ngFor="let organization of visibleOrganizations" (click)="openOrganization(organization)">
+            <header>
+              <div>
+                <span>{{ organization.orgCode }}</span>
+                <h2>{{ organization.orgName }}</h2>
+              </div>
+              <tc-admin-status-badge [label]="organization.active ? 'ACTIVE' : 'SUSPENDED'" [tone]="organization.active ? 'success' : 'danger'"></tc-admin-status-badge>
+            </header>
+            <div class="organization-metrics">
+              <span><strong>{{ organization.branches }}</strong>Branches</span>
+              <span><strong>{{ organization.students }}</strong>Students</span>
+              <span><strong>{{ organization.staff }}</strong>Staff</span>
+              <span><strong>{{ organization.activeUsers }}</strong>Users</span>
+            </div>
+            <footer>
+              <span>{{ organization.subscriptionType || 'STANDARD' }}</span>
+              <strong>{{ organization.healthScore }}%</strong>
+            </footer>
+          </article>
+        </section>
+
+        <section class="admin-panel" *ngIf="organizationTab === 'branches'">
+          <header class="admin-section-header"><div><span>Branch management</span><h2>Campus Operations</h2></div></header>
+          <div class="branch-grid">
+            <article class="branch-card" *ngFor="let branch of workspace.branches">
+              <div><strong>{{ branch.branchName }}</strong><small>{{ branch.location || branch.branchCode }}</small></div>
+              <tc-admin-status-badge [label]="branch.active ? 'ACTIVE' : 'INACTIVE'" [tone]="branch.active ? 'success' : 'warning'"></tc-admin-status-badge>
+              <footer><span>{{ branch.staff }} staff</span><span>{{ branch.students }} students</span></footer>
+            </article>
+          </div>
+        </section>
+
+        <section class="organization-grid compact" *ngIf="organizationTab === 'subscription'">
+          <article class="organization-card" *ngFor="let organization of visibleOrganizations" (click)="openOrganization(organization)">
+            <header><div><span>{{ organization.orgCode }}</span><h2>{{ organization.subscriptionType || 'STANDARD' }}</h2></div><strong>{{ organization.activeUsers }} users</strong></header>
+            <div class="storage-meter"><span [style.width.%]="(organization.storageUsedMb / organization.storageLimitMb) * 100"></span></div>
+            <footer><span>{{ organization.storageUsedMb }} / {{ organization.storageLimitMb }} MB</span><span>{{ organization.apiUsageToday }} API calls</span></footer>
+          </article>
+        </section>
+
+        <section class="admin-panel branding-panel" *ngIf="organizationTab === 'branding'">
+          <header class="admin-section-header"><div><span>Branding</span><h2>Identity Vault</h2></div></header>
+          <div class="branding-grid">
+            <article *ngFor="let organization of visibleOrganizations">
+              <span>{{ (organization.brandName || organization.orgName).slice(0, 2).toUpperCase() }}</span>
+              <div><strong>{{ organization.brandName || organization.orgName }}</strong><small>{{ organization.tenantId || 'public' }}</small></div>
+            </article>
+          </div>
+          <a routerLink="/app/academics/settings" class="academic-link"><i class="pi pi-book"></i>Academic Configuration</a>
+        </section>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'access'">
+        <div class="admin-tab-strip access-strip">
+          <button type="button" [class.is-active]="accessTab === 'roles'" (click)="accessTab = 'roles'"><i class="pi pi-shield"></i>Roles</button>
+          <button type="button" [class.is-active]="accessTab === 'matrix'" (click)="accessTab = 'matrix'"><i class="pi pi-table"></i>Permission Matrix</button>
+          <button type="button" [class.is-active]="accessTab === 'users'" (click)="accessTab = 'users'"><i class="pi pi-users"></i>User Access</button>
+          <button type="button" [class.is-active]="accessTab === 'invitations'" (click)="accessTab = 'invitations'"><i class="pi pi-send"></i>Invitations</button>
+          <span class="admin-search"><i class="pi pi-search"></i><input type="search" [(ngModel)]="accessSearch" placeholder="Search access" /></span>
+        </div>
+
+        <section class="role-grid" *ngIf="accessTab === 'roles'">
+          <article class="role-card" *ngFor="let role of filteredRoles" (click)="openRole(role)">
+            <header><span><i class="pi pi-shield"></i></span><tc-admin-status-badge [label]="role.active ? 'ACTIVE' : 'INACTIVE'" [tone]="role.active ? 'success' : 'warning'"></tc-admin-status-badge></header>
+            <h2>{{ role.roleName }}</h2>
+            <p>{{ role.description || role.roleCode }}</p>
+            <footer><span>{{ role.users }} users</span><span>{{ role.permissionAssignments }} permissions</span></footer>
+          </article>
+        </section>
+
+        <tc-admin-permission-matrix *ngIf="accessTab === 'matrix'" [rows]="workspace.permissionMatrix"></tc-admin-permission-matrix>
+
+        <section class="admin-panel admin-table-panel" *ngIf="accessTab === 'users'">
+          <header class="admin-section-header"><div><span>User access</span><h2>Access Directory</h2></div></header>
+          <div class="admin-table-wrap">
+            <table class="admin-data-table">
+              <thead><tr><th>User</th><th>Roles</th><th>Organizations</th><th>Last Login</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let user of filteredUsers">
+                  <td><strong>{{ user.fullName || user.userName }}</strong><small>{{ user.email }}</small></td>
+                  <td>{{ user.roles.join(', ') }}</td>
+                  <td>{{ user.organizations.join(', ') || 'N/A' }}</td>
+                  <td>{{ user.lastLoginDate || 'N/A' }}</td>
+                  <td><tc-admin-status-badge [label]="user.blocked ? 'BLOCKED' : user.invitationStatus" [tone]="user.blocked ? 'danger' : statusTone(user.invitationStatus)"></tc-admin-status-badge></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="admin-panel" *ngIf="accessTab === 'invitations'">
+          <header class="admin-section-header"><div><span>Invitation center</span><h2>Pending Access</h2></div></header>
+          <div class="invitation-list">
+            <article *ngFor="let user of pendingInvitations">
+              <span><i class="pi pi-send"></i></span>
+              <div><strong>{{ user.fullName || user.userName }}</strong><small>{{ user.email }}</small></div>
+              <tc-admin-status-badge label="PENDING" tone="warning"></tc-admin-status-badge>
+            </article>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'monitoring'">
+        <div class="admin-tab-strip">
+          <button type="button" [class.is-active]="monitoringTab === 'health'" (click)="monitoringTab = 'health'"><i class="pi pi-heart"></i>Health</button>
+          <button type="button" [class.is-active]="monitoringTab === 'jobs'" (click)="monitoringTab = 'jobs'"><i class="pi pi-clock"></i>Jobs</button>
+          <button type="button" [class.is-active]="monitoringTab === 'notifications'" (click)="monitoringTab = 'notifications'"><i class="pi pi-bell"></i>Notifications</button>
+          <button type="button" [class.is-active]="monitoringTab === 'integrity'" (click)="monitoringTab = 'integrity'"><i class="pi pi-database"></i>Data Integrity</button>
+        </div>
+
+        <section class="monitoring-grid" *ngIf="monitoringTab === 'health'">
+          <article class="health-score-card">
+            <span>System Health</span>
+            <strong>{{ workspace.monitoring.healthScore }}%</strong>
+            <tc-admin-status-badge [label]="workspace.monitoring.databaseStatus" [tone]="healthTone(workspace.monitoring.healthScore)" icon="pi pi-database"></tc-admin-status-badge>
+          </article>
+          <tc-admin-monitoring-widget *ngFor="let widget of workspace.monitoring.widgets" [widget]="widget"></tc-admin-monitoring-widget>
+        </section>
+
+        <section class="event-grid" *ngIf="monitoringTab === 'jobs'">
+          <article *ngFor="let event of workspace.monitoring.jobs" (click)="openSystemEvent(event)"><strong>{{ event.title }}</strong><p>{{ event.message }}</p><small>{{ formatMetric(event.metricValue, event.metricUnit) }}</small></article>
+        </section>
+        <section class="event-grid" *ngIf="monitoringTab === 'notifications'">
+          <article *ngFor="let event of workspace.monitoring.notifications" (click)="openSystemEvent(event)"><strong>{{ event.title }}</strong><p>{{ event.message }}</p><small>{{ event.status }}</small></article>
+        </section>
+        <section class="event-grid" *ngIf="monitoringTab === 'integrity'">
+          <article *ngFor="let event of workspace.monitoring.dataIntegrity" (click)="openSystemEvent(event)"><strong>{{ event.title }}</strong><p>{{ event.message }}</p><small>{{ event.status }}</small></article>
+        </section>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'audit'">
+        <section class="admin-kpi-grid compact">
+          <tc-admin-kpi-card [metric]="{ key: 'audit', label: 'Audit Logs', value: workspace.auditLogs.length + '', helper: 'recent records', icon: 'pi pi-history', tone: 'info' }"></tc-admin-kpi-card>
+          <tc-admin-kpi-card [metric]="{ key: 'security', label: 'Security Events', value: workspace.securityEvents.length + '', helper: securityAlerts.length + ' alerts', icon: 'pi pi-shield', tone: securityAlerts.length ? 'warning' : 'success' }"></tc-admin-kpi-card>
+          <tc-admin-kpi-card [metric]="{ key: 'system', label: 'System Events', value: workspace.systemEvents.length + '', helper: highPrioritySystemEvents.length + ' open signals', icon: 'pi pi-server', tone: highPrioritySystemEvents.length ? 'warning' : 'success' }"></tc-admin-kpi-card>
+        </section>
+
+        <div class="audit-filter-bar">
+          <span class="admin-search"><i class="pi pi-search"></i><input type="search" [(ngModel)]="auditSearch" placeholder="Search audit logs" /></span>
+        </div>
+
+        <section class="audit-layout">
+          <tc-admin-audit-table [items]="filteredAuditLogs" (selected)="openAuditEvent($event)"></tc-admin-audit-table>
+          <section class="admin-panel security-alert-panel">
+            <header class="admin-section-header"><div><span>Login audit</span><h2>Security Events</h2></div></header>
+            <article class="security-alert-row" *ngFor="let event of workspace.securityEvents" (click)="openSecurityEvent(event)">
+              <tc-admin-status-badge [label]="event.success ? 'SUCCESS' : 'FAILED'" [tone]="event.success ? 'success' : 'danger'" icon="pi pi-lock"></tc-admin-status-badge>
+              <div><strong>{{ event.eventCode }}</strong><p>{{ event.message }}</p><small>{{ event.username || 'System' }} · {{ event.occurredAt | date:'short' }}</small></div>
+            </article>
+          </section>
+        </section>
+      </ng-container>
+    </div>
+
+    <tc-admin-organization-drawer [open]="!!selectedOrganization" [organization]="selectedOrganization" [branches]="visibleBranches" (closed)="closeOrganizationDrawer()"></tc-admin-organization-drawer>
+
+    <aside class="admin-drawer" [class.is-open]="!!drawerMode">
+      <div class="admin-drawer-panel" *ngIf="drawerMode">
+        <header>
+          <div><span>Administration</span><h2>{{ drawerTitle() }}</h2></div>
+          <button type="button" class="admin-icon-button" (click)="closeDrawer()" aria-label="Close panel"><i class="pi pi-times"></i></button>
+        </header>
+
+        <section class="drawer-section form-section" *ngIf="drawerMode === 'create-organization'">
+          <label>Organization Name<input type="text" [(ngModel)]="organizationForm.displayName" /></label>
+          <label>Tenant Code<input type="text" [(ngModel)]="organizationForm.tenantName" /></label>
+          <label>Admin Email<input type="email" [(ngModel)]="organizationForm.adminEmail" /></label>
+          <label>Admin Password<input type="password" [(ngModel)]="organizationForm.adminPassword" /></label>
+          <label>Admin First Name<input type="text" [(ngModel)]="organizationForm.adminFirstName" /></label>
+          <label>Admin Last Name<input type="text" [(ngModel)]="organizationForm.adminLastName" /></label>
+          <label>Admin Mobile<input type="text" [(ngModel)]="organizationForm.adminMobile" /></label>
+          <label>City<input type="text" [(ngModel)]="organizationForm.city" /></label>
+          <label>State<input type="text" [(ngModel)]="organizationForm.state" /></label>
+          <div class="drawer-actions"><button type="button" class="admin-command-button primary" (click)="createOrganization()" [disabled]="actionLoading"><i class="pi pi-check"></i>Create</button></div>
+        </section>
+
+        <section class="drawer-section form-section" *ngIf="drawerMode === 'create-user'">
+          <label>Username<input type="text" [(ngModel)]="adminUserForm.userName" /></label>
+          <label>Email<input type="email" [(ngModel)]="adminUserForm.email" /></label>
+          <label>Password<input type="password" [(ngModel)]="adminUserForm.password" /></label>
+          <label>First Name<input type="text" [(ngModel)]="adminUserForm.firstName" /></label>
+          <label>Last Name<input type="text" [(ngModel)]="adminUserForm.lastName" /></label>
+          <label>Mobile<input type="number" [(ngModel)]="adminUserForm.mobileNumber" /></label>
+          <label>Role<select [(ngModel)]="adminUserRole"><option *ngFor="let role of workspace.roles" [value]="role.roleName">{{ role.roleName }}</option></select></label>
+          <label>Organization<select [(ngModel)]="adminUserOrgId"><option *ngFor="let organization of workspace.organizations" [value]="organization.orgId">{{ organization.orgName }}</option></select></label>
+          <div class="drawer-actions"><button type="button" class="admin-command-button primary" (click)="createAdminUser()" [disabled]="actionLoading"><i class="pi pi-check"></i>Create</button></div>
+        </section>
+
+        <section class="drawer-section" *ngIf="drawerMode === 'role-detail' && selectedRole">
+          <dl class="drawer-definition-grid">
+            <div><dt>Code</dt><dd>{{ selectedRole.roleCode }}</dd></div>
+            <div><dt>Type</dt><dd>{{ selectedRole.roleType || 'STANDARD' }}</dd></div>
+            <div><dt>Users</dt><dd>{{ selectedRole.users }}</dd></div>
+            <div><dt>Permissions</dt><dd>{{ selectedRole.permissionAssignments }}</dd></div>
+          </dl>
+        </section>
+
+        <section class="drawer-section" *ngIf="drawerMode === 'audit-detail' && selectedAuditEvent">
+          <dl class="drawer-definition-grid">
+            <div><dt>Event</dt><dd>{{ selectedAuditEvent.eventType }}</dd></div>
+            <div><dt>Actor</dt><dd>{{ selectedAuditEvent.actorUsername || 'System' }}</dd></div>
+            <div><dt>Entity</dt><dd>{{ selectedAuditEvent.entityType }} {{ selectedAuditEvent.entityId }}</dd></div>
+            <div><dt>Source</dt><dd>{{ selectedAuditEvent.sourceIp || 'Internal' }}</dd></div>
+          </dl>
+          <pre class="audit-change-block">{{ selectedAuditEvent.changes || selectedAuditEvent.summary }}</pre>
+        </section>
+
+        <section class="drawer-section" *ngIf="drawerMode === 'security-detail' && selectedSecurityEvent">
+          <dl class="drawer-definition-grid">
+            <div><dt>Event</dt><dd>{{ selectedSecurityEvent.eventCode }}</dd></div>
+            <div><dt>User</dt><dd>{{ selectedSecurityEvent.username || 'System' }}</dd></div>
+            <div><dt>Severity</dt><dd>{{ selectedSecurityEvent.severity }}</dd></div>
+            <div><dt>Source</dt><dd>{{ selectedSecurityEvent.sourceIp || 'Internal' }}</dd></div>
+          </dl>
+          <p class="drawer-note">{{ selectedSecurityEvent.message }}</p>
+        </section>
+
+        <section class="drawer-section" *ngIf="drawerMode === 'system-event' && selectedSystemEvent">
+          <dl class="drawer-definition-grid">
+            <div><dt>Category</dt><dd>{{ selectedSystemEvent.category }}</dd></div>
+            <div><dt>Component</dt><dd>{{ selectedSystemEvent.component }}</dd></div>
+            <div><dt>Status</dt><dd>{{ selectedSystemEvent.status }}</dd></div>
+            <div><dt>Metric</dt><dd>{{ formatMetric(selectedSystemEvent.metricValue, selectedSystemEvent.metricUnit) }}</dd></div>
+          </dl>
+          <p class="drawer-note">{{ selectedSystemEvent.message }}</p>
+        </section>
+      </div>
+    </aside>
+  </ng-container>
+</section>

@@ -1,0 +1,441 @@
+<section class="ops-workspace">
+  <aside class="ops-rail">
+    <div class="ops-brand">
+      <span><i class="pi pi-id-card"></i></span>
+      <div>
+        <strong>Staff Operations</strong>
+        <small>{{ data.staff.length }} employees in workspace</small>
+      </div>
+    </div>
+    <tc-ops-nav [items]="navItems"></tc-ops-nav>
+  </aside>
+
+  <main class="ops-main">
+    <div *ngIf="loading" class="ops-loading-shell">
+      <span>Loading workforce workspace...</span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <tc-ops-header
+        title="Staff Management"
+        subtitle="Manage employees, attendance, leaves, departments and workforce operations from one workspace."
+        eyebrow="Workforce command center">
+        <button type="button" class="ops-button primary" (click)="openRegister()"><i class="pi pi-user-plus"></i>Register Staff</button>
+        <button type="button" class="ops-button accent" (click)="focusLeaveQueue()"><i class="pi pi-check-circle"></i>Approve Leave</button>
+        <button type="button" class="ops-button" (click)="goToAttendance()"><i class="pi pi-check-square"></i>Mark Attendance</button>
+        <button type="button" class="ops-icon-button" (click)="exportStaffReport()" aria-label="Generate staff report"><i class="pi pi-download"></i></button>
+      </tc-ops-header>
+
+      <section class="ops-kpi-grid">
+        <tc-ops-kpi-card *ngFor="let metric of metrics" [metric]="metric"></tc-ops-kpi-card>
+      </section>
+
+      <ng-container [ngSwitch]="activePage">
+        <section *ngSwitchCase="'dashboard'" class="ops-dashboard-grid">
+          <div class="ops-panel">
+            <header>
+              <div>
+                <span>Department distribution</span>
+                <h2>Workforce balance</h2>
+              </div>
+            </header>
+            <div class="ops-grid-2">
+              <div class="ops-donut-wrap">
+                <div class="ops-donut" [style.background]="departmentDonutStyle()">
+                  <strong>{{ profiles.length }}</strong>
+                </div>
+              </div>
+              <div class="ops-progress-list">
+                <div class="ops-progress-row" *ngFor="let item of departmentDistribution">
+                  <div><span>{{ item.name }}</span><strong>{{ item.count }}</strong></div>
+                  <div class="ops-progress-bar"><span [style.width.%]="item.percentage" [style.background]="item.color"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ops-panel">
+            <header>
+              <div>
+                <span>Attendance snapshot</span>
+                <h2>Today</h2>
+              </div>
+              <button type="button" class="ops-icon-button" (click)="goToAttendance()" aria-label="Open staff attendance"><i class="pi pi-arrow-right"></i></button>
+            </header>
+            <div class="ops-summary-grid">
+              <div class="ops-stat">
+                <small>Marked</small>
+                <strong>{{ data.todayStaffAttendance.length }}</strong>
+              </div>
+              <div class="ops-stat">
+                <small>Coverage</small>
+                <strong>{{ metrics[3].helper }}</strong>
+              </div>
+              <div class="ops-stat">
+                <small>Pending leaves</small>
+                <strong>{{ pendingLeaves.length }}</strong>
+              </div>
+              <div class="ops-stat">
+                <small>Payroll net</small>
+                <strong>{{ formatCurrency(payrollTotal) }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="ops-panel">
+            <header>
+              <div>
+                <span>Pending actions</span>
+                <h2>Approval queue</h2>
+              </div>
+            </header>
+            <div *ngIf="!pendingLeaves.length" class="ops-empty-state">
+              <span><i class="pi pi-check-circle"></i></span>
+              <strong>No pending leaves</strong>
+              <p>Every submitted leave request has been actioned.</p>
+            </div>
+            <div class="ops-alert-list" *ngIf="pendingLeaves.length">
+              <article class="ops-compact-row" *ngFor="let request of pendingLeaves; trackBy: trackByLeave">
+                <div class="ops-cell-main">
+                  <strong>{{ request.staffName }}</strong>
+                  <small>{{ request.leaveType }} · {{ formatDate(request.startDate) }} - {{ formatDate(request.endDate) }}</small>
+                </div>
+                <div class="ops-inline-actions">
+                  <button type="button" class="ops-icon-button" (click)="approveLeave(request)" aria-label="Approve leave"><i class="pi pi-check"></i></button>
+                  <button type="button" class="ops-icon-button" (click)="rejectLeave(request)" aria-label="Reject leave"><i class="pi pi-times"></i></button>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <tc-ops-timeline [items]="recentActivities" title="Recent activities" emptyMessage="Staff attendance, payroll and leave actions will appear here."></tc-ops-timeline>
+        </section>
+
+        <section *ngSwitchCase="'directory'" class="ops-directory-layout">
+          <tc-ops-filter-panel title="Staff filters" eyebrow="Directory control">
+            <div class="ops-filter-stack">
+              <label class="ops-field">
+                <span>Search Staff</span>
+                <input [(ngModel)]="filters.search" placeholder="Name, code, email or role">
+              </label>
+              <label class="ops-field">
+                <span>Department</span>
+                <select [(ngModel)]="filters.department">
+                  <option value="all">All departments</option>
+                  <option *ngFor="let department of data.departments" [value]="department.departmentName">{{ department.departmentName }}</option>
+                </select>
+              </label>
+              <label class="ops-field">
+                <span>Branch</span>
+                <select [(ngModel)]="filters.branch">
+                  <option value="all">All branches</option>
+                  <option *ngFor="let branch of data.branches" [value]="branch.branchName">{{ branch.branchName }}</option>
+                </select>
+              </label>
+              <label class="ops-field">
+                <span>Role</span>
+                <select [(ngModel)]="filters.role">
+                  <option value="all">All roles</option>
+                  <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
+                </select>
+              </label>
+              <label class="ops-field">
+                <span>Teaching / Non Teaching</span>
+                <select [(ngModel)]="filters.staffType">
+                  <option value="all">All staff types</option>
+                  <option value="Teaching">Teaching</option>
+                  <option value="Non Teaching">Non Teaching</option>
+                </select>
+              </label>
+              <label class="ops-field">
+                <span>Status</span>
+                <select [(ngModel)]="filters.status">
+                  <option value="all">All statuses</option>
+                  <option *ngFor="let status of attendanceStatusOptions" [value]="status">{{ statusLabel(status) }}</option>
+                </select>
+              </label>
+              <label class="ops-field">
+                <span>Experience</span>
+                <select [(ngModel)]="filters.experience">
+                  <option value="all">All experience</option>
+                  <option value="0-2">0-2 years</option>
+                  <option value="3-5">3-5 years</option>
+                  <option value="6+">6+ years</option>
+                </select>
+              </label>
+            </div>
+          </tc-ops-filter-panel>
+
+          <section class="ops-panel">
+            <header>
+              <div>
+                <span>{{ filteredProfiles.length }} results</span>
+                <h2>Staff Directory</h2>
+              </div>
+              <div class="ops-segmented">
+                <button type="button" [class.is-active]="viewMode === 'card'" (click)="setViewMode('card')"><i class="pi pi-th-large"></i>Cards</button>
+                <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')"><i class="pi pi-table"></i>Table</button>
+                <button type="button" [class.is-active]="viewMode === 'compact'" (click)="setViewMode('compact')"><i class="pi pi-bars"></i>Compact</button>
+              </div>
+            </header>
+
+            <div *ngIf="!filteredProfiles.length" class="ops-empty-state">
+              <span><i class="pi pi-search"></i></span>
+              <strong>No staff match the filters</strong>
+              <p>Adjust one or more filters to widen the directory result.</p>
+            </div>
+
+            <div *ngIf="filteredProfiles.length && viewMode === 'card'" class="ops-list-grid">
+              <article class="ops-list-card" *ngFor="let profile of filteredProfiles; trackBy: trackByStaff" (click)="previewProfile(profile)">
+                <header>
+                  <span class="ops-avatar large">{{ profile.initials }}</span>
+                  <div class="ops-card-title">
+                    <strong>{{ profile.fullName }}</strong>
+                    <small>{{ profile.designation }}</small>
+                  </div>
+                </header>
+                <div class="ops-pill-row">
+                  <span class="ops-pill info">{{ profile.departmentName }}</span>
+                  <span class="ops-pill">{{ profile.branchName }}</span>
+                  <span class="ops-pill" [ngClass]="statusTone(profile.attendanceStatus)">{{ statusLabel(profile.attendanceStatus) }}</span>
+                </div>
+                <div class="ops-summary-grid">
+                  <div class="ops-stat"><small>Experience</small><strong>{{ profile.experienceYears }} yrs</strong></div>
+                  <div class="ops-stat"><small>Contact</small><strong>{{ profile.mobileNumber }}</strong></div>
+                </div>
+                <div class="ops-inline-actions">
+                  <button type="button" class="ops-button accent" (click)="openProfile(profile); $event.stopPropagation()"><i class="pi pi-eye"></i>Profile</button>
+                  <button type="button" class="ops-icon-button" (click)="goToAttendance(); $event.stopPropagation()" aria-label="Mark staff attendance"><i class="pi pi-check-square"></i></button>
+                </div>
+              </article>
+            </div>
+
+            <div *ngIf="filteredProfiles.length && viewMode === 'table'" class="ops-table-shell">
+              <table>
+                <thead>
+                  <tr><th>Staff</th><th>Department</th><th>Branch</th><th>Attendance</th><th>Experience</th><th>Contact</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let profile of filteredProfiles; trackBy: trackByStaff">
+                    <td><div class="ops-cell-main"><strong>{{ profile.fullName }}</strong><small>{{ profile.staffCode }} · {{ profile.designation }}</small></div></td>
+                    <td>{{ profile.departmentName }}</td>
+                    <td>{{ profile.branchName }}</td>
+                    <td><span class="ops-pill" [ngClass]="statusTone(profile.attendanceStatus)">{{ statusLabel(profile.attendanceStatus) }}</span></td>
+                    <td>{{ profile.experienceYears }} yrs</td>
+                    <td>{{ profile.email }}</td>
+                    <td><button type="button" class="ops-icon-button" (click)="openProfile(profile)" aria-label="Open profile"><i class="pi pi-arrow-right"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div *ngIf="filteredProfiles.length && viewMode === 'compact'" class="ops-list-grid compact">
+              <article class="ops-compact-row" *ngFor="let profile of filteredProfiles; trackBy: trackByStaff" (click)="previewProfile(profile)">
+                <div class="ops-cell-main">
+                  <strong>{{ profile.fullName }}</strong>
+                  <small>{{ profile.departmentName }} · {{ profile.designation }} · {{ statusLabel(profile.attendanceStatus) }}</small>
+                </div>
+                <button type="button" class="ops-icon-button" (click)="openProfile(profile); $event.stopPropagation()" aria-label="Open profile"><i class="pi pi-eye"></i></button>
+              </article>
+            </div>
+          </section>
+
+          <aside class="ops-profile-panel" *ngIf="selectedStaff as profile">
+            <div class="ops-profile-head">
+              <span class="ops-avatar xl">{{ profile.initials }}</span>
+              <div class="ops-profile-title">
+                <strong>{{ profile.fullName }}</strong>
+                <small>{{ profile.designation }}</small>
+              </div>
+            </div>
+            <div class="ops-profile-stats">
+              <div class="ops-stat"><small>Department</small><strong>{{ profile.departmentName }}</strong></div>
+              <div class="ops-stat"><small>Status</small><strong>{{ statusLabel(profile.attendanceStatus) }}</strong></div>
+              <div class="ops-stat"><small>Experience</small><strong>{{ profile.experienceYears }} yrs</strong></div>
+              <div class="ops-stat"><small>Payroll</small><strong>{{ formatCurrency(profile.payroll?.netSalary) }}</strong></div>
+            </div>
+            <div class="ops-button-row" style="margin-top: 14px;">
+              <button type="button" class="ops-button accent" (click)="openProfile(profile)"><i class="pi pi-id-card"></i>Open Profile</button>
+              <button type="button" class="ops-button" (click)="goToAttendance()"><i class="pi pi-check-square"></i>Attendance</button>
+            </div>
+          </aside>
+        </section>
+
+        <section *ngSwitchCase="'operations'" class="ops-operations-layout">
+          <div class="ops-tabs">
+            <button type="button" [class.is-active]="operationTab === 'departments'" (click)="operationTab = 'departments'"><i class="pi pi-sitemap"></i>Departments</button>
+            <button type="button" [class.is-active]="operationTab === 'branches'" (click)="operationTab = 'branches'"><i class="pi pi-building"></i>Branches</button>
+            <button type="button" [class.is-active]="operationTab === 'leave'" (click)="operationTab = 'leave'"><i class="pi pi-calendar-minus"></i>Leave Management</button>
+            <button type="button" [class.is-active]="operationTab === 'payroll'" (click)="operationTab = 'payroll'"><i class="pi pi-money-bill"></i>Payroll</button>
+          </div>
+
+          <section class="ops-panel" *ngIf="operationTab === 'departments'">
+            <header>
+              <div><span>Departments</span><h2>Academic and support units</h2></div>
+              <button type="button" class="ops-button accent" (click)="openDepartment()"><i class="pi pi-plus"></i>Department</button>
+            </header>
+            <div class="ops-list-grid">
+              <article class="ops-list-card" *ngFor="let department of data.departments; trackBy: trackByDepartment" (click)="openDepartment(department)">
+                <span class="ops-stat-icon"><i class="pi pi-sitemap"></i></span>
+                <div class="ops-card-title"><strong>{{ department.departmentName }}</strong><small>{{ department.departmentCode }}</small></div>
+                <p>{{ department.description }}</p>
+                <span class="ops-pill info">{{ staffCountForDepartment(department) }} staff</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="ops-panel" *ngIf="operationTab === 'branches'">
+            <header>
+              <div><span>Branches</span><h2>Campus coverage</h2></div>
+              <button type="button" class="ops-button accent" (click)="openBranch()"><i class="pi pi-plus"></i>Branch</button>
+            </header>
+            <div class="ops-list-grid">
+              <article class="ops-list-card" *ngFor="let branch of data.branches; trackBy: trackByBranch" (click)="openBranch(branch)">
+                <span class="ops-stat-icon"><i class="pi pi-building"></i></span>
+                <div class="ops-card-title"><strong>{{ branch.branchName }}</strong><small>{{ branch.branchCode }}</small></div>
+                <p>{{ branch.location }}</p>
+                <span class="ops-pill info">{{ staffCountForBranch(branch) }} staff</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="ops-panel" *ngIf="operationTab === 'leave'">
+            <header>
+              <div><span>Leave queue</span><h2>Approval workflow</h2></div>
+              <span class="ops-pill warning">{{ pendingLeaves.length }} pending</span>
+            </header>
+            <div class="ops-table-shell">
+              <table>
+                <thead><tr><th>Staff</th><th>Department</th><th>Type</th><th>Period</th><th>Status</th><th>Reason</th><th></th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let request of data.leaveRequests; trackBy: trackByLeave">
+                    <td><strong>{{ request.staffName }}</strong></td>
+                    <td>{{ request.department }}</td>
+                    <td>{{ request.leaveType }}</td>
+                    <td>{{ formatDate(request.startDate) }} - {{ formatDate(request.endDate) }}</td>
+                    <td><span class="ops-pill" [ngClass]="leaveTone(request.status)">{{ request.status }}</span></td>
+                    <td>{{ request.reason }}</td>
+                    <td>
+                      <div class="ops-inline-actions" *ngIf="request.status === 'PENDING'">
+                        <button type="button" class="ops-icon-button" (click)="approveLeave(request)" aria-label="Approve leave"><i class="pi pi-check"></i></button>
+                        <button type="button" class="ops-icon-button" (click)="rejectLeave(request)" aria-label="Reject leave"><i class="pi pi-times"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="ops-panel" *ngIf="operationTab === 'payroll'">
+            <header>
+              <div><span>Payroll</span><h2>Compensation overview</h2></div>
+              <button type="button" class="ops-button primary" (click)="runPayroll()" [disabled]="saving"><i class="pi pi-play"></i>Run Payroll</button>
+            </header>
+            <div class="ops-table-shell">
+              <table>
+                <thead><tr><th>Staff</th><th>Designation</th><th>Department</th><th>Gross</th><th>Deductions</th><th>Net</th><th>Effective</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let payroll of data.payroll">
+                    <td><strong>{{ payroll.staffName }}</strong></td>
+                    <td>{{ payroll.designation }}</td>
+                    <td>{{ payroll.department }}</td>
+                    <td>{{ formatCurrency(payroll.grossSalary) }}</td>
+                    <td>{{ formatCurrency(payroll.totalDeductions) }}</td>
+                    <td>{{ formatCurrency(payroll.netSalary) }}</td>
+                    <td>{{ formatDate(payroll.effectiveFrom) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </ng-container>
+    </ng-container>
+  </main>
+
+  <tc-ops-drawer [open]="drawerOpen" [title]="drawerTitle" [eyebrow]="drawerEyebrow" (closed)="closeDrawer()">
+    <form *ngIf="drawerMode === 'register'" class="ops-form-grid two" (ngSubmit)="submitRegister()">
+      <label class="ops-field"><span>First Name</span><input name="firstName" [(ngModel)]="registerForm.firstName" required></label>
+      <label class="ops-field"><span>Last Name</span><input name="lastName" [(ngModel)]="registerForm.lastName" required></label>
+      <label class="ops-field"><span>Email</span><input name="email" type="email" [(ngModel)]="registerForm.email" required></label>
+      <label class="ops-field"><span>Mobile</span><input name="mobile" type="number" [(ngModel)]="registerForm.mobileNumber" required></label>
+      <label class="ops-field"><span>Gender</span><select name="gender" [(ngModel)]="registerForm.gender"><option value="">Select gender</option><option>Female</option><option>Male</option><option>Other</option></select></label>
+      <label class="ops-field"><span>Hire Date</span><input name="hireDate" type="date" [(ngModel)]="registerForm.hireDate"></label>
+      <label class="ops-field"><span>Branch</span><select name="branch" [(ngModel)]="registerForm.branchCode" required><option value="">Select branch</option><option *ngFor="let branch of data.branches" [value]="branch.branchCode">{{ branch.branchName }}</option></select></label>
+      <label class="ops-field"><span>Department</span><select name="department" [(ngModel)]="registerForm.departmentCode" required><option value="">Select department</option><option *ngFor="let department of data.departments" [value]="department.departmentCode">{{ department.departmentName }}</option></select></label>
+      <label class="ops-field"><span>Designation / Role</span><input name="remarks" [(ngModel)]="registerForm.remarks" placeholder="e.g. Senior Teacher"></label>
+      <label class="ops-field"><span>City</span><input name="city" [(ngModel)]="registerForm.city"></label>
+      <label class="ops-field" style="grid-column: 1 / -1;"><span>Address</span><textarea name="address" [(ngModel)]="registerForm.address"></textarea></label>
+      <div class="ops-button-row" style="grid-column: 1 / -1;"><button type="submit" class="ops-button primary" [disabled]="saving"><i class="pi pi-save"></i>Save Staff</button></div>
+    </form>
+
+    <section *ngIf="drawerMode === 'profile' && selectedStaff as profile" class="ops-form-grid">
+      <div class="ops-profile-head">
+        <span class="ops-avatar xl">{{ profile.initials }}</span>
+        <div class="ops-profile-title"><strong>{{ profile.fullName }}</strong><small>{{ profile.staffCode }} · {{ profile.designation }}</small></div>
+      </div>
+      <div class="ops-tabs">
+        <button *ngFor="let tab of profileTabs" type="button" [class.is-active]="profileTab === tab.value" (click)="profileTab = tab.value"><i [class]="tab.icon"></i>{{ tab.label }}</button>
+      </div>
+
+      <div *ngIf="profileTab === 'overview'" class="ops-summary-grid">
+        <div class="ops-stat"><small>Department</small><strong>{{ profile.departmentName }}</strong></div>
+        <div class="ops-stat"><small>Branch</small><strong>{{ profile.branchName }}</strong></div>
+        <div class="ops-stat"><small>Email</small><strong>{{ profile.email }}</strong></div>
+        <div class="ops-stat"><small>Mobile</small><strong>{{ profile.mobileNumber }}</strong></div>
+        <div class="ops-stat"><small>Experience</small><strong>{{ profile.experienceYears }} yrs</strong></div>
+        <div class="ops-stat"><small>Staff Type</small><strong>{{ profile.staffType }}</strong></div>
+      </div>
+
+      <div *ngIf="profileTab === 'attendance'" class="ops-summary-grid">
+        <div class="ops-stat"><small>Today</small><strong>{{ statusLabel(profile.attendanceStatus) }}</strong></div>
+        <div class="ops-stat"><small>Shift</small><strong>{{ profile.attendanceRecord?.shift || 'Not marked' }}</strong></div>
+        <div class="ops-stat"><small>Marked By</small><strong>{{ profile.attendanceRecord?.markedBy || 'Pending' }}</strong></div>
+        <div class="ops-stat"><small>Remarks</small><strong>{{ profile.attendanceRecord?.remarks || 'None' }}</strong></div>
+      </div>
+
+      <div *ngIf="profileTab === 'leave'" class="ops-alert-list">
+        <article class="ops-compact-row" *ngFor="let request of profile.leaveRequests">
+          <div class="ops-cell-main"><strong>{{ request.leaveType }} · {{ request.days }} day(s)</strong><small>{{ formatDate(request.startDate) }} - {{ formatDate(request.endDate) }} · {{ request.reason }}</small></div>
+          <span class="ops-pill" [ngClass]="leaveTone(request.status)">{{ request.status }}</span>
+        </article>
+      </div>
+
+      <div *ngIf="profileTab === 'payroll'" class="ops-summary-grid">
+        <div class="ops-stat"><small>Gross Salary</small><strong>{{ formatCurrency(profile.payroll?.grossSalary) }}</strong></div>
+        <div class="ops-stat"><small>Deductions</small><strong>{{ formatCurrency(profile.payroll?.totalDeductions) }}</strong></div>
+        <div class="ops-stat"><small>Net Salary</small><strong>{{ formatCurrency(profile.payroll?.netSalary) }}</strong></div>
+        <div class="ops-stat"><small>CTC Annual</small><strong>{{ formatCurrency(profile.payroll?.ctcAnnual) }}</strong></div>
+      </div>
+
+      <div *ngIf="profileTab === 'documents'" class="ops-alert-list">
+        <article class="ops-compact-row" *ngFor="let document of profileDocuments(profile)">
+          <div class="ops-cell-main"><strong>{{ document.label }}</strong><small>{{ document.meta }}</small></div>
+          <span class="ops-pill" [ngClass]="document.tone">{{ document.status }}</span>
+        </article>
+      </div>
+
+      <div *ngIf="profileTab === 'activity'" class="ops-timeline">
+        <article *ngFor="let item of profile.activities" [attr.data-tone]="item.tone">
+          <span><i [class]="item.icon"></i></span>
+          <div><strong>{{ item.title }}</strong><p>{{ item.description }}</p><small>{{ item.meta }}</small></div>
+        </article>
+      </div>
+    </section>
+
+    <form *ngIf="drawerMode === 'department'" class="ops-form-grid" (ngSubmit)="submitDepartment()">
+      <label class="ops-field"><span>Department Name</span><input name="departmentName" [(ngModel)]="departmentForm.departmentName" required></label>
+      <label class="ops-field"><span>Department Code</span><input name="departmentCode" [(ngModel)]="departmentForm.departmentCode" required></label>
+      <label class="ops-field"><span>Description</span><textarea name="description" [(ngModel)]="departmentForm.description"></textarea></label>
+      <button type="submit" class="ops-button primary" [disabled]="saving"><i class="pi pi-save"></i>Save Department</button>
+    </form>
+
+    <form *ngIf="drawerMode === 'branch'" class="ops-form-grid" (ngSubmit)="submitBranch()">
+      <label class="ops-field"><span>Branch Name</span><input name="branchName" [(ngModel)]="branchForm.branchName" required></label>
+      <label class="ops-field"><span>Branch Code</span><input name="branchCode" [(ngModel)]="branchForm.branchCode" required></label>
+      <label class="ops-field"><span>Location</span><textarea name="location" [(ngModel)]="branchForm.location"></textarea></label>
+      <button type="submit" class="ops-button primary" [disabled]="saving"><i class="pi pi-save"></i>Save Branch</button>
+    </form>
+  </tc-ops-drawer>
+</section>

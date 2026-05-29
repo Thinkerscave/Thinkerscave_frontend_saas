@@ -1,0 +1,247 @@
+<section class="tc-workflow-workspace student-workspace">
+  <aside class="tc-workspace-rail">
+    <div class="tc-workspace-brand">
+      <span><i class="pi pi-graduation-cap"></i></span>
+      <div>
+        <strong>Student Management</strong>
+        <small>Lifecycle command center</small>
+      </div>
+    </div>
+    <tc-workspace-nav [items]="navItems"></tc-workspace-nav>
+  </aside>
+
+  <main class="tc-workspace-main">
+    <header class="tc-workspace-hero">
+      <div>
+        <span class="tc-eyebrow">ThinkersCave ERP</span>
+        <h1>{{ title }}</h1>
+        <p>{{ subtitle }}</p>
+      </div>
+      <div class="tc-hero-actions">
+        <button type="button" class="tc-button secondary" (click)="page = 'profiles'">
+          <i class="pi pi-id-card"></i>
+          <span>Open Profile</span>
+        </button>
+        <button type="button" class="tc-button primary" (click)="page = 'directory'">
+          <i class="pi pi-search"></i>
+          <span>Find Student</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="tc-metric-grid">
+      <tc-workspace-metric *ngFor="let metric of metrics" [metric]="metric"></tc-workspace-metric>
+    </section>
+
+    <div class="tc-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      Loading student workspace
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <section class="tc-workspace-view" *ngIf="page === 'dashboard'">
+        <div class="tc-two-column">
+          <article class="tc-panel tc-panel-large">
+            <header>
+              <div><span class="tc-eyebrow">Lifecycle</span><h2>Student health snapshot</h2></div>
+            </header>
+            <div class="tc-three-column compact">
+              <article class="tc-mini-card" *ngFor="let stat of classStats() | slice:0:6">
+                <span>{{ stat.classItem.className }}</span>
+                <strong>{{ stat.students.length }}</strong>
+                <small>{{ stat.sections.length }} sections</small>
+                <div class="tc-progress"><i [style.width.%]="stat.utilization"></i></div>
+              </article>
+            </div>
+          </article>
+
+          <article class="tc-panel">
+            <header><div><span class="tc-eyebrow">Action Queue</span><h2>Records to review</h2></div></header>
+            <button type="button" class="tc-focus-row" *ngFor="let student of data.students | slice:0:6" (click)="selectStudent(student); page = 'profiles'">
+              <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span>
+              <div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.sectionName }}</small></div>
+              <em>{{ student.rollNumber }}</em>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'directory'">
+        <article class="tc-panel">
+          <header class="tc-toolbar-header">
+            <div><span class="tc-eyebrow">Directory</span><h2>Search students</h2></div>
+            <div class="tc-toolbar">
+              <label class="tc-search"><i class="pi pi-search"></i><input placeholder="Search by name, class, roll, parent" [value]="searchTerm" (input)="searchTerm = $any($event.target).value" /></label>
+              <div class="tc-segmented">
+                <button type="button" [class.is-active]="directoryView === 'table'" (click)="setDirectoryView('table')"><i class="pi pi-list"></i></button>
+                <button type="button" [class.is-active]="directoryView === 'grid'" (click)="setDirectoryView('grid')"><i class="pi pi-th-large"></i></button>
+                <button type="button" [class.is-active]="directoryView === 'cards'" (click)="setDirectoryView('cards')"><i class="pi pi-id-card"></i></button>
+              </div>
+            </div>
+          </header>
+
+          <div class="tc-table" *ngIf="directoryView === 'table'">
+            <div class="tc-table-row tc-table-head"><span>Student</span><span>Roll</span><span>Class</span><span>Parent</span><span>Status</span></div>
+            <button type="button" class="tc-table-row clickable" *ngFor="let student of filteredStudents()" (click)="selectStudent(student); page = 'profiles'">
+              <span>{{ studentName(student) }}</span><span>{{ student.rollNumber }}</span><span>{{ student.className }} / {{ student.sectionName }}</span><span>{{ student.parentName }}</span><span>{{ isActive(student) ? 'Active' : 'Inactive' }}</span>
+            </button>
+          </div>
+
+          <div class="tc-card-grid" *ngIf="directoryView !== 'table'">
+            <button type="button" class="tc-student-card" *ngFor="let student of filteredStudents()" (click)="selectStudent(student); page = 'profiles'">
+              <span class="tc-avatar large">{{ student.firstName.charAt(0) }}</span>
+              <strong>{{ studentName(student) }}</strong>
+              <small>{{ student.className }} • {{ student.sectionName }}</small>
+              <p>{{ student.email || student.parentName }}</p>
+            </button>
+          </div>
+
+          <tc-workspace-empty *ngIf="!filteredStudents().length" title="No students match" message="Adjust the search query to see matching student records." icon="pi pi-search"></tc-workspace-empty>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'profiles'">
+        <div class="tc-profile-layout" *ngIf="selectedStudent; else noProfile">
+          <aside class="tc-profile-list">
+            <button type="button" *ngFor="let student of data.students" [class.is-active]="student.studentId === selectedStudent.studentId" (click)="selectStudent(student)">
+              <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span>
+              <div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.rollNumber }}</small></div>
+            </button>
+          </aside>
+          <article class="tc-panel tc-profile-panel">
+            <header class="tc-profile-header">
+              <span class="tc-avatar xl">{{ selectedStudent.firstName.charAt(0) }}</span>
+              <div><span class="tc-eyebrow">{{ selectedStudent.rollNumber }}</span><h2>{{ studentName(selectedStudent) }}</h2><p>{{ selectedStudent.className }} • {{ selectedStudent.sectionName }} • {{ selectedStudent.parentName }}</p></div>
+            </header>
+            <div class="tc-tabs">
+              <button type="button" *ngFor="let tab of profileTabs" [class.is-active]="activeProfileTab === tab" (click)="activeProfileTab = tab">{{ tab }}</button>
+            </div>
+            <div class="tc-profile-content" [ngSwitch]="activeProfileTab">
+              <div *ngSwitchCase="'Overview'" class="tc-detail-grid">
+                <span><small>Email</small><strong>{{ selectedStudent.email || 'Not provided' }}</strong></span>
+                <span><small>Mobile</small><strong>{{ selectedStudent.mobileNumber || 'Not provided' }}</strong></span>
+                <span><small>DOB</small><strong>{{ selectedStudent.dateOfBirth || 'Pending' }}</strong></span>
+                <span><small>Enrollment</small><strong>{{ selectedStudent.enrollmentDate || 'Pending' }}</strong></span>
+              </div>
+              <div *ngSwitchCase="'Academics'" class="tc-detail-grid">
+                <span><small>Class</small><strong>{{ selectedStudent.className }}</strong></span>
+                <span><small>Section</small><strong>{{ selectedStudent.sectionName }}</strong></span>
+                <span><small>Next Class</small><strong>{{ nextClassName(selectedStudent.className) }}</strong></span>
+                <span><small>Status</small><strong>{{ isActive(selectedStudent) ? 'Active' : 'Inactive' }}</strong></span>
+              </div>
+              <div *ngSwitchCase="'Documents'" class="tc-doc-list">
+                <span *ngFor="let document of studentDocuments(selectedStudent)"><i class="pi pi-file"></i>{{ document.documentType }} • {{ document.documentName }}</span>
+                <tc-workspace-empty *ngIf="!studentDocuments(selectedStudent).length" title="No documents" message="Uploaded documents will appear in this profile." icon="pi pi-folder"></tc-workspace-empty>
+              </div>
+              <div *ngSwitchDefault class="tc-detail-grid">
+                <span><small>Current State</small><strong>Tracked in linked modules</strong></span>
+                <span><small>Student</small><strong>{{ studentName(selectedStudent) }}</strong></span>
+              </div>
+            </div>
+          </article>
+        </div>
+        <ng-template #noProfile><tc-workspace-empty title="No student selected" message="Choose a student from the directory to open a profile." icon="pi pi-id-card"></tc-workspace-empty></ng-template>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'admissions'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Admissions</span><h2>Admission-to-student bridge</h2></div></header>
+          <div class="tc-table">
+            <div class="tc-table-row tc-table-head"><span>Application</span><span>Applicant</span><span>Class</span><span>Status</span><span>Contact</span></div>
+            <div class="tc-table-row" *ngFor="let application of admissionApplications()">
+              <span>{{ application.applicationId }}</span><span>{{ application.applicantName }}</span><span>{{ application.applyingForSchoolOrCollege }}</span><span>{{ application.status }}</span><span>{{ application.contactNumber }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'classes'">
+        <div class="tc-three-column">
+          <article class="tc-panel" *ngFor="let stat of classStats()">
+            <header><div><span class="tc-eyebrow">Class</span><h2>{{ stat.classItem.className }}</h2></div><strong>{{ stat.students.length }}</strong></header>
+            <p>{{ stat.sections.length }} sections configured</p>
+            <div class="tc-progress"><i [style.width.%]="stat.utilization"></i></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'sections'">
+        <div class="tc-three-column">
+          <article class="tc-panel" *ngFor="let stat of sectionStats()">
+            <header><div><span class="tc-eyebrow">Section</span><h2>{{ stat.section.sectionName }}</h2></div><strong>{{ stat.students.length }}</strong></header>
+            <p>{{ stat.section.classEntity?.className || 'Class mapped' }}</p>
+            <div class="tc-progress"><i [style.width.%]="stat.utilization"></i></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'promotion'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Promotion</span><h2>Academic movement preview</h2></div></header>
+          <div class="tc-table">
+            <div class="tc-table-row tc-table-head"><span>Student</span><span>Current</span><span>Next</span><span>Readiness</span></div>
+            <div class="tc-table-row" *ngFor="let student of data.students">
+              <span>{{ studentName(student) }}</span><span>{{ student.className }}</span><span>{{ nextClassName(student.className) }}</span><span>{{ studentDocuments(student).length ? 'Records complete' : 'Document check pending' }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'transfer'">
+        <div class="tc-two-column">
+          <article class="tc-panel">
+            <header><div><span class="tc-eyebrow">Transfer</span><h2>Transfer certificate desk</h2></div></header>
+            <div class="tc-focus-list">
+              <button type="button" class="tc-focus-row" *ngFor="let student of data.students | slice:0:8" (click)="selectStudent(student)">
+                <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.parentName }}</small></div><em>{{ isActive(student) ? 'Eligible' : 'Inactive' }}</em>
+              </button>
+            </div>
+          </article>
+          <article class="tc-panel"><header><h2>Readiness</h2></header><p>Transfer readiness is based on active student status and document availability from the live student vault.</p></article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'documents'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Documents</span><h2>Student document vault</h2></div></header>
+          <div class="tc-table">
+            <div class="tc-table-row tc-table-head"><span>Student</span><span>Type</span><span>File</span><span>Status</span></div>
+            <div class="tc-table-row" *ngFor="let document of data.documents"><span>{{ studentByDocument(document.studentId) }}</span><span>{{ document.documentType }}</span><span>{{ document.documentName }}</span><span>Available</span></div>
+          </div>
+          <tc-workspace-empty *ngIf="!data.documents.length" title="No documents uploaded" message="Student documents will appear as soon as they are uploaded through registration." icon="pi pi-folder-open"></tc-workspace-empty>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'parents'">
+        <div class="tc-three-column">
+          <article class="tc-panel" *ngFor="let parent of parentGroups()">
+            <header><div><span class="tc-eyebrow">Guardian</span><h2>{{ parent.name }}</h2></div><strong>{{ parent.students.length }}</strong></header>
+            <p>{{ parent.classes }}</p>
+            <div class="tc-doc-list"><span *ngFor="let student of parent.students"><i class="pi pi-user"></i>{{ studentName(student) }}</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'id-cards'">
+        <div class="tc-id-card-grid">
+          <article class="tc-id-card" *ngFor="let student of data.students | slice:0:9">
+            <header><span class="tc-avatar large">{{ student.firstName.charAt(0) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.sectionName }}</small></div></header>
+            <div class="tc-qr"><i class="pi pi-qrcode"></i></div>
+            <footer><span>{{ student.rollNumber }}</span><span>{{ student.mobileNumber }}</span></footer>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'alumni'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Alumni</span><h2>Graduation-ready records</h2></div></header>
+          <div class="tc-table" *ngIf="graduationReadyStudents().length; else noAlumni">
+            <div class="tc-table-row tc-table-head"><span>Student</span><span>Class</span><span>Parent</span><span>Status</span></div>
+            <div class="tc-table-row" *ngFor="let student of graduationReadyStudents()"><span>{{ studentName(student) }}</span><span>{{ student.className }}</span><span>{{ student.parentName }}</span><span>Eligible for alumni transition</span></div>
+          </div>
+          <ng-template #noAlumni><tc-workspace-empty title="No alumni-ready records" message="Graduation-ready students will be listed here from the active roster." icon="pi pi-verified"></tc-workspace-empty></ng-template>
+        </article>
+      </section>
+    </ng-container>
+  </main>
+</section>

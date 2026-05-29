@@ -1,0 +1,343 @@
+<section class="tc-workflow-workspace admissions-workspace">
+  <aside class="tc-workspace-rail">
+    <div class="tc-workspace-brand">
+      <span><i class="pi pi-compass"></i></span>
+      <div>
+        <strong>Inquiry & Admissions</strong>
+        <small>Enrollment command center</small>
+      </div>
+    </div>
+    <tc-workspace-nav [items]="navItems"></tc-workspace-nav>
+  </aside>
+
+  <main class="tc-workspace-main">
+    <header class="tc-workspace-hero">
+      <div>
+        <span class="tc-eyebrow">ThinkersCave ERP</span>
+        <h1>{{ title }}</h1>
+        <p>{{ subtitle }}</p>
+      </div>
+      <div class="tc-hero-actions">
+        <button type="button" class="tc-button secondary" (click)="openDrawer('follow-up')">
+          <i class="pi pi-phone"></i>
+          <span>Schedule Follow-up</span>
+        </button>
+        <button type="button" class="tc-button primary" (click)="openDrawer('inquiry')">
+          <i class="pi pi-user-plus"></i>
+          <span>New Inquiry</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="tc-message" *ngIf="message">{{ message }}</div>
+
+    <section class="tc-metric-grid">
+      <tc-workspace-metric *ngFor="let metric of metrics" [metric]="metric"></tc-workspace-metric>
+    </section>
+
+    <div class="tc-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      Loading admissions workspace
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <section class="tc-workspace-view" *ngIf="page === 'dashboard'">
+        <div class="tc-two-column">
+          <article class="tc-panel tc-panel-large">
+            <header>
+              <div>
+                <span class="tc-eyebrow">Admissions Flow</span>
+                <h2>What needs attention next</h2>
+              </div>
+            </header>
+            <div class="tc-focus-list" *ngIf="data.inquiries.length; else noInquiries">
+              <button type="button" *ngFor="let inquiry of data.inquiries | slice:0:6" class="tc-focus-row" (click)="selectedInquiry = inquiry">
+                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <div>
+                  <strong>{{ inquiry.name }}</strong>
+                  <small>{{ inquiry.classInterested }} • {{ inquiry.mobileNumber }}</small>
+                </div>
+                <em>{{ statusLabel(inquiry.status) }}</em>
+              </button>
+            </div>
+            <ng-template #noInquiries>
+              <tc-workspace-empty title="No inquiries yet" message="New inquiries will appear here once they are submitted." icon="pi pi-user-plus"></tc-workspace-empty>
+            </ng-template>
+          </article>
+
+          <article class="tc-panel">
+            <header>
+              <div>
+                <span class="tc-eyebrow">Today</span>
+                <h2>Follow-up Priority</h2>
+              </div>
+            </header>
+            <div class="tc-task-stack">
+              <button type="button" *ngFor="let task of followUpsByTiming('today') | slice:0:5" class="tc-task-card" (click)="openDrawer('follow-up', inquiryById(task.inquiryId))">
+                <i class="pi pi-phone"></i>
+                <div>
+                  <strong>{{ inquiryName(task.inquiryId) }}</strong>
+                  <small>{{ task.followUpType }} • {{ task.remarks }}</small>
+                </div>
+              </button>
+              <tc-workspace-empty *ngIf="!followUpsByTiming('today').length" title="No follow-ups today" message="The current follow-up queue is clear." icon="pi pi-check-circle"></tc-workspace-empty>
+            </div>
+          </article>
+        </div>
+
+        <div class="tc-three-column">
+          <article class="tc-panel" *ngFor="let stage of stages | slice:0:6">
+            <header>
+              <div>
+                <span class="tc-eyebrow">{{ stage.label }}</span>
+                <h2>{{ inquiriesForStage(stage).length }}</h2>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+            </header>
+            <p>{{ stage.description }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'pipeline'">
+        <div class="tc-kanban">
+          <article class="tc-kanban-column" *ngFor="let stage of stages" (dragover)="$event.preventDefault()" (drop)="onDrop(stage)">
+            <header>
+              <div>
+                <strong>{{ stage.label }}</strong>
+                <small>{{ stage.description }}</small>
+              </div>
+              <span>{{ inquiriesForStage(stage).length }}</span>
+            </header>
+            <button type="button" class="tc-lead-card" *ngFor="let inquiry of inquiriesForStage(stage)" draggable="true" (dragstart)="onDragStart(inquiry)" (click)="selectedInquiry = inquiry">
+              <div class="tc-lead-card__top">
+                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <div>
+                  <strong>{{ inquiry.name }}</strong>
+                  <small>{{ inquiry.classInterested }}</small>
+                </div>
+              </div>
+              <p>{{ inquiry.comments || inquiry.address }}</p>
+              <footer>
+                <span>{{ inquiry.inquirySource }}</span>
+                <em>{{ inquiry.nextFollowUpDate || 'No next date' }}</em>
+              </footer>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'management'">
+        <div class="tc-two-column">
+          <article class="tc-panel tc-form-panel">
+            <header>
+              <div>
+                <span class="tc-eyebrow">Guided Intake</span>
+                <h2>Capture inquiry</h2>
+              </div>
+            </header>
+            <form [formGroup]="inquiryForm" (ngSubmit)="submitInquiry()" class="tc-form-grid">
+              <label>Name<input formControlName="name" /></label>
+              <label>Mobile<input formControlName="mobileNumber" /></label>
+              <label>Email<input formControlName="email" /></label>
+              <label>Class Interested<input formControlName="classInterested" /></label>
+              <label>Source
+                <select formControlName="inquirySource">
+                  <option value="WEBSITE">Website</option>
+                  <option value="WALK_IN">Walk-in</option>
+                  <option value="REFERRAL">Referral</option>
+                  <option value="SOCIAL_MEDIA">Social Media</option>
+                  <option value="CAMPAIGN">Campaign</option>
+                  <option value="PHONE">Phone</option>
+                </select>
+              </label>
+              <label>Referred By<input formControlName="referredBy" /></label>
+              <label class="span-2">Address<textarea formControlName="address" rows="3"></textarea></label>
+              <label class="span-2">Notes<textarea formControlName="comments" rows="3"></textarea></label>
+              <div class="tc-warning" *ngIf="duplicateInquiry">
+                Existing inquiry found for {{ duplicateInquiry.name }} ({{ duplicateInquiry.mobileNumber }}).
+              </div>
+              <button class="tc-button primary span-2" type="submit" [disabled]="saving">
+                <i class="pi pi-save"></i>
+                <span>{{ saving ? 'Saving' : 'Save Inquiry' }}</span>
+              </button>
+            </form>
+          </article>
+
+          <article class="tc-panel">
+            <header>
+              <div>
+                <span class="tc-eyebrow">Recent Intake</span>
+                <h2>Duplicate-safe queue</h2>
+              </div>
+            </header>
+            <div class="tc-focus-list">
+              <button type="button" *ngFor="let inquiry of data.inquiries | slice:0:8" class="tc-focus-row" (click)="selectedInquiry = inquiry">
+                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <div>
+                  <strong>{{ inquiry.name }}</strong>
+                  <small>{{ inquiry.email }}</small>
+                </div>
+                <em>{{ inquiry.inquirySource }}</em>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'follow-ups'">
+        <div class="tc-three-column">
+          <article class="tc-panel">
+            <header><h2>Overdue</h2><span class="tc-badge danger">{{ followUpsByTiming('overdue').length }}</span></header>
+            <button type="button" class="tc-task-card" *ngFor="let task of followUpsByTiming('overdue')" (click)="openDrawer('follow-up', inquiryById(task.inquiryId))">
+              <i class="pi pi-exclamation-triangle"></i><div><strong>{{ inquiryName(task.inquiryId) }}</strong><small>{{ task.nextFollowUpDate }}</small></div>
+            </button>
+          </article>
+          <article class="tc-panel">
+            <header><h2>Today</h2><span class="tc-badge info">{{ followUpsByTiming('today').length }}</span></header>
+            <button type="button" class="tc-task-card" *ngFor="let task of followUpsByTiming('today')" (click)="openDrawer('follow-up', inquiryById(task.inquiryId))">
+              <i class="pi pi-phone"></i><div><strong>{{ inquiryName(task.inquiryId) }}</strong><small>{{ task.remarks }}</small></div>
+            </button>
+          </article>
+          <article class="tc-panel">
+            <header><h2>Upcoming</h2><span class="tc-badge success">{{ followUpsByTiming('upcoming').length }}</span></header>
+            <button type="button" class="tc-task-card" *ngFor="let task of followUpsByTiming('upcoming') | slice:0:8" (click)="openDrawer('follow-up', inquiryById(task.inquiryId))">
+              <i class="pi pi-calendar"></i><div><strong>{{ inquiryName(task.inquiryId) }}</strong><small>{{ task.nextFollowUpDate }}</small></div>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'counseling'">
+        <article class="tc-panel">
+          <header>
+            <div><span class="tc-eyebrow">Counseling</span><h2>Session board</h2></div>
+          </header>
+          <div class="tc-table">
+            <div class="tc-table-row tc-table-head"><span>Family</span><span>Mode</span><span>Status</span><span>Next Step</span></div>
+            <div class="tc-table-row" *ngFor="let item of data.followUps">
+              <span>{{ inquiryName(item.inquiryId) }}</span>
+              <span>{{ item.followUpType }}</span>
+              <span>{{ statusLabel(item.statusAfterFollowUp) }}</span>
+              <span>{{ item.nextFollowUpDate || 'Admission desk review' }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'applications'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Applications</span><h2>Admission review queue</h2></div></header>
+          <div class="tc-table">
+            <div class="tc-table-row tc-table-head"><span>Application</span><span>Applicant</span><span>Class</span><span>Status</span><span>Documents</span></div>
+            <div class="tc-table-row" *ngFor="let application of data.admissions">
+              <span>{{ application.applicationId }}</span>
+              <span>{{ application.applicantName }}</span>
+              <span>{{ application.applyingForSchoolOrCollege }}</span>
+              <span><em class="tc-status">{{ statusLabel(application.status) }}</em></span>
+              <span>{{ applicationDocumentProgress(application) }}%</span>
+            </div>
+          </div>
+          <tc-workspace-empty *ngIf="!data.admissions.length" title="No admission applications" message="Applications created by admissions staff will appear in this queue." icon="pi pi-file-edit"></tc-workspace-empty>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'documents'">
+        <div class="tc-three-column">
+          <article class="tc-panel" *ngFor="let application of data.admissions">
+            <header>
+              <div><span class="tc-eyebrow">{{ application.status }}</span><h2>{{ application.applicantName }}</h2></div>
+              <strong>{{ applicationDocumentProgress(application) }}%</strong>
+            </header>
+            <div class="tc-doc-list">
+              <span *ngFor="let doc of requiredDocuments" [class.is-done]="application.uploadedDocuments?.includes(doc)">
+                <i class="pi" [class.pi-check-circle]="application.uploadedDocuments?.includes(doc)" [class.pi-circle]="!application.uploadedDocuments?.includes(doc)"></i>
+                {{ doc }}
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'communication'">
+        <article class="tc-panel">
+          <header><div><span class="tc-eyebrow">Communication</span><h2>Interaction timeline</h2></div></header>
+          <div class="tc-timeline">
+            <div class="tc-timeline-item" *ngFor="let item of data.followUps">
+              <span><i class="pi pi-send"></i></span>
+              <div>
+                <strong>{{ inquiryName(item.inquiryId) }} • {{ item.followUpType }}</strong>
+                <small>{{ item.followUpDate | date:'medium' }}</small>
+                <p>{{ item.remarks }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="tc-workspace-view" *ngIf="page === 'analytics'">
+        <div class="tc-two-column">
+          <article class="tc-panel">
+            <header><h2>Source performance</h2></header>
+            <div class="tc-bar-list">
+              <div class="tc-bar-row" *ngFor="let item of sourceBreakdown()">
+                <span>{{ item.source }}</span><div><i [style.width.%]="item.width"></i></div><strong>{{ item.total }}</strong>
+              </div>
+            </div>
+          </article>
+          <article class="tc-panel">
+            <header><h2>Class demand</h2></header>
+            <div class="tc-bar-list">
+              <div class="tc-bar-row" *ngFor="let item of classDemand()">
+                <span>{{ item.className }}</span><div><i [style.width.%]="item.width"></i></div><strong>{{ item.total }}</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </ng-container>
+  </main>
+</section>
+
+<tc-workspace-drawer [open]="drawerMode !== null" [title]="drawerMode === 'inquiry' ? 'New Inquiry' : 'Schedule Follow-up'" (close)="closeDrawer()">
+  <form *ngIf="drawerMode === 'inquiry'" [formGroup]="inquiryForm" (ngSubmit)="submitInquiry()" class="tc-form-grid drawer-form">
+    <label>Name<input formControlName="name" /></label>
+    <label>Mobile<input formControlName="mobileNumber" /></label>
+    <label>Email<input formControlName="email" /></label>
+    <label>Class<input formControlName="classInterested" /></label>
+    <label class="span-2">Address<textarea formControlName="address" rows="3"></textarea></label>
+    <label class="span-2">Notes<textarea formControlName="comments" rows="3"></textarea></label>
+    <button class="tc-button primary span-2" type="submit" [disabled]="saving"><i class="pi pi-save"></i><span>Save Inquiry</span></button>
+  </form>
+
+  <form *ngIf="drawerMode === 'follow-up'" [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="tc-form-grid drawer-form">
+    <label class="span-2">Inquiry
+      <select formControlName="inquiryId">
+        <option *ngFor="let inquiry of data.inquiries" [ngValue]="inquiry.inquiryId">{{ inquiry.name }} - {{ inquiry.classInterested }}</option>
+      </select>
+    </label>
+    <label>Type
+      <select formControlName="followUpType">
+        <option value="CALL">Call</option>
+        <option value="WHATSAPP">WhatsApp</option>
+        <option value="EMAIL">Email</option>
+        <option value="WALK_IN">Walk-in</option>
+        <option value="SMS">SMS</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </label>
+    <label>Status
+      <select formControlName="statusAfterFollowUp">
+        <option value="CONTACTED">Contacted</option>
+        <option value="INTERESTED">Interested</option>
+        <option value="COUNSELING">Counseling</option>
+        <option value="DOCUMENTS_PENDING">Documents Pending</option>
+        <option value="READY_FOR_ADMISSION">Ready For Admission</option>
+        <option value="LOST">Lost</option>
+      </select>
+    </label>
+    <label class="span-2">Next Follow-up<input type="date" formControlName="nextFollowUpDate" /></label>
+    <label class="span-2">Remarks<textarea formControlName="remarks" rows="4"></textarea></label>
+    <button class="tc-button primary span-2" type="submit" [disabled]="saving"><i class="pi pi-check"></i><span>Save Follow-up</span></button>
+  </form>
+</tc-workspace-drawer>
