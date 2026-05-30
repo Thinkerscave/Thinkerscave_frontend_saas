@@ -1,0 +1,118 @@
+:host {
+  display: contents;
+}
+
+.tc-drawer-form {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.tc-drawer-form.is-open {
+  pointer-events: auto;
+}
+
+.tc-drawer-form__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  opacity: 0;
+  background: rgba(15, 23, 42, 0.48);
+  transition: opacity 180ms ease;
+}
+
+.tc-drawer-form.is-open .tc-drawer-form__backdrop {
+  opacity: 1;
+}
+
+.tc-drawer-form__panel {
+  position: absolute;
+  top: var(--tc-space-4);
+  right: var(--tc-space-4);
+  bottom: var(--tc-space-4);
+  width: min(560px, calc(100vw - 2rem));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card-solid);
+  color: var(--tc-text);
+  box-shadow: var(--tc-shadow-lg);
+  transform: translateX(calc(100% + var(--tc-space-6)));
+  transition: transform 220ms ease;
+  overflow: hidden;
+}
+
+.tc-drawer-form__panel--sm {
+  width: min(420px, calc(100vw - 2rem));
+}
+
+.tc-drawer-form__panel--lg {
+  width: min(760px, calc(100vw - 2rem));
+}
+
+.tc-drawer-form.is-open .tc-drawer-form__panel {
+  transform: translateX(0);
+}
+
+header,
+footer {
+  padding: var(--tc-space-4);
+  border-color: var(--tc-border);
+}
+
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tc-space-3);
+  border-bottom: 1px solid var(--tc-border);
+}
+
+footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--tc-space-2);
+  border-top: 1px solid var(--tc-border);
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  color: var(--tc-heading);
+  font-size: 1.15rem;
+}
+
+p {
+  color: var(--tc-text-muted);
+}
+
+.tc-drawer-form__content {
+  min-width: 0;
+  overflow: auto;
+  padding: var(--tc-space-4);
+}
+
+.tc-drawer-form__close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
+  background: transparent;
+  color: var(--tc-text);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .tc-drawer-form__panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    border-radius: 0;
+  }
+}

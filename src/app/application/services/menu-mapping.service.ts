@@ -197,7 +197,25 @@ export class MenuMappingService {
     return (items ?? []).map(item => ({
       ...item,
       icon: normalizePrimeIcon(item.icon, 'pi pi-circle'),
+      routerLink: this.normalizeRouterLink(item.routerLink),
       items: item.items ? this.normalizeMenuItems(item.items) : item.items
     }));
+  }
+
+  private normalizeRouterLink(routerLink: MenuItem['routerLink']): MenuItem['routerLink'] {
+    if (!routerLink || Array.isArray(routerLink) || typeof routerLink !== 'string') {
+      return routerLink;
+    }
+
+    const link = routerLink.trim();
+    if (!link || link.startsWith('/app') || link.startsWith('/auth') || link.startsWith('/public') || /^https?:\/\//i.test(link)) {
+      return routerLink;
+    }
+
+    if (link.startsWith('app/')) {
+      return `/${link}`;
+    }
+
+    return `/app/${link.replace(/^\/+/, '')}`;
   }
 }

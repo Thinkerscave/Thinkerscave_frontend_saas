@@ -1,25 +1,23 @@
 .ops-workspace {
-  --ops-bg: #071224;
-  --ops-panel: #0e1b34;
-  --ops-panel-strong: #132544;
-  --ops-accent: #7c5cff;
-  --ops-success: #00c48c;
-  --ops-warning: #ffb547;
-  --ops-danger: #ff5d73;
-  --ops-border: rgba(255, 255, 255, 0.08);
-  --ops-hover: rgba(124, 92, 255, 0.15);
-  --ops-text: #f7f9ff;
-  --ops-muted: rgba(247, 249, 255, 0.68);
-  --ops-soft: rgba(247, 249, 255, 0.09);
+  --ops-bg: var(--tc-bg);
+  --ops-panel: var(--tc-surface-card-solid);
+  --ops-panel-strong: var(--tc-surface-elevated);
+  --ops-accent: var(--tc-primary-600);
+  --ops-success: var(--tc-success);
+  --ops-warning: var(--tc-warning);
+  --ops-danger: var(--tc-danger);
+  --ops-border: var(--tc-border);
+  --ops-hover: var(--tc-primary-100);
+  --ops-text: var(--tc-heading);
+  --ops-muted: var(--tc-text-muted);
+  --ops-soft: var(--tc-surface-card);
   min-height: calc(100vh - 72px);
   display: grid;
   grid-template-columns: minmax(240px, 292px) minmax(0, 1fr);
   gap: 18px;
   padding: 18px;
   color: var(--ops-text);
-  background:
-    linear-gradient(135deg, rgba(124, 92, 255, 0.16), transparent 32%),
-    var(--ops-bg);
+  background: var(--tc-bg-gradient);
 }
 
 .ops-workspace * {
@@ -411,7 +409,7 @@
 }
 
 .ops-field option {
-  color: #071224;
+  color: var(--tc-text);
 }
 
 .ops-list-grid {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostListener, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -89,6 +89,7 @@ export class AcademicsWorkspaceComponent implements OnInit {
   private readonly insightsService = inject(AcademicsInsightsService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly pages = ACADEMICS_PAGES;
   readonly navGroups = ACADEMICS_NAV_GROUPS;
@@ -105,6 +106,7 @@ export class AcademicsWorkspaceComponent implements OnInit {
   ngOnInit(): void {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'dashboard';
+      this.cdr.markForCheck();
     });
 
     this.refresh();
@@ -176,7 +178,10 @@ export class AcademicsWorkspaceComponent implements OnInit {
   refresh(): void {
     this.loading = true;
     this.workspaceService.loadWorkspaceData()
-      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => this.data = data,
         error: () => {
@@ -212,7 +217,10 @@ export class AcademicsWorkspaceComponent implements OnInit {
   saveDrawer(event: { mode: AcademicsActionMode; payload: Record<string, unknown> }): void {
     this.saving = true;
     this.saveRequest(event.mode, event.payload)
-      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.drawerOpen = false;

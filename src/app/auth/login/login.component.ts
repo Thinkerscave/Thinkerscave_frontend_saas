@@ -69,8 +69,10 @@ export class LoginComponent {
 
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
-        const accessToken = res.data.accessToken || res.data.token;
-        const refreshToken = res.data.refreshToken;
+        const loginData = res?.data ?? res;
+        const accessToken = loginData.accessToken || loginData.token;
+        const refreshToken = loginData.refreshToken || loginData.token;
+        const loginUser = loginData.user;
 
         if (!accessToken) {
           console.error('[LOGIN COMPONENT] No access token found in response');
@@ -85,7 +87,14 @@ export class LoginComponent {
         }
 
         // 1. Store token and tenant (pass rememberMe preference)
-        this.loginService.loginUser(accessToken, refreshToken, res.tenantId, res.user?.orgType, res.user?.organizations, rememberMe);
+        this.loginService.loginUser(
+          accessToken,
+          refreshToken,
+          loginData.tenantId,
+          loginUser?.orgType,
+          loginUser?.organizations,
+          rememberMe
+        );
 
         // 2. Fetch current user details
         this.loginService.getCurrentUser().subscribe({

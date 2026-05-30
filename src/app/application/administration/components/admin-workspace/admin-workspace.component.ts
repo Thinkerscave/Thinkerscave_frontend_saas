@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -54,6 +54,7 @@ type MonitoringTab = 'health' | 'jobs' | 'notifications' | 'integrity';
 })
 export class AdminWorkspaceComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   page: AdminWorkspacePage = 'dashboard';
   workspace: AdminControlCenter | null = null;
@@ -90,6 +91,7 @@ export class AdminWorkspaceComponent implements OnInit {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.page = (data['adminPage'] as AdminWorkspacePage) || 'dashboard';
       this.clearMessages();
+      this.cdr.markForCheck();
     });
     this.loadWorkspace();
   }
@@ -101,10 +103,12 @@ export class AdminWorkspaceComponent implements OnInit {
         this.workspace = workspace;
         this.loading = false;
         this.adminUserOrgId = workspace.organizations[0]?.orgId ?? null;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.loading = false;
         this.errorMessage = 'Administration workspace data could not be loaded.';
+        this.cdr.markForCheck();
       }
     });
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Table, TableModule } from 'primeng/table';
@@ -8,7 +8,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { ListViewConfig, PageRequestParams, ListViewAction, ListViewColumn } from './list-view-models';
+import { BulkActionEvent, ListViewConfig, PageRequestParams, ListViewAction, ListViewBulkAction, ListViewColumn } from './list-view-models';
 import { normalizePrimeIcon } from '../../utils/prime-icon.util';
 
 @Component({
@@ -28,7 +28,7 @@ import { normalizePrimeIcon } from '../../utils/prime-icon.util';
   styleUrl: './standard-list-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StandardListViewComponent {
+export class StandardListViewComponent implements OnChanges {
   @Input() config!: ListViewConfig;
   @Input() data: any[] = [];
 
@@ -36,8 +36,22 @@ export class StandardListViewComponent {
 
   @Output() onLoadData = new EventEmitter<PageRequestParams>();
   @Output() onSearch = new EventEmitter<string>();
+  @Output() onBulkAction = new EventEmitter<BulkActionEvent>();
 
   globalFilter: string = '';
+  selectedRows: any[] = [];
+  columnPanelOpen = false;
+  private visibleColumnFields = new Set<string>();
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['config'] && this.config?.columns?.length) {
+      this.visibleColumnFields = new Set(
+        this.config.columns
+          .filter(column => !column.hidden)
+          .map(column => column.field)
+      );
+    }
+  }
 
   get primaryRowActions() {
     return this.config?.rowActions?.filter(a => a.isPrimary) || [];
@@ -47,10 +61,34 @@ export class StandardListViewComponent {
     return this.config?.rowActions?.filter(a => !a.isPrimary) || [];
   }
 
+  get visibleColumns(): ListViewColumn[] {
+    return this.config?.columns?.filter(column => this.visibleColumnFields.has(column.field)) || [];
+  }
+
   get globalFilterFields(): string[] {
-    return this.config?.columns
+    return this.visibleColumns
       ?.filter(column => column.field && column.type !== 'custom')
       .map(column => column.field) || [];
+  }
+
+  get loadingRows(): number[] {
+    const rowCount = Math.min(this.config?.loadingRows || this.config?.rows || 5, 10);
+    return Array.from({ length: rowCount }, (_, index) => index);
+  }
+
+  get emptyColspan(): number {
+    return (this.visibleColumns?.length || 1)
+      + (this.config?.enableBulkSelection ? 1 : 0)
+      + (this.config?.rowActions?.length ? 1 : 0);
+  }
+
+  get hasSelectedRows(): boolean {
+    return this.selectedRows.length > 0;
+  }
+
+  get availableBulkActions(): ListViewBulkAction[] {
+    return this.config?.bulkActions
+      ?.filter(action => !action.visibleFn || action.visibleFn(this.selectedRows)) || [];
   }
 
   getMenuModel(item: any, actions: ListViewAction[]): MenuItem[] {
@@ -80,6 +118,49 @@ export class StandardListViewComponent {
     this.onSearch.emit(this.globalFilter);
   }
 
+  isColumnVisible(column: ListViewColumn): boolean {
+    return this.visibleColumnFields.has(column.field);
+  }
+
+  toggleColumn(field: string): void {
+    if (this.visibleColumnFields.has(field)) {
+      if (this.visibleColumnFields.size > 1) {
+        this.visibleColumnFields.delete(field);
+      }
+      return;
+    }
+
+    this.visibleColumnFields.add(field);
+  }
+
+  runBulkAction(action: ListViewBulkAction): void {
+    const items = [...this.selectedRows];
+    action.actionFn(items);
+    this.onBulkAction.emit({ action, items });
+  }
+
+  clearSelection(): void {
+    this.selectedRows = [];
+  }
+
+  exportCsv(): void {
+    const columns = this.visibleColumns.filter(column => column.type !== 'custom' && column.exportable !== false);
+    const fileName = this.config?.exportFileName || this.toSafeFileName(this.config?.title || 'records');
+    const rows = this.data ?? [];
+    const csv = [
+      columns.map(column => this.escapeCsv(column.header)).join(','),
+      ...rows.map(item => columns.map(column => this.escapeCsv(this.getExportValue(item, column))).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   getCellData(item: any, col: any): any {
     if (col.valueGetter) {
       return col.valueGetter(item);
@@ -105,5 +186,26 @@ export class StandardListViewComponent {
 
   getIconClass(item: any, col: ListViewColumn): string {
     return normalizePrimeIcon(this.getCellData(item, col), 'pi pi-circle');
+  }
+
+  private getExportValue(item: any, column: ListViewColumn): string {
+    if (column.type === 'tags') {
+      return this.getTagsData(item, column).join('; ');
+    }
+
+    const value = this.getCellData(item, column);
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return value === null || value === undefined ? '' : String(value);
+  }
+
+  private escapeCsv(value: string): string {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+
+  private toSafeFileName(value: string): string {
+    return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'records';
   }
 }

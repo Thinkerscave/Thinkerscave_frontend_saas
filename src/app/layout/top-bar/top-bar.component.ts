@@ -7,12 +7,13 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { InitialsPipe } from '../../shared/pipes';
+import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 
 
 @Component({
   selector: 'app-top-bar',
     changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MenuModule, ButtonModule, CommonModule, InitialsPipe],
+  imports: [MenuModule, ButtonModule, CommonModule, InitialsPipe, GlobalSearchComponent],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })

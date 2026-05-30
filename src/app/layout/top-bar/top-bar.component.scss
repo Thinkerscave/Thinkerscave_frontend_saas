@@ -64,6 +64,10 @@
     gap: 0.75rem;
   }
 
+  .topbar-search {
+    display: inline-flex;
+  }
+
   .theme-toggle {
     width: 40px;
     height: 40px;
@@ -129,6 +133,10 @@
     }
 
     .profile-btn .user-name {
+      display: none;
+    }
+
+    .topbar-search {
       display: none;
     }
   }

@@ -21,10 +21,13 @@ const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 /**
  * Attaches the JWT Bearer token to every outgoing HTTP request.
  *
- * On 401 / 403:
+ * On 401:
  *   - Skips refresh for public/login endpoints
  *   - Triggers token refresh exactly once (concurrent requests queue and retry)
  *   - On refresh failure: clears tokens and redirects to session-expired
+ *
+ * 403 is an authorization denial for an authenticated user. It must not
+ * trigger token refresh or clear the active session.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<any>,
@@ -53,7 +56,11 @@ export const authInterceptor: HttpInterceptorFn = (
 
       // Public API calls and login endpoint — do not redirect to session-expired
       const isPublicApi = req.url.includes('/public/') || req.url.includes('/password/');
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 403) {
+        return throwError(() => error);
+      }
+
+      if (error.status === 401) {
         if (isPublicApi || req.url.includes('/login')) {
           return throwError(() => error);
         }

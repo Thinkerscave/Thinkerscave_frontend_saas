@@ -1,20 +1,20 @@
 .admin-control-workspace {
-  --admin-bg: #071224;
-  --admin-panel: #0e1b34;
-  --admin-panel-2: #132544;
-  --admin-border: rgba(255, 255, 255, 0.08);
-  --admin-text: #edf4ff;
-  --admin-muted: #94a8c7;
-  --admin-soft: #657997;
-  --admin-primary: #7c5cff;
-  --admin-info: #38bdf8;
-  --admin-success: #00c48c;
-  --admin-warning: #ffb547;
-  --admin-danger: #ff5d73;
+  --admin-bg: var(--tc-bg);
+  --admin-panel: var(--tc-surface-card-solid);
+  --admin-panel-2: var(--tc-surface-elevated);
+  --admin-border: var(--tc-border);
+  --admin-text: var(--tc-heading);
+  --admin-muted: var(--tc-text-muted);
+  --admin-soft: var(--tc-text-soft);
+  --admin-primary: var(--tc-primary-600);
+  --admin-info: var(--tc-info);
+  --admin-success: var(--tc-success);
+  --admin-warning: var(--tc-warning);
+  --admin-danger: var(--tc-danger);
   min-height: 100vh;
   padding: 24px;
   color: var(--admin-text);
-  background: linear-gradient(135deg, #071224 0%, #0b172c 54%, #0b1f2f 100%);
+  background: var(--tc-bg-gradient);
 }
 
 .admin-control-workspace a {
@@ -27,7 +27,7 @@
   min-height: 260px;
   border: 1px dashed var(--admin-border);
   border-radius: 8px;
-  background: rgba(14, 27, 52, 0.82);
+  background: var(--admin-panel);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,7 +63,7 @@
   min-height: 72px;
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(14, 27, 52, 0.78);
+  background: var(--admin-panel);
   display: grid;
   grid-template-columns: 34px 1fr;
   grid-template-rows: auto auto;
@@ -116,7 +116,7 @@
   align-items: end;
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(14, 27, 52, 0.82);
+  background: var(--admin-panel);
   padding: 22px;
   margin-bottom: 18px;
 }
@@ -160,7 +160,7 @@
 .admin-icon-button {
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(19, 37, 68, 0.94);
+  background: var(--admin-panel-2);
   color: var(--admin-text);
   min-height: 40px;
   display: inline-flex;
@@ -227,7 +227,7 @@
 .event-grid article {
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(14, 27, 52, 0.84);
+  background: var(--admin-panel);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
 }
 
@@ -306,7 +306,7 @@
 }
 
 .admin-summary-band article {
-  background: rgba(19, 37, 68, 0.94);
+  background: var(--admin-panel-2);
   min-height: 86px;
   padding: 14px;
   display: flex;
@@ -437,7 +437,7 @@
   min-height: 40px;
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(14, 27, 52, 0.85);
+  background: var(--admin-panel);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -757,7 +757,7 @@
 .drawer-mini-card {
   border: 1px solid var(--admin-border);
   border-radius: 8px;
-  background: rgba(19, 37, 68, 0.75);
+  background: var(--admin-panel-2);
   padding: 14px;
   display: flex;
   justify-content: space-between;

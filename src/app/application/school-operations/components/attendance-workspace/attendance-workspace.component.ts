@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -47,6 +47,7 @@ export class AttendanceWorkspaceComponent implements OnInit {
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly navItems: OpsNavItem[] = [
     { label: 'Dashboard', description: 'Daily attendance command view', route: '/app/attendance/dashboard', icon: 'pi pi-chart-line' },
@@ -96,6 +97,7 @@ export class AttendanceWorkspaceComponent implements OnInit {
       if (!this.loading) {
         this.loadActiveRoster();
       }
+      this.cdr.markForCheck();
     });
     this.refresh();
   }
@@ -160,7 +162,10 @@ export class AttendanceWorkspaceComponent implements OnInit {
   refresh(): void {
     this.loading = true;
     this.dataService.loadAttendanceWorkspace()
-      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => {
           this.data = data;
@@ -176,7 +181,10 @@ export class AttendanceWorkspaceComponent implements OnInit {
   loadStudentRoster(): void {
     this.rosterLoading = true;
     this.dataService.loadStudentRoster(this.studentFilters)
-      .pipe(finalize(() => this.rosterLoading = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.rosterLoading = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: rows => this.studentRows = rows,
         error: () => this.messageService.add({ severity: 'error', summary: 'Roster unavailable', detail: 'Unable to load student roster.' })
@@ -186,7 +194,10 @@ export class AttendanceWorkspaceComponent implements OnInit {
   loadStaffRoster(): void {
     this.rosterLoading = true;
     this.dataService.loadStaffRoster(this.staffFilters)
-      .pipe(finalize(() => this.rosterLoading = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.rosterLoading = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: rows => this.staffRows = rows,
         error: () => this.messageService.add({ severity: 'error', summary: 'Roster unavailable', detail: 'Unable to load staff roster.' })

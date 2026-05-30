@@ -164,14 +164,14 @@ export const academicsApi = {
 
 // ─── Syllabus ───────────────────────────────────────────────────────────────────
 export const syllabusApi = {
-  base: `${BASE}/syllabi`,
-  byId: (id: number) => `${BASE}/syllabi/${id}`,
-  publish: (id: number) => `${BASE}/syllabi/${id}/publish`,
-  newVersion: (id: number) => `${BASE}/syllabi/${id}/new-version`,
-  history: (id: number) => `${BASE}/syllabi/${id}/history`,
+  base: `${BASE}/syllabus`,
+  byId: (id: number) => `${BASE}/syllabus/${id}`,
+  publish: (id: number) => `${BASE}/syllabus/${id}/publish`,
+  newVersion: (id: number) => `${BASE}/syllabus/${id}/version`,
+  history: (id: number) => `${BASE}/syllabus/${id}/history`,
   latestBySubject: (subjectId: number) => `${BASE}/syllabus/subject/${subjectId}/latest`,
-  studentProgress: (studentId: number, syllabusId: number) => `${BASE}/student-progress/${studentId}/${syllabusId}`,
-  saveStudentProgress: `${BASE}/student-progress`,
+  studentProgress: (studentId: number, syllabusId: number) => `${BASE}/syllabus/progress/student/${studentId}/syllabus/${syllabusId}`,
+  saveStudentProgress: (topicId: number) => `${BASE}/syllabus/progress/topic/${topicId}`,
 };
 
 // ─── Dashboard ──────────────────────────────────────────────────────────────────

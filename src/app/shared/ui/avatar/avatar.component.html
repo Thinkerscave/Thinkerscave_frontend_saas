@@ -1,0 +1,7 @@
+<span class="tc-avatar" [class.tc-avatar--sm]="size === 'sm'" [class.tc-avatar--lg]="size === 'lg'" [class.tc-avatar--xl]="size === 'xl'">
+  @if (imageUrl) {
+    <img [src]="imageUrl" [alt]="name || 'Avatar'" />
+  } @else {
+    <span>{{ initials }}</span>
+  }
+</span>

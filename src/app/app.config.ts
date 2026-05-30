@@ -12,6 +12,8 @@ import { authInterceptor } from './core/interceptor/auth.interceptor';
 import { httpErrorInterceptor } from './core/interceptor/http-error.interceptor';
 import { MessageService } from 'primeng/api';
 import { GlobalErrorHandler } from './core/error/global-error-handler';
+import { GlobalSearchProvider } from './shared/components/global-search/global-search.provider';
+import { ApplicationGlobalSearchProvider } from './application/services/application-global-search.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -41,6 +43,7 @@ export const appConfig: ApplicationConfig = {
     // (only one of the two trackers observes the cancellation).
     importProvidersFrom(NgxUiLoaderModule),
     MessageService,
+    { provide: GlobalSearchProvider, useClass: ApplicationGlobalSearchProvider },
     { provide: ErrorHandler, useClass: GlobalErrorHandler }
   ]
 };

@@ -16,7 +16,7 @@
     align-items: flex-start;
     gap: 1.5rem;
     padding: 1.25rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--tc-border);
     border-radius: 1.25rem;
     background: linear-gradient(135deg, #fefce8, #fffbeb);
 }
@@ -31,12 +31,12 @@
 
 .form-hero h3 {
     margin: .35rem 0;
-    color: #111827;
+    color: var(--tc-text);
 }
 
 .form-hero p {
     margin: 0;
-    color: #475569;
+    color: var(--tc-text-muted);
 }
 
 .form-meta {
@@ -58,7 +58,7 @@
 .form-meta strong {
     display: block;
     font-size: 1.8rem;
-    color: #111827;
+    color: var(--tc-text);
 }
 
 .master-form-grid {
@@ -68,10 +68,10 @@
 }
 
 .form-section {
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--tc-border);
     border-radius: 1rem;
     padding: 1.25rem;
-    background: #fff;
+    background: var(--tc-surface-card-solid);
     box-shadow: 0 10px 22px rgba(15, 23, 42, .04);
 }
 
@@ -84,12 +84,12 @@
 
 .form-section header h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--tc-heading);
 }
 
 .form-section header span {
     font-size: .85rem;
-    color: #94a3b8;
+    color: var(--tc-text-soft);
 }
 
 .form-row {
@@ -106,7 +106,7 @@
 
 .form-field label {
     font-weight: 600;
-    color: #0f172a;
+    color: var(--tc-heading);
 }
 
 .form-field input {
@@ -115,7 +115,7 @@
 
 .optional {
     font-weight: 400;
-    color: #94a3b8;
+    color: var(--tc-text-soft);
     font-size: .8rem;
 }
 
@@ -137,7 +137,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--tc-border);
 }
 
 .list-header h3 {
@@ -161,6 +161,6 @@
 
 .empty-msg {
     text-align: center;
-    color: #94a3b8;
+    color: var(--tc-text-soft);
     padding: 2rem !important;
 }

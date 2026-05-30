@@ -1,19 +1,19 @@
 .academics-premium-workspace {
-  --acad-bg: #0b1020;
-  --acad-bg-2: #111827;
-  --acad-surface: rgba(23, 32, 51, 0.78);
-  --acad-surface-strong: rgba(23, 32, 51, 0.94);
-  --acad-primary: #7c5cff;
-  --acad-blue: #3b82f6;
-  --acad-emerald: #10b981;
-  --acad-amber: #f59e0b;
-  --acad-rose: #f43f5e;
-  --acad-text: #f8fafc;
-  --acad-text-2: #cbd5e1;
-  --acad-muted: #94a3b8;
-  --acad-border: rgba(255, 255, 255, 0.08);
-  --acad-shadow: 0 22px 70px rgba(2, 6, 23, 0.42);
-  --acad-radius: 8px;
+  --acad-bg: var(--tc-bg);
+  --acad-bg-2: var(--tc-bg-muted);
+  --acad-surface: var(--tc-surface-card);
+  --acad-surface-strong: var(--tc-surface-card-solid);
+  --acad-primary: var(--tc-primary-600);
+  --acad-blue: var(--tc-info);
+  --acad-emerald: var(--tc-success);
+  --acad-amber: var(--tc-warning);
+  --acad-rose: var(--tc-danger);
+  --acad-text: var(--tc-heading);
+  --acad-text-2: var(--tc-text);
+  --acad-muted: var(--tc-text-muted);
+  --acad-border: var(--tc-border);
+  --acad-shadow: var(--tc-shadow-sm);
+  --acad-radius: var(--tc-radius-md);
 
   min-height: calc(100vh - 86px);
   display: grid;
@@ -21,10 +21,7 @@
   gap: 1rem;
   padding: 1rem;
   color: var(--acad-text);
-  background:
-    radial-gradient(circle at 16% 12%, rgba(124, 92, 255, 0.18), transparent 26rem),
-    radial-gradient(circle at 84% 18%, rgba(59, 130, 246, 0.16), transparent 24rem),
-    linear-gradient(135deg, var(--acad-bg) 0%, var(--acad-bg-2) 58%, #0f172a 100%);
+  background: var(--tc-bg-gradient);
   border-radius: var(--acad-radius);
   isolation: isolate;
 
@@ -62,8 +59,7 @@
 .acad-action-drawer,
 .acad-command-panel {
   border: 1px solid var(--acad-border);
-  background: linear-gradient(145deg, rgba(23, 32, 51, 0.86), rgba(17, 24, 39, 0.74));
-  backdrop-filter: blur(22px);
+  background: var(--tc-surface-card-solid);
   box-shadow: var(--acad-shadow);
   border-radius: var(--acad-radius);
 }
@@ -559,7 +555,8 @@
     position: absolute;
     inset: 20px;
     border-radius: 50%;
-    background: var(--acad-bg-2);
+    background: var(--tc-surface-card-solid);
+    border: 1px solid var(--tc-border);
   }
 
   strong,
@@ -1466,7 +1463,7 @@
     gap: 0.6rem;
     padding: 0.9rem 1rem;
     border-top: 1px solid var(--acad-border);
-    background: rgba(17, 24, 39, 0.94);
+    background: var(--acad-surface-strong);
   }
 }
 

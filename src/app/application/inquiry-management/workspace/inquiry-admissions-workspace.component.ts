@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -22,6 +22,7 @@ export class InquiryAdmissionsWorkspaceComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly workflowData = inject(WorkflowDataService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly navItems = INQUIRY_NAV_ITEMS;
   readonly stages = INQUIRY_PIPELINE_STAGES;
@@ -63,7 +64,10 @@ export class InquiryAdmissionsWorkspaceComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.workflowData.loadInquiryWorkspace()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe(data => {
         this.data = data;
         this.selectedInquiry = data.inquiries[0];

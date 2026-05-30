@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -58,6 +58,7 @@ export class StaffWorkspaceComponent implements OnInit {
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly navItems: OpsNavItem[] = [
     { label: 'Dashboard', description: 'Workforce command view', route: '/app/staff/dashboard', icon: 'pi pi-chart-line' },
@@ -103,6 +104,7 @@ export class StaffWorkspaceComponent implements OnInit {
   ngOnInit(): void {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as StaffWorkspacePage | undefined) ?? 'dashboard';
+      this.cdr.markForCheck();
     });
     this.refresh();
   }
@@ -210,7 +212,10 @@ export class StaffWorkspaceComponent implements OnInit {
   refresh(): void {
     this.loading = true;
     this.dataService.loadStaffWorkspace()
-      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => {
           this.data = data;

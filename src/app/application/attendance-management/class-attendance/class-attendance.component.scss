@@ -1,8 +1,8 @@
 .card {
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--tc-border);
+  background: var(--tc-surface-card-solid);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 
@@ -18,7 +18,7 @@
   gap: 1rem;
   align-items: flex-start;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--tc-border);
 }
 
 .eyebrow {
@@ -31,7 +31,7 @@
 
 .form-meta {
   background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--tc-border);
   border-radius: 0.85rem;
   padding: 0.75rem 1rem;
   min-width: 140px;
@@ -41,13 +41,13 @@
     display: block;
     font-size: 0.75rem;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: var(--tc-text-soft);
     margin-bottom: 0.2rem;
   }
 
   strong {
     font-size: 1.5rem;
-    color: #111827;
+    color: var(--tc-text);
   }
 }
 
@@ -67,7 +67,7 @@
 
   label {
     font-weight: 600;
-    color: #111827;
+    color: var(--tc-text);
   }
 }
 

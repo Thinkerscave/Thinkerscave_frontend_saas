@@ -1,0 +1,22 @@
+<section class="tc-timeline">
+  <header>{{ title }}</header>
+  @if (!items.length) {
+    <p class="tc-timeline__empty">No activity recorded yet.</p>
+  } @else {
+    <ol>
+      @for (item of items; track item.id || item.title) {
+        <li>
+          <span class="tc-timeline__marker"><i [ngClass]="item.icon || 'pi pi-circle-fill'"></i></span>
+          <div>
+            <strong>{{ item.title }}</strong>
+            @if (item.description) { <p>{{ item.description }}</p> }
+            <small>
+              @if (item.actor) { <span>{{ item.actor }}</span> }
+              @if (item.timestamp) { <time>{{ item.timestamp | date:'medium' }}</time> }
+            </small>
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</section>

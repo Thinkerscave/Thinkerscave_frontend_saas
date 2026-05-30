@@ -5,6 +5,8 @@ import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { ENROLLMENT_MANAGEMENT_ROUTES } from './enrollment-management/enrollment-management.routes';
 import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
+import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
+import { STUDENT_MANAGEMENT_ROUTES } from './student-management/student-management.route';
 import { roleGuard } from '../core/guard/role.guard';
 
 export const APPLICATION_ROUTES: Routes = [
@@ -77,7 +79,7 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'staff',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'HR_MANAGER', 'ACCOUNTANT'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'HR_MANAGER'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./school-operations/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent) },
@@ -113,6 +115,16 @@ export const APPLICATION_ROUTES: Routes = [
     redirectTo: 'admin/access'
   },
   {
+    path: 'role/privilege-mapping',
+    pathMatch: 'full',
+    redirectTo: 'admin/access'
+  },
+  {
+    path: 'public/admission',
+    pathMatch: 'full',
+    redirectTo: '/public/admission'
+  },
+  {
     path: 'inquiry',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -127,26 +139,26 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'analytics', data: { workspacePage: 'analytics' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) },
       { path: 'manage', pathMatch: 'full', redirectTo: 'management' },
       { path: 'followup', pathMatch: 'full', redirectTo: 'follow-ups' },
-      { path: 'detail/:id', pathMatch: 'full', redirectTo: 'pipeline' }
+      { path: 'detail/:id', data: { workspacePage: 'pipeline' }, loadComponent: () => import('./inquiry-management/workspace/inquiry-admissions-workspace.component').then(m => m.InquiryAdmissionsWorkspaceComponent) }
     ]
   },
   {
     path: 'students',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'profiles', data: { workspacePage: 'profiles' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'admissions', data: { workspacePage: 'admissions' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'classes', data: { workspacePage: 'classes' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'sections', data: { workspacePage: 'sections' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'promotion', data: { workspacePage: 'promotion' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'transfer', data: { workspacePage: 'transfer' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'documents', data: { workspacePage: 'documents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'parents', data: { workspacePage: 'parents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'id-cards', data: { workspacePage: 'id-cards' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
-      { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) }
+      { path: 'dashboard', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'dashboard' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'directory', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'directory' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'profiles', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'profiles' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'admissions', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'admissions' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'classes', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'classes' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'sections', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'sections' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'promotion', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'promotion' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'transfer', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'transfer' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'documents', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'documents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'parents', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'parents' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'id-cards', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'id-cards' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      { path: 'alumni', canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])], data: { workspacePage: 'alumni' }, loadComponent: () => import('./student-management/workspace/student-workspace.component').then(m => m.StudentWorkspaceComponent) },
+      ...STUDENT_MANAGEMENT_ROUTES
     ]
   },
   {
@@ -199,8 +211,8 @@ export const APPLICATION_ROUTES: Routes = [
       },
       {
         path: 'syllabus/history/:id',
-        pathMatch: 'full',
-        redirectTo: 'syllabus'
+        data: { workspacePage: 'syllabus' },
+        loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent)
       },
       {
         path: 'tracker',
@@ -263,6 +275,15 @@ export const APPLICATION_ROUTES: Routes = [
     path: '',
     children: RESPONSIBILITY_MANAGEMENT_ROUTES
   },
+  {
+    path: 'fees',
+    children: FEE_MANAGEMENT_ROUTES
+  },
+  {
+    path: 'reports',
+    pathMatch: 'full',
+    redirectTo: 'fees/reports'
+  },
   // ─── Master Data ─────────────────────────────────────────────────────────
   {
     path: 'manage-branch',
@@ -287,10 +308,12 @@ export const APPLICATION_ROUTES: Routes = [
   // ─── User Profile ────────────────────────────────────────────────────────
   {
     path: 'profile',
+    data: { profilePage: 'profile' },
     loadComponent: () => import('./user-profile/user-profile.component').then(m => m.UserProfileComponent)
   },
   {
     path: 'settings',
+    data: { profilePage: 'settings' },
     loadComponent: () => import('./user-profile/user-profile.component').then(m => m.UserProfileComponent)
   }
 ];

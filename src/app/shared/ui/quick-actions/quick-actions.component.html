@@ -1,0 +1,20 @@
+<section class="tc-quick-actions">
+  <header>{{ title }}</header>
+  <div class="tc-quick-actions__grid">
+    @for (action of actions; track action.id || action.label) {
+      @if (action.visible !== false) {
+        @if (action.routerLink) {
+          <a class="tc-quick-action" [routerLink]="action.routerLink" [queryParams]="action.queryParams">
+            <i [ngClass]="action.icon || 'pi pi-arrow-right'"></i>
+            <span>{{ action.label }}</span>
+          </a>
+        } @else {
+          <button type="button" class="tc-quick-action" [disabled]="action.disabled" (click)="select(action)">
+            <i [ngClass]="action.icon || 'pi pi-arrow-right'"></i>
+            <span>{{ action.label }}</span>
+          </button>
+        }
+      }
+    }
+  </div>
+</section>

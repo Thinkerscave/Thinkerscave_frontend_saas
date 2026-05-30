@@ -1,0 +1,82 @@
+<section class="tc-workspace-shell" [class.tc-workspace-shell--compact]="density === 'compact'">
+  <header class="tc-workspace-shell__header">
+    <div class="tc-workspace-shell__identity">
+      <span class="tc-workspace-shell__icon"><i [ngClass]="icon"></i></span>
+      <div>
+        @if (eyebrow) {
+          <span class="tc-workspace-shell__eyebrow">{{ eyebrow }}</span>
+        }
+        <h1>{{ title }}</h1>
+        @if (description) {
+          <p>{{ description }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="tc-workspace-shell__actions">
+      <ng-content select="[workspace-actions]"></ng-content>
+      @for (action of actions; track action.id || action.label) {
+        @if (isVisible(action)) {
+          @if (action.routerLink) {
+            <a class="tc-action-button" [class]="'tc-action-button tone-' + (action.tone || 'default')"
+              [routerLink]="action.routerLink" [queryParams]="action.queryParams" [attr.aria-label]="action.label">
+              @if (action.icon) { <i [ngClass]="action.icon"></i> }
+              <span>{{ action.label }}</span>
+            </a>
+          } @else {
+            <button type="button" class="tc-action-button" [class]="'tc-action-button tone-' + (action.tone || 'default')"
+              [disabled]="action.disabled" (click)="selectAction(action)" [attr.aria-label]="action.label">
+              @if (action.icon) { <i [ngClass]="action.icon"></i> }
+              <span>{{ action.label }}</span>
+            </button>
+          }
+        }
+      }
+    </div>
+  </header>
+
+  @if (navItems.length) {
+    <nav class="tc-workspace-shell__nav" aria-label="Workspace navigation">
+      @for (item of navItems; track item.id) {
+        @if (item.routerLink) {
+          <a class="tc-workspace-shell__nav-item" [class.is-active]="item.id === activeId"
+            [routerLink]="item.routerLink" [queryParams]="item.queryParams">
+            @if (item.icon) { <i [ngClass]="item.icon"></i> }
+            <span>{{ item.label }}</span>
+            @if (item.badge !== undefined) { <em>{{ item.badge }}</em> }
+          </a>
+        } @else {
+          <button type="button" class="tc-workspace-shell__nav-item" [class.is-active]="item.id === activeId"
+            [disabled]="item.disabled" (click)="selectNav(item)">
+            @if (item.icon) { <i [ngClass]="item.icon"></i> }
+            <span>{{ item.label }}</span>
+            @if (item.badge !== undefined) { <em>{{ item.badge }}</em> }
+          </button>
+        }
+      }
+    </nav>
+  }
+
+  <ng-content select="[workspace-filters]"></ng-content>
+
+  @if (stats.length) {
+    <section class="tc-workspace-shell__stats" aria-label="Workspace summary">
+      @for (stat of stats; track stat.label) {
+        <app-kpi-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon || 'pi pi-chart-line'"
+          [tone]="$any(stat.tone === 'brand' ? 'default' : stat.tone || 'default')" [delta]="stat.delta ?? null"
+          [hint]="stat.trend || null" [link]="stat.link || null" [loading]="loading"></app-kpi-card>
+      }
+    </section>
+  }
+
+  <main class="tc-workspace-shell__body">
+    @if (loading) {
+      <app-skeleton shape="card" [rows]="4"></app-skeleton>
+    } @else if (error) {
+      <app-empty-state icon="pi pi-exclamation-triangle" title="Unable to load workspace" [message]="error"
+        actionLabel="Retry" actionIcon="pi pi-refresh" (action)="retry.emit()"></app-empty-state>
+    } @else {
+      <ng-content></ng-content>
+    }
+  </main>
+</section>

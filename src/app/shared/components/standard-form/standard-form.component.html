@@ -1,5 +1,20 @@
-<form (ngSubmit)="submitForm()" #form="ngForm" class="standard-form-container">
-    @for (section of config.sections; track section.title) {
+<form (ngSubmit)="form.valid && submitForm()" #form="ngForm" class="standard-form-container"
+    [class.standard-form-container--compact]="config.density === 'compact'">
+    @if (isWizard) {
+        <ol class="standard-form-steps" aria-label="Form steps">
+            @for (section of visibleSections; track section.title; let sectionIndex = $index) {
+                <li [class.is-active]="sectionIndex === activeSectionIndex" [class.is-complete]="sectionIndex < activeSectionIndex">
+                    <button type="button" (click)="goToSection(sectionIndex)">
+                        <span>{{ sectionIndex + 1 }}</span>
+                        <strong>{{ section.title }}</strong>
+                    </button>
+                </li>
+            }
+        </ol>
+    }
+
+    @for (section of visibleSections; track section.title; let sectionIndex = $index) {
+        @if (!isWizard || sectionIndex === activeSectionIndex) {
         <div class="form-section mb-5">
             @if (section.title) {
                 <h5 class="section-title border-bottom-1 surface-border pb-2 mb-4 mt-2 font-semibold text-lg text-900">
@@ -28,21 +43,31 @@
                                 @case ('text') {
                                     <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
                                         [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         class="w-full" />
                                 }
                                 @case ('email') {
                                     <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
                                         [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         class="w-full" />
                                 }
                                 @case ('password') {
                                     <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
                                         [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
+                                        class="w-full" />
+                                }
+                                @case ('phone') {
+                                    <input [id]="field.field" type="tel" pInputText [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         class="w-full" />
                                 }
                                 @case ('number') {
                                     <p-inputNumber [id]="field.field" [(ngModel)]="model[field.field]"
                                         [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         class="w-full"></p-inputNumber>
                                 }
                                 @case ('dropdown') {
@@ -50,18 +75,41 @@
                                         [(ngModel)]="model[field.field]" [name]="field.field"
                                         [optionLabel]="field.optionLabel || 'label'" [optionValue]="field.optionValue || 'value'"
                                         [placeholder]="field.placeholder || 'Select Option'" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         [showClear]="true" class="w-full"></p-dropdown>
+                                }
+                                @case ('search-select') {
+                                    <p-dropdown [id]="field.field" [options]="field.options || []"
+                                        [(ngModel)]="model[field.field]" [name]="field.field"
+                                        [optionLabel]="field.optionLabel || 'label'" [optionValue]="field.optionValue || 'value'"
+                                        [placeholder]="field.placeholder || 'Search and select'" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'"
+                                        [showClear]="true" [filter]="true" class="w-full"></p-dropdown>
                                 }
                                 @case ('calendar') {
                                     <p-calendar [id]="field.field" [(ngModel)]="model[field.field]"
                                         [name]="field.field" [placeholder]="field.placeholder || 'dd/mm/yy'"
                                         [required]="!!field.required" dateFormat="dd/mm/yy" [showIcon]="true"
+                                        [attr.aria-describedby]="field.field + '-error'"
+                                        class="w-full"></p-calendar>
+                                }
+                                @case ('date') {
+                                    <p-calendar [id]="field.field" [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || 'dd/mm/yy'"
+                                        [required]="!!field.required" dateFormat="dd/mm/yy" [showIcon]="true"
+                                        [attr.aria-describedby]="field.field + '-error'"
                                         class="w-full"></p-calendar>
                                 }
                                 @case ('textarea') {
                                     <textarea [id]="field.field" pInputTextarea
                                         [(ngModel)]="model[field.field]" [name]="field.field" [rows]="5"
-                                        [placeholder]="field.placeholder || ''" [required]="!!field.required" class="w-full"></textarea>
+                                        [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        [attr.aria-describedby]="field.field + '-error'" class="w-full"></textarea>
+                                }
+                                @case ('upload') {
+                                    <input [id]="field.field" type="file" [name]="field.field" [required]="!!field.required"
+                                        [attr.accept]="field.accept || null" [attr.multiple]="field.multiple ? '' : null"
+                                        [attr.aria-describedby]="field.field + '-error'" class="standard-file-input w-full" />
                                 }
                                 @case ('radio') {
                                     <div class="flex gap-4 mt-2">
@@ -85,18 +133,34 @@
                             @if (field.helperText) {
                                 <small class="text-500 mt-1 block">{{ field.helperText }}</small>
                             }
+                            @if (form.controls[field.field]?.invalid && (form.controls[field.field]?.touched || form.submitted)) {
+                                <small [id]="field.field + '-error'" class="field-error" role="alert">
+                                    {{ getValidationMessage(field) }}
+                                </small>
+                            }
                         </div>
                     }
                 }
             </div>
         </div>
+        }
     }
 
     <!-- Actions -->
-    <div class="form-actions mt-5 flex gap-3">
-        <button pButton [label]="config.submitLabel || 'Submit'"
-            [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check'" [disabled]="loading" class="p-button-success"
-            type="submit"></button>
+    <div class="form-actions mt-5 flex gap-3" [class.form-actions--sticky]="config.stickyActions">
+        @if (isWizard && !isFirstSection) {
+            <button pButton [label]="config.previousLabel || 'Previous'" icon="pi pi-arrow-left"
+                class="p-button-secondary p-button-text" type="button" (click)="previousSection()"></button>
+        }
+
+        @if (!isWizard || isLastSection) {
+            <button pButton [label]="config.submitLabel || 'Submit'"
+                [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check'" [disabled]="loading" class="p-button-success"
+                type="submit"></button>
+        } @else {
+            <button pButton [label]="config.nextLabel || 'Next'" icon="pi pi-arrow-right"
+                class="p-button-primary" type="button" (click)="nextSection()"></button>
+        }
 
         @if (config.cancelLabel) {
             <button pButton [label]="config.cancelLabel" icon="pi pi-times"

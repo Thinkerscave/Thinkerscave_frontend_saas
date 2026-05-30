@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { STUDENT_NAV_ITEMS, STUDENT_PROFILE_TABS } from '../../workspaces/data/workflow-workspace.config';
@@ -29,7 +29,11 @@ export class StudentWorkspaceComponent implements OnInit {
   activeProfileTab = 'Overview';
   selectedStudent?: StudentRecord;
 
-  constructor(private readonly route: ActivatedRoute, private readonly workflowData: WorkflowDataService) { }
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly workflowData: WorkflowDataService,
+    private readonly cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.page = this.route.snapshot.data['workspacePage'] ?? 'dashboard';
@@ -39,7 +43,10 @@ export class StudentWorkspaceComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.workflowData.loadStudentWorkspace()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe(data => {
         this.data = data;
         this.selectedStudent = data.students[0];

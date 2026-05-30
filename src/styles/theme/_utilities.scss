@@ -163,3 +163,21 @@
 .tc-theme-dark .text-500 {
   color: var(--tc-text-muted) !important;
 }
+
+.tc-drawer__panel,
+.admin-drawer-panel,
+.ops-drawer-panel,
+.acad-action-drawer {
+  background: var(--tc-surface-card-solid) !important;
+  border-color: var(--tc-border) !important;
+  color: var(--tc-text) !important;
+}
+
+.acad-progress-ring::before,
+.acad-donut::after {
+  background: var(--tc-surface-card-solid) !important;
+  border-color: var(--tc-border) !important;
+}
+
+/* Workspace variable overrides removed — workspace SCSS files now
+   reference --tc-* tokens directly, so they adapt automatically. */

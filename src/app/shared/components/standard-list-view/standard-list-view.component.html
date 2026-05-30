@@ -11,6 +11,31 @@
 
         <!-- Global Actions -->
         <div class="flex gap-2 align-items-center">
+            @if (config.showExport) {
+                <button pButton type="button" label="Export" icon="pi pi-download"
+                    class="p-button-outlined p-button-sm" (click)="exportCsv()">
+                </button>
+            }
+
+            @if (config.showColumnToggle !== false) {
+                <div class="list-column-toggle">
+                    <button pButton type="button" label="Columns" icon="pi pi-sliders-h"
+                        class="p-button-outlined p-button-sm" (click)="columnPanelOpen = !columnPanelOpen">
+                    </button>
+                    @if (columnPanelOpen) {
+                        <div class="list-column-panel" role="menu" aria-label="Column visibility">
+                            @for (col of config.columns; track col.field) {
+                                <label>
+                                    <input type="checkbox" [checked]="isColumnVisible(col)"
+                                        (change)="toggleColumn(col.field)" />
+                                    <span>{{ col.header }}</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
             @for (action of config.secondaryActions; track action.label) {
                 @if (!action.visibleFn || action.visibleFn()) {
                     <button pButton [label]="action.label"
@@ -27,6 +52,20 @@
         </div>
     </div>
 
+    @if (config.enableBulkSelection && hasSelectedRows && availableBulkActions.length) {
+        <div class="list-bulk-bar" role="region" aria-label="Bulk actions">
+            <span>{{ selectedRows.length }} selected</span>
+            <div class="list-bulk-actions">
+                @for (action of availableBulkActions; track action.label) {
+                    <button pButton type="button" [label]="action.label" [icon]="action.icon || 'pi pi-check'"
+                        class="p-button-sm p-button-outlined" (click)="runBulkAction(action)"></button>
+                }
+                <button pButton type="button" label="Clear" icon="pi pi-times" class="p-button-text p-button-sm"
+                    (click)="clearSelection()"></button>
+            </div>
+        </div>
+    }
+
     <!-- Search & Filters Bar -->
     <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
         @if (config.showSearch !== false) {
@@ -42,17 +81,22 @@
     </div>
 
     <!-- Data Table -->
-    <p-table #dt [value]="data" [columns]="config.columns" [lazy]="!config.isClientSide"
+    <p-table #dt [value]="data" [columns]="visibleColumns" [lazy]="!config.isClientSide"
         (onLazyLoad)="onLazyLoad($event)" [paginator]="true" [rows]="config.rows || 10"
         [totalRecords]="config.totalRecords || data.length" [loading]="config.loading"
         [rowsPerPageOptions]="config.rowsPerPageOptions || [10, 25, 50]" responsiveLayout="scroll"
         [globalFilterFields]="globalFilterFields" styleClass="p-datatable-sm p-datatable-striped"
         [rowHover]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [showCurrentPageReport]="true">
+        [showCurrentPageReport]="true" [(selection)]="selectedRows" [dataKey]="config.dataKey || ''">
 
         <!-- Table Header -->
         <ng-template pTemplate="header" let-columns>
             <tr>
+                @if (config.enableBulkSelection) {
+                    <th style="width: 48px">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                    </th>
+                }
                 @for (col of columns; track col.field) {
                     <th [pSortableColumn]="col.sortable ? col.field : undefined"
                         [style]="{'width': col.width, 'text-align': col.align || 'left'}"
@@ -78,6 +122,11 @@
         <!-- Table Body -->
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr>
+                @if (config.enableBulkSelection) {
+                    <td>
+                        <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
+                    </td>
+                }
                 @for (col of columns; track col.field) {
                     <td [style]="{'text-align': col.align || 'left'}" class="text-700">
 
@@ -154,15 +203,43 @@
             </tr>
         </ng-template>
 
+        <!-- Loading Skeleton -->
+        <ng-template pTemplate="loadingbody" let-columns>
+            @for (_ of loadingRows; track $index) {
+                <tr class="list-skeleton-row">
+                    @if (config.enableBulkSelection) {
+                        <td><span class="list-skeleton-action"></span></td>
+                    }
+                    @for (col of columns; track col.field) {
+                        <td>
+                            <span class="list-skeleton-cell"
+                                [style.width]="col.width || ($index % 2 === 0 ? '72%' : '52%')"></span>
+                        </td>
+                    }
+                    @if (config.rowActions?.length) {
+                        <td class="text-right sticky-right">
+                            <span class="list-skeleton-action"></span>
+                        </td>
+                    }
+                </tr>
+            }
+        </ng-template>
+
         <!-- Empty State -->
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td [attr.colspan]="config.columns.length + (config.rowActions?.length ? 1 : 0)"
-                    class="text-center p-5">
-                    <div class="flex flex-column align-items-center justify-content-center text-500">
-                        <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
-                        <span class="text-lg">No records found</span>
-                        <span class="text-sm mt-1">Try adjusting your search or filters.</span>
+                <td [attr.colspan]="emptyColspan" class="text-center p-5">
+                    <div class="list-empty-state">
+                        <i [ngClass]="config.emptyIcon || 'pi pi-inbox'"></i>
+                        <span class="list-empty-title">{{ config.emptyTitle || 'No records found' }}</span>
+                        <span class="list-empty-message">
+                            {{ config.emptyMessage || 'Try adjusting your search or filters.' }}
+                        </span>
+                        @if (config.primaryAction && (!config.primaryAction.visibleFn || config.primaryAction.visibleFn())) {
+                            <button pButton type="button" [label]="config.primaryAction.label"
+                                [icon]="config.primaryAction.icon || 'pi pi-plus'" class="p-button-sm"
+                                (click)="config.primaryAction.actionFn()"></button>
+                        }
                     </div>
                 </td>
             </tr>

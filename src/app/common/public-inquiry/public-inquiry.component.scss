@@ -6,12 +6,12 @@
 $primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 $secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 $success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-$bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-$glass-bg: rgba(255, 255, 255, 0.08);
-$glass-border: rgba(255, 255, 255, 0.15);
-$text-primary: #ffffff;
-$text-secondary: rgba(255, 255, 255, 0.75);
-$text-muted: rgba(255, 255, 255, 0.5);
+$bg-gradient: var(--tc-bg-gradient);
+$glass-bg: var(--tc-surface-card);
+$glass-border: var(--tc-border);
+$text-primary: var(--tc-heading);
+$text-secondary: var(--tc-text);
+$text-muted: var(--tc-text-muted);
 $accent-purple: #8b5cf6;
 $accent-pink: #ec4899;
 $accent-blue: #3b82f6;

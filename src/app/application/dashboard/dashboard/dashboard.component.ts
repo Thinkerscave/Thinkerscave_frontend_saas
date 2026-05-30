@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -31,7 +31,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private breadcrumbService: BreadCrumbService,
     private dashboardService: DashboardWorkspaceService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -46,7 +47,10 @@ export class DashboardComponent implements OnInit {
     this.dashboardService.loadWorkspace()
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading = false)
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
       )
       .subscribe({
         next: workspace => this.workspace = workspace,
@@ -73,7 +77,10 @@ export class DashboardComponent implements OnInit {
       this.dashboardService.search(query)
         .pipe(
           takeUntilDestroyed(this.destroyRef),
-          finalize(() => this.searchLoading = false)
+          finalize(() => {
+            this.searchLoading = false;
+            this.cdr.markForCheck();
+          })
         )
         .subscribe({
           next: response => this.searchResults = response.results,

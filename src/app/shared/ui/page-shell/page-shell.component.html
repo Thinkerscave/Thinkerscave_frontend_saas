@@ -1,0 +1,12 @@
+<section class="tc-page-shell"
+  [class.tc-page-shell--compact]="density === 'compact'"
+  [class.tc-page-shell--spacious]="density === 'spacious'"
+  [class.tc-page-shell--wide]="maxWidth === 'wide'"
+  [class.tc-page-shell--content]="maxWidth === 'content'"
+  [class.tc-page-shell--subtle]="surface === 'subtle'">
+  <ng-content select="[tcPageHeader]"></ng-content>
+  <ng-content select="[tcPageToolbar]"></ng-content>
+  <div class="tc-page-shell__body">
+    <ng-content></ng-content>
+  </div>
+</section>

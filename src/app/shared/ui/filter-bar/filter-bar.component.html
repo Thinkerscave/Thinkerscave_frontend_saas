@@ -1,0 +1,22 @@
+<section class="tc-filter-bar" aria-label="Filters">
+  <label class="tc-filter-bar__search">
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <input type="search" [placeholder]="placeholder" [ngModel]="search" (ngModelChange)="updateSearch($event)" />
+  </label>
+
+  <div class="tc-filter-bar__content">
+    <ng-content></ng-content>
+  </div>
+
+  <div class="tc-filter-bar__meta">
+    @if (resultCount !== null) {
+      <span>{{ resultCount }} results</span>
+    }
+    @if (showReset) {
+      <button type="button" (click)="reset.emit()" aria-label="Reset filters">
+        <i class="pi pi-refresh" aria-hidden="true"></i>
+        <span>Reset</span>
+      </button>
+    }
+  </div>
+</section>

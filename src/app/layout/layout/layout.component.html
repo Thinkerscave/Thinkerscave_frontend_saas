@@ -7,11 +7,10 @@
     <button class="sidebar-backdrop" type="button" aria-label="Close sidebar" (click)="toggleSidebar()"></button>
 
     <div class="page-content">
-      <!-- 🧭 Add Breadcrumb Here -->
-      <app-breadcrumb></app-breadcrumb>
-
-      <!-- Body Content -->
-      <router-outlet></router-outlet>
+      <tc-page-shell>
+        <app-breadcrumb tcPageHeader></app-breadcrumb>
+        <router-outlet></router-outlet>
+      </tc-page-shell>
     </div>
   </div>
 

@@ -16,7 +16,7 @@ import { catchError, throwError } from 'rxjs';
  * 401/403 + token refresh):
  *  - Surface a single, user-friendly toast for every failing request
  *  - Normalize the backend's `ApiResponse` error envelope into a single message
- *  - Suppress noisy 401/403 toasts (handled by authInterceptor's redirect)
+ *  - Suppress noisy 401 toasts (handled by authInterceptor's refresh/redirect)
  *  - Honour a per-request opt-out via the `X-Skip-Error-Toast` header
  *  - Redirect on 503 maintenance and offline conditions
  */
@@ -38,8 +38,8 @@ export const httpErrorInterceptor: HttpInterceptorFn = (
 
       const { summary, detail, severity } = describeError(err);
 
-      // 401/403 are owned by authInterceptor — avoid double-toasting
-      if (err.status !== 401 && err.status !== 403) {
+      // 401 is owned by authInterceptor — avoid double-toasting while refresh runs.
+      if (err.status !== 401) {
         messageService.add({ severity, summary, detail, life: 5000 });
       }
 

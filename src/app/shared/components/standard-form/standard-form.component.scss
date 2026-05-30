@@ -2,6 +2,12 @@
     max-width: 1200px;
     margin: 0 auto;
 
+    &.standard-form-container--compact {
+        .form-section {
+            margin-bottom: var(--tc-space-4) !important;
+        }
+    }
+
     .section-title {
         color: var(--tc-heading);
         letter-spacing: 0;
@@ -10,6 +16,14 @@
     .form-actions {
         border-top: 1px solid var(--surface-border);
         padding-top: 2rem;
+
+        &.form-actions--sticky {
+            position: sticky;
+            bottom: 0;
+            z-index: 4;
+            padding: var(--tc-space-3) 0 0;
+            background: var(--tc-surface-card-solid);
+        }
     }
 
     .field {
@@ -17,7 +31,67 @@
             font-size: 0.875rem;
             color: var(--tc-text-muted);
         }
+
+        .field-error {
+            display: block;
+            margin-top: 0.4rem;
+            color: var(--tc-danger);
+            font-size: 0.8rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
     }
+}
+
+.standard-form-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--tc-space-2);
+    margin: 0 0 var(--tc-space-5);
+    padding: 0;
+    list-style: none;
+
+    li button {
+        width: 100%;
+        min-height: 48px;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        align-items: center;
+        gap: var(--tc-space-2);
+        border: 1px solid var(--tc-border);
+        border-radius: var(--tc-radius-md);
+        background: var(--tc-surface-card-solid);
+        color: var(--tc-text-muted);
+        text-align: left;
+        cursor: pointer;
+
+        span {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--tc-radius-pill);
+            background: var(--tc-surface-hover);
+            font-weight: 800;
+        }
+    }
+
+    li.is-active button,
+    li.is-complete button {
+        border-color: color-mix(in srgb, var(--tc-primary-600) 30%, var(--tc-border));
+        color: var(--tc-heading);
+        background: var(--tc-surface-active);
+    }
+}
+
+.standard-file-input {
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--tc-input-border);
+    border-radius: var(--tc-radius-sm);
+    background: var(--tc-input-bg);
+    color: var(--tc-text);
 }
 
 // Custom responsive grid gap adjustment

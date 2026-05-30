@@ -111,3 +111,126 @@
     font-size: 0.82rem;
     white-space: nowrap;
 }
+
+.list-column-toggle {
+    position: relative;
+}
+
+.list-column-panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 20;
+    min-width: 220px;
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.65rem;
+    border: 1px solid var(--tc-border);
+    border-radius: var(--tc-radius-md);
+    background: var(--tc-surface-elevated);
+    color: var(--tc-text);
+    box-shadow: var(--tc-shadow-lg);
+
+    label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 32px;
+        padding: 0 0.35rem;
+        border-radius: var(--tc-radius-sm);
+        cursor: pointer;
+
+        &:hover {
+            background: var(--tc-surface-hover);
+        }
+    }
+}
+
+.list-bulk-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tc-space-3);
+    margin: 0 0 var(--tc-space-3);
+    padding: var(--tc-space-2) var(--tc-space-3);
+    border: 1px solid color-mix(in srgb, var(--tc-primary-600) 22%, var(--tc-border));
+    border-radius: var(--tc-radius-md);
+    background: color-mix(in srgb, var(--tc-primary-600) 8%, var(--tc-surface-card-solid));
+    color: var(--tc-text);
+
+    > span {
+        font-weight: 700;
+    }
+}
+
+.list-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--tc-space-2);
+    flex-wrap: wrap;
+}
+
+.list-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 180px;
+    color: var(--tc-text-muted);
+
+    > i {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--tc-radius-md);
+        color: var(--tc-primary-600);
+        background: color-mix(in srgb, var(--tc-primary-600) 10%, transparent);
+        font-size: 1.35rem;
+    }
+}
+
+.list-empty-title {
+    color: var(--tc-heading);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.list-empty-message {
+    max-width: 28rem;
+    line-height: 1.45;
+}
+
+.list-skeleton-row td {
+    padding-block: 0.95rem !important;
+}
+
+.list-skeleton-cell,
+.list-skeleton-action {
+    display: inline-block;
+    height: 0.8rem;
+    border-radius: var(--tc-radius-pill);
+    background: linear-gradient(90deg,
+            color-mix(in srgb, var(--tc-surface-300) 35%, transparent),
+            color-mix(in srgb, var(--tc-surface-300) 15%, transparent),
+            color-mix(in srgb, var(--tc-surface-300) 35%, transparent));
+    background-size: 220% 100%;
+    animation: list-skeleton-pulse 1.35s ease-in-out infinite;
+}
+
+.list-skeleton-action {
+    width: 2.5rem;
+    height: 1.5rem;
+}
+
+@keyframes list-skeleton-pulse {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}

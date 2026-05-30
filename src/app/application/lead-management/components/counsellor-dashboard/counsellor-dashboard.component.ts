@@ -1,4 +1,4 @@
-import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -76,7 +76,8 @@ export class CounsellorDashboardComponent implements OnInit {
     private leadService: LeadService,
     private loginService: LoginService,
     private messageService: MessageService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) { }
 
   get todayFollowupsConfig(): ListViewConfig {
@@ -165,6 +166,7 @@ export class CounsellorDashboardComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeMenu = params['tab'];
+        this.cdr.markForCheck();
       }
     });
   }
@@ -191,6 +193,7 @@ export class CounsellorDashboardComponent implements OnInit {
       this.loadNewLeads()
     ]).finally(() => {
       this.loading = false;
+      this.cdr.markForCheck();
     });
   }
 

@@ -1,0 +1,23 @@
+<div class="tc-drawer-form" [class.is-open]="open" role="presentation">
+  <button type="button" class="tc-drawer-form__backdrop" aria-label="Close drawer" (click)="closed.emit()"></button>
+  <aside class="tc-drawer-form__panel" [class.tc-drawer-form__panel--sm]="size === 'sm'"
+    [class.tc-drawer-form__panel--lg]="size === 'lg'" role="dialog" aria-modal="true" [attr.aria-label]="title">
+    <header>
+      <div>
+        <h2>{{ title }}</h2>
+        @if (description) { <p>{{ description }}</p> }
+      </div>
+      <button type="button" class="tc-drawer-form__close" (click)="closed.emit()" aria-label="Close drawer">
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <section class="tc-drawer-form__content">
+      <ng-content></ng-content>
+    </section>
+
+    <footer>
+      <ng-content select="[drawer-actions]"></ng-content>
+    </footer>
+  </aside>
+</div>

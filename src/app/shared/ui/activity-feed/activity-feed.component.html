@@ -1,0 +1,22 @@
+<section class="tc-activity-feed">
+  <header>{{ title }}</header>
+  @if (!items.length) {
+    <p>No recent activity.</p>
+  } @else {
+    <div class="tc-activity-feed__list">
+      @for (item of items; track item.id || item.title) {
+        @if (item.link) {
+          <a class="tc-activity-feed__item" [routerLink]="item.link">
+            <i [ngClass]="item.icon || 'pi pi-bell'"></i>
+            <span><strong>{{ item.title }}</strong><small>{{ item.description }}</small></span>
+          </a>
+        } @else {
+          <div class="tc-activity-feed__item">
+            <i [ngClass]="item.icon || 'pi pi-bell'"></i>
+            <span><strong>{{ item.title }}</strong><small>{{ item.description }}</small></span>
+          </div>
+        }
+      }
+    </div>
+  }
+</section>

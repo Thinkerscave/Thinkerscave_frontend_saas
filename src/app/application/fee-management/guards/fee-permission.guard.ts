@@ -31,7 +31,7 @@ export function feePermissionGuard(requiredPermission: FeePermission): CanActiva
             return false;
         }
 
-        const userRoles = user.roles as string[] || [];
+        const userRoles = resolveFeeRoles(user.roles as any[] || []);
 
         // Check if any of user's roles have the required permission
         const hasAccess = userRoles.some(role => {
@@ -68,7 +68,7 @@ export function feeAnyPermissionGuard(requiredPermissions: FeePermission[]): Can
             return false;
         }
 
-        const userRoles = user.roles as string[] || [];
+        const userRoles = resolveFeeRoles(user.roles as any[] || []);
 
         // Check if any of user's roles have ANY of the required permissions
         const hasAccess = userRoles.some(role => {
@@ -105,7 +105,7 @@ export function feeRoleGuard(allowedRoles: FeeRole[]): CanActivateFn {
             return false;
         }
 
-        const userRoles = user.roles as string[] || [];
+        const userRoles = resolveFeeRoles(user.roles as any[] || []);
 
         // Check if user has any of the allowed roles
         const hasRole = userRoles.some(role =>
@@ -125,6 +125,46 @@ export function feeRoleGuard(allowedRoles: FeeRole[]): CanActivateFn {
 
         return true;
     };
+}
+
+function resolveFeeRoles(roles: any[]): FeeRole[] {
+    const resolved = new Set<FeeRole>();
+
+    roles.forEach(role => {
+        const roleCode = (role?.roleCode ?? role?.roleName ?? role ?? '').toString().trim().toUpperCase();
+        const normalized = roleCode.replace(/^ROLE_/, '').replace(/\s+/g, '_');
+
+        if (normalized === 'ADMIN') {
+            resolved.add(FeeRole.INSTITUTION_ADMIN);
+        }
+
+        if (normalized === 'SUPER_ADMIN') {
+            resolved.add(FeeRole.SUPER_ADMIN);
+            resolved.add(FeeRole.INSTITUTION_ADMIN);
+        }
+
+        if (normalized === 'ACCOUNTANT') {
+            resolved.add(FeeRole.ACCOUNTANT);
+        }
+
+        if (normalized === 'PARENT') {
+            resolved.add(FeeRole.PARENT);
+        }
+
+        if (normalized === 'GUARDIAN') {
+            resolved.add(FeeRole.GUARDIAN);
+        }
+
+        if (normalized === 'STUDENT') {
+            resolved.add(FeeRole.STUDENT);
+        }
+
+        if (Object.values(FeeRole).includes(normalized as FeeRole)) {
+            resolved.add(normalized as FeeRole);
+        }
+    });
+
+    return Array.from(resolved);
 }
 
 // ============================================

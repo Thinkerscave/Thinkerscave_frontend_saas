@@ -48,17 +48,32 @@ export class SyllabusTrackerComponent implements OnInit {
   }
 
   loadProgress() {
-    if (!this.syllabus?.id) return;
-    this.syllabusService.getStudentProgress(this.studentId, this.syllabus.id).subscribe({
-      next: (progressData: any[]) => {
-        // Assuming progressData is list of completed topic IDs or objects with topicId
-        // For simplicity, let's assume it returns objects { topicId: 1, status: 'COMPLETED' }
-        progressData.forEach(p => {
-          if (p.status === 'COMPLETED') {
-            this.completedTopics.add(p.topicId);
-          }
-        });
-        this.calculateProgress();
+    const syllabusId = this.syllabusId(this.syllabus);
+    if (!syllabusId) {
+      this.loading = false;
+      return;
+    }
+
+    this.syllabusService.getStudentProgress(this.studentId, syllabusId).subscribe({
+      next: (progressData: any) => {
+        this.completedTopics.clear();
+        const topicProgress = progressData?.topicProgress ?? {};
+
+        if (Array.isArray(progressData)) {
+          progressData.forEach(progressItem => {
+            if (progressItem.status === 'COMPLETED' && progressItem.topicId) {
+              this.completedTopics.add(Number(progressItem.topicId));
+            }
+          });
+        } else {
+          Object.entries(topicProgress).forEach(([topicId, status]) => {
+            if (status === 'COMPLETED') {
+              this.completedTopics.add(Number(topicId));
+            }
+          });
+        }
+
+        this.progress = Number(progressData?.overallCompletion ?? this.calculateProgress());
         this.loading = false;
       },
       error: (err: any) => {
@@ -68,23 +83,26 @@ export class SyllabusTrackerComponent implements OnInit {
     });
   }
 
-  isTopicCompleted(topicId: number): boolean {
-    return this.completedTopics.has(topicId);
+  isTopicCompleted(topicId: number | undefined): boolean {
+    return topicId !== undefined && this.completedTopics.has(topicId);
   }
 
-  toggleTopic(topic: any, chapterId: number) {
-    const isCompleted = !this.completedTopics.has(topic.id);
+  toggleTopic(topic: any) {
+    const topicId = this.topicId(topic);
+    if (!topicId) {
+      return;
+    }
+
+    const isCompleted = !this.completedTopics.has(topicId);
     if (isCompleted) {
-      this.completedTopics.add(topic.id);
+      this.completedTopics.add(topicId);
     } else {
-      this.completedTopics.delete(topic.id);
+      this.completedTopics.delete(topicId);
     }
 
     const payload = {
       studentId: this.studentId,
-      syllabusId: this.syllabus.id,
-      chapterId: chapterId,
-      topicId: topic.id,
+      topicId,
       status: isCompleted ? 'COMPLETED' : 'PENDING'
     };
 
@@ -97,7 +115,7 @@ export class SyllabusTrackerComponent implements OnInit {
   }
 
   calculateProgress() {
-    if (!this.syllabus) return;
+    if (!this.syllabus) return 0;
     let totalTopics = 0;
     let completedCount = 0;
 
@@ -105,10 +123,8 @@ export class SyllabusTrackerComponent implements OnInit {
       if (chapter.topics) {
         totalTopics += chapter.topics.length;
         chapter.topics.forEach(topic => {
-          // Check if topic.id is in completedTopics
-          // Note: topic might not have ID if created purely client side without ID return?
-          // We assume topics have IDs.
-          if (topic.id && this.completedTopics.has(topic.id)) {
+          const topicId = this.topicId(topic);
+          if (topicId && this.completedTopics.has(topicId)) {
             completedCount++;
           }
         });
@@ -116,5 +132,34 @@ export class SyllabusTrackerComponent implements OnInit {
     });
 
     this.progress = totalTopics === 0 ? 0 : Math.round((completedCount / totalTopics) * 100);
+    return this.progress;
+  }
+
+  syllabusId(syllabus: Syllabus | undefined): number | undefined {
+    return syllabus?.id ?? syllabus?.syllabusId;
+  }
+
+  chapterTitle(chapter: any): string {
+    return chapter.name ?? chapter.chapterName ?? `Chapter ${chapter.chapterNumber ?? ''}`.trim();
+  }
+
+  topicId(topic: any): number | undefined {
+    return topic.id ?? topic.topicId;
+  }
+
+  topicTitle(topic: any): string {
+    return topic.name ?? topic.topicName ?? `Topic ${topic.topicNumber ?? ''}`.trim();
+  }
+
+  topicDuration(topic: any): string {
+    if (topic.estimatedMinutes !== undefined) {
+      return `${topic.estimatedMinutes} mins`;
+    }
+
+    if (topic.estimatedHours !== undefined) {
+      return `${topic.estimatedHours} hrs`;
+    }
+
+    return '';
   }
 }

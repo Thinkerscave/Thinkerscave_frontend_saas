@@ -1,8 +1,8 @@
 .card {
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--tc-border);
+  background: var(--tc-surface-card-solid);
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
 }
 
@@ -18,7 +18,7 @@
   gap: 1rem;
   align-items: flex-start;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--tc-border);
 }
 
 .eyebrow {
@@ -47,7 +47,7 @@
 
   strong {
     font-size: 1.5rem;
-    color: #0f172a;
+    color: var(--tc-heading);
   }
 }
 
@@ -67,7 +67,7 @@
 
   label {
     font-weight: 600;
-    color: #0f172a;
+    color: var(--tc-heading);
   }
 }
 

@@ -1,0 +1,17 @@
+<aside class="tc-detail-panel" aria-label="Detail panel">
+  <header>
+    <div>
+      <h2>{{ title }}</h2>
+      @if (subtitle) { <p>{{ subtitle }}</p> }
+    </div>
+    <button type="button" (click)="close.emit()" aria-label="Close detail panel">
+      <i class="pi pi-times" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  @if (empty) {
+    <div class="tc-detail-panel__empty">{{ emptyMessage }}</div>
+  } @else {
+    <ng-content></ng-content>
+  }
+</aside>

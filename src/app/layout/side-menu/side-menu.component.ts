@@ -40,7 +40,6 @@ export class SideMenuComponent implements OnInit {
     this.sideMenuService.loadMenu().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (menus) => {
         this.items = this.normalizeItems(menus);
-        this.syncActiveGroups();
         this.loading = false;
       },
       error: (err) => {
@@ -113,14 +112,6 @@ export class SideMenuComponent implements OnInit {
       icon: normalizePrimeIcon(item.icon, 'pi pi-circle'),
       items: item.items ? this.normalizeItems(item.items) : undefined
     }));
-  }
-
-  private syncActiveGroups(): void {
-    this.items.forEach(item => {
-      if (this.hasChildren(item) && this.isMenuActive(item)) {
-        this.openGroups.add(this.getItemKey(item));
-      }
-    });
   }
 
 }

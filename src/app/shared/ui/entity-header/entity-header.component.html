@@ -1,0 +1,27 @@
+<header class="tc-entity-header">
+  <tc-avatar [name]="title" [imageUrl]="imageUrl" size="lg"></tc-avatar>
+  <div class="tc-entity-header__copy">
+    <div class="tc-entity-header__title-row">
+      <h2>{{ title }}</h2>
+      @if (status) {
+        <app-status-badge [label]="status" [tone]="$any(statusTone === 'brand' ? 'info' : statusTone)"></app-status-badge>
+      }
+    </div>
+    @if (subtitle) {
+      <p>{{ subtitle }}</p>
+    }
+    @if (meta.length) {
+      <dl class="tc-entity-header__meta">
+        @for (item of meta; track item.label) {
+          <span>
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </span>
+        }
+      </dl>
+    }
+  </div>
+  <div class="tc-entity-header__actions">
+    <ng-content></ng-content>
+  </div>
+</header>

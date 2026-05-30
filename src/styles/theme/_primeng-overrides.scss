@@ -120,6 +120,44 @@
   box-shadow: var(--tc-focus-ring);
 }
 
+.p-inputtext,
+.p-password input,
+.p-select,
+.p-dropdown,
+.p-multiselect,
+.p-calendar,
+.p-inputnumber,
+.p-inputnumber-input {
+  min-height: 40px;
+  font-family: var(--tc-font-family);
+  font-size: 0.9rem;
+  border-radius: var(--tc-radius-sm);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.p-inputtext,
+.p-password input,
+.p-inputnumber-input {
+  padding: 0.55rem 0.75rem;
+}
+
+.p-dropdown-label,
+.p-select-label,
+.p-multiselect-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding-block: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.p-inputtextarea {
+  min-height: 96px;
+  font-family: var(--tc-font-family);
+  font-size: 0.9rem;
+  border-radius: var(--tc-radius-sm);
+}
+
 .p-dropdown-panel,
 .p-select-overlay,
 .p-multiselect-panel,
@@ -137,6 +175,10 @@
 .p-multiselect-option,
 .p-menuitem-link {
   color: var(--tc-text);
+  border-radius: var(--tc-radius-xs);
+  margin: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 .p-dropdown-item:hover,
@@ -166,6 +208,9 @@
   color: var(--tc-text-muted);
   border-color: var(--tc-table-border);
   font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .p-datatable .p-datatable-tbody > tr {
@@ -255,4 +300,25 @@
   background: var(--tc-surface-900);
   color: var(--tc-text-inverse);
   border-radius: var(--tc-radius-sm);
+}
+
+.p-dialog {
+  border-radius: var(--tc-radius-lg);
+  overflow: hidden;
+}
+
+.p-dialog .p-dialog-header,
+.p-dialog .p-dialog-content,
+.p-dialog .p-dialog-footer {
+  background: var(--tc-surface-card-solid);
+  color: var(--tc-text);
+  border-color: var(--tc-border);
+}
+
+.p-dialog .p-dialog-header {
+  padding: 1rem 1.25rem;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 0 1.25rem 1.25rem;
 }

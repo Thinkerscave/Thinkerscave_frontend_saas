@@ -10,19 +10,18 @@
     </div>
 
     <div *ngIf="!loading && syllabus">
-        <h3 class="mb-3">{{ syllabus.syllabusCode }}</h3>
+        <h3 class="mb-3">{{ syllabus.title || syllabus.syllabusCode }}</h3>
         <p-accordion [multiple]="true">
-            <p-accordionTab *ngFor="let chapter of syllabus.chapters" [header]="chapter.name">
+            <p-accordionTab *ngFor="let chapter of syllabus.chapters" [header]="chapterTitle(chapter)">
                 <div class="flex flex-column gap-3">
                     <div *ngFor="let topic of chapter.topics"
                         class="flex align-items-center p-2 border-bottom-1 surface-border">
                         <div class="flex-grow-1 flex align-items-center gap-2">
-                            <p-checkbox [binary]="true" [ngModel]="isTopicCompleted(topic.id!)"
-                                (onChange)="toggleTopic(topic, chapter.id!)"></p-checkbox>
-                            <span [ngClass]="{'line-through text-500': isTopicCompleted(topic.id!)}">{{ topic.name
-                                }}</span>
+                            <p-checkbox [binary]="true" [ngModel]="isTopicCompleted(topicId(topic))"
+                                (onChange)="toggleTopic(topic)"></p-checkbox>
+                            <span [ngClass]="{'line-through text-500': isTopicCompleted(topicId(topic))}">{{ topicTitle(topic) }}</span>
                         </div>
-                        <span class="text-sm text-500">{{ topic.estimatedMinutes }} mins</span>
+                        <span class="text-sm text-500">{{ topicDuration(topic) }}</span>
                     </div>
                 </div>
             </p-accordionTab>

@@ -1,0 +1,51 @@
+[1m[33mComponent HMR has been enabled, see https://angular.dev/hmr for more info.[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/application-global-search.provider.ts:103:56:
+[37m      103 │         description: item.title || item.tooltip || item.[32mdescription[37m,
+          ╵                                                         [32m~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/application-global-search.provider.ts:103:56:
+[37m      103 │         description: item.title || item.tooltip || item.[32mdescription[37m,
+          ╵                                                         [32m~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/application-global-search.provider.ts:103:56:
+[37m      103 │         description: item.title || item.tooltip || item.[32mdescription[37m,
+          ╵                                                         [32m~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/application-global-search.provider.ts:103:56:
+[37m      103 │         description: item.title || item.tooltip || item.[32mdescription[37m,
+          ╵                                                         [32m~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2345: Argument of type '(topicId: number) => string' is not assignable to parameter of type 'string'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/syllabus-management/services/syllabus.service.ts:47:31:
+[37m      47 │ ...rn this.http.post<any>([32msyllabusApi.saveStudentProgress[37m, progress);
+         ╵                           [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Did you mean to call this expression?
+
+    src/app/application/syllabus-management/services/syllabus.service.ts:47:31:
+[37m      47 │ ...rn this.http.post<any>([32msyllabusApi.saveStudentProgress[37m, progress);
+         ╵                           [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type 'Observable<Syllabus | null>' is not assignable to type 'Observable<Syllabus>'.
+  Type 'Syllabus | null' is not assignable to type 'Syllabus'.
+    Type 'null' is not assignable to type 'Syllabus'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/syllabus-management/services/syllabus.service.ts:40:4:
+[37m      40 │     [32mreturn[37m this.http.get<unknown>(syllabusApi.byId(id)).pipe(
+         ╵     [32m~~~~~~[0m
+
+[39m[22m

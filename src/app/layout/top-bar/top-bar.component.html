@@ -9,6 +9,8 @@
   </div>
 
   <div class="topbar-actions">
+    <app-global-search class="topbar-search"></app-global-search>
+
     <button class="theme-toggle" type="button" (click)="toggleTheme()"
       [attr.aria-label]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'"
       [attr.title]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'">

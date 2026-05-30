@@ -1,18 +1,18 @@
 .role-dashboard-workspace {
-	--dash-bg: #f5f7fb;
-	--dash-panel: #ffffff;
-	--dash-panel-soft: #f8fafc;
-	--dash-border: rgba(100, 116, 139, 0.22);
-	--dash-border-strong: rgba(71, 85, 105, 0.34);
-	--dash-text: #0f172a;
-	--dash-muted: #64748b;
-	--dash-soft: #94a3b8;
-	--dash-primary: #2563eb;
-	--dash-info: #0284c7;
-	--dash-success: #059669;
-	--dash-warning: #d97706;
-	--dash-danger: #dc2626;
-	--dash-neutral: #475569;
+	--dash-bg: var(--tc-bg);
+	--dash-panel: var(--tc-surface-card-solid);
+	--dash-panel-soft: var(--tc-bg-muted);
+	--dash-border: var(--tc-border);
+	--dash-border-strong: var(--tc-border-strong);
+	--dash-text: var(--tc-heading);
+	--dash-muted: var(--tc-text-muted);
+	--dash-soft: var(--tc-text-soft);
+	--dash-primary: var(--tc-primary-600);
+	--dash-info: var(--tc-info);
+	--dash-success: var(--tc-success);
+	--dash-warning: var(--tc-warning);
+	--dash-danger: var(--tc-danger);
+	--dash-neutral: var(--tc-text-soft);
 	min-height: 100vh;
 	padding: 24px;
 	background: var(--dash-bg);
@@ -147,7 +147,7 @@
 .dash-command-button.primary {
 	background: var(--dash-primary);
 	border-color: var(--dash-primary);
-	color: #fff;
+	color: var(--tc-text-inverse);
 }
 
 .dash-icon-button:hover,
@@ -201,7 +201,7 @@
 	grid-column: 1 / -1;
 	border: 1px solid var(--dash-border);
 	border-radius: 8px;
-	background: #ffffff;
+	background: var(--tc-surface-card-solid);
 	padding: 12px;
 }
 
