@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AccordionModule } from 'primeng/accordion';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -9,6 +9,7 @@ import { ProgressBarComponent } from '../progress-bar/progress-bar.component';
 
 @Component({
   selector: 'app-syllabus-tracker',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AccordionModule, CheckboxModule, FormsModule, ProgressBarComponent],
   templateUrl: './syllabus-tracker.component.html',

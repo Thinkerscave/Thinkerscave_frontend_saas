@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -12,6 +12,7 @@ import { FeeStorageService, FeeHead } from '../../../services/fee-storage.servic
 
 @Component({
   selector: 'app-fee-head-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RouterModule, TableModule, ButtonModule, TagModule, TooltipModule, ToastModule, ConfirmDialogModule],
   providers: [ConfirmationService, MessageService],

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FooterComponent } from '../footer/footer.component';
 import { SideMenuComponent } from '../side-menu/side-menu.component';
@@ -8,6 +8,7 @@ import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-layout',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterOutlet, TopBarComponent, SideMenuComponent, FooterComponent, BreadcrumbComponent],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'

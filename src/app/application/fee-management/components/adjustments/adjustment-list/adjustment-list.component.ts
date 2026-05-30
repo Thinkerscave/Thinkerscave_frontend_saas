@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -29,6 +29,7 @@ interface Adjustment {
 
 @Component({
     selector: 'app-adjustment-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, DropdownModule, CalendarModule, TooltipModule, DialogModule],
     template: `

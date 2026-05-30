@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject , ChangeDetectionStrategy} from '@angular/core';
 import { AcademicsActionMode, AcademicsWorkspaceData, AcademicClass, AcademicSection } from '../../../models/academics-workspace.model';
 import { AcademicsInsightsService } from '../../../services/academics-insights.service';
 import { AcademicEmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-academic-classes-page',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicEmptyStateComponent],
   template: `

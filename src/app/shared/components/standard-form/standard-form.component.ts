@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,7 +28,8 @@ import { FormConfig } from './form-models';
         ButtonModule
     ],
     templateUrl: './standard-form.component.html',
-    styleUrls: ['./standard-form.component.scss']
+    styleUrls: ['./standard-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StandardFormComponent {
     @Input() config!: FormConfig;

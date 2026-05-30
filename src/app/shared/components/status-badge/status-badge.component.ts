@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 export type StatusTone = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -15,7 +15,8 @@ export type StatusTone = 'default' | 'success' | 'warning' | 'danger' | 'info' |
     standalone: true,
     imports: [CommonModule],
     templateUrl: './status-badge.component.html',
-    styleUrl: './status-badge.component.scss'
+    styleUrl: './status-badge.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatusBadgeComponent {
     @Input() status: string | null = '';

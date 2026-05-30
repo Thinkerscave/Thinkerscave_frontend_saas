@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, TemplateRef } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
@@ -19,7 +19,8 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [CommonModule, BreadcrumbModule, ButtonModule],
   templateUrl: './workspace-header.component.html',
-  styleUrls: ['./workspace-header.component.scss']
+  styleUrls: ['./workspace-header.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceHeaderComponent {
   @Input() title = '';

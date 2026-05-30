@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -10,12 +10,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CourseService } from '../../services/course.service';
 import { AcademicYear } from '../../../../shared/models/course.model';
 import { SemesterListComponent } from '../semester-list/semester-list.component';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
+import { AutofocusDirective } from '../../../../shared/directives';
 
 @Component({
   selector: 'app-academic-year-config',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -26,7 +28,8 @@ import { ListViewConfig } from '../../../../shared/components/standard-list-view
     InputTextModule,
     TooltipModule,
     SemesterListComponent,
-    StandardListViewComponent
+    StandardListViewComponent,
+    AutofocusDirective
   ],
   templateUrl: './academic-year-config.component.html',
   styleUrls: ['./academic-year-config.component.scss']

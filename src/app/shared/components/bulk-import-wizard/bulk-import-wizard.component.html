@@ -37,7 +37,7 @@
 
     <!-- Step 2: preview -->
     <ng-container *ngIf="activeStep() === 1">
-      <p-table [value]="parsedRows()" [scrollable]="true" scrollHeight="360px" styleClass="p-datatable-sm">
+      <p-table [value]="parsedRows()" [scrollable]="true" scrollHeight="360px" [virtualScroll]="true" [virtualScrollItemSize]="36" styleClass="p-datatable-sm">
         <ng-template pTemplate="header">
           <tr>
             <th *ngFor="let c of config.columns" [style.width]="c.width || ''">{{ c.header }}</th>

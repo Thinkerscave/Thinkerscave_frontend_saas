@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AcademicsActionMode, AcademicsWorkspaceData, SubjectModel } from '../../../models/academics-workspace.model';
 import { AcademicEmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-academic-subjects-page',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, FormsModule, AcademicEmptyStateComponent],
   template: `

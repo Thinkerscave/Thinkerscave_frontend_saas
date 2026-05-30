@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -30,6 +30,7 @@ interface PaymentGateway {
 
 @Component({
     selector: 'app-pay-online',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, CardModule, ButtonModule, InputNumberModule, RadioButtonModule, CheckboxModule, DividerModule, StepsModule, MessageModule],
     template: `

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input , ChangeDetectionStrategy} from '@angular/core';
 import { AcademicsMetric } from '../../../models/academics-workspace.model';
 import { AcademicProgressRingComponent } from '../progress-ring/progress-ring.component';
 
 @Component({
   selector: 'app-academic-metric-card',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicProgressRingComponent],
   template: `

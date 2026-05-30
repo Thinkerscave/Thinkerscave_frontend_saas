@@ -13,7 +13,7 @@ import {
   take,
   throwError
 } from 'rxjs';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);

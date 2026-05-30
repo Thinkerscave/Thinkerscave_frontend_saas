@@ -91,6 +91,7 @@ export const admissionApi = {
   getById: (id: number) => `${BASE}/admissions/${id}`,
   getAll: `${BASE}/admissions`,
   updateStatus: `${BASE}/admissions/status`,
+  publicFormConfig: `${BASE}/public/admissions/form-config`,
 };
 
 // ─── Inquiry (previously /api/staff/inquiries — now /api/v1/inquiries) ────────
@@ -110,4 +111,91 @@ export const inquiryApi = {
 // ─── Public Inquiry (previously /api/public/inquiries — now /api/v1/public/inquiries) ─
 export const publicInquiryApi = {
   submit: `${BASE}/public/inquiries`,
+};
+
+// ─── Courses, Subjects, Academic Years ─────────────────────────────────────────
+export const courseApi = {
+  getByOrg: (orgId: number) => `${BASE}/courses/org/${orgId}`,
+  getById: (id: number) => `${BASE}/courses/${id}`,
+  save: `${BASE}/courses`,
+  subjectsByOrg: (orgId: number) => `${BASE}/subjects/org/${orgId}`,
+  subjectById: (id: number) => `${BASE}/subjects/${id}`,
+  saveSubject: `${BASE}/subjects`,
+  courseSubjects: (courseId: number) => `${BASE}/courses/${courseId}/subjects`,
+};
+
+export const academicYearApi = {
+  getByOrg: (orgId: number) => `${BASE}/academic-structure/years/${orgId}`,
+  save: `${BASE}/academic-structure/years`,
+  setCurrent: (orgId: number, yearId: number) => `${BASE}/academic-structure/years/${orgId}/current/${yearId}`,
+  getCurrent: (orgId: number) => `${BASE}/academic-structure/years/${orgId}/current`,
+};
+
+// ─── Semesters ──────────────────────────────────────────────────────────────────
+export const semesterApi = {
+  base: `${BASE}/semesters`,
+  byYear: (yearId: number) => `${BASE}/semesters/year/${yearId}`,
+  byId: (id: number) => `${BASE}/semesters/${id}`,
+  setCurrent: (id: number) => `${BASE}/semesters/${id}/set-current`,
+};
+
+// ─── Academic Structure (containers) ────────────────────────────────────────────
+export const academicStructureApi = {
+  base: `${BASE}/academic-structure`,
+  containersByOrgYear: (orgId: number, yearId: number) => `${BASE}/academic-structure/containers/org/${orgId}/year/${yearId}`,
+  children: (parentId: number) => `${BASE}/academic-structure/containers/${parentId}/children`,
+  containerById: (id: number) => `${BASE}/academic-structure/containers/${id}`,
+  saveContainer: `${BASE}/academic-structure/containers`,
+  generateSchool: `${BASE}/academic-structure/generate-school`,
+  generateDynamic: `${BASE}/academic-structure/generate-dynamic`,
+};
+
+// ─── Academics Workspace ────────────────────────────────────────────────────────
+export const academicsApi = {
+  saveClass: `${BASE}/classes/saveOrUpdate`,
+  saveSection: `${BASE}/sections/saveOrUpdate`,
+  allocations: `${BASE}/allocations`,
+  allocationsByClass: (classId: number) => `${BASE}/allocations/class/${classId}`,
+  classTeachers: `${BASE}/academics/class-teachers`,
+  timetableSlots: `${BASE}/academics/timetable-slots`,
+  calendarEvents: `${BASE}/academics/calendar-events`,
+  settings: `${BASE}/academics/settings`,
+};
+
+// ─── Syllabus ───────────────────────────────────────────────────────────────────
+export const syllabusApi = {
+  base: `${BASE}/syllabi`,
+  byId: (id: number) => `${BASE}/syllabi/${id}`,
+  publish: (id: number) => `${BASE}/syllabi/${id}/publish`,
+  newVersion: (id: number) => `${BASE}/syllabi/${id}/new-version`,
+  history: (id: number) => `${BASE}/syllabi/${id}/history`,
+  latestBySubject: (subjectId: number) => `${BASE}/syllabus/subject/${subjectId}/latest`,
+  studentProgress: (studentId: number, syllabusId: number) => `${BASE}/student-progress/${studentId}/${syllabusId}`,
+  saveStudentProgress: `${BASE}/student-progress`,
+};
+
+// ─── Dashboard ──────────────────────────────────────────────────────────────────
+export const dashboardApi = {
+  base: `${BASE}/dashboard`,
+  workspace: `${BASE}/dashboard/workspace`,
+  search: `${BASE}/dashboard/search`,
+};
+
+// ─── Admin Control ──────────────────────────────────────────────────────────────
+export const adminControlApi = {
+  workspace: `${BASE}/admin-control/workspace`,
+  diagnostics: `${BASE}/admin-control/diagnostics`,
+  provision: `${BASE}/tenant-onboarding/provision`,
+  registerUser: `${BASE}/users/register`,
+};
+
+// ─── Organization ───────────────────────────────────────────────────────────────
+export const organizationApi = {
+  base: `${BASE}/organizations`,
+  all: `${BASE}/organizations/all`,
+  groups: `${BASE}/organizations/groups`,
+  byId: (orgId: number) => `${BASE}/organizations/${orgId}`,
+  byCode: (orgCode: string) => `${BASE}/organizations/${orgCode}`,
+  updateOwner: `${BASE}/organizations/owner/update`,
+  provision: `${BASE}/tenant-onboarding/provision`,
 };

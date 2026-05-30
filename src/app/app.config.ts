@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -9,7 +9,9 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors } from '@angular
 import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
 import { NgxUiLoaderModule } from 'ngx-ui-loader';
 import { authInterceptor } from './core/interceptor/auth.interceptor';
+import { httpErrorInterceptor } from './core/interceptor/http-error.interceptor';
 import { MessageService } from 'primeng/api';
+import { GlobalErrorHandler } from './core/error/global-error-handler';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,7 +21,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([
         tenantInterceptor,
-        authInterceptor
+        authInterceptor,
+        httpErrorInterceptor
       ])
     ),
 
@@ -37,6 +40,7 @@ export const appConfig: ApplicationConfig = {
     // overlay can get stuck when navigation cancels an in-flight request
     // (only one of the two trackers observes the cancellation).
     importProvidersFrom(NgxUiLoaderModule),
-    MessageService
+    MessageService,
+    { provide: ErrorHandler, useClass: GlobalErrorHandler }
   ]
 };

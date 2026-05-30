@@ -428,7 +428,7 @@
     position: absolute;
     inset: 9px;
     border-radius: 50%;
-    background: #111827;
+    background: var(--tc-surface-card-solid);
     border: 1px solid var(--acad-border);
   }
 

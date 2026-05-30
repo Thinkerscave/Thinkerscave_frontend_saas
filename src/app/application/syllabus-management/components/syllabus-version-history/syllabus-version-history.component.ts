@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -12,6 +12,7 @@ import { ListViewConfig } from '../../../../shared/components/standard-list-view
 
 @Component({
   selector: 'app-syllabus-version-history',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, TableModule, ButtonModule, TagModule, RouterModule, StandardListViewComponent],
   templateUrl: './syllabus-version-history.component.html',
@@ -73,7 +74,6 @@ export class SyllabusVersionHistoryComponent implements OnInit {
   createNewVersion() {
     this.syllabusService.createNewVersion(this.currentSyllabusId).subscribe({
       next: (newVer: Syllabus) => {
-        console.log('New version created', newVer);
         this.loadHistory();
       },
       error: (err: any) => console.error(err)

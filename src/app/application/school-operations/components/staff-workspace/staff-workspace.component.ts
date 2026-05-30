@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { Subject, finalize, takeUntil } from 'rxjs';
+import { finalize } from 'rxjs';
 import {
   ActivityItem,
   AttendanceStatus,
@@ -36,6 +37,7 @@ type StaffDrawerMode = 'none' | 'register' | 'profile' | 'department' | 'branch'
 
 @Component({
   selector: 'app-staff-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -50,12 +52,12 @@ type StaffDrawerMode = 'none' | 'register' | 'profile' | 'department' | 'branch'
   ],
   templateUrl: './staff-workspace.component.html'
 })
-export class StaffWorkspaceComponent implements OnInit, OnDestroy {
+export class StaffWorkspaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly messageService = inject(MessageService);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly navItems: OpsNavItem[] = [
     { label: 'Dashboard', description: 'Workforce command view', route: '/app/staff/dashboard', icon: 'pi pi-chart-line' },
@@ -99,15 +101,10 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
   branchForm: Partial<BranchRecord> = this.emptyBranchForm();
 
   ngOnInit(): void {
-    this.route.data.pipe(takeUntil(this.destroy$)).subscribe(data => {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as StaffWorkspacePage | undefined) ?? 'dashboard';
     });
     this.refresh();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   get profiles(): StaffProfile[] {
@@ -213,7 +210,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.loading = true;
     this.dataService.loadStaffWorkspace()
-      .pipe(finalize(() => this.loading = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => {
           this.data = data;
@@ -271,7 +268,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.dataService.registerStaff(this.registerForm)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Staff registered', detail: 'The staff profile is now available in the directory.' });
@@ -290,7 +287,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.dataService.saveDepartment(this.departmentForm)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Department saved', detail: 'Workforce structure has been updated.' });
@@ -309,7 +306,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.dataService.saveBranch(this.branchForm)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Branch saved', detail: 'Campus structure has been updated.' });
@@ -323,7 +320,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
   approveLeave(request: LeaveRecord): void {
     this.saving = true;
     this.dataService.approveLeave(request.id)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Leave approved', detail: `${request.staffName} leave request approved.` });
@@ -341,7 +338,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.dataService.rejectLeave(request.id, reason)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'info', summary: 'Leave rejected', detail: `${request.staffName} leave request rejected.` });
@@ -354,7 +351,7 @@ export class StaffWorkspaceComponent implements OnInit, OnDestroy {
   runPayroll(): void {
     this.saving = true;
     this.dataService.runPayroll()
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => this.messageService.add({ severity: 'success', summary: 'Payroll processed', detail: `${result.month}: ${result.totalStaff} staff processed.` }),
         error: error => this.messageService.add({ severity: 'error', summary: 'Payroll failed', detail: this.errorMessage(error) })

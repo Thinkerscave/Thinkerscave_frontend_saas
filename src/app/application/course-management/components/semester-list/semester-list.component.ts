@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -13,10 +13,12 @@ import { Semester } from '../../../../shared/models/semester.model';
 import { SemesterService } from '../../services/semester.service';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
+import { AutofocusDirective } from '../../../../shared/directives';
 
 @Component({
     selector: 'app-semester-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
         CommonModule,
@@ -28,7 +30,8 @@ import { LoginService } from '../../../../services/login.service';
         CalendarModule,
         ToastModule,
         ConfirmDialogModule,
-        StandardListViewComponent
+        StandardListViewComponent,
+        AutofocusDirective
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './semester-list.component.html',

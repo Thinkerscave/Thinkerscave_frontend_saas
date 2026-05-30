@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy} from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 
 @Component({
   selector: 'app-session-expired',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CardModule,ButtonModule],
   templateUrl: './session-expired.component.html',
   styleUrl: './session-expired.component.scss'

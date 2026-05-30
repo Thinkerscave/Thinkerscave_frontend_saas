@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +14,7 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { RippleModule } from 'primeng/ripple';
 
 import { LeadService } from '../../services/lead.service';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { Lead, CounsellorDashboardStats } from '../../models/lead.model';
 import { LeadStatus } from '../../models/lead-status.enum';
 import { LeadListComponent } from '../lead-list/lead-list.component';
@@ -23,6 +23,7 @@ import { ListViewConfig } from '../../../../shared/components/standard-list-view
 
 @Component({
   selector: 'app-counsellor-dashboard',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,

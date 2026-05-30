@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,13 +14,15 @@ import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { CourseService } from '../../services/course.service';
 import { Course } from '../../../../shared/models/course.model';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
-import { TenantConfigService, TenantConfig } from '../../../../services/tenant-config.service';
+import { TenantConfigService, TenantConfig } from '../../../../core/services/tenant-config.service';
+import { AutofocusDirective } from '../../../../shared/directives';
 
 @Component({
   selector: 'app-course-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -34,7 +36,8 @@ import { TenantConfigService, TenantConfig } from '../../../../services/tenant-c
     TooltipModule,
     TagModule,
     TabsModule,
-    StandardListViewComponent
+    StandardListViewComponent,
+    AutofocusDirective
   ],
   templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.scss']

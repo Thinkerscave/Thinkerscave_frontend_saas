@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -28,6 +28,7 @@ interface Student {
 
 @Component({
   selector: 'app-adjustment-form',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ButtonModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, AutoCompleteModule, CardModule, DividerModule, ToastModule, TagModule],
   providers: [MessageService],

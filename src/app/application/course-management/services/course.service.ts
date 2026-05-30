@@ -1,85 +1,83 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { Course, Subject, AcademicYear } from '../../../shared/models/course.model';
+import { courseApi, academicYearApi } from '../../../shared/constants/api.endpoint';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CourseService {
-  private apiUrl = `${environment.apiUrl}`;
 
   constructor(private http: HttpClient) { }
 
   // --- Courses ---
   getAllCoursesByOrg(orgId: number): Observable<Course[]> {
-    return this.http.get<Course[]>(`${this.apiUrl}/courses/org/${orgId}`);
+    return this.http.get<Course[]>(courseApi.getByOrg(orgId));
   }
 
   getCourseById(id: number): Observable<Course> {
-    return this.http.get<Course>(`${this.apiUrl}/courses/${id}`);
+    return this.http.get<Course>(courseApi.getById(id));
   }
 
   createCourse(course: Course): Observable<Course> {
-    return this.http.post<Course>(`${this.apiUrl}/courses`, course);
+    return this.http.post<Course>(courseApi.save, course);
   }
 
   updateCourse(id: number, course: Course): Observable<Course> {
-    return this.http.put<Course>(`${this.apiUrl}/courses/${id}`, course);
+    return this.http.put<Course>(courseApi.getById(id), course);
   }
 
   deleteCourse(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/courses/${id}`);
+    return this.http.delete<void>(courseApi.getById(id));
   }
 
   // --- Subjects ---
   getAllSubjectsByOrg(orgId: number): Observable<Subject[]> {
-    return this.http.get<Subject[]>(`${this.apiUrl}/subjects/org/${orgId}`);
+    return this.http.get<Subject[]>(courseApi.subjectsByOrg(orgId));
   }
 
   getSubjectById(id: number): Observable<Subject> {
-    return this.http.get<Subject>(`${this.apiUrl}/subjects/${id}`);
+    return this.http.get<Subject>(courseApi.subjectById(id));
   }
 
   createSubject(subject: Subject): Observable<Subject> {
-    return this.http.post<Subject>(`${this.apiUrl}/subjects`, subject);
+    return this.http.post<Subject>(courseApi.saveSubject, subject);
   }
 
   updateSubject(id: number, subject: Subject): Observable<Subject> {
-    return this.http.put<Subject>(`${this.apiUrl}/subjects/${id}`, subject);
+    return this.http.put<Subject>(courseApi.subjectById(id), subject);
   }
 
   deleteSubject(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/subjects/${id}`);
+    return this.http.delete<void>(courseApi.subjectById(id));
   }
 
   // --- Academic Years (Aligned with AcademicStructureController) ---
   getAllAcademicYears(orgId: number): Observable<AcademicYear[]> {
-    return this.http.get<AcademicYear[]>(`${this.apiUrl}/academic-structure/years/${orgId}`);
+    return this.http.get<AcademicYear[]>(academicYearApi.getByOrg(orgId));
   }
 
   createAcademicYear(orgId: number, year: AcademicYear): Observable<AcademicYear> {
-    // Backend takes RequestParams for this specific method based on controller
     const params = new HttpParams()
       .set('orgId', orgId.toString())
       .set('yearCode', year.yearCode)
       .set('startDate', year.startDate)
       .set('endDate', year.endDate);
-    return this.http.post<AcademicYear>(`${this.apiUrl}/academic-structure/years`, null, { params });
+    return this.http.post<AcademicYear>(academicYearApi.save, null, { params });
   }
 
   setAcademicYearAsCurrent(orgId: number, yearId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/academic-structure/years/${orgId}/current/${yearId}`, {});
+    return this.http.post<void>(academicYearApi.setCurrent(orgId, yearId), {});
   }
 
   // --- Curriculum / Subject Mapping ---
   assignSubjectToCourse(courseId: number, subjectId: number, semester: number): Observable<any> {
     const payload = { courseId, subjectId, semester };
-    return this.http.post<any>(`${this.apiUrl}/courses/${courseId}/subjects`, payload);
+    return this.http.post<any>(courseApi.courseSubjects(courseId), payload);
   }
 
   getSubjectsByCourse(courseId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/courses/${courseId}/subjects`);
+    return this.http.get<any[]>(courseApi.courseSubjects(courseId));
   }
 }

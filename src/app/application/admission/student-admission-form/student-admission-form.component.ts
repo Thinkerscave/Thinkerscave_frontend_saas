@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy} from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { StepsModule } from 'primeng/steps';
@@ -12,11 +12,12 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { CommonModule } from '@angular/common';
 import { ToastModule } from 'primeng/toast';
 import { AdmissionService } from '../../../services/admission.service';
-import { LoginService } from '../../../services/login.service';
-import { TenantConfigService, TenantConfig } from '../../../services/tenant-config.service';
+import { LoginService } from '../../../core/services/login.service';
+import { TenantConfigService, TenantConfig } from '../../../core/services/tenant-config.service';
 
 @Component({
   selector: 'app-student-admission-form',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,

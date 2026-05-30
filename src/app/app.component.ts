@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject , ChangeDetectionStrategy} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgxUiLoaderModule } from 'ngx-ui-loader';
 import { ThemeService } from './shared/theme/theme.service';
 
 @Component({
   selector: 'app-root',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet,NgxUiLoaderModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'

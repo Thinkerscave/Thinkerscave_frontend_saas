@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component, NgModule , ChangeDetectionStrategy} from '@angular/core';
 import { Tab, TabsModule } from 'primeng/tabs';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +14,7 @@ import { TableModule } from 'primeng/table';
 import { Table } from 'primeng/table';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 
 interface Staff {
   id: number;
@@ -27,6 +27,7 @@ interface Staff {
 }
 @Component({
   selector: 'app-manage-staff',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TabsModule, Tab,
     AccordionModule, ButtonModule, FormsModule, CommonModule, CalendarModule,
     DropdownModule, InputMaskModule, InputTextModule, TableModule,

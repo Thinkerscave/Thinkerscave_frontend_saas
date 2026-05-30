@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { CardModule } from 'primeng/card';
@@ -25,6 +25,7 @@ interface Installment {
 
 @Component({
   selector: 'app-fee-structure-view',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule, RouterModule, CardModule, ButtonModule,

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject , ChangeDetectionStrategy} from '@angular/core';
 import { ACADEMICS_DAY_OPTIONS, ACADEMICS_PERIODS } from '../../../data/academics-workspace.config';
 import { AcademicsActionMode, AcademicsWorkspaceData } from '../../../models/academics-workspace.model';
 import { AcademicsInsightsService } from '../../../services/academics-insights.service';
@@ -7,6 +7,7 @@ import { AcademicEmptyStateComponent } from '../../shared/empty-state/empty-stat
 
 @Component({
   selector: 'app-academic-timetable-page',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicEmptyStateComponent],
   template: `

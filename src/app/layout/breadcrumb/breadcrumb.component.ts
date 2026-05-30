@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input , ChangeDetectionStrategy} from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { BreadCrumbService } from '../../services/bread-crumb.service';
+import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 
 @Component({
   selector: 'app-breadcrumb',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [BreadcrumbModule],
   templateUrl: './breadcrumb.component.html',
   styleUrl: './breadcrumb.component.scss'

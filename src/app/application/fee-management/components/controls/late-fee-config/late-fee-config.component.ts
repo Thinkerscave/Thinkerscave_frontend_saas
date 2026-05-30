@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -30,6 +30,7 @@ interface LateFeeConfig {
 
 @Component({
   selector: 'app-late-fee-config',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ButtonModule, CardModule, InputNumberModule, DropdownModule, MultiSelectModule, InputSwitchModule, DividerModule, ToastModule, TagModule],
   providers: [MessageService],

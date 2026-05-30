@@ -1,24 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, Input, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { Subject, takeUntil } from 'rxjs';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
-import { BreadCrumbService } from '../../services/bread-crumb.service';
+import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
 @Component({
   selector: 'app-side-menu',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })
-export class SideMenuComponent implements OnInit, OnDestroy {
+export class SideMenuComponent implements OnInit {
   items: MenuItem[] = [];
   loading = true;
   @Input() expanded = false;
 
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
   private readonly openGroups = new Set<string>();
 
   constructor(private sideMenuService: MenuMappingService,
@@ -30,18 +31,13 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     this.loadMenu();
 
     this.sideMenuService.menuRefresh$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadMenu());
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private loadMenu(): void {
     this.loading = true;
-    this.sideMenuService.loadMenu().pipe(takeUntil(this.destroy$)).subscribe({
+    this.sideMenuService.loadMenu().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (menus) => {
         this.items = this.normalizeItems(menus);
         this.syncActiveGroups();
@@ -64,7 +60,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   }
 
   isGroupOpen(item: MenuItem): boolean {
-    return this.openGroups.has(this.getItemKey(item)) || this.isMenuActive(item);
+    return this.openGroups.has(this.getItemKey(item));
   }
 
   toggleGroup(item: MenuItem): void {
@@ -74,6 +70,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.openGroups.clear();
     this.openGroups.add(key);
   }
 

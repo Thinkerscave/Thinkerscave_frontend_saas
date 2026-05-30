@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject , ChangeDetectionStrategy} from '@angular/core';
 import { AcademicsActionMode, AcademicsWorkspaceData, AcademicsWorkloadItem } from '../../../models/academics-workspace.model';
 import { AcademicsInsightsService } from '../../../services/academics-insights.service';
 import { AcademicEmptyStateComponent } from '../../shared/empty-state/empty-state.component';
@@ -7,6 +7,7 @@ import { AcademicProgressRingComponent } from '../../shared/progress-ring/progre
 
 @Component({
   selector: 'app-academic-allocation-page',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicEmptyStateComponent, AcademicProgressRingComponent],
   template: `

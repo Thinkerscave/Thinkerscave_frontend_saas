@@ -52,7 +52,7 @@
             </header>
             <div class="tc-focus-list" *ngIf="data.inquiries.length; else noInquiries">
               <button type="button" *ngFor="let inquiry of data.inquiries | slice:0:6" class="tc-focus-row" (click)="selectedInquiry = inquiry">
-                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <span class="tc-avatar">{{ (inquiry.name | initials) }}</span>
                 <div>
                   <strong>{{ inquiry.name }}</strong>
                   <small>{{ inquiry.classInterested }} • {{ inquiry.mobileNumber }}</small>
@@ -111,7 +111,7 @@
             </header>
             <button type="button" class="tc-lead-card" *ngFor="let inquiry of inquiriesForStage(stage)" draggable="true" (dragstart)="onDragStart(inquiry)" (click)="selectedInquiry = inquiry">
               <div class="tc-lead-card__top">
-                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <span class="tc-avatar">{{ (inquiry.name | initials) }}</span>
                 <div>
                   <strong>{{ inquiry.name }}</strong>
                   <small>{{ inquiry.classInterested }}</small>
@@ -173,7 +173,7 @@
             </header>
             <div class="tc-focus-list">
               <button type="button" *ngFor="let inquiry of data.inquiries | slice:0:8" class="tc-focus-row" (click)="selectedInquiry = inquiry">
-                <span class="tc-avatar">{{ inquiry.name.charAt(0) }}</span>
+                <span class="tc-avatar">{{ (inquiry.name | initials) }}</span>
                 <div>
                   <strong>{{ inquiry.name }}</strong>
                   <small>{{ inquiry.email }}</small>

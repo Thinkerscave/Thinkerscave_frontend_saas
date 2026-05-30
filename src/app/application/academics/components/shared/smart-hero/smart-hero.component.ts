@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { AcademicYear, AcademicsMetric, AcademicsPageConfig } from '../../../models/academics-workspace.model';
 import { AcademicProgressRingComponent } from '../progress-ring/progress-ring.component';
 
 @Component({
   selector: 'app-academic-smart-hero',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicProgressRingComponent],
   template: `

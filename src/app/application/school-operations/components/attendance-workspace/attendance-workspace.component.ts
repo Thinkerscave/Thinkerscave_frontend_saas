@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { Subject, finalize, takeUntil } from 'rxjs';
+import { finalize } from 'rxjs';
 import {
   ActivityItem,
   AttendanceRecord,
@@ -27,6 +28,7 @@ import {
 
 @Component({
   selector: 'app-attendance-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -39,12 +41,12 @@ import {
   ],
   templateUrl: './attendance-workspace.component.html'
 })
-export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
+export class AttendanceWorkspaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly messageService = inject(MessageService);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly navItems: OpsNavItem[] = [
     { label: 'Dashboard', description: 'Daily attendance command view', route: '/app/attendance/dashboard', icon: 'pi pi-chart-line' },
@@ -89,18 +91,13 @@ export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
-    this.route.data.pipe(takeUntil(this.destroy$)).subscribe(data => {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AttendanceWorkspacePage | undefined) ?? 'dashboard';
       if (!this.loading) {
         this.loadActiveRoster();
       }
     });
     this.refresh();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   get metrics(): KpiMetric[] {
@@ -163,7 +160,7 @@ export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.loading = true;
     this.dataService.loadAttendanceWorkspace()
-      .pipe(finalize(() => this.loading = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => {
           this.data = data;
@@ -179,7 +176,7 @@ export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
   loadStudentRoster(): void {
     this.rosterLoading = true;
     this.dataService.loadStudentRoster(this.studentFilters)
-      .pipe(finalize(() => this.rosterLoading = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.rosterLoading = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: rows => this.studentRows = rows,
         error: () => this.messageService.add({ severity: 'error', summary: 'Roster unavailable', detail: 'Unable to load student roster.' })
@@ -189,7 +186,7 @@ export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
   loadStaffRoster(): void {
     this.rosterLoading = true;
     this.dataService.loadStaffRoster(this.staffFilters)
-      .pipe(finalize(() => this.rosterLoading = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.rosterLoading = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: rows => this.staffRows = rows,
         error: () => this.messageService.add({ severity: 'error', summary: 'Roster unavailable', detail: 'Unable to load staff roster.' })
@@ -318,7 +315,7 @@ export class AttendanceWorkspaceComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.dataService.saveAttendanceBatch(rows, type)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Attendance submitted', detail: `${rows.length} ${type === 'CLASS' ? 'student' : 'staff'} records saved.` });

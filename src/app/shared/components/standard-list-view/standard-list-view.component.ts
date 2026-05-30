@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Table, TableModule } from 'primeng/table';
@@ -25,7 +25,8 @@ import { normalizePrimeIcon } from '../../utils/prime-icon.util';
     MenuModule
   ],
   templateUrl: './standard-list-view.component.html',
-  styleUrl: './standard-list-view.component.scss'
+  styleUrl: './standard-list-view.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StandardListViewComponent {
   @Input() config!: ListViewConfig;

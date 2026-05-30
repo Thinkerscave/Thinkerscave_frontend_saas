@@ -1,18 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { STUDENT_NAV_ITEMS, STUDENT_PROFILE_TABS } from '../../workspaces/data/workflow-workspace.config';
 import { WorkflowEmptyStateComponent, WorkflowMetricComponent, WorkflowNavComponent } from '../../workspaces/components/workflow-primitives.component';
 import { WorkflowDataService } from '../../workspaces/services/workflow-data.service';
 import { AdmissionApplication, ClassRecord, SectionRecord, StudentRecord, StudentWorkspaceData, WorkspaceMetric } from '../../workspaces/models/workflow-workspace.model';
+import { InitialsPipe } from '../../../shared/pipes';
 
 type DirectoryView = 'table' | 'grid' | 'cards';
 
 @Component({
   selector: 'app-student-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, WorkflowNavComponent, WorkflowMetricComponent, WorkflowEmptyStateComponent],
+  imports: [CommonModule, WorkflowNavComponent, WorkflowMetricComponent, WorkflowEmptyStateComponent, InitialsPipe],
   templateUrl: './student-workspace.component.html'
 })
 export class StudentWorkspaceComponent implements OnInit {

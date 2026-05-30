@@ -1,8 +1,8 @@
-import { Component, DestroyRef, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { BreadCrumbService } from '../../../services/bread-crumb.service';
+import { BreadCrumbService } from '../../../core/services/bread-crumb.service';
 import { DashboardLayoutComponent } from '../components/shared/dashboard-primitives.component';
 import { DashboardActionTarget, DashboardSearchResult, DashboardWorkspace } from '../models/dashboard-workspace.model';
 import { DashboardWorkspaceService } from '../services/dashboard-workspace.service';
@@ -13,7 +13,8 @@ import { DashboardWorkspaceService } from '../services/dashboard-workspace.servi
   imports: [DashboardLayoutComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);

@@ -1,72 +1,96 @@
 <form (ngSubmit)="submitForm()" #form="ngForm" class="standard-form-container">
-    <div *ngFor="let section of config.sections" class="form-section mb-5">
-        <h5 *ngIf="section.title"
-            class="section-title border-bottom-1 surface-border pb-2 mb-4 mt-2 font-semibold text-lg text-900">
-            {{ section.title }}
-        </h5>
-        <p *ngIf="section.description" class="section-description text-500 mb-4 -mt-3 text-sm">
-            {{ section.description }}
-        </p>
+    @for (section of config.sections; track section.title) {
+        <div class="form-section mb-5">
+            @if (section.title) {
+                <h5 class="section-title border-bottom-1 surface-border pb-2 mb-4 mt-2 font-semibold text-lg text-900">
+                    {{ section.title }}
+                </h5>
+            }
+            @if (section.description) {
+                <p class="section-description text-500 mb-4 -mt-3 text-sm">
+                    {{ section.description }}
+                </p>
+            }
 
-        <div class="grid p-fluid gap-y-4">
-            <ng-container *ngFor="let field of section.fields">
-                <div *ngIf="field.visibleFn ? field.visibleFn(model) : true"
-                    [class]="field.colSpan || 'col-12 md:col-6'" class="field">
+            <div class="grid p-fluid gap-y-4">
+                @for (field of section.fields; track field.field) {
+                    @if (field.visibleFn ? field.visibleFn(model) : true) {
+                        <div [class]="field.colSpan || 'col-12 md:col-6'" class="field">
 
-                    <label [for]="field.field" class="font-semibold text-900 mb-2 block">
-                        {{ field.label }}
-                        <span *ngIf="field.required" class="text-red-500">*</span>
-                    </label>
+                            <label [for]="field.field" class="font-semibold text-900 mb-2 block">
+                                {{ field.label }}
+                                @if (field.required) {
+                                    <span class="text-red-500">*</span>
+                                }
+                            </label>
 
-                    <!-- Text Input -->
-                    <input *ngIf="field.type === 'text' || field.type === 'email' || field.type === 'password'"
-                        [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
-                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
-                        class="w-full" />
+                            @switch (field.type) {
+                                @case ('text') {
+                                    <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        class="w-full" />
+                                }
+                                @case ('email') {
+                                    <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        class="w-full" />
+                                }
+                                @case ('password') {
+                                    <input [id]="field.field" [type]="field.type" pInputText [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        class="w-full" />
+                                }
+                                @case ('number') {
+                                    <p-inputNumber [id]="field.field" [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
+                                        class="w-full"></p-inputNumber>
+                                }
+                                @case ('dropdown') {
+                                    <p-dropdown [id]="field.field" [options]="field.options || []"
+                                        [(ngModel)]="model[field.field]" [name]="field.field"
+                                        [optionLabel]="field.optionLabel || 'label'" [optionValue]="field.optionValue || 'value'"
+                                        [placeholder]="field.placeholder || 'Select Option'" [required]="!!field.required"
+                                        [showClear]="true" class="w-full"></p-dropdown>
+                                }
+                                @case ('calendar') {
+                                    <p-calendar [id]="field.field" [(ngModel)]="model[field.field]"
+                                        [name]="field.field" [placeholder]="field.placeholder || 'dd/mm/yy'"
+                                        [required]="!!field.required" dateFormat="dd/mm/yy" [showIcon]="true"
+                                        class="w-full"></p-calendar>
+                                }
+                                @case ('textarea') {
+                                    <textarea [id]="field.field" pInputTextarea
+                                        [(ngModel)]="model[field.field]" [name]="field.field" [rows]="5"
+                                        [placeholder]="field.placeholder || ''" [required]="!!field.required" class="w-full"></textarea>
+                                }
+                                @case ('radio') {
+                                    <div class="flex gap-4 mt-2">
+                                        @for (option of field.options; track $index) {
+                                            <div class="flex align-items-center gap-2">
+                                                <p-radioButton [name]="field.field" [value]="option[field.optionValue || 'value']"
+                                                    [(ngModel)]="model[field.field]"
+                                                    [inputId]="field.field + '_' + option[field.optionValue || 'value']"></p-radioButton>
+                                                <label [for]="field.field + '_' + option[field.optionValue || 'value']">{{
+                                                    option[field.optionLabel || 'label'] }}</label>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                @case ('switch') {
+                                    <p-inputSwitch [id]="field.field" [(ngModel)]="model[field.field]"
+                                        [name]="field.field"></p-inputSwitch>
+                                }
+                            }
 
-                    <!-- Number Input -->
-                    <p-inputNumber *ngIf="field.type === 'number'" [id]="field.field" [(ngModel)]="model[field.field]"
-                        [name]="field.field" [placeholder]="field.placeholder || ''" [required]="!!field.required"
-                        class="w-full"></p-inputNumber>
-
-                    <!-- Dropdown -->
-                    <p-dropdown *ngIf="field.type === 'dropdown'" [id]="field.field" [options]="field.options || []"
-                        [(ngModel)]="model[field.field]" [name]="field.field"
-                        [optionLabel]="field.optionLabel || 'label'" [optionValue]="field.optionValue || 'value'"
-                        [placeholder]="field.placeholder || 'Select Option'" [required]="!!field.required"
-                        [showClear]="true" class="w-full"></p-dropdown>
-
-                    <!-- Calendar -->
-                    <p-calendar *ngIf="field.type === 'calendar'" [id]="field.field" [(ngModel)]="model[field.field]"
-                        [name]="field.field" [placeholder]="field.placeholder || 'dd/mm/yy'"
-                        [required]="!!field.required" dateFormat="dd/mm/yy" [showIcon]="true"
-                        class="w-full"></p-calendar>
-
-                    <!-- Textarea -->
-                    <textarea *ngIf="field.type === 'textarea'" [id]="field.field" pInputTextarea
-                        [(ngModel)]="model[field.field]" [name]="field.field" [rows]="5"
-                        [placeholder]="field.placeholder || ''" [required]="!!field.required" class="w-full"></textarea>
-
-                    <!-- Radio Buttons -->
-                    <div *ngIf="field.type === 'radio'" class="flex gap-4 mt-2">
-                        <div *ngFor="let option of field.options" class="flex align-items-center gap-2">
-                            <p-radioButton [name]="field.field" [value]="option[field.optionValue || 'value']"
-                                [(ngModel)]="model[field.field]"
-                                [inputId]="field.field + '_' + option[field.optionValue || 'value']"></p-radioButton>
-                            <label [for]="field.field + '_' + option[field.optionValue || 'value']">{{
-                                option[field.optionLabel || 'label'] }}</label>
+                            @if (field.helperText) {
+                                <small class="text-500 mt-1 block">{{ field.helperText }}</small>
+                            }
                         </div>
-                    </div>
-
-                    <!-- Switch -->
-                    <p-inputSwitch *ngIf="field.type === 'switch'" [id]="field.field" [(ngModel)]="model[field.field]"
-                        [name]="field.field"></p-inputSwitch>
-
-                    <small *ngIf="field.helperText" class="text-500 mt-1 block">{{ field.helperText }}</small>
-                </div>
-            </ng-container>
+                    }
+                }
+            </div>
         </div>
-    </div>
+    }
 
     <!-- Actions -->
     <div class="form-actions mt-5 flex gap-3">
@@ -74,10 +98,14 @@
             [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check'" [disabled]="loading" class="p-button-success"
             type="submit"></button>
 
-        <button *ngIf="config.cancelLabel" pButton [label]="config.cancelLabel" icon="pi pi-times"
-            class="p-button-secondary p-button-text" type="button" (click)="cancelForm()"></button>
+        @if (config.cancelLabel) {
+            <button pButton [label]="config.cancelLabel" icon="pi pi-times"
+                class="p-button-secondary p-button-text" type="button" (click)="cancelForm()"></button>
+        }
 
-        <button *ngIf="config.resetLabel" pButton [label]="config.resetLabel" icon="pi pi-refresh"
-            class="p-button-outlined" type="button" (click)="resetForm()"></button>
+        @if (config.resetLabel) {
+            <button pButton [label]="config.resetLabel" icon="pi pi-refresh"
+                class="p-button-outlined" type="button" (click)="resetForm()"></button>
+        }
     </div>
 </form>

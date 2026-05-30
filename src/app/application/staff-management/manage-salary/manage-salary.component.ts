@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -15,6 +15,7 @@ import { PayrollDTO, PayrollService } from '../../../services/payroll.service';
 
 @Component({
   selector: 'app-manage-salary',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, ReactiveFormsModule, TableModule, ButtonModule,
     InputTextModule, DialogModule, InputNumberModule,

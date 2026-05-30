@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component, NgModule , ChangeDetectionStrategy} from '@angular/core';
 import { Tab, TabsModule } from 'primeng/tabs';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
@@ -32,6 +32,7 @@ interface DocumentData {
 
 @Component({
   selector: 'app-managestudent',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ViewStudentsComponent, TabsModule, Tab, AccordionModule, HttpClientModule, ButtonModule, FileUploaderComponent, CommonModule, FormsModule, ReactiveFormsModule, CheckboxModule, CardModule, DropdownModule, FileUploadModule, ToastModule],
   providers: [MessageService],
   templateUrl: './managestudent.component.html',
@@ -47,16 +48,7 @@ export class ManagestudentComponent {
 
 
   onAccordionChange(event: any) {
-    // alert('Accordion changed!');
-    console.log('Event:', event);
-
     const newIndexes = Array.isArray(event) ? event : [event];
-    const closed = this.activeAccordionIndexes.filter(i => !newIndexes.includes(i));
-    const opened = newIndexes.filter(i => !this.activeAccordionIndexes.includes(i));
-
-    console.log('Opened:', opened);
-    console.log('Closed:', closed);
-
     this.activeAccordionIndexes = newIndexes;
   }
 
@@ -281,7 +273,6 @@ export class ManagestudentComponent {
       if (file.type.startsWith('image/')) {
         this.showSuccess("Profile photo selected successfully.");
         this.profilePicture = file;
-        console.log('Selected photo:', file.name);
       } else {
         this.showError('Please select a valid image file (e.g., .jpg, .png)');
       }
@@ -290,7 +281,6 @@ export class ManagestudentComponent {
 
   onSaveDraft(): void {
     const draft = this.form.getRawValue();
-    console.log('Draft payload:', draft);
     this.lastSavedAt = new Date();
     this.showInfo('Application draft saved locally.');
   }
@@ -374,8 +364,6 @@ export class ManagestudentComponent {
       remarks: this.form.get('remarks')?.value || ''
     };
 
-    console.log('Publishing Student DTO JSON:', JSON.stringify(studentDTO, null, 2));
-
     formData.append('studentData', new Blob([JSON.stringify(studentDTO)], { type: 'application/json' }));
 
     // Profile Picture
@@ -391,13 +379,10 @@ export class ManagestudentComponent {
       });
     }
 
-    console.log('Sending formData to backend...');
-
     // Send to backend
     this.http.post(`${environment.baseUrl}/students/registerStudent`, formData)
       .subscribe({
         next: (res) => {
-          console.log('Student registered successfully:', res);
           this.showSuccess('Registration completed successfully! The student record has been saved.');
           this.form.reset();
         },

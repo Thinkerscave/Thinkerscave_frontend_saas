@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -7,13 +7,15 @@ import { INQUIRY_NAV_ITEMS, INQUIRY_PIPELINE_STAGES, REQUIRED_ADMISSION_DOCUMENT
 import { WorkflowDrawerComponent, WorkflowEmptyStateComponent, WorkflowMetricComponent, WorkflowNavComponent } from '../../workspaces/components/workflow-primitives.component';
 import { WorkflowDataService } from '../../workspaces/services/workflow-data.service';
 import { AdmissionApplication, FollowUpRecord, InquiryRecord, InquiryStatus, InquiryWorkspaceData, PipelineStage, WorkspaceMetric } from '../../workspaces/models/workflow-workspace.model';
+import { InitialsPipe } from '../../../shared/pipes';
 
 type DrawerMode = 'inquiry' | 'follow-up' | null;
 
 @Component({
   selector: 'app-inquiry-admissions-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, WorkflowNavComponent, WorkflowMetricComponent, WorkflowEmptyStateComponent, WorkflowDrawerComponent],
+  imports: [CommonModule, ReactiveFormsModule, WorkflowNavComponent, WorkflowMetricComponent, WorkflowEmptyStateComponent, WorkflowDrawerComponent, InitialsPipe],
   templateUrl: './inquiry-admissions-workspace.component.html'
 })
 export class InquiryAdmissionsWorkspaceComponent implements OnInit {

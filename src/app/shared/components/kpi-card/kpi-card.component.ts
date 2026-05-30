@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
@@ -21,7 +21,8 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [CommonModule, RouterLink, ButtonModule],
   templateUrl: './kpi-card.component.html',
-  styleUrls: ['./kpi-card.component.scss']
+  styleUrls: ['./kpi-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KpiCardComponent {
   @Input() label = '';

@@ -1,27 +1,29 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
 import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
-import { TenantConfigService } from '../../services/tenant-config.service';
+import { TenantConfigService } from '../../core/services/tenant-config.service';
+import { UserInfo } from '../../shared/models/auth.model';
 
 @Component({
   selector: 'app-login',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     RouterModule,
-    FormsModule,
+    ReactiveFormsModule,
     InputTextModule,
     PasswordModule,
     ButtonModule,
@@ -31,10 +33,13 @@ import { TenantConfigService } from '../../services/tenant-config.service';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  username = '';
-  password = '';
-  rememberMe: boolean = false;
-  firstTimeLogin: boolean = true;
+  private fb = inject(FormBuilder);
+
+  loginForm: FormGroup = this.fb.group({
+    username: ['', Validators.required],
+    password: ['', Validators.required],
+    rememberMe: [false]
+  });
 
   constructor(
     private router: Router,
@@ -51,22 +56,19 @@ export class LoginComponent {
   }
 
   login() {
-    const trimmedUsername = this.username.trim().toLowerCase();
-    console.log('[LOGIN COMPONENT] Login attempt with username:', trimmedUsername);
+    if (this.loginForm.invalid) return;
 
-    console.log('[LOGIN COMPONENT] Attempting regular backend login with:', trimmedUsername);
+    const { username, password, rememberMe } = this.loginForm.value;
 
     const loginPayload = {
-      userName: this.username,
-      password: this.password
+      userName: username,
+      password
     };
 
     this.loader.start('login-flow');
 
     this.loginService.generateToken(loginPayload).subscribe({
       next: (res: any) => {
-        console.log('[LOGIN COMPONENT] Backend login response:', res.data);
-
         const accessToken = res.data.accessToken || res.data.token;
         const refreshToken = res.data.refreshToken;
 
@@ -83,16 +85,13 @@ export class LoginComponent {
         }
 
         // 1. Store token and tenant (pass rememberMe preference)
-        this.loginService.loginUser(accessToken, refreshToken, res.tenantId, res.user?.orgType, res.user?.organizations, this.rememberMe);
-        console.log('[LOGIN COMPONENT] Tokens stored. Access Token:', accessToken ? 'Yes' : 'No');
+        this.loginService.loginUser(accessToken, refreshToken, res.tenantId, res.user?.orgType, res.user?.organizations, rememberMe);
 
         // 2. Fetch current user details
-        console.log('[LOGIN COMPONENT] Fetching current user details...');
         this.loginService.getCurrentUser().subscribe({
           next: (res: any) => {
             // Backend wraps response in ApiResponse<T>: { success, message, data: {...} }
             const user = res?.data ?? res;
-            console.log('[LOGIN COMPONENT] User details fetched:', user);
             this.loginService.setUser(user);
 
             // 3. Fetch Tenant Config
@@ -133,23 +132,17 @@ export class LoginComponent {
     });
   }
 
-  private redirectUser(user: any) {
+  private redirectUser(user: UserInfo) {
     this.loader.stop('login-flow');
     if (user.firstTimeLogin) {
-      console.log('[LOGIN COMPONENT] First time login detected, redirecting to /auth/first-time-login...');
       this.router.navigate(['/auth/first-time-login']).then(success => {
-        console.log('[LOGIN COMPONENT] Navigation to first-time-login result:', success);
         if (!success) {
-          console.error('[LOGIN COMPONENT] Navigation failed!');
           this.messageService.add({ severity: 'error', summary: 'Navigation Error', detail: 'Could not redirect to first time login page.' });
         }
       });
     } else {
-      console.log('[LOGIN COMPONENT] Redirecting to app dashboard...');
       this.idleTimeoutService.start();
-      this.router.navigate(['/app']).then(success => {
-        console.log('[LOGIN COMPONENT] Navigation to app dashboard result:', success);
-      });
+      this.router.navigate(['/app']);
     }
   }
 

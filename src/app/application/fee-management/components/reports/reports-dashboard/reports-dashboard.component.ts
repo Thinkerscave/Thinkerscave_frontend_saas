@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-reports-dashboard',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [CommonModule, RouterModule, ButtonModule, ChartModule, DropdownModule, FormsModule],
     template: `

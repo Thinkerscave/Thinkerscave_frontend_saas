@@ -1,8 +1,7 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { LoginService } from '../../../services/login.service';
 import {
   AttendanceRecord,
   AttendanceStatus,
@@ -27,7 +26,7 @@ import {
 export class SchoolOperationsDataService {
   private readonly apiBase = environment.baseUrl;
 
-  constructor(private readonly http: HttpClient, private readonly loginService: LoginService) { }
+  constructor(private readonly http: HttpClient) { }
 
   loadStaffWorkspace(): Observable<StaffWorkspaceData> {
     const today = this.today();
@@ -109,8 +108,8 @@ export class SchoolOperationsDataService {
       };
 
       return row.attendanceId
-        ? this.http.put<AttendanceRecord>(`${this.apiBase}/attendance/${row.attendanceId}`, payload, { headers: this.headers() })
-        : this.http.post<AttendanceRecord>(`${this.apiBase}/attendance`, payload, { headers: this.headers() });
+        ? this.http.put<AttendanceRecord>(`${this.apiBase}/attendance/${row.attendanceId}`, payload)
+        : this.http.post<AttendanceRecord>(`${this.apiBase}/attendance`, payload);
     });
 
     return requests.length ? forkJoin(requests) : of([]);
@@ -119,30 +118,30 @@ export class SchoolOperationsDataService {
   registerStaff(payload: StaffCreatePayload): Observable<StaffRecord> {
     const formData = new FormData();
     formData.append('staffData', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    return this.http.post<any>(`${this.apiBase}/staff/saveOrUpdateStaff`, formData, { headers: this.headers() })
+    return this.http.post<any>(`${this.apiBase}/staff/saveOrUpdateStaff`, formData)
       .pipe(map(response => this.unwrap<StaffRecord>(response)));
   }
 
   saveDepartment(payload: Partial<DepartmentRecord>): Observable<DepartmentRecord> {
-    return this.http.post<any>(`${this.apiBase}/departments/saveOrUpdate`, payload, { headers: this.headers() })
+    return this.http.post<any>(`${this.apiBase}/departments/saveOrUpdate`, payload)
       .pipe(map(response => this.unwrap<DepartmentRecord>(response)));
   }
 
   saveBranch(payload: Partial<BranchRecord>): Observable<BranchRecord> {
-    return this.http.post<any>(`${this.apiBase}/branches/saveOrUpdate`, payload, { headers: this.headers() })
+    return this.http.post<any>(`${this.apiBase}/branches/saveOrUpdate`, payload)
       .pipe(map(response => this.unwrap<BranchRecord>(response)));
   }
 
   approveLeave(id: number): Observable<LeaveRecord> {
-    return this.http.patch<LeaveRecord>(`${this.apiBase}/leave/${id}/approve`, {}, { headers: this.headers() });
+    return this.http.patch<LeaveRecord>(`${this.apiBase}/leave/${id}/approve`, {});
   }
 
   rejectLeave(id: number, reason: string): Observable<LeaveRecord> {
-    return this.http.patch<LeaveRecord>(`${this.apiBase}/leave/${id}/reject`, { reason }, { headers: this.headers() });
+    return this.http.patch<LeaveRecord>(`${this.apiBase}/leave/${id}/reject`, { reason });
   }
 
   runPayroll(): Observable<PayrollRunResult> {
-    return this.http.post<PayrollRunResult>(`${this.apiBase}/payroll/run`, {}, { headers: this.headers() });
+    return this.http.post<PayrollRunResult>(`${this.apiBase}/payroll/run`, {});
   }
 
   today(): string {
@@ -150,69 +149,69 @@ export class SchoolOperationsDataService {
   }
 
   private getStaff(): Observable<StaffRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/staff/getAllStaff`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/staff/getAllStaff`).pipe(
       map(response => this.unwrapArray<StaffRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getDepartments(): Observable<DepartmentRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/departments/getAllDepartment`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/departments/getAllDepartment`).pipe(
       map(response => this.unwrapArray<DepartmentRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getBranches(): Observable<BranchRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/branches/getAllBranch`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/branches/getAllBranch`).pipe(
       map(response => this.unwrapArray<BranchRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getLeaveRequests(): Observable<LeaveRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/leave/all`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/leave/all`).pipe(
       map(response => this.unwrapArray<LeaveRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getPayroll(): Observable<PayrollRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/payroll`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/payroll`).pipe(
       map(response => this.unwrapArray<PayrollRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getStudents(): Observable<StudentRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/students/getStudents`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/students/getStudents`).pipe(
       map(response => this.unwrapArray<StudentRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getClasses(): Observable<ClassRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/classes/getListOfClass`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/classes/getListOfClass`).pipe(
       map(response => this.unwrapArray<ClassRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getSections(classId: string | number): Observable<SectionRecord[]> {
-    return this.http.get<any>(`${this.apiBase}/sections/getListOfSectionsByClassId/${classId}`, { headers: this.headers() }).pipe(
+    return this.http.get<any>(`${this.apiBase}/sections/getListOfSectionsByClassId/${classId}`).pipe(
       map(response => this.unwrapArray<SectionRecord>(response)),
       catchError(() => of([]))
     );
   }
 
   private getAttendance(date: string, type: AttendanceType): Observable<AttendanceRecord[]> {
-    return this.http.get<AttendanceRecord[]>(`${this.apiBase}/attendance?date=${date}&type=${type}`, { headers: this.headers() }).pipe(
+    return this.http.get<AttendanceRecord[]>(`${this.apiBase}/attendance?date=${date}&type=${type}`).pipe(
       catchError(() => of([]))
     );
   }
 
   private getAttendanceByClass(classId: number, date: string): Observable<AttendanceRecord[]> {
-    return this.http.get<AttendanceRecord[]>(`${this.apiBase}/attendance/class/${classId}?date=${date}`, { headers: this.headers() }).pipe(
+    return this.http.get<AttendanceRecord[]>(`${this.apiBase}/attendance/class/${classId}?date=${date}`).pipe(
       catchError(() => of([]))
     );
   }
@@ -317,25 +316,6 @@ export class SchoolOperationsDataService {
       date.setDate(date.getDate() - (6 - index));
       return date.toISOString().slice(0, 10);
     });
-  }
-
-  private headers(): HttpHeaders {
-    const token = this.loginService.getAccessToken();
-    const tenant = this.loginService.getTenant() ?? environment.defaultTenantId;
-    const organizationId = this.loginService.getCurrentOrganizationId() ?? environment.defaultOrganizationId;
-    let headers = new HttpHeaders();
-
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-    if (tenant) {
-      headers = headers.set('X-Tenant-ID', tenant);
-    }
-    if (organizationId) {
-      headers = headers.set('X-Organization-ID', String(organizationId));
-    }
-
-    return headers;
   }
 
   private unwrapArray<T>(response: any): T[] {

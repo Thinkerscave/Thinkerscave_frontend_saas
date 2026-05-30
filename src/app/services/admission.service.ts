@@ -1,27 +1,20 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { admissionApi } from '../shared/constants/api.endpoint';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdmissionService {
 
-
-  private apiUrl = `${environment.baseUrl}/admissions`;
-  // Public endpoints live at /api/v1/public/... — baseUrl already includes /api/v1
-  private publicApiUrl = `${environment.baseUrl}/public/admissions`;
-
   constructor(private http: HttpClient) { }
 
   getFormConfig(): Observable<any> {
-    return this.http.get(`${this.publicApiUrl}/form-config`);
+    return this.http.get(admissionApi.publicFormConfig);
   }
 
   submitAdmission(formValue: any): Observable<any> {
-    // Backend: POST /api/v1/admissions (root POST — no /submit suffix)
-    const submissionUrl = this.apiUrl;
     const preparedPayload = this.preparePayload(formValue);
 
     const formData = new FormData();
@@ -41,13 +34,12 @@ export class AdmissionService {
         }
       });
     }
-    return this.http.post(submissionUrl, formData);
+    return this.http.post(admissionApi.submit, formData);
   }
 
   saveDraft(formValue: any): Observable<any> {
-    const draftUrl = `${this.apiUrl}/draft`;
-    const draftPayload = this.preparePayload(formValue, true); // Prepare payload for draft
-    return this.http.post(draftUrl, draftPayload);
+    const draftPayload = this.preparePayload(formValue, true);
+    return this.http.post(admissionApi.saveDraft, draftPayload);
   }
 
   /**

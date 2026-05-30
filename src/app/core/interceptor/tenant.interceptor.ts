@@ -2,7 +2,7 @@ import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angul
 import { inject } from '@angular/core';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
 import { finalize, Observable } from 'rxjs';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 
 /**
  * A functional HTTP interceptor that adds the X-Tenant-ID header to outgoing requests.

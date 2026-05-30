@@ -18,7 +18,7 @@
     <div class="profile-wrapper">
     <!-- Profile Button -->
     <button pButton type="button" class="profile-btn" (click)="profileMenu.toggle($event)">
-      <div class="profile-initials">{{ getInitials(userName) }}</div>
+      <div class="profile-initials">{{ userName | initials }}</div>
       <span class="user-name">{{ userName }}</span>
       <i class="pi pi-chevron-down"></i>
     </button>

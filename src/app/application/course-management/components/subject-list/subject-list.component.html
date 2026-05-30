@@ -11,7 +11,7 @@
                     <div class="field mb-4">
                         <label for="addSubjectName" class="font-semibold">Subject Name</label>
                         <input type="text" pInputText id="addSubjectName" [(ngModel)]="addSubjectObj.subjectName"
-                            required autofocus placeholder="e.g. Applied Physics" />
+                            required appAutofocus placeholder="e.g. Applied Physics" />
                         <small class="p-error" *ngIf="submitted && !addSubjectObj.subjectName">Name is required.</small>
                     </div>
                     <div class="field mb-4">
@@ -81,7 +81,7 @@
         <ng-template pTemplate="content">
             <div class="field">
                 <label for="subjectName" class="font-semibold">Subject Name</label>
-                <input type="text" pInputText id="subjectName" [(ngModel)]="subject.subjectName" required autofocus
+                <input type="text" pInputText id="subjectName" [(ngModel)]="subject.subjectName" required appAutofocus
                     placeholder="e.g. Applied Physics" />
                 <small class="p-error" *ngIf="submitted && !subject.subjectName">Name is required.</small>
             </div>

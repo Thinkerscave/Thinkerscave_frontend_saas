@@ -4,32 +4,38 @@
         <!-- Title & Subtitle -->
         <div>
             <h2 class="m-0 text-900 font-semibold text-2xl">{{ config.title }}</h2>
-            <p *ngIf="config.subtitle" class="m-0 text-600 mt-1 text-sm">{{ config.subtitle }}</p>
+            @if (config.subtitle) {
+                <p class="m-0 text-600 mt-1 text-sm">{{ config.subtitle }}</p>
+            }
         </div>
 
         <!-- Global Actions -->
         <div class="flex gap-2 align-items-center">
-            <ng-container *ngFor="let action of config.secondaryActions">
-                <button *ngIf="!action.visibleFn || action.visibleFn()" pButton [label]="action.label"
-                    [icon]="action.icon || ''" class="p-button-outlined p-button-sm" (click)="action.actionFn()">
-                </button>
-            </ng-container>
+            @for (action of config.secondaryActions; track action.label) {
+                @if (!action.visibleFn || action.visibleFn()) {
+                    <button pButton [label]="action.label"
+                        [icon]="action.icon || ''" class="p-button-outlined p-button-sm" (click)="action.actionFn()">
+                    </button>
+                }
+            }
 
-            <button
-                *ngIf="config.primaryAction && (!config.primaryAction.visibleFn || config.primaryAction.visibleFn())"
-                pButton [label]="config.primaryAction.label" [icon]="config.primaryAction.icon || ''"
-                class="p-button-primary p-button-sm" (click)="config.primaryAction.actionFn()">
-            </button>
+            @if (config.primaryAction && (!config.primaryAction.visibleFn || config.primaryAction.visibleFn())) {
+                <button pButton [label]="config.primaryAction.label" [icon]="config.primaryAction.icon || ''"
+                    class="p-button-primary p-button-sm" (click)="config.primaryAction.actionFn()">
+                </button>
+            }
         </div>
     </div>
 
     <!-- Search & Filters Bar -->
     <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
-        <div class="p-input-icon-left w-full md:w-25rem" *ngIf="config.showSearch !== false">
-            <i class="pi pi-search"></i>
-            <input pInputText type="text" [(ngModel)]="globalFilter" (input)="onSearchChange()"
-                [placeholder]="config.searchPlaceholder || 'Search '" class="w-full p-inputtext-sm border-round-lg" />
-        </div>
+        @if (config.showSearch !== false) {
+            <div class="p-input-icon-left w-full md:w-25rem">
+                <i class="pi pi-search"></i>
+                <input pInputText type="text" [(ngModel)]="globalFilter" (input)="onSearchChange()"
+                    [placeholder]="config.searchPlaceholder || 'Search '" class="w-full p-inputtext-sm border-round-lg" />
+            </div>
+        }
         <div>
             <!-- Filters will go here in Phase 2 -->
         </div>
@@ -47,88 +53,104 @@
         <!-- Table Header -->
         <ng-template pTemplate="header" let-columns>
             <tr>
-                <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : undefined"
-                    [style]="{'width': col.width, 'text-align': col.align || 'left'}"
-                    class="text-600 font-medium uppercase text-xs tracking-wide">
-                    <div class="flex align-items-center gap-2"
-                        [ngClass]="{'justify-content-center': col.align === 'center', 'justify-content-end': col.align === 'right'}">
-                        <span class="white-space-nowrap">{{ col.header }}</span>
-                        <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
-                    </div>
-                </th>
-                <th *ngIf="config.rowActions?.length" [style]="{'width': '100px', 'text-align': 'right'}"
-                    class="text-600 font-medium uppercase text-xs tracking-wide sticky-right">
-                    Actions
-                </th>
+                @for (col of columns; track col.field) {
+                    <th [pSortableColumn]="col.sortable ? col.field : undefined"
+                        [style]="{'width': col.width, 'text-align': col.align || 'left'}"
+                        class="text-600 font-medium uppercase text-xs tracking-wide">
+                        <div class="flex align-items-center gap-2"
+                            [ngClass]="{'justify-content-center': col.align === 'center', 'justify-content-end': col.align === 'right'}">
+                            <span class="white-space-nowrap">{{ col.header }}</span>
+                            @if (col.sortable) {
+                                <p-sortIcon [field]="col.field"></p-sortIcon>
+                            }
+                        </div>
+                    </th>
+                }
+                @if (config.rowActions?.length) {
+                    <th [style]="{'width': '100px', 'text-align': 'right'}"
+                        class="text-600 font-medium uppercase text-xs tracking-wide sticky-right">
+                        Actions
+                    </th>
+                }
             </tr>
         </ng-template>
 
         <!-- Table Body -->
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr>
-                <td *ngFor="let col of columns" [style]="{'text-align': col.align || 'left'}" class="text-700">
+                @for (col of columns; track col.field) {
+                    <td [style]="{'text-align': col.align || 'left'}" class="text-700">
 
-                    <!-- Text Type -->
-                    <span *ngIf="col.type === 'text'">{{ getCellData(rowData, col) }}</span>
-
-                    <!-- Date Type -->
-                    <span *ngIf="col.type === 'date'">{{ getCellData(rowData, col) | date:'mediumDate' }}</span>
-
-                    <!-- Number Type -->
-                    <span *ngIf="col.type === 'number'">{{ getCellData(rowData, col) }}</span>
-
-                    <!-- Badge Type -->
-                    <p-tag *ngIf="col.type === 'badge'" [value]="getCellData(rowData, col)"
-                        [severity]="getBadgeSeverity(getCellData(rowData, col))" [rounded]="true">
-                    </p-tag>
-
-                    <!-- Tags Type -->
-                    <div *ngIf="col.type === 'tags'" class="flex gap-1 flex-wrap">
-                        <span *ngFor="let tag of getTagsData(rowData, col)"
-                            class="p-tag p-tag-rounded p-tag-info p-tag-sm">
-                            {{ tag }}
-                        </span>
-                    </div>
-
-                    <!-- Boolean Type -->
-                    <span *ngIf="col.type === 'boolean'">
-                        <i class="pi"
-                            [ngClass]="{'pi-check-circle text-green-500': getCellData(rowData, col), 'pi-times-circle text-red-500': !getCellData(rowData, col)}"></i>
-                    </span>
-
-                    <!-- Icon Type -->
-                    <span *ngIf="col.type === 'icon'" class="list-icon-cell">
-                        <span class="list-icon-tile" [pTooltip]="getIconClass(rowData, col)" tooltipPosition="top">
-                            <i [ngClass]="getIconClass(rowData, col)"></i>
-                        </span>
-                        <span class="list-icon-code">{{ getIconClass(rowData, col) }}</span>
-                    </span>
-                </td>
+                        @switch (col.type) {
+                            @case ('text') {
+                                <span>{{ getCellData(rowData, col) }}</span>
+                            }
+                            @case ('date') {
+                                <span>{{ getCellData(rowData, col) | date:'mediumDate' }}</span>
+                            }
+                            @case ('number') {
+                                <span>{{ getCellData(rowData, col) }}</span>
+                            }
+                            @case ('badge') {
+                                <p-tag [value]="getCellData(rowData, col)"
+                                    [severity]="getBadgeSeverity(getCellData(rowData, col))" [rounded]="true">
+                                </p-tag>
+                            }
+                            @case ('tags') {
+                                <div class="flex gap-1 flex-wrap">
+                                    @for (tag of getTagsData(rowData, col); track tag) {
+                                        <span class="p-tag p-tag-rounded p-tag-info p-tag-sm">
+                                            {{ tag }}
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            @case ('boolean') {
+                                <span>
+                                    <i class="pi"
+                                        [ngClass]="{'pi-check-circle text-green-500': getCellData(rowData, col), 'pi-times-circle text-red-500': !getCellData(rowData, col)}"></i>
+                                </span>
+                            }
+                            @case ('icon') {
+                                <span class="list-icon-cell">
+                                    <span class="list-icon-tile" [pTooltip]="getIconClass(rowData, col)" tooltipPosition="top">
+                                        <i [ngClass]="getIconClass(rowData, col)"></i>
+                                    </span>
+                                    <span class="list-icon-code">{{ getIconClass(rowData, col) }}</span>
+                                </span>
+                            }
+                        }
+                    </td>
+                }
 
                 <!-- Actions Column -->
-                <td *ngIf="config.rowActions?.length" class="text-right sticky-right whitespace-nowrap">
-                    <div class="flex justify-content-end gap-2">
-                        <!-- Primary Actions (Standalone Buttons) -->
-                        <ng-container *ngFor="let action of primaryRowActions">
-                            <button *ngIf="!action.visibleFn || action.visibleFn(rowData)" pButton pRipple
-                                [icon]="action.icon || 'pi pi-cog'" class="p-button-rounded p-button-text p-button-sm"
-                                [class.p-button-danger]="action.color === 'danger'"
-                                [class.p-button-success]="action.color === 'success'" [pTooltip]="action.label"
-                                tooltipPosition="top" (click)="action.actionFn(rowData)">
-                            </button>
-                        </ng-container>
+                @if (config.rowActions?.length) {
+                    <td class="text-right sticky-right whitespace-nowrap">
+                        <div class="flex justify-content-end gap-2">
+                            <!-- Primary Actions (Standalone Buttons) -->
+                            @for (action of primaryRowActions; track action.label) {
+                                @if (!action.visibleFn || action.visibleFn(rowData)) {
+                                    <button pButton pRipple
+                                        [icon]="action.icon || 'pi pi-cog'" class="p-button-rounded p-button-text p-button-sm"
+                                        [class.p-button-danger]="action.color === 'danger'"
+                                        [class.p-button-success]="action.color === 'success'" [pTooltip]="action.label"
+                                        tooltipPosition="top" (click)="action.actionFn(rowData)">
+                                    </button>
+                                }
+                            }
 
-                        <!-- Secondary Actions (More Menu) -->
-                        <ng-container *ngIf="secondaryRowActions.length > 0">
-                            <p-menu #menu [model]="getMenuModel(rowData, secondaryRowActions)" [popup]="true"
-                                appendTo="body"></p-menu>
-                            <button pButton pRipple icon="pi pi-ellipsis-v"
-                                class="p-button-rounded p-button-text p-button-sm text-600"
-                                (click)="menu.toggle($event)">
-                            </button>
-                        </ng-container>
-                    </div>
-                </td>
+                            <!-- Secondary Actions (More Menu) -->
+                            @if (secondaryRowActions.length > 0) {
+                                <p-menu #menu [model]="getMenuModel(rowData, secondaryRowActions)" [popup]="true"
+                                    appendTo="body"></p-menu>
+                                <button pButton pRipple icon="pi pi-ellipsis-v"
+                                    class="p-button-rounded p-button-text p-button-sm text-600"
+                                    (click)="menu.toggle($event)">
+                                </button>
+                            }
+                        </div>
+                    </td>
+                }
             </tr>
         </ng-template>
 

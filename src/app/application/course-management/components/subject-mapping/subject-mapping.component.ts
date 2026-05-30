@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,11 +8,12 @@ import { TabViewModule } from 'primeng/tabview';
 import { PickListModule } from 'primeng/picklist';
 import { CourseService } from '../../services/course.service';
 import { Course, Subject } from '../../../../shared/models/course.model';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-subject-mapping',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,

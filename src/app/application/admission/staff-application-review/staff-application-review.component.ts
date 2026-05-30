@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -24,6 +24,7 @@ interface Application {
 
 @Component({
   selector: 'app-staff-application-review',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -121,7 +122,6 @@ export class StaffApplicationReviewComponent {
         this.applications[appIndex].status = this.reviewForm.value.status.value;
       }
 
-      console.log('Updating application:', this.selectedApplication.application_id, 'with data:', this.reviewForm.value);
       this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Application updated successfully' });
 
       this.displayDialog = false;

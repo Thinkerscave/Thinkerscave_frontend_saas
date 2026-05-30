@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -32,6 +32,7 @@ interface PendingAdjustment {
 
 @Component({
   selector: 'app-pending-approvals',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule],
   providers: [MessageService, ConfirmationService],

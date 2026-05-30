@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -21,6 +21,7 @@ interface Branch {
 
 @Component({
     selector: 'app-manage-branch',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, TabsModule, Tab, ButtonModule, InputTextModule, TableModule, ToastModule, TooltipModule],
     providers: [MessageService],

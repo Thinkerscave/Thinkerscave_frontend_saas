@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -11,13 +11,14 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 
 @Component({
   selector: 'app-forgot-password',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     RouterModule,
-    FormsModule,
+    ReactiveFormsModule,
     InputTextModule,
     PasswordModule,
     ButtonModule,
@@ -27,13 +28,22 @@ import { LoginService } from '../../services/login.service';
   styleUrl: './forgot-password.component.scss'
 })
 export class ForgotPasswordComponent {
-step: number = 1;
+  private fb = inject(FormBuilder);
 
-  // --- MODIFICATION: Changed from 'username' to 'email' ---
-  email: string = '';
-  otp: string = '';
-  newPassword: string = '';
-  confirmPassword: string = '';
+  step = 1;
+
+  emailForm: FormGroup = this.fb.group({
+    email: ['', [Validators.required, Validators.email]]
+  });
+
+  otpForm: FormGroup = this.fb.group({
+    otp: ['', [Validators.required, Validators.minLength(4)]]
+  });
+
+  passwordForm: FormGroup = this.fb.group({
+    newPassword: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', Validators.required]
+  });
 
   // Inject your service to make API calls
   constructor(
@@ -46,12 +56,13 @@ step: number = 1;
    * Step 1: Calls the backend to send an OTP to the provided email.
    */
   sendOtp() {
-    if (!this.email) {
-      this.showError('Please enter your email address.');
+    if (this.emailForm.invalid) {
+      this.showError('Please enter a valid email address.');
       return;
     }
 
-    this.loginService.requestPasswordOtp(this.email).subscribe({
+    const email = this.emailForm.value.email;
+    this.loginService.requestPasswordOtp(email).subscribe({
       next: (response) => {
         this.messageService.add({
           severity: 'success',
@@ -78,11 +89,13 @@ step: number = 1;
    * Step 2: Calls the backend to verify the OTP.
    */
   verifyOtp() {
-    if (!this.otp) {
+    if (this.otpForm.invalid) {
         this.showError('Please enter the OTP.');
         return;
     }
-    this.loginService.verifyPasswordOtp(this.email, this.otp).subscribe({
+    const email = this.emailForm.value.email;
+    const otp = this.otpForm.value.otp;
+    this.loginService.verifyPasswordOtp(email, otp).subscribe({
       next: (response) => {
         this.messageService.add({
           severity: 'success',
@@ -102,19 +115,19 @@ step: number = 1;
    * Step 3: Calls the backend to reset the password with the new credentials.
    */
   resetPassword() {
-    if (this.newPassword !== this.confirmPassword) {
+    if (this.passwordForm.value.newPassword !== this.passwordForm.value.confirmPassword) {
       this.showError('Passwords do not match.');
       return;
     }
-    if (!this.newPassword) {
-        this.showError('Please enter a new password.');
+    if (this.passwordForm.invalid) {
+        this.showError('Please enter a valid new password.');
         return;
     }
 
     const payload = {
-      email: this.email,
-      otp: this.otp,
-      newPassword: this.newPassword
+      email: this.emailForm.value.email,
+      otp: this.otpForm.value.otp,
+      newPassword: this.passwordForm.value.newPassword
     };
 
     this.loginService.resetPasswordWithOtp(payload).subscribe({

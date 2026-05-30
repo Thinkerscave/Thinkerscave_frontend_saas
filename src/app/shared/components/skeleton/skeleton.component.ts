@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 export type SkeletonShape = 'line' | 'rect' | 'circle' | 'card' | 'table' | 'list';
 
@@ -16,7 +16,8 @@ export type SkeletonShape = 'line' | 'rect' | 'circle' | 'card' | 'table' | 'lis
     standalone: true,
     imports: [CommonModule],
     templateUrl: './skeleton.component.html',
-    styleUrl: './skeleton.component.scss'
+    styleUrl: './skeleton.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SkeletonComponent {
     @Input() shape: SkeletonShape = 'line';

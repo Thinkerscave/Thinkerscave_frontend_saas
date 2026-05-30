@@ -5,29 +5,29 @@
     <!-- <p class="subtitle">Sign in and get 30 day free trial</p> -->
   </div>
 
-  <form (ngSubmit)="login()" class="login-panel__form">
+  <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-panel__form">
     <div class="form-field">
       <label for="username">Username</label>
-      <input id="username" type="text" pInputText [(ngModel)]="username" name="username" required
+      <input id="username" type="text" pInputText formControlName="username"
         placeholder="Enter your username" />
     </div>
 
     <div class="form-field">
       <label for="password">Password</label>
-      <p-password id="password" name="password" [(ngModel)]="password" [feedback]="false" [toggleMask]="true"
-        styleClass="login-password" inputStyleClass="login-password__input" required
+      <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true"
+        styleClass="login-password" inputStyleClass="login-password__input"
         placeholder="Enter your password"></p-password>
     </div>
 
     <div class="login-panel__meta">
       <div class="remember-me">
-        <p-checkbox inputId="remember" binary="true" name="rememberMe" [(ngModel)]="rememberMe"></p-checkbox>
+        <p-checkbox inputId="remember" binary="true" formControlName="rememberMe"></p-checkbox>
         <label for="remember">Remember Me</label>
       </div>
       <a routerLink="/auth/forgot-password" class="link">Forgot Password?</a>
     </div>
 
-    <button pButton type="submit" label="Submit" class="accent-button"></button>
+    <button pButton type="submit" label="Submit" class="accent-button" [disabled]="loginForm.invalid"></button>
   </form>
 
   <!-- Demo Counsellor Login (hidden — not implemented in backend)

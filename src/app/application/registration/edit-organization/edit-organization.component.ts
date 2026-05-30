@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild , ChangeDetectionStrategy} from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { AvatarModule } from 'primeng/avatar';
 import { Organisation, OrganisationService } from '../../../services/organisation.service';
@@ -13,6 +13,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-edit-organization',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     FormsModule,
     ButtonModule,
@@ -70,12 +71,6 @@ export class EditOrganizationComponent {
 
     // 1. Destructure the editData object to cleanly separate the id from the rest of the data.
     const { orgId, ...orgData } = this.editData;
-
-    // 'id' now holds the organization's ID.
-    // 'orgData' now holds all other properties, which matches the payload your backend expects.
-
-    console.log("Updating Organization with ID:", orgId);
-    console.log("Payload (orgData):", orgData);
 
     // 2. Call the update method in your service, passing the id and the payload.
     this.organizationService.updateOrganization(orgId, orgData).subscribe({

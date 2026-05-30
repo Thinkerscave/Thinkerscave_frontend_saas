@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
 import {
   AdminActivityTimelineComponent,
   AdminAuditTableComponent,
@@ -35,6 +35,7 @@ type MonitoringTab = 'health' | 'jobs' | 'notifications' | 'integrity';
 
 @Component({
   selector: 'app-admin-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -51,8 +52,8 @@ type MonitoringTab = 'health' | 'jobs' | 'notifications' | 'integrity';
   ],
   templateUrl: './admin-workspace.component.html'
 })
-export class AdminWorkspaceComponent implements OnInit, OnDestroy {
-  private readonly destroy$ = new Subject<void>();
+export class AdminWorkspaceComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
 
   page: AdminWorkspacePage = 'dashboard';
   workspace: AdminControlCenter | null = null;
@@ -86,16 +87,11 @@ export class AdminWorkspaceComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.route.data.pipe(takeUntil(this.destroy$)).subscribe(data => {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.page = (data['adminPage'] as AdminWorkspacePage) || 'dashboard';
       this.clearMessages();
     });
     this.loadWorkspace();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   loadWorkspace(): void {

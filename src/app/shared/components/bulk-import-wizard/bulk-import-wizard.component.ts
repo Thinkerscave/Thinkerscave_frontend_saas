@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { StepsModule } from 'primeng/steps';
 import { TableModule } from 'primeng/table';
@@ -30,7 +30,8 @@ import {
     MessageModule, ProgressBarModule
   ],
   templateUrl: './bulk-import-wizard.component.html',
-  styleUrls: ['./bulk-import-wizard.component.scss']
+  styleUrls: ['./bulk-import-wizard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BulkImportWizardComponent<TRow = any> {
   @Input({ required: true }) config!: BulkImportConfig<TRow>;

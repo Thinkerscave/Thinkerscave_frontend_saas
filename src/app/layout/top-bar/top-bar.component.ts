@@ -1,16 +1,18 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject , ChangeDetectionStrategy} from '@angular/core';
 import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../shared/theme/theme.service';
+import { InitialsPipe } from '../../shared/pipes';
 
 
 @Component({
   selector: 'app-top-bar',
-  imports: [MenuModule, ButtonModule, CommonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MenuModule, ButtonModule, CommonModule, InitialsPipe],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })
@@ -60,16 +62,6 @@ export class TopBarComponent {
         command: () => this.logout()
       }
     ];
-  }
-
-  getInitials(name: string): string {
-    if (!name || !name.trim()) return 'U';
-    const names = name.trim().split(' ').filter(n => n.length > 0);
-    if (names.length === 1) {
-      return names[0].charAt(0).toUpperCase();
-    } else {
-      return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
-    }
   }
 
   onToggleSidebar(): void {

@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 import {
   AcademicClass,
   AcademicCalendarEventModel,

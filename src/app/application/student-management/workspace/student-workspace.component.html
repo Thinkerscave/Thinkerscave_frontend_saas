@@ -58,7 +58,7 @@
           <article class="tc-panel">
             <header><div><span class="tc-eyebrow">Action Queue</span><h2>Records to review</h2></div></header>
             <button type="button" class="tc-focus-row" *ngFor="let student of data.students | slice:0:6" (click)="selectStudent(student); page = 'profiles'">
-              <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span>
+              <span class="tc-avatar">{{ (student.firstName | initials) }}</span>
               <div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.sectionName }}</small></div>
               <em>{{ student.rollNumber }}</em>
             </button>
@@ -89,7 +89,7 @@
 
           <div class="tc-card-grid" *ngIf="directoryView !== 'table'">
             <button type="button" class="tc-student-card" *ngFor="let student of filteredStudents()" (click)="selectStudent(student); page = 'profiles'">
-              <span class="tc-avatar large">{{ student.firstName.charAt(0) }}</span>
+              <span class="tc-avatar large">{{ (student.firstName | initials) }}</span>
               <strong>{{ studentName(student) }}</strong>
               <small>{{ student.className }} • {{ student.sectionName }}</small>
               <p>{{ student.email || student.parentName }}</p>
@@ -104,13 +104,13 @@
         <div class="tc-profile-layout" *ngIf="selectedStudent; else noProfile">
           <aside class="tc-profile-list">
             <button type="button" *ngFor="let student of data.students" [class.is-active]="student.studentId === selectedStudent.studentId" (click)="selectStudent(student)">
-              <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span>
+              <span class="tc-avatar">{{ (student.firstName | initials) }}</span>
               <div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.rollNumber }}</small></div>
             </button>
           </aside>
           <article class="tc-panel tc-profile-panel">
             <header class="tc-profile-header">
-              <span class="tc-avatar xl">{{ selectedStudent.firstName.charAt(0) }}</span>
+              <span class="tc-avatar xl">{{ selectedStudent.firstName | initials }}</span>
               <div><span class="tc-eyebrow">{{ selectedStudent.rollNumber }}</span><h2>{{ studentName(selectedStudent) }}</h2><p>{{ selectedStudent.className }} • {{ selectedStudent.sectionName }} • {{ selectedStudent.parentName }}</p></div>
             </header>
             <div class="tc-tabs">
@@ -193,7 +193,7 @@
             <header><div><span class="tc-eyebrow">Transfer</span><h2>Transfer certificate desk</h2></div></header>
             <div class="tc-focus-list">
               <button type="button" class="tc-focus-row" *ngFor="let student of data.students | slice:0:8" (click)="selectStudent(student)">
-                <span class="tc-avatar">{{ student.firstName.charAt(0) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.parentName }}</small></div><em>{{ isActive(student) ? 'Eligible' : 'Inactive' }}</em>
+                <span class="tc-avatar">{{ (student.firstName | initials) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.parentName }}</small></div><em>{{ isActive(student) ? 'Eligible' : 'Inactive' }}</em>
               </button>
             </div>
           </article>
@@ -225,7 +225,7 @@
       <section class="tc-workspace-view" *ngIf="page === 'id-cards'">
         <div class="tc-id-card-grid">
           <article class="tc-id-card" *ngFor="let student of data.students | slice:0:9">
-            <header><span class="tc-avatar large">{{ student.firstName.charAt(0) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.sectionName }}</small></div></header>
+            <header><span class="tc-avatar large">{{ (student.firstName | initials) }}</span><div><strong>{{ studentName(student) }}</strong><small>{{ student.className }} • {{ student.sectionName }}</small></div></header>
             <div class="tc-qr"><i class="pi pi-qrcode"></i></div>
             <footer><span>{{ student.rollNumber }}</span><span>{{ student.mobileNumber }}</span></footer>
           </article>

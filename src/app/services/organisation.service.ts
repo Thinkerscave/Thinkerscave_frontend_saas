@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { organizationApi, tenantApi } from '../shared/constants/api.endpoint';
 
 
 export interface TenantOnboardingRequest {
@@ -115,79 +115,42 @@ export interface OrgUpdateRequest {
   providedIn: 'root'
 })
 export class OrganisationService {
-  // Define the base URL for your organization API.
-  private apiUrl = `${environment.baseUrl}/organizations`;
-  private onboardingUrl = `${environment.baseUrl}/tenant-onboarding`;
 
   constructor(private http: HttpClient) { }
 
-  /**
-   * CREATE (Submit): Sends the new organization data to the backend.
-   * @param payload The data for the new organization, matching the OrgRequest interface.
-   * @returns An Observable with the backend's response.
-   */
   createOrganization(payload: TenantOnboardingRequest): Observable<TenantOnboardingResponse> {
-    return this.http.post<TenantOnboardingResponse>(`${this.onboardingUrl}/provision`, payload);
+    return this.http.post<TenantOnboardingResponse>(organizationApi.provision, payload);
   }
 
-  /**
-   * READ (View List): Fetches the list of all organizations from the backend.
-   * @returns An Observable containing an array of Organisation objects.
-   */
   getOrganizations(): Observable<Organisation[]> {
-    return this.http.get<Organisation[]>(`${this.apiUrl}/all`);
+    return this.http.get<Organisation[]>(organizationApi.all);
   }
-  /**
-   * 
-   * 
-   */
+
   getParentOrganizations(): Observable<ParentOrg[]> {
-    return this.http.get<ParentOrg[]>(`${this.apiUrl}/groups`)
+    return this.http.get<ParentOrg[]>(organizationApi.groups);
   }
 
-  /**
-   * UPDATE (Edit): Sends updated organization data to the backend.
-   * @param orgId The ID of the organization to update.
-   * @param payload The updated data for the organization.
-   * @returns An Observable with the backend's response.
-   */
   updateOrganization(orgId: number, payload: OrgUpdateRequest): Observable<any> {
-    const updateUrl = `${this.apiUrl}/${orgId}`;
-    return this.http.put<any>(updateUrl, payload);
+    return this.http.put<any>(organizationApi.byId(orgId), payload);
   }
 
-  /**
-   * DELETE (Soft Delete): Sends a request to the backend to soft-delete an organization.
-   * The backend should handle this by setting an 'isActive' flag to false.
-   * @param orgCode The code of the organization to delete.
-   * @returns An Observable with the backend's response.
-   */
   deleteOrganization(orgCode: string): Observable<any> {
-    return this.http.patch<Organisation>(`${this.apiUrl}/${orgCode}`, {});
+    return this.http.patch<Organisation>(organizationApi.byCode(orgCode), {});
   }
 
-  /**
-   * Gets the current status and health of a tenant schema.
-   */
   getTenantStatus(tenantId: string): Observable<TenantStatusResponse> {
-    return this.http.get<TenantStatusResponse>(`${this.onboardingUrl}/status/${tenantId}`);
+    return this.http.get<TenantStatusResponse>(tenantApi.status(tenantId));
   }
 
-  /**
-   * Activates a suspended tenant.
-   */
   activateTenant(tenantId: string): Observable<void> {
-    return this.http.post<void>(`${this.onboardingUrl}/${tenantId}/activate`, {});
+    return this.http.post<void>(tenantApi.activate(tenantId), {});
   }
 
-  /**
-   * Deactivates/suspends an active tenant.
-   */
   deactivateTenant(tenantId: string): Observable<void> {
-    return this.http.post<void>(`${this.onboardingUrl}/${tenantId}/deactivate`, {});
+    return this.http.post<void>(tenantApi.deactivate(tenantId), {});
   }
 
   updateOwnerDetails(dto: OwnerDTO): Observable<string> {
-    return this.http.put(`${this.apiUrl}/owner/update`, dto, { responseType: 'text' });
+    return this.http.put(organizationApi.updateOwner, dto, { responseType: 'text' });
   }
 }

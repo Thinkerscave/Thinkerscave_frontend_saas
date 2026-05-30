@@ -1,5 +1,5 @@
 import { Injectable, NgZone, OnDestroy } from '@angular/core';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from './login.service';
 
 /**
  * IdleTimeoutService - Automatically logs out the user after a period of inactivity.

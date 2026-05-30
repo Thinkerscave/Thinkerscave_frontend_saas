@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AcademicsNavGroup, AcademicsPageConfig, AcademicsWorkspacePage } from '../../../models/academics-workspace.model';
 
 @Component({
   selector: 'app-academic-workspace-nav',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `

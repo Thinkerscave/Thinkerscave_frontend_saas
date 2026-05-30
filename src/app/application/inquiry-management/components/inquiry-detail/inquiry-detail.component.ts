@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,9 +20,11 @@ import { MessageService } from 'primeng/api';
 import { FollowUpService } from '../../services/followup.service';
 import { InquiryService } from '../../services/inquiry.service';
 import { InquiryWithFollowUp, FollowUp, FollowUpType, FollowUpStatus } from '../../models/followup.model';
+import { InitialsPipe } from '../../../../shared/pipes';
 
 @Component({
     selector: 'app-inquiry-detail',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
         CommonModule,
@@ -37,7 +39,8 @@ import { InquiryWithFollowUp, FollowUp, FollowUpType, FollowUpStatus } from '../
         TagModule,
         AvatarModule,
         DividerModule,
-        DatePickerModule
+        DatePickerModule,
+        InitialsPipe
     ],
     providers: [MessageService],
     templateUrl: './inquiry-detail.component.html',
@@ -290,16 +293,6 @@ export class InquiryDetailComponent implements OnInit {
             default:
                 return '#6B7280';
         }
-    }
-
-    getInitials(name: string): string {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-    }
-
-    getAvatarColor(name: string): string {
-        const colors = ['#3B82F6', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
-        const index = name.charCodeAt(0) % colors.length;
-        return colors[index];
     }
 
     isInvalid(controlName: string): boolean {

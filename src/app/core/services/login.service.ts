@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, from, Observable, Subject, switchMap } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { loginApi, passwordApi } from '../shared/constants/api.endpoint';
+import { environment } from '../../../environments/environment';
+import { loginApi, passwordApi } from '../../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
+import { LoginRequest, LoginResponse, UserInfo, UserOrganization, RefreshTokenResponse, PasswordResetPayload, ApiResponse } from '../../shared/models/auth.model';
 
 /** All keys managed by this service */
 const STORAGE_KEYS = [
@@ -60,9 +61,9 @@ export class LoginService {
    * @param email The user's email address.
    * @returns An Observable for the API call.
    */
-  requestPasswordOtp(email: string): Observable<any> {
+  requestPasswordOtp(email: string): Observable<ApiResponse<void>> {
     const params = new HttpParams().set('email', email);
-    return this.http.post(passwordApi.forgot, null, { params });
+    return this.http.post<ApiResponse<void>>(passwordApi.forgot, null, { params });
   }
 
   /**
@@ -71,11 +72,11 @@ export class LoginService {
    * @param otp The 6-digit OTP entered by the user.
    * @returns An Observable for the API call.
    */
-  verifyPasswordOtp(email: string, otp: string): Observable<any> {
+  verifyPasswordOtp(email: string, otp: string): Observable<ApiResponse<void>> {
     const params = new HttpParams()
       .set('email', email)
       .set('otp', otp.trim());
-    return this.http.post(passwordApi.verifyOtp, null, { params });
+    return this.http.post<ApiResponse<void>>(passwordApi.verifyOtp, null, { params });
   }
 
   /**
@@ -83,26 +84,26 @@ export class LoginService {
    * @param payload An object containing the email, OTP, and newPassword.
    * @returns An Observable for the API call.
    */
-  resetPasswordWithOtp(payload: { email: string; otp: string; newPassword: string }): Observable<any> {
-    return this.http.post(passwordApi.reset, payload);
+  resetPasswordWithOtp(payload: PasswordResetPayload): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(passwordApi.reset, payload);
   }
-  public generateToken(loginData: any) {
-    return this.http.post(loginApi.loginUrl, loginData);
+  public generateToken(loginData: LoginRequest) {
+    return this.http.post<LoginResponse>(loginApi.loginUrl, loginData);
   }
 
   /**
    * Changes the authenticated user's password (first-time login flow).
    * Calls PATCH /api/v1/users/changePassword with the stored JWT in the Authorization header.
    */
-  public changePassword(newPassword: string, confirmPassword: string): Observable<any> {
+  public changePassword(newPassword: string, confirmPassword: string): Observable<string> {
     return this.http.patch(`${environment.baseUrl}/users/changePassword`, {
       newPassword,
       confirmPassword
-    }, { responseType: 'text' as 'json' });
+    }, { responseType: 'text' });
   }
 
   public getCurrentUser() {
-    return this.http.get(loginApi.currentUserInfo);
+    return this.http.get<ApiResponse<UserInfo>>(loginApi.currentUserInfo);
   }
 
   /**
@@ -114,8 +115,8 @@ export class LoginService {
     refreshToken: string,
     tenantId?: string,
     orgType?: string,
-    organizations?: any[],
-    rememberMe: boolean = true
+    organizations?: UserOrganization[],
+    rememberMe: boolean = false
   ) {
     // Record the storage preference first
     if (rememberMe) {
@@ -172,7 +173,7 @@ export class LoginService {
     this.currentOrgId$.next(orgId); // notify all subscribers
   }
 
-  public getOrganizations(): any[] {
+  public getOrganizations(): UserOrganization[] {
     const orgs = this.readItem('organizations');
     return orgs ? JSON.parse(orgs) : [];
   }
@@ -208,11 +209,11 @@ export class LoginService {
     return this.readItem('refreshToken');
   }
 
-  public setUser(user: any) {
+  public setUser(user: UserInfo) {
     this.storage.setItem('user', JSON.stringify(user));
   }
 
-  public getUser() {
+  public getUser(): UserInfo | null {
     const userStr = this.readItem('user');
     if (userStr != null) {
       const parsed = JSON.parse(userStr);
@@ -261,9 +262,9 @@ export class LoginService {
   }
 
   public refreshAccessToken(refreshToken: string): Observable<string> {
-    return this.http.post<any>(loginApi.refreshTokenUrl, { token: refreshToken }
+    return this.http.post<RefreshTokenResponse>(loginApi.refreshTokenUrl, { token: refreshToken }
     ).pipe(
-      switchMap((res: any) => {
+      switchMap((res: RefreshTokenResponse) => {
         this.setAccessToken(res.accessToken);
         return from([res.accessToken]);
       })

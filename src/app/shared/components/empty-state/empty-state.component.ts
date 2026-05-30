@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 
 /**
@@ -11,7 +11,8 @@ import { ButtonModule } from 'primeng/button';
     standalone: true,
     imports: [CommonModule, ButtonModule],
     templateUrl: './empty-state.component.html',
-    styleUrl: './empty-state.component.scss'
+    styleUrl: './empty-state.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyStateComponent {
     @Input() icon = 'pi pi-inbox';

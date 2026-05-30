@@ -11,8 +11,8 @@
             <h2 class="text-xl font-bold text-900 m-0">Inquiry Details</h2>
         </div>
         <div class="flex align-items-center gap-2">
-            <p-avatar [label]="getInitials(inquiry.name)" shape="circle" size="normal"
-                [style]="{'background-color': getAvatarColor(inquiry.name), 'color': '#fff'}">
+            <p-avatar [label]="inquiry.name | initials" shape="circle" size="normal"
+                [style]="{'background-color': '#3B82F6', 'color': '#fff'}">
             </p-avatar>
             <p-tag [value]="inquiry.status" [severity]="getStatusSeverity(inquiry.status)">
             </p-tag>

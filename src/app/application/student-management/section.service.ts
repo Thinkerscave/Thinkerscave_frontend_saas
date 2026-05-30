@@ -1,10 +1,9 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Class } from './class.service';
-import { LoginService } from '../../services/login.service';
-import { environment } from '../../../environments/environment';
+import { sectionApi } from '../../shared/constants/api.endpoint';
 
 export interface Section {
   sectionId: string;
@@ -17,23 +16,10 @@ export interface Section {
 })
 export class SectionService {
 
-  private baseUrl = `${environment.baseUrl}/sections`;
-
-  constructor(private http: HttpClient, private loginService: LoginService) { }
-
-  private getHeaders(): HttpHeaders {
-    const token = this.loginService.getAccessToken();
-    const tenant = this.loginService.getTenant();
-    const orgId = this.loginService.getCurrentOrganizationId();
-    let headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    if (tenant) headers = headers.set('X-Tenant-ID', tenant);
-    if (orgId) headers = headers.set('X-Organization-ID', orgId);
-    return headers;
-  }
+  constructor(private http: HttpClient) { }
 
   getSectionsByClassId(classId: string): Observable<Section[]> {
-    const url = `${this.baseUrl}/getListOfSectionsByClassId/${classId}`;
-    return this.http.get<any>(url, { headers: this.getHeaders() }).pipe(
+    return this.http.get<any>(sectionApi.getByclassId(Number(classId))).pipe(
       map((res: any) => Array.isArray(res) ? res : (res?.data ?? []))
     );
   }

@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 import {
     FeeRole,
     FeePermission,

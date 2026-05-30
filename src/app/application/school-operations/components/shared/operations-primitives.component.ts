@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ActivityItem, KpiMetric } from '../../models/school-operations.model';
 
@@ -12,6 +12,7 @@ export interface OpsNavItem {
 
 @Component({
   selector: 'tc-ops-nav',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
@@ -30,6 +31,7 @@ export class OpsNavComponent {
 
 @Component({
   selector: 'tc-ops-header',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -53,6 +55,7 @@ export class OpsHeaderComponent {
 
 @Component({
   selector: 'tc-ops-kpi-card',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -72,6 +75,7 @@ export class OpsKpiCardComponent {
 
 @Component({
   selector: 'tc-ops-filter-panel',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -91,6 +95,7 @@ export class OpsFilterPanelComponent {
 
 @Component({
   selector: 'tc-ops-drawer',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -119,6 +124,7 @@ export class OpsDrawerComponent {
 
 @Component({
   selector: 'tc-ops-timeline',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `

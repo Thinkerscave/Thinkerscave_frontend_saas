@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
-  Component, ElementRef, HostListener, ViewChild,
+  ChangeDetectionStrategy, Component, ElementRef, HostListener, ViewChild,
   inject, signal
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -34,7 +34,8 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
     EmptyStateComponent, SkeletonComponent
   ],
   templateUrl: './global-search.component.html',
-  styleUrls: ['./global-search.component.scss']
+  styleUrls: ['./global-search.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GlobalSearchComponent {
   private readonly router = inject(Router);

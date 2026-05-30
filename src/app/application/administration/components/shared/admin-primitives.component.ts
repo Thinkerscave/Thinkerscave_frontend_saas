@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   AdminActivity,
@@ -14,6 +14,7 @@ import {
 
 @Component({
   selector: 'tc-admin-nav',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
@@ -32,6 +33,7 @@ export class AdminNavComponent {
 
 @Component({
   selector: 'tc-admin-kpi-card',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -51,6 +53,7 @@ export class AdminKpiCardComponent {
 
 @Component({
   selector: 'tc-admin-status-badge',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `<span class="admin-status-badge" [attr.data-tone]="tone"><i [class]="icon"></i>{{ label }}</span>`
@@ -63,6 +66,7 @@ export class AdminStatusBadgeComponent {
 
 @Component({
   selector: 'tc-admin-monitoring-widget',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AdminStatusBadgeComponent],
   template: `
@@ -83,6 +87,7 @@ export class AdminMonitoringWidgetComponent {
 
 @Component({
   selector: 'tc-admin-activity-timeline',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -118,6 +123,7 @@ export class AdminActivityTimelineComponent {
 
 @Component({
   selector: 'tc-admin-permission-matrix',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -152,6 +158,7 @@ export class AdminPermissionMatrixComponent {
 
 @Component({
   selector: 'tc-admin-audit-table',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AdminStatusBadgeComponent],
   template: `
@@ -219,6 +226,7 @@ export class AdminAuditTableComponent {
 
 @Component({
   selector: 'tc-admin-organization-drawer',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AdminStatusBadgeComponent],
   template: `

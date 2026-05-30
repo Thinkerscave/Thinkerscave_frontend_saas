@@ -1,18 +1,10 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/login/login.component';
-import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.component';
-import { FirstTimeLoginComponent } from './auth/first-time-login/first-time-login.component';
-import { LayoutComponent } from './layout/layout/layout.component';
-import { AuthLayoutComponent } from './auth/auth-layout/auth-layout.component';
-import { SessionExpiredComponent } from './shared/pages/session-expired/session-expired.component';
-import { PublicLayoutComponent } from './layout/public-layout/public-layout.component';
 import { authGuard } from './core/guard/auth.guard';
-import { UnauthorizedComponent } from './shared/pages/unauthorized/unauthorized.component';
 
 export const routes: Routes = [
     {
         path: 'public',
-        component: PublicLayoutComponent,
+        loadComponent: () => import('./layout/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
         children: [
             {
                 path: 'admission',
@@ -35,12 +27,12 @@ export const routes: Routes = [
     },
     {
         path: 'session-expired',
-        component: SessionExpiredComponent,
+        loadComponent: () => import('./shared/pages/session-expired/session-expired.component').then(m => m.SessionExpiredComponent),
         pathMatch: 'full'
     },
     {
         path: 'unauthorized',
-        component: UnauthorizedComponent,
+        loadComponent: () => import('./shared/pages/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent),
         pathMatch: 'full'
     },
     {
@@ -55,16 +47,25 @@ export const routes: Routes = [
     },
     {
         path: 'auth',
-        component: AuthLayoutComponent,
+        loadComponent: () => import('./auth/auth-layout/auth-layout.component').then(m => m.AuthLayoutComponent),
         children: [
-            { path: 'login', component: LoginComponent },
-            { path: 'forgot-password', component: ForgotPasswordComponent },
-            { path: 'first-time-login', component: FirstTimeLoginComponent }
+            {
+                path: 'login',
+                loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
+            },
+            {
+                path: 'forgot-password',
+                loadComponent: () => import('./auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+            },
+            {
+                path: 'first-time-login',
+                loadComponent: () => import('./auth/first-time-login/first-time-login.component').then(m => m.FirstTimeLoginComponent)
+            }
         ]
     },
     {
         path: 'app',
-        component: LayoutComponent,
+        loadComponent: () => import('./layout/layout/layout.component').then(m => m.LayoutComponent),
         canActivate: [authGuard],
         children: [
             {
@@ -75,6 +76,9 @@ export const routes: Routes = [
         ]
     },
 
-    // Wildcard (optional)
-    { path: '**', redirectTo: 'login' }
+    // 404 — Not Found
+    {
+        path: '**',
+        loadComponent: () => import('./shared/pages/not-found/not-found.component').then(m => m.NotFoundComponent)
+    }
 ];

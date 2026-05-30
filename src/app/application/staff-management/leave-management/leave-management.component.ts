@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild , ChangeDetectionStrategy} from '@angular/core';
 import { Table, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -15,10 +15,11 @@ import { MessageService } from 'primeng/api';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
 import { LeaveResponseDTO, LeaveService, LeaveRequestDTO, LeaveType } from '../../../services/leave.service';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 
 @Component({
   selector: 'app-leave-management',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TableModule, CardModule, ButtonModule, TagModule, InputTextModule,
     DropdownModule, CommonModule, FormsModule, ReactiveFormsModule,

@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { Observable, Subject, finalize, takeUntil } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import {
   ACADEMICS_NAV_GROUPS,
   ACADEMICS_PAGES,
@@ -44,6 +45,7 @@ import { AcademicActionDrawerComponent } from '../shared/action-drawer/academic-
 import { AcademicQuickActionBarComponent } from '../shared/quick-action-bar/quick-action-bar.component';
 import { AcademicSmartHeroComponent } from '../shared/smart-hero/smart-hero.component';
 import { AcademicWorkspaceNavComponent } from '../shared/workspace-nav/workspace-nav.component';
+import { AutofocusDirective } from '../../../../shared/directives';
 
 interface AcademicCommand {
   label: string;
@@ -55,6 +57,7 @@ interface AcademicCommand {
 
 @Component({
   selector: 'app-academics-workspace',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -74,17 +77,18 @@ interface AcademicCommand {
     AcademicTimetablePageComponent,
     AcademicCalendarPageComponent,
     AcademicHierarchyPageComponent,
-    AcademicSettingsPageComponent
+    AcademicSettingsPageComponent,
+    AutofocusDirective
   ],
   templateUrl: './academics-workspace.component.html'
 })
-export class AcademicsWorkspaceComponent implements OnInit, OnDestroy {
+export class AcademicsWorkspaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly workspaceService = inject(AcademicsWorkspaceService);
   private readonly insightsService = inject(AcademicsInsightsService);
   private readonly messageService = inject(MessageService);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly pages = ACADEMICS_PAGES;
   readonly navGroups = ACADEMICS_NAV_GROUPS;
@@ -99,16 +103,11 @@ export class AcademicsWorkspaceComponent implements OnInit, OnDestroy {
   activeActionMode: AcademicsActionMode = 'class';
 
   ngOnInit(): void {
-    this.route.data.pipe(takeUntil(this.destroy$)).subscribe(data => {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'dashboard';
     });
 
     this.refresh();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -177,7 +176,7 @@ export class AcademicsWorkspaceComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.loading = true;
     this.workspaceService.loadWorkspaceData()
-      .pipe(finalize(() => this.loading = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.loading = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => this.data = data,
         error: () => {
@@ -213,7 +212,7 @@ export class AcademicsWorkspaceComponent implements OnInit, OnDestroy {
   saveDrawer(event: { mode: AcademicsActionMode; payload: Record<string, unknown> }): void {
     this.saving = true;
     this.saveRequest(event.mode, event.payload)
-      .pipe(finalize(() => this.saving = false), takeUntil(this.destroy$))
+      .pipe(finalize(() => this.saving = false), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.drawerOpen = false;

@@ -31,37 +31,36 @@
     </div>
 
     <div class="gs__body">
-      <ng-container *ngIf="loading(); else loaded">
+      @if (loading()) {
         <app-skeleton shape="list" [rows]="3"></app-skeleton>
-      </ng-container>
-
-      <ng-template #loaded>
-        <ng-container *ngIf="!results().length; else hasResults">
-          <app-empty-state
-              [compact]="true"
-              icon="pi pi-search"
-              [title]="term().length < 2 ? 'Start typing to search' : 'No matches found'"
-              [message]="term().length < 2 ? 'Press Ctrl K from anywhere to open this palette.' : 'Try different keywords or check your filters.'"></app-empty-state>
-        </ng-container>
-
-        <ng-template #hasResults>
-          <div class="gs__group" *ngFor="let group of groupedResults">
+      } @else if (!results().length) {
+        <app-empty-state
+            [compact]="true"
+            icon="pi pi-search"
+            [title]="term().length < 2 ? 'Start typing to search' : 'No matches found'"
+            [message]="term().length < 2 ? 'Press Ctrl K from anywhere to open this palette.' : 'Try different keywords or check your filters.'"></app-empty-state>
+      } @else {
+        @for (group of groupedResults; track group.category) {
+          <div class="gs__group">
             <header class="gs__group-header">{{ group.category }}</header>
-            <button type="button" class="gs__item"
-                    *ngFor="let item of group.items"
-                    [class.gs__item--active]="isHighlighted(item)"
-                    (mouseenter)="highlighted.set(results().indexOf(item))"
-                    (click)="select(item)">
-              <span class="gs__item-icon"><i [class]="item.icon || 'pi pi-circle-fill'"></i></span>
-              <span class="gs__item-text">
-                <strong>{{ item.label }}</strong>
-                <small *ngIf="item.description">{{ item.description }}</small>
-              </span>
-              <i class="pi pi-arrow-right gs__item-go"></i>
-            </button>
+            @for (item of group.items; track item.label) {
+              <button type="button" class="gs__item"
+                      [class.gs__item--active]="isHighlighted(item)"
+                      (mouseenter)="highlighted.set(results().indexOf(item))"
+                      (click)="select(item)">
+                <span class="gs__item-icon"><i [class]="item.icon || 'pi pi-circle-fill'"></i></span>
+                <span class="gs__item-text">
+                  <strong>{{ item.label }}</strong>
+                  @if (item.description) {
+                    <small>{{ item.description }}</small>
+                  }
+                </span>
+                <i class="pi pi-arrow-right gs__item-go"></i>
+              </button>
+            }
           </div>
-        </ng-template>
-      </ng-template>
+        }
+      }
     </div>
 
     <footer class="gs__footer">

@@ -715,10 +715,10 @@
   transform: translateX(calc(100% + 24px));
   transition: transform 0.22s ease;
   border-radius: 8px;
-  border: 1px solid var(--tc-line);
-  background: #151817;
+  border: 1px solid var(--tc-border);
+  background: var(--tc-surface-card-solid);
   color: var(--tc-text);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.46);
+  box-shadow: var(--tc-shadow-lg);
   padding: 18px;
   overflow: auto;
 }

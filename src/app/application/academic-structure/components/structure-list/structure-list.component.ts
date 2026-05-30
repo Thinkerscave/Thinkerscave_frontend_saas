@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { TreeNode, MenuItem, ConfirmationService } from 'primeng/api';
@@ -17,13 +17,14 @@ import { ChipsModule } from 'primeng/chips';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AcademicStructureService } from '../../services/academic-structure.service';
 import { AcademicContainer, StructureTemplate } from '../../../../shared/models/academic-container.model';
-import { LoginService } from '../../../../services/login.service';
-import { TenantConfigService, TenantConfig } from '../../../../services/tenant-config.service';
+import { LoginService } from '../../../../core/services/login.service';
+import { TenantConfigService, TenantConfig } from '../../../../core/services/tenant-config.service';
 import { CourseService } from '../../../course-management/services/course.service';
 import { StructureFormComponent } from '../structure-form/structure-form.component';
 
 @Component({
   selector: 'app-structure-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,

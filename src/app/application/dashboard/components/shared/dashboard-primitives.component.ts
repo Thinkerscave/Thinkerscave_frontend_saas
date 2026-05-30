@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import {
   DashboardActionTarget,
   DashboardActivity,
@@ -15,6 +15,7 @@ import {
 
 @Component({
   selector: 'tc-kpi-card',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -34,6 +35,7 @@ export class KpiCardComponent {
 
 @Component({
   selector: 'tc-quick-action-panel',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -68,6 +70,7 @@ export class QuickActionPanelComponent {
 
 @Component({
   selector: 'tc-approval-center',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -106,6 +109,7 @@ export class ApprovalCenterComponent {
 
 @Component({
   selector: 'tc-alert-center',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -144,6 +148,7 @@ export class AlertCenterComponent {
 
 @Component({
   selector: 'tc-activity-feed',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -181,6 +186,7 @@ export class ActivityFeedComponent {
 
 @Component({
   selector: 'tc-widget-registry',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -216,6 +222,7 @@ export class WidgetRegistryComponent {
 
 @Component({
   selector: 'tc-role-dashboard-renderer',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, KpiCardComponent, QuickActionPanelComponent, ApprovalCenterComponent, AlertCenterComponent, ActivityFeedComponent, WidgetRegistryComponent],
   template: `
@@ -275,6 +282,7 @@ export class RoleDashboardRendererComponent {
 
 @Component({
   selector: 'tc-dashboard-layout',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RoleDashboardRendererComponent],
   template: `

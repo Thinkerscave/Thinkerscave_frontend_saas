@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,12 +7,13 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { AcademicStructureService } from '../../services/academic-structure.service';
 import { ContainerType } from '../../../../core/enums/container-type.enum';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { CourseService } from '../../../course-management/services/course.service';
-import { TenantConfigService, TenantConfig } from '../../../../services/tenant-config.service';
+import { TenantConfigService, TenantConfig } from '../../../../core/services/tenant-config.service';
 
 @Component({
   selector: 'app-structure-form',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, InputTextModule, ButtonModule, DropdownModule, RouterModule],
   templateUrl: './structure-form.component.html',

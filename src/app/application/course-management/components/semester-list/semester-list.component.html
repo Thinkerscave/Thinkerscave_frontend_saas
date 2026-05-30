@@ -11,7 +11,7 @@
             <form [formGroup]="semesterForm">
                 <div class="field">
                     <label for="semesterName">Name</label>
-                    <input type="text" pInputText id="semesterName" formControlName="semesterName" required autofocus />
+                    <input type="text" pInputText id="semesterName" formControlName="semesterName" required appAutofocus />
                     <small class="p-error" *ngIf="submitted && semesterForm.get('semesterName')?.invalid">Name is
                         required.</small>
                 </div>

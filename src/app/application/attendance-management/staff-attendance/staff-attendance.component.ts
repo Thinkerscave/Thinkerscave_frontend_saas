@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Tab, TabsModule } from 'primeng/tabs';
 import { TableModule } from 'primeng/table';
@@ -15,6 +15,7 @@ import { AttendanceRecord, AttendanceService } from '../../../services/attendanc
 
 @Component({
   selector: 'app-staff-attendance',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, TabsModule, Tab,

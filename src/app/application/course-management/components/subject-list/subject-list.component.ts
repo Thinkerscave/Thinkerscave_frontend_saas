@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -13,12 +13,14 @@ import { TabsModule } from 'primeng/tabs';
 import { CourseService } from '../../services/course.service';
 import { Subject } from '../../../../shared/models/course.model';
 import { SubjectCategory } from '../../../../core/enums/subject-category.enum';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
+import { AutofocusDirective } from '../../../../shared/directives';
 
 @Component({
     selector: 'app-subject-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
         CommonModule,
@@ -32,7 +34,8 @@ import { ListViewConfig } from '../../../../shared/components/standard-list-view
         InputNumberModule,
         TagModule,
         TabsModule,
-        StandardListViewComponent
+        StandardListViewComponent,
+        AutofocusDirective
     ],
     templateUrl: './subject-list.component.html',
     styleUrls: ['./subject-list.component.scss']

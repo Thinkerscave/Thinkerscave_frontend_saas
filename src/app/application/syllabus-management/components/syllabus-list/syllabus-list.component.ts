@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -11,10 +11,11 @@ import { SyllabusStatus } from '../../../../core/enums/syllabus-status.enum';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../../shared/components/standard-list-view/list-view-models';
 import { SyllabusEditorComponent } from '../syllabus-editor/syllabus-editor.component';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 
 @Component({
   selector: 'app-syllabus-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, TableModule, ButtonModule, TagModule, RouterModule, StandardListViewComponent, TabsModule, SyllabusEditorComponent],
   templateUrl: './syllabus-list.component.html',

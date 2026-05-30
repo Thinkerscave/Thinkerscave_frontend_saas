@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -21,6 +21,7 @@ interface Section {
 
 @Component({
     selector: 'app-manage-section',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, FormsModule, TabsModule, Tab, ButtonModule, InputTextModule, DropdownModule, TableModule, ToastModule, TooltipModule],
     providers: [MessageService],

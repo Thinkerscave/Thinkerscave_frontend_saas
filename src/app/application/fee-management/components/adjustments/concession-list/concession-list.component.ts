@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -33,6 +33,7 @@ interface ConcessionType {
 
 @Component({
   selector: 'app-concession-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule, InputSwitchModule, MultiSelectModule],
   providers: [MessageService, ConfirmationService],

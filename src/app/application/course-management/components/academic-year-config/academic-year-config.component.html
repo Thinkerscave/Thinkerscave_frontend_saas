@@ -7,7 +7,7 @@
         <ng-template pTemplate="content">
             <div class="field">
                 <label for="yearCode">Year Code</label>
-                <input type="text" pInputText id="yearCode" [(ngModel)]="year.yearCode" required autofocus
+                <input type="text" pInputText id="yearCode" [(ngModel)]="year.yearCode" required appAutofocus
                     placeholder="e.g. AY-2024-25" />
                 <small class="p-error" *ngIf="submitted && !year.yearCode">Year Code is required.</small>
             </div>

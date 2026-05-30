@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, NgModule, Output } from '@angular/core';
+import { Component, EventEmitter, NgModule, Output , ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -13,6 +13,7 @@ export interface DocumentRow {
 }
 @Component({
   selector: 'app-file-uploader',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     FormsModule,
     CardModule,
@@ -80,8 +81,6 @@ export class FileUploaderComponent {
    * In a real app, this would send the data to a backend service.
    */
   submitAll(): void {
-    console.log("Submitting all documents:", this.documents);
-
     // Basic validation to check if all fields are filled.
     const isValid = this.documents.every(doc => doc.docName.trim() !== '' && doc.file !== null);
 

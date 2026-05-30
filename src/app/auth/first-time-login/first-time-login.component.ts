@@ -1,15 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
-import { LoginService } from '../../services/login.service';
+import { LoginService } from '../../core/services/login.service';
 
 @Component({
   selector: 'app-first-time-login',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [PasswordModule, CommonModule, FormsModule, ToastModule, ButtonModule, RouterModule],
   templateUrl: './first-time-login.component.html',
   styleUrl: './first-time-login.component.scss'

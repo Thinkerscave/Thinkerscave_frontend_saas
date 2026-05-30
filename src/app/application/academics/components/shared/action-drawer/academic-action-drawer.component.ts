@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject , ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ACADEMICS_DAY_OPTIONS, ACADEMICS_EVENT_TYPES, ACADEMICS_PERIODS, actionModeLabel } from '../../../data/academics-workspace.config';
 import {
@@ -12,6 +12,7 @@ import { AcademicsInsightsService } from '../../../services/academics-insights.s
 
 @Component({
   selector: 'app-academic-action-drawer',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './academic-action-drawer.component.html'

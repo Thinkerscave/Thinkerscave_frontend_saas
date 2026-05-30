@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -15,10 +15,11 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 
 @Component({
   selector: 'app-manage-role',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     FormsModule,
     TabViewModule,

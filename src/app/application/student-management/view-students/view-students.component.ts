@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output , ChangeDetectionStrategy} from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
-import { LoginService } from '../../../services/login.service';
+import { LoginService } from '../../../core/services/login.service';
 import { StudentService } from '../student.service';
 import { MessageService } from 'primeng/api';
 
@@ -21,6 +21,7 @@ export interface Student {
 }
 @Component({
   selector: 'app-view-students',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule,
     TableModule,
     ButtonModule,
@@ -114,7 +115,6 @@ export class ViewStudentsComponent {
 
   // 4. Define placeholder methods for button actions.
   editStudent(student: Student) {
-    console.log('Editing student:', student.studentName);
     this.editRequested.emit(student.originalData);
   }
 
@@ -134,12 +134,10 @@ export class ViewStudentsComponent {
   }
 
   downloadInfo(student: Student) {
-    console.log('Downloading info for:', student.studentName);
-    // In a real app, you would generate a PDF or CSV file.
+    // TODO: generate a PDF or CSV file
   }
 
   showMore(student: Student) {
-    console.log('Showing more details for:', student.studentName);
-    // In a real app, you might expand a row or navigate to a details page.
+    // TODO: expand a row or navigate to a details page
   }
 }

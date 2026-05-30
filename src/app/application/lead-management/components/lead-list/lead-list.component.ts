@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CardModule } from 'primeng/card';
@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 
 import { LeadService } from '../../services/lead.service';
-import { LoginService } from '../../../../services/login.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { Lead, FilterOptions } from '../../models/lead.model';
 import { LeadStatus, LeadSource } from '../../models/lead-status.enum';
 import { StandardListViewComponent } from '../../../../shared/components/standard-list-view/standard-list-view.component';
@@ -20,6 +20,7 @@ import { ListViewConfig } from '../../../../shared/components/standard-list-view
 
 @Component({
   selector: 'app-lead-list',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -109,14 +110,14 @@ export class LeadListComponent implements OnInit {
           icon: 'pi pi-phone',
           isPrimary: true,
           color: 'success',
-          actionFn: (lead: Lead) => console.log('Call action', lead)
+          actionFn: (lead: Lead) => { /* TODO: implement call action */ }
         },
         {
           label: 'Delete',
           icon: 'pi pi-trash',
           isPrimary: true,
           color: 'danger',
-          actionFn: (lead: Lead) => console.log('Delete action', lead)
+          actionFn: (lead: Lead) => { /* TODO: implement delete action */ }
         }
       ]
     };

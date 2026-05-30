@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import {
   AcademicsActivityItem,
   AcademicsAlert,
@@ -16,6 +16,7 @@ import { AcademicProgressRingComponent } from '../../shared/progress-ring/progre
 
 @Component({
   selector: 'app-academic-dashboard-page',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, AcademicMetricCardComponent, AcademicProgressRingComponent, AcademicActivityTimelineComponent],
   template: `

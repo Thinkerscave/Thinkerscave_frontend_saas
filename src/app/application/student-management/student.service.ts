@@ -1,9 +1,8 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LoginService } from '../../services/login.service';
-import { environment } from '../../../environments/environment';
+import { studentApi } from '../../shared/constants/api.endpoint';
 
 export interface StudentResponseDTO {
     studentId: number;
@@ -30,47 +29,32 @@ export interface StudentResponseDTO {
 })
 export class StudentService {
 
-    private baseUrl = `${environment.baseUrl}/students`;
-
-    constructor(private http: HttpClient, private loginService: LoginService) { }
-
-    private getHeaders(): HttpHeaders {
-        const token = this.loginService.getAccessToken();
-        const tenant = this.loginService.getTenant();
-        const organizationId = this.loginService.getCurrentOrganizationId();
-
-        let headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-        if (tenant) headers = headers.set('X-Tenant-ID', tenant);
-        if (organizationId) headers = headers.set('X-Organization-ID', organizationId);
-        return headers;
-    }
+    constructor(private http: HttpClient) { }
 
     getStudents(): Observable<StudentResponseDTO[]> {
-        return this.http.get<any>(`${this.baseUrl}/getStudents`, { headers: this.getHeaders() }).pipe(
+        return this.http.get<any>(studentApi.getAll).pipe(
             map((res: any) => Array.isArray(res) ? res : (res?.data ?? []))
         );
     }
 
     getStudentById(id: number): Observable<StudentResponseDTO> {
-        return this.http.get<StudentResponseDTO>(`${this.baseUrl}/${id}`, { headers: this.getHeaders() });
+        return this.http.get<StudentResponseDTO>(studentApi.getById(id));
     }
 
     updateStudent(id: number, data: any): Observable<any> {
-        return this.http.put(`${this.baseUrl}/${id}`, data, { headers: this.getHeaders() });
+        return this.http.put(studentApi.update(id), data);
     }
 
     deleteStudent(id: number): Observable<any> {
-        return this.http.delete(`${this.baseUrl}/${id}`, { headers: this.getHeaders() });
+        return this.http.delete(studentApi.delete(id));
     }
 
     getStudentDocuments(id: number): Observable<any[]> {
-        return this.http.get<any[]>(`${this.baseUrl}/${id}/documents`, { headers: this.getHeaders() });
+        return this.http.get<any[]>(studentApi.documents(id));
     }
 
     downloadDocument(docId: number): Observable<Blob> {
-        const headers = this.getHeaders().set('Accept', 'application/octet-stream');
-        return this.http.get(`${this.baseUrl}/document/${docId}/download`, {
-            headers: headers,
+        return this.http.get(studentApi.downloadDoc(docId), {
             responseType: 'blob'
         });
     }

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output , ChangeDetectionStrategy} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { WorkspaceMetric, WorkspaceNavItem } from '../models/workflow-workspace.model';
 
 @Component({
   selector: 'tc-workspace-nav',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
@@ -23,6 +24,7 @@ export class WorkflowNavComponent {
 
 @Component({
   selector: 'tc-workspace-metric',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -42,6 +44,7 @@ export class WorkflowMetricComponent {
 
 @Component({
   selector: 'tc-workspace-empty',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `
@@ -60,6 +63,7 @@ export class WorkflowEmptyStateComponent {
 
 @Component({
   selector: 'tc-workspace-drawer',
+    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   template: `

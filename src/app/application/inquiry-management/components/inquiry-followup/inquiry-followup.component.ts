@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,6 +30,7 @@ type TabType = 'today' | 'overdue' | 'upcoming' | 'converted' | 'lost';
 
 @Component({
     selector: 'app-inquiry-followup',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
         CommonModule,
@@ -341,16 +342,6 @@ export class InquiryFollowupComponent implements OnInit {
         if (days === 0) return 'info';
         if (days <= 3) return 'warn';
         return 'success';
-    }
-
-    getInitials(name: string): string {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-    }
-
-    getAvatarColor(name: string): string {
-        const colors = ['#3B82F6', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
-        const index = name.charCodeAt(0) % colors.length;
-        return colors[index];
     }
 
     getFollowUpTypeSeverity(type: string | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {

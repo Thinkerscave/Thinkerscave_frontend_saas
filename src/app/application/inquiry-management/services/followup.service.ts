@@ -2,21 +2,23 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, delay } from 'rxjs';
 import { FollowUp, FollowUpType, FollowUpStatus, InquiryWithFollowUp } from '../models/followup.model';
+import { inquiryApi } from '../../../shared/constants/api.endpoint';
+import { ApiResponse } from '../../../shared/models/auth.model';
 
 @Injectable({
     providedIn: 'root'
 })
 export class FollowUpService {
-    private baseUrl = 'http://localhost:8181/api/staff/inquiries';
+    private baseUrl = inquiryApi.base;
 
     constructor(private http: HttpClient) { }
 
     // Get inquiries filtered by tab type
     getInquiriesByTab(tab: string): Observable<InquiryWithFollowUp[]> {
         return new Observable(observer => {
-            this.http.get<any>(`${this.baseUrl}/follow-ups?tab=${tab.toUpperCase()}`).subscribe({
+            this.http.get<ApiResponse<Record<string, unknown>[]>>(`${this.baseUrl}/follow-ups?tab=${tab.toUpperCase()}`).subscribe({
                 next: (response) => {
-                    const mapped = response.data.map((i: any) => this.mapToInquiryWithFollowUp(i));
+                    const mapped = response.data.map((i: Record<string, unknown>) => this.mapToInquiryWithFollowUp(i));
                     observer.next(mapped);
                     observer.complete();
                 },
@@ -27,7 +29,7 @@ export class FollowUpService {
         });
     }
 
-    private mapToInquiryWithFollowUp(i: any): InquiryWithFollowUp {
+    private mapToInquiryWithFollowUp(i: Record<string, unknown>): InquiryWithFollowUp {
         const nextFollowUpDate = i.nextFollowUpDate ? new Date(i.nextFollowUpDate) : undefined;
         let daysUntil = undefined;
         let overdue = false;
@@ -79,7 +81,7 @@ export class FollowUpService {
     // Get inquiry by ID with full details
     getInquiryById(id: number): Observable<InquiryWithFollowUp | undefined> {
         return new Observable(observer => {
-            this.http.get<any>(`${this.baseUrl}/${id}/summary`).subscribe({
+            this.http.get<ApiResponse<Record<string, unknown>>>(`${this.baseUrl}/${id}/summary`).subscribe({
                 next: (response) => {
                     observer.next(this.mapToInquiryWithFollowUp(response.data));
                     observer.complete();
@@ -91,7 +93,7 @@ export class FollowUpService {
     // Get follow-up history for an inquiry
     getFollowUpHistory(inquiryId: number): Observable<FollowUp[]> {
         return new Observable(observer => {
-            this.http.get<any>(`${this.baseUrl}/${inquiryId}/follow-ups`).subscribe({
+            this.http.get<ApiResponse<FollowUp[]>>(`${this.baseUrl}/${inquiryId}/follow-ups`).subscribe({
                 next: (res) => {
                     observer.next(res.data);
                     observer.complete();
@@ -103,7 +105,7 @@ export class FollowUpService {
     // Add a new follow-up
     addFollowUp(followUp: FollowUp): Observable<FollowUp> {
         return new Observable(observer => {
-            this.http.post<any>(`${this.baseUrl}/${followUp.inquiryId}/follow-ups`, followUp).subscribe({
+            this.http.post<ApiResponse<FollowUp>>(`${this.baseUrl}/${followUp.inquiryId}/follow-ups`, followUp).subscribe({
                 next: (res) => {
                     observer.next(res.data);
                     observer.complete();
@@ -115,7 +117,7 @@ export class FollowUpService {
     // Convert inquiry to admission
     convertToAdmission(inquiryId: number): Observable<void> {
         return new Observable(observer => {
-            this.http.post<any>(`${this.baseUrl}/${inquiryId}/proceed-admission`, {}).subscribe({
+            this.http.post<void>(`${this.baseUrl}/${inquiryId}/proceed-admission`, {}).subscribe({
                 next: () => {
                     observer.next();
                     observer.complete();
