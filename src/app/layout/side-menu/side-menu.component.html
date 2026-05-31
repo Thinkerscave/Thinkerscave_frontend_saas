@@ -1,15 +1,19 @@
-<nav class="side-menu-wrapper" [class.is-expanded]="expanded" aria-label="Primary navigation">
-  <div class="side-brand">
-    <div class="side-brand-mark">
+<aside class="sidebar-wrapper"
+  [class.is-expanded]="displayExpanded"
+  (mouseenter)="hovered = true"
+  (mouseleave)="hovered = false"
+  aria-label="Primary navigation">
+  <div class="sidebar-brand">
+    <div class="brand-mark">
       <i class="pi pi-compass"></i>
     </div>
-    <div class="side-brand-copy">
-      <span>Workspace</span>
-      <strong>Navigation</strong>
-    </div>
+    @if (displayExpanded) {
+      <div class="brand-copy tc-animate-fade-in tc-stagger-1">
+        <span>Workspace</span>
+        <strong>Navigation</strong>
+      </div>
+    }
   </div>
-
-  <div class="nav-section-label">Main</div>
 
   @if (loading) {
     <div class="nav-loading">
@@ -18,46 +22,68 @@
       }
     </div>
   } @else if (items.length) {
-    <ul class="nav-list">
-      @for (item of items; track item.label) {
-        <li class="nav-item" [class.has-children]="hasChildren(item)"
-          [class.is-active-parent]="isMenuActive(item)">
+    <nav class="nav-list">
+      @for (item of items; track item.label; let idx = $index) {
+        <div class="nav-item-wrapper" [style.animation-delay]="idx * 40 + 'ms'">
           @if (!hasChildren(item)) {
-            <a class="nav-link" [routerLink]="getRouterLink(item)"
-              [queryParams]="item.queryParams" routerLinkActive="is-active"
-              [routerLinkActiveOptions]="{ exact: isExact(item) }" [attr.title]="item.label"
-              (click)="selectItem(null, item)">
+            <a class="nav-link" 
+               [routerLink]="getRouterLink(item)"
+               [queryParams]="item.queryParams" 
+               routerLinkActive="is-active"
+               [routerLinkActiveOptions]="{ exact: isExact(item) }"
+               [title]="displayExpanded ? '' : item.label"
+               (click)="selectItem(null, item)">
               <span class="nav-icon"><i [ngClass]="item.icon"></i></span>
-              <span class="nav-label">{{ item.label }}</span>
+              @if (displayExpanded) {
+                <span class="nav-label">{{ item.label }}</span>
+              }
             </a>
           } @else {
             <button class="nav-link nav-parent" type="button"
-              [class.is-open]="isGroupOpen(item)" [attr.title]="item.label" (click)="toggleGroup(item)">
+                    [class.is-open]="isGroupOpen(item)" 
+                    [class.is-active-parent]="isMenuActive(item)"
+                    [title]="displayExpanded ? '' : item.label" 
+                    (click)="toggleGroup(item)">
               <span class="nav-icon"><i [ngClass]="item.icon"></i></span>
-              <span class="nav-label">{{ item.label }}</span>
-              <span class="nav-chevron"><i class="pi pi-chevron-right"></i></span>
+              @if (displayExpanded) {
+                <span class="nav-label">{{ item.label }}</span>
+                <span class="nav-chevron"><i class="pi pi-chevron-down"></i></span>
+              }
             </button>
 
-            <ul class="submenu" [class.is-open]="isGroupOpen(item)">
-              @for (child of item.items; track child.label) {
-                <li class="submenu-item">
-                  <a class="submenu-link" [routerLink]="getRouterLink(child)" [queryParams]="child.queryParams"
-                    routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: isExact(child) }"
-                    [attr.title]="child.label" (click)="selectItem(item, child)">
+            @if (displayExpanded && isGroupOpen(item)) {
+              <div class="submenu tc-animate-slide-down">
+                @for (child of item.items; track child.label; let ci = $index) {
+                  <a class="submenu-link" 
+                     [routerLink]="getRouterLink(child)" 
+                     [queryParams]="child.queryParams"
+                     routerLinkActive="is-active" 
+                     [routerLinkActiveOptions]="{ exact: isExact(child) }"
+                     [title]="child.label" 
+                     [style.animation-delay]="ci * 30 + 'ms'"
+                     (click)="selectItem(item, child)">
                     <span class="submenu-icon"><i [ngClass]="child.icon"></i></span>
                     <span class="submenu-label">{{ child.label }}</span>
                   </a>
-                </li>
-              }
-            </ul>
+                }
+              </div>
+            }
           }
-        </li>
+        </div>
       }
-    </ul>
+    </nav>
   } @else {
     <div class="nav-empty">
       <i class="pi pi-info-circle"></i>
-      <span>No menus available</span>
+      @if (displayExpanded) {
+        <span>No menus available</span>
+      }
     </div>
   }
-</nav>
+
+  <div class="sidebar-footer">
+    @if (displayExpanded) {
+      <div class="sidebar-version tc-animate-fade-in tc-stagger-8">ThinkersCave v2.0</div>
+    }
+  </div>
+</aside>

@@ -1,0 +1,31 @@
+<button type="button" class="notification-trigger" (click)="notificationPanel.toggle($event)" title="Notifications" aria-label="Open notifications">
+  <i class="pi pi-bell"></i>
+  @if (unreadCount > 0) {
+    <span class="notification-badge">{{ unreadCount }}</span>
+  }
+</button>
+
+<p-overlayPanel #notificationPanel appendTo="body" styleClass="tc-dropdown-panel notification-center-panel">
+  <section class="notification-center">
+    <header class="notification-center__header">
+      <div>
+        <span>Notification Center</span>
+        <strong>{{ unreadCount }} unread</strong>
+      </div>
+      <button type="button" (click)="markAllAsRead()" [disabled]="!unreadCount">Mark all read</button>
+    </header>
+
+    <div class="notification-center__list">
+      @for (notification of notifications; track notification.title) {
+        <article class="notification-card" [class.is-unread]="notification.unread" [attr.data-tone]="notification.tone">
+          <span class="notification-card__dot"></span>
+          <div>
+            <strong>{{ notification.title }}</strong>
+            <p>{{ notification.message }}</p>
+            <small>{{ notification.time }}</small>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+</p-overlayPanel>

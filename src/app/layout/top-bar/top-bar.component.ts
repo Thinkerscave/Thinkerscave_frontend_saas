@@ -1,88 +1,66 @@
-import { Component, EventEmitter, Input, Output, inject , ChangeDetectionStrategy} from '@angular/core';
-import { MenuItem, MessageService } from 'primeng/api';
-import { MenuModule } from 'primeng/menu';
-import { ButtonModule } from 'primeng/button';
-import { LoginService } from '../../core/services/login.service';
-import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ThemeService } from '../../shared/theme/theme.service';
-import { InitialsPipe } from '../../shared/pipes';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { LoginService } from '../../core/services/login.service';
 import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
-
+import { ThemeService } from '../../shared/theme/theme.service';
+import { NotificationCenterComponent } from '../notification-center/notification-center.component';
 
 @Component({
   selector: 'app-top-bar',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MenuModule, ButtonModule, CommonModule, InitialsPipe, GlobalSearchComponent],
+  standalone: true,
+  imports: [CommonModule, OverlayPanelModule, GlobalSearchComponent, NotificationCenterComponent],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })
 export class TopBarComponent {
-  private readonly themeService = inject(ThemeService);
-
-  userName: string = '';
-  profileItems: MenuItem[] = [];
-  readonly themeMode = this.themeService.themeMode;
-  readonly isDarkTheme = this.themeService.isDarkTheme;
-
-  @Input() isSidebarExpanded = false;
+  @Input() isSidebarExpanded = true;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  constructor(
-    private loginService: LoginService,
-    private router: Router,
-    private messageService: MessageService
-  ) { }
+  loginService = inject(LoginService);
+  themeService = inject(ThemeService);
+  router = inject(Router);
 
-  ngOnInit(): void {
-    const user = this.loginService.getUser();
-    if (user) {
-      const first = user.firstName || '';
-      const last = user.lastName || '';
-      // Show full name if available, fall back to username
-      this.userName = (first + ' ' + last).trim() || user.userName || 'User';
-    }
+  isDarkTheme = this.themeService.isDarkTheme;
+  currentUser = this.loginService.getUser();
 
-    this.profileItems = [
-      {
-        label: 'Profile',
-        icon: 'pi pi-user-edit',
-        command: () => this.router.navigate(['/app/profile'])
-      },
-      {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        command: () => this.router.navigate(['/app/settings'])
-      },
-      {
-        separator: true
-      },
-      {
-        label: 'Logout',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
-      }
-    ];
-  }
-
-  onToggleSidebar(): void {
-    this.toggleSidebar.emit();
-  }
-
-  toggleTheme(): void {
+  toggleTheme() {
     this.themeService.toggleTheme();
   }
 
   logout() {
-    // Clear storage and redirect to login
     this.loginService.logOutAndRedirect();
-
-    // Show success message
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Logged out',
-      detail: 'You have been logged out successfully'
-    });
+  }
+  
+  openSettings() {
+    this.router.navigate(['/app/settings']);
+  }
+  
+  getInitials(name: string | undefined | null): string {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+  
+  getUserName(): string {
+    if (!this.currentUser) return 'User';
+    return (this.currentUser.firstName + ' ' + (this.currentUser.lastName || '')).trim();
   }
 
+  getRoleName(): string {
+    if (!this.currentUser || !this.currentUser.roles || this.currentUser.roles.length === 0) return 'Guest';
+    const role = this.currentUser.roles[0] as any;
+    return (role?.roleName ?? role?.roleCode ?? role ?? 'User').toString();
+  }
+
+  getOrganizationName(): string {
+    const user = this.currentUser as any;
+    const org = user?.organizations?.[0] ?? user?.organization ?? user?.orgName;
+    if (typeof org === 'string') return org;
+    return org?.orgName ?? org?.displayName ?? localStorage.getItem('tenantId') ?? 'ThinkersCave';
+  }
 }

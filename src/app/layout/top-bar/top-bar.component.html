@@ -1,32 +1,62 @@
-<div class="topbar-container">
+<header class="topbar-container">
   <div class="topbar-left">
-    <button class="sidebar-toggle" type="button" (click)="onToggleSidebar()"
-      [attr.aria-label]="isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'"
-      [class.is-active]="isSidebarExpanded">
-      <i class="pi" [ngClass]="isSidebarExpanded ? 'pi-chevron-left' : 'pi-bars'"></i>
+    <button type="button" class="sidebar-toggle" (click)="toggleSidebar.emit()" aria-label="Toggle Sidebar">
+      <i class="pi" [ngClass]="isSidebarExpanded ? 'pi-align-left' : 'pi-bars'"></i>
     </button>
-    <div class="app-name">ThinkerScave</div>
+    <div class="brand-identity" aria-label="ThinkersCave workspace">
+      <span class="brand-logo"><i class="pi pi-sparkles"></i></span>
+      <div>
+        <strong>ThinkersCave</strong>
+        <small>{{ getRoleName() }} · {{ getOrganizationName() }}</small>
+      </div>
+    </div>
   </div>
 
-  <div class="topbar-actions">
-    <app-global-search class="topbar-search"></app-global-search>
+  <div class="topbar-center">
+    <app-global-search></app-global-search>
+  </div>
 
-    <button class="theme-toggle" type="button" (click)="toggleTheme()"
-      [attr.aria-label]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'"
-      [attr.title]="isDarkTheme() ? 'Switch to light theme' : 'Switch to dark theme'">
+  <div class="topbar-right">
+    <button type="button" class="icon-btn" (click)="toggleTheme()" [title]="isDarkTheme() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
       <i class="pi" [ngClass]="isDarkTheme() ? 'pi-sun' : 'pi-moon'"></i>
     </button>
 
-    <div class="profile-wrapper">
-    <!-- Profile Button -->
-    <button pButton type="button" class="profile-btn" (click)="profileMenu.toggle($event)">
-      <div class="profile-initials">{{ userName | initials }}</div>
-      <span class="user-name">{{ userName }}</span>
-      <i class="pi pi-chevron-down"></i>
+    <button type="button" class="icon-btn" (click)="openSettings()" title="Settings">
+      <i class="pi pi-cog"></i>
     </button>
 
-    <!-- Profile Menu -->
-    <p-menu #profileMenu [popup]="true" [model]="profileItems"></p-menu>
+    <app-notification-center></app-notification-center>
+
+    <div class="profile-menu">
+      <button type="button" class="profile-btn" (click)="userPanel.toggle($event)">
+        <div class="avatar">{{ getInitials(getUserName()) }}</div>
+        <div class="user-info">
+          <span class="name">{{ getUserName() }}</span>
+          <span class="role">{{ getRoleName() }}</span>
+        </div>
+        <i class="pi pi-angle-down drop-icon"></i>
+      </button>
+
+      <p-overlayPanel #userPanel appendTo="body" styleClass="tc-dropdown-panel user-panel">
+        <div class="user-dropdown-header">
+          <div class="avatar lg">{{ getInitials(getUserName()) }}</div>
+          <div>
+            <strong>{{ getUserName() }}</strong>
+            <small>{{ currentUser?.userName }}</small>
+          </div>
+        </div>
+        <hr>
+        <button class="dropdown-item" (click)="router.navigate(['/app/profile'])">
+          <i class="pi pi-user"></i> My Profile
+        </button>
+        <button class="dropdown-item" (click)="openSettings()">
+          <i class="pi pi-sliders-h"></i> Preferences
+        </button>
+        <hr>
+        <button class="dropdown-item text-danger" (click)="logout()">
+          <i class="pi pi-power-off"></i> Sign Out
+        </button>
+      </p-overlayPanel>
     </div>
   </div>
-</div>
+</header>

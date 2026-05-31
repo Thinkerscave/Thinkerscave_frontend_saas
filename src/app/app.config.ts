@@ -36,11 +36,9 @@ export const appConfig: ApplicationConfig = {
         }
       }
     }),
-    // Core loader only. The HTTP module is intentionally NOT registered here —
-    // tenantInterceptor already calls loader.start()/stop() per request, so
-    // registering NgxUiLoaderHttpModule too would double-count and the loader
-    // overlay can get stuck when navigation cancels an in-flight request
-    // (only one of the two trackers observes the cancellation).
+    // Core loader only. Feature flows such as login start/stop it explicitly;
+    // route content uses local loading states so background HTTP activity cannot
+    // mask the application shell with a stale full-screen overlay.
     importProvidersFrom(NgxUiLoaderModule),
     MessageService,
     { provide: GlobalSearchProvider, useClass: ApplicationGlobalSearchProvider },

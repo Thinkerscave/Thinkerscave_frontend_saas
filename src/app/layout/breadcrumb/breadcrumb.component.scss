@@ -1,13 +1,49 @@
+:host {
+  display: block;
+}
+
+.tc-breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0.1rem;
+}
+
+.tc-breadcrumb__title {
+  color: var(--tc-heading);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 :host ::ng-deep .p-breadcrumb {
   background: transparent;
-  border: none;
+  border: 0;
   padding: 0;
 }
 
-.p-breadcrumb .pi-home {
-  color: #2c3e50;
+:host ::ng-deep .p-breadcrumb-list {
+  gap: 0.25rem;
 }
 
-.text-primary {
-  color: #2c3e50;
+:host ::ng-deep .p-breadcrumb-item,
+:host ::ng-deep .p-breadcrumb-separator,
+:host ::ng-deep .p-breadcrumb-home {
+  color: var(--tc-text-muted);
+  font-size: 0.82rem;
+}
+
+:host ::ng-deep .p-breadcrumb-item:last-child {
+  color: var(--tc-heading);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .tc-breadcrumb {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
 }

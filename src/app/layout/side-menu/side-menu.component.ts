@@ -1,46 +1,50 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, Input, OnInit, inject , ChangeDetectionStrategy} from '@angular/core';
+import { Component, DestroyRef, HostBinding, inject, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { MenuMappingService } from '../../application/services/menu-mapping.service';
+import { filter } from 'rxjs';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
+import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
 @Component({
   selector: 'app-side-menu',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })
 export class SideMenuComponent implements OnInit {
+  @Input() expanded = true;
+
   items: MenuItem[] = [];
   loading = true;
-  @Input() expanded = false;
+  openGroups = new Set<string>();
+  hovered = false;
 
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly openGroups = new Set<string>();
+  private sideMenuService = inject(MenuMappingService);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+  private breadcrumbService = inject(BreadCrumbService);
 
-  constructor(private sideMenuService: MenuMappingService,
-    private breadcrumbService: BreadCrumbService,
-    private router: Router
-  ) { }
-
-  ngOnInit(): void {
-    this.loadMenu();
-
-    this.sideMenuService.menuRefresh$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadMenu());
+  get displayExpanded(): boolean {
+    return this.expanded || this.hovered;
   }
 
-  private loadMenu(): void {
-    this.loading = true;
+  @HostBinding('class.is-hover-expanded')
+  get isHoverExpanded(): boolean {
+    return this.hovered && !this.expanded;
+  }
+
+  ngOnInit() {
     this.sideMenuService.loadMenu().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (menus) => {
         this.items = this.normalizeItems(menus);
         this.loading = false;
+        
+        setTimeout(() => this.openActiveGroup(), 100);
       },
       error: (err) => {
         console.error('Error loading menu:', err);
@@ -48,6 +52,27 @@ export class SideMenuComponent implements OnInit {
         this.loading = false;
       }
     });
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {});
+  }
+
+  private openActiveGroup() {
+    for (const item of this.items) {
+      if (this.hasChildren(item) && this.isMenuActive(item)) {
+        this.openGroups.add(this.getItemKey(item));
+      }
+    }
+  }
+
+  private normalizeItems(items: MenuItem[]): MenuItem[] {
+    return (items ?? []).map(item => ({
+      ...item,
+      icon: normalizePrimeIcon(item.icon, 'pi pi-circle'),
+      items: item.items ? this.normalizeItems(item.items) : undefined
+    }));
   }
 
   hasChildren(item: MenuItem): boolean {
@@ -63,6 +88,15 @@ export class SideMenuComponent implements OnInit {
   }
 
   toggleGroup(item: MenuItem): void {
+    if (!this.displayExpanded) {
+      const routerLink = this.getRouterLink(item);
+      if (routerLink) {
+        const commands = Array.isArray(routerLink) ? routerLink : [routerLink];
+        void this.router.navigate(commands, { queryParams: item.queryParams });
+      }
+      return;
+    }
+
     const key = this.getItemKey(item);
     if (this.openGroups.has(key)) {
       this.openGroups.delete(key);
@@ -96,22 +130,16 @@ export class SideMenuComponent implements OnInit {
     });
   }
 
+  getRouterLink(item: MenuItem): string | any[] | null {
+    if (item.routerLink) return item.routerLink as string | any[];
+    if (item.url) return item.url as string;
+    return null;
+  }
+
   isExact(item: MenuItem): boolean {
     const link = this.getRouterLink(item);
+    if (!link) return false;
     const path = Array.isArray(link) ? link.join('/') : link;
     return path === '/app' || path === 'app' || path === '/app/';
   }
-
-  getRouterLink(item: MenuItem): string | any[] | null {
-    return item.routerLink as string | any[] | null;
-  }
-
-  private normalizeItems(items: MenuItem[]): MenuItem[] {
-    return (items ?? []).map(item => ({
-      ...item,
-      icon: normalizePrimeIcon(item.icon, 'pi pi-circle'),
-      items: item.items ? this.normalizeItems(item.items) : undefined
-    }));
-  }
-
 }

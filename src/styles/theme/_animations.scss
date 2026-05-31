@@ -1,0 +1,100 @@
+/* ThinkersCave Global Animations */
+
+@keyframes tc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tc-slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tc-slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tc-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tc-slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tc-slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tc-pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+@keyframes tc-shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+/* Utility Classes */
+
+.tc-animate-fade-in {
+  animation: tc-fade-in var(--tc-anim-duration-normal) var(--tc-anim-easing) forwards;
+}
+
+.tc-animate-slide-up {
+  animation: tc-slide-up var(--tc-anim-duration-normal) var(--tc-anim-easing) forwards;
+}
+
+.tc-animate-slide-down {
+  animation: tc-slide-down var(--tc-anim-duration-normal) var(--tc-anim-easing) forwards;
+}
+
+.tc-animate-scale-in {
+  animation: tc-scale-in var(--tc-anim-duration-fast) var(--tc-anim-easing) forwards;
+}
+
+.tc-animate-slide-in-right {
+  animation: tc-slide-in-right var(--tc-anim-duration-normal) var(--tc-anim-easing) forwards;
+}
+
+.tc-animate-slide-in-left {
+  animation: tc-slide-in-left var(--tc-anim-duration-normal) var(--tc-anim-easing) forwards;
+}
+
+/* Staggered entry classes */
+.tc-stagger-1 { animation-delay: 50ms; }
+.tc-stagger-2 { animation-delay: 100ms; }
+.tc-stagger-3 { animation-delay: 150ms; }
+.tc-stagger-4 { animation-delay: 200ms; }
+.tc-stagger-5 { animation-delay: 250ms; }
+.tc-stagger-6 { animation-delay: 300ms; }
+.tc-stagger-7 { animation-delay: 350ms; }
+.tc-stagger-8 { animation-delay: 400ms; }
+
+/* Interactive Hover Utilities */
+
+.tc-hover-lift {
+  transition: transform var(--tc-anim-duration-fast) var(--tc-anim-easing),
+              box-shadow var(--tc-anim-duration-fast) var(--tc-anim-easing);
+}
+
+.tc-hover-lift:hover {
+  transform: translateY(var(--tc-card-hover-translate));
+  box-shadow: var(--tc-card-hover-shadow);
+}
+
+.tc-hover-glow {
+  transition: border-color var(--tc-anim-duration-fast) var(--tc-anim-easing),
+              box-shadow var(--tc-anim-duration-fast) var(--tc-anim-easing);
+}
+
+.tc-hover-glow:hover {
+  border-color: var(--tc-card-hover-border);
+  box-shadow: var(--tc-shadow-focus);
+}

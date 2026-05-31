@@ -5,7 +5,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { Subject, debounceTime, switchMap } from 'rxjs';
@@ -30,7 +29,7 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
   selector: 'app-global-search',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DialogModule, InputTextModule, ButtonModule,
+    CommonModule, FormsModule, InputTextModule, ButtonModule,
     EmptyStateComponent, SkeletonComponent
   ],
   templateUrl: './global-search.component.html',
@@ -108,6 +107,8 @@ export class GlobalSearchComponent {
       const current = this.results()[this.highlighted()];
       if (current) this.select(current);
     } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
       this.close();
     }
   }

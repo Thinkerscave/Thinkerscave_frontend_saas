@@ -3,14 +3,14 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BreadCrumbService } from '../../../core/services/bread-crumb.service';
-import { DashboardLayoutComponent } from '../components/shared/dashboard-primitives.component';
+import { RoleDashboardRendererComponent } from '../components/shared/dashboard-primitives.component';
 import { DashboardActionTarget, DashboardSearchResult, DashboardWorkspace } from '../models/dashboard-workspace.model';
 import { DashboardWorkspaceService } from '../services/dashboard-workspace.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DashboardLayoutComponent],
+  imports: [RoleDashboardRendererComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   encapsulation: ViewEncapsulation.None,
@@ -37,7 +37,42 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.breadcrumbService.setBreadcrumb('Dashboard', '');
+    this.setGreeting();
     this.loadWorkspace();
+  }
+
+  get greeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return '☀️ Good morning,';
+    if (hour < 17) return '🌤️ Good afternoon,';
+    return '🌙 Good evening,';
+  }
+
+  private setGreeting() {
+    // Just a placeholder method if we need interval updates later
+  }
+
+  getPrimaryActionLabel(): string {
+    if (!this.workspace) return 'New Action';
+    const role = this.workspace.context.primaryRoleName.toLowerCase();
+    if (role.includes('admin')) return 'New Inquiry';
+    if (role.includes('teacher')) return 'Mark Attendance';
+    if (role.includes('student')) return 'Submit Assignment';
+    return 'New Request';
+  }
+
+  primaryActionClicked(): void {
+    if (!this.workspace) return;
+    const role = this.workspace.context.primaryRoleName.toLowerCase();
+    if (role.includes('admin')) {
+      this.router.navigate(['/app/administration/manageinquiry']);
+    } else if (role.includes('teacher')) {
+      this.router.navigate(['/app/academics/daily-attendance']);
+    } else if (role.includes('student')) {
+      this.router.navigate(['/app/academics/assignment-student']);
+    } else {
+      this.loadWorkspace();
+    }
   }
 
   loadWorkspace(): void {
@@ -137,6 +172,14 @@ export class DashboardComponent implements OnInit {
       tone,
       metadata: this.targetMetadata(target)
     };
+  }
+
+  metadataEntries(result: DashboardSearchResult): {key: string, value: string}[] {
+    if (!result || !result.metadata) return [];
+    return Object.entries(result.metadata).map(([key, value]) => ({
+      key,
+      value: String(value)
+    }));
   }
 
   private targetMetadata(target: DashboardActionTarget): Record<string, unknown> {

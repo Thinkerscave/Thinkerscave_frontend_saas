@@ -6,6 +6,19 @@ import { menuMappingeApi } from '../../shared/constants/api_menu.endpoint';
 import { unwrapApiList } from '../../shared/utils/api-response.util';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
+interface WorkspaceMenuLeaf {
+  item: MenuItem;
+  path: string[];
+  routeText: string;
+  groupKey: string;
+}
+
+interface WorkspaceMenuGroupDefinition {
+  key: string;
+  label: string;
+  icon: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -71,7 +84,7 @@ export class MenuMappingService {
             queryParams: { tab: 'lead-statistics' }
           }
         ];
-        return of(this.normalizeMenuItems(counsellorMenu));
+        return of(this.consolidateWorkspaceMenu(this.normalizeMenuItems(counsellorMenu)));
       }
 
       // Mock Institution Admin menu (only for mock login - detected by mock token prefix)
@@ -154,7 +167,7 @@ export class MenuMappingService {
             routerLink: ['/app/fees/audit']
           }
         ];
-        return of(this.normalizeMenuItems(adminFeeMenu));
+        return of(this.consolidateWorkspaceMenu(this.normalizeMenuItems(adminFeeMenu)));
       }
     }
 
@@ -168,7 +181,7 @@ export class MenuMappingService {
       map((response: any) => {
         // Backend wraps response in ApiResponse<T>: { success, message, data: [...] }
         // Handle both a raw array and the wrapped ApiResponse format.
-        return this.normalizeMenuItems(unwrapApiList<MenuItem>(response));
+        return this.consolidateWorkspaceMenu(this.normalizeMenuItems(unwrapApiList<MenuItem>(response)));
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -217,5 +230,131 @@ export class MenuMappingService {
     }
 
     return `/app/${link.replace(/^\/+/, '')}`;
+  }
+
+  private consolidateWorkspaceMenu(items: MenuItem[]): MenuItem[] {
+    const leaves = this.uniqueLeaves(this.flattenMenuItems(items));
+    if (!leaves.length) {
+      return items;
+    }
+
+    const grouped = this.workspaceGroups()
+      .map(group => this.toWorkspaceGroup(group, leaves.filter(leaf => leaf.groupKey === group.key)))
+      .filter((item): item is MenuItem => !!item);
+
+    const uncategorized = leaves.filter(leaf => leaf.groupKey === 'more');
+    if (uncategorized.length) {
+      grouped.push(this.toWorkspaceGroup({ key: 'more', label: 'More', icon: 'pi pi-ellipsis-h' }, uncategorized)!);
+    }
+
+    return grouped;
+  }
+
+  private workspaceGroups(): WorkspaceMenuGroupDefinition[] {
+    return [
+      { key: 'dashboard', label: 'Dashboard', icon: 'pi pi-home' },
+      { key: 'students', label: 'Students', icon: 'pi pi-users' },
+      { key: 'staff', label: 'Staff', icon: 'pi pi-id-card' },
+      { key: 'attendance', label: 'Attendance', icon: 'pi pi-calendar-check' },
+      { key: 'admissions', label: 'Admissions', icon: 'pi pi-inbox' },
+      { key: 'academics', label: 'Academics', icon: 'pi pi-book' },
+      { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
+      { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
+      { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
+      { key: 'admin', label: 'Administration', icon: 'pi pi-shield' }
+    ];
+  }
+
+  private toWorkspaceGroup(group: WorkspaceMenuGroupDefinition, leaves: WorkspaceMenuLeaf[]): MenuItem | null {
+    if (!leaves.length) {
+      return null;
+    }
+
+    const first = leaves[0].item;
+    const childItems = leaves.map(leaf => ({
+      ...leaf.item,
+      items: undefined,
+      title: leaf.path.slice(0, -1).join(' / ') || leaf.item.title
+    }));
+
+    if (group.key === 'dashboard' && childItems.length === 1) {
+      return {
+        ...first,
+        label: group.label,
+        icon: group.icon,
+        items: undefined
+      };
+    }
+
+    return {
+      label: group.label,
+      icon: group.icon,
+      routerLink: first.routerLink,
+      queryParams: first.queryParams,
+      items: childItems
+    };
+  }
+
+  private flattenMenuItems(items: MenuItem[], parents: string[] = []): WorkspaceMenuLeaf[] {
+    return (items ?? []).flatMap(item => {
+      const label = item.label ?? 'Menu item';
+      const path = [...parents, label];
+      const routeText = this.routerLinkText(item.routerLink);
+      const current: WorkspaceMenuLeaf[] = routeText ? [{
+        item,
+        path,
+        routeText,
+        groupKey: this.workspaceGroupKey(label, routeText, path)
+      }] : [];
+
+      return [...current, ...this.flattenMenuItems(item.items ?? [], path)];
+    });
+  }
+
+  private uniqueLeaves(leaves: WorkspaceMenuLeaf[]): WorkspaceMenuLeaf[] {
+    const seen = new Set<string>();
+    return leaves.filter(leaf => {
+      const key = `${leaf.routeText}::${leaf.item.label ?? ''}::${JSON.stringify(leaf.item.queryParams ?? {})}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }
+
+  private routerLinkText(routerLink: MenuItem['routerLink']): string {
+    if (!routerLink) {
+      return '';
+    }
+
+    return Array.isArray(routerLink) ? routerLink.join('/') : String(routerLink);
+  }
+
+  private workspaceGroupKey(label: string, routeText: string, path: string[]): string {
+    const haystack = `${label} ${routeText} ${path.join(' ')}`.toLowerCase();
+    const route = routeText.toLowerCase();
+
+    if (/^\/?app\/?$/.test(route)) return 'dashboard';
+    if (route.includes('/app/admin')) return 'admin';
+    if (route.includes('/app/academics')) return 'academics';
+    if (route.includes('/app/students') || /managestudent|manage-class|manage-section/.test(route)) return 'students';
+    if (route.includes('/app/staff') || /salary|leave|manage-branch|manage-department/.test(route)) return 'staff';
+    if (route.includes('/app/attendance')) return 'attendance';
+    if (route.includes('/app/inquiry') || route.includes('/app/counsellor') || route.includes('/public/admission')) return 'admissions';
+    if (route.includes('/app/fees') || route.includes('/app/reports')) return 'finance';
+
+    if (/academic|academics|subject|syllabus|curriculum|timetable|calendar|teacher-allocation|hierarchy|year|course/.test(haystack)) return 'academics';
+    if (/student|parent|alumni|class|section|promotion|transfer|document|id-card/.test(haystack)) return 'students';
+    if (/staff|employee|salary|leave|payroll|department|branch/.test(haystack)) return 'staff';
+    if (/attendance|present|absent/.test(haystack)) return 'attendance';
+    if (/inquiry|admission|lead|counsellor|counseling|enrollment|application|follow-up/.test(haystack)) return 'admissions';
+    if (/fee|fees|finance|payment|receipt|ledger|contract|adjustment|concession|collection|outstanding|report/.test(haystack)) return 'finance';
+    if (/exam|marks|mark sheet|marksheet|grade|result/.test(haystack)) return 'exams';
+    if (/communication|message|notice|notification|email|sms|chat/.test(haystack)) return 'communication';
+    if (/admin|administration|organization|role|permission|access|audit|monitoring|setting|menu|privilege|navigation|system/.test(haystack)) return 'admin';
+    if (/\bdashboard\b/.test(haystack)) return 'dashboard';
+
+    return 'more';
   }
 }

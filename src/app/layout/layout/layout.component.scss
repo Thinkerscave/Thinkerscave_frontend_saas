@@ -1,5 +1,5 @@
 .layout-container {
-  --tc-sidebar-compact-width: 84px;
+  --tc-sidebar-compact-width: 64px;
   --tc-sidebar-expanded-width: 280px;
   --tc-sidebar-current-width: var(--tc-sidebar-compact-width);
 
@@ -22,10 +22,13 @@
 
     .sidemenu {
       width: var(--tc-sidebar-current-width);
+      flex-grow: 0;
       flex-shrink: 0;
+      flex-basis: var(--tc-sidebar-current-width);
+      min-width: var(--tc-sidebar-current-width);
       background: var(--tc-sidebar-bg);
       border-right: 1px solid var(--tc-sidebar-border);
-      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: visible;
       z-index: 18;
     }
@@ -60,8 +63,11 @@
 }
 
 @media (min-width: 769px) {
-  .layout-container:not(.sidebar-expanded) .main-content .sidemenu:hover {
-    width: var(--tc-sidebar-expanded-width);
+  .layout-container:not(.sidebar-expanded) .main-content .sidemenu:hover,
+  .layout-container:not(.sidebar-expanded) .main-content .sidemenu.is-hover-expanded {
+    width: var(--tc-sidebar-expanded-width) !important;
+    flex-basis: var(--tc-sidebar-expanded-width) !important;
+    min-width: var(--tc-sidebar-expanded-width) !important;
   }
 }
 
@@ -75,6 +81,8 @@
         top: 0;
         left: 0;
         width: min(var(--tc-sidebar-expanded-width), calc(100vw - 2rem));
+        flex-basis: auto;
+        min-width: 0;
         height: 100%;
         background: var(--tc-sidebar-bg);
         box-shadow: var(--tc-shadow-lg);

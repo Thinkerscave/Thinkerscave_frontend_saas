@@ -1,7 +1,6 @@
 import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { NgxUiLoaderService } from 'ngx-ui-loader';
-import { finalize, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { LoginService } from '../../core/services/login.service';
 
 /**
@@ -11,11 +10,7 @@ import { LoginService } from '../../core/services/login.service';
  * @returns An Observable of the event stream.
  */
 export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
-  const loader = inject(NgxUiLoaderService);
   const loginService = inject(LoginService);
-
-  // Start loader
-  loader.start();
 
   // Get tenant ID from current user context
   const tenantId = loginService.getTenant();
@@ -32,9 +27,6 @@ export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, 
     headers: headers
   });
 
-  // Pass the cloned request to the next handler in the chain.
-  return next(modifiedRequest).pipe(
-    finalize(() => loader.stop())
-  );
+  return next(modifiedRequest);
 };
 
