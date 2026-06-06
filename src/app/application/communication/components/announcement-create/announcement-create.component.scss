@@ -1,0 +1,62 @@
+.announcement-create {
+  .step {
+    &__title { margin: 0 0 16px; font-size: 1rem; color: var(--saas-text); font-weight: 600; }
+    &__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      .saas-field--full { grid-column: 1 / -1; }
+    }
+  }
+
+  .priority {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    border: none; padding: 0;
+    legend { font-weight: 600; color: var(--saas-text-soft); font-size: 0.78rem; padding: 0 0 6px; }
+    &__opt {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 999px;
+      border: 1px solid var(--saas-border);
+      cursor: pointer; transition: all 0.15s ease;
+      input { accent-color: var(--saas-primary); }
+      &:hover { border-color: var(--saas-primary); }
+    }
+  }
+
+  .upload-zone {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 30px;
+    border: 2px dashed var(--saas-border);
+    border-radius: 12px;
+    color: var(--saas-text-soft);
+    gap: 12px;
+    i { font-size: 2rem; color: var(--saas-primary); }
+    input { padding: 8px 12px; border: 1px solid var(--saas-border); border-radius: 8px; min-width: 280px; }
+  }
+
+  .attachments {
+    list-style: none; padding: 0; margin: 16px 0 0;
+    display: flex; flex-direction: column; gap: 8px;
+    li {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      background: var(--saas-surface-muted);
+      border-radius: 8px;
+      span { flex: 1; font-size: 0.85rem; }
+    }
+  }
+
+  .review {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    row-gap: 10px; column-gap: 16px;
+    dt { color: var(--saas-text-soft); font-size: 0.82rem; }
+    dd { margin: 0; color: var(--saas-text); font-size: 0.88rem; font-weight: 500; }
+  }
+
+  .wizard-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 22px; padding-top: 16px;
+    border-top: 1px solid var(--saas-border);
+  }
+}

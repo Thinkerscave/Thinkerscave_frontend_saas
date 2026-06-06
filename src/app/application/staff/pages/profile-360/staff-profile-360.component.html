@@ -1,0 +1,292 @@
+<section class="adm-workspace" *ngIf="!loading && profile; else loadingTpl">
+
+  <header class="staff-hero">
+    <div class="staff-photo staff-photo--lg staff-photo--initials">{{ initials(profile.fullName) }}</div>
+    <div class="staff-hero__meta">
+      <h1>{{ profile.fullName }}</h1>
+      <p>{{ profile.designation }} · {{ profile.department }}</p>
+      <div class="staff-hero-chips">
+        <span class="staff-hero-chip"><i class="pi pi-id-card"></i> {{ profile.staffCode }}</span>
+        <span class="staff-hero-chip"><i class="pi pi-envelope"></i> {{ profile.email || '—' }}</span>
+        <span class="staff-hero-chip"><i class="pi pi-phone"></i> {{ profile.contact || '—' }}</span>
+        <span class="staff-hero-chip"><i class="pi pi-calendar-plus"></i> Joined {{ profile.joinedDate || '—' }}</span>
+        <span class="staff-pill" [attr.data-state]="profile.active ? 'PRESENT' : 'ABSENT'">{{ profile.active ? 'Active' : 'Inactive' }}</span>
+      </div>
+    </div>
+    <div class="staff-hero__actions">
+      <button type="button" class="adm-btn adm-btn--ghost" (click)="back()"><i class="pi pi-arrow-left"></i> Back</button>
+      <button type="button" class="adm-btn"><i class="pi pi-pencil"></i> Edit Profile</button>
+      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-ellipsis-v"></i> More Actions</button>
+    </div>
+  </header>
+
+  <div class="adm-kpi-grid" style="margin-top:14px;">
+    <div class="adm-kpi" data-tone="success">
+      <span class="adm-kpi__label">Leave Balance</span>
+      <span class="adm-kpi__value">{{ profile.leave.balance }} Days</span>
+      <span class="adm-kpi__hint">Available</span>
+    </div>
+    <div class="adm-kpi" data-tone="info">
+      <span class="adm-kpi__label">Responsibilities</span>
+      <span class="adm-kpi__value">{{ profile.overview.keyResponsibilities.length }}</span>
+      <span class="adm-kpi__hint">Assigned</span>
+    </div>
+    <div class="adm-kpi" data-tone="info">
+      <span class="adm-kpi__label">Classes Assigned</span>
+      <span class="adm-kpi__value">{{ profile.overview.subjectLoad.length }}</span>
+      <span class="adm-kpi__hint">Total Classes</span>
+    </div>
+    <div class="adm-kpi" data-tone="success">
+      <span class="adm-kpi__label">Attendance (This Month)</span>
+      <span class="adm-kpi__value">{{ profile.overview.attendancePercent | number:'1.0-0' }}%</span>
+      <span class="adm-kpi__hint">Present</span>
+    </div>
+    <div class="adm-kpi" data-tone="warning">
+      <span class="adm-kpi__label">Next Leave</span>
+      <span class="adm-kpi__value" style="font-size:1.1rem;">{{ profile.leave.nextLeave || 'None scheduled' }}</span>
+      <span class="adm-kpi__hint">Upcoming</span>
+    </div>
+    <div class="adm-kpi" data-tone="info">
+      <span class="adm-kpi__label">Years of Service</span>
+      <span class="adm-kpi__value">{{ profile.employment.yearsOfService | number:'1.1-1' }}</span>
+      <span class="adm-kpi__hint">Completed</span>
+    </div>
+  </div>
+
+  <nav class="staff-tabs" role="tablist">
+    <button *ngFor="let t of tabs" type="button"
+            [class.is-active]="activeTab === t.value"
+            (click)="setTab(t.value)">
+      <i [ngClass]="t.icon"></i> {{ t.label }}
+    </button>
+  </nav>
+
+  <!-- Overview -->
+  <div *ngIf="activeTab === 'overview'" class="staff-snapshot-grid">
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head">
+        <h3>Key Responsibilities</h3>
+      </div>
+      <div *ngIf="!profile.overview.keyResponsibilities.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No responsibilities assigned.</div>
+      <div class="staff-snapshot__rows">
+        <div *ngFor="let r of profile.overview.keyResponsibilities; trackBy: trackByIdx">
+          <span>{{ r.responsibilityName }}</span>
+          <strong>{{ r.type }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head">
+        <h3>Class / Subject Summary</h3>
+      </div>
+      <div *ngIf="!profile.overview.subjectLoad.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No classes allocated.</div>
+      <div class="staff-snapshot__rows">
+        <div *ngFor="let s of profile.overview.subjectLoad; trackBy: trackByIdx">
+          <span>{{ s.className }}</span>
+          <strong>{{ s.subject }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head">
+        <h3>Recent Activity</h3>
+      </div>
+      <div *ngIf="!timeline.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No recent activity.</div>
+      <div class="staff-snapshot__rows">
+        <div *ngFor="let t of timeline.slice(0, 5); trackBy: trackByIdx">
+          <span>{{ t.title }}</span>
+          <strong>{{ t.occurredOn || '—' }}</strong>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Personal -->
+  <div *ngIf="activeTab === 'personal'" class="staff-snapshot-grid">
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head"><h3>Personal Information</h3></div>
+      <div class="staff-snapshot__rows">
+        <div><span>Full Name</span><strong>{{ profile.personal.firstName }} {{ profile.personal.middleName || '' }} {{ profile.personal.lastName || '' }}</strong></div>
+        <div><span>Gender</span><strong>{{ profile.personal.gender || '—' }}</strong></div>
+        <div><span>Date of Birth</span><strong>{{ profile.personal.dateOfBirth || '—' }}</strong></div>
+        <div><span>Mobile</span><strong>{{ profile.personal.mobile || '—' }}</strong></div>
+        <div><span>Email</span><strong>{{ profile.personal.email || '—' }}</strong></div>
+      </div>
+    </article>
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head"><h3>Address</h3></div>
+      <div class="staff-snapshot__rows">
+        <div><span>Address</span><strong>{{ profile.personal.address || '—' }}</strong></div>
+        <div><span>City</span><strong>{{ profile.personal.city || '—' }}</strong></div>
+        <div><span>State</span><strong>{{ profile.personal.state || '—' }}</strong></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Employment -->
+  <div *ngIf="activeTab === 'employment'" class="staff-snapshot-grid">
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head"><h3>Employment Details</h3></div>
+      <div class="staff-snapshot__rows">
+        <div><span>Employee ID</span><strong>{{ profile.employment.staffCode }}</strong></div>
+        <div><span>Designation</span><strong>{{ profile.employment.designation || '—' }}</strong></div>
+        <div><span>Department</span><strong>{{ profile.employment.department || '—' }}</strong></div>
+        <div><span>Branch</span><strong>{{ profile.employment.branch || '—' }}</strong></div>
+        <div><span>Hire Date</span><strong>{{ profile.employment.hireDate || '—' }}</strong></div>
+        <div><span>Years of Service</span><strong>{{ profile.employment.yearsOfService | number:'1.1-1' }}</strong></div>
+        <div><span>Remarks</span><strong>{{ profile.employment.remarks || '—' }}</strong></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Teaching Profile (editable) -->
+  <div *ngIf="activeTab === 'teaching'">
+    <article class="staff-snapshot" style="max-width:none;">
+      <div class="staff-snapshot__head">
+        <h3>Teaching Profile</h3>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="saveTeaching()" [disabled]="saving">
+          <i class="pi" [class.pi-spin]="saving" [class.pi-save]="!saving" [class.pi-spinner]="saving"></i> Save
+        </button>
+      </div>
+      <div class="adm-filter-bar">
+        <div class="adm-field">
+          <label>Subjects Can Teach</label>
+          <input type="text" [(ngModel)]="teachingForm.subjectsCanTeach" placeholder="Mathematics, Physics, ..."/>
+        </div>
+        <div class="adm-field">
+          <label>Preferred Subjects</label>
+          <input type="text" [(ngModel)]="teachingForm.preferredSubjects" placeholder="Mathematics"/>
+        </div>
+        <div class="adm-field">
+          <label>Teaching Levels</label>
+          <input type="text" [(ngModel)]="teachingForm.teachingLevels" placeholder="Class 9-10, Class 11-12"/>
+        </div>
+        <div class="adm-field">
+          <label>Can Substitute For</label>
+          <input type="text" [(ngModel)]="teachingForm.canSubstituteFor" placeholder="Mathematics, Physics"/>
+        </div>
+        <div class="adm-field">
+          <label>Cannot Substitute For</label>
+          <input type="text" [(ngModel)]="teachingForm.cannotSubstituteFor" placeholder="Hindi, Commerce"/>
+        </div>
+        <div class="adm-field">
+          <label>Qualification</label>
+          <input type="text" [(ngModel)]="teachingForm.qualification" placeholder="M.Sc, B.Ed"/>
+        </div>
+        <div class="adm-field">
+          <label>Experience (years)</label>
+          <input type="number" min="0" [(ngModel)]="teachingForm.experienceYears"/>
+        </div>
+        <div class="adm-field" style="grid-column: 1 / -1;">
+          <label>Remarks</label>
+          <input type="text" [(ngModel)]="teachingForm.remarks" placeholder="Any notes about this teacher..."/>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Responsibilities -->
+  <div *ngIf="activeTab === 'responsibilities'">
+    <article class="staff-snapshot" style="max-width:none;">
+      <div class="staff-snapshot__head"><h3>Responsibilities</h3></div>
+      <div *ngIf="!profile.overview.keyResponsibilities.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No responsibilities assigned.</div>
+      <div class="staff-table-wrap" *ngIf="profile.overview.keyResponsibilities.length">
+        <table class="staff-table">
+          <thead><tr><th>Responsibility</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of profile.overview.keyResponsibilities; trackBy: trackByIdx">
+              <td>{{ r.responsibilityName }}</td>
+              <td>{{ r.type }}</td>
+              <td><span class="staff-pill" [attr.data-state]="r.status">{{ r.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <!-- Documents (placeholder list — full vault on Documents page) -->
+  <div *ngIf="activeTab === 'documents'">
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head">
+        <h3>Document Vault</h3>
+        <a (click)="router.navigate(['/app/staff/documents'])">Open Full Vault →</a>
+      </div>
+      <p style="margin:0; color:var(--tc-text-muted); font-size:0.86rem;">Manage uploads, verification status, and expiry from the dedicated Documents page.</p>
+    </article>
+  </div>
+
+  <!-- Leave -->
+  <div *ngIf="activeTab === 'leave'" class="staff-snapshot-grid">
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head"><h3>Leave Summary</h3></div>
+      <div class="staff-snapshot__rows">
+        <div><span>Used</span><strong>{{ profile.leave.used }} days</strong></div>
+        <div><span>Balance</span><strong>{{ profile.leave.balance }} days</strong></div>
+        <div><span>Next Leave</span><strong>{{ profile.leave.nextLeave || '—' }}</strong></div>
+      </div>
+    </article>
+    <article class="staff-snapshot">
+      <div class="staff-snapshot__head"><h3>Recent Leaves</h3></div>
+      <div *ngIf="!profile.leave.recent.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No leave history.</div>
+      <div class="staff-snapshot__rows">
+        <div *ngFor="let l of profile.leave.recent.slice(0,5); trackBy: trackByIdx">
+          <span>{{ l.leaveType }} · {{ l.startDate }} → {{ l.endDate }}</span>
+          <strong><span class="staff-pill" [attr.data-state]="l.status">{{ l.status }}</span></strong>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Payroll -->
+  <div *ngIf="activeTab === 'payroll'">
+    <article class="staff-snapshot" *ngIf="profile.payroll; else noPayroll">
+      <div class="staff-snapshot__head"><h3>Payroll Snapshot</h3></div>
+      <div class="staff-snapshot__rows">
+        <div><span>Designation</span><strong>{{ profile.payroll.designation || '—' }}</strong></div>
+        <div><span>Basic</span><strong>₹{{ profile.payroll.basic | number:'1.0-2' }}</strong></div>
+        <div><span>HRA</span><strong>₹{{ profile.payroll.hra | number:'1.0-2' }}</strong></div>
+        <div><span>Special Allowance</span><strong>₹{{ profile.payroll.specialAllowance | number:'1.0-2' }}</strong></div>
+        <div><span>Total Earnings</span><strong>₹{{ profile.payroll.totalEarnings | number:'1.0-2' }}</strong></div>
+        <div><span>Total Deductions</span><strong>₹{{ profile.payroll.totalDeductions | number:'1.0-2' }}</strong></div>
+        <div><span>Net Pay</span><strong style="color:var(--tc-success)">₹{{ profile.payroll.netPay | number:'1.0-2' }}</strong></div>
+        <div><span>Effective From</span><strong>{{ profile.payroll.effectiveFrom || '—' }}</strong></div>
+      </div>
+    </article>
+    <ng-template #noPayroll>
+      <div class="adm-empty">
+        <i class="pi pi-money-bill"></i>
+        <p>No payroll record configured for this employee.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Timeline -->
+  <div *ngIf="activeTab === 'timeline'">
+    <article class="staff-snapshot" style="max-width:none;">
+      <div class="staff-snapshot__head"><h3>Activity Timeline</h3></div>
+      <div *ngIf="!timeline.length" style="color:var(--tc-text-muted); font-size:0.85rem;">No timeline entries.</div>
+      <div class="staff-table-wrap" *ngIf="timeline.length">
+        <table class="staff-table">
+          <thead><tr><th>Type</th><th>Title</th><th>Detail</th><th>When</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let t of timeline; trackBy: trackByIdx">
+              <td>{{ t.type }}</td>
+              <td>{{ t.title }}</td>
+              <td>{{ t.detail }}</td>
+              <td>{{ t.occurredOn || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+</section>
+
+<ng-template #loadingTpl>
+  <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading profile...</div>
+  <div *ngIf="!loading && errorMessage" class="adm-empty">{{ errorMessage }}</div>
+</ng-template>

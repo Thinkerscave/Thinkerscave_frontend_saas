@@ -1,5 +1,5 @@
 export type StaffWorkspacePage = 'dashboard' | 'directory' | 'operations';
-export type AttendanceWorkspacePage = 'dashboard' | 'students' | 'staff';
+export type AttendanceWorkspacePage = 'dashboard' | 'students' | 'staff' | 'reports' | 'settings';
 export type StaffViewMode = 'card' | 'table' | 'compact';
 export type StaffOperationTab = 'departments' | 'branches' | 'leave' | 'payroll';
 export type StaffProfileTab = 'overview' | 'attendance' | 'leave' | 'payroll' | 'documents' | 'activity';

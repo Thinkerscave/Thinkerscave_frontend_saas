@@ -1,0 +1,83 @@
+<tc-saas-page-header
+  title="My Profile"
+  subtitle="Personal information, security and quick links"
+  [breadcrumbs]="[{ label: 'Dashboard', route: '/app' }, { label: 'My Profile' }]">
+  <button type="button" class="btn-ghost" (click)="goDashboard()"><i class="pi pi-arrow-left"></i>Back to Dashboard</button>
+  <a routerLink="/app/settings" class="btn-ghost"><i class="pi pi-cog"></i>Settings</a>
+</tc-saas-page-header>
+
+<section class="profile-hero">
+  <div class="avatar-xl" *ngIf="photoUrl(); else initialsFallback">
+    <img [src]="photoUrl()" [alt]="fullName()">
+  </div>
+  <ng-template #initialsFallback>
+    <div class="avatar-xl is-initials">{{ initials() }}</div>
+  </ng-template>
+  <div class="hero-meta">
+    <h2>{{ fullName() }}</h2>
+    <p>{{ user()?.email || user()?.userName }}</p>
+    <div class="hero-pills">
+      <tc-saas-pill [label]="roleLabel()" tone="info" icon="pi pi-shield"></tc-saas-pill>
+      <tc-saas-pill *ngIf="user()?.mobileNumber" [label]="user()?.mobileNumber" tone="neutral" icon="pi pi-phone"></tc-saas-pill>
+      <tc-saas-pill *ngIf="user()?.city" [label]="user()?.city" tone="neutral" icon="pi pi-map-marker"></tc-saas-pill>
+    </div>
+  </div>
+</section>
+
+<tc-saas-tabs [tabs]="tabs" [active]="active()" (changeTab)="selectTab($event)"></tc-saas-tabs>
+
+<tc-saas-panel *ngIf="active() === 'overview'" title="Personal Information">
+  <dl class="info-grid">
+    <div><dt>Username</dt><dd>{{ user()?.userName || '—' }}</dd></div>
+    <div><dt>First Name</dt><dd>{{ user()?.firstName || '—' }}</dd></div>
+    <div><dt>Last Name</dt><dd>{{ user()?.lastName || '—' }}</dd></div>
+    <div><dt>Email</dt><dd>{{ user()?.email || '—' }}</dd></div>
+    <div><dt>Mobile</dt><dd>{{ user()?.mobileNumber || '—' }}</dd></div>
+    <div><dt>Role</dt><dd>{{ roleLabel() }}</dd></div>
+    <div><dt>City</dt><dd>{{ user()?.city || '—' }}</dd></div>
+    <div><dt>State</dt><dd>{{ user()?.state || '—' }}</dd></div>
+  </dl>
+</tc-saas-panel>
+
+<tc-saas-panel *ngIf="active() === 'edit'" title="Edit Personal Details">
+  <form class="form-grid" (submit)="saveProfile(); $event.preventDefault()">
+    <label>First Name<input type="text" [ngModel]="edit().firstName" (ngModelChange)="updateEditField('firstName', $event)" name="firstName"></label>
+    <label>Last Name<input type="text" [ngModel]="edit().lastName" (ngModelChange)="updateEditField('lastName', $event)" name="lastName"></label>
+    <label>Email<input type="email" [ngModel]="edit().email" (ngModelChange)="updateEditField('email', $event)" name="email"></label>
+    <label>Mobile<input type="tel" [ngModel]="edit().mobile" (ngModelChange)="updateEditField('mobile', $event)" name="mobile"></label>
+    <label>City<input type="text" [ngModel]="edit().city" (ngModelChange)="updateEditField('city', $event)" name="city"></label>
+    <label>State<input type="text" [ngModel]="edit().state" (ngModelChange)="updateEditField('state', $event)" name="state"></label>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="editStatus() === 'saving'">
+        <i class="pi" [class.pi-spinner]="editStatus() === 'saving'" [class.pi-check]="editStatus() !== 'saving'"></i>
+        {{ editStatus() === 'saving' ? 'Saving…' : 'Save Changes' }}
+      </button>
+      <span class="status saved" *ngIf="editStatus() === 'saved'">Profile updated</span>
+    </div>
+  </form>
+</tc-saas-panel>
+
+<tc-saas-panel *ngIf="active() === 'security'" title="Change Password" subtitle="Use a strong password of at least 8 characters">
+  <form class="form-grid narrow" (submit)="changePassword(); $event.preventDefault()">
+    <label>Current Password<input type="password" autocomplete="current-password" [ngModel]="password().current" (ngModelChange)="updatePasswordField('current', $event)" name="current"></label>
+    <label>New Password<input type="password" autocomplete="new-password" [ngModel]="password().next" (ngModelChange)="updatePasswordField('next', $event)" name="next"></label>
+    <label>Confirm New Password<input type="password" autocomplete="new-password" [ngModel]="password().confirm" (ngModelChange)="updatePasswordField('confirm', $event)" name="confirm"></label>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="passwordStatus() === 'saving'">
+        <i class="pi pi-shield"></i>{{ passwordStatus() === 'saving' ? 'Updating…' : 'Update Password' }}
+      </button>
+      <span class="status saved"    *ngIf="passwordStatus() === 'saved'">Password changed</span>
+      <span class="status error"    *ngIf="passwordStatus() === 'mismatch'">New passwords do not match</span>
+      <span class="status error"    *ngIf="passwordStatus() === 'weak'">Password must be at least 8 characters</span>
+    </div>
+  </form>
+</tc-saas-panel>
+
+<tc-saas-panel *ngIf="active() === 'quick-links'" title="Quick Links" subtitle="Shortcuts to your most-used areas">
+  <ul class="link-list">
+    <li><a routerLink="/app"><i class="pi pi-home"></i>Dashboard<small>Your role-specific overview</small></a></li>
+    <li><a routerLink="/app/settings"><i class="pi pi-cog"></i>Settings<small>Theme, language and notifications</small></a></li>
+    <li><a routerLink="/app/organization/activity-logs"><i class="pi pi-list"></i>My Activity<small>Recent actions and audit trail</small></a></li>
+    <li><a routerLink="/app/communication/announcements"><i class="pi pi-megaphone"></i>Announcements<small>Latest organization updates</small></a></li>
+  </ul>
+</tc-saas-panel>

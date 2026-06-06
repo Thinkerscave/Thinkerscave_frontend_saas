@@ -1,0 +1,57 @@
+<div class="saas-page delivery-logs">
+  <tc-saas-page-header
+    title="Delivery Logs"
+    subtitle="Track delivery status across SMS, email, push, and in-app channels"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Delivery Logs'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
+    <button type="button" class="saas-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading delivery logs...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <tc-saas-filter-row>
+      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search subject..."></label>
+      <label class="saas-field"><span>Channel</span>
+        <select [(ngModel)]="channelFilter">
+          <option value="all">All</option>
+          <option value="EMAIL">Email</option>
+          <option value="SMS">SMS</option>
+          <option value="PUSH">Push</option>
+          <option value="IN_APP">In-app</option>
+        </select>
+      </label>
+      <label class="saas-field"><span>Status</span>
+        <select [(ngModel)]="statusFilter">
+          <option value="all">All</option>
+          <option value="SENT">Delivered</option>
+          <option value="PENDING">Pending</option>
+          <option value="FAILED">Failed</option>
+        </select>
+      </label>
+      <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
+      <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
+    </tc-saas-filter-row>
+
+    <tc-saas-panel [title]="'Delivery Activity (' + filtered.length + ')'">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>Message ID</th><th>Subject</th><th>Recipient</th><th>Channel</th><th>Sent On</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngIf="!filtered.length"><td colspan="6"><div class="saas-empty"><i class="pi pi-inbox"></i><strong>No delivery records match your filters</strong></div></td></tr>
+            <tr *ngFor="let n of filtered">
+              <td>#{{ n.id }}</td>
+              <td>{{ n.subject }}</td>
+              <td>User #{{ n.recipientUserId }}</td>
+              <td><tc-saas-pill [label]="n.channel" tone="info"></tc-saas-pill></td>
+              <td>{{ n.sentAt | date:'medium' }}</td>
+              <td><tc-saas-pill [label]="n.status" [tone]="statusTone(n.status)"></tc-saas-pill></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

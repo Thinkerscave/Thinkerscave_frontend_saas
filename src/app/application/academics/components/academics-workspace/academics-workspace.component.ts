@@ -43,8 +43,6 @@ import { AcademicTimetablePageComponent } from '../pages/timetable/academic-time
 import { AcademicYearsPageComponent } from '../pages/years/academic-years-page.component';
 import { AcademicActionDrawerComponent } from '../shared/action-drawer/academic-action-drawer.component';
 import { AcademicQuickActionBarComponent } from '../shared/quick-action-bar/quick-action-bar.component';
-import { AcademicSmartHeroComponent } from '../shared/smart-hero/smart-hero.component';
-import { AcademicWorkspaceNavComponent } from '../shared/workspace-nav/workspace-nav.component';
 import { AutofocusDirective } from '../../../../shared/directives';
 
 interface AcademicCommand {
@@ -63,9 +61,7 @@ interface AcademicCommand {
     CommonModule,
     FormsModule,
     RouterModule,
-    AcademicSmartHeroComponent,
     AcademicQuickActionBarComponent,
-    AcademicWorkspaceNavComponent,
     AcademicActionDrawerComponent,
     AcademicDashboardPageComponent,
     AcademicYearsPageComponent,

@@ -1,0 +1,42 @@
+<div class="saas-page templates-list">
+  <tc-saas-page-header
+    title="Message Templates"
+    subtitle="Reusable templates for announcements and notifications"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Templates'}]">
+    <a class="saas-btn saas-btn--primary" routerLink="/app/communication/templates/new/edit"><i class="pi pi-plus"></i>Create Template</a>
+  </tc-saas-page-header>
+
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+  <tc-saas-filter-row>
+    <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search templates..."></label>
+    <label class="saas-field"><span>Category</span>
+      <select [(ngModel)]="categoryFilter"><option value="all">All</option><option *ngFor="let c of categories" [value]="c">{{ c }}</option></select>
+    </label>
+    <label class="saas-field"><span>Status</span>
+      <select [(ngModel)]="statusFilter"><option value="all">All</option><option value="active">Active</option><option value="draft">Draft</option></select>
+    </label>
+  </tc-saas-filter-row>
+
+  <tc-saas-panel [title]="'All Templates (' + filtered.length + ')'">
+    <div class="saas-table-wrap">
+      <table class="saas-data-table">
+        <thead><tr><th>Template Name</th><th>Category</th><th>Subject</th><th>Last Updated</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngIf="!filtered.length"><td colspan="6"><div class="saas-empty"><i class="pi pi-file-edit"></i><strong>No templates match your filters</strong></div></td></tr>
+          <tr *ngFor="let t of filtered">
+            <td><strong>{{ t.name }}</strong></td>
+            <td><tc-saas-pill [label]="t.category" tone="info"></tc-saas-pill></td>
+            <td>{{ t.subject }}</td>
+            <td>{{ t.updatedAt | date:'mediumDate' }}</td>
+            <td><tc-saas-pill [label]="t.active ? 'Active' : 'Draft'" [tone]="t.active ? 'success' : 'warning'"></tc-saas-pill></td>
+            <td class="cell-actions">
+              <a class="saas-icon-btn" [routerLink]="['/app/communication/templates', t.id, 'edit']"><i class="pi pi-pencil"></i></a>
+              <button type="button" class="saas-icon-btn"><i class="pi pi-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </tc-saas-panel>
+</div>

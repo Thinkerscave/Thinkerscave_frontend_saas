@@ -1,0 +1,158 @@
+<section class="adm-workspace">
+  <p-confirmDialog></p-confirmDialog>
+
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Documents — Employee Vault</h1>
+      <p>Manage uploads, verification status, and document compliance.</p>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openAdd()">
+        <i class="pi pi-upload"></i> Upload Document
+      </button>
+      <button type="button" class="adm-btn"><i class="pi pi-cloud-upload"></i> Bulk Upload</button>
+    </div>
+  </header>
+
+  <div class="adm-kpi-grid">
+    <div class="adm-kpi" data-tone="info">
+      <span class="adm-kpi__label">Total Documents</span>
+      <span class="adm-kpi__value">{{ kpi.total }}</span>
+      <span class="adm-kpi__hint">All</span>
+    </div>
+    <div class="adm-kpi" data-tone="success">
+      <span class="adm-kpi__label">Verified</span>
+      <span class="adm-kpi__value">{{ kpi.verified }}</span>
+      <span class="adm-kpi__hint">{{ kpi.total > 0 ? ((kpi.verified / kpi.total) * 100 | number:'1.0-1') : 0 }}%</span>
+    </div>
+    <div class="adm-kpi" data-tone="warning">
+      <span class="adm-kpi__label">Pending</span>
+      <span class="adm-kpi__value">{{ kpi.pending }}</span>
+      <span class="adm-kpi__hint">{{ kpi.total > 0 ? ((kpi.pending / kpi.total) * 100 | number:'1.0-1') : 0 }}%</span>
+    </div>
+    <div class="adm-kpi" data-tone="danger">
+      <span class="adm-kpi__label">Missing</span>
+      <span class="adm-kpi__value">{{ kpi.missing }}</span>
+      <span class="adm-kpi__hint">Action needed</span>
+    </div>
+    <div class="adm-kpi" data-tone="danger">
+      <span class="adm-kpi__label">Expired</span>
+      <span class="adm-kpi__value">{{ kpi.expired }}</span>
+      <span class="adm-kpi__hint">Renew now</span>
+    </div>
+  </div>
+
+  <div class="staff-doc-layout">
+    <aside class="staff-doc-sidebar">
+      <button *ngFor="let c of categories"
+              type="button"
+              [class.is-active]="activeCategory === c.code"
+              (click)="selectCategory(c.code)">
+        <span>{{ c.label }}</span>
+        <span class="badge">{{ countForCategory(c.code) }}</span>
+      </button>
+    </aside>
+
+    <div class="adm-panel" style="margin:0;">
+      <div class="adm-panel__header">
+        <div class="adm-panel__title">
+          <h2>{{ categoryLabel(activeCategory) }}</h2>
+          <small class="adm-panel__hint">{{ documents.length }} document(s)</small>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+      <div *ngIf="errorMessage" class="adm-empty">{{ errorMessage }}</div>
+
+      <div *ngIf="!loading && !documents.length" class="adm-empty">
+        <i class="pi pi-folder-open"></i>
+        <p>No documents in this category.</p>
+      </div>
+
+      <div *ngIf="!loading && documents.length" class="staff-table-wrap">
+        <table class="staff-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Document</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Uploaded On</th>
+              <th>Expiry</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of documents; trackBy: trackById">
+              <td>{{ d.staffName }}</td>
+              <td><strong>{{ d.documentType }}</strong><br><small style="color:var(--tc-text-muted)">{{ d.fileName }}</small></td>
+              <td>{{ d.category }}</td>
+              <td><span class="staff-pill" [attr.data-state]="d.status">{{ d.status }}</span></td>
+              <td>{{ d.uploadedOn ? (d.uploadedOn | date:'mediumDate') : '—' }}</td>
+              <td>{{ d.expiresOn || '—' }}</td>
+              <td>
+                <button *ngIf="d.status !== 'VERIFIED'" type="button" class="adm-btn adm-btn--ghost" (click)="verify(d)" title="Verify"><i class="pi pi-check"></i></button>
+                <a *ngIf="d.fileUrl" [attr.href]="d.fileUrl" target="_blank" class="adm-btn adm-btn--ghost" title="Download"><i class="pi pi-download"></i></a>
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--danger" (click)="confirmDelete(d)" title="Delete"><i class="pi pi-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="staff-modal-overlay" *ngIf="showAdd" (click)="closeAdd()">
+    <div class="staff-modal" (click)="$event.stopPropagation()">
+      <div class="staff-modal__head">
+        <h2>Upload Document</h2>
+        <button type="button" (click)="closeAdd()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="staff-modal__body">
+        <div class="adm-filter-bar">
+          <div class="adm-field">
+            <label>Employee *</label>
+            <select [(ngModel)]="form.staffId">
+              <option [ngValue]="0">— Select Employee —</option>
+              <option *ngFor="let s of staffOptions" [ngValue]="s.staffId">{{ s.fullName }} ({{ s.staffCode }})</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Category *</label>
+            <select [(ngModel)]="form.category">
+              <option *ngFor="let c of categories.slice(1)" [value]="c.code">{{ c.label }}</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Document Type *</label>
+            <input type="text" [(ngModel)]="form.documentType" placeholder="e.g. Aadhaar Card, PAN, B.Ed Certificate"/>
+          </div>
+          <div class="adm-field">
+            <label>File Name *</label>
+            <input type="text" [(ngModel)]="form.fileName" placeholder="e.g. aadhaar.pdf"/>
+          </div>
+          <div class="adm-field">
+            <label>File URL</label>
+            <input type="text" [(ngModel)]="form.fileUrl" placeholder="/uploads/staff/.../file.pdf"/>
+          </div>
+          <div class="adm-field">
+            <label>Expires On</label>
+            <input type="date" [(ngModel)]="form.expiresOn"/>
+          </div>
+          <div class="adm-field" style="grid-column: 1 / -1;">
+            <label>Remarks</label>
+            <input type="text" [(ngModel)]="form.remarks" placeholder="Optional notes"/>
+          </div>
+        </div>
+      </div>
+      <div class="staff-modal__foot">
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="closeAdd()">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="save()" [disabled]="saving">
+          <i class="pi" [class.pi-spin]="saving" [class.pi-upload]="!saving" [class.pi-spinner]="saving"></i> Upload
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>

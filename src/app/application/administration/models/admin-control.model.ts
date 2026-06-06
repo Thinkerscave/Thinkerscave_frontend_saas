@@ -1,4 +1,4 @@
-export type AdminWorkspacePage = 'dashboard' | 'access' | 'monitoring' | 'audit';
+export type AdminWorkspacePage = 'dashboard' | 'access' | 'monitoring' | 'audit' | 'subscriptions';
 export type AdminTone = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
 export interface AdminSection {
@@ -207,6 +207,25 @@ export interface AdminControlCenter {
   auditLogs: AdminAuditEvent[];
   securityEvents: AdminSecurityEvent[];
   systemEvents: AdminSystemEvent[];
+}
+
+export interface SubscriptionPlanDTO {
+  planId?: number;
+  planCode: string;
+  planName: string;
+  description?: string;
+  monthlyPrice?: number;
+  annualPrice?: number;
+  currency?: string;
+  maxStudents?: number;
+  maxStaff?: number;
+  maxUsers?: number;
+  storageGb?: number;
+  modulesIncluded?: string;
+  supportTier?: string;
+  highlightColor?: string;
+  featured?: boolean;
+  active?: boolean;
 }
 
 export interface AdminOrganizationCreatePayload {

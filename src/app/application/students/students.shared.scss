@@ -1,0 +1,245 @@
+/* ============================================================
+   STUDENTS WORKSPACE — additions on top of admissions.shared.scss
+   These classes layer specialised primitives needed by
+   Directory / Profile 360 / Academic Movement / Student Movement /
+   Document Vault / Alumni screens.
+   ============================================================ */
+
+/* Real photo avatar (replaces initial-only avatar from admissions) */
+.stu-photo {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--tc-primary-500), var(--tc-primary-700));
+  border: 2px solid var(--tc-surface-0);
+  box-shadow: var(--tc-shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+  flex-shrink: 0;
+}
+.stu-photo--lg  { width: 84px; height: 84px; border: 3px solid var(--tc-surface-0); }
+.stu-photo--xl  { width: 120px; height: 120px; border: 4px solid var(--tc-surface-0); }
+.stu-photo--initials {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700;
+}
+
+/* Profile 360 hero */
+.stu-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tc-primary-500) 10%, transparent), transparent);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg, 16px);
+
+  &__meta {
+    display: flex; flex-direction: column; gap: 6px;
+    h1 { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--tc-text); }
+    p  { margin: 0; color: var(--tc-text-muted); font-size: 0.9rem; }
+    .stu-hero-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+    }
+    .stu-hero-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: var(--tc-radius-pill, 999px);
+      background: var(--tc-surface-100);
+      border: 1px solid var(--tc-border);
+      font-size: 0.78rem; color: var(--tc-text-muted);
+      i { color: var(--tc-primary-600); }
+    }
+  }
+
+  &__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+}
+
+/* Snapshot panels (Overview tab) */
+.stu-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.stu-snapshot {
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg, 16px);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 12px;
+
+  &__head {
+    display: flex; align-items: center; justify-content: space-between;
+    h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--tc-text); }
+    a  { font-size: 0.78rem; color: var(--tc-primary-600); cursor: pointer; }
+  }
+  &__rows {
+    display: flex; flex-direction: column; gap: 6px;
+    > div {
+      display: flex; justify-content: space-between; gap: 12px;
+      font-size: 0.85rem;
+      span:first-child { color: var(--tc-text-muted); }
+      strong { color: var(--tc-text); font-weight: 700; }
+    }
+  }
+}
+
+/* Circular attendance ring */
+.stu-ring {
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  width: 110px; height: 110px;
+  margin: 4px auto;
+
+  svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .stu-ring__track  { stroke: var(--tc-surface-100); }
+  .stu-ring__fill   { stroke: var(--tc-success); transition: stroke-dashoffset .35s ease; }
+  .stu-ring__label  {
+    position: absolute;
+    text-align: center;
+    strong { display: block; font-size: 1.5rem; font-weight: 800; color: var(--tc-text); line-height: 1; }
+    small  { font-size: 0.72rem; color: var(--tc-text-muted); display: block; margin-top: 2px; }
+  }
+}
+
+/* Fee progress bar */
+.stu-fee-bar {
+  height: 10px; background: var(--tc-surface-100); border-radius: 999px; overflow: hidden;
+  > span { display: block; height: 100%;
+           background: linear-gradient(90deg, var(--tc-primary-500), var(--tc-primary-700));
+           transition: width .35s ease; }
+}
+
+/* Generic data table */
+.stu-table-wrap {
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg, 16px);
+  overflow: hidden;
+  background: var(--tc-surface-0);
+}
+.stu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  thead th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--tc-surface-50);
+    color: var(--tc-text-muted);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--tc-border);
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--tc-border);
+    color: var(--tc-text);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--tc-surface-50); }
+}
+
+/* Toolbar chips (category filter) */
+.stu-chip-bar {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  button {
+    background: var(--tc-surface-0);
+    border: 1px solid var(--tc-border);
+    color: var(--tc-text-muted);
+    padding: 6px 12px;
+    border-radius: var(--tc-radius-pill, 999px);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all var(--tc-anim-duration-fast, 150ms) ease;
+    font-family: inherit;
+
+    &.is-active {
+      background: color-mix(in srgb, var(--tc-primary-500) 12%, transparent);
+      border-color: var(--tc-primary-500);
+      color: var(--tc-primary-700);
+    }
+    &:hover { color: var(--tc-primary-600); }
+  }
+}
+
+/* Presence dot on directory cards */
+.stu-presence {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.74rem; font-weight: 700;
+  &::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tc-text-muted);
+  }
+  &[data-state="PRESENT_TODAY"] { color: var(--tc-success); &::before { background: var(--tc-success); } }
+  &[data-state="ABSENT_TODAY"]  { color: var(--tc-danger);  &::before { background: var(--tc-danger);  } }
+  &[data-state="PENDING"]       { color: var(--tc-text-muted); }
+}
+
+/* Two-column layout for Profile 360 (main + sidebar) */
+.stu-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+.stu-aside {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* TC readiness checklist */
+.stu-checklist {
+  display: flex; flex-direction: column; gap: 8px;
+  > div {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--tc-surface-50);
+    border-radius: var(--tc-radius-md, 12px);
+    font-size: 0.86rem;
+
+    i {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+    }
+    &[data-ok="true"] i  { background: color-mix(in srgb, var(--tc-success) 18%, transparent); color: var(--tc-success); }
+    &[data-ok="false"] i { background: color-mix(in srgb, var(--tc-warning) 18%, transparent); color: var(--tc-warning); }
+
+    strong { margin-right: auto; color: var(--tc-text); }
+    small  { color: var(--tc-text-muted); font-size: 0.78rem; }
+  }
+}
+
+/* Achievement card list */
+.stu-achievement-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.stu-achievement {
+  display: flex; gap: 12px;
+  padding: 14px 16px;
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg, 16px);
+
+  &__icon {
+    width: 42px; height: 42px; flex-shrink: 0;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--tc-primary-500) 12%, transparent);
+    color: var(--tc-primary-600);
+    font-size: 1.1rem;
+  }
+  &__body {
+    display: flex; flex-direction: column; gap: 2px;
+    strong { font-size: 0.92rem; font-weight: 700; color: var(--tc-text); }
+    p      { margin: 0; font-size: 0.82rem; color: var(--tc-text-muted); }
+    small  { font-size: 0.74rem; color: var(--tc-text-muted); }
+  }
+}

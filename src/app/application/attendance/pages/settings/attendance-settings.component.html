@@ -1,0 +1,60 @@
+<div class="saas-page attendance-settings">
+  <tc-saas-page-header title="Settings" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Settings'}]">
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Settings</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="saved" class="attendance-settings__toast"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
+
+  <div class="attendance-settings__grid">
+    <tc-saas-panel title="Attendance Mode" subtitle="Choose how attendance is captured">
+      <div class="settings-radio-group">
+        <label class="settings-radio">
+          <input type="radio" name="mode" [(ngModel)]="settings.mode" value="DAILY">
+          <div><strong>Daily</strong><small>Mark attendance once a day per student.</small></div>
+        </label>
+        <label class="settings-radio">
+          <input type="radio" name="mode" [(ngModel)]="settings.mode" value="PERIOD">
+          <div><strong>Period-wise</strong><small>Mark attendance per period for granular tracking.</small></div>
+        </label>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="School Timings" subtitle="Operating hours for attendance window">
+      <div class="settings-row">
+        <label class="saas-field"><span>Start Time</span><input type="time" [(ngModel)]="settings.startTime"></label>
+        <label class="saas-field"><span>End Time</span><input type="time" [(ngModel)]="settings.endTime"></label>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Late Arrival Rule" subtitle="Mark students late after this time">
+      <label class="saas-field"><span>Late After</span><input type="time" [(ngModel)]="settings.lateAfter"></label>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Defaulter Threshold" subtitle="Below this percent students appear as defaulters">
+      <label class="saas-field"><span>Min Attendance %</span><input type="number" min="0" max="100" [(ngModel)]="settings.minAttendancePct"></label>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Attendance Freeze" subtitle="Prevent edits after the cut-off">
+      <label class="settings-toggle">
+        <input type="checkbox" [(ngModel)]="settings.allowEdit">
+        <span>Allow editing past attendance</span>
+      </label>
+      <label class="saas-field" style="margin-top: 14px;">
+        <span>Enable freeze after</span>
+        <select [(ngModel)]="settings.freezeAfterDays">
+          <option [ngValue]="3">3 days</option>
+          <option [ngValue]="7">7 days</option>
+          <option [ngValue]="15">15 days</option>
+          <option [ngValue]="30">30 days</option>
+        </select>
+      </label>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Notifications" subtitle="Notify parents about attendance events">
+      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.notifySms"><span>SMS</span></label>
+      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.notifyWhatsapp"><span>WhatsApp</span></label>
+      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.notifyPush"><span>Push notifications</span></label>
+      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.notifyEmail"><span>Email</span></label>
+    </tc-saas-panel>
+  </div>
+</div>

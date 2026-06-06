@@ -1,30 +1,21 @@
 import { PipelineStage, WorkspaceNavItem } from '../models/workflow-workspace.model';
 
+// Admissions module — spec defines three pages only: Inquiry Center, Admission Center, Settings.
+// Legacy page IDs (pipeline, follow-ups, counseling, applications, documents, communication, analytics)
+// remain reachable via /app/inquiry/* redirects but are no longer surfaced as separate tabs.
 export const INQUIRY_NAV_ITEMS: WorkspaceNavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', route: '/app/inquiry/dashboard', icon: 'pi pi-sparkles', description: 'Live admission pulse' },
-  { id: 'pipeline', label: 'Inquiry Pipeline', route: '/app/inquiry/pipeline', icon: 'pi pi-sitemap', description: 'Stage movement' },
-  { id: 'management', label: 'Inquiry Management', route: '/app/inquiry/management', icon: 'pi pi-user-plus', description: 'Guided capture' },
-  { id: 'follow-ups', label: 'Follow-Up Center', route: '/app/inquiry/follow-ups', icon: 'pi pi-phone', description: 'Today and overdue' },
-  { id: 'counseling', label: 'Counseling Sessions', route: '/app/inquiry/counseling', icon: 'pi pi-comments', description: 'Walk-ins and meetings' },
-  { id: 'applications', label: 'Admission Applications', route: '/app/inquiry/applications', icon: 'pi pi-file-edit', description: 'Review queue' },
-  { id: 'documents', label: 'Document Collection', route: '/app/inquiry/documents', icon: 'pi pi-folder-open', description: 'Checklist readiness' },
-  { id: 'communication', label: 'Communication Center', route: '/app/inquiry/communication', icon: 'pi pi-send', description: 'Messages and calls' },
-  { id: 'analytics', label: 'Analytics & Reports', route: '/app/inquiry/analytics', icon: 'pi pi-chart-line', description: 'Sources and conversion' }
+  { id: 'dashboard', label: 'Inquiry Center', route: '/app/admissions/inquiry-center', icon: 'pi pi-sparkles', description: 'Inquiry pipeline, follow-ups, counseling' },
+  { id: 'applications', label: 'Admission Center', route: '/app/admissions/admission-center', icon: 'pi pi-file-edit', description: 'Admissions, documents, enrollment' },
+  { id: 'settings', label: 'Settings', route: '/app/admissions/settings', icon: 'pi pi-cog', description: 'Sources, statuses, documents, rules' }
 ];
 
+// Student Management — spec defines five pages: Students, Academic Movement, Student Movement, Documents, Alumni.
 export const STUDENT_NAV_ITEMS: WorkspaceNavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', route: '/app/students/dashboard', icon: 'pi pi-th-large', description: 'Student health' },
-  { id: 'directory', label: 'Student Directory', route: '/app/students/directory', icon: 'pi pi-users', description: 'Find and manage' },
-  { id: 'profiles', label: 'Student Profiles', route: '/app/students/profiles', icon: 'pi pi-id-card', description: '360 degree record' },
-  { id: 'admissions', label: 'Admissions', route: '/app/students/admissions', icon: 'pi pi-user-plus', description: 'Joined pipeline' },
-  { id: 'classes', label: 'Classes', route: '/app/students/classes', icon: 'pi pi-building-columns', description: 'Class structure' },
-  { id: 'sections', label: 'Sections', route: '/app/students/sections', icon: 'pi pi-table', description: 'Section balance' },
-  { id: 'promotion', label: 'Promotion Center', route: '/app/students/promotion', icon: 'pi pi-arrow-up-right', description: 'Academic movement' },
-  { id: 'transfer', label: 'Transfer Center', route: '/app/students/transfer', icon: 'pi pi-send', description: 'Movement requests' },
-  { id: 'documents', label: 'Documents', route: '/app/students/documents', icon: 'pi pi-folder', description: 'Student files' },
-  { id: 'parents', label: 'Parent Directory', route: '/app/students/parents', icon: 'pi pi-address-book', description: 'Family links' },
-  { id: 'id-cards', label: 'ID Cards', route: '/app/students/id-cards', icon: 'pi pi-qrcode', description: 'Card issuing' },
-  { id: 'alumni', label: 'Alumni', route: '/app/students/alumni', icon: 'pi pi-verified', description: 'Lifecycle records' }
+  { id: 'directory', label: 'Students', route: '/app/students/directory', icon: 'pi pi-users', description: 'Active, inactive, alumni records' },
+  { id: 'promotion', label: 'Academic Movement', route: '/app/students/academic-movement', icon: 'pi pi-arrow-up-right', description: 'Promotion and progression' },
+  { id: 'transfer', label: 'Student Movement', route: '/app/students/student-movement', icon: 'pi pi-send', description: 'Transfers, withdrawals, readmissions' },
+  { id: 'documents', label: 'Documents', route: '/app/students/documents', icon: 'pi pi-folder', description: 'Student document vault' },
+  { id: 'alumni', label: 'Alumni', route: '/app/students/alumni', icon: 'pi pi-verified', description: 'Lifecycle alumni directory' }
 ];
 
 export const INQUIRY_PIPELINE_STAGES: PipelineStage[] = [
@@ -38,7 +29,7 @@ export const INQUIRY_PIPELINE_STAGES: PipelineStage[] = [
   { id: 'LOST', label: 'Lost', description: 'Closed after a negative outcome', tone: 'danger' }
 ];
 
-export const STUDENT_PROFILE_TABS = ['Overview', 'Academics', 'Attendance', 'Fees', 'Documents', 'Medical', 'Communication', 'Timeline'];
+export const STUDENT_PROFILE_TABS = ['Overview', 'Personal', 'Family', 'Academic', 'Attendance', 'Fees', 'Documents', 'Medical', 'Portfolio', 'Timeline'];
 
 export const REQUIRED_ADMISSION_DOCUMENTS = [
   'Birth Certificate',

@@ -1,0 +1,60 @@
+.access-control {
+  &__overrides {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 18px;
+    @media (max-width: 900px) { grid-template-columns: 1fr; }
+  }
+}
+
+.permission-matrix {
+  th, td { text-align: center; }
+  th:first-child, td:first-child { text-align: left; }
+}
+
+.permission-cell {
+  width: 70px;
+  &__chip {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--saas-danger-soft);
+    color: var(--saas-danger);
+    i { font-size: 0.75rem; }
+
+    &[data-on="true"] { background: var(--saas-success-soft); color: var(--saas-success); }
+  }
+}
+
+.user-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 420px; overflow-y: auto;
+
+  &__item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    strong { display: block; color: var(--saas-text); font-size: 0.88rem; }
+    small { color: var(--saas-text-soft); font-size: 0.74rem; }
+
+    &:hover { background: var(--saas-surface-muted); }
+    &.is-active { background: var(--saas-primary-soft); border-color: var(--saas-primary); }
+    &.is-active strong { color: var(--saas-primary); }
+  }
+
+  &__avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--saas-primary-soft);
+    color: var(--saas-primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+}

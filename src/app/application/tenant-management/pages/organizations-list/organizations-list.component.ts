@@ -3,18 +3,30 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Host
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+
 import { AdminControlCenter } from '../../../administration/models/admin-control.model';
 import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
-import { TenantOrgView, TenantStatus, mapOrganization, tenantKpis } from '../../data/tenant-view.model';
+import { TenantOrgView, TenantStatus, mapOrganization, tenantKpis, PlanTier } from '../../data/tenant-view.model';
+
+import {
+  SaasPageHeaderComponent,
+  SaasStatGridComponent,
+  SaasPanelComponent,
+  SaasFilterRowComponent,
+  SaasPillComponent,
+  SaasStat
+} from '../../../../shared/ui/saas';
 
 type StatusFilter = 'all' | TenantStatus;
+type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
 @Component({
   selector: 'app-organizations-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent],
   templateUrl: './organizations-list.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './organizations-list.component.scss'
 })
 export class OrganizationsListComponent implements OnInit {
   private readonly router = inject(Router);
@@ -32,15 +44,13 @@ export class OrganizationsListComponent implements OnInit {
   openMenuFor: number | null = null;
 
   readonly statusChips: { id: StatusFilter; label: string }[] = [
-    { id: 'all', label: 'All tenants' },
+    { id: 'all', label: 'All Status' },
     { id: 'active', label: 'Active' },
     { id: 'trial', label: 'Trial' },
     { id: 'suspended', label: 'Suspended' }
   ];
 
-  ngOnInit(): void {
-    this.load();
-  }
+  ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading = true;
@@ -55,7 +65,7 @@ export class OrganizationsListComponent implements OnInit {
           this.cdr.markForCheck();
         },
         error: () => {
-          this.errorMessage = 'We could not reach the tenant workspace. Showing an empty view — retry to refresh.';
+          this.errorMessage = 'Could not reach the tenant workspace. Showing an empty view — retry to refresh.';
           this.organizations = [];
           this.loading = false;
           this.cdr.markForCheck();
@@ -63,13 +73,19 @@ export class OrganizationsListComponent implements OnInit {
       });
   }
 
-  get kpis() {
-    return tenantKpis(this.organizations);
+  get kpis() { return tenantKpis(this.organizations); }
+
+  get stats(): SaasStat[] {
+    const k = this.kpis;
+    return [
+      { key: 'total', label: 'Total Organizations', value: k.total.toString(), helper: 'All tenants', icon: 'pi pi-building', tone: 'primary' },
+      { key: 'active', label: 'Active Subscriptions', value: k.active.toString(), helper: 'Live tenants', icon: 'pi pi-check-circle', tone: 'success' },
+      { key: 'trial', label: 'Trial Period', value: k.trial.toString(), helper: 'Evaluating ThinkersCave', icon: 'pi pi-clock', tone: 'warning' },
+      { key: 'suspended', label: 'Suspended', value: k.suspended.toString(), helper: 'Paused tenants', icon: 'pi pi-ban', tone: 'danger' }
+    ];
   }
 
-  get planOptions(): string[] {
-    return Array.from(new Set(this.organizations.map(o => o.plan))).sort();
-  }
+  get planOptions(): string[] { return Array.from(new Set(this.organizations.map(o => o.plan))).sort(); }
 
   get filtered(): TenantOrgView[] {
     const q = this.search.trim().toLowerCase();
@@ -87,9 +103,7 @@ export class OrganizationsListComponent implements OnInit {
   }
 
   openWorkspace(org: TenantOrgView, event?: MouseEvent): void {
-    if (event && (event.target as HTMLElement).closest('.tc-tenant-card__menu, .tc-tenant-card__menu-btn')) {
-      return;
-    }
+    if (event && (event.target as HTMLElement).closest('.organizations-list__menu, .saas-icon-btn')) { return; }
     this.router.navigate(['/app/tenant-management/organizations', org.id]);
   }
 
@@ -117,8 +131,22 @@ export class OrganizationsListComponent implements OnInit {
       this.router.navigate(['/app/tenant-management/subscription-plans']);
       return;
     }
-    // Suspend / Activate / Renew / Impersonate — placeholder until backend endpoints land
     this.router.navigate(['/app/tenant-management/organizations', org.id], { queryParams: { action } });
+  }
+
+  statusTone(status: TenantStatus): PillTone {
+    if (status === 'active') return 'success';
+    if (status === 'trial') return 'warning';
+    if (status === 'suspended') return 'danger';
+    return 'neutral';
+  }
+
+  planTone(tier: PlanTier): PillTone {
+    if (tier === 'enterprise') return 'primary';
+    if (tier === 'professional') return 'info';
+    if (tier === 'starter') return 'neutral';
+    if (tier === 'custom') return 'warning';
+    return 'neutral';
   }
 
   resetFilters(): void {
@@ -127,7 +155,5 @@ export class OrganizationsListComponent implements OnInit {
     this.planFilter = 'all';
   }
 
-  trackById(_: number, org: TenantOrgView): number {
-    return org.id;
-  }
+  trackById(_: number, org: TenantOrgView): number { return org.id; }
 }

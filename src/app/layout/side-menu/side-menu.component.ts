@@ -44,8 +44,6 @@ export class SideMenuComponent implements OnInit {
       next: (menus) => {
         this.items = this.normalizeItems(menus);
         this.loading = false;
-        
-        setTimeout(() => this.openActiveGroup(), 100);
       },
       error: (err) => {
         console.error('Error loading menu:', err);
@@ -72,6 +70,8 @@ export class SideMenuComponent implements OnInit {
   }
 
   private openActiveGroup() {
+    // Auto-expanding the active route's parent group prevented users from
+    // collapsing sections they were on; sidebar now relies on click-to-toggle.
     for (const item of this.items) {
       if (this.hasChildren(item) && this.isMenuActive(item)) {
         this.openGroups.add(this.getItemKey(item));

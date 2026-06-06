@@ -1,0 +1,36 @@
+<div class="saas-page template-editor">
+  <tc-saas-page-header
+    [title]="isNew ? 'Create Template' : 'Edit Template'"
+    subtitle="Design reusable message templates with variables"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Templates',route:'/app/communication/templates'},{label:isNew ? 'New' : 'Edit'}]">
+    <button type="button" class="saas-btn" (click)="cancel()">Cancel</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Template</button>
+  </tc-saas-page-header>
+
+  <div class="editor-grid">
+    <tc-saas-panel title="Template Details" class="editor-grid__main">
+      <div class="form-grid">
+        <label class="saas-field"><span>Template Name</span><input type="text" [(ngModel)]="template.name" placeholder="e.g. Fee Reminder"></label>
+        <label class="saas-field"><span>Category</span>
+          <select [(ngModel)]="template.category"><option *ngFor="let c of categories" [value]="c">{{ c }}</option></select>
+        </label>
+        <label class="saas-field saas-field--full"><span>Subject</span><input type="text" [(ngModel)]="template.subject" placeholder="Subject line"></label>
+        <label class="saas-field saas-field--full"><span>Message Body</span><textarea rows="14" [(ngModel)]="template.body" [placeholder]="bodyPlaceholder"></textarea></label>
+        <label class="saas-check"><input type="checkbox" [(ngModel)]="template.active"><span>Active</span></label>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Available Variables" subtitle="Click to insert into body">
+      <ul class="vars">
+        <li *ngFor="let v of variables" (click)="insertVariable(v.key)">
+          <code>{{ v.key }}</code>
+          <small>{{ v.description }}</small>
+        </li>
+      </ul>
+      <div class="preview">
+        <strong>Preview</strong>
+        <p>{{ template.body || 'Body preview appears here…' }}</p>
+      </div>
+    </tc-saas-panel>
+  </div>
+</div>

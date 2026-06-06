@@ -1,0 +1,72 @@
+<div class="saas-page attendance-staff">
+  <tc-saas-page-header
+    title="Staff Attendance"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Staff Attendance'}]">
+    <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-file"></i>Attendance Log</button>
+  </tc-saas-page-header>
+
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+  <div class="attendance-staff__layout">
+    <tc-saas-panel title="My Attendance" subtitle="Personal clock-in and clock-out">
+      <article class="attendance-staff__me">
+        <div class="attendance-staff__me-avatar">{{ meName.charAt(0) }}</div>
+        <strong>{{ meName }}</strong>
+        <small>{{ meRole }}</small>
+        <div class="attendance-staff__clock">{{ clockTime }}</div>
+        <p class="attendance-staff__date">{{ clockDate }}</p>
+        <div class="attendance-staff__me-status" [class.is-in]="meStatus === 'IN'">
+          <small>Status</small>
+          <strong>{{ meStatus === 'IN' ? 'Signed In' : 'Not Signed In' }}</strong>
+        </div>
+        <button type="button" class="saas-btn saas-btn--primary attendance-staff__me-action" (click)="signInOut()">
+          <i class="pi" [ngClass]="meStatus === 'IN' ? 'pi-sign-out' : 'pi-sign-in'"></i>
+          {{ meStatus === 'IN' ? 'Sign Out' : 'Sign In' }}
+        </button>
+      </article>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Today's Attendance Log" subtitle="Recent sign in / sign out events">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>Date</th><th>Sign In</th><th>Sign Out</th><th>Working Hours</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngIf="!todayLog.length"><td colspan="5"><div class="saas-empty"><i class="pi pi-clock"></i><strong>No attendance entries</strong></div></td></tr>
+            <tr *ngFor="let row of todayLog">
+              <td>{{ row.date }}</td>
+              <td>{{ row.signIn }}</td>
+              <td>{{ row.signOut }}</td>
+              <td>{{ row.hours }}</td>
+              <td><tc-saas-pill [label]="row.status" [tone]="$any(row.tone)"></tc-saas-pill></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </div>
+
+  <tc-saas-panel title="Teacher Absence Impact" subtitle="Substitute arrangement status for absent teachers">
+    <div *ngIf="!absentTeacherImpact.length" class="saas-empty"><i class="pi pi-check-circle"></i><strong>No teacher impact today</strong></div>
+    <article class="impact-row" *ngFor="let item of absentTeacherImpact">
+      <div class="impact-row__teacher">
+        <span class="attendance-staff__me-avatar small">{{ item.teacher.charAt(0) }}</span>
+        <div>
+          <strong>{{ item.teacher }}</strong>
+          <small>{{ item.subject }}</small>
+        </div>
+        <tc-saas-pill label="Absent Today" tone="danger"></tc-saas-pill>
+      </div>
+      <div class="impact-row__classes">
+        <small>Affected Classes ({{ item.affectedClasses.length }})</small>
+        <div>
+          <span class="saas-chip" *ngFor="let cls of item.affectedClasses">{{ cls }}</span>
+        </div>
+      </div>
+      <div class="impact-row__action">
+        <small>Arrangement Status</small>
+        <tc-saas-pill [label]="item.status" tone="warning"></tc-saas-pill>
+        <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-user-plus"></i>Open Arrangement</button>
+      </div>
+    </article>
+  </tc-saas-panel>
+</div>

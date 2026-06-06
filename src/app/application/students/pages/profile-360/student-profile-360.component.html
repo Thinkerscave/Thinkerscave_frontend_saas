@@ -1,0 +1,331 @@
+<section class="adm-workspace" *ngIf="!loading && profile">
+  <!-- Breadcrumb / back -->
+  <div style="display:flex; align-items:center; gap:8px; font-size:0.86rem; color:var(--tc-text-muted);">
+    <a (click)="back()" style="cursor:pointer; color:var(--tc-primary-600);">Students</a>
+    <i class="pi pi-angle-right"></i>
+    <span>{{ profile.overview.fullName }}</span>
+    <i class="pi pi-angle-right"></i>
+    <span>{{ tabs[0].label }}</span>
+  </div>
+
+  <!-- Hero -->
+  <header class="stu-hero">
+    <div class="stu-photo stu-photo--xl stu-photo--initials"
+         style="font-size:2rem;">{{ initials(profile.overview.fullName) }}</div>
+    <div class="stu-hero__meta">
+      <h1>{{ profile.overview.fullName }}</h1>
+      <p>{{ profile.overview.admissionNumber }} · {{ profile.overview.className || '—' }} {{ profile.overview.sectionName ? '· ' + profile.overview.sectionName : '' }}</p>
+      <div class="stu-hero-chips">
+        <span class="stu-hero-chip"><i class="pi pi-calendar"></i> DOB {{ profile.overview.dateOfBirth || '—' }}</span>
+        <span class="stu-hero-chip"><i class="pi pi-user"></i> {{ profile.overview.gender || '—' }} · {{ profile.overview.ageYears || '—' }}y</span>
+        <span class="stu-hero-chip"><i class="pi pi-phone"></i> {{ profile.overview.mobile || '—' }}</span>
+        <span class="stu-hero-chip"><i class="pi pi-envelope"></i> {{ profile.overview.email || '—' }}</span>
+        <span class="adm-badge" [attr.data-tone]="profile.overview.active ? 'success' : 'neutral'">
+          {{ profile.overview.active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+    <div class="stu-hero__actions">
+      <button type="button" class="adm-btn"><i class="pi pi-pencil"></i> Edit Profile</button>
+      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-ellipsis-v"></i> More Actions</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="adm-tabs">
+    <button *ngFor="let t of tabs"
+            [class.is-active]="activeTab === t.key"
+            (click)="go(t.key)">
+      <i [class]="t.icon" style="margin-right:6px;"></i>{{ t.label }}
+    </button>
+  </nav>
+
+  <!-- ============ OVERVIEW ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'OVERVIEW'">
+    <div class="stu-snapshot-grid">
+      <!-- Academic snapshot -->
+      <div class="stu-snapshot">
+        <div class="stu-snapshot__head"><h3><i class="pi pi-book"></i> Academic</h3><a (click)="go('ACADEMICS')">View</a></div>
+        <div class="stu-snapshot__rows">
+          <div><span>Class</span><strong>{{ profile.academics.currentClass || '—' }}</strong></div>
+          <div><span>Section</span><strong>{{ profile.academics.currentSection || '—' }}</strong></div>
+          <div><span>Roll Number</span><strong>{{ profile.academics.rollNumber || '—' }}</strong></div>
+          <div><span>Academic Year</span><strong>{{ profile.academics.academicYear || '—' }}</strong></div>
+          <div><span>Admission Date</span><strong>{{ profile.academics.admissionDate || '—' }}</strong></div>
+        </div>
+      </div>
+
+      <!-- Attendance ring -->
+      <div class="stu-snapshot">
+        <div class="stu-snapshot__head"><h3><i class="pi pi-calendar-times"></i> Attendance (this month)</h3><a (click)="go('ATTENDANCE')">View</a></div>
+        <div class="stu-ring">
+          <svg viewBox="0 0 110 110">
+            <circle class="stu-ring__track" cx="55" cy="55" r="48" stroke-width="9" fill="none"/>
+            <circle class="stu-ring__fill" cx="55" cy="55" r="48" stroke-width="9" fill="none"
+                    [attr.stroke-dasharray]="ringDash().circ"
+                    [attr.stroke-dashoffset]="ringDash().offset"
+                    stroke-linecap="round"/>
+          </svg>
+          <div class="stu-ring__label">
+            <strong>{{ profile.attendance.percent }}%</strong>
+            <small>{{ profile.attendance.present }} / {{ profile.attendance.totalWorkingDays }} days</small>
+          </div>
+        </div>
+        <div class="stu-snapshot__rows">
+          <div><span>Present</span><strong>{{ profile.attendance.present }}</strong></div>
+          <div><span>Absent</span><strong>{{ profile.attendance.absent }}</strong></div>
+          <div><span>Late</span><strong>{{ profile.attendance.late }}</strong></div>
+        </div>
+      </div>
+
+      <!-- Fee snapshot -->
+      <div class="stu-snapshot">
+        <div class="stu-snapshot__head"><h3><i class="pi pi-credit-card"></i> Fee</h3><a (click)="go('FEES')">View</a></div>
+        <div class="stu-snapshot__rows">
+          <div><span>Total</span><strong>₹{{ profile.fees.totalFee | number }}</strong></div>
+          <div><span>Paid</span><strong style="color:var(--tc-success)">₹{{ profile.fees.paid | number }}</strong></div>
+          <div><span>Pending</span><strong style="color:var(--tc-warning)">₹{{ profile.fees.pending | number }}</strong></div>
+        </div>
+        <div class="stu-fee-bar"><span [style.width.%]="feePercent()"></span></div>
+        <span class="adm-badge" [attr.data-tone]="profile.fees.pending > 0 ? 'warning' : 'success'">{{ profile.fees.status }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PERSONAL ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'PERSONAL'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Personal Details</h2></div>
+      <dl class="adm-dl">
+        <div><dt>Full Name</dt><dd>{{ profile.personal.fullName }}</dd></div>
+        <div><dt>Gender</dt><dd>{{ profile.personal.gender || '—' }}</dd></div>
+        <div><dt>Date of Birth</dt><dd>{{ profile.personal.dateOfBirth || '—' }}</dd></div>
+        <div><dt>Blood Group</dt><dd>{{ profile.personal.bloodGroup || '—' }}</dd></div>
+        <div><dt>Nationality</dt><dd>{{ profile.personal.nationality || '—' }}</dd></div>
+        <div><dt>Religion</dt><dd>{{ profile.personal.religion || '—' }}</dd></div>
+        <div><dt>Mother Tongue</dt><dd>{{ profile.personal.motherTongue || '—' }}</dd></div>
+        <div><dt>Permanent Address</dt><dd>{{ profile.personal.permanentAddress || '—' }}</dd></div>
+        <div><dt>Current Address</dt><dd>{{ profile.personal.currentAddress || '—' }}</dd></div>
+        <div><dt>Remarks</dt><dd>{{ profile.personal.remarks || '—' }}</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- ============ FAMILY ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'FAMILY'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Guardians</h2></div>
+      <div class="stu-snapshot-grid" *ngIf="profile.family.guardians.length; else noGuardians">
+        <div class="stu-snapshot" *ngFor="let g of profile.family.guardians">
+          <div class="stu-snapshot__head"><h3><i class="pi pi-user"></i> {{ g.name }}</h3>
+            <span class="adm-badge" data-tone="info">{{ g.relation || 'Guardian' }}</span>
+          </div>
+          <div class="stu-snapshot__rows">
+            <div><span>Mobile</span><strong>{{ g.mobile || '—' }}</strong></div>
+            <div><span>Email</span><strong>{{ g.email || '—' }}</strong></div>
+            <div><span>Address</span><strong>{{ g.address || '—' }}</strong></div>
+            <div *ngIf="g.occupation"><span>Occupation</span><strong>{{ g.occupation }}</strong></div>
+          </div>
+        </div>
+      </div>
+      <ng-template #noGuardians><div class="adm-empty"><i class="pi pi-users"></i><h3>No guardians on file</h3></div></ng-template>
+    </div>
+
+    <div class="adm-panel" *ngIf="profile.family.siblings.length">
+      <div class="adm-panel__header"><h2>Siblings</h2><small class="adm-panel__hint">{{ profile.family.siblings.length }} record(s)</small></div>
+      <div class="stu-table-wrap">
+        <table class="stu-table">
+          <thead><tr><th>Name</th><th>Relationship</th><th>Class</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let s of profile.family.siblings">
+              <td>{{ s.name }}</td>
+              <td>{{ s.relationship }}</td>
+              <td>{{ s.className || '—' }} / {{ s.sectionName || '—' }}</td>
+              <td><span class="adm-badge" [attr.data-tone]="s.active ? 'success' : 'neutral'">{{ s.active ? 'Active' : 'Inactive' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ACADEMICS ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'ACADEMICS'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Academic Profile</h2></div>
+      <dl class="adm-dl">
+        <div><dt>Current Class</dt><dd>{{ profile.academics.currentClass || '—' }}</dd></div>
+        <div><dt>Current Section</dt><dd>{{ profile.academics.currentSection || '—' }}</dd></div>
+        <div><dt>Roll Number</dt><dd>{{ profile.academics.rollNumber || '—' }}</dd></div>
+        <div><dt>Academic Year</dt><dd>{{ profile.academics.academicYear || '—' }}</dd></div>
+        <div><dt>Admission Date</dt><dd>{{ profile.academics.admissionDate || '—' }}</dd></div>
+        <div><dt>Admission Age</dt><dd>{{ profile.academics.admissionAgeYears || '—' }} years</dd></div>
+        <div><dt>Course Count</dt><dd>{{ profile.academics.courseCount }}</dd></div>
+        <div><dt>Subject Count</dt><dd>{{ profile.academics.subjectCount }}</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- ============ DOCUMENTS ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'DOCUMENTS'">
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <h2>Documents</h2>
+        <a routerLink="/app/students/documents" style="font-size:0.82rem; color:var(--tc-primary-600);">Open Document Vault →</a>
+      </div>
+      <div class="adm-empty">
+        <i class="pi pi-file"></i>
+        <h3>Document Vault</h3>
+        <p>Manage uploads, verification and missing-document tracking from the Document Vault.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ATTENDANCE ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'ATTENDANCE'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Attendance Summary</h2><small class="adm-panel__hint">Current month</small></div>
+      <div class="stu-snapshot-grid">
+        <div class="stu-snapshot">
+          <div class="stu-ring">
+            <svg viewBox="0 0 110 110">
+              <circle class="stu-ring__track" cx="55" cy="55" r="48" stroke-width="9" fill="none"/>
+              <circle class="stu-ring__fill" cx="55" cy="55" r="48" stroke-width="9" fill="none"
+                      [attr.stroke-dasharray]="ringDash().circ"
+                      [attr.stroke-dashoffset]="ringDash().offset"
+                      stroke-linecap="round"/>
+            </svg>
+            <div class="stu-ring__label">
+              <strong>{{ profile.attendance.percent }}%</strong>
+              <small>attendance</small>
+            </div>
+          </div>
+        </div>
+        <div class="stu-snapshot">
+          <div class="stu-snapshot__rows">
+            <div><span>Working Days</span><strong>{{ profile.attendance.totalWorkingDays }}</strong></div>
+            <div><span>Present</span><strong style="color:var(--tc-success)">{{ profile.attendance.present }}</strong></div>
+            <div><span>Absent</span><strong style="color:var(--tc-danger)">{{ profile.attendance.absent }}</strong></div>
+            <div><span>Late</span><strong style="color:var(--tc-warning)">{{ profile.attendance.late }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FEES ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'FEES'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Fee Summary</h2></div>
+      <dl class="adm-dl">
+        <div><dt>Total</dt><dd>₹{{ profile.fees.totalFee | number }}</dd></div>
+        <div><dt>Paid</dt><dd style="color:var(--tc-success)">₹{{ profile.fees.paid | number }}</dd></div>
+        <div><dt>Pending</dt><dd style="color:var(--tc-warning)">₹{{ profile.fees.pending | number }}</dd></div>
+        <div><dt>Status</dt><dd><span class="adm-badge" [attr.data-tone]="profile.fees.pending > 0 ? 'warning' : 'success'">{{ profile.fees.status }}</span></dd></div>
+      </dl>
+      <div class="stu-fee-bar"><span [style.width.%]="feePercent()"></span></div>
+    </div>
+  </div>
+
+  <!-- ============ MEDICAL ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'MEDICAL'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Medical Profile</h2></div>
+      <dl class="adm-dl">
+        <div><dt>Blood Group</dt><dd>{{ profile.medical.bloodGroup || '—' }}</dd></div>
+        <div><dt>Allergies</dt><dd>{{ profile.medical.allergies || '—' }}</dd></div>
+        <div><dt>Medications</dt><dd>{{ profile.medical.medications || '—' }}</dd></div>
+        <div><dt>Emergency Contact</dt><dd>{{ profile.medical.emergencyContact || '—' }}</dd></div>
+        <div><dt>Notes</dt><dd>{{ profile.medical.notes || '—' }}</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- ============ PORTFOLIO (Achievements) ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'PORTFOLIO'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Achievements & Portfolio</h2>
+        <small class="adm-panel__hint">{{ achievements.length }} achievement(s)</small>
+      </div>
+
+      <div class="adm-filter-bar">
+        <div class="adm-field">
+          <label>Category</label>
+          <select [(ngModel)]="newAchievement.category">
+            <option value="ACADEMIC">Academic</option>
+            <option value="SPORTS">Sports</option>
+            <option value="CULTURAL">Cultural</option>
+            <option value="CHARACTER">Character</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="adm-field">
+          <label>Title</label>
+          <input type="text" [(ngModel)]="newAchievement.title" placeholder="e.g. Math Olympiad Winner"/>
+        </div>
+        <div class="adm-field">
+          <label>Date</label>
+          <input type="date" [(ngModel)]="newAchievement.achievementDate"/>
+        </div>
+        <div class="adm-field">
+          <label>Awarded By</label>
+          <input type="text" [(ngModel)]="newAchievement.awardedBy"/>
+        </div>
+        <div class="adm-field">
+          <label>&nbsp;</label>
+          <button type="button" class="adm-btn adm-btn--primary"
+                  [disabled]="!newAchievement.title || savingAchievement"
+                  (click)="addAchievement()">
+            <i class="pi" [class.pi-plus]="!savingAchievement" [class.pi-spin]="savingAchievement" [class.pi-spinner]="savingAchievement"></i> Add
+          </button>
+        </div>
+      </div>
+
+      <div class="stu-achievement-list" *ngIf="achievements.length">
+        <div class="stu-achievement" *ngFor="let a of achievements">
+          <div class="stu-achievement__icon"><i [class]="a.icon || 'pi pi-trophy'"></i></div>
+          <div class="stu-achievement__body">
+            <strong>{{ a.title }}</strong>
+            <p *ngIf="a.description">{{ a.description }}</p>
+            <small>
+              <span class="adm-badge" data-tone="info" style="margin-right:6px;">{{ a.category }}</span>
+              {{ a.achievementDate || '' }}{{ a.location ? ' · ' + a.location : '' }}{{ a.awardedBy ? ' · ' + a.awardedBy : '' }}
+            </small>
+          </div>
+        </div>
+      </div>
+      <div class="adm-empty" *ngIf="!achievements.length">
+        <i class="pi pi-star"></i>
+        <h3>No achievements yet</h3>
+        <p>Capture awards, certificates and accolades to build the student portfolio.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TIMELINE ============ -->
+  <div class="adm-tab-panel" *ngIf="activeTab === 'TIMELINE'">
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Lifecycle Timeline</h2><small class="adm-panel__hint">{{ timeline.length }} events</small></div>
+      <div class="adm-timeline" *ngIf="timeline.length; else noTimeline">
+        <div class="adm-timeline__item" *ngFor="let e of timeline" [attr.data-tone]="e.tone">
+          <div class="adm-timeline__dot"><i [class]="e.icon"></i></div>
+          <div class="adm-timeline__body">
+            <strong>{{ e.action }}</strong>
+            <p>{{ e.description }}</p>
+            <small>{{ e.performedBy }} · {{ e.performedAt | date:'medium' }}</small>
+          </div>
+        </div>
+      </div>
+      <ng-template #noTimeline><div class="adm-empty"><i class="pi pi-history"></i><h3>No events recorded</h3></div></ng-template>
+    </div>
+  </div>
+
+</section>
+
+<section class="adm-workspace" *ngIf="loading">
+  <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading student profile…</div>
+</section>
+
+<section class="adm-workspace" *ngIf="errorMessage && !loading">
+  <div class="adm-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
+</section>

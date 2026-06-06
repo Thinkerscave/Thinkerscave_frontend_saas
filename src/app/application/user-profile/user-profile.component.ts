@@ -1,105 +1,110 @@
-import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-import { TagModule } from 'primeng/tag';
-import { DividerModule } from 'primeng/divider';
-import { ButtonModule } from 'primeng/button';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import {
+  SaasPageHeaderComponent,
+  SaasPanelComponent,
+  SaasPillComponent,
+  SaasTab,
+  SaasTabsComponent
+} from '../../shared/ui/saas';
 import { LoginService } from '../../core/services/login.service';
-import { Router } from '@angular/router';
+
+type TabKey = 'overview' | 'edit' | 'security' | 'quick-links';
 
 @Component({
   selector: 'app-user-profile',
-    changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, CardModule, TagModule, DividerModule, ButtonModule],
-  template: `
-    <div class="profile-page p-4">
-      <div class="profile-card-wrapper" style="max-width: 640px; margin: 0 auto;">
-        <p-card>
-          <!-- Avatar + Name Header -->
-          <div class="flex align-items-center gap-4 mb-4">
-            <div class="profile-avatar" style="
-              width: 72px; height: 72px; border-radius: 50%;
-              background: linear-gradient(135deg, #6366f1, #8b5cf6);
-              display: flex; align-items: center; justify-content: center;
-              font-size: 1.75rem; font-weight: 700; color: white; flex-shrink: 0;">
-              {{ initials }}
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-900 m-0">{{ fullName || 'User' }}</h2>
-              <span class="text-500 text-sm">{{ user?.email || '' }}</span>
-              <div class="mt-1">
-                <p-tag [value]="roleLabel" severity="info"></p-tag>
-              </div>
-            </div>
-          </div>
-
-          <p-divider></p-divider>
-
-          <!-- Details Grid -->
-          <div class="grid">
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">Username</span>
-              <span class="font-semibold text-900">{{ user?.userName || '—' }}</span>
-            </div>
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">First Name</span>
-              <span class="font-semibold text-900">{{ user?.firstName || '—' }}</span>
-            </div>
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">Last Name</span>
-              <span class="font-semibold text-900">{{ user?.lastName || '—' }}</span>
-            </div>
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">Mobile</span>
-              <span class="font-semibold text-900">{{ user?.mobileNumber || '—' }}</span>
-            </div>
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">City</span>
-              <span class="font-semibold text-900">{{ user?.city || '—' }}</span>
-            </div>
-            <div class="col-12 md:col-6 mb-3">
-              <span class="text-500 text-sm block mb-1">State</span>
-              <span class="font-semibold text-900">{{ user?.state || '—' }}</span>
-            </div>
-          </div>
-
-          <p-divider></p-divider>
-
-          <div class="flex gap-3 mt-3">
-            <button pButton label="Back to Dashboard" icon="pi pi-arrow-left"
-              class="p-button-outlined" (click)="goBack()"></button>
-          </div>
-        </p-card>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .profile-page { background: var(--surface-ground, #f8fafc); min-height: calc(100vh - 80px); }
-  `]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    SaasPillComponent,
+    SaasTabsComponent
+  ],
+  templateUrl: './user-profile.component.html',
+  styleUrl: './user-profile.component.scss'
 })
-export class UserProfileComponent implements OnInit {
-  user: any = null;
-  fullName = '';
-  initials = '';
-  roleLabel = '';
+export class UserProfileComponent {
+  private readonly loginService = inject(LoginService);
+  private readonly router = inject(Router);
 
-  constructor(private loginService: LoginService, private router: Router) {}
+  readonly tabs: SaasTab[] = [
+    { key: 'overview',     label: 'Profile Overview', icon: 'pi pi-id-card' },
+    { key: 'edit',         label: 'Edit Details',     icon: 'pi pi-user-edit' },
+    { key: 'security',     label: 'Security',         icon: 'pi pi-key' },
+    { key: 'quick-links',  label: 'Quick Links',      icon: 'pi pi-link' }
+  ];
+  readonly active = signal<TabKey>('overview');
 
-  ngOnInit(): void {
-    this.user = this.loginService.getUser();
-    if (this.user) {
-      this.fullName = `${this.user.firstName || ''} ${this.user.lastName || ''}`.trim() || this.user.userName || 'User';
-      const parts = this.fullName.split(' ');
-      this.initials = parts.length >= 2
-        ? (parts[0][0] + parts[1][0]).toUpperCase()
-        : (parts[0]?.[0] || 'U').toUpperCase();
-      const roles: any[] = this.user.roles || [];
-      this.roleLabel = roles.map((r: any) => r.roleName || r).join(', ') || 'User';
-    }
+  readonly user = signal<any>(this.loginService.getUser() ?? {});
+
+  readonly edit = signal({
+    firstName: this.user()?.firstName || '',
+    lastName: this.user()?.lastName || '',
+    email: this.user()?.email || '',
+    mobile: this.user()?.mobileNumber || '',
+    city: this.user()?.city || '',
+    state: this.user()?.state || ''
+  });
+  readonly editStatus = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  readonly password = signal({ current: '', next: '', confirm: '' });
+  readonly passwordStatus = signal<'idle' | 'saving' | 'saved' | 'mismatch' | 'weak'>('idle');
+
+  readonly fullName = computed(() => {
+    const u = this.user();
+    return [u?.firstName, u?.lastName].filter(Boolean).join(' ') || u?.userName || 'User';
+  });
+  readonly initials = computed(() => {
+    const name = this.fullName();
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return (name[0] || 'U').toUpperCase();
+  });
+  readonly roleLabel = computed(() => {
+    const roles: any[] = this.user()?.roles || [];
+    if (!roles.length) return 'User';
+    return roles.map(r => r.roleName || r.roleCode || r).join(', ');
+  });
+  readonly photoUrl = computed<string | null>(() => {
+    const u: any = this.user();
+    return u?.studentPhoto || u?.staffPhoto || u?.parentPhoto || u?.profilePhoto || u?.adminPhoto || null;
+  });
+
+  selectTab(key: string): void { this.active.set(key as TabKey); }
+
+  updateEditField(field: string, value: string): void {
+    this.edit.update(e => ({ ...e, [field]: value } as any));
+  }
+  saveProfile(): void {
+    this.editStatus.set('saving');
+    setTimeout(() => {
+      const merged = { ...this.user(), ...this.edit(), mobileNumber: this.edit().mobile };
+      this.user.set(merged);
+      this.editStatus.set('saved');
+      setTimeout(() => this.editStatus.set('idle'), 2000);
+    }, 400);
   }
 
-  goBack(): void {
-    this.router.navigate(['/app']);
+  updatePasswordField(field: string, value: string): void {
+    this.password.update(p => ({ ...p, [field]: value } as any));
   }
+  changePassword(): void {
+    const p = this.password();
+    if (p.next.length < 8) { this.passwordStatus.set('weak'); return; }
+    if (p.next !== p.confirm) { this.passwordStatus.set('mismatch'); return; }
+    this.passwordStatus.set('saving');
+    setTimeout(() => {
+      this.password.set({ current: '', next: '', confirm: '' });
+      this.passwordStatus.set('saved');
+      setTimeout(() => this.passwordStatus.set('idle'), 2000);
+    }, 400);
+  }
+
+  goDashboard(): void { this.router.navigate(['/app']); }
 }

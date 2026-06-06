@@ -221,6 +221,150 @@
             </div>
           </aside>
         </section>
+
+        <section *ngSwitchCase="'reports'" class="ops-roster-layout">
+          <section class="ops-panel">
+            <header>
+              <div>
+                <span>Attendance reports</span>
+                <h2>{{ reportFilters.scope === 'staff' ? 'Staff attendance summary' : 'Student attendance summary' }}</h2>
+              </div>
+              <button type="button" class="ops-button primary" (click)="exportReportsCsv()"><i class="pi pi-download"></i>Export CSV</button>
+            </header>
+
+            <div class="ops-toolbar">
+              <label class="ops-field">
+                <span>Scope</span>
+                <select [(ngModel)]="reportFilters.scope">
+                  <option value="students">Student attendance</option>
+                  <option value="staff">Staff attendance</option>
+                </select>
+              </label>
+              <label class="ops-field"><span>From</span><input type="date" [(ngModel)]="reportFilters.fromDate"></label>
+              <label class="ops-field"><span>To</span><input type="date" [(ngModel)]="reportFilters.toDate"></label>
+              <label class="ops-field" *ngIf="reportFilters.scope === 'students'">
+                <span>Class</span>
+                <select [(ngModel)]="reportFilters.classId">
+                  <option value="all">All classes</option>
+                  <option *ngFor="let item of data.classes" [value]="item.classId">{{ item.className }}</option>
+                </select>
+              </label>
+              <label class="ops-field" *ngIf="reportFilters.scope === 'staff'">
+                <span>Department</span>
+                <select [(ngModel)]="reportFilters.department">
+                  <option value="all">All departments</option>
+                  <option *ngFor="let d of data.departments" [value]="d.departmentName">{{ d.departmentName }}</option>
+                </select>
+              </label>
+              <label class="ops-field"><span>Defaulter &lt;</span><input type="number" min="0" max="100" [(ngModel)]="reportFilters.threshold"> </label>
+              <button type="button" class="ops-button accent" (click)="refresh()"><i class="pi pi-refresh"></i>Refresh</button>
+            </div>
+
+            <div class="ops-summary-grid" style="margin-bottom: 16px;">
+              <div class="ops-stat"><small>Total records</small><strong>{{ reportRows.length }}</strong></div>
+              <div class="ops-stat"><small>Avg attendance</small><strong>{{ averageRate(reportRows) }}%</strong></div>
+              <div class="ops-stat"><small>Defaulters (&lt;{{ reportFilters.threshold }}%)</small><strong>{{ reportDefaulters.length }}</strong></div>
+            </div>
+
+            <div *ngIf="!reportRows.length" class="ops-empty-state">
+              <span><i class="pi pi-chart-bar"></i></span>
+              <strong>No attendance data yet</strong>
+              <p>Submit student or staff attendance first to generate reports.</p>
+            </div>
+
+            <div *ngIf="reportRows.length" class="ops-roster-grid">
+              <article class="ops-roster-row" *ngFor="let row of reportRows; trackBy: trackByName">
+                <div class="ops-cell-main">
+                  <strong>{{ row.referenceName }}</strong>
+                  <small>{{ row.meta }}</small>
+                </div>
+                <div class="ops-summary-grid" style="flex: 1; gap: 8px;">
+                  <div class="ops-stat"><small>Present</small><strong>{{ row.present }}</strong></div>
+                  <div class="ops-stat"><small>Absent</small><strong>{{ row.absent }}</strong></div>
+                  <div class="ops-stat"><small>Late</small><strong>{{ row.late }}</strong></div>
+                  <div class="ops-stat"><small>Total</small><strong>{{ row.total }}</strong></div>
+                </div>
+                <span class="ops-pill" [ngClass]="row.rate >= reportFilters.threshold ? 'success' : 'danger'">{{ row.rate }}%</span>
+              </article>
+            </div>
+          </section>
+
+          <aside class="ops-profile-panel">
+            <header><div><span>Defaulters</span><h2>Below {{ reportFilters.threshold }}%</h2></div></header>
+            <div *ngIf="!reportDefaulters.length" class="ops-empty-state compact">
+              <span><i class="pi pi-check-circle"></i></span>
+              <strong>No defaulters</strong>
+            </div>
+            <article class="ops-compact-row" *ngFor="let row of reportDefaulters">
+              <div class="ops-cell-main"><strong>{{ row.referenceName }}</strong><small>{{ row.meta }}</small></div>
+              <span class="ops-pill danger">{{ row.rate }}%</span>
+            </article>
+          </aside>
+        </section>
+
+        <section *ngSwitchCase="'settings'" class="ops-roster-layout">
+          <section class="ops-panel">
+            <header>
+              <div>
+                <span>Attendance configuration</span>
+                <h2>Operating rules</h2>
+              </div>
+              <div class="ops-button-row">
+                <button type="button" class="ops-button" (click)="resetSettings()"><i class="pi pi-refresh"></i>Reset</button>
+                <button type="button" class="ops-button primary" (click)="saveSettings()" [disabled]="settingsSaving"><i class="pi pi-save"></i>Save settings</button>
+              </div>
+            </header>
+
+            <div class="ops-toolbar" style="flex-wrap: wrap; gap: 14px;">
+              <label class="ops-field" style="min-width: 220px;">
+                <span>Attendance mode</span>
+                <select [(ngModel)]="settings.attendanceMode">
+                  <option value="DAILY">Daily — mark once per day</option>
+                  <option value="PERIOD_WISE">Period-wise — mark per period</option>
+                </select>
+              </label>
+              <label class="ops-field"><span>School start</span><input type="time" [(ngModel)]="settings.schoolStartTime"></label>
+              <label class="ops-field"><span>School end</span><input type="time" [(ngModel)]="settings.schoolEndTime"></label>
+              <label class="ops-field"><span>Late after</span><input type="time" [(ngModel)]="settings.lateArrivalAfter"></label>
+              <label class="ops-field"><span>Defaulter threshold (%)</span><input type="number" min="0" max="100" [(ngModel)]="settings.defaulterThreshold"></label>
+              <label class="ops-field"><span>Freeze after (minutes)</span><input type="number" min="0" [(ngModel)]="settings.freezeAfterMinutes"></label>
+            </div>
+
+            <div class="ops-button-row" style="margin-top: 18px; flex-wrap: wrap; gap: 18px;">
+              <label class="ops-field" style="flex-direction: row; align-items: center; gap: 8px;">
+                <input type="checkbox" [(ngModel)]="settings.allowCorrectionRequest">
+                <span>Allow correction requests after freeze</span>
+              </label>
+              <label class="ops-field" style="flex-direction: row; align-items: center; gap: 8px;">
+                <input type="checkbox" [(ngModel)]="settings.notifyOnLowAttendance">
+                <span>Notify parents on low attendance</span>
+              </label>
+              <label class="ops-field" style="flex-direction: row; align-items: center; gap: 8px;">
+                <input type="checkbox" [(ngModel)]="settings.notifyOnTeacherAbsence">
+                <span>Notify admins on teacher absence</span>
+              </label>
+            </div>
+          </section>
+
+          <aside class="ops-profile-panel">
+            <header><div><span>About</span><h2>Why these rules?</h2></div></header>
+            <p style="padding: 12px 16px; line-height: 1.55; color: var(--tc-text-muted);">
+              These settings drive late-arrival detection, defaulter reports, attendance freeze, and notifications across student and staff modules. Daily mode is recommended for schools; period-wise mode is for colleges and coaching centers.
+            </p>
+            <article class="ops-compact-row">
+              <div class="ops-cell-main"><strong>Mode</strong><small>{{ settings.attendanceMode === 'DAILY' ? 'Daily' : 'Period-wise' }}</small></div>
+              <span class="ops-pill info">{{ settings.attendanceMode }}</span>
+            </article>
+            <article class="ops-compact-row">
+              <div class="ops-cell-main"><strong>School hours</strong><small>{{ settings.schoolStartTime }} – {{ settings.schoolEndTime }}</small></div>
+              <span class="ops-pill success">Active</span>
+            </article>
+            <article class="ops-compact-row">
+              <div class="ops-cell-main"><strong>Defaulter at</strong><small>Less than {{ settings.defaulterThreshold }}%</small></div>
+              <span class="ops-pill warning">{{ settings.defaulterThreshold }}%</span>
+            </article>
+          </aside>
+        </section>
       </ng-container>
     </ng-container>
   </main>

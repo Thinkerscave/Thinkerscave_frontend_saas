@@ -1,0 +1,105 @@
+<div class="saas-page access-control">
+  <tc-saas-page-header
+    title="Access Control"
+    subtitle="Configure roles, permissions, and user-level overrides"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organization'},{label:'Access Control'}]">
+    <button type="button" class="saas-btn"><i class="pi pi-download"></i>Export Policy</button>
+    <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-plus"></i>Create Responsibility</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading access control...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
+
+    <ng-container [ngSwitch]="activeTab">
+      <!-- Responsibilities -->
+      <section *ngSwitchCase="'responsibilities'">
+        <tc-saas-panel [title]="'Responsibilities (' + (workspace?.roles?.length ?? 0) + ')'" subtitle="Reusable roles that bundle a set of capabilities">
+          <div class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead><tr><th>Role</th><th>Type</th><th>Users</th><th>Pages</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr *ngFor="let r of workspace?.roles || []">
+                  <td><strong>{{ r.roleName }}</strong><br><small style="color: var(--saas-text-soft);">{{ r.roleCode }}</small></td>
+                  <td>{{ r.roleType || 'Custom' }}</td>
+                  <td>{{ r.users }}</td>
+                  <td>{{ r.permissionAssignments }}</td>
+                  <td><tc-saas-pill [label]="r.active === false ? 'Disabled' : 'Active'" [tone]="r.active === false ? 'danger' : 'success'"></tc-saas-pill></td>
+                  <td><button type="button" class="saas-icon-btn"><i class="pi pi-pencil"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Permission Assignment matrix -->
+      <section *ngSwitchCase="'assignment'">
+        <tc-saas-panel title="Permission Matrix" subtitle="Module × Capability grid per role">
+          <div class="saas-table-wrap">
+            <table class="saas-data-table permission-matrix">
+              <thead>
+                <tr>
+                  <th rowspan="2">Module</th>
+                  <th *ngFor="let role of defaultRoles" colspan="3">{{ role }}</th>
+                </tr>
+                <tr>
+                  <ng-container *ngFor="let role of defaultRoles">
+                    <th>View</th><th>Manage</th><th>Approve</th>
+                  </ng-container>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let module of modules">
+                  <td><strong>{{ module }}</strong></td>
+                  <ng-container *ngFor="let role of defaultRoles">
+                    <td *ngFor="let cap of capabilities" class="permission-cell">
+                      <span class="permission-cell__chip" [attr.data-on]="hasCapability(role, module, cap)">
+                        <i class="pi" [ngClass]="hasCapability(role, module, cap) ? 'pi-check' : 'pi-times'"></i>
+                      </span>
+                    </td>
+                  </ng-container>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- User overrides -->
+      <section *ngSwitchCase="'overrides'" class="access-control__overrides">
+        <tc-saas-panel title="Users" subtitle="Search and pick a user">
+          <input type="text" class="saas-search" placeholder="Search users..." style="margin-bottom: 10px;">
+          <div class="user-list">
+            <button type="button" *ngFor="let u of users.slice(0, 12)" class="user-list__item" [class.is-active]="selectedUser?.id === u.id" (click)="selectUser(u)">
+              <span class="user-list__avatar">{{ u.fullName.charAt(0) }}</span>
+              <div>
+                <strong>{{ u.fullName }}</strong>
+                <small>{{ (u.roles || []).join(', ') }}</small>
+              </div>
+            </button>
+          </div>
+        </tc-saas-panel>
+
+        <tc-saas-panel [title]="selectedUser ? selectedUser.fullName + '\u2019s Overrides' : 'Override Permissions'" subtitle="Capability overrides applied on top of role">
+          <div *ngIf="!selectedUser" class="saas-empty"><i class="pi pi-shield"></i><strong>No user selected</strong></div>
+          <div *ngIf="selectedUser" class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead><tr><th>Module</th><th>View</th><th>Manage</th><th>Approve</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let module of modules">
+                  <td><strong>{{ module }}</strong></td>
+                  <td><input type="checkbox"></td>
+                  <td><input type="checkbox"></td>
+                  <td><input type="checkbox"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
+    </ng-container>
+  </ng-container>
+</div>

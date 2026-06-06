@@ -1,97 +1,137 @@
-<p-toast position="top-right"></p-toast>
+<div class="saas-page subscription-plans">
+  <p-toast position="top-right"></p-toast>
 
-<section class="tc-tenant-page tc-plans">
-  <header class="tc-tenant-page__header">
-    <div>
-      <p class="tc-tenant-page__eyebrow">Subscription plans</p>
-      <h1 class="tc-tenant-page__title">Compare every entitlement</h1>
-      <p class="tc-tenant-page__subtitle">Pick the tier that fits each tenant — every row below is enforced at provisioning. Use “Provision tenant” to onboard with the selected plan preselected.</p>
+  <tc-saas-page-header
+    title="Subscription Plans"
+    subtitle="Choose the right plan for each organization"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Platform Admin'},{label:'Subscription Plans'}]">
+    <div class="subscription-plans__toggle">
+      <button type="button" [class.is-active]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>
+      <button type="button" [class.is-active]="billing === 'annual'" (click)="billing = 'annual'">Annual<span class="saas-chip" style="margin-left: 6px;">Save 17%</span></button>
     </div>
-    <div class="tc-tenant-page__actions">
-      <a class="tc-btn tc-btn--ghost tc-btn--sm" routerLink="/app/tenant-management/organizations"><i class="pi pi-arrow-left"></i><span>Back to tenants</span></a>
-      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="comingSoonNewPlan()"><i class="pi pi-plus"></i><span>New plan</span></button>
-      <a class="tc-btn tc-btn--primary tc-btn--sm" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-bolt"></i><span>Provision tenant</span></a>
-    </div>
-  </header>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="openWizard()"><i class="pi pi-plus"></i>Create Custom Plan</button>
+  </tc-saas-page-header>
 
-  <div class="tc-plans__legend">
-    <strong style="color: var(--tc-heading); font-size: 12px;">Legend:</strong>
-    <span><span class="tc-plans__check tc-plans__check--on"><i class="pi pi-check"></i></span> Included</span>
-    <span><span class="tc-plans__check tc-plans__check--off"><i class="pi pi-minus"></i></span> Not in this tier</span>
-    <span><strong style="color: var(--tc-heading);">Bold</strong> = quota / numeric limit</span>
-    <span style="margin-left: auto;">
-      <button type="button" class="tc-link" (click)="expandAll()" style="font-size: 12px;">Expand all</button>
-      &nbsp;·&nbsp;
-      <button type="button" class="tc-link" (click)="collapseAll()" style="font-size: 12px;">Collapse all</button>
-    </span>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading subscription plans...</div>
+
+  <div *ngIf="!loading && !plans.length" class="saas-empty">
+    <i class="pi pi-credit-card"></i>
+    <strong>No subscription plans configured</strong>
+    <p>Click Create Custom Plan to define your first plan.</p>
   </div>
 
-  <div class="tc-plans__matrix" role="table" aria-label="Subscription feature matrix">
-    <header class="tc-plans__tier-row" role="row">
-      <div class="tc-plans__feature-cell" role="columnheader">
-        <p class="tc-plans__feature-eyebrow">Feature</p>
-        <h2 class="tc-plans__feature-title">What your tenants get</h2>
-      </div>
-      <div *ngFor="let p of plans"
-           class="tc-plans__tier-cell"
-           [class.is-highlight]="p.highlight"
-           [attr.data-tier]="p.id"
-           role="columnheader">
-        <span class="tc-plans__tier-badge" *ngIf="p.badge">{{ p.badge }}</span>
-        <h3>{{ p.name }}</h3>
-        <p class="tc-plans__tier-tagline">{{ p.tagline }}</p>
-        <p class="tc-plans__tier-price">{{ p.priceLabel }}</p>
-        <p class="tc-plans__tier-hint">{{ p.priceHint }}</p>
-        <a class="tc-btn tc-btn--sm"
-           [class.tc-btn--primary]="p.highlight"
-           [class.tc-btn--ghost]="!p.highlight"
-           routerLink="/app/tenant-management/organizations/create"
-           [queryParams]="{plan: p.id}">{{ p.ctaLabel }}</a>
-      </div>
-    </header>
+  <div *ngIf="!loading && plans.length" class="subscription-plans__grid">
+    <article *ngFor="let plan of plans; trackBy: trackByPlan" class="plan-card" [ngClass]="toneClass(plan)" [class.is-popular]="plan.popular">
+      <span class="plan-card__badge" *ngIf="plan.popular">Most Popular</span>
+      <header class="plan-card__head">
+        <span class="plan-card__icon"><i class="pi pi-bolt"></i></span>
+        <h3>{{ plan.raw.planName }}</h3>
+        <p>{{ plan.raw.description || 'Tailored experience' }}</p>
+      </header>
 
-    <ng-container *ngFor="let group of matrix">
-      <button type="button"
-              class="tc-plans__group-toggle"
-              [class.is-open]="openGroups.has(group.title)"
-              (click)="toggleGroup(group.title)"
-              [attr.aria-expanded]="openGroups.has(group.title)">
-        <div class="tc-plans__group-head">
-          <i class="pi {{ group.icon }} tc-plans__group-icon"></i>
-          <div>
-            <h4>{{ group.title }}</h4>
-            <p>{{ group.caption }}</p>
-          </div>
-          <i class="pi pi-chevron-down tc-plans__group-chevron"></i>
-        </div>
-      </button>
+      <div class="plan-card__price">
+        <strong>{{ priceLabel(plan) }}</strong>
+        <small>/ {{ billing === 'annual' ? 'year' : 'month' }}</small>
+      </div>
 
-      <ng-container *ngIf="openGroups.has(group.title)">
-        <div *ngFor="let row of group.rows" class="tc-plans__row" role="row">
-          <div class="tc-plans__feature-cell" role="rowheader">
-            <p class="tc-plans__row-label">{{ row.label }}</p>
-            <p *ngIf="row.description" class="tc-plans__row-desc">{{ row.description }}</p>
-          </div>
-          <div *ngFor="let tier of tierIds"
-               class="tc-plans__value-cell"
-               [class.is-highlight]="plans[1].id === tier"
-               role="cell"
-               [attr.aria-label]="row.label + ' for ' + tier">
-            <ng-container *ngIf="cellIsBoolean(row.values[tier].value); else asText">
-              <span *ngIf="row.values[tier].value === true" class="tc-plans__check tc-plans__check--on" aria-label="Included"><i class="pi pi-check"></i></span>
-              <span *ngIf="row.values[tier].value === false" class="tc-plans__check tc-plans__check--off" aria-label="Not included"><i class="pi pi-minus"></i></span>
-            </ng-container>
-            <ng-template #asText>
-              <span class="tc-plans__value">{{ row.values[tier].value }}</span>
-            </ng-template>
-          </div>
+      <ul class="plan-card__features">
+        <li *ngFor="let f of plan.features"><i class="pi pi-check"></i>{{ f }}</li>
+      </ul>
+
+      <div *ngIf="plan.modules.length" class="plan-card__modules">
+        <small>Included modules</small>
+        <div>
+          <tc-saas-pill *ngFor="let m of plan.modules" [label]="m" tone="neutral"></tc-saas-pill>
         </div>
-      </ng-container>
-    </ng-container>
+      </div>
+
+      <footer class="plan-card__foot">
+        <button type="button" class="saas-btn" [ngClass]="{'saas-btn--primary': plan.popular}">Choose Plan</button>
+      </footer>
+    </article>
+
+    <article class="plan-card plan-card--custom-cta" (click)="openWizard()">
+      <span class="plan-card__icon"><i class="pi pi-sliders-h"></i></span>
+      <h3>Custom Plan</h3>
+      <p>Build a plan that fits the unique requirements of an organization.</p>
+      <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-plus"></i>Create Custom Plan</button>
+    </article>
   </div>
 
-  <footer class="tc-plans__footer">
-    <p>Need something off-menu? Custom plans support negotiated quotas, private clouds and bespoke SLAs.</p>
-    <a class="tc-btn tc-btn--ghost" routerLink="/app/tenant-management/organizations/create" [queryParams]="{plan: 'custom'}"><i class="pi pi-sliders-h"></i><span>Design a custom plan</span></a>
-  </footer>
-</section>
+  <!-- Wizard modal -->
+  <div *ngIf="wizardOpen" class="saas-modal-backdrop" (click)="closeWizard()">
+    <div class="saas-modal subscription-plans__wizard" (click)="$event.stopPropagation()">
+      <header class="saas-modal__header">
+        <h2>Create Custom Subscription Plan</h2>
+        <button type="button" class="saas-icon-btn" (click)="closeWizard()"><i class="pi pi-times"></i></button>
+      </header>
+      <div class="saas-modal__body">
+        <tc-saas-stepper [steps]="wizardSteps" [activeIndex]="step"></tc-saas-stepper>
+
+        <section *ngIf="step === 0" class="wizard-step">
+          <h3>Basic Information</h3>
+          <p>Give the plan a clear name, description, and pricing.</p>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Plan Name</span><input type="text" [(ngModel)]="draft.planName" placeholder="Eg. Enterprise Plus"></label>
+            <label class="saas-field"><span>Currency</span>
+              <select [(ngModel)]="draft.currency"><option value="INR">INR (₹)</option><option value="USD">USD ($)</option></select>
+            </label>
+          </div>
+          <label class="saas-field"><span>Description</span><textarea rows="3" [(ngModel)]="draft.description" placeholder="One-line summary shown to customers"></textarea></label>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Monthly Price</span><input type="number" min="0" [(ngModel)]="draft.monthlyPrice"></label>
+            <label class="saas-field"><span>Annual Price</span><input type="number" min="0" [(ngModel)]="draft.annualPrice"></label>
+            <label class="saas-field"><span>Support Tier</span>
+              <select [(ngModel)]="draft.supportTier"><option>Standard</option><option>Priority</option><option>Premium 24x7</option></select>
+            </label>
+          </div>
+        </section>
+
+        <section *ngIf="step === 1" class="wizard-step">
+          <h3>Limits & Quotas</h3>
+          <p>Set the boundaries for what this plan includes.</p>
+          <div class="wizard-row wizard-row--quad">
+            <label class="saas-field"><span>Max Students</span><input type="number" min="0" [(ngModel)]="draft.maxStudents"></label>
+            <label class="saas-field"><span>Max Staff</span><input type="number" min="0" [(ngModel)]="draft.maxStaff"></label>
+            <label class="saas-field"><span>Max Users</span><input type="number" min="0" [(ngModel)]="draft.maxUsers"></label>
+            <label class="saas-field"><span>Storage (GB)</span><input type="number" min="0" [(ngModel)]="draft.storageGb"></label>
+          </div>
+        </section>
+
+        <section *ngIf="step === 2" class="wizard-step">
+          <h3>Modules Included</h3>
+          <p>Pick the modules that this plan unlocks.</p>
+          <div class="wizard-modules">
+            <label *ngFor="let m of moduleOptions" class="wizard-module" [class.is-checked]="selectedModules.has(m)" (click)="toggleModule(m)">
+              <i class="pi" [ngClass]="selectedModules.has(m) ? 'pi-check-square' : 'pi-stop'"></i>
+              <span>{{ m }}</span>
+            </label>
+          </div>
+        </section>
+
+        <section *ngIf="step === 3" class="wizard-step wizard-review">
+          <h3>Review</h3>
+          <p>Confirm the plan details before saving.</p>
+          <dl>
+            <div><dt>Plan Name</dt><dd>{{ draft.planName }}</dd></div>
+            <div><dt>Description</dt><dd>{{ draft.description || '—' }}</dd></div>
+            <div><dt>Pricing</dt><dd>{{ draft.currency }} {{ draft.monthlyPrice | number }} / month · {{ draft.annualPrice | number }} / year</dd></div>
+            <div><dt>Limits</dt><dd>{{ draft.maxStudents }} students · {{ draft.maxStaff }} staff · {{ draft.maxUsers }} users · {{ draft.storageGb }} GB</dd></div>
+            <div><dt>Support Tier</dt><dd>{{ draft.supportTier }}</dd></div>
+            <div><dt>Modules</dt><dd>{{ selectedModules.size }} modules selected</dd></div>
+          </dl>
+        </section>
+      </div>
+      <footer class="saas-modal__footer">
+        <button type="button" class="saas-btn" (click)="prev()" [disabled]="step === 0"><i class="pi pi-arrow-left"></i>Back</button>
+        <div style="margin-left:auto; display: flex; gap: 8px;">
+          <button type="button" class="saas-btn" (click)="closeWizard()">Cancel</button>
+          <button type="button" *ngIf="step < wizardSteps.length - 1" class="saas-btn saas-btn--primary" (click)="next()">Next<i class="pi pi-arrow-right"></i></button>
+          <button type="button" *ngIf="step === wizardSteps.length - 1" class="saas-btn saas-btn--primary" (click)="submitPlan()" [disabled]="saving">
+            <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>Save Plan
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+</div>

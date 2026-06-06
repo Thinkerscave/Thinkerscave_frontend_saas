@@ -9,6 +9,9 @@ export interface DashboardWorkspace {
   smartAlerts: DashboardAlert[];
   moduleShortcuts: DashboardShortcut[];
   search: DashboardSearchMeta;
+  charts: DashboardChart[] | null;
+  profileCard: DashboardProfileCard | null;
+  financialSummary: DashboardFinancialSummary | null;
 }
 
 export interface DashboardUserContext {
@@ -116,6 +119,54 @@ export interface DashboardShortcut {
 export interface DashboardSearchMeta {
   placeholder: string;
   categories: string[];
+}
+
+export type DashboardChartType = 'line' | 'bar' | 'doughnut' | 'pie';
+
+export interface DashboardChart {
+  key: string;
+  title: string;
+  subtitle: string | null;
+  type: DashboardChartType | string;
+  labels: string[];
+  datasets: DashboardChartDataset[];
+  tone: DashboardTone;
+  emptyMessage: string | null;
+}
+
+export interface DashboardChartDataset {
+  label: string;
+  data: number[];
+  tone: DashboardTone;
+}
+
+export interface DashboardProfileCard {
+  displayName: string;
+  roleLabel: string;
+  classLabel: string | null;
+  sectionLabel: string | null;
+  rollNumber: string | null;
+  avatarInitials: string;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  attendanceRate: number | null;
+  presentDays: number | null;
+  absentDays: number | null;
+  totalDays: number | null;
+  childOf: string | null;
+  classTeacherName: string | null;
+}
+
+export interface DashboardFinancialSummary {
+  currencySymbol: string;
+  totalRevenue: string;
+  paid: string;
+  pending: string;
+  overdue: string;
+  invoicesPaid: number | null;
+  invoicesPending: number | null;
+  invoicesOverdue: number | null;
+  helper: string | null;
 }
 
 export interface DashboardSearchResponse {

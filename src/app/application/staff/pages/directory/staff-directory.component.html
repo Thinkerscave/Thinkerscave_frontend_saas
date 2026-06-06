@@ -1,0 +1,168 @@
+<section class="adm-workspace">
+
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Employees</h1>
+      <p>Search and manage all employees.</p>
+      <span class="adm-count"><i class="pi pi-id-card"></i> {{ kpi.totalEmployees }} employees</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary" (click)="addStaff()">
+        <i class="pi pi-plus"></i> Add Employee
+      </button>
+      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+    </div>
+  </header>
+
+  <div class="adm-kpi-grid">
+    <button *ngFor="let tile of kpiTiles"
+            type="button"
+            class="adm-kpi"
+            [class.is-active]="activeKpi === tile.key"
+            [attr.data-tone]="tile.tone"
+            (click)="toggleKpiFilter(tile)">
+      <span class="adm-kpi__label">{{ tile.label }}</span>
+      <span class="adm-kpi__value">{{ kpi[tile.key] }}</span>
+      <span class="adm-kpi__hint">{{ tile.hint }}</span>
+    </button>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel__header">
+      <div class="adm-panel__title">
+        <h2>Employee Directory</h2>
+        <small class="adm-panel__hint">{{ staff.length }} result(s)</small>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="stu-chip-bar">
+          <button [class.is-active]="view === 'grid'" (click)="view = 'grid'"><i class="pi pi-th-large"></i> Grid</button>
+          <button [class.is-active]="view === 'list'" (click)="view = 'list'"><i class="pi pi-list"></i> List</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="adm-filter-bar">
+      <div class="adm-field">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="filter.query" placeholder="Name, employee ID, mobile, email…" (keyup.enter)="runSearch()"/>
+      </div>
+      <div class="adm-field">
+        <label>Department</label>
+        <select [(ngModel)]="filter.department">
+          <option [ngValue]="undefined">All</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Science">Science</option>
+          <option value="English">English</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Administration">Administration</option>
+          <option value="Finance">Finance</option>
+          <option value="Student Services">Student Services</option>
+          <option value="Sports">Sports</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Branch</label>
+        <select [(ngModel)]="filter.branch">
+          <option [ngValue]="undefined">All</option>
+          <option value="Main Campus">Main Campus</option>
+          <option value="Whitefield Campus">Whitefield Campus</option>
+          <option value="Electronic City Campus">Electronic City Campus</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status">
+          <option [ngValue]="undefined">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>&nbsp;</label>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
+            <i class="pi" [class.pi-spin]="searching" [class.pi-search]="!searching" [class.pi-spinner]="searching"></i> Search
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+
+    <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading employees...</div>
+
+    <div *ngIf="!loading && staff.length === 0 && !errorMessage" class="adm-empty">
+      <i class="pi pi-inbox"></i>
+      <p>No employees match your filter.</p>
+    </div>
+
+    <!-- Grid view -->
+    <div *ngIf="!loading && view === 'grid' && staff.length" class="staff-card-grid">
+      <article *ngFor="let s of staff; trackBy: trackByStaff"
+               class="staff-card"
+               (click)="openProfile(s)">
+        <div class="staff-card__head">
+          <div class="staff-photo staff-photo--initials">{{ initials(s.fullName) }}</div>
+          <div class="staff-card__name">
+            <strong>{{ s.fullName }}</strong>
+            <small>{{ s.staffCode }} · {{ s.designation }}</small>
+          </div>
+          <span class="staff-pill" [attr.data-state]="s.availabilityStatus">{{ s.availabilityStatus }}</span>
+        </div>
+        <div class="staff-card__rows">
+          <div><i class="pi pi-briefcase"></i> {{ s.department }}</div>
+          <div><i class="pi pi-map-marker"></i> {{ s.branch }}</div>
+          <div><i class="pi pi-calendar-plus"></i> Joined {{ s.joinedDate || '—' }}</div>
+        </div>
+        <div class="staff-card__icons">
+          <a [attr.href]="'tel:' + s.contact" (click)="$event.stopPropagation()" title="Call"><i class="pi pi-phone"></i></a>
+          <a [attr.href]="'mailto:' + s.email" (click)="$event.stopPropagation()" title="Email"><i class="pi pi-envelope"></i></a>
+          <a (click)="$event.stopPropagation(); openProfile(s)" title="Open Profile"><i class="pi pi-id-card"></i></a>
+        </div>
+      </article>
+    </div>
+
+    <!-- List view -->
+    <div *ngIf="!loading && view === 'list' && staff.length" class="staff-table-wrap">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Designation</th>
+            <th>Department</th>
+            <th>Branch</th>
+            <th>Joined</th>
+            <th>Availability</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of staff; trackBy: trackByStaff">
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="staff-photo staff-photo--initials" style="width:32px;height:32px;font-size:0.8rem;">{{ initials(s.fullName) }}</div>
+                <div>
+                  <strong>{{ s.fullName }}</strong><br>
+                  <small style="color:var(--tc-text-muted)">{{ s.staffCode }}</small>
+                </div>
+              </div>
+            </td>
+            <td>{{ s.designation }}</td>
+            <td>{{ s.department }}</td>
+            <td>{{ s.branch }}</td>
+            <td>{{ s.joinedDate || '—' }}</td>
+            <td><span class="staff-pill" [attr.data-state]="s.availabilityStatus">{{ s.availabilityStatus }}</span></td>
+            <td>
+              <button type="button" class="adm-btn adm-btn--ghost" (click)="openProfile(s)">
+                <i class="pi pi-eye"></i> View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</section>

@@ -4,7 +4,7 @@
 }
 
 .tc-page-shell {
-  --tc-page-gap: var(--tc-space-5);
+  --tc-page-gap: var(--tc-space-3);
   width: 100%;
   min-height: 100%;
   display: flex;
@@ -15,11 +15,11 @@
 }
 
 .tc-page-shell--compact {
-  --tc-page-gap: var(--tc-space-3);
+  --tc-page-gap: var(--tc-space-2);
 }
 
 .tc-page-shell--spacious {
-  --tc-page-gap: var(--tc-space-6);
+  --tc-page-gap: var(--tc-space-5);
 }
 
 .tc-page-shell--wide {

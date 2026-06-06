@@ -3,13 +3,14 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
-import { AdminControlCenter, AdminOrganizationCreatePayload, AdminSystemEvent, AdminUserCreatePayload } from '../models/admin-control.model';
+import { AdminControlCenter, AdminOrganizationCreatePayload, AdminSystemEvent, AdminUserCreatePayload, SubscriptionPlanDTO } from '../models/admin-control.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminControlDataService {
   private readonly adminUrl = `${environment.baseUrl}/admin-control`;
   private readonly onboardingUrl = `${environment.baseUrl}/tenant-onboarding`;
   private readonly usersUrl = `${environment.baseUrl}/users`;
+  private readonly subscriptionPlansUrl = `${environment.baseUrl}/subscription-plans`;
 
   constructor(
     private http: HttpClient
@@ -33,5 +34,25 @@ export class AdminControlDataService {
   createAdminUser(payload: AdminUserCreatePayload): Observable<any> {
     return this.http.post<any>(`${this.usersUrl}/register`, payload)
       .pipe(map(response => unwrapApiResponse(response, response)));
+  }
+
+  listSubscriptionPlans(): Observable<SubscriptionPlanDTO[]> {
+    return this.http.get<any>(this.subscriptionPlansUrl)
+      .pipe(map(response => unwrapApiResponse<SubscriptionPlanDTO[]>(response, [] as SubscriptionPlanDTO[])));
+  }
+
+  createSubscriptionPlan(plan: SubscriptionPlanDTO): Observable<SubscriptionPlanDTO> {
+    return this.http.post<any>(this.subscriptionPlansUrl, plan)
+      .pipe(map(response => unwrapApiResponse<SubscriptionPlanDTO>(response, plan)));
+  }
+
+  updateSubscriptionPlan(plan: SubscriptionPlanDTO): Observable<SubscriptionPlanDTO> {
+    return this.http.put<any>(`${this.subscriptionPlansUrl}/${plan.planId}`, plan)
+      .pipe(map(response => unwrapApiResponse<SubscriptionPlanDTO>(response, plan)));
+  }
+
+  deleteSubscriptionPlan(planId: number): Observable<void> {
+    return this.http.delete<any>(`${this.subscriptionPlansUrl}/${planId}`)
+      .pipe(map(() => undefined));
   }
 }

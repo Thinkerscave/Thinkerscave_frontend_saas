@@ -1,0 +1,55 @@
+<div class="saas-page announcements-list">
+  <tc-saas-page-header
+    title="Announcements"
+    subtitle="Broadcasts to parents, students, and staff"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
+    <a class="saas-btn saas-btn--primary" routerLink="/app/communication/announcements/new"><i class="pi pi-plus"></i>Create Announcement</a>
+  </tc-saas-page-header>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading announcements...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <tc-saas-filter-row>
+      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search announcement..."></label>
+      <label class="saas-field"><span>Audience</span>
+        <select [(ngModel)]="audienceFilter"><option value="all">All</option><option *ngFor="let a of audiences" [value]="a">{{ a }}</option></select>
+      </label>
+      <label class="saas-field"><span>Priority</span>
+        <select [(ngModel)]="priorityFilter"><option value="all">All</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+      </label>
+      <label class="saas-field"><span>Status</span>
+        <select [(ngModel)]="statusFilter"><option value="all">All</option><option value="PUBLISHED">Published</option><option value="DRAFT">Draft</option><option value="ARCHIVED">Archived</option></select>
+      </label>
+    </tc-saas-filter-row>
+
+    <tc-saas-panel [title]="'All Announcements (' + filtered.length + ')'">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>Title</th><th>Audience</th><th>Priority</th><th>Created By</th><th>Created On</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngIf="!filtered.length"><td colspan="7"><div class="saas-empty"><i class="pi pi-megaphone"></i><strong>No announcements yet</strong></div></td></tr>
+            <tr *ngFor="let n of filtered; trackBy: trackById">
+              <td>
+                <a [routerLink]="['/app/communication/announcements', n.id]" class="cell-main">
+                  <strong>{{ n.title }}</strong>
+                  <small>{{ n.body | slice:0:80 }}…</small>
+                </a>
+              </td>
+              <td>{{ n.audience || 'All' }}</td>
+              <td><tc-saas-pill [label]="$any(n).priority || 'Normal'" [tone]="priorityTone($any(n).priority || '')"></tc-saas-pill></td>
+              <td>{{ $any(n).createdBy || '—' }}</td>
+              <td>{{ n.createdAt | date:'mediumDate' }}</td>
+              <td><tc-saas-pill [label]="n.status" [tone]="statusTone(n.status)"></tc-saas-pill></td>
+              <td class="cell-actions">
+                <a class="saas-icon-btn" [routerLink]="['/app/communication/announcements', n.id]"><i class="pi pi-eye"></i></a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

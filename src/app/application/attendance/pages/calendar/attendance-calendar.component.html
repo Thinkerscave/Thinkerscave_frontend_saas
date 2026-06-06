@@ -1,0 +1,52 @@
+<div class="saas-page attendance-calendar">
+  <tc-saas-page-header title="Attendance Calendar" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Calendar'}]">
+    <button type="button" class="saas-btn"><i class="pi pi-download"></i>Export</button>
+  </tc-saas-page-header>
+
+  <tc-saas-filter-row>
+    <label class="saas-field"><span>Student</span>
+      <select [(ngModel)]="filters.studentName">
+        <option value="">All Students</option>
+        <option *ngFor="let s of data.students" [value]="s.firstName + ' ' + s.lastName">{{ s.firstName }} {{ s.lastName }}</option>
+      </select>
+    </label>
+    <label class="saas-field"><span>Class</span>
+      <select [(ngModel)]="filters.classId"><option value="all">All</option><option *ngFor="let c of data.classes" [value]="c.classId">{{ c.className }}</option></select>
+    </label>
+    <label class="saas-field"><span>Section</span>
+      <select [(ngModel)]="filters.sectionName"><option value="all">All</option></select>
+    </label>
+  </tc-saas-filter-row>
+
+  <tc-saas-panel [title]="monthLabel" subtitle="Daily attendance visualization">
+    <ng-container panel-actions>
+      <button type="button" class="saas-icon-btn" (click)="prev()"><i class="pi pi-chevron-left"></i></button>
+      <button type="button" class="saas-icon-btn" (click)="next()"><i class="pi pi-chevron-right"></i></button>
+      <ul class="calendar-legend">
+        <li><span class="dot dot--p"></span>Present</li>
+        <li><span class="dot dot--a"></span>Absent</li>
+        <li><span class="dot dot--l"></span>Late</li>
+        <li><span class="dot dot--h"></span>No Attendance</li>
+      </ul>
+    </ng-container>
+
+    <div class="calendar-grid calendar-grid--head">
+      <span *ngFor="let d of weekDays">{{ d }}</span>
+    </div>
+    <div class="calendar-grid">
+      <div *ngFor="let cell of days; trackBy: trackByDay" class="calendar-day"
+           [class.is-other]="cell.otherMonth"
+           [class.is-today]="cell.today"
+           [class.is-weekend]="cell.weekend">
+        <ng-container *ngIf="!cell.otherMonth">
+          <span class="calendar-day__num">{{ cell.day }}</span>
+          <span class="calendar-day__dot" [attr.data-status]="cell.status" *ngIf="cell.status"></span>
+        </ng-container>
+      </div>
+    </div>
+  </tc-saas-panel>
+
+  <tc-saas-panel title="Attendance Summary" subtitle="Statistics for the current month">
+    <tc-saas-stat-grid [stats]="summary"></tc-saas-stat-grid>
+  </tc-saas-panel>
+</div>

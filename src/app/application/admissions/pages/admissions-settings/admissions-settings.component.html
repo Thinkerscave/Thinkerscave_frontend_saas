@@ -1,0 +1,91 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Admissions Settings</h1>
+      <p>Configure inquiry sources, statuses, documents, and admission policies.</p>
+    </div>
+  </header>
+
+  <div class="adm-loading" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading settings…
+  </div>
+  <div class="adm-toast is-error" *ngIf="errorMessage"><i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}</div>
+
+  <div *ngIf="!loading && settings" class="adm-settings-grid">
+    <!-- Inquiry Sources -->
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <h2>Inquiry sources</h2>
+        <small class="adm-panel__hint">{{ settings.inquirySources.length }} options</small>
+      </div>
+      <div class="adm-chip-row">
+        <span *ngFor="let s of settings.inquirySources"
+              class="adm-chip" [class.is-active]="s.active">
+          {{ s.label }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Inquiry Statuses -->
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <h2>Inquiry statuses</h2>
+        <small class="adm-panel__hint">{{ settings.inquiryStatuses.length }} states</small>
+      </div>
+      <div class="adm-chip-row">
+        <span *ngFor="let s of settings.inquiryStatuses" class="adm-chip is-active">{{ s.label }}</span>
+      </div>
+    </div>
+
+    <!-- Required Documents -->
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <h2>Required documents</h2>
+        <small class="adm-panel__hint">{{ settings.requiredDocuments.length }} items</small>
+      </div>
+      <div class="adm-chip-row">
+        <span *ngFor="let d of settings.requiredDocuments"
+              class="adm-chip" [class.is-active]="d.active">
+          <i class="pi pi-file"></i> {{ d.label }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Admission Config -->
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Admission configuration</h2></div>
+      <div class="adm-config-grid">
+        <div class="adm-config-row">
+          <span>Auto inquiry number</span>
+          <strong>{{ settings.admissionConfig.autoInquiryNumber ? 'Enabled' : 'Disabled' }}</strong>
+        </div>
+        <div class="adm-config-row">
+          <span>Auto admission number</span>
+          <strong>{{ settings.admissionConfig.autoAdmissionNumber ? 'Enabled' : 'Disabled' }}</strong>
+        </div>
+        <div class="adm-config-row">
+          <span>Admission number pattern</span>
+          <strong>{{ settings.admissionConfig.admissionNumberPattern }}</strong>
+        </div>
+        <div class="adm-config-row">
+          <span>Student ID pattern</span>
+          <strong>{{ settings.admissionConfig.studentIdPattern }}</strong>
+        </div>
+        <div class="adm-config-row">
+          <span>Default admission status</span>
+          <strong>{{ settings.admissionConfig.defaultAdmissionStatus }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Counselor Assignment -->
+    <div class="adm-panel">
+      <div class="adm-panel__header"><h2>Counselor assignment rules</h2></div>
+      <div class="adm-config-grid">
+        <div class="adm-config-row"><span>Strategy</span><strong>{{ settings.counselorRules.strategy }}</strong></div>
+        <div class="adm-config-row"><span>Balance workload</span><strong>{{ settings.counselorRules.balanceWorkload ? 'Yes' : 'No' }}</strong></div>
+        <div class="adm-config-row"><span>Consider location</span><strong>{{ settings.counselorRules.considerLocation ? 'Yes' : 'No' }}</strong></div>
+      </div>
+    </div>
+  </div>
+</section>

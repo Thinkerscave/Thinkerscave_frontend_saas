@@ -1,0 +1,53 @@
+<div class="saas-page announcement-detail">
+  <tc-saas-page-header
+    [title]="notice?.title || 'Announcement'"
+    subtitle="Delivery report and recipient breakdown"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements',route:'/app/communication/announcements'},{label:notice?.title || 'Detail'}]">
+    <a class="saas-btn" routerLink="/app/communication/announcements"><i class="pi pi-arrow-left"></i>Back</a>
+  </tc-saas-page-header>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading announcement...</div>
+
+  <ng-container *ngIf="!loading && notice">
+    <div class="detail-grid">
+      <tc-saas-panel title="Announcement Information" class="detail-grid__main">
+        <dl class="meta">
+          <dt>Title</dt><dd>{{ notice.title }}</dd>
+          <dt>Audience</dt><dd>{{ notice.audience || '—' }}</dd>
+          <dt>Status</dt><dd><tc-saas-pill [label]="notice.status" tone="success"></tc-saas-pill></dd>
+          <dt>Published</dt><dd>{{ notice.publishedAt | date:'medium' }}</dd>
+          <dt>Created</dt><dd>{{ notice.createdAt | date:'medium' }}</dd>
+        </dl>
+        <article class="body">
+          <h4>Message</h4>
+          <p>{{ notice.body }}</p>
+        </article>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Delivery Summary">
+        <div class="donut" [style.background]="'conic-gradient(' + donutGradient + ')'">
+          <div class="donut__hole">
+            <strong>{{ delivery.total | number }}</strong>
+            <small>Total</small>
+          </div>
+        </div>
+        <ul class="legend">
+          <li *ngFor="let s of segments">
+            <span class="dot" [style.background]="s.color"></span>
+            <span class="legend__label">{{ s.label }}</span>
+            <strong>{{ s.value | number }}</strong>
+          </li>
+        </ul>
+        <p class="rate">Delivery rate <strong>{{ deliveryRate }}%</strong></p>
+      </tc-saas-panel>
+    </div>
+
+    <tc-saas-panel title="Delivery Timeline">
+      <ul class="timeline">
+        <li><span class="timeline__dot"></span><div><strong>Sent</strong><small>{{ notice.publishedAt | date:'medium' }}</small></div></li>
+        <li><span class="timeline__dot is-ok"></span><div><strong>Delivered to {{ delivery.delivered | number }} recipients</strong><small>{{ notice.publishedAt | date:'medium' }}</small></div></li>
+        <li *ngIf="delivery.failed > 0"><span class="timeline__dot is-fail"></span><div><strong>{{ delivery.failed }} failures</strong><small>Retry scheduled</small></div></li>
+      </ul>
+    </tc-saas-panel>
+  </ng-container>
+</div>

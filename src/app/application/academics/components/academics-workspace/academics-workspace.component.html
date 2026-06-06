@@ -1,25 +1,12 @@
 <section class="academics-premium-workspace">
-  <app-academic-workspace-nav
-    [groups]="navGroups"
-    [pages]="pages"
-    [activePage]="activePage">
-  </app-academic-workspace-nav>
-
   <main class="acad-main">
     <div class="acad-loading-shell" *ngIf="loading">
       <span></span><span></span><span></span>
     </div>
 
     <ng-container *ngIf="!loading">
-      <app-academic-smart-hero
-        [page]="page"
-        [currentYear]="data.currentYear"
-        [metrics]="metrics"
-        [health]="health"
-        (commandRequested)="commandOpen = true">
-      </app-academic-smart-hero>
-
       <app-academic-quick-action-bar
+        *ngIf="activePage === 'dashboard'"
         [actions]="quickActions"
         (selected)="openQuickAction($event)">
       </app-academic-quick-action-bar>

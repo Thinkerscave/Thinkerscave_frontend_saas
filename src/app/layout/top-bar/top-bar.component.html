@@ -26,7 +26,8 @@
 
     <div class="profile-menu">
       <button type="button" class="profile-btn" (click)="userPanel.toggle($event)">
-        <div class="avatar">{{ getInitials(getUserName()) }}</div>
+        <div class="avatar" *ngIf="photoUrl(); else avatarInitials"><img [src]="photoUrl()" [alt]="getUserName()"></div>
+        <ng-template #avatarInitials><div class="avatar is-initials">{{ getInitials(getUserName()) }}</div></ng-template>
         <div class="user-info">
           <span class="name">{{ getUserName() }}</span>
           <span class="role">{{ getRoleName() }}</span>
@@ -36,17 +37,21 @@
 
       <p-overlayPanel #userPanel appendTo="body" styleClass="tc-dropdown-panel user-panel">
         <div class="user-dropdown-header">
-          <div class="avatar lg">{{ getInitials(getUserName()) }}</div>
+          <div class="avatar lg" *ngIf="photoUrl(); else avatarInitialsLg"><img [src]="photoUrl()" [alt]="getUserName()"></div>
+          <ng-template #avatarInitialsLg><div class="avatar lg is-initials">{{ getInitials(getUserName()) }}</div></ng-template>
           <div>
             <strong>{{ getUserName() }}</strong>
             <small>{{ currentUser?.userName }}</small>
           </div>
         </div>
         <hr>
-        <button class="dropdown-item" (click)="router.navigate(['/app/profile'])">
+        <button class="dropdown-item" (click)="router.navigate(['/app/profile']); userPanel.hide()">
           <i class="pi pi-user"></i> My Profile
         </button>
-        <button class="dropdown-item" *ngIf="canOpenOrganizationProfile()" (click)="openOrganizationProfile()">
+        <button class="dropdown-item" (click)="openSettings(); userPanel.hide()">
+          <i class="pi pi-cog"></i> Settings
+        </button>
+        <button class="dropdown-item" *ngIf="canOpenOrganizationProfile()" (click)="openOrganizationProfile(); userPanel.hide()">
           <i class="pi pi-building"></i> Organization Profile
         </button>
         <hr>

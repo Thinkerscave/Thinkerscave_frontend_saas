@@ -1,0 +1,79 @@
+.announcement-detail {
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 18px;
+    @media (max-width: 900px) { grid-template-columns: 1fr; }
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    row-gap: 10px; column-gap: 16px;
+    margin: 0 0 16px;
+    dt { color: var(--saas-text-soft); font-size: 0.82rem; }
+    dd { margin: 0; color: var(--saas-text); font-size: 0.9rem; font-weight: 500; }
+  }
+
+  .body {
+    border-top: 1px solid var(--saas-border);
+    padding-top: 14px;
+    h4 { margin: 0 0 8px; font-size: 0.9rem; color: var(--saas-text); }
+    p { margin: 0; line-height: 1.6; color: var(--saas-text-soft); }
+  }
+
+  .donut {
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    margin: 6px auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    &__hole {
+      width: 110px; height: 110px;
+      background: var(--saas-surface);
+      border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: var(--saas-shadow-sm);
+      strong { font-size: 1.2rem; }
+      small { font-size: 0.75rem; color: var(--saas-text-soft); }
+    }
+  }
+
+  .legend {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 8px;
+    li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.84rem;
+      .dot { width: 10px; height: 10px; border-radius: 50%; }
+      &__label { flex: 1; color: var(--saas-text-soft); }
+      strong { color: var(--saas-text); }
+    }
+  }
+
+  .rate {
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--saas-border);
+    color: var(--saas-text-soft);
+    font-size: 0.85rem;
+    text-align: center;
+    strong { color: var(--saas-success); margin-left: 6px; }
+  }
+
+  .timeline {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 12px;
+    li {
+      display: flex; gap: 12px; align-items: flex-start;
+      strong { display: block; font-size: 0.88rem; color: var(--saas-text); }
+      small { color: var(--saas-text-soft); font-size: 0.78rem; }
+    }
+    &__dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--saas-primary);
+      margin-top: 5px;
+      &.is-ok { background: var(--saas-success); }
+      &.is-fail { background: var(--saas-danger); }
+    }
+  }
+}

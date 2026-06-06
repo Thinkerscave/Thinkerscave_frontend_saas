@@ -1,0 +1,105 @@
+<div class="saas-page attendance-student">
+  <tc-saas-page-header
+    title="Student Attendance"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Student Attendance'}]">
+    <button type="button" class="saas-btn"><i class="pi pi-calendar"></i>Attendance Calendar</button>
+    <button type="button" class="saas-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
+  </tc-saas-page-header>
+
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+  <tc-saas-filter-row>
+    <label class="saas-field"><span>Academic Year</span>
+      <select [(ngModel)]="filters.academicYear">
+        <option value="2025-26">2025-26</option>
+        <option value="2024-25">2024-25</option>
+      </select>
+    </label>
+    <label class="saas-field"><span>Class</span>
+      <select [(ngModel)]="filters.classId" (change)="filters.sectionName='all'">
+        <option value="all">All Classes</option>
+        <option *ngFor="let c of data.classes" [value]="c.classId">{{ c.className }}</option>
+      </select>
+    </label>
+    <label class="saas-field"><span>Section</span>
+      <select [(ngModel)]="filters.sectionName">
+        <option value="all">All Sections</option>
+        <option *ngFor="let s of sections" [value]="s">{{ s }}</option>
+      </select>
+    </label>
+    <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="filters.date"></label>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="loadRoster()"><i class="pi pi-search"></i>Load</button>
+  </tc-saas-filter-row>
+
+  <div class="attendance-student__layout">
+    <tc-saas-panel
+      [title]="filters.classId === 'all' ? 'Class Attendance' : 'Class Roster'"
+      [subtitle]="rows.length ? rows.length + ' students loaded' : 'Choose class and date, then load.'">
+      <ng-container panel-actions>
+        <button type="button" class="saas-btn" (click)="markAllPresent()" [disabled]="!rows.length"><i class="pi pi-check"></i>Mark All Present</button>
+      </ng-container>
+
+      <div *ngIf="rosterLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading roster...</div>
+
+      <div *ngIf="!rosterLoading && !rows.length" class="saas-empty">
+        <i class="pi pi-users"></i>
+        <strong>No roster loaded</strong>
+        <p>Select a class, section, and date, then click Load.</p>
+      </div>
+
+      <div *ngIf="!rosterLoading && rows.length" class="saas-table-wrap">
+        <table class="saas-data-table attendance-student__table">
+          <thead>
+            <tr><th style="width:60px">Roll No.</th><th style="width:60px"></th><th>Student Name</th><th style="width:200px">Status</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows; let i = index; trackBy: trackByRow">
+              <td>{{ i + 1 }}</td>
+              <td>
+                <span class="attendance-student__avatar">{{ (row.referenceName || '?').charAt(0).toUpperCase() }}</span>
+              </td>
+              <td>
+                <div class="cell-main">
+                  <strong>{{ row.referenceName }}</strong>
+                  <small>{{ row.className }} · {{ row.sectionName }}</small>
+                </div>
+              </td>
+              <td>
+                <select class="attendance-student__status" [ngModel]="row.status" (ngModelChange)="setStatus(row, $event)" [attr.data-status]="row.status">
+                  <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer *ngIf="rows.length" class="attendance-student__footer">
+        <span>Showing {{ rows.length }} students</span>
+        <div>
+          <button type="button" class="saas-btn"><i class="pi pi-times"></i>Cancel</button>
+          <button type="button" class="saas-btn saas-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>Save Attendance</button>
+        </div>
+      </footer>
+    </tc-saas-panel>
+
+    <aside class="attendance-student__side">
+      <tc-saas-panel title="Pending Attendance" subtitle="Classes not yet completed today">
+        <div *ngIf="!pendingClasses.length" class="saas-empty">
+          <i class="pi pi-check-circle"></i><strong>All classes marked</strong>
+        </div>
+        <article class="pending-row" *ngFor="let pending of pendingClasses">
+          <div>
+            <strong>{{ pending.className }} - {{ pending.sectionName }}</strong>
+            <small>{{ pending.completed }}/{{ pending.total }} students</small>
+          </div>
+          <div class="pending-row__pct">
+            <strong [attr.data-tone]="pctTone(pending.pct)">{{ pending.pct }}%</strong>
+            <div class="pending-row__bar"><span [style.width.%]="pending.pct" [attr.data-tone]="pctTone(pending.pct)"></span></div>
+          </div>
+        </article>
+        <button type="button" class="saas-btn saas-btn--primary attendance-student__view-all"><i class="pi pi-eye"></i>View All Pending</button>
+      </tc-saas-panel>
+    </aside>
+  </div>
+</div>

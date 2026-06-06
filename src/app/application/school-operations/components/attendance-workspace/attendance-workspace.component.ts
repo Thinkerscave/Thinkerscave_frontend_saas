@@ -52,7 +52,9 @@ export class AttendanceWorkspaceComponent implements OnInit {
   readonly navItems: OpsNavItem[] = [
     { label: 'Dashboard', description: 'Daily attendance command view', route: '/app/attendance/dashboard', icon: 'pi pi-chart-line' },
     { label: 'Student Attendance', description: 'Class roster marking', route: '/app/attendance/students', icon: 'pi pi-users' },
-    { label: 'Staff Attendance', description: 'Workforce roster marking', route: '/app/attendance/staff', icon: 'pi pi-id-card' }
+    { label: 'Staff Attendance', description: 'Workforce roster marking', route: '/app/attendance/staff', icon: 'pi pi-id-card' },
+    { label: 'Reports', description: 'Attendance analytics and exports', route: '/app/attendance/reports', icon: 'pi pi-chart-bar' },
+    { label: 'Settings', description: 'Attendance rules and freeze policy', route: '/app/attendance/settings', icon: 'pi pi-cog' }
   ];
 
   readonly studentStatuses: { label: string; value: AttendanceStatus; icon: string }[] = [
@@ -91,7 +93,31 @@ export class AttendanceWorkspaceComponent implements OnInit {
     shift: 'Morning'
   };
 
+  reportFilters = {
+    scope: 'students' as 'students' | 'staff',
+    fromDate: this.dataService.dateBeforeDays(30),
+    toDate: this.dataService.today(),
+    classId: 'all',
+    department: 'all',
+    threshold: 75
+  };
+
+  settings = {
+    attendanceMode: 'DAILY' as 'DAILY' | 'PERIOD_WISE',
+    schoolStartTime: '08:30',
+    schoolEndTime: '14:30',
+    lateArrivalAfter: '08:40',
+    defaulterThreshold: 75,
+    freezeAfterMinutes: 120,
+    allowCorrectionRequest: true,
+    notifyOnLowAttendance: false,
+    notifyOnTeacherAbsence: true
+  };
+
+  settingsSaving = false;
+
   ngOnInit(): void {
+    this.loadStoredSettings();
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AttendanceWorkspacePage | undefined) ?? 'dashboard';
       if (!this.loading) {
@@ -381,4 +407,107 @@ export class AttendanceWorkspaceComponent implements OnInit {
     const candidate = error as { error?: { message?: string }; message?: string };
     return candidate.error?.message ?? candidate.message ?? 'Please try again.';
   }
+
+  // ============ Reports ============
+
+  get reportRows(): ReportRow[] {
+    const source: AttendanceRecord[] = this.reportFilters.scope === 'staff'
+      ? this.data.todayStaffAttendance
+      : this.data.todayClassAttendance;
+
+    const grouped = new Map<string, AttendanceRecord[]>();
+    source.forEach(record => {
+      const key = `${record.referenceId ?? record.referenceName}|${record.referenceName}`;
+      grouped.set(key, [...(grouped.get(key) ?? []), record]);
+    });
+
+    return Array.from(grouped.entries()).map(([key, records]) => {
+      const referenceName = key.split('|')[1] || 'Unknown';
+      const total = records.length || 1;
+      const present = records.filter(r => this.isPresentLike(r.status)).length;
+      const absent = records.filter(r => r.status === 'ABSENT').length;
+      const late = records.filter(r => r.status === 'LATE' || r.status === 'HALF_DAY').length;
+      const rate = Math.round((present / total) * 100);
+      const meta = this.reportFilters.scope === 'staff'
+        ? (records[0]?.department ?? '-')
+        : `${records[0]?.className ?? ''} ${records[0]?.sectionName ?? ''}`.trim();
+      return { referenceName, meta, present, absent, late, total, rate };
+    }).sort((a, b) => a.rate - b.rate);
+  }
+
+  get reportDefaulters(): ReportRow[] {
+    return this.reportRows.filter(row => row.rate < this.reportFilters.threshold);
+  }
+
+  exportReportsCsv(): void {
+    const rows = [
+      ['Name', this.reportFilters.scope === 'staff' ? 'Department' : 'Class', 'Present', 'Absent', 'Late', 'Total', 'Attendance %'],
+      ...this.reportRows.map(r => [r.referenceName, r.meta, r.present, r.absent, r.late, r.total, `${r.rate}%`])
+    ];
+    const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const url = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `attendance-${this.reportFilters.scope}-${this.reportFilters.fromDate}-to-${this.reportFilters.toDate}.csv`;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  averageRate(rows: ReportRow[]): number {
+    if (!rows.length) { return 0; }
+    return Math.round(rows.reduce((sum, r) => sum + r.rate, 0) / rows.length);
+  }
+
+  trackByName(_: number, row: ReportRow): string {
+    return row.referenceName;
+  }
+
+  // ============ Settings ============
+
+  saveSettings(): void {
+    this.settingsSaving = true;
+    try {
+      localStorage.setItem('tc.attendance.settings', JSON.stringify(this.settings));
+      this.messageService.add({ severity: 'success', summary: 'Settings saved', detail: 'Attendance configuration updated.' });
+    } catch {
+      this.messageService.add({ severity: 'error', summary: 'Save failed', detail: 'Unable to persist settings.' });
+    } finally {
+      this.settingsSaving = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  resetSettings(): void {
+    this.settings = {
+      attendanceMode: 'DAILY',
+      schoolStartTime: '08:30',
+      schoolEndTime: '14:30',
+      lateArrivalAfter: '08:40',
+      defaulterThreshold: 75,
+      freezeAfterMinutes: 120,
+      allowCorrectionRequest: true,
+      notifyOnLowAttendance: false,
+      notifyOnTeacherAbsence: true
+    };
+    this.messageService.add({ severity: 'info', summary: 'Settings reset', detail: 'Restored default attendance configuration.' });
+  }
+
+  private loadStoredSettings(): void {
+    try {
+      const stored = localStorage.getItem('tc.attendance.settings');
+      if (stored) {
+        this.settings = { ...this.settings, ...JSON.parse(stored) };
+      }
+    } catch { /* ignore */ }
+  }
+}
+
+export interface ReportRow {
+  referenceName: string;
+  meta: string;
+  present: number;
+  absent: number;
+  late: number;
+  total: number;
+  rate: number;
 }

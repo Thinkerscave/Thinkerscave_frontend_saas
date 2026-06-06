@@ -2,6 +2,7 @@
 @use "./styles/theme/animations";
 @use "./styles/theme/utilities";
 @use "./styles/theme/primeng-overrides";
+@use "./styles/saas/primitives" as saasPrimitives;
 @use "./styles/academics/workspace";
 @use "./styles/workflow/workspace" as workflowWorkspace;
 @use "./styles/school-operations/workspace" as schoolOperationsWorkspace;

@@ -1,0 +1,75 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Document Vault</h1>
+      <p>Centralised repository for every student document — uploads, verification, and missing tracking.</p>
+      <span class="adm-count"><i class="pi pi-file"></i> {{ kpi.totalDocuments }} on file</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn"><i class="pi pi-upload"></i> Bulk Upload</button>
+      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-plus"></i> Upload Document</button>
+    </div>
+  </header>
+
+  <div class="adm-kpi-grid">
+    <div *ngFor="let tile of kpiTiles" class="adm-kpi" [attr.data-tone]="tile.tone">
+      <span class="adm-kpi__label">{{ tile.label }}</span>
+      <span class="adm-kpi__value">{{ kpi[tile.key] }}</span>
+      <span class="adm-kpi__hint">{{ tile.hint }}</span>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel__header">
+      <h2>Documents</h2>
+      <div class="stu-chip-bar">
+        <button *ngFor="let c of categories"
+                [class.is-active]="activeCategory === c"
+                (click)="filterCategory(c)">{{ c }}</button>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+
+    <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading documents…</div>
+
+    <div class="stu-table-wrap" *ngIf="!loading && entries.length">
+      <table class="stu-table">
+        <thead>
+          <tr><th>Student</th><th>Document Type</th><th>File Name</th><th>Category</th><th>Status</th><th>Uploaded On</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of entries">
+            <td>
+              <strong>{{ d.studentName }}</strong><br/>
+              <small style="color:var(--tc-text-muted)">Student #{{ d.studentId }}</small>
+            </td>
+            <td>{{ d.documentType }}</td>
+            <td>
+              <i class="pi pi-file" style="color:var(--tc-primary-600); margin-right:6px;"></i>
+              {{ d.fileName }}
+            </td>
+            <td><span class="adm-badge" data-tone="info">{{ d.category }}</span></td>
+            <td><span class="adm-badge" [attr.data-tone]="statusTone(d.status)">{{ d.status }}</span></td>
+            <td>{{ d.uploadedOn || '—' }}</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="adm-icon-btn" title="View"><i class="pi pi-eye"></i></button>
+                <button class="adm-icon-btn" title="Download"><i class="pi pi-download"></i></button>
+                <button class="adm-icon-btn" title="Verify"><i class="pi pi-check"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="adm-empty" *ngIf="!loading && !entries.length">
+      <i class="pi pi-folder-open"></i>
+      <h3>No documents found</h3>
+      <p>Upload documents from individual student profiles or via bulk upload.</p>
+    </div>
+  </div>
+</section>

@@ -10,7 +10,7 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { RippleModule } from 'primeng/ripple';
 
 import { LeadService } from '../../services/lead.service';
@@ -77,8 +77,34 @@ export class CounsellorDashboardComponent implements OnInit {
     private loginService: LoginService,
     private messageService: MessageService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) { }
+
+  /** Quick dial via tel: link — falls back to a toast if the device cannot place a call. */
+  callLead(lead: Lead): void {
+    const phone = (lead?.phoneNumber || '').toString().replace(/\s+/g, '');
+    if (!phone) { this.messageService.add({ severity: 'warn', summary: 'No phone number', detail: 'This lead has no phone number on file.' }); return; }
+    window.location.href = `tel:${phone}`;
+  }
+
+  /** Open lead detail in admissions module. */
+  viewLead(lead: Lead): void {
+    if (!lead?.id) return;
+    this.router.navigate(['/app/admissions/detail', lead.id]);
+  }
+
+  /** Move lead through pipeline using the standard action stage. */
+  takeAction(lead: Lead): void {
+    if (!lead?.id) return;
+    this.router.navigate(['/app/admissions/detail', lead.id], { queryParams: { action: 'follow-up' } });
+  }
+
+  /** Launch admission conversion wizard. */
+  convertLead(lead: Lead): void {
+    if (!lead?.id) return;
+    this.router.navigate(['/app/admissions/wizard', lead.id]);
+  }
 
   get todayFollowupsConfig(): ListViewConfig {
     return {
@@ -94,8 +120,8 @@ export class CounsellorDashboardComponent implements OnInit {
         { field: 'nextFollowUpDate', header: 'Date', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
       ],
       rowActions: [
-        { label: 'Call', icon: 'pi pi-phone', isPrimary: true, color: 'success', actionFn: () => { } },
-        { label: 'View', icon: 'pi pi-eye', isPrimary: true, color: 'info', actionFn: () => { } } // Note: Assuming Router handle locally
+        { label: 'Call', icon: 'pi pi-phone', isPrimary: true, color: 'success', actionFn: (lead: Lead) => this.callLead(lead) },
+        { label: 'View', icon: 'pi pi-eye',   isPrimary: true, color: 'info',    actionFn: (lead: Lead) => this.viewLead(lead) }
       ]
     };
   }
@@ -114,7 +140,7 @@ export class CounsellorDashboardComponent implements OnInit {
         { field: 'nextFollowUpDate', header: 'Date', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
       ],
       rowActions: [
-        { label: 'Action', icon: 'pi pi-arrow-right', isPrimary: true, color: 'warning', actionFn: () => { } }
+        { label: 'Action', icon: 'pi pi-arrow-right', isPrimary: true, color: 'warning', actionFn: (lead: Lead) => this.takeAction(lead) }
       ]
     };
   }
@@ -133,7 +159,7 @@ export class CounsellorDashboardComponent implements OnInit {
         { field: 'nextFollowUpDate', header: 'Follow-up', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.nextFollowUpDate as Date) }
       ],
       rowActions: [
-        { label: 'Convert', icon: 'pi pi-check', isPrimary: true, color: 'success', actionFn: () => { } }
+        { label: 'Convert', icon: 'pi pi-check', isPrimary: true, color: 'success', actionFn: (lead: Lead) => this.convertLead(lead) }
       ]
     };
   }
@@ -152,7 +178,7 @@ export class CounsellorDashboardComponent implements OnInit {
         { field: 'createdDate', header: 'Created', type: 'text', sortable: true, valueGetter: (lead: Lead) => this.formatDate(lead.createdDate as Date) }
       ],
       rowActions: [
-        { label: 'View', icon: 'pi pi-eye', isPrimary: true, color: 'secondary', actionFn: () => { } }
+        { label: 'View', icon: 'pi pi-eye', isPrimary: true, color: 'secondary', actionFn: (lead: Lead) => this.viewLead(lead) }
       ]
     };
   }

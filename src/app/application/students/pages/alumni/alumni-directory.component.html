@@ -1,0 +1,101 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Alumni Directory</h1>
+      <p>Stay connected with graduates — track careers, batches and engagement opportunities.</p>
+      <span class="adm-count"><i class="pi pi-flag-fill"></i> {{ alumni.length }} alumni</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openAdd()">
+        <i class="pi pi-plus"></i> Add Alumni
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+    <i class="pi pi-check-circle"></i> {{ successMessage }}
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel__header">
+      <h2>Directory</h2>
+      <div class="adm-field" style="min-width:240px;">
+        <input type="text" [(ngModel)]="search" placeholder="Search by name, batch, course, occupation…"/>
+      </div>
+    </div>
+
+    <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading alumni…</div>
+
+    <div class="stu-table-wrap" *ngIf="!loading && filtered().length">
+      <table class="stu-table">
+        <thead>
+          <tr><th>Alumni</th><th>Batch</th><th>Course</th><th>Occupation</th><th>Employer</th><th>City</th><th>Contact</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of filtered()">
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="stu-photo stu-photo--initials" style="width:36px; height:36px; font-size:0.78rem;">{{ initials(a.fullName) }}</div>
+                <div>
+                  <strong>{{ a.fullName }}</strong><br/>
+                  <small style="color:var(--tc-text-muted)">{{ a.email || '—' }}</small>
+                </div>
+              </div>
+            </td>
+            <td>{{ a.batchYear || '—' }}<br/><small style="color:var(--tc-text-muted)">Passed {{ a.yearPassed || '—' }}</small></td>
+            <td>{{ a.course || '—' }}</td>
+            <td>{{ a.occupation || '—' }}</td>
+            <td>{{ a.employer || '—' }}</td>
+            <td>{{ a.city || '—' }}</td>
+            <td>{{ a.contact || '—' }}</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <a *ngIf="a.linkedIn" [href]="a.linkedIn" target="_blank" class="adm-icon-btn" title="LinkedIn"><i class="pi pi-linkedin"></i></a>
+                <a *ngIf="a.email" [href]="'mailto:' + a.email" class="adm-icon-btn" title="Email"><i class="pi pi-envelope"></i></a>
+                <a *ngIf="a.contact" [href]="'tel:' + a.contact" class="adm-icon-btn" title="Call"><i class="pi pi-phone"></i></a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="adm-empty" *ngIf="!loading && !filtered().length">
+      <i class="pi pi-flag"></i>
+      <h3>No alumni records yet</h3>
+      <p>Capture graduate details to build the alumni network.</p>
+    </div>
+  </div>
+
+  <!-- Add modal -->
+  <div *ngIf="showForm" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;" (click)="closeAdd()">
+    <div class="adm-panel" style="width:640px; max-width:100%;" (click)="$event.stopPropagation()">
+      <div class="adm-panel__header"><h2>Add Alumni</h2>
+        <button class="adm-icon-btn" (click)="closeAdd()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="adm-wizard__body">
+        <div class="adm-field"><label>Full Name *</label><input type="text" [(ngModel)]="newAlumni.fullName"/></div>
+        <div class="adm-field"><label>Batch Year</label><input type="text" [(ngModel)]="newAlumni.batchYear" placeholder="e.g. 2019-20"/></div>
+        <div class="adm-field"><label>Year Passed</label><input type="text" [(ngModel)]="newAlumni.yearPassed" placeholder="e.g. 2020"/></div>
+        <div class="adm-field"><label>Course</label><input type="text" [(ngModel)]="newAlumni.course"/></div>
+        <div class="adm-field"><label>Occupation</label><input type="text" [(ngModel)]="newAlumni.occupation"/></div>
+        <div class="adm-field"><label>Employer</label><input type="text" [(ngModel)]="newAlumni.employer"/></div>
+        <div class="adm-field"><label>City</label><input type="text" [(ngModel)]="newAlumni.city"/></div>
+        <div class="adm-field"><label>Contact</label><input type="text" [(ngModel)]="newAlumni.contact"/></div>
+        <div class="adm-field"><label>Email</label><input type="email" [(ngModel)]="newAlumni.email"/></div>
+        <div class="adm-field"><label>Graduation Date</label><input type="date" [(ngModel)]="newAlumni.graduationDate"/></div>
+        <div class="adm-field adm-field--full"><label>LinkedIn URL</label><input type="url" [(ngModel)]="newAlumni.linkedIn"/></div>
+      </div>
+      <div class="adm-wizard__footer">
+        <button class="adm-btn" (click)="closeAdd()">Cancel</button>
+        <button class="adm-btn adm-btn--primary" [disabled]="saving" (click)="saveAlumni()">
+          <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Save Alumni
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

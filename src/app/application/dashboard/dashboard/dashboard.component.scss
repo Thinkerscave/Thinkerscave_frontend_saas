@@ -558,3 +558,197 @@ button {
     justify-content: center;
   }
 }
+
+/* === Role-aware dashboard sections (P1) === */
+
+.dash-renderer {
+  /* Two-column variant for student/parent profile + chart */
+  .dash-two-column.wide-right {
+    grid-template-columns: 1fr 2fr;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.dash-chart-panel {
+  .chart-container {
+    position: relative;
+    flex: 1;
+    min-height: 280px;
+    width: 100%;
+  }
+}
+
+.dash-section-helper {
+  color: var(--dash-muted);
+  font-size: 0.85rem;
+  margin-left: 12px;
+}
+
+/* Priority / alert / approval row tones */
+.dash-table-list .dash-table-row .row-icon[data-tone] {
+  background: var(--tc-surface-50);
+}
+.dash-table-list .dash-table-row .row-icon[data-tone="success"] { background: color-mix(in srgb, var(--tc-success) 14%, transparent); color: var(--tc-success); }
+.dash-table-list .dash-table-row .row-icon[data-tone="warning"] { background: color-mix(in srgb, var(--tc-warning) 14%, transparent); color: var(--tc-warning); }
+.dash-table-list .dash-table-row .row-icon[data-tone="danger"]  { background: color-mix(in srgb, var(--tc-danger) 14%, transparent); color: var(--tc-danger); }
+.dash-table-list .dash-table-row .row-icon[data-tone="info"]    { background: color-mix(in srgb, var(--tc-info) 14%, transparent); color: var(--tc-info); }
+.dash-table-list .dash-table-row .row-icon[data-tone="neutral"] { background: var(--tc-surface-100); color: var(--tc-text-muted); }
+
+.dash-table-list .dash-table-row .row-badge[data-tone] {
+  padding: 4px 10px;
+  border-radius: var(--tc-radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.dash-table-list .dash-table-row .row-badge[data-tone="success"] { background: color-mix(in srgb, var(--tc-success) 14%, transparent); color: var(--tc-success); }
+.dash-table-list .dash-table-row .row-badge[data-tone="warning"] { background: color-mix(in srgb, var(--tc-warning) 14%, transparent); color: var(--tc-warning); }
+.dash-table-list .dash-table-row .row-badge[data-tone="danger"]  { background: color-mix(in srgb, var(--tc-danger) 14%, transparent); color: var(--tc-danger); }
+.dash-table-list .dash-table-row .row-badge[data-tone="info"]    { background: color-mix(in srgb, var(--tc-info) 14%, transparent); color: var(--tc-info); }
+.dash-table-list .dash-table-row .row-badge[data-tone="neutral"] { background: var(--tc-surface-100); color: var(--tc-text-muted); }
+
+/* Profile card (student / parent) */
+.dash-profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--tc-primary-500), var(--tc-primary-700));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      box-shadow: var(--tc-shadow-sm);
+    }
+
+    .profile-meta {
+      min-width: 0;
+      strong {
+        display: block;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--dash-text);
+        line-height: 1.2;
+        margin-bottom: 2px;
+      }
+      span {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--tc-primary-600);
+        background: color-mix(in srgb, var(--tc-primary-500) 12%, transparent);
+        padding: 3px 8px;
+        border-radius: var(--tc-radius-pill);
+        margin-bottom: 4px;
+      }
+      small {
+        display: block;
+        color: var(--dash-muted);
+        font-size: 0.85rem;
+      }
+    }
+  }
+
+  .profile-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+
+    div {
+      background: var(--dash-panel-soft);
+      border: 1px solid var(--dash-border);
+      border-radius: var(--tc-radius-md);
+      padding: 10px 12px;
+
+      dt {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 700;
+        color: var(--dash-soft);
+        margin-bottom: 4px;
+      }
+      dd {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--dash-text);
+        font-weight: 600;
+
+        &.truncate {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        &[data-tone="success"] { color: var(--tc-success); }
+        &[data-tone="warning"] { color: var(--tc-warning); }
+        &[data-tone="danger"]  { color: var(--tc-danger); }
+      }
+    }
+  }
+}
+
+/* Financial summary tiles */
+.dash-financial-card {
+  .finance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .finance-tile {
+    border: 1px solid var(--dash-border);
+    border-radius: var(--tc-radius-lg);
+    padding: 16px 18px;
+    background: var(--dash-panel-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: transform var(--tc-anim-duration-fast) ease;
+
+    &:hover { transform: translateY(-2px); }
+
+    span {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--dash-soft);
+    }
+    strong {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--dash-text);
+      letter-spacing: -0.01em;
+    }
+    small {
+      font-size: 0.78rem;
+      color: var(--dash-muted);
+    }
+
+    &[data-tone="info"]    { border-color: color-mix(in srgb, var(--tc-info) 35%, var(--dash-border)); }
+    &[data-tone="success"] { border-color: color-mix(in srgb, var(--tc-success) 35%, var(--dash-border)); strong { color: var(--tc-success); } }
+    &[data-tone="warning"] { border-color: color-mix(in srgb, var(--tc-warning) 35%, var(--dash-border)); strong { color: var(--tc-warning); } }
+    &[data-tone="danger"]  { border-color: color-mix(in srgb, var(--tc-danger) 35%, var(--dash-border)); strong { color: var(--tc-danger); } }
+  }
+}

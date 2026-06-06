@@ -1,0 +1,90 @@
+.attendance-staff {
+  &__layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 18px;
+    @media (max-width: 1100px) { grid-template-columns: 1fr; }
+  }
+
+  &__me {
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 4px;
+
+    strong { font-size: 1rem; color: var(--saas-text); }
+    small { color: var(--saas-text-soft); font-size: 0.8rem; }
+  }
+
+  &__me-avatar {
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    background: var(--saas-primary-soft);
+    color: var(--saas-primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 700;
+    margin-bottom: 4px;
+
+    &.small { width: 40px; height: 40px; font-size: 1rem; }
+  }
+
+  &__clock {
+    margin-top: 8px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--saas-text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  &__date { margin: 0; color: var(--saas-text-soft); font-size: 0.82rem; }
+
+  &__me-status {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: var(--saas-danger-soft);
+    color: var(--saas-danger);
+    border-radius: 10px;
+    display: flex; flex-direction: column; gap: 2px; width: 100%;
+
+    small { color: inherit; }
+    strong { color: inherit; font-size: 0.95rem; }
+
+    &.is-in {
+      background: var(--saas-success-soft);
+      color: var(--saas-success);
+    }
+  }
+
+  &__me-action {
+    width: 100%; justify-content: center; margin-top: 8px;
+  }
+}
+
+.impact-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.4fr;
+  gap: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--saas-border);
+  align-items: center;
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+
+  &:last-of-type { border-bottom: 0; }
+
+  &__teacher {
+    display: flex; align-items: center; gap: 12px;
+    strong { display: block; font-size: 0.92rem; }
+    small { color: var(--saas-text-soft); font-size: 0.78rem; }
+  }
+
+  &__classes small,
+  &__action small {
+    display: block;
+    color: var(--saas-text-soft);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  &__classes > div { display: flex; flex-wrap: wrap; gap: 6px; }
+  &__action { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+}

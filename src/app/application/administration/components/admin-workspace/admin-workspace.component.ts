@@ -23,7 +23,8 @@ import {
   AdminSystemEvent,
   AdminUserCreatePayload,
   AdminUserAccess,
-  AdminWorkspacePage
+  AdminWorkspacePage,
+  SubscriptionPlanDTO
 } from '../../models/admin-control.model';
 
 type AdminDrawerMode = 'create-user' | 'role-detail' | 'audit-detail' | 'security-detail' | 'system-event' | null;
@@ -74,6 +75,14 @@ export class AdminWorkspaceComponent implements OnInit {
   adminUserRole = 'Admin';
   adminUserOrgId: number | null = null;
 
+  subscriptionPlans: SubscriptionPlanDTO[] = [];
+  subscriptionPlansLoading = false;
+  planEditing: SubscriptionPlanDTO | null = null;
+  planFormOpen = false;
+  planForm: SubscriptionPlanDTO = this.emptyPlanForm();
+  planFormStep = 1;
+  planSaving = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -84,6 +93,9 @@ export class AdminWorkspaceComponent implements OnInit {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.page = (data['adminPage'] as AdminWorkspacePage) || 'dashboard';
       this.clearMessages();
+      if (this.page === 'subscriptions') {
+        this.loadSubscriptionPlans();
+      }
       this.cdr.markForCheck();
     });
     this.loadWorkspace();
@@ -285,6 +297,7 @@ export class AdminWorkspaceComponent implements OnInit {
       case 'access': return 'Access & Permissions';
       case 'monitoring': return 'System Monitoring';
       case 'audit': return 'Audit Center';
+      case 'subscriptions': return 'Subscription Plans';
       default: return 'Administration Center';
     }
   }
@@ -294,6 +307,7 @@ export class AdminWorkspaceComponent implements OnInit {
       case 'access': return 'Govern roles, user access, invitations and permission coverage across the ERP.';
       case 'monitoring': return 'Track tenant health, jobs, notification delivery, diagnostics and data integrity.';
       case 'audit': return 'Explore administrative changes, security events, login audit and critical activity.';
+      case 'subscriptions': return 'Manage plan catalog, pricing, capacity limits and module entitlement for tenants.';
       default: return 'Manage users, permissions, system activity and internal administrative controls.';
     }
   }
@@ -355,5 +369,141 @@ export class AdminWorkspaceComponent implements OnInit {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  // ============ Subscription Plans ============
+
+  loadSubscriptionPlans(): void {
+    if (this.subscriptionPlansLoading || this.subscriptionPlans.length) {
+      return;
+    }
+    this.subscriptionPlansLoading = true;
+    this.adminDataService.listSubscriptionPlans()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: plans => {
+          this.subscriptionPlans = plans ?? [];
+          this.subscriptionPlansLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.subscriptionPlansLoading = false;
+          this.errorMessage = 'Unable to load subscription plans.';
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  refreshSubscriptionPlans(): void {
+    this.subscriptionPlans = [];
+    this.loadSubscriptionPlans();
+  }
+
+  openPlanForm(plan?: SubscriptionPlanDTO): void {
+    this.planEditing = plan ?? null;
+    this.planForm = plan ? { ...plan } : this.emptyPlanForm();
+    this.planFormStep = 1;
+    this.planFormOpen = true;
+  }
+
+  closePlanForm(): void {
+    this.planFormOpen = false;
+    this.planEditing = null;
+    this.planFormStep = 1;
+  }
+
+  nextPlanStep(): void {
+    if (this.planFormStep < 4) {
+      this.planFormStep++;
+    }
+  }
+
+  prevPlanStep(): void {
+    if (this.planFormStep > 1) {
+      this.planFormStep--;
+    }
+  }
+
+  savePlan(): void {
+    if (!this.planForm.planCode || !this.planForm.planName) {
+      this.errorMessage = 'Plan code and name are required.';
+      return;
+    }
+    this.planSaving = true;
+    const request$ = this.planEditing && this.planForm.planId
+      ? this.adminDataService.updateSubscriptionPlan(this.planForm)
+      : this.adminDataService.createSubscriptionPlan(this.planForm);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: saved => {
+        const idx = this.subscriptionPlans.findIndex(p => p.planId === saved.planId);
+        if (idx >= 0) {
+          this.subscriptionPlans[idx] = saved;
+        } else {
+          this.subscriptionPlans = [...this.subscriptionPlans, saved];
+        }
+        this.successMessage = `Plan "${saved.planName}" saved.`;
+        this.planSaving = false;
+        this.closePlanForm();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.planSaving = false;
+        this.errorMessage = 'Unable to save subscription plan.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  deletePlan(plan: SubscriptionPlanDTO): void {
+    if (!plan.planId) { return; }
+    if (!confirm(`Delete plan "${plan.planName}"? Organizations using this plan will keep their current subscription type.`)) {
+      return;
+    }
+    this.adminDataService.deleteSubscriptionPlan(plan.planId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.subscriptionPlans = this.subscriptionPlans.filter(p => p.planId !== plan.planId);
+          this.successMessage = `Plan "${plan.planName}" deleted.`;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.errorMessage = 'Unable to delete plan.';
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  planModules(plan: SubscriptionPlanDTO): string[] {
+    return (plan.modulesIncluded ?? '').split(',').map(m => m.trim()).filter(Boolean);
+  }
+
+  planFeaturedCount(): number {
+    return this.subscriptionPlans.filter(p => p.featured).length;
+  }
+
+  planActiveCount(): number {
+    return this.subscriptionPlans.filter(p => p.active !== false).length;
+  }
+
+  private emptyPlanForm(): SubscriptionPlanDTO {
+    return {
+      planCode: '',
+      planName: '',
+      description: '',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      currency: 'INR',
+      maxStudents: 100,
+      maxStaff: 20,
+      maxUsers: 50,
+      storageGb: 10,
+      modulesIncluded: 'Dashboard,Students,Staff,Attendance',
+      supportTier: 'Email',
+      highlightColor: '#3B82F6',
+      featured: false,
+      active: true
+    };
   }
 }

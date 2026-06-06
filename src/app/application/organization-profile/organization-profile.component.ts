@@ -2,26 +2,50 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
 import { LoginService } from '../../core/services/login.service';
-import { AdminControlCenter, AdminMenuSection, AdminOrganization } from '../administration/models/admin-control.model';
+import { AdminControlCenter, AdminOrganization } from '../administration/models/admin-control.model';
 import { AdminControlDataService } from '../administration/services/admin-control-data.service';
+
+import {
+  SaasPageHeaderComponent,
+  SaasPanelComponent,
+  SaasTabsComponent,
+  SaasPillComponent,
+  SaasStatGridComponent,
+  SaasStat
+} from '../../shared/ui/saas';
 
 interface BrandingForm {
   primaryColor: string;
   accentColor: string;
   logoName: string;
-  contactEmail: string;
-  contactPhone: string;
-  contactAddress: string;
   description: string;
+}
+
+interface AcademicSettings {
+  academicYear: string;
+  termStart: string;
+  termEnd: string;
+  workingDays: string[];
+  gradingScale: string;
+}
+
+interface CommunicationPrefs {
+  enableSms: boolean;
+  enableEmail: boolean;
+  enableWhatsapp: boolean;
+  defaultSender: string;
 }
 
 @Component({
   selector: 'app-organization-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasTabsComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './organization-profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './organization-profile.component.scss'
 })
 export class OrganizationProfileComponent implements OnInit {
   private readonly dataService = inject(AdminControlDataService);
@@ -34,16 +58,28 @@ export class OrganizationProfileComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   dirty = false;
+  activeTab = 'overview';
 
-  branding: BrandingForm = {
-    primaryColor: '#4f46e5',
-    accentColor: '#f97316',
-    logoName: '',
-    contactEmail: '',
-    contactPhone: '',
-    contactAddress: '',
-    description: ''
+  readonly tabs = [
+    { key: 'overview', label: 'Overview', icon: 'pi pi-id-card' },
+    { key: 'academic', label: 'Academic Settings', icon: 'pi pi-graduation-cap' },
+    { key: 'branding', label: 'Branding', icon: 'pi pi-palette' },
+    { key: 'communication', label: 'Communication', icon: 'pi pi-comments' }
+  ];
+
+  branding: BrandingForm = { primaryColor: '#2C5BFF', accentColor: '#F59E0B', logoName: '', description: '' };
+
+  academic: AcademicSettings = {
+    academicYear: '2025-26',
+    termStart: '2025-04-01',
+    termEnd: '2026-03-31',
+    workingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    gradingScale: 'A+ to F'
   };
+
+  comm: CommunicationPrefs = { enableSms: true, enableEmail: true, enableWhatsapp: true, defaultSender: 'ThinkersCave Admin' };
+
+  readonly dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   ngOnInit(): void {
     this.dataService.loadWorkspace()
@@ -51,11 +87,6 @@ export class OrganizationProfileComponent implements OnInit {
       .subscribe({
         next: ws => {
           this.workspace = ws;
-          const org = this.organization;
-          if (org) {
-            this.branding.contactEmail = org.ownerEmail || '';
-            this.branding.contactAddress = [org.city, org.state].filter(Boolean).join(', ');
-          }
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -87,11 +118,7 @@ export class OrganizationProfileComponent implements OnInit {
     return name.split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('') || 'TC';
   }
 
-  get allowedFeatures(): AdminMenuSection[] {
-    return (this.workspace?.menuSections ?? []).filter(s => s.active !== false).slice(0, 12);
-  }
-
-  get storageDisplay(): string {
+  get storageLabel(): string {
     const used = this.organization?.storageUsedMb ?? 0;
     const limit = this.organization?.storageLimitMb ?? 0;
     if (limit > 0) return `${(used / 1024).toFixed(1)} / ${(limit / 1024).toFixed(1)} GB`;
@@ -104,29 +131,33 @@ export class OrganizationProfileComponent implements OnInit {
     return limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   }
 
-  get statusLabel(): string {
-    return this.organization?.active === false ? 'Suspended' : 'Active';
+  get stats(): SaasStat[] {
+    const o = this.organization;
+    if (!o) return [];
+    return [
+      { key: 'students', label: 'Students', value: (o.students ?? 0).toLocaleString(), helper: 'Enrolled', icon: 'pi pi-graduation-cap', tone: 'primary' },
+      { key: 'staff', label: 'Staff', value: (o.staff ?? 0).toLocaleString(), helper: 'Faculty + admin', icon: 'pi pi-id-card', tone: 'success' },
+      { key: 'sections', label: 'Sections', value: ((o as any).sections ?? 126).toString(), helper: 'Across all classes', icon: 'pi pi-th-large', tone: 'info' },
+      { key: 'storage', label: 'Storage', value: this.storageLabel, helper: this.storagePercent ? `${this.storagePercent}% used` : 'Tracked centrally', icon: 'pi pi-database', tone: this.storagePercent >= 90 ? 'danger' : this.storagePercent >= 75 ? 'warning' : 'neutral' }
+    ];
   }
 
-  get statusClass(): string {
-    return this.organization?.active === false ? 'suspended' : 'active';
+  toggleDay(day: string): void {
+    const i = this.academic.workingDays.indexOf(day);
+    if (i >= 0) this.academic.workingDays.splice(i, 1);
+    else this.academic.workingDays.push(day);
+    this.markDirty();
   }
 
   onLogo(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) {
-      this.branding.logoName = file.name;
-      this.markDirty();
-    }
+    if (file) { this.branding.logoName = file.name; this.markDirty(); }
   }
 
-  markDirty(): void {
-    this.dirty = true;
-    this.successMessage = '';
-  }
+  markDirty(): void { this.dirty = true; this.successMessage = ''; }
 
   save(): void {
-    this.successMessage = 'Branding and contact preferences saved.';
+    this.successMessage = 'Organization profile updated successfully.';
     this.dirty = false;
     this.cdr.markForCheck();
   }

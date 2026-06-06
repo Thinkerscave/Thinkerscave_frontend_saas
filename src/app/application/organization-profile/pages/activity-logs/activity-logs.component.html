@@ -1,0 +1,57 @@
+<div class="saas-page activity-logs">
+  <tc-saas-page-header
+    title="Activity Logs"
+    subtitle="Audit trail of user and system actions"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organization'},{label:'Activity Logs'}]">
+    <button type="button" class="saas-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export CSV</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading activity logs...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <tc-saas-filter-row>
+      <label class="saas-search">
+        <i class="pi pi-search"></i>
+        <input type="text" [(ngModel)]="search" placeholder="Search action or summary...">
+      </label>
+      <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
+      <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
+      <label class="saas-field"><span>Module</span>
+        <select [(ngModel)]="moduleFilter"><option value="all">All</option><option *ngFor="let m of modules" [value]="m">{{ m }}</option></select>
+      </label>
+      <label class="saas-field"><span>User</span>
+        <select [(ngModel)]="userFilter"><option value="all">All</option><option *ngFor="let u of users" [value]="u">{{ u }}</option></select>
+      </label>
+      <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
+    </tc-saas-filter-row>
+
+    <tc-saas-panel [title]="'All Activity (' + filtered.length + ')'">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>Date & Time</th><th>User</th><th>Action</th><th>Module</th><th>Summary</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngIf="!pageItems.length"><td colspan="6"><div class="saas-empty"><i class="pi pi-list"></i><strong>No logs match your filters</strong></div></td></tr>
+            <tr *ngFor="let l of pageItems">
+              <td>{{ l.occurredAt | date:'medium' }}</td>
+              <td><strong>{{ l.actorUsername || '—' }}</strong></td>
+              <td><tc-saas-pill [label]="l.action || 'Action'" [tone]="toneFor(l.action || '')"></tc-saas-pill></td>
+              <td>{{ l.entityType || 'system' }}</td>
+              <td>{{ l.summary || l.eventType }}</td>
+              <td><tc-saas-pill label="Success" tone="success"></tc-saas-pill></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <footer class="activity-logs__pagination">
+        <span>Showing {{ pageItems.length }} of {{ filtered.length }} logs</span>
+        <div>
+          <button type="button" class="saas-icon-btn" (click)="prev()" [disabled]="page === 0"><i class="pi pi-chevron-left"></i></button>
+          <span>Page {{ page + 1 }} / {{ totalPages }}</span>
+          <button type="button" class="saas-icon-btn" (click)="next()" [disabled]="page >= totalPages - 1"><i class="pi pi-chevron-right"></i></button>
+        </div>
+      </footer>
+    </tc-saas-panel>
+  </ng-container>
+</div>

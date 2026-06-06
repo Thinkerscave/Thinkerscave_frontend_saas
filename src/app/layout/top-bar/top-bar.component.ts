@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { LoginService } from '../../core/services/login.service';
@@ -22,41 +22,42 @@ export class TopBarComponent {
   isDarkTheme = this.themeService.isDarkTheme;
   currentUser = this.loginService.getUser();
 
-  toggleTheme() {
-    this.themeService.toggleTheme();
-  }
+  /** Reactive role token list so dashboard/permissions computations stay synced. */
+  private readonly user = signal<any>(this.currentUser);
+  readonly roleTokens = computed(() => this.computeRoleTokens(this.user()));
+  readonly photoUrl = computed<string | null>(() => {
+    const u: any = this.user();
+    return u?.studentPhoto || u?.staffPhoto || u?.parentPhoto || u?.profilePhoto || u?.adminPhoto || null;
+  });
+  readonly dashboardRoute = computed(() => this.resolveDashboardRoute(this.roleTokens()));
 
-  navigateHome() {
-    this.router.navigate(['/app']);
-  }
+  toggleTheme() { this.themeService.toggleTheme(); }
 
-  logout() {
-    this.loginService.logOutAndRedirect();
-  }
-  
-  openSettings() {
-    this.router.navigate(['/app/settings']);
-  }
+  navigateHome() { this.router.navigate([this.dashboardRoute()]); }
 
-  openOrganizationProfile() {
-    this.router.navigate(['/app/organization-profile']);
-  }
+  logout() { this.loginService.logOutAndRedirect(); }
+
+  openSettings() { this.router.navigate(['/app/settings']); }
+
+  openOrganizationProfile() { this.router.navigate(['/app/organization/profile']); }
 
   canOpenOrganizationProfile(): boolean {
-    const roles = this.currentRoleTokens();
     return ['ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
-      .some(role => roles.includes(role));
+      .some(role => this.roleTokens().includes(role));
   }
-  
+
+  canSwitchTenant(): boolean {
+    return ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']
+      .some(role => this.roleTokens().includes(role));
+  }
+
   getInitials(name: string | undefined | null): string {
     if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.substring(0, 2).toUpperCase();
   }
-  
+
   getUserName(): string {
     if (!this.currentUser) return 'User';
     return (this.currentUser.firstName + ' ' + (this.currentUser.lastName || '')).trim();
@@ -75,12 +76,22 @@ export class TopBarComponent {
     return org?.orgName ?? org?.displayName ?? localStorage.getItem('tenantId') ?? 'ThinkerScave Academy';
   }
 
-  private currentRoleTokens(): string[] {
-    const user = this.currentUser as any;
+  private computeRoleTokens(user: any): string[] {
     const roles = [user?.role, user?.roleCode, user?.roleName, ...(Array.isArray(user?.roles) ? user.roles : [])];
     return roles
       .flatMap((role: any) => [role?.roleCode, role?.roleName, role?.name, role])
       .filter(Boolean)
       .map((role: any) => String(role).trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase());
+  }
+
+  /** Logo click goes to role-appropriate dashboard root. */
+  private resolveDashboardRoute(tokens: string[]): string {
+    if (tokens.some(t => ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'].includes(t))) return '/app/tenant-management/organizations';
+    if (tokens.some(t => ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'INSTITUTION_ADMIN', 'COLLEGE_ADMIN', 'ADMIN'].includes(t))) return '/app/organization/profile';
+    if (tokens.some(t => ['PRINCIPAL', 'ACADEMIC_COORDINATOR', 'HR_MANAGER'].includes(t))) return '/app';
+    if (tokens.some(t => ['TEACHER', 'STAFF'].includes(t))) return '/app';
+    if (tokens.some(t => ['PARENT'].includes(t))) return '/app';
+    if (tokens.some(t => ['STUDENT'].includes(t))) return '/app';
+    return '/app';
   }
 }

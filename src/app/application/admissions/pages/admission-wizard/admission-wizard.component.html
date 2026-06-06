@@ -1,0 +1,162 @@
+<section class="adm-workspace adm-wizard">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>{{ applicationId ? 'Edit Admission' : 'New Admission' }}</h1>
+      <p>Complete the 7 stages to enroll the student.</p>
+      <span class="adm-count" *ngIf="applicationId"><i class="pi pi-id-card"></i> {{ applicationId }}</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--ghost" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
+      <button type="button" class="adm-btn" (click)="saveDraft()" [disabled]="saving">
+        <i class="pi" [class.pi-save]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Save draft
+      </button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="submit()" [disabled]="saving">
+        <i class="pi pi-check"></i> Submit
+      </button>
+    </div>
+  </header>
+
+  <div class="adm-toast" *ngIf="message" [class.is-error]="isError">
+    <i class="pi" [class.pi-check-circle]="!isError" [class.pi-exclamation-triangle]="isError"></i> {{ message }}
+  </div>
+
+  <!-- Progress bar -->
+  <div class="adm-wizard__progress">
+    <div class="adm-wizard__bar"><span [style.width.%]="progress.progressPercentage"></span></div>
+    <div class="adm-wizard__pct">{{ progress.progressPercentage }}%</div>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="adm-wizard__steps">
+    <button type="button" *ngFor="let s of steps"
+            (click)="goTo(s.index)"
+            [class.is-active]="activeStep === s.index"
+            [class.is-complete]="isComplete(s.index)">
+      <span class="step-no">Step {{ s.index }}</span>
+      <strong>{{ s.label }}</strong>
+      <em>{{ s.description }}</em>
+    </button>
+  </div>
+
+  <form [formGroup]="wizardForm" class="adm-panel">
+    <!-- Step 1: Basic -->
+    <ng-container *ngIf="activeStep === 1" formGroupName="basic">
+      <div class="adm-panel__header"><h2>Step 1 · Basic Information</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field"><label>Full name *</label><input formControlName="applicantName"/></div>
+        <div class="adm-field"><label>Date of birth *</label><input type="date" formControlName="dateOfBirth"/></div>
+        <div class="adm-field">
+          <label>Gender *</label>
+          <select formControlName="gender">
+            <option value="">Select</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="adm-field"><label>Applying for *</label><input formControlName="applyingForSchoolOrCollege" placeholder="e.g. Grade 10"/></div>
+      </div>
+    </ng-container>
+
+    <!-- Step 2: Parent -->
+    <ng-container *ngIf="activeStep === 2" formGroupName="parent">
+      <div class="adm-panel__header"><h2>Step 2 · Parent / Guardian</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field"><label>Parent name *</label><input formControlName="parentName"/></div>
+        <div class="adm-field"><label>Guardian name</label><input formControlName="guardianName"/></div>
+        <div class="adm-field"><label>Contact number *</label><input formControlName="contactNumber" maxlength="10"/></div>
+        <div class="adm-field"><label>Email *</label><input type="email" formControlName="email"/></div>
+        <div class="adm-field"><label>Emergency contact name</label><input formControlName="emergencyName"/></div>
+        <div class="adm-field"><label>Emergency contact number</label><input formControlName="emergencyNumber" maxlength="10"/></div>
+      </div>
+    </ng-container>
+
+    <!-- Step 3: Address -->
+    <ng-container *ngIf="activeStep === 3" formGroupName="address">
+      <div class="adm-panel__header"><h2>Step 3 · Address</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field adm-field--full"><label>Street *</label><input formControlName="street"/></div>
+        <div class="adm-field"><label>City *</label><input formControlName="city"/></div>
+        <div class="adm-field"><label>State *</label><input formControlName="state"/></div>
+        <div class="adm-field"><label>Pin code *</label><input formControlName="pinCode" maxlength="6"/></div>
+      </div>
+    </ng-container>
+
+    <!-- Step 4: Academic -->
+    <ng-container *ngIf="activeStep === 4" formGroupName="academic">
+      <div class="adm-panel__header"><h2>Step 4 · Academic History</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field"><label>Previous school / college</label><input formControlName="previousSchool"/></div>
+        <div class="adm-field"><label>Previous class</label><input formControlName="previousClass"/></div>
+        <div class="adm-field"><label>Aggregate marks (%)</label><input type="number" formControlName="previousMarks"/></div>
+        <div class="adm-field adm-field--full"><label>Notes</label><textarea formControlName="academicNotes" rows="3"></textarea></div>
+      </div>
+    </ng-container>
+
+    <!-- Step 5: Documents -->
+    <ng-container *ngIf="activeStep === 5">
+      <div class="adm-panel__header"><h2>Step 5 · Documents</h2></div>
+      <p style="color: var(--tc-text-muted); font-size: 0.88rem; margin: 0;">
+        Upload required documents. Pending fields will appear in the progress tracker.
+      </p>
+      <div class="adm-chip-row">
+        <span class="adm-chip" *ngFor="let pf of progress.pendingFields">
+          <i class="pi pi-times"></i> {{ pf }}
+        </span>
+        <span class="adm-chip is-active" *ngIf="!progress.pendingFields?.length">
+          <i class="pi pi-check-circle"></i> All required documents present
+        </span>
+      </div>
+    </ng-container>
+
+    <!-- Step 6: Fee -->
+    <ng-container *ngIf="activeStep === 6" formGroupName="fee">
+      <div class="adm-panel__header"><h2>Step 6 · Fee Plan</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field"><label>Fee plan</label><input formControlName="feePlan" placeholder="e.g. Annual Standard"/></div>
+        <div class="adm-field"><label>Discount (%)</label><input type="number" formControlName="discount"/></div>
+        <div class="adm-field">
+          <label>Payment mode</label>
+          <select formControlName="paymentMode">
+            <option value="ONLINE">Online</option>
+            <option value="OFFLINE">Offline</option>
+            <option value="DD">Demand Draft</option>
+          </select>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Step 7: Review -->
+    <ng-container *ngIf="activeStep === 7" formGroupName="review">
+      <div class="adm-panel__header"><h2>Step 7 · Review & Submit</h2></div>
+      <div class="adm-wizard__body">
+        <div class="adm-field adm-field--full">
+          <label>Internal comments</label>
+          <textarea formControlName="internalComments" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="adm-empty" *ngIf="!progress.pendingFields?.length">
+        <i class="pi pi-check-circle" style="color: var(--tc-success);"></i>
+        <h3>Ready to enroll</h3>
+        <p>All checkpoints complete. Click <strong>Approve</strong> to enroll the student.</p>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="approve()" [disabled]="saving">
+          <i class="pi pi-graduation-cap"></i> Approve & Enroll
+        </button>
+      </div>
+      <div class="adm-empty" *ngIf="progress.pendingFields?.length">
+        <i class="pi pi-exclamation-triangle" style="color: var(--tc-warning);"></i>
+        <h3>{{ progress.pendingFields.length }} item(s) pending</h3>
+        <p>Complete the highlighted items before approval.</p>
+      </div>
+    </ng-container>
+
+    <footer class="adm-wizard__footer">
+      <button type="button" class="adm-btn" (click)="back()" [disabled]="activeStep === 1">
+        <i class="pi pi-arrow-left"></i> Back
+      </button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="next()" [disabled]="activeStep === 7">
+        Next <i class="pi pi-arrow-right"></i>
+      </button>
+    </footer>
+  </form>
+</section>

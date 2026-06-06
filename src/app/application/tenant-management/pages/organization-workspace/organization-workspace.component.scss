@@ -1,0 +1,96 @@
+.organization-workspace {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 18px;
+    @media (max-width: 1100px) { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 760px) { grid-template-columns: 1fr; }
+  }
+}
+
+.org-dl {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px 18px; margin: 0;
+
+  > div { display: flex; flex-direction: column; gap: 2px; }
+  dt { color: var(--saas-text-soft); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  dd { margin: 0; color: var(--saas-text); font-size: 0.92rem; font-weight: 500; word-break: break-word; }
+}
+
+.usage-row {
+  margin-bottom: 18px;
+
+  &__label {
+    display: flex; justify-content: space-between;
+    margin-bottom: 6px;
+    color: var(--saas-text);
+    font-size: 0.88rem; font-weight: 600;
+
+    span { color: var(--saas-text-soft); font-weight: 500; }
+  }
+}
+
+.cmp-bar {
+  background: var(--saas-surface-muted);
+  border-radius: 999px;
+  height: 8px; overflow: hidden;
+  span {
+    display: block; height: 100%;
+    background: var(--saas-primary);
+    &[data-tone="success"] { background: var(--saas-success); }
+    &[data-tone="warning"] { background: var(--saas-warning); }
+    &[data-tone="danger"] { background: var(--saas-danger); }
+  }
+}
+
+.subscription-detail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  gap: 18px; align-items: center;
+  @media (max-width: 900px) { grid-template-columns: 1fr 1fr; }
+
+  small {
+    display: block;
+    color: var(--saas-text-soft);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  strong { color: var(--saas-text); font-size: 1.05rem; font-weight: 700; }
+}
+
+.activity-list {
+  list-style: none; padding: 0; margin: 0;
+
+  li {
+    display: flex; gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--saas-border);
+
+    &:last-of-type { border-bottom: 0; }
+
+    .muted { color: var(--saas-text-soft); }
+    strong { color: var(--saas-text); }
+    p { margin: 4px 0; color: var(--saas-text); font-size: 0.86rem; }
+    small { color: var(--saas-text-soft); font-size: 0.78rem; }
+  }
+
+  &__dot {
+    margin-top: 8px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--saas-primary);
+    flex-shrink: 0;
+  }
+}
+
+.settings-action-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--saas-border);
+
+  &:last-of-type { border-bottom: 0; }
+  strong { display: block; color: var(--saas-text); font-size: 0.9rem; }
+  p { margin: 2px 0 0; color: var(--saas-text-soft); font-size: 0.82rem; }
+}

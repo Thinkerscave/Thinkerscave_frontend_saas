@@ -1,0 +1,142 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Student Movement</h1>
+      <p>Transfer Certificate (TC) center — manage transfer requests, readiness and issuance.</p>
+      <span class="adm-count"><i class="pi pi-send"></i> {{ transfers.length }} requests</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openNew()">
+        <i class="pi pi-plus"></i> New Transfer Request
+      </button>
+      <button type="button" class="adm-btn"><i class="pi pi-file"></i> TC Templates</button>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+    <i class="pi pi-check-circle"></i> {{ successMessage }}
+  </div>
+
+  <div class="stu-profile-layout">
+    <!-- Main: requests table -->
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <h2>Transfer Requests</h2>
+        <small class="adm-panel__hint">{{ transfers.length }} record(s)</small>
+      </div>
+      <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading transfers…</div>
+      <div class="stu-table-wrap" *ngIf="!loading && transfers.length">
+        <table class="stu-table">
+          <thead>
+            <tr><th>Request #</th><th>Student</th><th>Reason</th><th>Destination</th><th>Status</th><th>Requested</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of transfers" (click)="select(r)" style="cursor:pointer;">
+              <td>{{ r.requestNumber || '#' + r.id }}</td>
+              <td>{{ r.studentId }}</td>
+              <td>{{ r.reason || '—' }}</td>
+              <td>{{ r.destinationSchool || '—' }}</td>
+              <td><span class="adm-badge" [attr.data-tone]="statusTone(r.status)">{{ r.status }}</span></td>
+              <td>{{ r.requestedOn || '—' }}</td>
+              <td>
+                <div style="display:flex; gap:4px;">
+                  <button class="adm-icon-btn" *ngIf="r.status === 'REQUESTED'" title="Send to review" (click)="transition(r, 'UNDER_REVIEW'); $event.stopPropagation()">
+                    <i class="pi pi-arrow-right"></i>
+                  </button>
+                  <button class="adm-icon-btn" *ngIf="r.status === 'UNDER_REVIEW'" title="Approve" (click)="transition(r, 'APPROVED'); $event.stopPropagation()">
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button class="adm-icon-btn" *ngIf="r.status === 'APPROVED'" title="Issue TC" (click)="transition(r, 'TC_ISSUED'); $event.stopPropagation()">
+                    <i class="pi pi-file"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="adm-empty" *ngIf="!loading && !transfers.length">
+        <i class="pi pi-inbox"></i>
+        <h3>No transfer requests</h3>
+        <p>Create the first transfer request from the button above.</p>
+      </div>
+    </div>
+
+    <!-- Sidebar: readiness check -->
+    <aside class="stu-aside">
+      <div class="adm-panel" *ngIf="selected">
+        <div class="adm-panel__header"><h2>Request Details</h2></div>
+        <dl class="adm-dl">
+          <div><dt>Request #</dt><dd>{{ selected.requestNumber || '#' + selected.id }}</dd></div>
+          <div><dt>Student</dt><dd>{{ selected.studentId }}</dd></div>
+          <div><dt>Status</dt><dd><span class="adm-badge" [attr.data-tone]="statusTone(selected.status)">{{ selected.status }}</span></dd></div>
+          <div><dt>Reason</dt><dd>{{ selected.reason || '—' }}</dd></div>
+          <div><dt>Destination</dt><dd>{{ selected.destinationSchool || '—' }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="adm-panel">
+        <div class="adm-panel__header"><h2>Readiness Check</h2></div>
+        <div class="stu-checklist">
+          <div *ngFor="let c of readinessChecks" [attr.data-ok]="c.ok">
+            <i [class]="c.ok ? 'pi pi-check' : 'pi pi-exclamation-triangle'"></i>
+            <strong>{{ c.label }}</strong>
+            <small>{{ c.ok ? 'OK' : 'Pending' }}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-panel">
+        <div class="adm-panel__header"><h2>TC Template</h2></div>
+        <select style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--tc-border);">
+          <option>Standard Transfer Certificate</option>
+          <option>Migration Certificate</option>
+          <option>Bonafide Certificate</option>
+        </select>
+        <button class="adm-btn adm-btn--primary" style="margin-top:10px; width:100%;">
+          <i class="pi pi-print"></i> Generate Certificate
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- New request modal -->
+  <div *ngIf="showForm" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;" (click)="closeNew()">
+    <div class="adm-panel" style="width:520px; max-width:100%;" (click)="$event.stopPropagation()">
+      <div class="adm-panel__header"><h2>New Transfer Request</h2>
+        <button class="adm-icon-btn" (click)="closeNew()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="adm-wizard__body">
+        <div class="adm-field">
+          <label>Student ID</label>
+          <input type="number" [(ngModel)]="newRequest.studentId"/>
+        </div>
+        <div class="adm-field">
+          <label>Enrollment ID</label>
+          <input type="number" [(ngModel)]="newRequest.enrollmentId"/>
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Reason</label>
+          <textarea [(ngModel)]="newRequest.reason" rows="3" placeholder="Reason for transfer"></textarea>
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Destination School</label>
+          <input type="text" [(ngModel)]="newRequest.destinationSchool"/>
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Remarks</label>
+          <textarea [(ngModel)]="newRequest.remarks" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="adm-wizard__footer">
+        <button class="adm-btn" (click)="closeNew()">Cancel</button>
+        <button class="adm-btn adm-btn--primary" [disabled]="saving" (click)="submitRequest()">
+          <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Submit Request
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

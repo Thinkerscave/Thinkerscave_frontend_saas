@@ -1,0 +1,146 @@
+<section class="adm-workspace">
+
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Alumni Staff</h1>
+      <p>Retired, resigned, and exited staff archive.</p>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openAdd()">
+        <i class="pi pi-plus"></i> Add Alumni Staff
+      </button>
+      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+    </div>
+  </header>
+
+  <div class="adm-kpi-grid">
+    <div *ngFor="let t of kpiTiles" class="adm-kpi" [attr.data-tone]="t.tone">
+      <span class="adm-kpi__label">{{ t.label }}</span>
+      <span class="adm-kpi__value">{{ kpi[t.key] }}</span>
+      <span class="adm-kpi__hint">{{ t.hint }}</span>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel__header">
+      <div class="adm-panel__title">
+        <h2>Alumni Staff Records</h2>
+        <small class="adm-panel__hint">{{ filtered.length }} record(s)</small>
+      </div>
+      <div class="adm-field" style="min-width:260px;">
+        <input type="search" [(ngModel)]="searchQuery" placeholder="Search alumni staff..."/>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+    <div *ngIf="errorMessage" class="adm-empty">{{ errorMessage }}</div>
+
+    <div *ngIf="!loading && !filtered.length" class="adm-empty">
+      <i class="pi pi-history"></i>
+      <p>No alumni staff records yet.</p>
+    </div>
+
+    <div *ngIf="!loading && filtered.length" class="staff-table-wrap">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Last Designation</th>
+            <th>Department</th>
+            <th>Exit Type</th>
+            <th>Exit Date</th>
+            <th>Years of Service</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of filtered; trackBy: trackById">
+            <td><strong>{{ a.fullName }}</strong><br><small style="color:var(--tc-text-muted)">{{ a.staffCode || '—' }}</small></td>
+            <td>{{ a.lastDesignation || '—' }}</td>
+            <td>{{ a.department || '—' }}</td>
+            <td><span class="staff-pill" [attr.data-state]="a.exitType">{{ a.exitType }}</span></td>
+            <td>{{ a.exitDate }}</td>
+            <td>{{ a.yearsOfService ? (a.yearsOfService | number:'1.1-1') + ' Yrs' : '—' }}</td>
+            <td>
+              <button type="button" class="adm-btn adm-btn--ghost" title="View"><i class="pi pi-eye"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Modal -->
+  <div class="staff-modal-overlay" *ngIf="showAdd" (click)="closeAdd()">
+    <div class="staff-modal" (click)="$event.stopPropagation()">
+      <div class="staff-modal__head">
+        <h2>Add Alumni Staff</h2>
+        <button type="button" (click)="closeAdd()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="staff-modal__body">
+        <div class="adm-filter-bar">
+          <div class="adm-field">
+            <label>Link to existing employee</label>
+            <select [(ngModel)]="form.staffId">
+              <option [ngValue]="undefined">— None / External Record —</option>
+              <option *ngFor="let s of staffOptions" [ngValue]="s.staffId">{{ s.fullName }} ({{ s.staffCode }})</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Full Name *</label>
+            <input type="text" [(ngModel)]="form.fullName" placeholder="e.g. Rajesh Kumar"/>
+          </div>
+          <div class="adm-field">
+            <label>Staff Code</label>
+            <input type="text" [(ngModel)]="form.staffCode" placeholder="STF-Axxx"/>
+          </div>
+          <div class="adm-field">
+            <label>Last Designation</label>
+            <input type="text" [(ngModel)]="form.lastDesignation" placeholder="e.g. Senior Teacher"/>
+          </div>
+          <div class="adm-field">
+            <label>Department</label>
+            <input type="text" [(ngModel)]="form.department" placeholder="e.g. Mathematics"/>
+          </div>
+          <div class="adm-field">
+            <label>Exit Type *</label>
+            <select [(ngModel)]="form.exitType">
+              <option value="RETIRED">Retired</option>
+              <option value="RESIGNED">Resigned</option>
+              <option value="CONTRACT_COMPLETED">Contract Completed</option>
+              <option value="TERMINATED">Terminated</option>
+              <option value="DECEASED">Deceased</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Exit Date *</label>
+            <input type="date" [(ngModel)]="form.exitDate"/>
+          </div>
+          <div class="adm-field">
+            <label>Joined Date</label>
+            <input type="date" [(ngModel)]="form.joinedDate"/>
+          </div>
+          <div class="adm-field">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="form.email" placeholder="contact@example.com"/>
+          </div>
+          <div class="adm-field">
+            <label>Contact</label>
+            <input type="text" [(ngModel)]="form.contact" placeholder="9876543210"/>
+          </div>
+          <div class="adm-field" style="grid-column: 1 / -1;">
+            <label>Remarks</label>
+            <input type="text" [(ngModel)]="form.remarks" placeholder="Optional notes"/>
+          </div>
+        </div>
+      </div>
+      <div class="staff-modal__foot">
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="closeAdd()">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="save()" [disabled]="saving">
+          <i class="pi" [class.pi-spin]="saving" [class.pi-save]="!saving" [class.pi-spinner]="saving"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>

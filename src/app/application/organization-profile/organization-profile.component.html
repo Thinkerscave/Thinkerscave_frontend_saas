@@ -1,107 +1,136 @@
-<section class="tc-tenant-page tc-org-profile" *ngIf="!loading && organization; else loadingOrError">
-  <header class="tc-workspace__header">
-    <div class="tc-workspace__identity">
-      <span class="tc-workspace__avatar" data-tier="professional">{{ initials }}</span>
-      <div>
-        <p class="tc-workspace__eyebrow">My organization</p>
-        <h1>{{ organization.brandName || organization.orgName }}</h1>
-        <p class="tc-workspace__meta">
-          <span>{{ organization.orgCode }}</span>
-          <span class="tc-dot"></span>
-          <span>{{ organization.subscriptionType || 'Professional' }} plan</span>
-        </p>
-      </div>
-    </div>
-    <div class="tc-workspace__chips">
-      <span class="tc-pill tc-pill--{{ statusClass }}"><i class="pi pi-circle-fill"></i>{{ statusLabel }}</span>
-      <span class="tc-pill tc-pill--soft"><i class="pi pi-calendar"></i>Renewal managed by platform</span>
-    </div>
-  </header>
+<div class="saas-page organization-profile">
+  <tc-saas-page-header
+    title="Organization Profile"
+    subtitle="Manage your institution's profile, branding, and preferences"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organization Profile'}]">
+    <button type="button" class="saas-btn"><i class="pi pi-eye"></i>View Plan Details</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="!dirty"><i class="pi pi-save"></i>Save Changes</button>
+  </tc-saas-page-header>
 
-  <div *ngIf="successMessage" class="tc-banner tc-banner--success"><i class="pi pi-check-circle"></i><span>{{ successMessage }}</span></div>
+  <div *ngIf="errorMessage" class="saas-empty">
+    <i class="pi pi-exclamation-triangle" style="color: var(--saas-warning);"></i>
+    <strong>{{ errorMessage }}</strong>
+  </div>
+  <div *ngIf="successMessage" class="saas-empty" style="border-color: var(--saas-success-soft); background: var(--saas-success-soft);">
+    <i class="pi pi-check-circle" style="color: var(--saas-success);"></i>
+    <strong style="color: var(--saas-success);">{{ successMessage }}</strong>
+  </div>
 
-  <div class="tc-org-profile__layout">
-    <article class="tc-panel tc-org-profile__readonly">
-      <header class="tc-panel__header">
-        <h2>Organization at a glance</h2>
-        <p>These fields are governed by the ThinkersCave platform team. Contact support to request changes.</p>
-      </header>
-      <dl class="tc-defs">
-        <div><dt>Organization name</dt><dd>{{ organization.orgName }}</dd></div>
-        <div><dt>Subscription</dt><dd>{{ organization.subscriptionType || 'Professional' }}</dd></div>
-        <div><dt>Owner</dt><dd>{{ organization.ownerName || '—' }} · {{ organization.ownerEmail || '—' }}</dd></div>
-        <div><dt>Domain</dt><dd>{{ organization.tenantId ? organization.tenantId + '.thinkerscave.app' : '—' }}</dd></div>
-        <div><dt>Active users</dt><dd>{{ organization.activeUsers | number }}</dd></div>
-        <div><dt>Branches</dt><dd>{{ organization.branches | number }}</dd></div>
-        <div><dt>Storage</dt><dd>{{ storageDisplay }}</dd></div>
-        <div><dt>Renewal</dt><dd>Managed centrally</dd></div>
-      </dl>
-      <div class="tc-org-profile__storage" *ngIf="organization.storageLimitMb">
-        <div class="tc-progress" [class.is-warn]="storagePercent >= 80" [class.is-danger]="storagePercent >= 95"><div class="tc-progress__bar" [style.width.%]="storagePercent"></div></div>
-        <p>{{ storagePercent }}% of allocated storage in use.</p>
-      </div>
-      <h3 class="tc-panel__title">Allowed features</h3>
-      <ul class="tc-feature-tags" *ngIf="allowedFeatures.length; else noFeatures">
-        <li *ngFor="let f of allowedFeatures"><i class="pi {{ f.icon || 'pi-th-large' }}"></i>{{ f.name }}</li>
-      </ul>
-      <ng-template #noFeatures><p class="tc-empty-line">No modules have been enabled yet.</p></ng-template>
-    </article>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization profile...</div>
 
-    <article class="tc-panel tc-org-profile__editable">
-      <header class="tc-panel__header">
-        <h2>Branding & contact</h2>
-        <p>What your staff and students see across login screens, emails and reports.</p>
-      </header>
+  <ng-container *ngIf="!loading && organization">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 
-      <section class="tc-org-profile__section">
-        <h3 class="tc-panel__title">Logo</h3>
-        <label class="tc-uploader">
-          <input type="file" accept="image/*" (change)="onLogo($event)" />
-          <i class="pi pi-upload"></i>
-          <div>
-            <p>{{ branding.logoName || 'Drop a PNG or SVG here' }}</p>
-            <span>Recommended 512×512 transparent background</span>
+    <ng-container [ngSwitch]="activeTab">
+      <!-- Overview -->
+      <section *ngSwitchCase="'overview'" class="organization-profile__grid">
+        <tc-saas-panel title="School Information">
+          <article class="org-card">
+            <span class="org-card__logo">{{ initials }}</span>
+            <div>
+              <strong>{{ organization.brandName || organization.orgName }}</strong>
+              <small>{{ organization.orgCode }}</small>
+            </div>
+          </article>
+          <dl class="org-dl">
+            <div><dt>Type</dt><dd>{{ organization.orgType || '—' }}</dd></div>
+            <div><dt>Address</dt><dd>{{ [organization.city, organization.state] | json }}</dd></div>
+            <div><dt>Phone</dt><dd>—</dd></div>
+            <div><dt>Email</dt><dd>{{ organization.ownerEmail || '—' }}</dd></div>
+            <div><dt>Website</dt><dd>{{ organization.tenantId ? (organization.tenantId + '.thinkerscave.app') : '—' }}</dd></div>
+            <div><dt>Owner</dt><dd>{{ organization.ownerName || '—' }}</dd></div>
+          </dl>
+          <a routerLink="/app/organization/access-control" class="saas-btn" style="margin-top: 12px;"><i class="pi pi-shield"></i>Manage Access Control</a>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Summary" subtitle="Live institution statistics">
+          <ul class="summary-list">
+            <li><span class="summary-list__icon" data-tone="primary"><i class="pi pi-graduation-cap"></i></span><span>Students</span><strong>{{ organization.students | number }}</strong></li>
+            <li><span class="summary-list__icon" data-tone="success"><i class="pi pi-id-card"></i></span><span>Staff</span><strong>{{ organization.staff | number }}</strong></li>
+            <li><span class="summary-list__icon" data-tone="info"><i class="pi pi-th-large"></i></span><span>Sections</span><strong>126</strong></li>
+            <li><span class="summary-list__icon" data-tone="warning"><i class="pi pi-sitemap"></i></span><span>Branches</span><strong>{{ organization.branches | number }}</strong></li>
+            <li><span class="summary-list__icon" data-tone="info"><i class="pi pi-users"></i></span><span>Active Users</span><strong>{{ organization.activeUsers | number }}</strong></li>
+          </ul>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Subscription">
+          <ng-container panel-actions><tc-saas-pill label="Active" tone="success"></tc-saas-pill></ng-container>
+          <dl class="org-dl">
+            <div><dt>Plan</dt><dd><strong>{{ organization.subscriptionType || 'Professional' }}</strong></dd></div>
+            <div><dt>Status</dt><dd>Active</dd></div>
+            <div><dt>Renewed Date</dt><dd>01 May 2026</dd></div>
+            <div><dt>Storage Used</dt><dd>{{ storageLabel }}</dd></div>
+          </dl>
+          <div class="cmp-bar" style="margin-top: 10px;"><span [style.width.%]="storagePercent" [attr.data-tone]="storagePercent >= 90 ? 'danger' : storagePercent >= 75 ? 'warning' : 'success'"></span></div>
+          <button type="button" class="saas-btn saas-btn--primary" style="margin-top: 14px; width: 100%; justify-content: center;"><i class="pi pi-credit-card"></i>View Plan Details</button>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Academic Settings -->
+      <section *ngSwitchCase="'academic'" class="organization-profile__split">
+        <tc-saas-panel title="Academic Year" subtitle="Define your current academic term">
+          <div class="wizard-row">
+            <label class="saas-field"><span>Academic Year</span><input type="text" [(ngModel)]="academic.academicYear" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Grading Scale</span>
+              <select [(ngModel)]="academic.gradingScale" (ngModelChange)="markDirty()">
+                <option>A+ to F</option><option>1 to 10</option><option>Percentage</option><option>CGPA</option>
+              </select>
+            </label>
           </div>
-        </label>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Term Start</span><input type="date" [(ngModel)]="academic.termStart" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Term End</span><input type="date" [(ngModel)]="academic.termEnd" (ngModelChange)="markDirty()"></label>
+          </div>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Working Days" subtitle="Choose which days school is in session">
+          <div class="day-toggles">
+            <button type="button" *ngFor="let d of dayNames" class="day-toggle" [class.is-active]="academic.workingDays.includes(d)" (click)="toggleDay(d)">
+              {{ d }}
+            </button>
+          </div>
+        </tc-saas-panel>
       </section>
 
-      <section class="tc-org-profile__section">
-        <h3 class="tc-panel__title">Theme colours</h3>
-        <div class="tc-color-grid">
-          <label><span>Primary</span><input type="color" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()" /><code>{{ branding.primaryColor }}</code></label>
-          <label><span>Accent</span><input type="color" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()" /><code>{{ branding.accentColor }}</code></label>
-        </div>
+      <!-- Branding -->
+      <section *ngSwitchCase="'branding'" class="organization-profile__split">
+        <tc-saas-panel title="Identity" subtitle="Logo, colors, and tagline">
+          <article class="org-card">
+            <span class="org-card__logo" [style.background]="branding.primaryColor + '22'" [style.color]="branding.primaryColor">{{ initials }}</span>
+            <label class="saas-btn"><input type="file" accept="image/*" (change)="onLogo($event)" hidden><i class="pi pi-upload"></i>Upload logo</label>
+          </article>
+          <small *ngIf="branding.logoName" style="display: block; margin-top: 8px; color: var(--saas-text-soft);">{{ branding.logoName }}</small>
+          <label class="saas-field"><span>Description / Tagline</span><textarea rows="3" [(ngModel)]="branding.description" (ngModelChange)="markDirty()" placeholder="One-liner shown to parents and visitors"></textarea></label>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Theme" subtitle="Brand colors used across the parent portal">
+          <div class="wizard-row">
+            <label class="saas-field"><span>Primary Color</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="color" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()" style="width: 56px; height: 36px; padding: 0; border-radius: 8px;">
+                <input type="text" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()">
+              </div>
+            </label>
+            <label class="saas-field"><span>Accent Color</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="color" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()" style="width: 56px; height: 36px; padding: 0; border-radius: 8px;">
+                <input type="text" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()">
+              </div>
+            </label>
+          </div>
+        </tc-saas-panel>
       </section>
 
-      <section class="tc-org-profile__section">
-        <h3 class="tc-panel__title">Contact information</h3>
-        <div class="tc-form-grid">
-          <label class="tc-field"><span>Public email</span><input type="email" [(ngModel)]="branding.contactEmail" (ngModelChange)="markDirty()" placeholder="hello@institution.edu" /></label>
-          <label class="tc-field"><span>Phone</span><input type="tel" [(ngModel)]="branding.contactPhone" (ngModelChange)="markDirty()" placeholder="+91" /></label>
-          <label class="tc-field tc-field--wide"><span>Address</span><input type="text" [(ngModel)]="branding.contactAddress" (ngModelChange)="markDirty()" placeholder="Street, city" /></label>
-        </div>
+      <!-- Communication -->
+      <section *ngSwitchCase="'communication'">
+        <tc-saas-panel title="Communication Preferences" subtitle="Default channels and sender identity">
+          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableSms" (ngModelChange)="markDirty()"><span>Enable SMS notifications</span></label>
+          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableEmail" (ngModelChange)="markDirty()"><span>Enable Email notifications</span></label>
+          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableWhatsapp" (ngModelChange)="markDirty()"><span>Enable WhatsApp notifications</span></label>
+          <label class="saas-field" style="margin-top: 14px;"><span>Default Sender Name</span><input type="text" [(ngModel)]="comm.defaultSender" (ngModelChange)="markDirty()"></label>
+        </tc-saas-panel>
       </section>
-
-      <section class="tc-org-profile__section">
-        <h3 class="tc-panel__title">Organization details</h3>
-        <label class="tc-field"><span>About</span><textarea rows="4" [(ngModel)]="branding.description" (ngModelChange)="markDirty()" placeholder="A short description shown on parent and staff portals."></textarea></label>
-      </section>
-    </article>
-  </div>
-
-  <div class="tc-org-profile__savebar" [class.is-active]="dirty">
-    <p><i class="pi pi-info-circle"></i>You have unsaved branding changes.</p>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="!dirty"><i class="pi pi-save"></i><span>Save changes</span></button>
-  </div>
-</section>
-
-<ng-template #loadingOrError>
-  <section class="tc-tenant-page">
-    <div *ngIf="loading" class="tc-skeleton-block" aria-hidden="true"></div>
-    <div *ngIf="!loading && errorMessage" class="tc-empty">
-      <i class="pi pi-exclamation-circle"></i>
-      <h3>Profile unavailable</h3>
-      <p>{{ errorMessage }}</p>
-    </div>
-  </section>
-</ng-template>
+    </ng-container>
+  </ng-container>
+</div>

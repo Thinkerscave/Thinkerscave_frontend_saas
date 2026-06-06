@@ -1,0 +1,166 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Academic Movement</h1>
+      <p>Promotion center — move students from one class to the next academic year.</p>
+      <span class="adm-count"><i class="pi pi-arrow-up"></i> {{ batches.length }} batches</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn"><i class="pi pi-history"></i> Promotion History</button>
+    </div>
+  </header>
+
+  <!-- Wizard steps -->
+  <div class="adm-panel">
+    <div class="adm-wizard">
+      <div class="adm-wizard__steps">
+        <button *ngFor="let s of steps; let i = index"
+                [class.is-active]="step === s.key"
+                [class.is-complete]="(step === 'REVIEW' && i === 0) || (step === 'CONFIRM' && i < 2) || (step === 'DONE' && i < 3)"
+                (click)="goToStep(s.key)">
+          <span class="step-no">Step {{ i + 1 }}</span>
+          <strong>{{ s.label }}</strong>
+          <em>{{ s.hint }}</em>
+        </button>
+      </div>
+
+      <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+        <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+        <i class="pi pi-check-circle"></i> {{ successMessage }}
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="adm-wizard__body" *ngIf="step === 'SELECT'">
+        <div class="adm-field">
+          <label>Batch Code</label>
+          <input type="text" [(ngModel)]="newBatch.batchCode" placeholder="e.g. PROMO-2025-26"/>
+        </div>
+        <div class="adm-field">
+          <label>From Academic Year ID</label>
+          <input type="number" [(ngModel)]="newBatch.fromAcademicYearId"/>
+        </div>
+        <div class="adm-field">
+          <label>To Academic Year ID</label>
+          <input type="number" [(ngModel)]="newBatch.toAcademicYearId"/>
+        </div>
+        <div class="adm-field">
+          <label>From Class ID</label>
+          <input type="number" [(ngModel)]="newBatch.fromClassId"/>
+        </div>
+        <div class="adm-field">
+          <label>To Class ID</label>
+          <input type="number" [(ngModel)]="newBatch.toClassId"/>
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Remarks</label>
+          <textarea [(ngModel)]="newBatch.remarks" placeholder="Notes for this promotion batch"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div *ngIf="step === 'REVIEW'">
+        <div class="adm-kpi-grid" style="margin-bottom:16px;">
+          <div class="adm-kpi" data-tone="info">
+            <span class="adm-kpi__label">Total Students</span>
+            <span class="adm-kpi__value">{{ totalCount() }}</span>
+            <span class="adm-kpi__hint">Eligible for promotion</span>
+          </div>
+          <div class="adm-kpi" data-tone="success">
+            <span class="adm-kpi__label">Eligible</span>
+            <span class="adm-kpi__value">{{ eligibleCount() }}</span>
+            <span class="adm-kpi__hint">Promote, Repeat or Transfer</span>
+          </div>
+          <div class="adm-kpi" data-tone="warning">
+            <span class="adm-kpi__label">On Hold</span>
+            <span class="adm-kpi__value">{{ holdCount() }}</span>
+            <span class="adm-kpi__hint">Decision pending</span>
+          </div>
+        </div>
+        <div class="stu-table-wrap">
+          <table class="stu-table">
+            <thead><tr><th>Student ID</th><th>From Enrollment</th><th>Decision</th><th>Reason</th><th></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let r of records">
+                <td>{{ r.studentId }}</td>
+                <td>{{ r.fromEnrollmentId || '—' }}</td>
+                <td>
+                  <select [(ngModel)]="r.decision" style="padding:6px 10px; border-radius:8px; border:1px solid var(--tc-border);">
+                    <option *ngFor="let d of decisions" [value]="d.value">{{ d.label }}</option>
+                  </select>
+                </td>
+                <td><input type="text" [(ngModel)]="r.reason" placeholder="Reason" style="padding:6px 10px; border-radius:8px; border:1px solid var(--tc-border); width:100%;"/></td>
+                <td><button class="adm-btn adm-btn--ghost" (click)="updateRecord(r)"><i class="pi pi-save"></i> Save</button></td>
+              </tr>
+              <tr *ngIf="!records.length"><td colspan="5" style="text-align:center; color:var(--tc-text-muted); padding:24px;">No records to review.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div *ngIf="step === 'CONFIRM'">
+        <div class="adm-empty">
+          <i class="pi pi-check-circle"></i>
+          <h3>Ready to execute</h3>
+          <p>{{ eligibleCount() }} students will be promoted, {{ holdCount() }} on hold. This will create new enrollments for the next academic year.</p>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div *ngIf="step === 'DONE'">
+        <div class="adm-empty">
+          <i class="pi pi-flag-fill"></i>
+          <h3>Promotion executed</h3>
+          <p>Batch <strong>{{ currentBatch?.batchCode }}</strong> processed {{ currentBatch?.processedCount || 0 }} student(s).</p>
+        </div>
+      </div>
+
+      <!-- footer -->
+      <div class="adm-wizard__footer">
+        <button class="adm-btn" *ngIf="step !== 'SELECT' && step !== 'DONE'" (click)="step = (step === 'CONFIRM' ? 'REVIEW' : 'SELECT')"><i class="pi pi-arrow-left"></i> Back</button>
+        <div style="display:flex; gap:8px; margin-left:auto;">
+          <button class="adm-btn adm-btn--primary" *ngIf="step === 'SELECT'" [disabled]="saving" (click)="createBatch()">
+            <i class="pi" [class.pi-arrow-right]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Create batch & Preview
+          </button>
+          <button class="adm-btn adm-btn--primary" *ngIf="step === 'REVIEW'" (click)="step = 'CONFIRM'">
+            <i class="pi pi-arrow-right"></i> Continue
+          </button>
+          <button class="adm-btn adm-btn--primary" *ngIf="step === 'CONFIRM'" [disabled]="saving" (click)="executeBatch()">
+            <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Execute Promotion
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent batches -->
+  <div class="adm-panel">
+    <div class="adm-panel__header"><h2>Recent Batches</h2><small class="adm-panel__hint">{{ batches.length }} record(s)</small></div>
+    <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+    <div class="stu-table-wrap" *ngIf="!loading && batches.length">
+      <table class="stu-table">
+        <thead>
+          <tr><th>Code</th><th>From Class</th><th>To Class</th><th>Status</th><th>Planned</th><th>Processed</th><th>Executed</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of batches">
+            <td>{{ b.batchCode }}</td>
+            <td>{{ b.fromClassId || '—' }}</td>
+            <td>{{ b.toClassId || '—' }}</td>
+            <td><span class="adm-badge" [attr.data-tone]="b.status === 'EXECUTED' ? 'success' : b.status === 'IN_PROGRESS' ? 'info' : 'neutral'">{{ b.status }}</span></td>
+            <td>{{ b.plannedCount || 0 }}</td>
+            <td>{{ b.processedCount || 0 }}</td>
+            <td>{{ b.executedOn || '—' }}</td>
+            <td><button class="adm-btn adm-btn--ghost" (click)="selectBatch(b)"><i class="pi pi-eye"></i> View</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="adm-empty" *ngIf="!loading && !batches.length">
+      <i class="pi pi-inbox"></i><h3>No promotion batches</h3>
+      <p>Create your first batch via Step 1 above.</p>
+    </div>
+  </div>
+</section>

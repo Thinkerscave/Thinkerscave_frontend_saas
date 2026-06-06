@@ -1,0 +1,38 @@
+.template-editor {
+  .editor-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 18px;
+    @media (max-width: 900px) { grid-template-columns: 1fr; }
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    .saas-field--full { grid-column: 1 / -1; }
+  }
+
+  .vars {
+    list-style: none; padding: 0; margin: 0 0 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    li {
+      display: flex; flex-direction: column;
+      padding: 10px 12px;
+      background: var(--saas-surface-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      &:hover { background: var(--saas-primary-soft); }
+      code { font-family: 'JetBrains Mono', monospace; color: var(--saas-primary); font-size: 0.82rem; }
+      small { color: var(--saas-text-soft); font-size: 0.75rem; margin-top: 2px; }
+    }
+  }
+
+  .preview {
+    border-top: 1px solid var(--saas-border);
+    padding-top: 12px;
+    strong { display: block; font-size: 0.82rem; margin-bottom: 6px; color: var(--saas-text); }
+    p { margin: 0; padding: 10px; background: var(--saas-surface-muted); border-radius: 8px; font-size: 0.82rem; color: var(--saas-text-soft); line-height: 1.6; }
+  }
+}

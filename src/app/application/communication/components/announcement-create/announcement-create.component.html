@@ -1,0 +1,93 @@
+<div class="saas-page announcement-create">
+  <tc-saas-page-header
+    title="Create Announcement"
+    subtitle="Broadcast a message to your school community"
+    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements',route:'/app/communication/announcements'},{label:'New'}]">
+    <button type="button" class="saas-btn" (click)="cancel()">Cancel</button>
+  </tc-saas-page-header>
+
+  <tc-saas-stepper [steps]="steps" [activeIndex]="active"></tc-saas-stepper>
+
+  <tc-saas-panel>
+    <!-- Step 1: basic -->
+    <section *ngIf="active === 0" class="step">
+      <h3 class="step__title">Basic Information</h3>
+      <div class="step__grid">
+        <label class="saas-field saas-field--full"><span>Title</span><input type="text" [(ngModel)]="draft.title" placeholder="Annual day rehearsal..."></label>
+        <label class="saas-field saas-field--full"><span>Message</span><textarea rows="6" [(ngModel)]="draft.body" placeholder="Provide detailed information..."></textarea></label>
+        <fieldset class="saas-field saas-field--full priority">
+          <legend>Priority</legend>
+          <label class="priority__opt"><input type="radio" name="prio" value="High" [(ngModel)]="draft.priority"><span>High</span></label>
+          <label class="priority__opt"><input type="radio" name="prio" value="Medium" [(ngModel)]="draft.priority"><span>Medium</span></label>
+          <label class="priority__opt"><input type="radio" name="prio" value="Low" [(ngModel)]="draft.priority"><span>Low</span></label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- Step 2: audience -->
+    <section *ngIf="active === 1" class="step">
+      <h3 class="step__title">Select Audience</h3>
+      <div class="step__grid">
+        <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.audienceAll"><span>Everyone</span></label>
+        <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.audienceParents"><span>Parents</span></label>
+        <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.audienceStudents"><span>Students</span></label>
+        <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.audienceStaff"><span>Staff</span></label>
+        <label class="saas-field saas-field--full"><span>Or specific grade</span><input type="text" [(ngModel)]="draft.audienceGrade" placeholder="e.g. Grade 10A"></label>
+      </div>
+    </section>
+
+    <!-- Step 3: attachments -->
+    <section *ngIf="active === 2" class="step">
+      <h3 class="step__title">Attachments (optional)</h3>
+      <div class="upload-zone">
+        <i class="pi pi-cloud-upload"></i>
+        <p>Drag & drop files here or click to browse.</p>
+        <input type="text" #fileInput placeholder="Type filename and press Add">
+        <button type="button" class="saas-btn" (click)="addAttachment(fileInput.value); fileInput.value=''">Add</button>
+      </div>
+      <ul class="attachments" *ngIf="draft.attachments.length">
+        <li *ngFor="let a of draft.attachments; let i = index">
+          <i class="pi pi-paperclip"></i><span>{{ a }}</span>
+          <button type="button" class="saas-icon-btn" (click)="removeAttachment(i)"><i class="pi pi-times"></i></button>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Step 4: schedule -->
+    <section *ngIf="active === 3" class="step">
+      <h3 class="step__title">Schedule Delivery</h3>
+      <div class="step__grid">
+        <label class="saas-check"><input type="radio" name="when" [value]="true" [(ngModel)]="draft.scheduleNow"><span>Send immediately</span></label>
+        <label class="saas-check"><input type="radio" name="when" [value]="false" [(ngModel)]="draft.scheduleNow"><span>Schedule for later</span></label>
+        <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="draft.sendDate" [disabled]="draft.scheduleNow"></label>
+        <label class="saas-field"><span>Time</span><input type="time" [(ngModel)]="draft.sendTime" [disabled]="draft.scheduleNow"></label>
+        <fieldset class="saas-field saas-field--full">
+          <legend>Channels</legend>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.channels.email"><span>Email</span></label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.channels.sms"><span>SMS</span></label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.channels.push"><span>Push</span></label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="draft.channels.inApp"><span>In-app</span></label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- Step 5: review -->
+    <section *ngIf="active === 4" class="step">
+      <h3 class="step__title">Review</h3>
+      <dl class="review">
+        <dt>Title</dt><dd>{{ draft.title || '—' }}</dd>
+        <dt>Priority</dt><dd>{{ draft.priority }}</dd>
+        <dt>Audience</dt><dd>{{ audienceLabel }}</dd>
+        <dt>Attachments</dt><dd>{{ draft.attachments.length || 'None' }}</dd>
+        <dt>Schedule</dt><dd>{{ draft.scheduleNow ? 'Send now' : (draft.sendDate + ' ' + draft.sendTime) }}</dd>
+        <dt>Channels</dt><dd>{{ (draft.channels.email ? 'Email ' : '') + (draft.channels.sms ? 'SMS ' : '') + (draft.channels.push ? 'Push ' : '') + (draft.channels.inApp ? 'In-app' : '') }}</dd>
+      </dl>
+    </section>
+
+    <footer class="wizard-footer">
+      <button type="button" class="saas-btn" (click)="prev()" [disabled]="active === 0">Previous</button>
+      <button *ngIf="active < steps.length - 1" type="button" class="saas-btn saas-btn--primary" (click)="next()">Next</button>
+      <button *ngIf="active === steps.length - 1" type="button" class="saas-btn saas-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi pi-send"></i>{{ draft.scheduleNow ? 'Send Now' : 'Schedule' }}</button>
+    </footer>
+  </tc-saas-panel>
+</div>

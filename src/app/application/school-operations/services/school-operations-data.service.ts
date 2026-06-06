@@ -148,6 +148,12 @@ export class SchoolOperationsDataService {
     return new Date().toISOString().slice(0, 10);
   }
 
+  dateBeforeDays(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().slice(0, 10);
+  }
+
   private getStaff(): Observable<StaffRecord[]> {
     return this.http.get<any>(`${this.apiBase}/staff/getAllStaff`).pipe(
       map(response => this.unwrapArray<StaffRecord>(response)),

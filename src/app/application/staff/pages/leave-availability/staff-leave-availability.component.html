@@ -1,0 +1,115 @@
+<section class="adm-workspace">
+
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Leave &amp; Availability</h1>
+      <p>Staff leave requests, balances, calendar, and substitute-ready availability view.</p>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-plus"></i> Apply Leave</button>
+    </div>
+  </header>
+
+  <nav class="staff-tabs" role="tablist">
+    <button type="button" [class.is-active]="activeTab === 'overview'" (click)="activeTab = 'overview'"><i class="pi pi-chart-line"></i> Overview</button>
+    <button type="button" [class.is-active]="activeTab === 'requests'" (click)="activeTab = 'requests'"><i class="pi pi-inbox"></i> Leave Requests</button>
+    <button type="button" [class.is-active]="activeTab === 'calendar'" (click)="activeTab = 'calendar'"><i class="pi pi-calendar"></i> Calendar View</button>
+    <button type="button" [class.is-active]="activeTab === 'types'" (click)="activeTab = 'types'"><i class="pi pi-tags"></i> Leave Types</button>
+  </nav>
+
+  <div *ngIf="activeTab === 'overview'">
+    <div class="adm-kpi-grid">
+      <div *ngFor="let t of kpiTiles" class="adm-kpi" [attr.data-tone]="t.tone">
+        <span class="adm-kpi__label">{{ t.label }}</span>
+        <span class="adm-kpi__value">{{ kpi[t.key] }}</span>
+        <span class="adm-kpi__hint">{{ t.hint }}</span>
+      </div>
+    </div>
+
+    <div class="adm-panel">
+      <div class="adm-panel__header">
+        <div class="adm-panel__title">
+          <h2>Today's Leave</h2>
+          <small class="adm-panel__hint">{{ today.length }} entry(s)</small>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+      <div *ngIf="errorMessage" class="adm-empty">{{ errorMessage }}</div>
+
+      <div *ngIf="!loading && !today.length" class="adm-empty">
+        <i class="pi pi-check-circle"></i>
+        <p>No leaves today. Everyone is at work.</p>
+      </div>
+
+      <div *ngIf="!loading && today.length" class="staff-table-wrap">
+        <table class="staff-table">
+          <thead>
+            <tr><th>Employee</th><th>Leave Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of today; trackBy: trackById">
+              <td><strong>{{ l.staffName }}</strong><br><small style="color:var(--tc-text-muted)">{{ l.department || '—' }}</small></td>
+              <td>{{ l.leaveType }}</td>
+              <td>{{ l.startDate }}</td>
+              <td>{{ l.endDate }}</td>
+              <td>{{ l.days }}</td>
+              <td>{{ l.reason || '—' }}</td>
+              <td><span class="staff-pill" [attr.data-state]="l.status">{{ l.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="adm-panel" style="margin-top:14px;">
+      <div class="adm-panel__header">
+        <div class="adm-panel__title"><h2>Teacher Arrangement Overview</h2></div>
+        <small class="adm-panel__hint">Today's substitution needs</small>
+      </div>
+      <div class="adm-empty">
+        <i class="pi pi-info-circle"></i>
+        <p>Substitution overview integrates with the Academics &gt; Teacher Arrangement page when teachers are on leave.</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'requests'" class="adm-panel">
+    <div class="adm-panel__header">
+      <div class="adm-panel__title"><h2>Leave Requests</h2></div>
+    </div>
+    <div class="adm-empty">
+      <i class="pi pi-inbox"></i>
+      <p>Full leave request workflow (apply, approve, reject) is available under HR Operations.</p>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'calendar'" class="adm-panel">
+    <div class="adm-panel__header">
+      <div class="adm-panel__title"><h2>Calendar View</h2></div>
+    </div>
+    <div class="adm-empty">
+      <i class="pi pi-calendar"></i>
+      <p>Calendar visualization coming up next.</p>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'types'" class="adm-panel">
+    <div class="adm-panel__header">
+      <div class="adm-panel__title"><h2>Leave Types</h2></div>
+    </div>
+    <div class="staff-table-wrap">
+      <table class="staff-table">
+        <thead><tr><th>Type</th><th>Default Allowance</th><th>Carry Forward</th></tr></thead>
+        <tbody>
+          <tr><td>Casual Leave</td><td>12 days</td><td>No</td></tr>
+          <tr><td>Sick Leave</td><td>10 days</td><td>Yes</td></tr>
+          <tr><td>Earned Leave</td><td>15 days</td><td>Yes</td></tr>
+          <tr><td>Maternity / Paternity</td><td>As policy</td><td>—</td></tr>
+          <tr><td>Compensatory Off</td><td>As accrued</td><td>Yes (30 days)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</section>

@@ -1,20 +1,36 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { AdminControlCenter } from '../../../administration/models/admin-control.model';
+
 import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
-import { FEATURE_MATRIX, MatrixGroup, MatrixRow, MatrixTier, PLAN_DEFS, PlanDefinition } from '../../data/feature-catalog';
+import { SubscriptionPlanDTO } from '../../../administration/models/admin-control.model';
+
+import {
+  SaasPageHeaderComponent,
+  SaasStepperComponent,
+  SaasPillComponent
+} from '../../../../shared/ui/saas';
+
+interface PlanCardView {
+  raw: SubscriptionPlanDTO;
+  popular: boolean;
+  features: string[];
+  modules: string[];
+  highlightTone: 'primary' | 'info' | 'purple' | 'neutral' | 'warning';
+}
 
 @Component({
   selector: 'app-subscription-plans',
   standalone: true,
-  imports: [CommonModule, RouterLink, ToastModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, FormsModule, ToastModule, SaasPageHeaderComponent, SaasStepperComponent, SaasPillComponent],
   providers: [MessageService],
   templateUrl: './subscription-plans.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './subscription-plans.component.scss'
 })
 export class SubscriptionPlansComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
@@ -23,75 +39,102 @@ export class SubscriptionPlansComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   loading = true;
-  workspace: AdminControlCenter | null = null;
+  saving = false;
+  billing: 'monthly' | 'annual' = 'monthly';
+  plans: PlanCardView[] = [];
 
-  readonly plans: PlanDefinition[] = PLAN_DEFS;
-  readonly tierIds: MatrixTier[] = ['starter', 'professional', 'enterprise', 'custom'];
-  matrix: MatrixGroup[] = FEATURE_MATRIX;
-  openGroups = new Set<string>();
+  wizardOpen = false;
+  step = 0;
+  readonly wizardSteps = [
+    { key: 'basic', label: 'Basic Information' },
+    { key: 'limits', label: 'Limits' },
+    { key: 'modules', label: 'Modules' },
+    { key: 'review', label: 'Review' }
+  ];
 
-  ngOnInit(): void {
-    // Default: first two groups expanded for a faster scan.
-    FEATURE_MATRIX.slice(0, 2).forEach(g => this.openGroups.add(g.title));
-    this.adminData.loadWorkspace()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+  draft: SubscriptionPlanDTO = this.emptyDraft();
+  moduleOptions = ['Academics', 'Attendance', 'Examinations', 'Fee Management', 'Communication', 'Library', 'Transport', 'Hostel', 'Reports', 'Mobile App', 'API Access'];
+  selectedModules = new Set<string>();
+
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
+    this.loading = true;
+    this.adminData.listSubscriptionPlans()
+      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ws => {
-          this.workspace = ws;
-          const supplementary = this.buildSupplementaryRows(ws);
-          if (supplementary.length) {
-            this.matrix = [
-              ...FEATURE_MATRIX,
-              { title: 'Module access', caption: 'Modules surfaced through your tenant configuration', icon: 'pi-th-large', rows: supplementary }
-            ];
-          }
-          this.loading = false;
-          this.cdr.markForCheck();
-        },
-        error: () => { this.loading = false; this.cdr.markForCheck(); }
+        next: list => this.plans = (list || []).map(p => this.toView(p)).sort((a, b) => (a.raw.monthlyPrice || 0) - (b.raw.monthlyPrice || 0)),
+        error: () => this.plans = []
       });
   }
 
-  private buildSupplementaryRows(ws: AdminControlCenter | null): MatrixRow[] {
-    const sections = ws?.menuSections || [];
-    const seen = new Set(FEATURE_MATRIX.flatMap(g => g.rows.map(r => r.label.toLowerCase())));
-    return sections
-      .filter(s => !seen.has(s.name.toLowerCase()))
-      .slice(0, 8)
-      .map(s => ({
-        label: s.name,
-        values: {
-          starter: { value: false },
-          professional: { value: true },
-          enterprise: { value: true },
-          custom: { value: 'Configurable' }
-        }
-      } as MatrixRow));
+  priceFor(plan: PlanCardView): number {
+    const p = plan.raw;
+    return this.billing === 'annual' ? (p.annualPrice ?? (p.monthlyPrice ?? 0) * 10) : (p.monthlyPrice ?? 0);
+  }
+  priceLabel(plan: PlanCardView): string {
+    if (!plan.raw.monthlyPrice && !plan.raw.annualPrice) return 'Custom';
+    const symbol = plan.raw.currency === 'USD' ? '$' : '₹';
+    return `${symbol}${this.priceFor(plan).toLocaleString()}`;
   }
 
-  cellIsBoolean(value: string | boolean): value is boolean {
-    return typeof value === 'boolean';
+  toneClass(plan: PlanCardView): string { return `plan-card--${plan.highlightTone}`; }
+
+  openWizard(): void {
+    this.draft = this.emptyDraft();
+    this.selectedModules = new Set();
+    this.step = 0;
+    this.wizardOpen = true;
+  }
+  closeWizard(): void { this.wizardOpen = false; }
+
+  next(): void { if (this.step < this.wizardSteps.length - 1) this.step += 1; }
+  prev(): void { if (this.step > 0) this.step -= 1; }
+
+  toggleModule(name: string): void {
+    if (this.selectedModules.has(name)) this.selectedModules.delete(name);
+    else this.selectedModules.add(name);
   }
 
-  toggleGroup(title: string): void {
-    if (this.openGroups.has(title)) this.openGroups.delete(title);
-    else this.openGroups.add(title);
+  submitPlan(): void {
+    this.saving = true;
+    this.draft.modulesIncluded = Array.from(this.selectedModules).join(',');
+    this.draft.planCode = (this.draft.planName || '').toUpperCase().replace(/\s+/g, '_');
+    this.adminData.createSubscriptionPlan(this.draft)
+      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Plan Created', detail: 'The new subscription plan is now available for assignment.' });
+          this.wizardOpen = false;
+          this.load();
+        },
+        error: () => this.messageService.add({ severity: 'error', summary: 'Could not create plan', detail: 'Verify limits and retry. SUPER_ADMIN role is required.' })
+      });
   }
 
-  expandAll(): void {
-    this.matrix.forEach(g => this.openGroups.add(g.title));
+  trackByPlan(_: number, plan: PlanCardView): string | number { return plan.raw.planId ?? plan.raw.planCode; }
+
+  private emptyDraft(): SubscriptionPlanDTO {
+    return {
+      planCode: '', planName: '', description: '',
+      monthlyPrice: 0, annualPrice: 0, currency: 'INR',
+      maxStudents: 1000, maxStaff: 100, maxUsers: 250, storageGb: 50,
+      modulesIncluded: '', supportTier: 'Standard', highlightColor: '#2C5BFF',
+      featured: false, active: true
+    };
   }
 
-  collapseAll(): void {
-    this.openGroups.clear();
-  }
-
-  comingSoonNewPlan(): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Coming soon',
-      detail: 'Defining brand-new plans from the UI lands in an upcoming release. For now, plans are managed in code and the Custom tier covers bespoke quotas.',
-      life: 5000
-    });
+  private toView(p: SubscriptionPlanDTO): PlanCardView {
+    const code = (p.planCode || '').toLowerCase();
+    const popular = !!p.featured || code.includes('pro');
+    const features: string[] = [];
+    if (p.maxStudents) features.push(`Up to ${p.maxStudents.toLocaleString()} students`);
+    if (p.maxStaff) features.push(`Up to ${p.maxStaff.toLocaleString()} staff`);
+    if (p.maxUsers) features.push(`Up to ${p.maxUsers.toLocaleString()} users`);
+    if (p.storageGb) features.push(`${p.storageGb} GB storage`);
+    if (p.supportTier) features.push(`${p.supportTier} support`);
+    const modules = (p.modulesIncluded || '').split(',').map(m => m.trim()).filter(Boolean);
+    const tone = code.includes('enter') ? 'purple' : popular ? 'primary' : code.includes('custom') ? 'warning' : code.includes('start') ? 'info' : 'neutral';
+    return { raw: p, popular, features, modules, highlightTone: tone };
   }
 }

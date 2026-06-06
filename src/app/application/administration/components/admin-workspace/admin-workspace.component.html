@@ -171,10 +171,118 @@
           </section>
         </section>
       </ng-container>
+
+      <ng-container *ngSwitchCase="'subscriptions'">
+        <section class="admin-kpi-grid compact">
+          <tc-admin-kpi-card [metric]="{ key: 'plans-total', label: 'Plan Catalog', value: subscriptionPlans.length + '', helper: 'configured plans', icon: 'pi pi-credit-card', tone: 'info' }"></tc-admin-kpi-card>
+          <tc-admin-kpi-card [metric]="{ key: 'plans-featured', label: 'Featured', value: subscriptionPlans.length ? (planFeaturedCount() + '') : '0', helper: 'highlighted to tenants', icon: 'pi pi-star', tone: 'success' }"></tc-admin-kpi-card>
+          <tc-admin-kpi-card [metric]="{ key: 'plans-active', label: 'Active', value: planActiveCount() + '', helper: 'available for sale', icon: 'pi pi-check-circle', tone: 'success' }"></tc-admin-kpi-card>
+        </section>
+
+        <div class="admin-tab-strip">
+          <span class="admin-tab-label"><i class="pi pi-credit-card"></i>Plan catalog</span>
+          <span class="admin-search"><i class="pi pi-search"></i><input type="search" [(ngModel)]="accessSearch" placeholder="Search plans" /></span>
+          <button type="button" class="admin-command-button" (click)="refreshSubscriptionPlans()"><i class="pi pi-refresh"></i>Refresh</button>
+          <button type="button" class="admin-command-button primary" (click)="openPlanForm()"><i class="pi pi-plus"></i>Create plan</button>
+        </div>
+
+        <div class="admin-loading-state compact" *ngIf="subscriptionPlansLoading">
+          <span><i class="pi pi-spin pi-spinner"></i></span><strong>Loading plans</strong>
+        </div>
+
+        <section class="admin-empty-state" *ngIf="!subscriptionPlansLoading && !subscriptionPlans.length">
+          <span><i class="pi pi-credit-card"></i></span><strong>No plans yet</strong>
+          <p>Create a plan to start offering subscription tiers to tenants.</p>
+        </section>
+
+        <section class="role-grid" *ngIf="!subscriptionPlansLoading && subscriptionPlans.length">
+          <article class="role-card plan-card" *ngFor="let plan of subscriptionPlans" [style.borderTopColor]="plan.highlightColor || '#3B82F6'">
+            <header>
+              <span [style.color]="plan.highlightColor || '#3B82F6'"><i class="pi pi-credit-card"></i></span>
+              <tc-admin-status-badge [label]="plan.active ? 'ACTIVE' : 'INACTIVE'" [tone]="plan.active ? 'success' : 'warning'"></tc-admin-status-badge>
+              <tc-admin-status-badge *ngIf="plan.featured" label="FEATURED" tone="info" icon="pi pi-star"></tc-admin-status-badge>
+            </header>
+            <h2>{{ plan.planName }}</h2>
+            <p>{{ plan.description }}</p>
+            <div class="plan-pricing">
+              <strong>{{ plan.currency }} {{ plan.monthlyPrice | number:'1.0-0' }}</strong><small>/month</small>
+              <div class="plan-annual"><i class="pi pi-calendar"></i>{{ plan.currency }} {{ plan.annualPrice | number:'1.0-0' }} / year</div>
+            </div>
+            <dl class="drawer-definition-grid">
+              <div><dt>Students</dt><dd>{{ plan.maxStudents }}</dd></div>
+              <div><dt>Staff</dt><dd>{{ plan.maxStaff }}</dd></div>
+              <div><dt>Users</dt><dd>{{ plan.maxUsers }}</dd></div>
+              <div><dt>Storage</dt><dd>{{ plan.storageGb }} GB</dd></div>
+              <div><dt>Support</dt><dd>{{ plan.supportTier }}</dd></div>
+            </dl>
+            <div class="plan-modules">
+              <span class="plan-module-pill" *ngFor="let module of planModules(plan)">{{ module }}</span>
+            </div>
+            <footer>
+              <button type="button" class="admin-command-button" (click)="openPlanForm(plan)"><i class="pi pi-pencil"></i>Edit</button>
+              <button type="button" class="admin-command-button danger" (click)="deletePlan(plan)"><i class="pi pi-trash"></i>Delete</button>
+            </footer>
+          </article>
+        </section>
+      </ng-container>
     </div>
 
-    <aside class="admin-drawer" [class.is-open]="!!drawerMode">
-      <div class="admin-drawer-panel" *ngIf="drawerMode">
+    <aside class="admin-drawer" [class.is-open]="planFormOpen" (click)="closePlanForm()" *ngIf="planFormOpen">
+      <div class="admin-drawer-panel" (click)="$event.stopPropagation()">
+        <header>
+          <div><span>Subscription Plans</span><h2>{{ planEditing ? 'Edit plan' : 'Create plan' }} — Step {{ planFormStep }} of 4</h2></div>
+          <button type="button" class="admin-icon-button" (click)="closePlanForm()" aria-label="Close"><i class="pi pi-times"></i></button>
+        </header>
+
+        <section class="drawer-section form-section" *ngIf="planFormStep === 1">
+          <label>Plan code<input type="text" [(ngModel)]="planForm.planCode" placeholder="PLAN_GROWTH" [disabled]="!!planEditing" /></label>
+          <label>Plan name<input type="text" [(ngModel)]="planForm.planName" placeholder="Growth" /></label>
+          <label>Description<textarea rows="3" [(ngModel)]="planForm.description" placeholder="Short positioning statement"></textarea></label>
+          <label>Highlight color<input type="color" [(ngModel)]="planForm.highlightColor" /></label>
+          <label style="flex-direction: row; gap: 8px; align-items: center;"><input type="checkbox" [(ngModel)]="planForm.featured" />Featured plan</label>
+          <label style="flex-direction: row; gap: 8px; align-items: center;"><input type="checkbox" [(ngModel)]="planForm.active" />Active</label>
+        </section>
+
+        <section class="drawer-section form-section" *ngIf="planFormStep === 2">
+          <label>Currency<input type="text" [(ngModel)]="planForm.currency" maxlength="6" /></label>
+          <label>Monthly price<input type="number" min="0" [(ngModel)]="planForm.monthlyPrice" /></label>
+          <label>Annual price<input type="number" min="0" [(ngModel)]="planForm.annualPrice" /></label>
+          <label>Support tier<select [(ngModel)]="planForm.supportTier"><option>Email</option><option>Priority</option><option>Dedicated</option></select></label>
+        </section>
+
+        <section class="drawer-section form-section" *ngIf="planFormStep === 3">
+          <label>Max students<input type="number" min="0" [(ngModel)]="planForm.maxStudents" /></label>
+          <label>Max staff<input type="number" min="0" [(ngModel)]="planForm.maxStaff" /></label>
+          <label>Max users<input type="number" min="0" [(ngModel)]="planForm.maxUsers" /></label>
+          <label>Storage (GB)<input type="number" min="0" [(ngModel)]="planForm.storageGb" /></label>
+          <label>Modules (comma separated)<textarea rows="3" [(ngModel)]="planForm.modulesIncluded" placeholder="Dashboard,Students,Staff,Attendance"></textarea></label>
+        </section>
+
+        <section class="drawer-section" *ngIf="planFormStep === 4">
+          <h3 style="margin: 0 0 12px;">Review</h3>
+          <dl class="drawer-definition-grid">
+            <div><dt>Code</dt><dd>{{ planForm.planCode }}</dd></div>
+            <div><dt>Name</dt><dd>{{ planForm.planName }}</dd></div>
+            <div><dt>Monthly</dt><dd>{{ planForm.currency }} {{ planForm.monthlyPrice }}</dd></div>
+            <div><dt>Annual</dt><dd>{{ planForm.currency }} {{ planForm.annualPrice }}</dd></div>
+            <div><dt>Limits</dt><dd>{{ planForm.maxStudents }} students · {{ planForm.maxStaff }} staff · {{ planForm.maxUsers }} users · {{ planForm.storageGb }} GB</dd></div>
+            <div><dt>Support</dt><dd>{{ planForm.supportTier }}</dd></div>
+            <div><dt>Featured</dt><dd>{{ planForm.featured ? 'Yes' : 'No' }}</dd></div>
+            <div><dt>Active</dt><dd>{{ planForm.active ? 'Yes' : 'No' }}</dd></div>
+          </dl>
+          <p style="margin: 12px 0 0; color: var(--tc-text-muted);">Review the plan details, then save to publish.</p>
+        </section>
+
+        <div class="drawer-actions">
+          <button type="button" class="admin-command-button" (click)="prevPlanStep()" [disabled]="planFormStep === 1"><i class="pi pi-arrow-left"></i>Back</button>
+          <button type="button" class="admin-command-button primary" (click)="nextPlanStep()" *ngIf="planFormStep < 4">Next<i class="pi pi-arrow-right"></i></button>
+          <button type="button" class="admin-command-button primary" (click)="savePlan()" [disabled]="planSaving" *ngIf="planFormStep === 4"><i class="pi" [ngClass]="planSaving ? 'pi-spin pi-spinner' : 'pi-check'"></i>{{ planEditing ? 'Save changes' : 'Create plan' }}</button>
+        </div>
+      </div>
+    </aside>
+
+    <aside class="admin-drawer" [class.is-open]="!!drawerMode" (click)="closeDrawer()">
+      <div class="admin-drawer-panel" *ngIf="drawerMode" (click)="$event.stopPropagation()">
         <header>
           <div><span>Administration</span><h2>{{ drawerTitle() }}</h2></div>
           <button type="button" class="admin-icon-button" (click)="closeDrawer()" aria-label="Close panel"><i class="pi pi-times"></i></button>

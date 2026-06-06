@@ -1,0 +1,168 @@
+<section class="adm-workspace">
+  <!-- Header -->
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>Student Management</h1>
+      <p>Comprehensive directory, profiles, movement and lifecycle for every learner.</p>
+      <span class="adm-count"><i class="pi pi-users"></i> {{ kpi.totalStudents }} students</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn adm-btn--primary" (click)="addStudent()">
+        <i class="pi pi-plus"></i> Add Student
+      </button>
+      <button type="button" class="adm-btn"><i class="pi pi-upload"></i> Bulk Import</button>
+      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+    </div>
+  </header>
+
+  <!-- KPI tiles -->
+  <div class="adm-kpi-grid">
+    <button type="button" *ngFor="let tile of kpiTiles"
+            class="adm-kpi"
+            [class.is-active]="activeKpi === tile.key"
+            [attr.data-tone]="tile.tone"
+            (click)="toggleKpiFilter(tile)">
+      <span class="adm-kpi__label">{{ tile.label }}</span>
+      <span class="adm-kpi__value">{{ kpi[tile.key] }}</span>
+      <span class="adm-kpi__hint">{{ tile.hint }}</span>
+    </button>
+  </div>
+
+  <!-- Search / filter / view -->
+  <div class="adm-panel">
+    <div class="adm-panel__header">
+      <h2>Directory</h2>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <small class="adm-panel__hint">{{ students.length }} result(s)</small>
+        <div class="stu-chip-bar">
+          <button [class.is-active]="view === 'grid'" (click)="view = 'grid'"><i class="pi pi-th-large"></i> Grid</button>
+          <button [class.is-active]="view === 'list'" (click)="view = 'list'"><i class="pi pi-list"></i> List</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="adm-filter-bar">
+      <div class="adm-field">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, roll, mobile, email…" (keyup.enter)="runSearch()"/>
+      </div>
+      <div class="adm-field">
+        <label>Class ID</label>
+        <input type="text" [(ngModel)]="filter.classId" placeholder="e.g. 3"/>
+      </div>
+      <div class="adm-field">
+        <label>Section ID</label>
+        <input type="text" [(ngModel)]="filter.sectionId" placeholder="e.g. 1"/>
+      </div>
+      <div class="adm-field">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status">
+          <option [ngValue]="null">All</option>
+          <option [ngValue]="'ACTIVE'">Active</option>
+          <option [ngValue]="'INACTIVE'">Inactive</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Parent</label>
+        <input type="text" [(ngModel)]="filter.parentName" placeholder="Guardian name"/>
+      </div>
+      <div class="adm-field">
+        <label>&nbsp;</label>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
+            <i class="pi" [class.pi-spin]="searching" [class.pi-search]="!searching" [class.pi-spinner]="searching"></i> Search
+          </button>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+
+    <div class="adm-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i> Loading directory…
+    </div>
+
+    <!-- Grid view -->
+    <div class="adm-card-grid" *ngIf="!loading && students.length && view === 'grid'">
+      <article *ngFor="let s of students" class="adm-card" (click)="openProfile(s)">
+        <header class="adm-card__head">
+          <div class="stu-photo stu-photo--initials">{{ initials(s.fullName) }}</div>
+          <div class="adm-card__title">
+            <strong>{{ s.fullName }}</strong>
+            <small>{{ s.admissionNumber }} · Roll {{ s.rollNumber || '—' }}</small>
+          </div>
+          <span class="adm-badge" [attr.data-tone]="s.active ? 'success' : 'neutral'">
+            {{ s.active ? 'Active' : 'Inactive' }}
+          </span>
+        </header>
+
+        <div class="adm-card__meta">
+          <span><i class="pi pi-book"></i> {{ s.className || '—' }}</span>
+          <span><i class="pi pi-th-large"></i> {{ s.sectionName || '—' }}</span>
+          <span><i class="pi pi-user"></i> {{ s.gender || '—' }}</span>
+          <span><i class="pi pi-phone"></i> {{ s.mobile || '—' }}</span>
+          <span *ngIf="s.guardianName"><i class="pi pi-users"></i> {{ s.guardianName }}</span>
+          <span class="stu-presence" [attr.data-state]="s.attendanceStatus">
+            {{ presenceLabel(s.attendanceStatus) }}
+          </span>
+        </div>
+
+        <footer class="adm-card__footer">
+          <small style="color: var(--tc-text-muted); font-size: 0.74rem;">
+            <i class="pi pi-calendar"></i> DOB: {{ s.dateOfBirth || '—' }}
+          </small>
+          <div class="adm-card__actions">
+            <button class="adm-icon-btn" title="Call" (click)="callPhone(s, $event)"><i class="pi pi-phone"></i></button>
+            <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(s, $event)"><i class="pi pi-whatsapp"></i></button>
+            <button class="adm-icon-btn" title="Email" (click)="emailContact(s, $event)"><i class="pi pi-envelope"></i></button>
+          </div>
+        </footer>
+      </article>
+    </div>
+
+    <!-- List view -->
+    <div class="stu-table-wrap" *ngIf="!loading && students.length && view === 'list'">
+      <table class="stu-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Admission #</th>
+            <th>Class / Section</th>
+            <th>Mobile</th>
+            <th>Guardian</th>
+            <th>Status</th>
+            <th>Today</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of students" (click)="openProfile(s)" style="cursor:pointer;">
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="stu-photo stu-photo--initials" style="width:36px; height:36px; font-size:0.78rem;">{{ initials(s.fullName) }}</div>
+                <div>
+                  <strong>{{ s.fullName }}</strong><br/>
+                  <small style="color:var(--tc-text-muted)">Roll {{ s.rollNumber || '—' }}</small>
+                </div>
+              </div>
+            </td>
+            <td>{{ s.admissionNumber }}</td>
+            <td>{{ s.className || '—' }}<br/><small style="color:var(--tc-text-muted)">{{ s.sectionName || '—' }}</small></td>
+            <td>{{ s.mobile || '—' }}</td>
+            <td>{{ s.guardianName || '—' }}<br/><small style="color:var(--tc-text-muted)">{{ s.guardianMobile || '—' }}</small></td>
+            <td><span class="adm-badge" [attr.data-tone]="s.active ? 'success' : 'neutral'">{{ s.active ? 'Active' : 'Inactive' }}</span></td>
+            <td><span class="stu-presence" [attr.data-state]="s.attendanceStatus">{{ presenceLabel(s.attendanceStatus) }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="adm-empty" *ngIf="!loading && !students.length">
+      <i class="pi pi-users"></i>
+      <h3>No students match</h3>
+      <p>Adjust filters or add new students from the admission center.</p>
+    </div>
+  </div>
+</section>
