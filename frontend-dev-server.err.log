@@ -4624,3 +4624,878 @@
         ╵         [32m~~~~~~~~~~~~~~~~~[0m
 
 [39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mTS-998113: AdminOrganizationDrawerComponent is not used within the template of AdminWorkspaceComponent[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/administration/components/admin-workspace/admin-workspace.component.ts:51:4:
+[37m      51 │     [32mAdminOrganizationDrawerComponent[37m
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG9: Property 'administrationSections' does not exist on type 'AdminWorkspaceComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/administration/components/admin-workspace/admin-workspace.component.html:8:27:
+[37m      8 │     <tc-admin-nav [items]="[32madministrationSections[37m"></tc-admin-nav>
+        ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component AdminWorkspaceComponent.
+
+    src/app/application/administration/components/admin-workspace/admin-workspace.component.ts:53:15:
+[37m      53 │   templateUrl: [32m'./admin-workspace.component.html'[37m
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG9: Property 'administrationSections' does not exist on type 'AdminWorkspaceComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/administration/components/admin-workspace/admin-workspace.component.html:65:60:
+[37m      65 │ ... *ngFor="let item of [32madministrationSections[37m" [routerLink]="item...
+         ╵                         [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component AdminWorkspaceComponent.
+
+    src/app/application/administration/components/admin-workspace/admin-workspace.component.ts:53:15:
+[37m      53 │   templateUrl: [32m'./admin-workspace.component.html'[37m
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG2: Type 'OrganizationStatus | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:127:130:
+[37m      127 │ ...h2></div><app-status-badge [[32mstatus[37m]="selectedOrganizationCard?...
+          ╵                                [32m~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'slugify' is private and only accessible within class 'PlatformControlCenterComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/platform-control/platform-control-center.component.html:235:73:
+[37m      235 │ ...{{ organization.tenantId || [32mslugify[37m(organization.orgName) }}</...
+          ╵                                [32m~~~~~~~[0m
+
+  Error occurs in the template of component PlatformControlCenterComponent.
+
+    src/app/application/platform-control/platform-control-center.component.ts:90:15:
+[37m      90 │   templateUrl: [32m'./platform-control-center.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type '({ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null)[]' is not assignable to type 'MenuItem[]'.
+  Type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; } | null' is not assignable to type 'MenuItem'.
+    Type 'null' is not assignable to type 'MenuItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:452:4:
+[37m      452 │     [32mreturn[37m (items ?? [])
+          ╵     [32m~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'MenuItem' is not assignable to type '{ items: MenuItem[] | undefined; label?: string; icon?: string; command?(event: MenuItemCommandEvent): void; url?: string; expanded?: boolean; ... 26 more ...; tooltipOptions?: TooltipOptions; }'.
+    Property 'items' is optional in type 'MenuItem' but required in type '{ items: MenuItem[] | undefined; label?: string | undefined; icon?: string | undefined; command?(event: MenuItemCommandEvent): void; url?: string | undefined; ... 27 more ...; tooltipOptions?: TooltipOptions | undefined; }'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/services/menu-mapping.service.ts:466:30:
+[37m      466 │       .filter((item): item is [32mMenuItem[37m => !!item);
+          ╵                               [32m~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./organization-profile/organization-profile.component"[0m
+
+    src/app/application/application.route.ts:47:36:
+[37m      47 │ ...=> import([32m'./organization-profile/organization-profile.componen[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './organization-profile/organization-profile.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:51:32:
+[37m      51 │ ...=> import([32m'./organization-profile/organization-profile.componen[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./organization-profile/organization-profile.component"[0m
+
+    src/app/application/application.route.ts:47:36:
+[37m      47 │ ...=> import([32m'./organization-profile/organization-profile.componen[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './organization-profile/organization-profile.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:51:32:
+[37m      51 │ ...=> import([32m'./organization-profile/organization-profile.componen[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/tenant-management.component"[0m
+
+    src/app/application/application.route.ts:22:104:
+[37m      22 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:26:98:
+[37m      26 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:27:111:
+[37m      27 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:28:111:
+[37m      28 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:108:
+[37m      29 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:30:108:
+[37m      30 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:31:109:
+[37m      31 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:32:96:
+[37m      32 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/tenant-management.component"[0m
+
+    src/app/application/application.route.ts:22:104:
+[37m      22 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:26:98:
+[37m      26 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:27:111:
+[37m      27 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:28:111:
+[37m      28 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:108:
+[37m      29 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:30:108:
+[37m      30 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:31:109:
+[37m      31 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/tenant-management.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:32:96:
+[37m      32 │ ...=> import([32m'./tenant-management/tenant-management.component'[37m).th...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mTS-998113: RouterLink is not used within the template of AuditCenterComponent[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/tenant-management/pages/audit-center/audit-center.component.ts:30:39:
+[37m      30 │   imports: [CommonModule, FormsModule, [32mRouterLink[37m, DatePipe],
+         ╵                                        [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/tenant-management/pages/organization-workspace/organization-workspace.component.html:65:59:
+[37m      65 │ ...ss="tc-owner__avatar">{{ org.ownerName?.[32mcharAt[37m(0) || 'O' }}</span>
+         ╵                                            [32m~~~~~~[0m
+
+  Error occurs in the template of component OrganizationWorkspaceComponent.
+
+    src/app/application/tenant-management/pages/organization-workspace/organization-workspace.component.ts:29:15:
+[37m      29 │   templateUrl: [32m'./organization-workspace.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/organization-workspace/organization-workspace.component"[0m
+
+    src/app/application/application.route.ts:24:72:
+[37m      24 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/organization-workspace/organization-workspace.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:28:66:
+[37m      28 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/organization-workspace/organization-workspace.component"[0m
+
+    src/app/application/application.route.ts:24:72:
+[37m      24 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/organization-workspace/organization-workspace.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:28:66:
+[37m      28 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/organization-workspace/organization-workspace.component"[0m
+
+    src/app/application/application.route.ts:24:72:
+[37m      24 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/organization-workspace/organization-workspace.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:28:66:
+[37m      28 │ ...=> import([32m'./tenant-management/pages/organization-workspace/org[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/subscription-plans/subscription-plans.component"[0m
+
+    src/app/application/application.route.ts:25:70:
+[37m      25 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/subscription-plans/subscription-plans.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:64:
+[37m      29 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/subscription-plans/subscription-plans.component"[0m
+
+    src/app/application/application.route.ts:25:70:
+[37m      25 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/subscription-plans/subscription-plans.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:64:
+[37m      29 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "./tenant-management/pages/subscription-plans/subscription-plans.component"[0m
+
+    src/app/application/application.route.ts:25:70:
+[37m      25 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/subscription-plans/subscription-plans.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:64:
+[37m      29 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './tenant-management/pages/subscription-plans/subscription-plans.component' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/application/application.route.ts:29:64:
+[37m      29 │ ...=> import([32m'./tenant-management/pages/subscription-plans/subscri[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCan't find stylesheet to import.
+  ╷
+9 │ @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ╵
+  src\styles.scss 9:1  root stylesheet[0m [1m[35m[plugin angular-sass][0m
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m

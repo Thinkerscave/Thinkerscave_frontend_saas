@@ -5,7 +5,7 @@
   </div>
 
   <ng-container *ngIf="!loading && workspace">
-    <tc-admin-nav [items]="workspace.adminSections"></tc-admin-nav>
+    <tc-admin-nav [items]="administrationSections"></tc-admin-nav>
 
     <header class="admin-hero">
       <div>
@@ -14,9 +14,6 @@
         <p>{{ pageSubtitle }}</p>
       </div>
       <div class="admin-hero-actions">
-        <button type="button" class="admin-command-button" (click)="openAction('create-organization')" title="Create Organization">
-          <i class="pi pi-building"></i><span>Create Organization</span>
-        </button>
         <button type="button" class="admin-command-button" (click)="openAction('create-user')" title="Create Admin User">
           <i class="pi pi-user-plus"></i><span>Create Admin User</span>
         </button>
@@ -38,16 +35,7 @@
     <div [ngSwitch]="page">
       <ng-container *ngSwitchCase="'dashboard'">
         <section class="admin-kpi-grid">
-          <tc-admin-kpi-card *ngFor="let metric of workspace.kpis" [metric]="metric"></tc-admin-kpi-card>
-        </section>
-
-        <section class="admin-summary-band">
-          <article><span>Schools</span><strong>{{ workspace.organizationSummary.schools }}</strong></article>
-          <article><span>Branches</span><strong>{{ workspace.organizationSummary.branches }}</strong></article>
-          <article><span>Departments</span><strong>{{ workspace.organizationSummary.departments }}</strong></article>
-          <article><span>Students</span><strong>{{ workspace.organizationSummary.students }}</strong></article>
-          <article><span>Staff</span><strong>{{ workspace.organizationSummary.staff }}</strong></article>
-          <article><span>Parents</span><strong>{{ workspace.organizationSummary.parents }}</strong></article>
+          <tc-admin-kpi-card *ngFor="let metric of administrationKpis" [metric]="metric"></tc-admin-kpi-card>
         </section>
 
         <section class="admin-dashboard-grid">
@@ -74,73 +62,12 @@
             <header class="admin-section-header">
               <div><span>Quick access</span><h2>Control Areas</h2></div>
             </header>
-            <a class="quick-access-row" *ngFor="let item of workspace.adminSections" [routerLink]="item.route">
+            <a class="quick-access-row" *ngFor="let item of administrationSections" [routerLink]="item.route">
               <span><i [class]="item.icon"></i></span>
               <div><strong>{{ item.label }}</strong><small>{{ item.description }}</small></div>
               <i class="pi pi-arrow-right"></i>
             </a>
           </section>
-        </section>
-      </ng-container>
-
-      <ng-container *ngSwitchCase="'organizations'">
-        <div class="admin-tab-strip">
-          <button type="button" [class.is-active]="organizationTab === 'overview'" (click)="organizationTab = 'overview'"><i class="pi pi-building"></i>Overview</button>
-          <button type="button" [class.is-active]="organizationTab === 'branches'" (click)="organizationTab = 'branches'"><i class="pi pi-sitemap"></i>Branches</button>
-          <button type="button" [class.is-active]="organizationTab === 'subscription'" (click)="organizationTab = 'subscription'"><i class="pi pi-credit-card"></i>Subscription</button>
-          <button type="button" [class.is-active]="organizationTab === 'branding'" (click)="organizationTab = 'branding'"><i class="pi pi-palette"></i>Branding</button>
-        </div>
-
-        <section class="organization-grid" *ngIf="organizationTab === 'overview'">
-          <article class="organization-card" *ngFor="let organization of visibleOrganizations" (click)="openOrganization(organization)">
-            <header>
-              <div>
-                <span>{{ organization.orgCode }}</span>
-                <h2>{{ organization.orgName }}</h2>
-              </div>
-              <tc-admin-status-badge [label]="organization.active ? 'ACTIVE' : 'SUSPENDED'" [tone]="organization.active ? 'success' : 'danger'"></tc-admin-status-badge>
-            </header>
-            <div class="organization-metrics">
-              <span><strong>{{ organization.branches }}</strong>Branches</span>
-              <span><strong>{{ organization.students }}</strong>Students</span>
-              <span><strong>{{ organization.staff }}</strong>Staff</span>
-              <span><strong>{{ organization.activeUsers }}</strong>Users</span>
-            </div>
-            <footer>
-              <span>{{ organization.subscriptionType || 'STANDARD' }}</span>
-              <strong>{{ organization.healthScore }}%</strong>
-            </footer>
-          </article>
-        </section>
-
-        <section class="admin-panel" *ngIf="organizationTab === 'branches'">
-          <header class="admin-section-header"><div><span>Branch management</span><h2>Campus Operations</h2></div></header>
-          <div class="branch-grid">
-            <article class="branch-card" *ngFor="let branch of workspace.branches">
-              <div><strong>{{ branch.branchName }}</strong><small>{{ branch.location || branch.branchCode }}</small></div>
-              <tc-admin-status-badge [label]="branch.active ? 'ACTIVE' : 'INACTIVE'" [tone]="branch.active ? 'success' : 'warning'"></tc-admin-status-badge>
-              <footer><span>{{ branch.staff }} staff</span><span>{{ branch.students }} students</span></footer>
-            </article>
-          </div>
-        </section>
-
-        <section class="organization-grid compact" *ngIf="organizationTab === 'subscription'">
-          <article class="organization-card" *ngFor="let organization of visibleOrganizations" (click)="openOrganization(organization)">
-            <header><div><span>{{ organization.orgCode }}</span><h2>{{ organization.subscriptionType || 'STANDARD' }}</h2></div><strong>{{ organization.activeUsers }} users</strong></header>
-            <div class="storage-meter"><span [style.width.%]="(organization.storageUsedMb / organization.storageLimitMb) * 100"></span></div>
-            <footer><span>{{ organization.storageUsedMb }} / {{ organization.storageLimitMb }} MB</span><span>{{ organization.apiUsageToday }} API calls</span></footer>
-          </article>
-        </section>
-
-        <section class="admin-panel branding-panel" *ngIf="organizationTab === 'branding'">
-          <header class="admin-section-header"><div><span>Branding</span><h2>Identity Vault</h2></div></header>
-          <div class="branding-grid">
-            <article *ngFor="let organization of visibleOrganizations">
-              <span>{{ (organization.brandName || organization.orgName).slice(0, 2).toUpperCase() }}</span>
-              <div><strong>{{ organization.brandName || organization.orgName }}</strong><small>{{ organization.tenantId || 'public' }}</small></div>
-            </article>
-          </div>
-          <a routerLink="/app/academics/settings" class="academic-link"><i class="pi pi-book"></i>Academic Configuration</a>
         </section>
       </ng-container>
 
@@ -246,27 +173,12 @@
       </ng-container>
     </div>
 
-    <tc-admin-organization-drawer [open]="!!selectedOrganization" [organization]="selectedOrganization" [branches]="visibleBranches" (closed)="closeOrganizationDrawer()"></tc-admin-organization-drawer>
-
     <aside class="admin-drawer" [class.is-open]="!!drawerMode">
       <div class="admin-drawer-panel" *ngIf="drawerMode">
         <header>
           <div><span>Administration</span><h2>{{ drawerTitle() }}</h2></div>
           <button type="button" class="admin-icon-button" (click)="closeDrawer()" aria-label="Close panel"><i class="pi pi-times"></i></button>
         </header>
-
-        <section class="drawer-section form-section" *ngIf="drawerMode === 'create-organization'">
-          <label>Organization Name<input type="text" [(ngModel)]="organizationForm.displayName" /></label>
-          <label>Tenant Code<input type="text" [(ngModel)]="organizationForm.tenantName" /></label>
-          <label>Admin Email<input type="email" [(ngModel)]="organizationForm.adminEmail" /></label>
-          <label>Admin Password<input type="password" [(ngModel)]="organizationForm.adminPassword" /></label>
-          <label>Admin First Name<input type="text" [(ngModel)]="organizationForm.adminFirstName" /></label>
-          <label>Admin Last Name<input type="text" [(ngModel)]="organizationForm.adminLastName" /></label>
-          <label>Admin Mobile<input type="text" [(ngModel)]="organizationForm.adminMobile" /></label>
-          <label>City<input type="text" [(ngModel)]="organizationForm.city" /></label>
-          <label>State<input type="text" [(ngModel)]="organizationForm.state" /></label>
-          <div class="drawer-actions"><button type="button" class="admin-command-button primary" (click)="createOrganization()" [disabled]="actionLoading"><i class="pi pi-check"></i>Create</button></div>
-        </section>
 
         <section class="drawer-section form-section" *ngIf="drawerMode === 'create-user'">
           <label>Username<input type="text" [(ngModel)]="adminUserForm.userName" /></label>

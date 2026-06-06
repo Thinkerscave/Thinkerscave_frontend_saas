@@ -9,18 +9,16 @@ import {
   AdminKpiCardComponent,
   AdminMonitoringWidgetComponent,
   AdminNavComponent,
-  AdminOrganizationDrawerComponent,
   AdminPermissionMatrixComponent,
   AdminStatusBadgeComponent
 } from '../shared/admin-primitives.component';
 import { AdminControlDataService } from '../../services/admin-control-data.service';
 import {
   AdminAuditEvent,
-  AdminBranch,
   AdminControlCenter,
-  AdminOrganization,
-  AdminOrganizationCreatePayload,
+  AdminKpi,
   AdminRole,
+  AdminSection,
   AdminSecurityEvent,
   AdminSystemEvent,
   AdminUserCreatePayload,
@@ -28,8 +26,7 @@ import {
   AdminWorkspacePage
 } from '../../models/admin-control.model';
 
-type AdminDrawerMode = 'create-organization' | 'create-user' | 'role-detail' | 'audit-detail' | 'security-detail' | 'system-event' | null;
-type OrganizationTab = 'overview' | 'branches' | 'subscription' | 'branding';
+type AdminDrawerMode = 'create-user' | 'role-detail' | 'audit-detail' | 'security-detail' | 'system-event' | null;
 type AccessTab = 'roles' | 'matrix' | 'users' | 'invitations';
 type MonitoringTab = 'health' | 'jobs' | 'notifications' | 'integrity';
 
@@ -47,8 +44,7 @@ type MonitoringTab = 'health' | 'jobs' | 'notifications' | 'integrity';
     AdminMonitoringWidgetComponent,
     AdminActivityTimelineComponent,
     AdminPermissionMatrixComponent,
-    AdminAuditTableComponent,
-    AdminOrganizationDrawerComponent
+    AdminAuditTableComponent
   ],
   templateUrl: './admin-workspace.component.html'
 })
@@ -63,20 +59,17 @@ export class AdminWorkspaceComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  organizationTab: OrganizationTab = 'overview';
   accessTab: AccessTab = 'roles';
   monitoringTab: MonitoringTab = 'health';
   auditSearch = '';
   accessSearch = '';
 
-  selectedOrganization: AdminOrganization | null = null;
   selectedRole: AdminRole | null = null;
   selectedAuditEvent: AdminAuditEvent | null = null;
   selectedSecurityEvent: AdminSecurityEvent | null = null;
   selectedSystemEvent: AdminSystemEvent | null = null;
   drawerMode: AdminDrawerMode = null;
 
-  organizationForm: AdminOrganizationCreatePayload = this.emptyOrganizationForm();
   adminUserForm: AdminUserCreatePayload = this.emptyAdminUserForm();
   adminUserRole = 'Admin';
   adminUserOrgId: number | null = null;
@@ -132,42 +125,11 @@ export class AdminWorkspaceComponent implements OnInit {
   openAction(mode: Exclude<AdminDrawerMode, null>): void {
     this.drawerMode = mode;
     this.clearMessages();
-    if (mode === 'create-organization') {
-      this.organizationForm = this.emptyOrganizationForm();
-    }
     if (mode === 'create-user') {
       this.adminUserForm = this.emptyAdminUserForm();
       this.adminUserOrgId = this.workspace?.organizations[0]?.orgId ?? null;
       this.adminUserRole = 'Admin';
     }
-  }
-
-  createOrganization(): void {
-    this.clearMessages();
-    if (!this.organizationForm.displayName || !this.organizationForm.adminEmail || !this.organizationForm.adminPassword) {
-      this.errorMessage = 'Organization name, admin email and password are required.';
-      return;
-    }
-    const payload: AdminOrganizationCreatePayload = {
-      ...this.organizationForm,
-      tenantName: this.organizationForm.tenantName || this.toTenantName(this.organizationForm.displayName),
-      adminFirstName: this.organizationForm.adminFirstName || 'Admin',
-      adminLastName: this.organizationForm.adminLastName || 'User'
-    };
-    this.actionLoading = true;
-    this.adminDataService.createOrganization(payload).subscribe({
-      next: () => {
-        this.errorMessage = '';
-        this.successMessage = 'Organization created successfully.';
-        this.actionLoading = false;
-        this.closeDrawer();
-        this.loadWorkspace();
-      },
-      error: () => {
-        this.errorMessage = 'Organization could not be created.';
-        this.actionLoading = false;
-      }
-    });
   }
 
   createAdminUser(): void {
@@ -195,10 +157,6 @@ export class AdminWorkspaceComponent implements OnInit {
         this.actionLoading = false;
       }
     });
-  }
-
-  openOrganization(organization: AdminOrganization): void {
-    this.selectedOrganization = organization;
   }
 
   openRole(role: AdminRole): void {
@@ -229,22 +187,58 @@ export class AdminWorkspaceComponent implements OnInit {
     this.selectedSystemEvent = null;
   }
 
-  closeOrganizationDrawer(): void {
-    this.selectedOrganization = null;
-  }
-
   navigateToAccess(): void {
     this.router.navigate(['/app/admin/access']);
   }
 
-  get visibleOrganizations(): AdminOrganization[] {
-    return this.workspace?.organizations ?? [];
+  get administrationSections(): AdminSection[] {
+    return (this.workspace?.adminSections ?? []).filter(section => {
+      const route = (section.route ?? '').toLowerCase();
+      const label = (section.label ?? '').toLowerCase();
+      return !route.includes('/admin/organizations') && !label.includes('organization');
+    });
   }
 
-  get visibleBranches(): AdminBranch[] {
-    const organizationId = this.selectedOrganization?.orgId;
-    const branches = this.workspace?.branches ?? [];
-    return organizationId ? branches.filter(branch => branch.organizationId === organizationId) : branches;
+  get administrationKpis(): AdminKpi[] {
+    const users = this.workspace?.users ?? [];
+    const roles = this.workspace?.roles ?? [];
+    const pendingInvitations = this.pendingInvitations.length;
+    const healthScore = this.workspace?.monitoring?.healthScore ?? 0;
+
+    return [
+      {
+        key: 'users',
+        label: 'Admin Users',
+        value: String(users.length),
+        helper: `${users.filter(user => !user.blocked).length} active accounts`,
+        icon: 'pi pi-users',
+        tone: 'info'
+      },
+      {
+        key: 'roles',
+        label: 'Roles Governed',
+        value: String(roles.length),
+        helper: `${roles.reduce((total, role) => total + role.permissionAssignments, 0)} permission links`,
+        icon: 'pi pi-shield',
+        tone: 'success'
+      },
+      {
+        key: 'pending-invitations',
+        label: 'Pending Invitations',
+        value: String(pendingInvitations),
+        helper: 'First login or email verification pending',
+        icon: 'pi pi-send',
+        tone: pendingInvitations ? 'warning' : 'success'
+      },
+      {
+        key: 'system-health',
+        label: 'System Health Score',
+        value: `${healthScore}%`,
+        helper: `${this.highPrioritySystemEvents.length} open signals`,
+        icon: 'pi pi-heart',
+        tone: this.highPrioritySystemEvents.length ? 'warning' : 'success'
+      }
+    ];
   }
 
   get filteredUsers(): AdminUserAccess[] {
@@ -288,7 +282,6 @@ export class AdminWorkspaceComponent implements OnInit {
 
   get pageTitle(): string {
     switch (this.page) {
-      case 'organizations': return 'Organization Management';
       case 'access': return 'Access & Permissions';
       case 'monitoring': return 'System Monitoring';
       case 'audit': return 'Audit Center';
@@ -298,17 +291,15 @@ export class AdminWorkspaceComponent implements OnInit {
 
   get pageSubtitle(): string {
     switch (this.page) {
-      case 'organizations': return 'Manage schools, branches, subscriptions, academic configuration and brand identity.';
       case 'access': return 'Govern roles, user access, invitations and permission coverage across the ERP.';
       case 'monitoring': return 'Track tenant health, jobs, notification delivery, diagnostics and data integrity.';
       case 'audit': return 'Explore administrative changes, security events, login audit and critical activity.';
-      default: return 'Manage organizations, users, permissions, system activity and platform operations.';
+      default: return 'Manage users, permissions, system activity and internal administrative controls.';
     }
   }
 
   drawerTitle(): string {
     switch (this.drawerMode) {
-      case 'create-organization': return 'Create Organization';
       case 'create-user': return 'Create Admin User';
       case 'role-detail': return this.selectedRole?.roleName || 'Role Detail';
       case 'audit-detail': return this.selectedAuditEvent?.action || 'Audit Detail';
@@ -348,25 +339,6 @@ export class AdminWorkspaceComponent implements OnInit {
     return unit ? `${value} ${unit}` : String(value);
   }
 
-  private emptyOrganizationForm(): AdminOrganizationCreatePayload {
-    return {
-      tenantName: '',
-      displayName: '',
-      adminEmail: '',
-      adminPassword: '',
-      adminFirstName: '',
-      adminLastName: '',
-      adminMobile: '',
-      organizationType: 'SCHOOL',
-      subscriptionType: 'PREMIUM',
-      maxUsers: 500,
-      storageLimitMb: 10240,
-      city: '',
-      state: '',
-      establishDate: null
-    };
-  }
-
   private emptyAdminUserForm(): AdminUserCreatePayload {
     return {
       userName: '',
@@ -378,10 +350,6 @@ export class AdminWorkspaceComponent implements OnInit {
       roles: [],
       organizationIds: []
     };
-  }
-
-  private toTenantName(value: string): string {
-    return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   }
 
   private clearMessages(): void {

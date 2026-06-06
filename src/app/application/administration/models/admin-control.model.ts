@@ -1,4 +1,4 @@
-export type AdminWorkspacePage = 'dashboard' | 'organizations' | 'access' | 'monitoring' | 'audit';
+export type AdminWorkspacePage = 'dashboard' | 'access' | 'monitoring' | 'audit';
 export type AdminTone = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
 export interface AdminSection {

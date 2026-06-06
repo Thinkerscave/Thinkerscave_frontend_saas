@@ -2,18 +2,14 @@
   [class.is-expanded]="displayExpanded"
   (mouseenter)="hovered = true"
   (mouseleave)="hovered = false"
+  (focusin)="expandFromFocus()"
+  (focusout)="collapseFromFocus($event)"
   aria-label="Primary navigation">
-  <div class="sidebar-brand">
+  <a class="sidebar-brand" routerLink="/app" title="Dashboard" aria-label="Go to Dashboard">
     <div class="brand-mark">
-      <i class="pi pi-compass"></i>
+      <img src="thinkerscave2.ico" alt="" aria-hidden="true">
     </div>
-    @if (displayExpanded) {
-      <div class="brand-copy tc-animate-fade-in tc-stagger-1">
-        <span>Workspace</span>
-        <strong>Navigation</strong>
-      </div>
-    }
-  </div>
+  </a>
 
   @if (loading) {
     <div class="nav-loading">
@@ -83,7 +79,7 @@
 
   <div class="sidebar-footer">
     @if (displayExpanded) {
-      <div class="sidebar-version tc-animate-fade-in tc-stagger-8">ThinkersCave v2.0</div>
+      <div class="sidebar-version tc-animate-fade-in tc-stagger-8">ThinkerScave ERP</div>
     }
   </div>
 </aside>

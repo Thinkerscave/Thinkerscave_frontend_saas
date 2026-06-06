@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostBinding, inject, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostBinding, inject, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -17,7 +17,7 @@ import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
   styleUrl: './side-menu.component.scss'
 })
 export class SideMenuComponent implements OnInit {
-  @Input() expanded = true;
+  @Input() expanded = false;
 
   items: MenuItem[] = [];
   loading = true;
@@ -28,6 +28,7 @@ export class SideMenuComponent implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private breadcrumbService = inject(BreadCrumbService);
+  private elementRef = inject(ElementRef<HTMLElement>);
 
   get displayExpanded(): boolean {
     return this.expanded || this.hovered;
@@ -57,6 +58,17 @@ export class SideMenuComponent implements OnInit {
       filter(event => event instanceof NavigationEnd),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {});
+  }
+
+  expandFromFocus(): void {
+    this.hovered = true;
+  }
+
+  collapseFromFocus(event: FocusEvent): void {
+    const nextTarget = event.relatedTarget as Node | null;
+    if (!nextTarget || !this.elementRef.nativeElement.contains(nextTarget)) {
+      this.hovered = false;
+    }
   }
 
   private openActiveGroup() {

@@ -8,6 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 0 1.25rem;
   background: var(--tc-topbar-bg);
   color: var(--tc-topbar-text);
@@ -19,32 +20,8 @@
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
   width: 30%;
-  min-width: 260px;
-}
-
-.sidebar-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--tc-radius-md);
-  border: 1px solid var(--tc-topbar-border);
-  background: var(--tc-topbar-hover);
-  color: var(--tc-topbar-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--tc-anim-duration-fast) var(--tc-anim-easing);
-
-  &:hover {
-    background: color-mix(in srgb, var(--tc-primary-500) 14%, transparent);
-    transform: translateY(-1px);
-  }
-
-  i {
-    font-size: 1.1rem;
-  }
+  min-width: 230px;
 }
 
 .brand-identity {
@@ -52,7 +29,19 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  border: 0;
+  background: transparent;
   color: var(--tc-topbar-text);
+  border-radius: var(--tc-radius-lg);
+  padding: 0.3rem 0.55rem 0.3rem 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--tc-anim-duration-fast) var(--tc-anim-easing), transform var(--tc-anim-duration-fast) var(--tc-anim-easing);
+
+  &:hover {
+    background: var(--tc-topbar-hover);
+    transform: translateY(-1px);
+  }
 }
 
 .brand-logo {
@@ -66,6 +55,12 @@
   border: 1px solid var(--tc-topbar-border);
   color: var(--tc-primary-600);
   flex: 0 0 auto;
+
+  img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
 }
 
 .brand-identity div {
@@ -84,6 +79,7 @@
 .brand-identity strong {
   font-size: 1rem;
   line-height: 1.1;
+  font-weight: 800;
 }
 
 .brand-identity small {
@@ -94,6 +90,7 @@
 
 .topbar-center {
   flex: 1;
+  min-width: 0;
   display: flex;
   justify-content: center;
   max-width: 600px;
@@ -125,6 +122,7 @@ app-global-search {
   justify-content: flex-end;
   gap: 0.75rem;
   width: 30%;
+  min-width: 0;
 }
 
 .icon-btn {
@@ -383,5 +381,49 @@ app-global-search {
       color: var(--tc-text-muted);
       font-size: 0.8rem;
     }
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar-container {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .topbar-left {
+    min-width: 0;
+    width: auto;
+  }
+
+  .topbar-center {
+    display: none;
+  }
+
+  .topbar-right {
+    width: auto;
+    gap: 0.35rem;
+  }
+
+  .profile-menu {
+    margin-left: 0;
+  }
+
+  .profile-btn {
+    gap: 0.35rem;
+    padding-inline: 0.25rem;
+  }
+
+  .brand-identity small {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand-identity strong {
+    max-width: 112px;
+  }
+
+  .icon-btn[title="Settings"] {
+    display: none;
   }
 }

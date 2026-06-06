@@ -1,0 +1,247 @@
+<p-toast position="top-right"></p-toast>
+
+<section class="tc-tenant-page tc-workspace" *ngIf="!loading && org; else loadingOrError">
+  <div class="tc-workspace__crumb">
+    <button type="button" class="tc-link" (click)="back()"><i class="pi pi-arrow-left"></i>All organizations</button>
+  </div>
+
+  <header class="tc-workspace__header">
+    <div class="tc-workspace__identity">
+      <span class="tc-workspace__avatar" [attr.data-tier]="org.planTier">{{ org.initials }}</span>
+      <div>
+        <p class="tc-workspace__eyebrow">{{ org.type }} · {{ org.location }}</p>
+        <h1>{{ org.name }}</h1>
+        <p class="tc-workspace__meta">
+          <span>{{ org.code }}</span>
+          <span class="tc-dot"></span>
+          <span>{{ org.domain }}</span>
+        </p>
+      </div>
+    </div>
+    <div class="tc-workspace__chips">
+      <span class="tc-pill tc-pill--{{ org.status }}"><i class="pi pi-circle-fill"></i>{{ org.statusLabel }}</span>
+      <span class="tc-pill tc-pill--plan" [attr.data-tier]="org.planTier">{{ org.plan }}</span>
+      <span class="tc-pill tc-pill--health tc-pill--{{ org.health }}" *ngIf="org.health !== 'unknown'"><i class="pi pi-heart"></i>Health {{ org.healthScore }}</span>
+      <span class="tc-pill tc-pill--soft"><i class="pi pi-calendar"></i>Renews {{ org.expiryDate }}</span>
+    </div>
+    <div class="tc-workspace__actions">
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="changePlan()"><i class="pi pi-arrow-up-right"></i><span>Change plan</span></button>
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="runAdminAction('renew')"><i class="pi pi-refresh"></i><span>Renew</span></button>
+      <button type="button" class="tc-btn tc-btn--sm"
+              [class.tc-btn--primary]="org.status === 'suspended'"
+              [class.tc-btn--danger-outline]="org.status !== 'suspended'"
+              (click)="toggleSuspension()">
+        <i class="pi" [class.pi-check-circle]="org.status === 'suspended'" [class.pi-ban]="org.status !== 'suspended'"></i>
+        <span>{{ org.status === 'suspended' ? 'Activate' : 'Suspend' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tc-workspace__nav" aria-label="Workspace sections">
+    <button *ngFor="let s of sections"
+            type="button"
+            class="tc-workspace__nav-item"
+            [class.is-active]="activeSection === s.id"
+            (click)="scrollTo(s.id)">
+      <i class="pi {{ s.icon }}"></i><span>{{ s.label }}</span>
+    </button>
+  </nav>
+
+  <article id="section-overview" class="tc-workspace__section">
+    <header class="tc-workspace__section-head">
+      <h2>Overview</h2>
+      <p>The essentials anyone in your team needs to recognise this tenant.</p>
+    </header>
+    <div class="tc-grid tc-grid--3">
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Tenant profile</h3>
+        <dl class="tc-defs">
+          <div><dt>Legal name</dt><dd>{{ org.source.orgName }}</dd></div>
+          <div><dt>Brand</dt><dd>{{ org.brand }}</dd></div>
+          <div><dt>Tenant code</dt><dd>{{ org.code }}</dd></div>
+          <div><dt>Type</dt><dd>{{ org.type }}</dd></div>
+          <div><dt>Location</dt><dd>{{ org.location }}</dd></div>
+          <div><dt>Established</dt><dd>{{ org.createdDate }}</dd></div>
+        </dl>
+      </div>
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Primary owner</h3>
+        <div class="tc-owner">
+          <span class="tc-owner__avatar">{{ (org.ownerName || 'O').charAt(0) }}</span>
+          <div>
+            <p class="tc-owner__name">{{ org.ownerName }}</p>
+            <p class="tc-owner__email">{{ org.ownerEmail }}</p>
+            <p class="tc-owner__role">Organization owner</p>
+          </div>
+        </div>
+        <p class="tc-empty-line" style="font-size: 12px;">Credential and ownership tools land with the upcoming admin console release.</p>
+      </div>
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Branches ({{ branches.length }})</h3>
+        <ul class="tc-list" *ngIf="branches.length; else noBranches">
+          <li *ngFor="let b of branches.slice(0, 5)">
+            <div>
+              <p class="tc-list__primary">{{ b.branchName }}</p>
+              <p class="tc-list__secondary">{{ b.branchCode }} · {{ b.location || '—' }}</p>
+            </div>
+            <span class="tc-list__metric">{{ b.students }} students</span>
+          </li>
+        </ul>
+        <ng-template #noBranches>
+          <p class="tc-empty-line">No branches recorded yet.</p>
+        </ng-template>
+      </div>
+    </div>
+  </article>
+
+  <article id="section-subscription" class="tc-workspace__section">
+    <header class="tc-workspace__section-head">
+      <h2>Subscription</h2>
+      <p>Plan entitlements and what this tenant is actually consuming.</p>
+    </header>
+    <div class="tc-grid tc-grid--2">
+      <div class="tc-panel tc-panel--plan" [attr.data-tier]="org.planTier">
+        <span class="tc-pill tc-pill--plan tc-pill--solid">{{ org.plan }}</span>
+        <h3 class="tc-panel__title">Current plan</h3>
+        <p class="tc-panel__lead">Entitlements applied to every user across {{ org.branches }} branch{{ org.branches === 1 ? '' : 'es' }}.</p>
+        <div class="tc-panel__footer">
+          <a class="tc-btn tc-btn--ghost tc-btn--sm" routerLink="/app/tenant-management/subscription-plans"><i class="pi pi-table"></i>Compare plans</a>
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="changePlan()"><i class="pi pi-arrow-up-right"></i>Change plan</button>
+        </div>
+      </div>
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Renewal &amp; billing</h3>
+        <dl class="tc-defs tc-defs--compact">
+          <div><dt>Next renewal</dt><dd>{{ org.expiryDate }}</dd></div>
+          <div><dt>Billing owner</dt><dd>{{ org.ownerEmail }}</dd></div>
+          <div><dt>Plan tier</dt><dd>{{ org.plan }}</dd></div>
+        </dl>
+        <p class="tc-empty-line" style="font-size: 12px;">Invoice history and payment methods arrive with the billing service.</p>
+      </div>
+    </div>
+
+    <header class="tc-workspace__section-head" style="margin-top: 8px;">
+      <h2 style="font-size: 16px;">Usage vs. limits</h2>
+      <p>Live consumption against this plan's quotas.</p>
+    </header>
+    <div class="tc-usage-grid">
+      <div *ngFor="let u of usage" class="tc-usage-card"
+           [class.tc-usage-card--unlimited]="u.variant === 'unlimited'"
+           [class.tc-usage-card--warn]="u.variant === 'warn'"
+           [class.tc-usage-card--danger]="u.variant === 'danger'">
+        <div class="tc-usage-card__head">
+          <div>
+            <p class="tc-usage-card__label">{{ u.label }}</p>
+            <p class="tc-usage-card__value">{{ u.value }}</p>
+          </div>
+          <span class="tc-usage-card__icon"><i class="pi {{ u.icon }}"></i></span>
+        </div>
+        <p class="tc-usage-card__caption">{{ u.caption }}</p>
+        <div class="tc-usage-card__meter" *ngIf="u.hasMeter">
+          <div class="tc-usage-card__meter-head"><span>{{ u.hint }}</span></div>
+          <div class="tc-progress" [class.is-warn]="u.meterClass === 'is-warn'" [class.is-danger]="u.meterClass === 'is-danger'">
+            <div class="tc-progress__bar" [style.width.%]="u.percent"></div>
+          </div>
+        </div>
+        <p class="tc-usage-card__caption" *ngIf="!u.hasMeter" style="margin-top: auto;">{{ u.hint }}</p>
+      </div>
+    </div>
+  </article>
+
+  <article id="section-users" class="tc-workspace__section">
+    <header class="tc-workspace__section-head">
+      <h2>Users</h2>
+      <p>How seats are distributed and who has signed in recently.</p>
+    </header>
+    <div class="tc-grid tc-grid--2">
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Role distribution</h3>
+        <p class="tc-panel__lead">{{ totalUsers | number }} total users</p>
+        <ul class="tc-bar-list" *ngIf="roleDistribution.length; else noRoles">
+          <li *ngFor="let r of roleDistribution">
+            <div class="tc-bar-list__head"><span>{{ r.role }}</span><span>{{ r.count }} · {{ r.percent }}%</span></div>
+            <div class="tc-progress"><div class="tc-progress__bar" [style.width.%]="r.percent"></div></div>
+          </li>
+        </ul>
+        <ng-template #noRoles><p class="tc-empty-line">Role data not yet available.</p></ng-template>
+      </div>
+      <div class="tc-panel">
+        <h3 class="tc-panel__title">Recent users</h3>
+        <ul class="tc-list" *ngIf="recentUsers.length; else noUsers">
+          <li *ngFor="let u of recentUsers">
+            <div>
+              <p class="tc-list__primary">{{ u.fullName }}</p>
+              <p class="tc-list__secondary">{{ u.email }} · {{ (u.roles && u.roles[0]) || '—' }}</p>
+            </div>
+            <span class="tc-list__metric tc-list__metric--muted">{{ u.lastLoginDate || 'No sign-in' }}</span>
+          </li>
+        </ul>
+        <ng-template #noUsers><p class="tc-empty-line">No user activity recorded.</p></ng-template>
+      </div>
+    </div>
+  </article>
+
+  <article id="section-activity" class="tc-workspace__section">
+    <header class="tc-workspace__section-head">
+      <h2>Activity</h2>
+      <p>Last events captured for this tenant. <a class="tc-link" routerLink="/app/tenant-management/audit-center" [queryParams]="{tenant: org.code}">Open in audit centre <i class="pi pi-external-link"></i></a></p>
+    </header>
+    <div class="tc-panel">
+      <ol class="tc-timeline" *ngIf="activity.length; else noActivity">
+        <li *ngFor="let e of activity">
+          <span class="tc-timeline__dot"></span>
+          <div>
+            <p class="tc-timeline__title">{{ e.action }} <span class="tc-timeline__entity" *ngIf="e.entityType">· {{ e.entityType }}</span></p>
+            <p class="tc-timeline__summary">{{ e.summary || e.changes || '—' }}</p>
+            <p class="tc-timeline__meta">{{ e.actorUsername || 'system' }} · {{ e.occurredAt | date:'medium' }}</p>
+          </div>
+        </li>
+      </ol>
+      <ng-template #noActivity><p class="tc-empty-line">No activity captured for this tenant yet.</p></ng-template>
+    </div>
+  </article>
+
+  <article id="section-administration" class="tc-workspace__section">
+    <header class="tc-workspace__section-head">
+      <h2>Administration</h2>
+      <p>Operational controls. Destructive actions are isolated in the danger zone below.</p>
+    </header>
+    <div class="tc-grid tc-grid--3">
+      <button *ngFor="let a of adminActions" type="button" class="tc-action-card" (click)="runAdminAction(a.key)">
+        <i class="pi {{ a.icon }}"></i>
+        <div>
+          <p>{{ a.label }}</p>
+          <span>{{ a.description }}</span>
+          <span class="tc-action-card__chip" *ngIf="!a.available">Coming soon</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="tc-danger-zone">
+      <header>
+        <h3><i class="pi pi-exclamation-triangle"></i>Danger zone</h3>
+        <p>These actions stop access for everyone in this tenant. Both are reversible by platform admins.</p>
+      </header>
+      <div class="tc-danger-zone__actions">
+        <button type="button" class="tc-btn tc-btn--danger-outline" (click)="toggleSuspension()">
+          {{ org.status === 'suspended' ? 'Lift suspension' : 'Suspend tenant' }}
+        </button>
+        <button type="button" class="tc-btn tc-btn--danger" (click)="deactivateTenant()">Deactivate tenant</button>
+      </div>
+    </div>
+  </article>
+</section>
+
+<ng-template #loadingOrError>
+  <section class="tc-tenant-page">
+    <div *ngIf="loading" class="tc-skeleton-block" aria-hidden="true"></div>
+    <div *ngIf="!loading && errorMessage" class="tc-empty">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Tenant unavailable</h3>
+      <p>{{ errorMessage }}</p>
+      <div class="tc-empty__actions">
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="back()">Back to organizations</button>
+      </div>
+    </div>
+  </section>
+</ng-template>

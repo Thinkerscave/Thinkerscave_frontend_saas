@@ -16,9 +16,4 @@ import { WorkspaceTabsComponent } from '../workspace-tabs/workspace-tabs.compone
   styleUrl: './layout.component.scss'
 })
 export class LayoutComponent {
-  isSidebarExpanded = false;
-
-  toggleSidebar(): void {
-    this.isSidebarExpanded = !this.isSidebarExpanded;
-  }
 }

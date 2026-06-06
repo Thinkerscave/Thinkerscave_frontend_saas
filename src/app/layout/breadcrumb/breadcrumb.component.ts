@@ -52,6 +52,10 @@ export class BreadcrumbComponent implements OnInit {
     const page = segments[2] ?? '';
 
     const workspaceLabels: Record<string, string> = {
+      'tenant-management': 'Tenant Management',
+      platform: 'Tenant Management',
+      organization: 'Organization Profile',
+      'organization-profile': 'Organization Profile',
       admin: 'Administration',
       students: 'Students',
       staff: 'Staff',
@@ -68,6 +72,10 @@ export class BreadcrumbComponent implements OnInit {
       return ['Dashboard'];
     }
 
+    if (workspace === 'tenant-management') {
+      return this.tenantManagementLabels(segments);
+    }
+
     const rootLabel = workspaceLabels[workspace] ?? this.titleCase(workspace);
     const pageLabel = this.routePageLabel(workspace, page);
     return pageLabel ? [rootLabel, pageLabel] : [rootLabel];
@@ -79,7 +87,10 @@ export class BreadcrumbComponent implements OnInit {
     }
 
     const labels: Record<string, Record<string, string>> = {
-      admin: { dashboard: 'Dashboard', organizations: 'Organizations', access: 'Access Control', monitoring: 'Monitoring', audit: 'Audit Center' },
+      platform: { dashboard: 'Organizations', organizations: 'Organizations', subscriptions: 'Subscription Plans', monitoring: 'Organizations', audit: 'Audit Center' },
+      organization: { '': 'Organization Profile' },
+      'organization-profile': { '': 'Organization Profile' },
+      admin: { dashboard: 'Dashboard', access: 'Access Control', monitoring: 'Monitoring', audit: 'Audit Center' },
       students: { dashboard: 'Dashboard', directory: 'Directory', profiles: 'Profiles', admissions: 'Admissions', classes: 'Classes', sections: 'Sections', promotion: 'Promotion Center', transfer: 'Transfer Center', documents: 'Documents', parents: 'Parents', 'id-cards': 'ID Cards', alumni: 'Alumni' },
       staff: { dashboard: 'Dashboard', directory: 'Directory', operations: 'Operations' },
       attendance: { dashboard: 'Dashboard', students: 'Student Attendance', staff: 'Staff Attendance' },
@@ -95,5 +106,38 @@ export class BreadcrumbComponent implements OnInit {
     return value
       .replace(/[-_]+/g, ' ')
       .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  private tenantManagementLabels(segments: string[]): string[] {
+    const page = segments[2] ?? '';
+    const child = segments[3] ?? '';
+    const labels = ['Tenant Management'];
+
+    if (page === 'organizations') {
+      labels.push('Organizations');
+      if (child === 'create') {
+        labels.push('Create Organization');
+      } else if (child) {
+        labels.push('Organization Details');
+      }
+      return labels;
+    }
+
+    if (page === 'subscription-plans') {
+      labels.push('Subscription Plans');
+      if (child === 'create') {
+        labels.push('Create Plan');
+      } else if (child) {
+        labels.push('Plan Details');
+      }
+      return labels;
+    }
+
+    if (page === 'audit-center') {
+      labels.push('Audit Center');
+      return labels;
+    }
+
+    return labels;
   }
 }

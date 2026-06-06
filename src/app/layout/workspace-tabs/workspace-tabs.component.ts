@@ -95,6 +95,18 @@ export class WorkspaceTabsComponent implements OnInit {
       ]
     },
     {
+      key: 'tenant-management',
+      label: 'Tenant Management',
+      eyebrow: 'Platform Team',
+      icon: 'pi pi-building',
+      matcher: /^\/app\/tenant-management(?:\/|$)/,
+      tabs: [
+        { label: 'Organizations', icon: 'pi pi-building', route: '/app/tenant-management/organizations' },
+        { label: 'Subscription Plans', icon: 'pi pi-credit-card', route: '/app/tenant-management/subscription-plans' },
+        { label: 'Audit Center', icon: 'pi pi-history', route: '/app/tenant-management/audit-center' }
+      ]
+    },
+    {
       key: 'admin',
       label: 'Administration Workspace',
       eyebrow: 'Control Center',
@@ -102,7 +114,6 @@ export class WorkspaceTabsComponent implements OnInit {
       matcher: /^\/app\/admin(?:\/|$)/,
       tabs: [
         { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/app/admin/dashboard' },
-        { label: 'Organizations', icon: 'pi pi-building', route: '/app/admin/organizations' },
         { label: 'Access', icon: 'pi pi-lock', route: '/app/admin/access' },
         { label: 'Monitoring', icon: 'pi pi-server', route: '/app/admin/monitoring' },
         { label: 'Audit', icon: 'pi pi-history', route: '/app/admin/audit' }

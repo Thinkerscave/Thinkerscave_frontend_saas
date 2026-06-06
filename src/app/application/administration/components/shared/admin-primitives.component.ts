@@ -4,10 +4,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   AdminActivity,
   AdminAuditEvent,
-  AdminBranch,
   AdminKpi,
   AdminMonitoringWidget,
-  AdminOrganization,
   AdminPermissionMatrixRow,
   AdminSection
 } from '../../models/admin-control.model';
@@ -221,89 +219,5 @@ export class AdminAuditTableComponent {
       return 'success';
     }
     return 'info';
-  }
-}
-
-@Component({
-  selector: 'tc-admin-organization-drawer',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
-  imports: [CommonModule, AdminStatusBadgeComponent],
-  template: `
-    <aside class="admin-drawer" [class.is-open]="open" aria-live="polite">
-      <div class="admin-drawer-panel" *ngIf="organization">
-        <header>
-          <div>
-            <span>Organization profile</span>
-            <h2>{{ organization.orgName }}</h2>
-          </div>
-          <button type="button" class="admin-icon-button" (click)="closed.emit()" aria-label="Close panel">
-            <i class="pi pi-times"></i>
-          </button>
-        </header>
-        <div class="organization-drawer-hero">
-          <strong>{{ organization.brandName || organization.orgCode }}</strong>
-          <tc-admin-status-badge [label]="organization.active ? 'ACTIVE' : 'SUSPENDED'" [tone]="organization.active ? 'success' : 'danger'"></tc-admin-status-badge>
-        </div>
-        <div class="drawer-tabs">
-          <button type="button" [class.is-active]="activeTab === 'profile'" (click)="activeTab = 'profile'">Profile</button>
-          <button type="button" [class.is-active]="activeTab === 'branches'" (click)="activeTab = 'branches'">Branches</button>
-          <button type="button" [class.is-active]="activeTab === 'subscription'" (click)="activeTab = 'subscription'">Subscription</button>
-          <button type="button" [class.is-active]="activeTab === 'branding'" (click)="activeTab = 'branding'">Branding</button>
-        </div>
-        <section class="drawer-section" *ngIf="activeTab === 'profile'">
-          <dl class="drawer-definition-grid">
-            <div><dt>Type</dt><dd>{{ organization.orgType || 'School' }}</dd></div>
-            <div><dt>Tenant</dt><dd>{{ organization.tenantId || 'public' }}</dd></div>
-            <div><dt>Location</dt><dd>{{ organization.city || 'N/A' }}, {{ organization.state || 'N/A' }}</dd></div>
-            <div><dt>Owner</dt><dd>{{ organization.ownerName || 'N/A' }}</dd></div>
-            <div><dt>Owner Email</dt><dd>{{ organization.ownerEmail || 'N/A' }}</dd></div>
-            <div><dt>Health</dt><dd>{{ organization.healthScore }}%</dd></div>
-          </dl>
-        </section>
-        <section class="drawer-section" *ngIf="activeTab === 'branches'">
-          <article class="drawer-mini-card" *ngFor="let branch of branches">
-            <div>
-              <strong>{{ branch.branchName }}</strong>
-              <small>{{ branch.location || branch.branchCode }}</small>
-            </div>
-            <tc-admin-status-badge [label]="branch.active ? 'ACTIVE' : 'INACTIVE'" [tone]="branch.active ? 'success' : 'warning'"></tc-admin-status-badge>
-          </article>
-        </section>
-        <section class="drawer-section" *ngIf="activeTab === 'subscription'">
-          <dl class="drawer-definition-grid">
-            <div><dt>Plan</dt><dd>{{ organization.subscriptionType || 'STANDARD' }}</dd></div>
-            <div><dt>Active Users</dt><dd>{{ organization.activeUsers }}</dd></div>
-            <div><dt>API Usage</dt><dd>{{ organization.apiUsageToday }}</dd></div>
-            <div><dt>Storage</dt><dd>{{ organization.storageUsedMb }} / {{ organization.storageLimitMb }} MB</dd></div>
-          </dl>
-        </section>
-        <section class="drawer-section" *ngIf="activeTab === 'branding'">
-          <div class="branding-preview">
-            <span>{{ initials(organization) }}</span>
-            <div>
-              <strong>{{ organization.brandName || organization.orgName }}</strong>
-              <small>{{ organization.orgCode }}</small>
-            </div>
-          </div>
-        </section>
-      </div>
-    </aside>
-  `
-})
-export class AdminOrganizationDrawerComponent {
-  @Input() open = false;
-  @Input() organization: AdminOrganization | null = null;
-  @Input() branches: AdminBranch[] = [];
-  @Output() closed = new EventEmitter<void>();
-  activeTab: 'profile' | 'branches' | 'subscription' | 'branding' = 'profile';
-
-  initials(organization: AdminOrganization): string {
-    return (organization.brandName || organization.orgName || 'TC')
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0]?.toUpperCase())
-      .join('');
   }
 }

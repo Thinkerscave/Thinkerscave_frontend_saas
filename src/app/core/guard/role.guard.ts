@@ -14,14 +14,24 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => () => {
     const loginService = inject(LoginService);
     const router = inject(Router);
 
-    const userRoles: string[] = (loginService.getUserRole() as any[])
-        .map((r: any) => (r?.roleCode ?? r?.roleName ?? r ?? '').toString().trim());
+    const normalizeRole = (role: string): string => role
+        .toString()
+        .trim()
+        .replace(/^ROLE_/i, '')
+        .replace(/[\s-]+/g, '_')
+        .toUpperCase();
 
-    const hasRole = allowedRoles.some(required =>
-        userRoles.some(userRole =>
-            userRole === required || userRole === `ROLE_${required}` || `ROLE_${userRole}` === required
-        )
-    );
+    const rawRoles = loginService.getUserRole() as any;
+    const roleList = Array.isArray(rawRoles) ? rawRoles : [rawRoles].filter(Boolean);
+
+    const userRoles: string[] = roleList
+        .flatMap((r: any) => [r?.roleCode, r?.roleName, r?.name, r])
+        .filter(Boolean)
+        .map((role: any) => normalizeRole(role));
+
+    const normalizedAllowedRoles = allowedRoles.map(role => normalizeRole(role));
+
+    const hasRole = normalizedAllowedRoles.some(required => userRoles.includes(required));
 
     if (!hasRole) {
         router.navigate(['/unauthorized']);

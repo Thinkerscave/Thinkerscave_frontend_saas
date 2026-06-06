@@ -84,7 +84,7 @@ export class MenuMappingService {
             queryParams: { tab: 'lead-statistics' }
           }
         ];
-        return of(this.consolidateWorkspaceMenu(this.normalizeMenuItems(counsellorMenu)));
+        return of(this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(counsellorMenu))));
       }
 
       // Mock Institution Admin menu (only for mock login - detected by mock token prefix)
@@ -167,7 +167,7 @@ export class MenuMappingService {
             routerLink: ['/app/fees/audit']
           }
         ];
-        return of(this.consolidateWorkspaceMenu(this.normalizeMenuItems(adminFeeMenu)));
+        return of(this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(adminFeeMenu))));
       }
     }
 
@@ -181,7 +181,7 @@ export class MenuMappingService {
       map((response: any) => {
         // Backend wraps response in ApiResponse<T>: { success, message, data: [...] }
         // Handle both a raw array and the wrapped ApiResponse format.
-        return this.consolidateWorkspaceMenu(this.normalizeMenuItems(unwrapApiList<MenuItem>(response)));
+        return this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(unwrapApiList<MenuItem>(response))));
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -261,6 +261,7 @@ export class MenuMappingService {
       { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
       { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
       { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
+      { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-building' },
       { key: 'admin', label: 'Administration', icon: 'pi pi-shield' }
     ];
   }
@@ -336,6 +337,8 @@ export class MenuMappingService {
     const route = routeText.toLowerCase();
 
     if (/^\/?app\/?$/.test(route)) return 'dashboard';
+    if (route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || route.includes('/app/organization-registration')) return 'tenant-management';
+    if (route.includes('/app/organization')) return 'admin';
     if (route.includes('/app/admin')) return 'admin';
     if (route.includes('/app/academics')) return 'academics';
     if (route.includes('/app/students') || /managestudent|manage-class|manage-section/.test(route)) return 'students';
@@ -352,9 +355,171 @@ export class MenuMappingService {
     if (/fee|fees|finance|payment|receipt|ledger|contract|adjustment|concession|collection|outstanding|report/.test(haystack)) return 'finance';
     if (/exam|marks|mark sheet|marksheet|grade|result/.test(haystack)) return 'exams';
     if (/communication|message|notice|notification|email|sms|chat/.test(haystack)) return 'communication';
-    if (/admin|administration|organization|role|permission|access|audit|monitoring|setting|menu|privilege|navigation|system/.test(haystack)) return 'admin';
+    if (/tenant management|subscription plan|tenant onboarding|organization directory|organization management/.test(haystack)) return 'tenant-management';
+    if (/platform control|my organization/.test(haystack)) return 'admin';
+    if (/admin|administration|role|permission|access|audit|monitoring|setting|menu|privilege|navigation|system/.test(haystack)) return 'admin';
     if (/\bdashboard\b/.test(haystack)) return 'dashboard';
 
     return 'more';
+  }
+
+  private applyNavigationRules(items: MenuItem[]): MenuItem[] {
+    const roles = this.currentRoleTokens();
+    const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
+
+    let menus = this.normalizeTenantRoutes(items);
+
+    if (!isTenantManager) {
+      menus = this.filterNavigationItems(menus, item => this.isTenantManagementItem(item));
+    }
+
+    menus = this.filterNavigationItems(menus, item => this.isOrganizationProfileItem(item));
+
+    if (isTenantManager) {
+      menus = this.ensureMenuGroup(menus, this.tenantManagementMenuGroup());
+    }
+
+    return menus;
+  }
+
+  private normalizeTenantRoutes(items: MenuItem[]): MenuItem[] {
+    return (items ?? []).map(item => {
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      const isLegacyOrganization = route.includes('/app/admin/organizations') || route.includes('/app/organization-registration');
+      const normalizedRouterLink = this.normalizedTenantRouterLink(route, item.routerLink, isLegacyOrganization);
+      return {
+        ...item,
+        label: this.normalizedTenantLabel(item.label, route, isLegacyOrganization),
+        routerLink: normalizedRouterLink,
+        items: item.items ? this.normalizeTenantRoutes(item.items) : item.items
+      };
+    });
+  }
+
+  private normalizedTenantRouterLink(route: string, routerLink: MenuItem['routerLink'], isLegacyOrganization: boolean): MenuItem['routerLink'] {
+    if (isLegacyOrganization) {
+      return ['/app/tenant-management/organizations'];
+    }
+    if (route.includes('/app/platform/dashboard') || route === '/app/platform') {
+      return ['/app/tenant-management/organizations'];
+    }
+    if (route.includes('/app/platform/organizations')) {
+      return Array.isArray(routerLink) && this.routerLinkText(routerLink).includes(':orgId') ? routerLink : ['/app/tenant-management/organizations'];
+    }
+    if (route.includes('/app/platform/subscriptions')) {
+      return ['/app/tenant-management/subscription-plans'];
+    }
+    if (route.includes('/app/platform/audit')) {
+      return ['/app/tenant-management/audit-center'];
+    }
+    return routerLink;
+  }
+
+  private normalizedTenantLabel(label: string | undefined, route: string, isLegacyOrganization: boolean): string | undefined {
+    if (route.includes('/app/platform') && /platform control/i.test(label ?? '')) {
+      return 'Tenant Management';
+    }
+    if (isLegacyOrganization && /registration|management/i.test(label ?? '')) {
+      return 'Organizations';
+    }
+    if (route.includes('/app/platform/subscriptions')) {
+      return 'Subscription Plans';
+    }
+    if (route.includes('/app/platform/audit')) {
+      return 'Audit Center';
+    }
+    return label;
+  }
+
+  private ensureMenuGroup(items: MenuItem[], menuItem: MenuItem): MenuItem[] {
+    if (this.containsRoute(items, this.routerLinkText(menuItem.routerLink))) {
+      return items;
+    }
+
+    const dashboardIndex = items.findIndex(item => this.routerLinkText(item.routerLink) === '/app' || item.label === 'Dashboard');
+    const next = [...items];
+    next.splice(dashboardIndex >= 0 ? dashboardIndex + 1 : next.length, 0, menuItem);
+    return next;
+  }
+
+  private tenantManagementMenuGroup(): MenuItem {
+    return {
+      label: 'Tenant Management',
+      icon: 'pi pi-building',
+      routerLink: ['/app/tenant-management/organizations'],
+      items: [
+        { label: 'Organizations', icon: 'pi pi-building', routerLink: ['/app/tenant-management/organizations'] },
+        { label: 'Subscription Plans', icon: 'pi pi-credit-card', routerLink: ['/app/tenant-management/subscription-plans'] },
+        { label: 'Audit Center', icon: 'pi pi-history', routerLink: ['/app/tenant-management/audit-center'] }
+      ]
+    };
+  }
+
+  private isTenantManagementItem(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    const label = (item.label ?? '').toLowerCase();
+    return route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || label.includes('tenant management') || label.includes('platform control center');
+  }
+
+  private isOrganizationProfileItem(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    return route.includes('/app/organization') || route.includes('/app/organization-profile');
+  }
+
+  private filterNavigationItems(items: MenuItem[], shouldRemove: (item: MenuItem) => boolean): MenuItem[] {
+    const filteredItems: MenuItem[] = [];
+
+    (items ?? []).forEach(item => {
+      if (shouldRemove(item)) {
+        return;
+      }
+
+      const children = item.items ? this.filterNavigationItems(item.items, shouldRemove) : undefined;
+      if (item.items && !children?.length && !item.routerLink) {
+        return;
+      }
+
+      filteredItems.push({
+        ...item,
+        items: children?.length ? children : undefined
+      });
+    });
+
+    return filteredItems;
+  }
+
+  private containsRoute(items: MenuItem[], routeText: string): boolean {
+    if (!routeText) {
+      return false;
+    }
+    return (items ?? []).some(item => this.routerLinkText(item.routerLink) === routeText || this.containsRoute(item.items ?? [], routeText));
+  }
+
+  private currentRoleTokens(): string[] {
+    const userStr = sessionStorage.getItem('user') ?? localStorage.getItem('user');
+    if (!userStr) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(userStr);
+      const user = parsed?.data && parsed.firstName === undefined ? parsed.data : parsed;
+      const roleValues = [user.role, user.roleCode, user.roleName, ...(Array.isArray(user.roles) ? user.roles : [])];
+      return roleValues
+        .flatMap((role: any) => [role?.roleCode, role?.roleName, role?.name, role])
+        .filter(Boolean)
+        .map((role: any) => this.normalizeRoleToken(String(role)));
+    } catch {
+      return [];
+    }
+  }
+
+  private hasAnyRole(userRoles: string[], allowedRoles: string[]): boolean {
+    const allowed = allowedRoles.map(role => this.normalizeRoleToken(role));
+    return allowed.some(role => userRoles.includes(role));
+  }
+
+  private normalizeRoleToken(role: string): string {
+    return role.trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase();
   }
 }

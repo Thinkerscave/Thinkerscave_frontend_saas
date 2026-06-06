@@ -1,15 +1,12 @@
 <header class="topbar-container">
   <div class="topbar-left">
-    <button type="button" class="sidebar-toggle" (click)="toggleSidebar.emit()" aria-label="Toggle Sidebar">
-      <i class="pi" [ngClass]="isSidebarExpanded ? 'pi-align-left' : 'pi-bars'"></i>
-    </button>
-    <div class="brand-identity" aria-label="ThinkersCave workspace">
-      <span class="brand-logo"><i class="pi pi-sparkles"></i></span>
+    <button type="button" class="brand-identity" (click)="navigateHome()" aria-label="Go to dashboard">
+      <span class="brand-logo"><img src="thinkerscave2.ico" alt="" aria-hidden="true"></span>
       <div>
-        <strong>ThinkersCave</strong>
-        <small>{{ getRoleName() }} · {{ getOrganizationName() }}</small>
+        <strong>ThinkerScave</strong>
+        <small>{{ getOrganizationName() }}</small>
       </div>
-    </div>
+    </button>
   </div>
 
   <div class="topbar-center">
@@ -49,12 +46,12 @@
         <button class="dropdown-item" (click)="router.navigate(['/app/profile'])">
           <i class="pi pi-user"></i> My Profile
         </button>
-        <button class="dropdown-item" (click)="openSettings()">
-          <i class="pi pi-sliders-h"></i> Preferences
+        <button class="dropdown-item" *ngIf="canOpenOrganizationProfile()" (click)="openOrganizationProfile()">
+          <i class="pi pi-building"></i> Organization Profile
         </button>
         <hr>
         <button class="dropdown-item text-danger" (click)="logout()">
-          <i class="pi pi-power-off"></i> Sign Out
+          <i class="pi pi-power-off"></i> Logout
         </button>
       </p-overlayPanel>
     </div>

@@ -1,0 +1,97 @@
+<p-toast position="top-right"></p-toast>
+
+<section class="tc-tenant-page tc-plans">
+  <header class="tc-tenant-page__header">
+    <div>
+      <p class="tc-tenant-page__eyebrow">Subscription plans</p>
+      <h1 class="tc-tenant-page__title">Compare every entitlement</h1>
+      <p class="tc-tenant-page__subtitle">Pick the tier that fits each tenant — every row below is enforced at provisioning. Use “Provision tenant” to onboard with the selected plan preselected.</p>
+    </div>
+    <div class="tc-tenant-page__actions">
+      <a class="tc-btn tc-btn--ghost tc-btn--sm" routerLink="/app/tenant-management/organizations"><i class="pi pi-arrow-left"></i><span>Back to tenants</span></a>
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="comingSoonNewPlan()"><i class="pi pi-plus"></i><span>New plan</span></button>
+      <a class="tc-btn tc-btn--primary tc-btn--sm" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-bolt"></i><span>Provision tenant</span></a>
+    </div>
+  </header>
+
+  <div class="tc-plans__legend">
+    <strong style="color: var(--tc-heading); font-size: 12px;">Legend:</strong>
+    <span><span class="tc-plans__check tc-plans__check--on"><i class="pi pi-check"></i></span> Included</span>
+    <span><span class="tc-plans__check tc-plans__check--off"><i class="pi pi-minus"></i></span> Not in this tier</span>
+    <span><strong style="color: var(--tc-heading);">Bold</strong> = quota / numeric limit</span>
+    <span style="margin-left: auto;">
+      <button type="button" class="tc-link" (click)="expandAll()" style="font-size: 12px;">Expand all</button>
+      &nbsp;·&nbsp;
+      <button type="button" class="tc-link" (click)="collapseAll()" style="font-size: 12px;">Collapse all</button>
+    </span>
+  </div>
+
+  <div class="tc-plans__matrix" role="table" aria-label="Subscription feature matrix">
+    <header class="tc-plans__tier-row" role="row">
+      <div class="tc-plans__feature-cell" role="columnheader">
+        <p class="tc-plans__feature-eyebrow">Feature</p>
+        <h2 class="tc-plans__feature-title">What your tenants get</h2>
+      </div>
+      <div *ngFor="let p of plans"
+           class="tc-plans__tier-cell"
+           [class.is-highlight]="p.highlight"
+           [attr.data-tier]="p.id"
+           role="columnheader">
+        <span class="tc-plans__tier-badge" *ngIf="p.badge">{{ p.badge }}</span>
+        <h3>{{ p.name }}</h3>
+        <p class="tc-plans__tier-tagline">{{ p.tagline }}</p>
+        <p class="tc-plans__tier-price">{{ p.priceLabel }}</p>
+        <p class="tc-plans__tier-hint">{{ p.priceHint }}</p>
+        <a class="tc-btn tc-btn--sm"
+           [class.tc-btn--primary]="p.highlight"
+           [class.tc-btn--ghost]="!p.highlight"
+           routerLink="/app/tenant-management/organizations/create"
+           [queryParams]="{plan: p.id}">{{ p.ctaLabel }}</a>
+      </div>
+    </header>
+
+    <ng-container *ngFor="let group of matrix">
+      <button type="button"
+              class="tc-plans__group-toggle"
+              [class.is-open]="openGroups.has(group.title)"
+              (click)="toggleGroup(group.title)"
+              [attr.aria-expanded]="openGroups.has(group.title)">
+        <div class="tc-plans__group-head">
+          <i class="pi {{ group.icon }} tc-plans__group-icon"></i>
+          <div>
+            <h4>{{ group.title }}</h4>
+            <p>{{ group.caption }}</p>
+          </div>
+          <i class="pi pi-chevron-down tc-plans__group-chevron"></i>
+        </div>
+      </button>
+
+      <ng-container *ngIf="openGroups.has(group.title)">
+        <div *ngFor="let row of group.rows" class="tc-plans__row" role="row">
+          <div class="tc-plans__feature-cell" role="rowheader">
+            <p class="tc-plans__row-label">{{ row.label }}</p>
+            <p *ngIf="row.description" class="tc-plans__row-desc">{{ row.description }}</p>
+          </div>
+          <div *ngFor="let tier of tierIds"
+               class="tc-plans__value-cell"
+               [class.is-highlight]="plans[1].id === tier"
+               role="cell"
+               [attr.aria-label]="row.label + ' for ' + tier">
+            <ng-container *ngIf="cellIsBoolean(row.values[tier].value); else asText">
+              <span *ngIf="row.values[tier].value === true" class="tc-plans__check tc-plans__check--on" aria-label="Included"><i class="pi pi-check"></i></span>
+              <span *ngIf="row.values[tier].value === false" class="tc-plans__check tc-plans__check--off" aria-label="Not included"><i class="pi pi-minus"></i></span>
+            </ng-container>
+            <ng-template #asText>
+              <span class="tc-plans__value">{{ row.values[tier].value }}</span>
+            </ng-template>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <footer class="tc-plans__footer">
+    <p>Need something off-menu? Custom plans support negotiated quotas, private clouds and bespoke SLAs.</p>
+    <a class="tc-btn tc-btn--ghost" routerLink="/app/tenant-management/organizations/create" [queryParams]="{plan: 'custom'}"><i class="pi pi-sliders-h"></i><span>Design a custom plan</span></a>
+  </footer>
+</section>

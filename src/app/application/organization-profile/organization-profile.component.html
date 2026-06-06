@@ -1,0 +1,107 @@
+<section class="tc-tenant-page tc-org-profile" *ngIf="!loading && organization; else loadingOrError">
+  <header class="tc-workspace__header">
+    <div class="tc-workspace__identity">
+      <span class="tc-workspace__avatar" data-tier="professional">{{ initials }}</span>
+      <div>
+        <p class="tc-workspace__eyebrow">My organization</p>
+        <h1>{{ organization.brandName || organization.orgName }}</h1>
+        <p class="tc-workspace__meta">
+          <span>{{ organization.orgCode }}</span>
+          <span class="tc-dot"></span>
+          <span>{{ organization.subscriptionType || 'Professional' }} plan</span>
+        </p>
+      </div>
+    </div>
+    <div class="tc-workspace__chips">
+      <span class="tc-pill tc-pill--{{ statusClass }}"><i class="pi pi-circle-fill"></i>{{ statusLabel }}</span>
+      <span class="tc-pill tc-pill--soft"><i class="pi pi-calendar"></i>Renewal managed by platform</span>
+    </div>
+  </header>
+
+  <div *ngIf="successMessage" class="tc-banner tc-banner--success"><i class="pi pi-check-circle"></i><span>{{ successMessage }}</span></div>
+
+  <div class="tc-org-profile__layout">
+    <article class="tc-panel tc-org-profile__readonly">
+      <header class="tc-panel__header">
+        <h2>Organization at a glance</h2>
+        <p>These fields are governed by the ThinkersCave platform team. Contact support to request changes.</p>
+      </header>
+      <dl class="tc-defs">
+        <div><dt>Organization name</dt><dd>{{ organization.orgName }}</dd></div>
+        <div><dt>Subscription</dt><dd>{{ organization.subscriptionType || 'Professional' }}</dd></div>
+        <div><dt>Owner</dt><dd>{{ organization.ownerName || '—' }} · {{ organization.ownerEmail || '—' }}</dd></div>
+        <div><dt>Domain</dt><dd>{{ organization.tenantId ? organization.tenantId + '.thinkerscave.app' : '—' }}</dd></div>
+        <div><dt>Active users</dt><dd>{{ organization.activeUsers | number }}</dd></div>
+        <div><dt>Branches</dt><dd>{{ organization.branches | number }}</dd></div>
+        <div><dt>Storage</dt><dd>{{ storageDisplay }}</dd></div>
+        <div><dt>Renewal</dt><dd>Managed centrally</dd></div>
+      </dl>
+      <div class="tc-org-profile__storage" *ngIf="organization.storageLimitMb">
+        <div class="tc-progress" [class.is-warn]="storagePercent >= 80" [class.is-danger]="storagePercent >= 95"><div class="tc-progress__bar" [style.width.%]="storagePercent"></div></div>
+        <p>{{ storagePercent }}% of allocated storage in use.</p>
+      </div>
+      <h3 class="tc-panel__title">Allowed features</h3>
+      <ul class="tc-feature-tags" *ngIf="allowedFeatures.length; else noFeatures">
+        <li *ngFor="let f of allowedFeatures"><i class="pi {{ f.icon || 'pi-th-large' }}"></i>{{ f.name }}</li>
+      </ul>
+      <ng-template #noFeatures><p class="tc-empty-line">No modules have been enabled yet.</p></ng-template>
+    </article>
+
+    <article class="tc-panel tc-org-profile__editable">
+      <header class="tc-panel__header">
+        <h2>Branding & contact</h2>
+        <p>What your staff and students see across login screens, emails and reports.</p>
+      </header>
+
+      <section class="tc-org-profile__section">
+        <h3 class="tc-panel__title">Logo</h3>
+        <label class="tc-uploader">
+          <input type="file" accept="image/*" (change)="onLogo($event)" />
+          <i class="pi pi-upload"></i>
+          <div>
+            <p>{{ branding.logoName || 'Drop a PNG or SVG here' }}</p>
+            <span>Recommended 512×512 transparent background</span>
+          </div>
+        </label>
+      </section>
+
+      <section class="tc-org-profile__section">
+        <h3 class="tc-panel__title">Theme colours</h3>
+        <div class="tc-color-grid">
+          <label><span>Primary</span><input type="color" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()" /><code>{{ branding.primaryColor }}</code></label>
+          <label><span>Accent</span><input type="color" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()" /><code>{{ branding.accentColor }}</code></label>
+        </div>
+      </section>
+
+      <section class="tc-org-profile__section">
+        <h3 class="tc-panel__title">Contact information</h3>
+        <div class="tc-form-grid">
+          <label class="tc-field"><span>Public email</span><input type="email" [(ngModel)]="branding.contactEmail" (ngModelChange)="markDirty()" placeholder="hello@institution.edu" /></label>
+          <label class="tc-field"><span>Phone</span><input type="tel" [(ngModel)]="branding.contactPhone" (ngModelChange)="markDirty()" placeholder="+91" /></label>
+          <label class="tc-field tc-field--wide"><span>Address</span><input type="text" [(ngModel)]="branding.contactAddress" (ngModelChange)="markDirty()" placeholder="Street, city" /></label>
+        </div>
+      </section>
+
+      <section class="tc-org-profile__section">
+        <h3 class="tc-panel__title">Organization details</h3>
+        <label class="tc-field"><span>About</span><textarea rows="4" [(ngModel)]="branding.description" (ngModelChange)="markDirty()" placeholder="A short description shown on parent and staff portals."></textarea></label>
+      </section>
+    </article>
+  </div>
+
+  <div class="tc-org-profile__savebar" [class.is-active]="dirty">
+    <p><i class="pi pi-info-circle"></i>You have unsaved branding changes.</p>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="!dirty"><i class="pi pi-save"></i><span>Save changes</span></button>
+  </div>
+</section>
+
+<ng-template #loadingOrError>
+  <section class="tc-tenant-page">
+    <div *ngIf="loading" class="tc-skeleton-block" aria-hidden="true"></div>
+    <div *ngIf="!loading && errorMessage" class="tc-empty">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Profile unavailable</h3>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </section>
+</ng-template>

@@ -1,0 +1,144 @@
+<section class="tc-tenant-page">
+  <header class="tc-tenant-page__header">
+    <div>
+      <p class="tc-tenant-page__eyebrow">Tenant management</p>
+      <h1 class="tc-tenant-page__title">Organizations</h1>
+      <p class="tc-tenant-page__subtitle">Every tenant onboarded on ThinkersCave at a glance. Click any card to open its workspace.</p>
+    </div>
+    <div class="tc-tenant-page__actions">
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="load()" [disabled]="loading">
+        <i class="pi pi-refresh"></i><span>Refresh</span>
+      </button>
+      <a class="tc-btn tc-btn--primary tc-btn--sm" routerLink="/app/tenant-management/organizations/create">
+        <i class="pi pi-plus"></i><span>Create organization</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="tc-insight-strip">
+    <div class="tc-insight"><span class="tc-insight__label">Active tenants</span><span class="tc-insight__value">{{ kpis.active }}</span><span class="tc-insight__hint">Live production tenants</span></div>
+    <div class="tc-insight"><span class="tc-insight__label">Trial tenants</span><span class="tc-insight__value">{{ kpis.trial }}</span><span class="tc-insight__hint">Evaluating ThinkersCave</span></div>
+    <div class="tc-insight"><span class="tc-insight__label">Expiring soon</span><span class="tc-insight__value">{{ kpis.expiringSoon }}</span><span class="tc-insight__hint">Renewal coverage tracked centrally</span></div>
+    <div class="tc-insight tc-insight--warn"><span class="tc-insight__label">Suspended</span><span class="tc-insight__value">{{ kpis.suspended }}</span><span class="tc-insight__hint">Locked or paused tenants</span></div>
+  </div>
+
+  <div class="tc-toolbar">
+    <div class="tc-search">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="search" placeholder="Search by tenant name, code or owner" aria-label="Search organizations" />
+    </div>
+    <div class="tc-chip-row" role="tablist">
+      <button *ngFor="let chip of statusChips"
+              type="button"
+              class="tc-chip"
+              [class.is-active]="statusFilter === chip.id"
+              (click)="statusFilter = chip.id">
+        {{ chip.label }}
+      </button>
+    </div>
+    <div class="tc-select">
+      <label>Plan</label>
+      <select [(ngModel)]="planFilter" aria-label="Filter by plan">
+        <option value="all">All plans</option>
+        <option *ngFor="let p of planOptions" [value]="p">{{ p }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="tc-banner tc-banner--warn" role="status">
+    <i class="pi pi-exclamation-triangle"></i><span>{{ errorMessage }}</span>
+    <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="load()">Retry</button>
+  </div>
+
+  <div *ngIf="loading" class="tc-skeleton-grid" aria-hidden="true">
+    <div class="tc-skeleton-card" *ngFor="let _ of [1,2,3,4,5,6]"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="filtered.length === 0" class="tc-empty">
+      <i class="pi pi-building"></i>
+      <h3>No tenants match your filters</h3>
+      <p *ngIf="organizations.length; else noneAtAll">Try clearing search or status filters to see the full directory.</p>
+      <ng-template #noneAtAll><p>You haven't onboarded any tenants yet. Create the first organization to get started.</p></ng-template>
+      <div class="tc-empty__actions">
+        <button *ngIf="organizations.length" type="button" class="tc-btn tc-btn--ghost" (click)="resetFilters()">Reset filters</button>
+        <a class="tc-btn tc-btn--primary" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-plus"></i><span>Create organization</span></a>
+      </div>
+    </div>
+
+    <div *ngIf="filtered.length" class="tc-tenant-grid">
+      <article *ngFor="let org of filtered; trackBy: trackById"
+               class="tc-tenant-card"
+               [class.is-suspended]="org.status === 'suspended'"
+               tabindex="0"
+               role="button"
+               [attr.aria-label]="'Open ' + org.name + ' workspace'"
+               (click)="openWorkspace(org, $event)"
+               (keydown.enter)="openWorkspace(org)">
+        <header class="tc-tenant-card__head">
+          <div class="tc-tenant-card__identity">
+            <span class="tc-tenant-card__avatar" [attr.data-tier]="org.planTier">{{ org.initials }}</span>
+            <div>
+              <h3 class="tc-tenant-card__title">{{ org.name }}</h3>
+              <p class="tc-tenant-card__meta">{{ org.code }} · {{ org.type }} · {{ org.location }}</p>
+            </div>
+          </div>
+          <div class="tc-tenant-card__menu-wrap">
+            <button type="button" class="tc-tenant-card__menu-btn" (click)="toggleMenu(org.id, $event)" aria-label="Quick actions">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+            <div class="tc-tenant-card__menu" *ngIf="openMenuFor === org.id" (click)="$event.stopPropagation()">
+              <button type="button" (click)="runQuickAction(org, org.status === 'suspended' ? 'activate' : 'suspend', $event)">
+                <i class="pi" [class.pi-check-circle]="org.status === 'suspended'" [class.pi-ban]="org.status !== 'suspended'"></i>
+                {{ org.status === 'suspended' ? 'Activate tenant' : 'Suspend tenant' }}
+              </button>
+              <button type="button" (click)="runQuickAction(org, 'renew', $event)"><i class="pi pi-refresh"></i> Renew subscription</button>
+              <button type="button" (click)="runQuickAction(org, 'upgrade', $event)"><i class="pi pi-arrow-up-right"></i> Upgrade plan</button>
+              <button type="button" (click)="runQuickAction(org, 'view-audit', $event)"><i class="pi pi-history"></i> View audit trail</button>
+              <button type="button" (click)="runQuickAction(org, 'impersonate', $event)"><i class="pi pi-user-edit"></i> Impersonate admin</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="tc-tenant-card__pills">
+          <span class="tc-pill tc-pill--{{ org.status }}"><i class="pi pi-circle-fill"></i>{{ org.statusLabel }}</span>
+          <span class="tc-pill tc-pill--plan" [attr.data-tier]="org.planTier">{{ org.plan }}</span>
+          <span class="tc-pill tc-pill--health tc-pill--{{ org.health }}" *ngIf="org.health !== 'unknown'">
+            <i class="pi pi-heart"></i>{{ org.healthScore }} · {{ org.healthLabel }}
+          </span>
+        </div>
+
+        <dl class="tc-tenant-card__stats">
+          <div><dt>Users</dt><dd>{{ org.users | number }}</dd></div>
+          <div><dt>Branches</dt><dd>{{ org.branches | number }}</dd></div>
+          <div><dt>Students</dt><dd>{{ org.students | number }}</dd></div>
+          <div><dt>API today</dt><dd>{{ org.apiUsageToday | number }}</dd></div>
+        </dl>
+
+        <div class="tc-tenant-card__storage" *ngIf="org.storageLimitMb > 0">
+          <div class="tc-tenant-card__storage-head">
+            <span>Storage</span><span>{{ org.storageLabel }}</span>
+          </div>
+          <div class="tc-progress" [class.is-warn]="org.storagePercent >= 80" [class.is-danger]="org.storagePercent >= 95">
+            <div class="tc-progress__bar" [style.width.%]="org.storagePercent"></div>
+          </div>
+        </div>
+
+        <footer class="tc-tenant-card__foot">
+          <div>
+            <span class="tc-tenant-card__label">Owner</span>
+            <span class="tc-tenant-card__value">{{ org.ownerName }}</span>
+          </div>
+          <div>
+            <span class="tc-tenant-card__label">Renews</span>
+            <span class="tc-tenant-card__value">{{ org.expiryDate }}</span>
+          </div>
+          <div>
+            <span class="tc-tenant-card__label">Last activity</span>
+            <span class="tc-tenant-card__value">{{ org.lastActivity }}</span>
+          </div>
+        </footer>
+      </article>
+    </div>
+  </ng-container>
+</section>

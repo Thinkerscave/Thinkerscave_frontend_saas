@@ -1,0 +1,159 @@
+<section class="tc-tenant-page tc-onboard" *ngIf="!successPayload; else success">
+  <div class="tc-onboard__crumb">
+    <button type="button" class="tc-link" (click)="cancel()"><i class="pi pi-arrow-left"></i>Cancel onboarding</button>
+  </div>
+
+  <header class="tc-onboard__hero">
+    <div>
+      <p class="tc-tenant-page__eyebrow">New tenant</p>
+      <h1>Provision an organization</h1>
+      <p class="tc-onboard__lead">Fill in what only you know — ThinkersCave generates tenant identifiers, credentials and module access automatically.</p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="tc-banner tc-banner--danger"><i class="pi pi-exclamation-triangle"></i><span>{{ errorMessage }}</span></div>
+
+  <div class="tc-onboard__layout">
+    <form class="tc-onboard__form" (ngSubmit)="submit()" #f="ngForm" novalidate>
+      <section class="tc-onboard__block">
+        <div class="tc-onboard__block-head">
+          <span class="tc-onboard__step">01</span>
+          <div><h2>Institution</h2><p>Where ThinkersCave will run. The subdomain and tenant code are derived from the name.</p></div>
+        </div>
+        <div class="tc-form-grid">
+          <label class="tc-field">
+            <span>Institution type</span>
+            <select [(ngModel)]="form.organizationType" name="organizationType" required>
+              <option *ngFor="let t of institutionTypes" [value]="t">{{ t }}</option>
+            </select>
+          </label>
+          <label class="tc-field tc-field--wide">
+            <span>Institution name</span>
+            <input type="text" [(ngModel)]="form.organizationName" name="organizationName" required placeholder="e.g. Northstar Institute of Technology" />
+          </label>
+          <label class="tc-field">
+            <span>Country</span>
+            <select [(ngModel)]="form.country" name="country" required>
+              <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+            </select>
+          </label>
+          <label class="tc-field"><span>State</span><input type="text" [(ngModel)]="form.state" name="state" placeholder="Optional" /></label>
+          <label class="tc-field"><span>City</span><input type="text" [(ngModel)]="form.city" name="city" required placeholder="Bengaluru" /></label>
+          <label class="tc-field tc-field--wide"><span>Website</span><input type="url" [(ngModel)]="form.website" name="website" placeholder="https://" /></label>
+        </div>
+      </section>
+
+      <section class="tc-onboard__block">
+        <div class="tc-onboard__block-head">
+          <span class="tc-onboard__step">02</span>
+          <div><h2>Organization owner</h2><p>This is the first administrator. We auto-generate the username and a strong temporary password.</p></div>
+        </div>
+        <div class="tc-form-grid">
+          <label class="tc-field"><span>Full name</span><input type="text" [(ngModel)]="form.ownerName" name="ownerName" required placeholder="e.g. Aarav Mehta" /></label>
+          <label class="tc-field"><span>Work email</span><input type="email" [(ngModel)]="form.ownerEmail" name="ownerEmail" required placeholder="admin@institution.edu" /></label>
+          <label class="tc-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.ownerMobile" name="ownerMobile" placeholder="+91" /></label>
+        </div>
+      </section>
+
+      <section class="tc-onboard__block">
+        <div class="tc-onboard__block-head">
+          <span class="tc-onboard__step">03</span>
+          <div><h2>Choose a plan</h2><p>Plans bundle modules, quotas and support. You can change this any time from the workspace.</p></div>
+        </div>
+        <div class="tc-plan-strip">
+          <button *ngFor="let p of plans"
+                  type="button"
+                  class="tc-plan-card"
+                  [class.is-selected]="form.planId === p.id"
+                  [class.is-highlight]="p.highlight"
+                  (click)="selectPlan(p.id)">
+            <header>
+              <span class="tc-plan-card__name">{{ p.name }}</span>
+              <span class="tc-plan-card__badge" *ngIf="p.badge">{{ p.badge }}</span>
+            </header>
+            <p class="tc-plan-card__tagline">{{ p.tagline }}</p>
+            <p class="tc-plan-card__price">{{ p.priceLabel }}</p>
+            <p class="tc-plan-card__audience">{{ p.audience }}</p>
+            <span class="tc-plan-card__check" aria-hidden="true"><i class="pi pi-check"></i></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="tc-onboard__block" *ngIf="form.planId === 'custom'">
+        <div class="tc-onboard__block-head">
+          <span class="tc-onboard__step">04</span>
+          <div><h2>Pick modules</h2><p>Custom plans only activate what you select. Modules can be toggled later from the tenant workspace.</p></div>
+        </div>
+        <div class="tc-feature-grid" *ngIf="featureCatalog.length; else noFeatures">
+          <label *ngFor="let f of featureCatalog" class="tc-feature-chip" [class.is-on]="form.featureKeys.includes(f.key)">
+            <input type="checkbox" [checked]="form.featureKeys.includes(f.key)" (change)="toggleFeature(f.key)" />
+            <i class="pi" [class.pi-check-square]="form.featureKeys.includes(f.key)" [class.pi-stop]="!form.featureKeys.includes(f.key)"></i>
+            <span>{{ f.label }}</span>
+          </label>
+        </div>
+        <ng-template #noFeatures><p class="tc-empty-line">Feature catalog will appear once menu sections are configured.</p></ng-template>
+      </section>
+
+      <div class="tc-onboard__cta">
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="cancel()">Cancel</button>
+        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="!canSubmit || submitting">
+          <i class="pi" [class.pi-spin]="submitting" [class.pi-spinner]="submitting" [class.pi-rocket]="!submitting"></i>
+          <span>{{ submitting ? 'Provisioning…' : 'Provision tenant' }}</span>
+        </button>
+      </div>
+    </form>
+
+    <aside class="tc-onboard__summary" aria-label="Live summary">
+      <header>
+        <p class="tc-onboard__summary-eyebrow">Live summary</p>
+        <h2>{{ form.organizationName || 'Your tenant' }}</h2>
+        <p class="tc-onboard__summary-sub">{{ form.organizationType }} · {{ form.city || '—' }}, {{ form.country }}</p>
+      </header>
+      <dl class="tc-defs tc-defs--compact">
+        <div><dt>Tenant code</dt><dd>{{ derived().tenantCode }}</dd></div>
+        <div><dt>Subdomain</dt><dd>{{ derived().subdomain }}</dd></div>
+        <div><dt>Identifier</dt><dd>{{ derived().tenantIdentifier }}</dd></div>
+        <div><dt>Slug</dt><dd>{{ derived().slug }}</dd></div>
+      </dl>
+      <hr />
+      <h3 class="tc-onboard__summary-title">Owner credentials</h3>
+      <dl class="tc-defs tc-defs--compact">
+        <div><dt>Name</dt><dd>{{ form.ownerName || '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ form.ownerEmail || '—' }}</dd></div>
+        <div><dt>Username</dt><dd>{{ derived().username }}</dd></div>
+        <div>
+          <dt>Temp password</dt>
+          <dd class="tc-onboard__pwd">
+            <code>{{ derived().tempPassword }}</code>
+            <button type="button" class="tc-link" (click)="regeneratePassword()" aria-label="Regenerate password"><i class="pi pi-refresh"></i></button>
+          </dd>
+        </div>
+        <div><dt>Default role</dt><dd>{{ derived().defaultRole }}</dd></div>
+      </dl>
+      <hr />
+      <h3 class="tc-onboard__summary-title">Plan</h3>
+      <p class="tc-onboard__summary-plan">{{ planLabel(form.planId) }}</p>
+      <p class="tc-onboard__summary-foot" *ngIf="form.planId === 'custom'">{{ form.featureKeys.length }} module{{ form.featureKeys.length === 1 ? '' : 's' }} selected</p>
+    </aside>
+  </div>
+</section>
+
+<ng-template #success>
+  <section class="tc-tenant-page tc-onboard-success">
+    <div class="tc-onboard-success__card">
+      <i class="pi pi-check-circle"></i>
+      <h1>Tenant provisioned</h1>
+      <p>{{ successPayload!.form.organizationName }} is live. Share these credentials with the new owner over a secure channel.</p>
+      <dl class="tc-defs">
+        <div><dt>Tenant subdomain</dt><dd>{{ successPayload!.credentials.subdomain }}</dd></div>
+        <div><dt>Owner username</dt><dd>{{ successPayload!.credentials.username }}</dd></div>
+        <div><dt>Temporary password</dt><dd><code>{{ successPayload!.credentials.tempPassword }}</code></dd></div>
+        <div><dt>Plan</dt><dd>{{ planLabel(successPayload!.form.planId) }}</dd></div>
+      </dl>
+      <div class="tc-onboard-success__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="goToWorkspace()"><i class="pi pi-arrow-right"></i><span>Go to organizations</span></button>
+        <a class="tc-btn tc-btn--ghost" routerLink="/app/tenant-management/organizations/create" (click)="successPayload = null"><i class="pi pi-plus"></i><span>Provision another</span></a>
+      </div>
+    </div>
+  </section>
+</ng-template>

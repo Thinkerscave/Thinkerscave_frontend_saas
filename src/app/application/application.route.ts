@@ -9,6 +9,9 @@ import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
 import { STUDENT_MANAGEMENT_ROUTES } from './student-management/student-management.route';
 import { roleGuard } from '../core/guard/role.guard';
 
+const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
+const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
+
 export const APPLICATION_ROUTES: Routes = [
   {
     path: '',
@@ -16,12 +19,48 @@ export const APPLICATION_ROUTES: Routes = [
       import('./dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
   {
+    path: 'tenant-management',
+    canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'organizations' },
+      { path: 'organizations', loadComponent: () => import('./tenant-management/pages/organizations-list/organizations-list.component').then(m => m.OrganizationsListComponent) },
+      { path: 'organizations/create', loadComponent: () => import('./tenant-management/pages/create-organization/create-organization.component').then(m => m.CreateOrganizationComponent) },
+      { path: 'organizations/:orgId', loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
+      { path: 'subscription-plans', loadComponent: () => import('./tenant-management/pages/subscription-plans/subscription-plans.component').then(m => m.SubscriptionPlansComponent) },
+      { path: 'subscription-plans/create', pathMatch: 'full', redirectTo: 'subscription-plans' },
+      { path: 'subscription-plans/:planId', redirectTo: 'subscription-plans' },
+      { path: 'audit-center', loadComponent: () => import('./tenant-management/pages/audit-center/audit-center.component').then(m => m.AuditCenterComponent) }
+    ]
+  },
+  {
+    path: 'platform',
+    canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'organizations/:orgId', redirectTo: '/app/tenant-management/organizations/:orgId' },
+      { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
+      { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' }
+    ]
+  },
+  {
+    path: 'organization-profile',
+    canActivate: [roleGuard(ORGANIZATION_PROFILE_ROLES)],
+    loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent)
+  },
+  {
+    path: 'organization',
+    redirectTo: 'organization-profile'
+  },
+  {
     path: 'admin',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', data: { adminPage: 'dashboard' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
-      { path: 'organizations', data: { adminPage: 'organizations' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
+      { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'access', data: { adminPage: 'access' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
       { path: 'monitoring', data: { adminPage: 'monitoring' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) },
       { path: 'audit', data: { adminPage: 'audit' }, loadComponent: () => import('./administration/components/admin-workspace/admin-workspace.component').then(m => m.AdminWorkspaceComponent) }
@@ -65,7 +104,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'organization-registration',
     pathMatch: 'full',
-    redirectTo: 'admin/organizations'
+    redirectTo: 'tenant-management/organizations/create'
   },
   {
     path: 'academy-demo',
