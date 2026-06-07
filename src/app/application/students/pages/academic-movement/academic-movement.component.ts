@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import { PromotionBatch, PromotionRecord } from '../../models/students-workspace.model';
+import { PromotionBatch, PromotionDecision, PromotionRecord, StudentDirectoryCard } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 
 type WizardStep = 'SELECT' | 'REVIEW' | 'CONFIRM' | 'DONE';
@@ -26,6 +26,7 @@ export class AcademicMovementComponent implements OnInit {
   successMessage = '';
 
   batches: PromotionBatch[] = [];
+  students: StudentDirectoryCard[] = [];
 
   step: WizardStep = 'SELECT';
   readonly steps: { key: WizardStep; label: string; hint: string }[] = [
@@ -35,19 +36,43 @@ export class AcademicMovementComponent implements OnInit {
     { key: 'DONE',    label: '4. Complete',          hint: 'Promotion executed' }
   ];
 
-  newBatch: PromotionBatch = {};
+  newBatch: PromotionBatch = {
+    batchCode: 'PROMO-2025-26',
+    fromAcademicYearId: 1,
+    toAcademicYearId: 3,
+    fromClassId: 1,
+    toClassId: 2
+  };
   currentBatch?: PromotionBatch;
   records: PromotionRecord[] = [];
 
-  readonly decisions: { value: 'PROMOTE' | 'REPEAT' | 'HOLD' | 'TRANSFER_OUT'; label: string }[] = [
-    { value: 'PROMOTE', label: 'Promote' },
-    { value: 'REPEAT', label: 'Repeat' },
-    { value: 'HOLD', label: 'Hold' },
-    { value: 'TRANSFER_OUT', label: 'Transfer Out' }
+  readonly academicYears = [
+    { id: 1, label: 'Academic Year 2025-26' },
+    { id: 3, label: 'Academic Year 2026-27' },
+    { id: 2, label: 'Academic Year 2024-25' }
+  ];
+
+  readonly classes = [
+    { id: 1, label: 'Class 8' },
+    { id: 2, label: 'Class 9' },
+    { id: 3, label: 'Class 10' },
+    { id: 4, label: 'Class 11 - Science' },
+    { id: 5, label: 'Class 11 - Commerce' },
+    { id: 6, label: 'Class 12 - Science' },
+    { id: 7, label: 'Class 12 - Commerce' }
+  ];
+
+  readonly decisions: { value: PromotionDecision; label: string }[] = [
+    { value: 'PROMOTED', label: 'Promote' },
+    { value: 'RETAINED', label: 'Retain' },
+    { value: 'WITHHELD', label: 'Hold' },
+    { value: 'TRANSFERRED_OUT', label: 'Transfer Out' },
+    { value: 'GRADUATED', label: 'Graduate' }
   ];
 
   ngOnInit(): void {
     this.loadBatches();
+    this.loadStudents();
   }
 
   loadBatches(): void {
@@ -57,6 +82,13 @@ export class AcademicMovementComponent implements OnInit {
       .subscribe({
         next: b => { this.batches = b ?? []; },
         error: () => { this.errorMessage = 'Could not load promotion batches.'; }
+      });
+  }
+
+  loadStudents(): void {
+    this.api.search({})
+      .subscribe({
+        next: list => { this.students = list ?? []; this.cdr.markForCheck(); }
       });
   }
 
@@ -128,6 +160,18 @@ export class AcademicMovementComponent implements OnInit {
   }
 
   totalCount(): number { return this.records.length; }
-  eligibleCount(): number { return this.records.filter(r => r.decision !== 'HOLD').length; }
-  holdCount(): number { return this.records.filter(r => r.decision === 'HOLD').length; }
+  eligibleCount(): number { return this.records.filter(r => r.decision !== 'WITHHELD').length; }
+  holdCount(): number { return this.records.filter(r => r.decision === 'WITHHELD').length; }
+
+  classLabel(id?: number | null): string {
+    return this.classes.find(c => c.id === id)?.label ?? (id ? `Class #${id}` : '-');
+  }
+
+  yearLabel(id?: number | null): string {
+    return this.academicYears.find(y => y.id === id)?.label ?? (id ? `Year #${id}` : '-');
+  }
+
+  studentName(id?: number | null): string {
+    return this.students.find(s => s.studentId === id)?.fullName ?? (id ? `Student #${id}` : '-');
+  }
 }

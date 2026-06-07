@@ -36,7 +36,7 @@
           <tbody>
             <tr *ngFor="let r of transfers" (click)="select(r)" style="cursor:pointer;">
               <td>{{ r.requestNumber || '#' + r.id }}</td>
-              <td>{{ r.studentId }}</td>
+              <td>{{ studentName(r.studentId) }}<br/><small style="color:var(--tc-text-muted)">#{{ r.studentId }}</small></td>
               <td>{{ r.reason || '—' }}</td>
               <td>{{ r.destinationSchool || '—' }}</td>
               <td><span class="adm-badge" [attr.data-tone]="statusTone(r.status)">{{ r.status }}</span></td>
@@ -49,7 +49,7 @@
                   <button class="adm-icon-btn" *ngIf="r.status === 'UNDER_REVIEW'" title="Approve" (click)="transition(r, 'APPROVED'); $event.stopPropagation()">
                     <i class="pi pi-check"></i>
                   </button>
-                  <button class="adm-icon-btn" *ngIf="r.status === 'APPROVED'" title="Issue TC" (click)="transition(r, 'TC_ISSUED'); $event.stopPropagation()">
+                  <button class="adm-icon-btn" *ngIf="r.status === 'APPROVED'" title="Issue certificate" (click)="transition(r, 'CERTIFICATE_ISSUED'); $event.stopPropagation()">
                     <i class="pi pi-file"></i>
                   </button>
                 </div>
@@ -71,7 +71,7 @@
         <div class="adm-panel__header"><h2>Request Details</h2></div>
         <dl class="adm-dl">
           <div><dt>Request #</dt><dd>{{ selected.requestNumber || '#' + selected.id }}</dd></div>
-          <div><dt>Student</dt><dd>{{ selected.studentId }}</dd></div>
+          <div><dt>Student</dt><dd>{{ studentName(selected.studentId) }}</dd></div>
           <div><dt>Status</dt><dd><span class="adm-badge" [attr.data-tone]="statusTone(selected.status)">{{ selected.status }}</span></dd></div>
           <div><dt>Reason</dt><dd>{{ selected.reason || '—' }}</dd></div>
           <div><dt>Destination</dt><dd>{{ selected.destinationSchool || '—' }}</dd></div>
@@ -81,10 +81,10 @@
       <div class="adm-panel">
         <div class="adm-panel__header"><h2>Readiness Check</h2></div>
         <div class="stu-checklist">
-          <div *ngFor="let c of readinessChecks" [attr.data-ok]="c.ok">
+          <div *ngFor="let c of readinessChecks()" [attr.data-ok]="c.ok">
             <i [class]="c.ok ? 'pi pi-check' : 'pi pi-exclamation-triangle'"></i>
             <strong>{{ c.label }}</strong>
-            <small>{{ c.ok ? 'OK' : 'Pending' }}</small>
+            <small>{{ c.helper }}</small>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@
           <option>Migration Certificate</option>
           <option>Bonafide Certificate</option>
         </select>
-        <button class="adm-btn adm-btn--primary" style="margin-top:10px; width:100%;">
+        <button class="adm-btn adm-btn--primary" style="margin-top:10px; width:100%;" [disabled]="!selected || selected.status !== 'APPROVED'" (click)="issueCertificate()">
           <i class="pi pi-print"></i> Generate Certificate
         </button>
       </div>
@@ -111,12 +111,15 @@
       </div>
       <div class="adm-wizard__body">
         <div class="adm-field">
-          <label>Student ID</label>
-          <input type="number" [(ngModel)]="newRequest.studentId"/>
+          <label>Student</label>
+          <select [(ngModel)]="newRequest.studentId" (ngModelChange)="onStudentChanged()">
+            <option [ngValue]="undefined">Select student</option>
+            <option *ngFor="let s of students" [ngValue]="s.studentId">{{ s.fullName }} ({{ s.className }} {{ s.sectionName }})</option>
+          </select>
         </div>
         <div class="adm-field">
-          <label>Enrollment ID</label>
-          <input type="number" [(ngModel)]="newRequest.enrollmentId"/>
+          <label>Active Enrollment</label>
+          <input type="text" [value]="newRequest.enrollmentId ? '#' + newRequest.enrollmentId : 'Auto-selected on submit'" disabled/>
         </div>
         <div class="adm-field adm-field--full">
           <label>Reason</label>

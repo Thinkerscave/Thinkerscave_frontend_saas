@@ -10,7 +10,7 @@
       <button type="button" class="adm-btn adm-btn--primary" (click)="addStudent()">
         <i class="pi pi-plus"></i> Add Student
       </button>
-      <button type="button" class="adm-btn"><i class="pi pi-upload"></i> Bulk Import</button>
+      <button type="button" class="adm-btn" (click)="openImport()"><i class="pi pi-upload"></i> Bulk Import</button>
       <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
     </div>
   </header>
@@ -47,12 +47,18 @@
         <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, roll, mobile, email…" (keyup.enter)="runSearch()"/>
       </div>
       <div class="adm-field">
-        <label>Class ID</label>
-        <input type="text" [(ngModel)]="filter.classId" placeholder="e.g. 3"/>
+        <label>Class</label>
+        <select [(ngModel)]="filter.classId" (ngModelChange)="onClassChanged()">
+          <option [ngValue]="null">All Classes</option>
+          <option *ngFor="let c of classOptions" [ngValue]="c.id.toString()">{{ c.label }}</option>
+        </select>
       </div>
       <div class="adm-field">
-        <label>Section ID</label>
-        <input type="text" [(ngModel)]="filter.sectionId" placeholder="e.g. 1"/>
+        <label>Section</label>
+        <select [(ngModel)]="filter.sectionId">
+          <option [ngValue]="null">All Sections</option>
+          <option *ngFor="let s of sectionOptions" [ngValue]="s.id.toString()">{{ s.label }}</option>
+        </select>
       </div>
       <div class="adm-field">
         <label>Status</label>
@@ -163,6 +169,33 @@
       <i class="pi pi-users"></i>
       <h3>No students match</h3>
       <p>Adjust filters or add new students from the admission center.</p>
+    </div>
+  </div>
+
+  <div *ngIf="showImport" class="stu-modal-overlay" (click)="closeImport()">
+    <div class="stu-modal" (click)="$event.stopPropagation()">
+      <div class="stu-modal__head">
+        <h2>Bulk Import Students</h2>
+        <button type="button" class="adm-icon-btn" (click)="closeImport()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="stu-modal__body">
+        <div class="adm-field adm-field--full">
+          <label>CSV Rows</label>
+          <textarea [(ngModel)]="importCsv" rows="9"></textarea>
+        </div>
+        <div *ngIf="importError" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+          <i class="pi pi-exclamation-triangle"></i> {{ importError }}
+        </div>
+        <div *ngIf="importSuccess" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+          <i class="pi pi-check-circle"></i> {{ importSuccess }}
+        </div>
+      </div>
+      <div class="stu-modal__foot">
+        <button type="button" class="adm-btn" (click)="closeImport()">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--primary" [disabled]="importing" (click)="importStudents()">
+          <i class="pi" [class.pi-upload]="!importing" [class.pi-spin]="importing" [class.pi-spinner]="importing"></i> Import
+        </button>
+      </div>
     </div>
   </div>
 </section>

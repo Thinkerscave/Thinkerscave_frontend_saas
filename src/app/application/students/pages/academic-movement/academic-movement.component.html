@@ -38,20 +38,28 @@
           <input type="text" [(ngModel)]="newBatch.batchCode" placeholder="e.g. PROMO-2025-26"/>
         </div>
         <div class="adm-field">
-          <label>From Academic Year ID</label>
-          <input type="number" [(ngModel)]="newBatch.fromAcademicYearId"/>
+          <label>Current Academic Year</label>
+          <select [(ngModel)]="newBatch.fromAcademicYearId">
+            <option *ngFor="let y of academicYears" [ngValue]="y.id">{{ y.label }}</option>
+          </select>
         </div>
         <div class="adm-field">
-          <label>To Academic Year ID</label>
-          <input type="number" [(ngModel)]="newBatch.toAcademicYearId"/>
+          <label>Next Academic Year</label>
+          <select [(ngModel)]="newBatch.toAcademicYearId">
+            <option *ngFor="let y of academicYears" [ngValue]="y.id">{{ y.label }}</option>
+          </select>
         </div>
         <div class="adm-field">
-          <label>From Class ID</label>
-          <input type="number" [(ngModel)]="newBatch.fromClassId"/>
+          <label>Current Class</label>
+          <select [(ngModel)]="newBatch.fromClassId">
+            <option *ngFor="let c of classes" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
         </div>
         <div class="adm-field">
-          <label>To Class ID</label>
-          <input type="number" [(ngModel)]="newBatch.toClassId"/>
+          <label>Next Class</label>
+          <select [(ngModel)]="newBatch.toClassId">
+            <option *ngFor="let c of classes" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
         </div>
         <div class="adm-field adm-field--full">
           <label>Remarks</label>
@@ -80,10 +88,10 @@
         </div>
         <div class="stu-table-wrap">
           <table class="stu-table">
-            <thead><tr><th>Student ID</th><th>From Enrollment</th><th>Decision</th><th>Reason</th><th></th></tr></thead>
+            <thead><tr><th>Student</th><th>From Enrollment</th><th>Decision</th><th>Reason</th><th></th></tr></thead>
             <tbody>
               <tr *ngFor="let r of records">
-                <td>{{ r.studentId }}</td>
+                <td>{{ studentName(r.studentId) }}<br/><small style="color:var(--tc-text-muted)">#{{ r.studentId }}</small></td>
                 <td>{{ r.fromEnrollmentId || '—' }}</td>
                 <td>
                   <select [(ngModel)]="r.decision" style="padding:6px 10px; border-radius:8px; border:1px solid var(--tc-border);">
@@ -147,9 +155,9 @@
         <tbody>
           <tr *ngFor="let b of batches">
             <td>{{ b.batchCode }}</td>
-            <td>{{ b.fromClassId || '—' }}</td>
-            <td>{{ b.toClassId || '—' }}</td>
-            <td><span class="adm-badge" [attr.data-tone]="b.status === 'EXECUTED' ? 'success' : b.status === 'IN_PROGRESS' ? 'info' : 'neutral'">{{ b.status }}</span></td>
+            <td>{{ classLabel(b.fromClassId) }}<br/><small style="color:var(--tc-text-muted)">{{ yearLabel(b.fromAcademicYearId) }}</small></td>
+            <td>{{ classLabel(b.toClassId) }}<br/><small style="color:var(--tc-text-muted)">{{ yearLabel(b.toAcademicYearId) }}</small></td>
+            <td><span class="adm-badge" [attr.data-tone]="b.status === 'COMPLETED' ? 'success' : b.status === 'IN_PROGRESS' ? 'info' : 'neutral'">{{ b.status }}</span></td>
             <td>{{ b.plannedCount || 0 }}</td>
             <td>{{ b.processedCount || 0 }}</td>
             <td>{{ b.executedOn || '—' }}</td>

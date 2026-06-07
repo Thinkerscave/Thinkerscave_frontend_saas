@@ -13,8 +13,8 @@
 <section class="tc-kpi-strip">
     <app-kpi-card label="Total"      [value]="batches().length"      icon="pi pi-list"          tone="info"></app-kpi-card>
     <app-kpi-card label="Draft"      [value]="countBy('DRAFT')"      icon="pi pi-file-edit"     tone="default"></app-kpi-card>
-    <app-kpi-card label="Previewed"  [value]="countBy('PREVIEWED')"  icon="pi pi-eye"           tone="warning"></app-kpi-card>
-    <app-kpi-card label="Executed"   [value]="countBy('EXECUTED')"   icon="pi pi-check-circle"  tone="success"></app-kpi-card>
+    <app-kpi-card label="In Progress" [value]="countBy('IN_PROGRESS')" icon="pi pi-eye"          tone="warning"></app-kpi-card>
+    <app-kpi-card label="Completed"   [value]="countBy('COMPLETED')"   icon="pi pi-check-circle" tone="success"></app-kpi-card>
 </section>
 
 <section class="tc-card">
@@ -38,7 +38,7 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-row>
                     <tr>
-                        <td>{{ row.batchNumber || row.id }}</td>
+                        <td>{{ row.batchCode || row.batchNumber || row.id }}</td>
                         <td>{{ row.fromAcademicYearId }}</td>
                         <td>{{ row.toAcademicYearId }}</td>
                         <td><app-status-badge [status]="row.status"></app-status-badge></td>
@@ -47,13 +47,13 @@
                             <p-button *ngIf="row.status === 'DRAFT'"
                                       icon="pi pi-eye" [text]="true" size="small"
                                       pTooltip="Preview" (onClick)="preview(row)"></p-button>
-                            <p-button *ngIf="row.status === 'PREVIEWED'"
+                            <p-button *ngIf="row.status === 'DRAFT'"
                                       icon="pi pi-check" [text]="true" size="small"
                                       pTooltip="Execute" (onClick)="execute(row)"></p-button>
-                            <p-button *ngIf="row.status === 'EXECUTED'"
+                            <p-button *ngIf="row.status === 'COMPLETED'"
                                       icon="pi pi-undo" [text]="true" size="small"
                                       pTooltip="Roll back" (onClick)="rollback(row)"></p-button>
-                            <p-button *ngIf="row.status === 'DRAFT' || row.status === 'PREVIEWED'"
+                            <p-button *ngIf="row.status === 'DRAFT'"
                                       icon="pi pi-times" [text]="true" size="small"
                                       pTooltip="Cancel" (onClick)="cancel(row)"></p-button>
                         </td>

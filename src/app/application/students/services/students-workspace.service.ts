@@ -10,9 +10,11 @@ import {
   AlumniResponse,
   DocumentVaultEntry,
   DocumentVaultKpi,
+  DocumentVaultRequest,
   PromotionBatch,
   PromotionRecord,
   StudentDirectoryCard,
+  StudentCreateRequest,
   StudentKpi,
   StudentProfile360,
   StudentSearchRequest,
@@ -39,6 +41,7 @@ interface PageEnvelope<T> {
 export class StudentsWorkspaceService {
   private readonly http = inject(HttpClient);
   private readonly workspaceBase = `${environment.baseUrl}/students/workspace`;
+  private readonly studentsBase = `${environment.baseUrl}/students`;
   private readonly promotionsBase = `${environment.baseUrl}/promotions`;
   private readonly transfersBase = `${environment.baseUrl}/transfers`;
 
@@ -54,6 +57,12 @@ export class StudentsWorkspaceService {
     return this.http
       .post<ApiEnvelope<StudentDirectoryCard[]>>(`${this.workspaceBase}/directory/search`, filter)
       .pipe(map(r => r.data ?? []));
+  }
+
+  createStudent(payload: StudentCreateRequest): Observable<void> {
+    return this.http
+      .post<ApiEnvelope<unknown>>(this.studentsBase, payload)
+      .pipe(map(() => void 0));
   }
 
   // ---------- Profile 360 ----------
@@ -108,6 +117,24 @@ export class StudentsWorkspaceService {
     return this.http
       .get<ApiEnvelope<DocumentVaultEntry[]>>(`${this.workspaceBase}/documents`, { params })
       .pipe(map(r => r.data ?? []));
+  }
+
+  addDocument(req: DocumentVaultRequest): Observable<DocumentVaultEntry> {
+    return this.http
+      .post<ApiEnvelope<DocumentVaultEntry>>(`${this.workspaceBase}/documents`, req)
+      .pipe(map(r => r.data));
+  }
+
+  verifyDocument(id: number): Observable<DocumentVaultEntry> {
+    return this.http
+      .post<ApiEnvelope<DocumentVaultEntry>>(`${this.workspaceBase}/documents/${id}/verify`, {})
+      .pipe(map(r => r.data));
+  }
+
+  deleteDocument(id: number): Observable<void> {
+    return this.http
+      .delete<ApiEnvelope<void>>(`${this.workspaceBase}/documents/${id}`)
+      .pipe(map(() => void 0));
   }
 
   // ---------- Promotion (existing API) ----------

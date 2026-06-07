@@ -1,16 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse, PageResponse } from '../../../shared/models/api-response.model';
 
-export type PromotionBatchStatus = 'DRAFT' | 'PREVIEWED' | 'EXECUTED' | 'CANCELLED' | 'ROLLED_BACK';
-export type PromotionDecision   = 'PROMOTED' | 'RETAINED' | 'GRADUATED' | 'TRANSFERRED_OUT';
-export type TransferStatus      = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'CERTIFICATE_ISSUED' | 'CANCELLED';
+export type PromotionBatchStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ROLLED_BACK';
+export type PromotionDecision   = 'PROMOTED' | 'RETAINED' | 'GRADUATED' | 'TRANSFERRED_OUT' | 'WITHHELD';
+export type TransferStatus      = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'CERTIFICATE_ISSUED' | 'CANCELLED';
 
 export interface PromotionBatch {
   id: number;
   batchNumber?: string;
+  batchCode?: string;
   fromAcademicYearId: number;
   toAcademicYearId: number;
   status: PromotionBatchStatus;
@@ -56,7 +57,7 @@ export class PromotionService {
     return this.http.get<ApiResponse<PromotionRecord[]>>(`${this.base}/${batchId}/records`).pipe(map(r => r.data ?? []));
   }
   updateRecord(batchId: number, recordId: number, payload: Partial<PromotionRecord>): Observable<PromotionRecord> {
-    return this.http.put<ApiResponse<PromotionRecord>>(`${this.base}/${batchId}/records/${recordId}`, payload).pipe(map(r => r.data));
+    return this.http.put<ApiResponse<PromotionRecord>>(`${this.base}/records/${recordId}`, payload).pipe(map(r => r.data));
   }
   execute(batchId: number): Observable<PromotionBatch> {
     return this.http.post<ApiResponse<PromotionBatch>>(`${this.base}/${batchId}/execute`, {}).pipe(map(r => r.data));
@@ -82,6 +83,7 @@ export class TransferRequestService {
     return this.http.post<ApiResponse<TransferRequest>>(this.base, payload).pipe(map(r => r.data));
   }
   transition(id: number, status: TransferStatus): Observable<TransferRequest> {
-    return this.http.patch<ApiResponse<TransferRequest>>(`${this.base}/${id}/status`, { status }).pipe(map(r => r.data));
+    const params = new HttpParams().set('target', status);
+    return this.http.patch<ApiResponse<TransferRequest>>(`${this.base}/${id}/status`, {}, { params }).pipe(map(r => r.data));
   }
 }

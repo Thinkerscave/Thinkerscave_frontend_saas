@@ -243,3 +243,60 @@
     small  { font-size: 0.74rem; color: var(--tc-text-muted); }
   }
 }
+
+.stu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.44);
+  backdrop-filter: blur(4px);
+}
+
+.stu-modal {
+  width: min(720px, 100%);
+  max-height: min(86vh, 760px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg, 16px);
+  background: var(--tc-surface-0);
+  box-shadow: var(--tc-shadow-xl, 0 24px 64px rgba(15, 23, 42, 0.22));
+
+  &__head,
+  &__foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--tc-border);
+  }
+
+  &__head {
+    justify-content: space-between;
+
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--tc-text);
+    }
+  }
+
+  &__body {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    overflow: auto;
+  }
+
+  &__foot {
+    justify-content: flex-end;
+    border-top: 1px solid var(--tc-border);
+    border-bottom: 0;
+    background: var(--tc-surface-50);
+  }
+}

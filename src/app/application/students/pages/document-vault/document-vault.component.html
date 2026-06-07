@@ -6,8 +6,8 @@
       <span class="adm-count"><i class="pi pi-file"></i> {{ kpi.totalDocuments }} on file</span>
     </div>
     <div class="adm-hero__actions">
-      <button type="button" class="adm-btn"><i class="pi pi-upload"></i> Bulk Upload</button>
-      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-plus"></i> Upload Document</button>
+      <button type="button" class="adm-btn" (click)="openBulk()"><i class="pi pi-upload"></i> Bulk Upload</button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openUpload()"><i class="pi pi-plus"></i> Upload Document</button>
     </div>
   </header>
 
@@ -31,6 +31,9 @@
 
     <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+      <i class="pi pi-check-circle"></i> {{ successMessage }}
     </div>
 
     <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading documents…</div>
@@ -56,9 +59,10 @@
             <td>{{ d.uploadedOn || '—' }}</td>
             <td>
               <div style="display:flex; gap:4px;">
-                <button class="adm-icon-btn" title="View"><i class="pi pi-eye"></i></button>
-                <button class="adm-icon-btn" title="Download"><i class="pi pi-download"></i></button>
-                <button class="adm-icon-btn" title="Verify"><i class="pi pi-check"></i></button>
+                <button class="adm-icon-btn" title="View" (click)="openFile(d)"><i class="pi pi-eye"></i></button>
+                <button class="adm-icon-btn" title="Download" (click)="openFile(d)"><i class="pi pi-download"></i></button>
+                <button class="adm-icon-btn" title="Verify" *ngIf="d.status !== 'VERIFIED'" (click)="verify(d)"><i class="pi pi-check"></i></button>
+                <button class="adm-icon-btn" title="Delete" (click)="deleteDocument(d)"><i class="pi pi-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -70,6 +74,79 @@
       <i class="pi pi-folder-open"></i>
       <h3>No documents found</h3>
       <p>Upload documents from individual student profiles or via bulk upload.</p>
+    </div>
+  </div>
+
+  <div *ngIf="showUpload" class="stu-modal-overlay" (click)="closeUpload()">
+    <div class="stu-modal" (click)="$event.stopPropagation()">
+      <div class="stu-modal__head">
+        <h2>Upload Document</h2>
+        <button class="adm-icon-btn" (click)="closeUpload()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="stu-modal__body">
+        <div class="adm-filter-bar">
+          <div class="adm-field">
+            <label>Student *</label>
+            <select [(ngModel)]="form.studentId">
+              <option [ngValue]="0">Select student</option>
+              <option *ngFor="let s of students" [ngValue]="s.studentId">{{ s.fullName }} ({{ s.className }} {{ s.sectionName }})</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Category *</label>
+            <select [(ngModel)]="form.category">
+              <option *ngFor="let c of categories.slice(1)" [ngValue]="c">{{ c }}</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Document Type *</label>
+            <input type="text" [(ngModel)]="form.documentType" placeholder="e.g. Birth Certificate"/>
+          </div>
+          <div class="adm-field">
+            <label>File Name *</label>
+            <input type="text" [(ngModel)]="form.fileName" placeholder="e.g. birth_certificate.pdf"/>
+          </div>
+          <div class="adm-field">
+            <label>File URL</label>
+            <input type="text" [(ngModel)]="form.fileUrl" placeholder="uploads/dev/students/..."/>
+          </div>
+          <div class="adm-field">
+            <label>Expires On</label>
+            <input type="date" [(ngModel)]="form.expiresOn"/>
+          </div>
+          <div class="adm-field adm-field--full">
+            <label>Remarks</label>
+            <input type="text" [(ngModel)]="form.remarks" placeholder="Optional notes"/>
+          </div>
+        </div>
+      </div>
+      <div class="stu-modal__foot">
+        <button class="adm-btn" (click)="closeUpload()">Cancel</button>
+        <button class="adm-btn adm-btn--primary" [disabled]="saving" (click)="saveDocument()">
+          <i class="pi" [class.pi-upload]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Upload
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showBulk" class="stu-modal-overlay" (click)="closeBulk()">
+    <div class="stu-modal" (click)="$event.stopPropagation()">
+      <div class="stu-modal__head">
+        <h2>Bulk Upload Documents</h2>
+        <button class="adm-icon-btn" (click)="closeBulk()"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="stu-modal__body">
+        <div class="adm-field adm-field--full">
+          <label>CSV Rows</label>
+          <textarea rows="8" [(ngModel)]="bulkCsv"></textarea>
+        </div>
+      </div>
+      <div class="stu-modal__foot">
+        <button class="adm-btn" (click)="closeBulk()">Cancel</button>
+        <button class="adm-btn adm-btn--primary" [disabled]="saving" (click)="saveBulk()">
+          <i class="pi" [class.pi-upload]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i> Upload
+        </button>
+      </div>
     </div>
   </div>
 </section>

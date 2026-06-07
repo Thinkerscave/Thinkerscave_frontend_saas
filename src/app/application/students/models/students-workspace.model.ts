@@ -19,6 +19,40 @@ export interface StudentSearchRequest {
   parentName?: string | null;
 }
 
+export interface StudentCreateRequest {
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  email: string;
+  mobileNumber: string;
+  gender?: string | null;
+  age?: string | null;
+  remarks?: string | null;
+  rollNumber?: string | null;
+  dateOfBirth?: string | null;
+  enrollmentDate?: string | null;
+  isSameAddress?: boolean | null;
+  currentCountry?: string | null;
+  currentState?: string | null;
+  currentCity?: string | null;
+  currentZipCode?: string | null;
+  currentAddressLine?: string | null;
+  permanentCountry?: string | null;
+  permanentState?: string | null;
+  permanentCity?: string | null;
+  permanentZipCode?: string | null;
+  permanentAddressLine?: string | null;
+  classId?: number | null;
+  sectionId?: number | null;
+  guardianFirstName: string;
+  guardianMiddleName?: string | null;
+  guardianLastName: string;
+  guardianRelation?: string | null;
+  guardianEmail?: string | null;
+  guardianPhoneNumber?: string | null;
+  guardianAddress?: string | null;
+}
+
 export type AttendanceStatusToday = 'PRESENT_TODAY' | 'ABSENT_TODAY' | 'PENDING';
 
 export interface StudentDirectoryCard {
@@ -26,8 +60,11 @@ export interface StudentDirectoryCard {
   admissionNumber: string;
   fullName: string;
   rollNumber?: string | null;
+  classId?: number | null;
   className?: string | null;
+  sectionId?: number | null;
   sectionName?: string | null;
+  activeEnrollmentId?: number | null;
   mobile?: string | null;
   email?: string | null;
   gender?: string | null;
@@ -223,15 +260,32 @@ export interface DocumentVaultEntry {
   studentName: string;
   documentType: string;
   fileName: string;
+  fileUrl?: string | null;
   status: DocumentVaultStatus;
   category: DocumentVaultCategory;
   uploadedOn?: string | null;
+  verifiedBy?: string | null;
+  verifiedOn?: string | null;
+  expiresOn?: string | null;
+  remarks?: string | null;
+}
+
+export interface DocumentVaultRequest {
+  studentId: number;
+  category: DocumentVaultCategory;
+  documentType: string;
+  fileName: string;
+  fileUrl?: string | null;
+  fileSize?: number | null;
+  status?: DocumentVaultStatus | null;
+  expiresOn?: string | null;
+  remarks?: string | null;
 }
 
 // --- Promotion / Transfer (existing endpoints) ---
 
-export type PromotionStatus = 'DRAFT' | 'IN_PROGRESS' | 'EXECUTED' | 'CANCELLED' | 'ROLLED_BACK';
-export type PromotionDecision = 'PROMOTE' | 'REPEAT' | 'HOLD' | 'TRANSFER_OUT';
+export type PromotionStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ROLLED_BACK';
+export type PromotionDecision = 'PROMOTED' | 'RETAINED' | 'GRADUATED' | 'TRANSFERRED_OUT' | 'WITHHELD';
 
 export interface PromotionBatch {
   id?: number;
@@ -257,7 +311,7 @@ export interface PromotionRecord {
   reason?: string | null;
 }
 
-export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'TC_ISSUED' | 'REJECTED' | 'CANCELLED';
+export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'CERTIFICATE_ISSUED' | 'REJECTED' | 'CANCELLED';
 
 export interface TransferRequest {
   id?: number;

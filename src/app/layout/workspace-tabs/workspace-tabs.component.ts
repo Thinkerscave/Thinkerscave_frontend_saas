@@ -42,12 +42,11 @@ export class WorkspaceTabsComponent implements OnInit {
       icon: 'pi pi-users',
       matcher: /^\/app\/students(?:\/|$)/,
       tabs: [
-        { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/app/students/dashboard' },
-        { label: 'Directory', icon: 'pi pi-list', route: '/app/students/directory' },
-        { label: 'Profiles', icon: 'pi pi-id-card', route: '/app/students/profiles' },
-        { label: 'Admissions', icon: 'pi pi-inbox', route: '/app/students/admissions' },
-        { label: 'Classes', icon: 'pi pi-building-columns', route: '/app/students/classes' },
-        { label: 'Sections', icon: 'pi pi-sitemap', route: '/app/students/sections' }
+        { label: 'Students', icon: 'pi pi-users', route: '/app/students/directory' },
+        { label: 'Academic Movement', icon: 'pi pi-arrow-up-right', route: '/app/students/academic-movement' },
+        { label: 'Student Movement', icon: 'pi pi-send', route: '/app/students/student-movement' },
+        { label: 'Documents', icon: 'pi pi-folder', route: '/app/students/documents' },
+        { label: 'Alumni', icon: 'pi pi-verified', route: '/app/students/alumni' }
       ]
     },
     {
