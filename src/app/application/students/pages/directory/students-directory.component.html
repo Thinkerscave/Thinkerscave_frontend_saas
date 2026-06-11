@@ -70,7 +70,15 @@
       </div>
       <div class="adm-field">
         <label>Parent</label>
-        <input type="text" [(ngModel)]="filter.parentName" placeholder="Guardian name"/>
+        <input type="text" [(ngModel)]="filter.parentName" placeholder="Guardian name" (keyup.enter)="runSearch()"/>
+      </div>
+      <div class="adm-field">
+        <label>Sort By</label>
+        <select [(ngModel)]="sortField" (change)="onSortChange($event)">
+          <option value="firstName,asc">Name (A-Z)</option>
+          <option value="firstName,desc">Name (Z-A)</option>
+          <option value="enrollmentDate,desc">Newest First</option>
+        </select>
       </div>
       <div class="adm-field">
         <label>&nbsp;</label>
@@ -169,6 +177,17 @@
       <i class="pi pi-users"></i>
       <h3>No students match</h3>
       <p>Adjust filters or add new students from the admission center.</p>
+    </div>
+
+    <!-- Paginator -->
+    <div style="margin-top: 16px;" *ngIf="!loading && totalElements > 0">
+      <p-paginator 
+        [first]="pageIndex * pageSize" 
+        [rows]="pageSize" 
+        [totalRecords]="totalElements" 
+        [rowsPerPageOptions]="[10, 20, 50]" 
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
     </div>
   </div>
 

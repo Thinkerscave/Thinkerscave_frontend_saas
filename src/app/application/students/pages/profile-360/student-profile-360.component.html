@@ -57,7 +57,7 @@
 
       <!-- Attendance ring -->
       <div class="stu-snapshot">
-        <div class="stu-snapshot__head"><h3><i class="pi pi-calendar-times"></i> Attendance (this month)</h3><a (click)="go('ATTENDANCE')">View</a></div>
+        <div class="stu-snapshot__head"><h3><i class="pi pi-calendar-times"></i> Attendance (this month)</h3></div>
         <div class="stu-ring">
           <svg viewBox="0 0 110 110">
             <circle class="stu-ring__track" cx="55" cy="55" r="48" stroke-width="9" fill="none"/>
@@ -80,7 +80,7 @@
 
       <!-- Fee snapshot -->
       <div class="stu-snapshot">
-        <div class="stu-snapshot__head"><h3><i class="pi pi-credit-card"></i> Fee</h3><a (click)="go('FEES')">View</a></div>
+        <div class="stu-snapshot__head"><h3><i class="pi pi-credit-card"></i> Fee</h3></div>
         <div class="stu-snapshot__rows">
           <div><span>Total</span><strong>₹{{ profile.fees.totalFee | number }}</strong></div>
           <div><span>Paid</span><strong style="color:var(--tc-success)">₹{{ profile.fees.paid | number }}</strong></div>
@@ -181,126 +181,7 @@
     </div>
   </div>
 
-  <!-- ============ ATTENDANCE ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'ATTENDANCE'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Attendance Summary</h2><small class="adm-panel__hint">Current month</small></div>
-      <div class="stu-snapshot-grid">
-        <div class="stu-snapshot">
-          <div class="stu-ring">
-            <svg viewBox="0 0 110 110">
-              <circle class="stu-ring__track" cx="55" cy="55" r="48" stroke-width="9" fill="none"/>
-              <circle class="stu-ring__fill" cx="55" cy="55" r="48" stroke-width="9" fill="none"
-                      [attr.stroke-dasharray]="ringDash().circ"
-                      [attr.stroke-dashoffset]="ringDash().offset"
-                      stroke-linecap="round"/>
-            </svg>
-            <div class="stu-ring__label">
-              <strong>{{ profile.attendance.percent }}%</strong>
-              <small>attendance</small>
-            </div>
-          </div>
-        </div>
-        <div class="stu-snapshot">
-          <div class="stu-snapshot__rows">
-            <div><span>Working Days</span><strong>{{ profile.attendance.totalWorkingDays }}</strong></div>
-            <div><span>Present</span><strong style="color:var(--tc-success)">{{ profile.attendance.present }}</strong></div>
-            <div><span>Absent</span><strong style="color:var(--tc-danger)">{{ profile.attendance.absent }}</strong></div>
-            <div><span>Late</span><strong style="color:var(--tc-warning)">{{ profile.attendance.late }}</strong></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ============ FEES ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'FEES'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Fee Summary</h2></div>
-      <dl class="adm-dl">
-        <div><dt>Total</dt><dd>₹{{ profile.fees.totalFee | number }}</dd></div>
-        <div><dt>Paid</dt><dd style="color:var(--tc-success)">₹{{ profile.fees.paid | number }}</dd></div>
-        <div><dt>Pending</dt><dd style="color:var(--tc-warning)">₹{{ profile.fees.pending | number }}</dd></div>
-        <div><dt>Status</dt><dd><span class="adm-badge" [attr.data-tone]="profile.fees.pending > 0 ? 'warning' : 'success'">{{ profile.fees.status }}</span></dd></div>
-      </dl>
-      <div class="stu-fee-bar"><span [style.width.%]="feePercent()"></span></div>
-    </div>
-  </div>
-
-  <!-- ============ MEDICAL ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'MEDICAL'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Medical Profile</h2></div>
-      <dl class="adm-dl">
-        <div><dt>Blood Group</dt><dd>{{ profile.medical.bloodGroup || '—' }}</dd></div>
-        <div><dt>Allergies</dt><dd>{{ profile.medical.allergies || '—' }}</dd></div>
-        <div><dt>Medications</dt><dd>{{ profile.medical.medications || '—' }}</dd></div>
-        <div><dt>Emergency Contact</dt><dd>{{ profile.medical.emergencyContact || '—' }}</dd></div>
-        <div><dt>Notes</dt><dd>{{ profile.medical.notes || '—' }}</dd></div>
-      </dl>
-    </div>
-  </div>
-
-  <!-- ============ PORTFOLIO (Achievements) ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'PORTFOLIO'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Achievements & Portfolio</h2>
-        <small class="adm-panel__hint">{{ achievements.length }} achievement(s)</small>
-      </div>
-
-      <div class="adm-filter-bar">
-        <div class="adm-field">
-          <label>Category</label>
-          <select [(ngModel)]="newAchievement.category">
-            <option value="ACADEMIC">Academic</option>
-            <option value="SPORTS">Sports</option>
-            <option value="CULTURAL">Cultural</option>
-            <option value="CHARACTER">Character</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
-        <div class="adm-field">
-          <label>Title</label>
-          <input type="text" [(ngModel)]="newAchievement.title" placeholder="e.g. Math Olympiad Winner"/>
-        </div>
-        <div class="adm-field">
-          <label>Date</label>
-          <input type="date" [(ngModel)]="newAchievement.achievementDate"/>
-        </div>
-        <div class="adm-field">
-          <label>Awarded By</label>
-          <input type="text" [(ngModel)]="newAchievement.awardedBy"/>
-        </div>
-        <div class="adm-field">
-          <label>&nbsp;</label>
-          <button type="button" class="adm-btn adm-btn--primary"
-                  [disabled]="!newAchievement.title || savingAchievement"
-                  (click)="addAchievement()">
-            <i class="pi" [class.pi-plus]="!savingAchievement" [class.pi-spin]="savingAchievement" [class.pi-spinner]="savingAchievement"></i> Add
-          </button>
-        </div>
-      </div>
-
-      <div class="stu-achievement-list" *ngIf="achievements.length">
-        <div class="stu-achievement" *ngFor="let a of achievements">
-          <div class="stu-achievement__icon"><i [class]="a.icon || 'pi pi-trophy'"></i></div>
-          <div class="stu-achievement__body">
-            <strong>{{ a.title }}</strong>
-            <p *ngIf="a.description">{{ a.description }}</p>
-            <small>
-              <span class="adm-badge" data-tone="info" style="margin-right:6px;">{{ a.category }}</span>
-              {{ a.achievementDate || '' }}{{ a.location ? ' · ' + a.location : '' }}{{ a.awardedBy ? ' · ' + a.awardedBy : '' }}
-            </small>
-          </div>
-        </div>
-      </div>
-      <div class="adm-empty" *ngIf="!achievements.length">
-        <i class="pi pi-star"></i>
-        <h3>No achievements yet</h3>
-        <p>Capture awards, certificates and accolades to build the student portfolio.</p>
-      </div>
-    </div>
-  </div>
 
   <!-- ============ TIMELINE ============ -->
   <div class="adm-tab-panel" *ngIf="activeTab === 'TIMELINE'">

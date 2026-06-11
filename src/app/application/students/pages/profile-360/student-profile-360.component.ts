@@ -18,10 +18,7 @@ type ProfileTab =
   | 'FAMILY'
   | 'ACADEMICS'
   | 'DOCUMENTS'
-  | 'ATTENDANCE'
-  | 'FEES'
   | 'MEDICAL'
-  | 'PORTFOLIO'
   | 'TIMELINE';
 
 @Component({
@@ -53,15 +50,9 @@ export class StudentProfile360Component implements OnInit {
     { key: 'FAMILY',     label: 'Family',     icon: 'pi pi-users' },
     { key: 'ACADEMICS',  label: 'Academics',  icon: 'pi pi-book' },
     { key: 'DOCUMENTS',  label: 'Documents',  icon: 'pi pi-file' },
-    { key: 'ATTENDANCE', label: 'Attendance', icon: 'pi pi-calendar-times' },
-    { key: 'FEES',       label: 'Fees',       icon: 'pi pi-credit-card' },
     { key: 'MEDICAL',    label: 'Medical',    icon: 'pi pi-heart' },
-    { key: 'PORTFOLIO',  label: 'Portfolio',  icon: 'pi pi-star' },
     { key: 'TIMELINE',   label: 'Timeline',   icon: 'pi pi-history' }
   ];
-
-  newAchievement: AchievementRequest = { category: 'ACADEMIC', title: '' };
-  savingAchievement = false;
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
@@ -76,15 +67,13 @@ export class StudentProfile360Component implements OnInit {
     this.loading = true;
     forkJoin({
       profile:      this.api.profile(this.studentId),
-      timeline:     this.api.timeline(this.studentId),
-      achievements: this.api.achievements(this.studentId)
+      timeline:     this.api.timeline(this.studentId)
     })
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: ({ profile, timeline, achievements }) => {
+        next: ({ profile, timeline }) => {
           this.profile = profile;
           this.timeline = timeline;
-          this.achievements = achievements;
         },
         error: () => { this.errorMessage = 'Unable to load student profile. Please retry.'; }
       });
@@ -114,19 +103,5 @@ export class StudentProfile360Component implements OnInit {
     const t = this.profile.fees.totalFee;
     if (!t) return 0;
     return Math.round((this.profile.fees.paid / t) * 100);
-  }
-
-  addAchievement(): void {
-    if (!this.newAchievement.title || !this.newAchievement.category) return;
-    this.savingAchievement = true;
-    this.api.addAchievement(this.studentId, this.newAchievement)
-      .pipe(finalize(() => { this.savingAchievement = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: created => {
-          this.achievements = [created, ...this.achievements];
-          this.newAchievement = { category: 'ACADEMIC', title: '' };
-        },
-        error: () => { this.errorMessage = 'Could not add achievement. Please retry.'; }
-      });
   }
 }

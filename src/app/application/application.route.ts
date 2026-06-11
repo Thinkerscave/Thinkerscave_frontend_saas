@@ -220,7 +220,7 @@ export const APPLICATION_ROUTES: Routes = [
       // Spec taxonomy: Students | Academic Movement | Student Movement | Documents | Alumni
       { path: 'directory',          loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
       { path: 'profile/:id',        loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
-      { path: 'academic-movement',  loadComponent: () => import('./students/pages/academic-movement/academic-movement.component').then(m => m.AcademicMovementComponent) },
+      { path: 'add-student',        loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
       { path: 'student-movement',   loadComponent: () => import('./students/pages/student-movement/student-movement.component').then(m => m.StudentMovementComponent) },
       { path: 'documents',          loadComponent: () => import('./students/pages/document-vault/document-vault.component').then(m => m.DocumentVaultComponent) },
       { path: 'alumni',             loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },

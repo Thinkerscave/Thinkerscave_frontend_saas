@@ -29,7 +29,7 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
-interface PageEnvelope<T> {
+export interface PageEnvelope<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
@@ -53,15 +53,19 @@ export class StudentsWorkspaceService {
   }
 
   // ---------- Directory ----------
-  search(filter: StudentSearchRequest): Observable<StudentDirectoryCard[]> {
+  search(filter: StudentSearchRequest, page: number = 0, size: number = 20, sort: string = 'firstName,asc'): Observable<PageEnvelope<StudentDirectoryCard>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
     return this.http
-      .post<ApiEnvelope<StudentDirectoryCard[]>>(`${this.workspaceBase}/directory/search`, filter)
-      .pipe(map(r => r.data ?? []));
+      .post<ApiEnvelope<PageEnvelope<StudentDirectoryCard>>>(`${this.workspaceBase}/directory/search`, filter, { params })
+      .pipe(map(r => r.data));
   }
 
   createStudent(payload: StudentCreateRequest): Observable<void> {
     return this.http
-      .post<ApiEnvelope<unknown>>(this.studentsBase, payload)
+      .post<ApiEnvelope<unknown>>(`${this.workspaceBase}/students`, payload)
       .pipe(map(() => void 0));
   }
 

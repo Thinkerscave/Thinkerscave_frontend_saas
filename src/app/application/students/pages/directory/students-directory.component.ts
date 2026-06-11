@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
+import { PaginatorModule } from 'primeng/paginator';
 
 import {
   AttendanceStatusToday,
@@ -11,7 +12,7 @@ import {
   StudentKpi,
   StudentSearchRequest
 } from '../../models/students-workspace.model';
-import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { StudentsWorkspaceService, PageEnvelope } from '../../services/students-workspace.service';
 
 interface KpiTile {
   key: keyof StudentKpi;
@@ -30,7 +31,7 @@ interface SelectOption {
   selector: 'app-students-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorModule],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './students-directory.component.html'
 })
@@ -59,12 +60,17 @@ export class StudentsDirectoryComponent implements OnInit {
   };
 
   students: StudentDirectoryCard[] = [];
-  allStudents: StudentDirectoryCard[] = [];
   classOptions: SelectOption[] = [];
   sectionOptions: SelectOption[] = [];
 
   filter: StudentSearchRequest = {};
   activeKpi: keyof StudentKpi | null = null;
+  
+  // Pagination State
+  pageIndex = 0;
+  pageSize = 20;
+  totalElements = 0;
+  sortField = 'firstName,asc';
 
   readonly kpiTiles: KpiTile[] = [
     { key: 'totalStudents',         label: 'Total Students',  hint: 'Across all classes',      tone: 'info' },
@@ -79,38 +85,48 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loading = true;
-    forkJoin({
-      kpi:  this.api.kpi(),
-      list: this.api.search(this.filter)
-    })
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: ({ kpi, list }) => {
-          this.kpi = kpi;
-          this.students = list;
-          this.allStudents = list;
-          this.refreshOptions();
-        },
-        error: () => { this.errorMessage = 'Unable to load students. Please retry.'; }
-      });
+    this.pageIndex = 0;
+    this.runSearch();
+    this.api.kpi().subscribe(kpi => {
+      this.kpi = kpi;
+      this.cdr.markForCheck();
+    });
   }
 
   runSearch(): void {
+    this.loading = true;
     this.searching = true;
-    this.api.search(this.filter)
-      .pipe(finalize(() => { this.searching = false; this.cdr.markForCheck(); }))
+    this.api.search(this.filter, this.pageIndex, this.pageSize, this.sortField)
+      .pipe(finalize(() => { 
+        this.loading = false; 
+        this.searching = false; 
+        this.cdr.markForCheck(); 
+      }))
       .subscribe({
-        next: list => {
-          this.students = list;
-          if (!this.hasActiveFilters()) {
-            this.allStudents = list;
-          }
+        next: (page: PageEnvelope<StudentDirectoryCard>) => {
+          this.students = page.content;
+          this.totalElements = page.totalElements;
           this.refreshOptions();
           this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Search failed. Please retry.'; }
       });
+  }
+
+  onPageChange(event: any): void {
+    // PrimeNG Paginator event: { first: number, rows: number, page: number, pageCount: number }
+    this.pageIndex = event.page;
+    this.pageSize = event.rows;
+    this.runSearch();
+  }
+
+  onSortChange(event: any): void {
+    const field = event.target.value;
+    if (field) {
+      this.sortField = field;
+      this.pageIndex = 0;
+      this.runSearch();
+    }
   }
 
   toggleKpiFilter(tile: KpiTile): void {
@@ -135,11 +151,11 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   refreshOptions(): void {
-    const source = [...this.allStudents, ...this.students];
-    this.classOptions = this.uniqueOptions(source, 'classId', 'className');
+    // Note: With server-side pagination, this only gets classes for the current page.
+    this.classOptions = this.uniqueOptions(this.students, 'classId', 'className');
     const classId = this.filter.classId ? Number(this.filter.classId) : null;
     this.sectionOptions = this.uniqueOptions(
-      source.filter(s => !classId || s.classId === classId),
+      this.students.filter(s => !classId || s.classId === classId),
       'sectionId',
       'sectionName'
     );
@@ -183,7 +199,7 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   addStudent(): void {
-    this.router.navigate(['/app/admissions/admission-center']);
+    this.router.navigate(['/app/students/add-student']);
   }
 
   private hasActiveFilters(): boolean {

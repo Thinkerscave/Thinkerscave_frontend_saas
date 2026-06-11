@@ -19,14 +19,10 @@ export class AlumniDirectoryComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
-  saving = false;
-  showForm = false;
   errorMessage = '';
-  successMessage = '';
   search = '';
 
   alumni: AlumniResponse[] = [];
-  newAlumni: AlumniRequest = { fullName: '' };
 
   ngOnInit(): void { this.load(); }
 
@@ -47,23 +43,7 @@ export class AlumniDirectoryComponent implements OnInit {
       (a.fullName + ' ' + (a.batchYear || '') + ' ' + (a.course || '') + ' ' + (a.occupation || '')).toLowerCase().includes(q));
   }
 
-  openAdd(): void { this.newAlumni = { fullName: '' }; this.showForm = true; }
-  closeAdd(): void { this.showForm = false; }
 
-  saveAlumni(): void {
-    if (!this.newAlumni.fullName) { this.errorMessage = 'Full name is required.'; return; }
-    this.saving = true;
-    this.api.addAlumni(this.newAlumni)
-      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: created => {
-          this.alumni = [created, ...this.alumni];
-          this.successMessage = 'Alumni record added.';
-          this.showForm = false;
-        },
-        error: () => { this.errorMessage = 'Could not save alumni record.'; }
-      });
-  }
 
   initials(name: string): string {
     if (!name) return '?';
