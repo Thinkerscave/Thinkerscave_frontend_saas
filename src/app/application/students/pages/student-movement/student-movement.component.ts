@@ -48,8 +48,9 @@ export class StudentMovementComponent implements OnInit {
       .subscribe({
         next: ({ transfers, students, documents }) => {
           this.transfers = transfers ?? [];
-          this.students = students ?? [];
+          this.students = students.content ?? [];
           this.documents = documents ?? [];
+          this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Could not load transfer requests.'; }
       });

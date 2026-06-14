@@ -68,7 +68,8 @@ export class DocumentVaultComponent implements OnInit {
         next: ({ kpi, docs, students }) => {
           this.kpi = kpi;
           this.entries = docs;
-          this.students = students;
+          this.students = students.content ?? [];
+          this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Could not load documents.'; }
       });
