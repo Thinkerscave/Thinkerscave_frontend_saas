@@ -6,17 +6,18 @@ import { finalize, forkJoin } from 'rxjs';
 import { PaginatorModule } from 'primeng/paginator';
 
 import {
-  AttendanceStatusToday,
-  StudentCreateRequest,
   StudentDirectoryCard,
   StudentKpi,
-  StudentSearchRequest
+  StudentSearchRequest,
+  StudentStatus
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService, PageEnvelope } from '../../services/students-workspace.service';
+import { AddStudentDrawerComponent } from '../add-student/add-student-drawer.component';
 
 interface KpiTile {
   key: keyof StudentKpi;
   label: string;
+  icon: string;
   hint: string;
   tone: 'info' | 'success' | 'warning' | 'danger' | 'neutral';
   filter?: Partial<StudentSearchRequest>;
@@ -27,11 +28,13 @@ interface SelectOption {
   label: string;
 }
 
+type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
+
 @Component({
   selector: 'app-students-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, PaginatorModule],
+  imports: [CommonModule, FormsModule, PaginatorModule, AddStudentDrawerComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './students-directory.component.html'
 })
@@ -45,11 +48,20 @@ export class StudentsDirectoryComponent implements OnInit {
   errorMessage = '';
 
   view: 'grid' | 'list' = 'grid';
+
+  // ---- Add Student Drawer ----
+  showAddDrawer = false;
+
+  // ---- Bulk Import ----
   showImport = false;
-  importCsv = 'firstName,lastName,email,mobileNumber,gender,dateOfBirth,classId,sectionId,rollNumber,guardianFirstName,guardianLastName,guardianPhoneNumber\nAarav,Mehta,aarav.mehta@student.thinkerscave.com,9988811101,Male,2012-08-14,1,1,21,Rajesh,Mehta,9988811199';
+  importStep: 'upload' | 'result' = 'upload';
+  importFile: File | null = null;
+  importLoading = false;
+  importResult: { total: number; success: number; failed: number } | null = null;
   importError = '';
-  importSuccess = '';
-  importing = false;
+
+  // ---- More menu per card ----
+  openMoreMenuId: number | null = null;
 
   kpi: StudentKpi = {
     totalStudents: 0,
@@ -65,19 +77,18 @@ export class StudentsDirectoryComponent implements OnInit {
 
   filter: StudentSearchRequest = {};
   activeKpi: keyof StudentKpi | null = null;
-  
-  // Pagination State
+
+  // Pagination
   pageIndex = 0;
   pageSize = 20;
   totalElements = 0;
   sortField = 'firstName,asc';
 
   readonly kpiTiles: KpiTile[] = [
-    { key: 'totalStudents',         label: 'Total Students',  hint: 'Across all classes',      tone: 'info' },
-    { key: 'activeStudents',        label: 'Active',          hint: 'Currently enrolled',      tone: 'success', filter: { status: 'ACTIVE' } },
-    { key: 'newAdmissionsThisYear', label: 'New Admissions',  hint: 'Current academic year',   tone: 'success' },
-    { key: 'inactiveStudents',      label: 'Inactive',        hint: 'Disabled or left',        tone: 'warning', filter: { status: 'INACTIVE' } },
-    { key: 'alumniCount',           label: 'Alumni',          hint: 'Past graduates',          tone: 'neutral' }
+    { key: 'totalStudents',         label: 'Total Students',  icon: 'pi-users',           hint: 'Across all classes',     tone: 'info' },
+    { key: 'activeStudents',        label: 'Active',          icon: 'pi-check-circle',    hint: 'Currently enrolled',     tone: 'success', filter: { status: 'ACTIVE' } },
+    { key: 'inactiveStudents',      label: 'Inactive',        icon: 'pi-times-circle',    hint: 'Disabled or left',       tone: 'warning', filter: { status: 'INACTIVE' } },
+    { key: 'alumniCount',           label: 'Alumni',          icon: 'pi-graduation-cap',  hint: 'Past graduates',         tone: 'neutral' }
   ];
 
   ngOnInit(): void {
@@ -91,22 +102,25 @@ export class StudentsDirectoryComponent implements OnInit {
       this.kpi = kpi;
       this.cdr.markForCheck();
     });
+    this.api.listClasses().subscribe(classes => {
+      this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
+      this.cdr.markForCheck();
+    });
   }
 
   runSearch(): void {
     this.loading = true;
     this.searching = true;
     this.api.search(this.filter, this.pageIndex, this.pageSize, this.sortField)
-      .pipe(finalize(() => { 
-        this.loading = false; 
-        this.searching = false; 
-        this.cdr.markForCheck(); 
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.searching = false;
+        this.cdr.markForCheck();
       }))
       .subscribe({
         next: (page: PageEnvelope<StudentDirectoryCard>) => {
           this.students = page.content;
           this.totalElements = page.totalElements;
-          this.refreshOptions();
           this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Search failed. Please retry.'; }
@@ -114,19 +128,15 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   onPageChange(event: any): void {
-    // PrimeNG Paginator event: { first: number, rows: number, page: number, pageCount: number }
     this.pageIndex = event.page;
     this.pageSize = event.rows;
     this.runSearch();
   }
 
-  onSortChange(event: any): void {
-    const field = event.target.value;
-    if (field) {
-      this.sortField = field;
-      this.pageIndex = 0;
-      this.runSearch();
-    }
+  onSortChange(field: string): void {
+    this.sortField = field;
+    this.pageIndex = 0;
+    this.runSearch();
   }
 
   toggleKpiFilter(tile: KpiTile): void {
@@ -150,151 +160,182 @@ export class StudentsDirectoryComponent implements OnInit {
     this.runSearch();
   }
 
-  refreshOptions(): void {
-    // Note: With server-side pagination, this only gets classes for the current page.
-    this.classOptions = this.uniqueOptions(this.students, 'classId', 'className');
-    const classId = this.filter.classId ? Number(this.filter.classId) : null;
-    this.sectionOptions = this.uniqueOptions(
-      this.students.filter(s => !classId || s.classId === classId),
-      'sectionId',
-      'sectionName'
-    );
-  }
-
   onClassChanged(): void {
     this.filter.sectionId = null;
-    this.refreshOptions();
-  }
-
-  openImport(): void {
-    this.importError = '';
-    this.importSuccess = '';
-    this.showImport = true;
-  }
-
-  closeImport(): void {
-    this.showImport = false;
-  }
-
-  importStudents(): void {
-    const rows = this.parseImportRows();
-    if (!rows.length || this.importError) {
-      return;
-    }
-    this.importing = true;
-    forkJoin(rows.map(row => this.api.createStudent(row)))
-      .pipe(finalize(() => { this.importing = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: () => {
-          this.importSuccess = `${rows.length} student(s) imported.`;
-          this.closeImport();
-          this.loadAll();
-        },
-        error: () => { this.importError = 'Import failed. Check duplicate email/roll number or required fields.'; }
+    this.sectionOptions = [];
+    if (this.filter.classId) {
+      this.api.listSectionsByClass(Number(this.filter.classId)).subscribe(sections => {
+        this.sectionOptions = sections.map(s => ({ id: s.id, label: s.label }));
+        this.cdr.markForCheck();
       });
+    }
   }
 
-  openProfile(s: StudentDirectoryCard): void {
+  // ---- Profile navigation ----
+  openProfile(s: StudentDirectoryCard, event?: Event): void {
+    event?.stopPropagation();
     this.router.navigate(['/app/students/profile', s.studentId]);
   }
 
-  addStudent(): void {
-    this.router.navigate(['/app/students/add-student']);
+  // ---- Add Student Drawer ----
+  openAddDrawer(): void {
+    this.showAddDrawer = true;
   }
 
-  private hasActiveFilters(): boolean {
-    return Boolean(this.filter.keyword || this.filter.classId || this.filter.sectionId || this.filter.status || this.filter.parentName);
+  closeAddDrawer(): void {
+    this.showAddDrawer = false;
   }
 
-  private uniqueOptions(rows: StudentDirectoryCard[], idKey: 'classId' | 'sectionId', labelKey: 'className' | 'sectionName'): SelectOption[] {
-    const byId = new Map<number, string>();
-    rows.forEach(row => {
-      const id = row[idKey];
-      const label = row[labelKey];
-      if (id != null && label && !byId.has(id)) {
-        byId.set(id, label);
-      }
-    });
-    return Array.from(byId.entries())
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+  onStudentAdded(): void {
+    this.showAddDrawer = false;
+    this.loadAll();
   }
 
-  private parseImportRows(): StudentCreateRequest[] {
+  // ---- Bulk Import ----
+  openImport(): void {
+    this.showImport = true;
+    this.importStep = 'upload';
+    this.importFile = null;
     this.importError = '';
-    const lines = this.importCsv.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-    if (lines.length < 2) {
-      this.importError = 'Paste a header row and at least one student row.';
-      return [];
-    }
-    const headers = lines[0].split(',').map(h => h.trim());
-    const required = ['firstName', 'lastName', 'email', 'mobileNumber', 'classId', 'sectionId', 'guardianFirstName', 'guardianLastName', 'guardianPhoneNumber'];
-    const missing = required.filter(key => !headers.includes(key));
-    if (missing.length) {
-      this.importError = `Missing columns: ${missing.join(', ')}`;
-      return [];
-    }
-
-    return lines.slice(1).map((line, index) => {
-      const values = line.split(',').map(v => v.trim());
-      const row = headers.reduce<Record<string, string>>((acc, key, i) => ({ ...acc, [key]: values[i] ?? '' }), {});
-      required.forEach(key => {
-        if (!row[key]) {
-          this.importError = `Row ${index + 2} is missing ${key}.`;
-        }
-      });
-      return {
-        firstName: row['firstName'],
-        lastName: row['lastName'],
-        email: row['email'],
-        mobileNumber: row['mobileNumber'],
-        gender: row['gender'] || null,
-        dateOfBirth: row['dateOfBirth'] || null,
-        enrollmentDate: row['enrollmentDate'] || new Date().toISOString().substring(0, 10),
-        rollNumber: row['rollNumber'] || null,
-        classId: Number(row['classId']),
-        sectionId: Number(row['sectionId']),
-        isSameAddress: true,
-        currentCountry: row['currentCountry'] || 'India',
-        currentState: row['currentState'] || 'Karnataka',
-        currentCity: row['currentCity'] || 'Bangalore',
-        currentZipCode: row['currentZipCode'] || '560001',
-        currentAddressLine: row['currentAddressLine'] || 'Imported address',
-        permanentCountry: row['permanentCountry'] || row['currentCountry'] || 'India',
-        permanentState: row['permanentState'] || row['currentState'] || 'Karnataka',
-        permanentCity: row['permanentCity'] || row['currentCity'] || 'Bangalore',
-        permanentZipCode: row['permanentZipCode'] || row['currentZipCode'] || '560001',
-        permanentAddressLine: row['permanentAddressLine'] || row['currentAddressLine'] || 'Imported address',
-        guardianFirstName: row['guardianFirstName'],
-        guardianLastName: row['guardianLastName'],
-        guardianRelation: row['guardianRelation'] || 'Guardian',
-        guardianEmail: row['guardianEmail'] || `parent.${row['guardianPhoneNumber']}@thinkerscave.local`,
-        guardianPhoneNumber: row['guardianPhoneNumber'],
-        guardianAddress: row['guardianAddress'] || row['currentAddressLine'] || 'Imported address'
-      };
-    });
+    this.importResult = null;
   }
 
+  closeImport(): void { this.showImport = false; }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.importFile = input.files[0];
+      this.importError = '';
+    }
+  }
+
+  downloadTemplate(): void {
+    const headers = [
+      'Admission Number', 'First Name', 'Middle Name', 'Last Name',
+      'Gender', 'Date Of Birth', 'Mobile', 'Email',
+      'Academic Year', 'Class Code', 'Section Code', 'Roll Number',
+      'Father Name', 'Father Mobile', 'Mother Name', 'Mother Mobile',
+      'Address', 'Blood Group', 'Remarks'
+    ].join(',');
+    const sample = ['ADM001', 'Rahul', '', 'Sharma', 'Male', '2010-05-15',
+      '9876543210', 'rahul@example.com', '2025-2026', 'CLS6', 'SEC-A', '1',
+      'Rajesh Sharma', '9876543211', 'Priya Sharma', '9876543212',
+      '45 Green Park, New Delhi', 'B+', ''].join(',');
+    const blob = new Blob([headers + '\n' + sample], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Student_Import_Template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  uploadImport(): void {
+    if (!this.importFile) {
+      this.importError = 'Please select a file to upload.';
+      return;
+    }
+    this.importLoading = true;
+    // MOCK: Simulate import result until backend is ready
+    setTimeout(() => {
+      this.importResult = { total: 25, success: 23, failed: 2 };
+      this.importStep = 'result';
+      this.importLoading = false;
+      this.cdr.markForCheck();
+    }, 1500);
+  }
+
+  downloadErrorReport(): void {
+    const content = 'Row,Error\n5,Invalid date of birth format\n18,Class code not found';
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Import_Error_Report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Export ----
+  exportStudents(): void {
+    // MOCK: Trigger download with current filter params
+    const params = new URLSearchParams();
+    if (this.filter.keyword) params.set('keyword', this.filter.keyword);
+    if (this.filter.classId) params.set('classId', this.filter.classId);
+    if (this.filter.status) params.set('status', this.filter.status);
+    // In production, this would call a backend export endpoint
+    alert('Export triggered. File will be downloaded shortly.');
+  }
+
+  // ---- More menu ----
+  toggleMoreMenu(id: number, event: Event): void {
+    event.stopPropagation();
+    this.openMoreMenuId = this.openMoreMenuId === id ? null : id;
+  }
+
+  closeMoreMenu(): void { this.openMoreMenuId = null; }
+
+  transferStudent(s: StudentDirectoryCard, event: Event): void {
+    event.stopPropagation();
+    this.openMoreMenuId = null;
+    this.router.navigate(['/app/students/transfers']);
+  }
+
+  deactivateStudent(s: StudentDirectoryCard, event: Event): void {
+    event.stopPropagation();
+    this.openMoreMenuId = null;
+    // MOCK: Would call API to deactivate
+    if (confirm(`Deactivate ${s.fullName}?`)) {
+      console.log('Deactivate student', s.studentId);
+    }
+  }
+
+  viewTimeline(s: StudentDirectoryCard, event: Event): void {
+    event.stopPropagation();
+    this.openMoreMenuId = null;
+    this.router.navigate(['/app/students/profile', s.studentId], { queryParams: { tab: 'TIMELINE' } });
+  }
+
+  // ---- Contact actions ----
   callPhone(s: StudentDirectoryCard, event: Event): void {
     event.stopPropagation();
     if (s.mobile) window.open(`tel:${s.mobile}`, '_self');
   }
+
   whatsapp(s: StudentDirectoryCard, event: Event): void {
     event.stopPropagation();
     if (s.mobile) window.open(`https://wa.me/${(s.mobile || '').replace(/\D/g, '')}`, '_blank');
   }
+
   emailContact(s: StudentDirectoryCard, event: Event): void {
     event.stopPropagation();
     if (s.email) window.open(`mailto:${s.email}`, '_self');
   }
 
+  // ---- Helpers ----
   initials(name: string): string {
     if (!name) return '?';
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
   }
 
-  presenceLabel(s: AttendanceStatusToday): string {
+  statusLabel(s: StudentDirectoryCard): string {
+    if (s.status) return s.status;
+    return s.active ? 'ACTIVE' : 'INACTIVE';
+  }
+
+  statusTone(s: StudentDirectoryCard): string {
+    const st = this.statusLabel(s);
+    switch (st) {
+      case 'ACTIVE': return 'success';
+      case 'INACTIVE': return 'neutral';
+      case 'ALUMNI': return 'info';
+      default: return 'neutral';
+    }
+  }
+
+  presenceLabel(s: import('../../models/students-workspace.model').AttendanceStatusToday): string {
     return s === 'PRESENT_TODAY' ? 'Present today'
          : s === 'ABSENT_TODAY'  ? 'Absent today'
          : 'Not marked';

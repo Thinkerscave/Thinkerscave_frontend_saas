@@ -1,56 +1,108 @@
 <section class="adm-workspace">
+  <!-- Header -->
   <header class="adm-hero">
     <div class="adm-hero__title">
       <h1>Alumni Directory</h1>
-      <p>Stay connected with graduates — track careers, batches and engagement opportunities.</p>
-      <span class="adm-count"><i class="pi pi-flag-fill"></i> {{ alumni.length }} alumni</span>
+      <p>Stay connected with your past graduates.</p>
     </div>
     <div class="adm-hero__actions">
-      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+      <button type="button" class="adm-btn" (click)="exportAlumni()">
+        <i class="pi pi-download"></i> Export Directory
+      </button>
     </div>
   </header>
 
-  <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
-    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-  </div>
-
+  <!-- Filters -->
   <div class="adm-panel">
-    <div class="adm-panel__header">
-      <h2>Directory</h2>
-      <div class="adm-field" style="min-width:240px;">
-        <input type="text" [(ngModel)]="search" placeholder="Search by name, batch, course, occupation…"/>
+    <div class="adm-filter-bar">
+      <div class="adm-field" style="flex:2; min-width:200px;">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="filters.keyword"
+               placeholder="Name, Company, City…"
+               (keyup.enter)="runSearch()"/>
+      </div>
+      <div class="adm-field">
+        <label>Passout Year</label>
+        <select [(ngModel)]="filters.passoutYear">
+          <option [ngValue]="null">All Years</option>
+          <option *ngFor="let y of passoutYears" [ngValue]="y">{{ y }}</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Course</label>
+        <input type="text" [(ngModel)]="filters.course" placeholder="B.Tech, MBA…"/>
+      </div>
+      <div class="adm-field">
+        <label>City</label>
+        <input type="text" [(ngModel)]="filters.city" placeholder="Mumbai, Delhi…"/>
+      </div>
+      <div class="adm-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
+          <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
+          Search
+        </button>
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Reset</button>
       </div>
     </div>
+    
+    <div *ngIf="errorMessage" class="adm-toast is-error" style="margin-top:12px;">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
 
-    <div class="adm-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading alumni…</div>
+    <!-- Loading -->
+    <div class="adm-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i> Loading alumni directory…
+    </div>
 
-    <div class="stu-table-wrap" *ngIf="!loading && filtered().length">
+    <!-- Table -->
+    <div class="stu-table-wrap" *ngIf="!loading && alumni.length" style="margin-top:16px;">
       <table class="stu-table">
         <thead>
-          <tr><th>Alumni</th><th>Batch</th><th>Course</th><th>Occupation</th><th>Employer</th><th>City</th><th>Contact</th><th></th></tr>
+          <tr>
+            <th>Alumni</th>
+            <th>Passout Year</th>
+            <th>Course & Batch</th>
+            <th>Current Occupation</th>
+            <th>Company / Org</th>
+            <th>Location</th>
+            <th>Contact</th>
+            <th style="width:120px;">Actions</th>
+          </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of filtered()">
+          <tr *ngFor="let a of alumni">
             <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div class="stu-photo stu-photo--initials" style="width:36px; height:36px; font-size:0.78rem;">{{ initials(a.fullName) }}</div>
-                <div>
-                  <strong>{{ a.fullName }}</strong><br/>
-                  <small style="color:var(--tc-text-muted)">{{ a.email || '—' }}</small>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="stu-photo stu-photo--initials" style="width:36px;height:36px;font-size:0.78rem;">
+                  <!-- Mocking photo logic for now -->
+                  <span>{{ initials(a.fullName) }}</span>
                 </div>
+                <strong>{{ a.fullName }}</strong>
               </div>
             </td>
-            <td>{{ a.batchYear || '—' }}<br/><small style="color:var(--tc-text-muted)">Passed {{ a.yearPassed || '—' }}</small></td>
-            <td>{{ a.course || '—' }}</td>
+            <td><strong>{{ a.yearPassed || '—' }}</strong></td>
+            <td>{{ a.course || '—' }}<br><small style="color:var(--tc-text-muted);">{{ a.batchYear || '' }}</small></td>
             <td>{{ a.occupation || '—' }}</td>
             <td>{{ a.employer || '—' }}</td>
             <td>{{ a.city || '—' }}</td>
-            <td>{{ a.contact || '—' }}</td>
+            <td style="color:var(--tc-text-muted);font-size:0.8rem;">
+              <div *ngIf="a.contact"><i class="pi pi-phone" style="margin-right:4px;"></i> {{ a.contact }}</div>
+              <div *ngIf="a.email" style="margin-top:2px;"><i class="pi pi-envelope" style="margin-right:4px;"></i> {{ a.email }}</div>
+            </td>
             <td>
-              <div style="display:flex; gap:4px;">
-                <a *ngIf="a.linkedIn" [href]="a.linkedIn" target="_blank" class="adm-icon-btn" title="LinkedIn"><i class="pi pi-linkedin"></i></a>
-                <a *ngIf="a.email" [href]="'mailto:' + a.email" class="adm-icon-btn" title="Email"><i class="pi pi-envelope"></i></a>
-                <a *ngIf="a.contact" [href]="'tel:' + a.contact" class="adm-icon-btn" title="Call"><i class="pi pi-phone"></i></a>
+              <div style="display:flex;gap:4px;">
+                <button class="adm-icon-btn" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
+                  <i class="pi pi-user"></i>
+                </button>
+                <button class="adm-icon-btn" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)" style="color:#0a66c2;">
+                  <i class="pi pi-linkedin"></i>
+                </button>
+                <button class="adm-icon-btn" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
+                  <i class="pi pi-envelope"></i>
+                </button>
+                <button class="adm-icon-btn" title="Call" *ngIf="a.contact" (click)="callAlumni(a.contact)">
+                  <i class="pi pi-phone"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -58,12 +110,10 @@
       </table>
     </div>
 
-    <div class="adm-empty" *ngIf="!loading && !filtered().length">
-      <i class="pi pi-flag"></i>
-      <h3>No alumni records yet</h3>
-      <p>Capture graduate details to build the alumni network.</p>
+    <div class="adm-empty" *ngIf="!loading && !alumni.length" style="padding:48px 0;">
+      <i class="pi pi-users"></i>
+      <h3>No alumni found</h3>
+      <p>Adjust your search filters to find registered alumni.</p>
     </div>
   </div>
-
-
 </section>

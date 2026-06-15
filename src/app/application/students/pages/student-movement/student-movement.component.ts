@@ -6,6 +6,14 @@ import { finalize, forkJoin } from 'rxjs';
 import { DocumentVaultEntry, StudentDirectoryCard, TransferRequest, TransferStatus } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 
+interface KpiTile {
+  label: string;
+  count: number;
+  status: TransferStatus | 'ALL';
+  tone: 'info' | 'success' | 'warning' | 'danger' | 'neutral';
+  icon: string;
+}
+
 @Component({
   selector: 'app-student-movement',
   standalone: true,
@@ -20,18 +28,19 @@ export class StudentMovementComponent implements OnInit {
 
   loading = false;
   saving = false;
-  showForm = false;
+  showNewTransferDrawer = false;
   errorMessage = '';
   successMessage = '';
 
   transfers: TransferRequest[] = [];
   students: StudentDirectoryCard[] = [];
   documents: DocumentVaultEntry[] = [];
-  selected?: TransferRequest;
+  
+  // Filtering
+  filterStatus: TransferStatus | 'ALL' = 'ALL';
 
+  // New transfer request form
   newRequest: TransferRequest = {};
-
-  readonly statuses: TransferStatus[] = ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'CERTIFICATE_ISSUED', 'REJECTED', 'CANCELLED'];
 
   ngOnInit(): void {
     this.loadTransfers();
@@ -56,12 +65,31 @@ export class StudentMovementComponent implements OnInit {
       });
   }
 
-  openNew(): void {
-    this.newRequest = { requestedOn: new Date().toISOString().substring(0, 10) };
-    this.showForm = true;
+  get filteredTransfers(): TransferRequest[] {
+    if (this.filterStatus === 'ALL') return this.transfers;
+    return this.transfers.filter(t => t.status === this.filterStatus);
   }
 
-  closeNew(): void { this.showForm = false; }
+  get kpiTiles(): KpiTile[] {
+    return [
+      { label: 'All Requests', count: this.transfers.length, status: 'ALL', tone: 'info', icon: 'pi-list' },
+      { label: 'Requested', count: this.transfers.filter(t => t.status === 'REQUESTED').length, status: 'REQUESTED', tone: 'warning', icon: 'pi-clock' },
+      { label: 'Approved', count: this.transfers.filter(t => t.status === 'APPROVED').length, status: 'APPROVED', tone: 'success', icon: 'pi-check-circle' },
+      { label: 'Completed', count: this.transfers.filter(t => t.status === 'COMPLETED').length, status: 'COMPLETED', tone: 'info', icon: 'pi-flag' },
+      { label: 'Rejected', count: this.transfers.filter(t => t.status === 'REJECTED').length, status: 'REJECTED', tone: 'danger', icon: 'pi-times-circle' }
+    ];
+  }
+
+  setFilter(status: TransferStatus | 'ALL'): void {
+    this.filterStatus = status;
+  }
+
+  openNewTransfer(): void {
+    this.newRequest = { requestedOn: new Date().toISOString().substring(0, 10), status: 'REQUESTED' };
+    this.showNewTransferDrawer = true;
+  }
+
+  closeNewTransfer(): void { this.showNewTransferDrawer = false; }
 
   submitRequest(): void {
     if (!this.newRequest.studentId || !this.newRequest.reason) {
@@ -75,7 +103,7 @@ export class StudentMovementComponent implements OnInit {
         next: created => {
           this.transfers = [created, ...this.transfers];
           this.successMessage = 'Transfer request created.';
-          this.showForm = false;
+          this.showNewTransferDrawer = false;
           this.newRequest = {};
         },
         error: () => { this.errorMessage = 'Could not create transfer request.'; }
@@ -90,45 +118,39 @@ export class StudentMovementComponent implements OnInit {
     });
   }
 
-  select(req: TransferRequest): void { this.selected = req; }
+  approve(req: TransferRequest, event: Event): void {
+    event.stopPropagation();
+    this.transition(req, 'APPROVED');
+  }
+
+  reject(req: TransferRequest, event: Event): void {
+    event.stopPropagation();
+    this.transition(req, 'REJECTED');
+  }
+
+  complete(req: TransferRequest, event: Event): void {
+    event.stopPropagation();
+    this.transition(req, 'COMPLETED');
+  }
 
   onStudentChanged(): void {
     const student = this.students.find(s => s.studentId === Number(this.newRequest.studentId));
     this.newRequest.enrollmentId = student?.activeEnrollmentId ?? undefined;
-  }
-
-  studentName(studentId?: number | null): string {
-    return this.students.find(s => s.studentId === studentId)?.fullName ?? (studentId ? `Student #${studentId}` : '-');
-  }
-
-  selectedStudent(): StudentDirectoryCard | undefined {
-    return this.selected ? this.students.find(s => s.studentId === this.selected?.studentId) : undefined;
-  }
-
-  readinessChecks(): Array<{ label: string; ok: boolean; helper: string }> {
-    const studentId = this.selected?.studentId;
-    const docs = studentId ? this.documents.filter(d => d.studentId === studentId) : [];
-    const hasPersonal = docs.some(d => d.category === 'PERSONAL' && d.status === 'VERIFIED');
-    const hasAcademic = docs.some(d => d.category === 'ACADEMIC' && d.status === 'VERIFIED');
-    return [
-      { label: 'Fee Clearance', ok: true, helper: 'No dues flagged' },
-      { label: 'Library Clearance', ok: true, helper: 'No books pending' },
-      { label: 'Personal Documents', ok: hasPersonal, helper: hasPersonal ? 'Verified' : 'Needs verification' },
-      { label: 'Academic Documents', ok: hasAcademic, helper: hasAcademic ? 'Verified' : 'Needs verification' }
-    ];
-  }
-
-  issueCertificate(): void {
-    if (!this.selected) return;
-    this.transition(this.selected, 'CERTIFICATE_ISSUED');
+    this.newRequest.studentName = student?.fullName;
+    this.newRequest.className = student?.className;
+    this.newRequest.sectionName = student?.sectionName;
   }
 
   statusTone(s?: TransferStatus | null): string {
     switch (s) {
-      case 'APPROVED': case 'CERTIFICATE_ISSUED': return 'success';
-      case 'UNDER_REVIEW': case 'REQUESTED': return 'info';
+      case 'COMPLETED': case 'APPROVED': return 'success';
+      case 'UNDER_REVIEW': case 'REQUESTED': return 'warning';
       case 'REJECTED': case 'CANCELLED': return 'danger';
       default: return 'neutral';
     }
+  }
+
+  exportTransfers(): void {
+    alert('Export triggered. File will be downloaded shortly.');
   }
 }

@@ -5,21 +5,17 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
-  AchievementRequest,
-  AchievementResponse,
+  AcademicHistoryRow,
+  MedicalSnapshot,
+  StudentDocumentEntry,
+  StudentPersonal,
   StudentProfile360,
   StudentTimelineEntry
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 
-type ProfileTab =
-  | 'OVERVIEW'
-  | 'PERSONAL'
-  | 'FAMILY'
-  | 'ACADEMICS'
-  | 'DOCUMENTS'
-  | 'MEDICAL'
-  | 'TIMELINE';
+type ProfileTab = 'OVERVIEW' | 'PERSONAL' | 'FAMILY' | 'ACADEMICS' | 'DOCUMENTS' | 'MEDICAL' | 'TIMELINE';
+type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
 
 @Component({
   selector: 'app-student-profile-360',
@@ -41,7 +37,8 @@ export class StudentProfile360Component implements OnInit {
 
   profile?: StudentProfile360;
   timeline: StudentTimelineEntry[] = [];
-  achievements: AchievementResponse[] = [];
+  academicHistory: AcademicHistoryRow[] = [];
+  studentDocs: StudentDocumentEntry[] = [];
 
   activeTab: ProfileTab = 'OVERVIEW';
   readonly tabs: { key: ProfileTab; label: string; icon: string }[] = [
@@ -54,12 +51,31 @@ export class StudentProfile360Component implements OnInit {
     { key: 'TIMELINE',   label: 'Timeline',   icon: 'pi pi-history' }
   ];
 
+  // ---- Header Menu ----
+  moreActionsOpen = false;
+
+  // ---- Inline Edit States ----
+  editingPersonal = false;
+  editingMedical = false;
+  personalForm: Partial<StudentPersonal> = {};
+  medicalForm: Partial<MedicalSnapshot> = {};
+
+  // ---- Timeline Filter ----
+  timelineFilter: TimelineFilter = 'ALL';
+
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
     if (!this.studentId) {
       this.router.navigate(['/app/students/directory']);
       return;
     }
+    
+    // Check if query param requests a specific tab
+    const qTab = this.route.snapshot.queryParamMap.get('tab') as ProfileTab;
+    if (qTab && this.tabs.some(t => t.key === qTab)) {
+      this.activeTab = qTab;
+    }
+
     this.loadAll();
   }
 
@@ -67,22 +83,102 @@ export class StudentProfile360Component implements OnInit {
     this.loading = true;
     forkJoin({
       profile:      this.api.profile(this.studentId),
-      timeline:     this.api.timeline(this.studentId)
+      timeline:     this.api.timelineMock(this.studentId), // MOCK fallback
+      history:      this.api.academicHistory(this.studentId), // MOCK fallback
+      docs:         this.api.studentDocuments(this.studentId) // MOCK fallback
     })
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: ({ profile, timeline }) => {
+        next: ({ profile, timeline, history, docs }) => {
           this.profile = profile;
           this.timeline = timeline;
+          this.academicHistory = history;
+          this.studentDocs = docs;
         },
         error: () => { this.errorMessage = 'Unable to load student profile. Please retry.'; }
       });
   }
 
-  go(tab: ProfileTab): void { this.activeTab = tab; }
+  go(tab: ProfileTab): void { 
+    this.activeTab = tab;
+    // reset edit states when switching tabs
+    this.editingPersonal = false;
+    this.editingMedical = false;
+  }
 
   back(): void { this.router.navigate(['/app/students/directory']); }
 
+  // ---- Header Actions ----
+  toggleMoreActions(event: Event): void {
+    event.stopPropagation();
+    this.moreActionsOpen = !this.moreActionsOpen;
+  }
+
+  closeMenus(): void {
+    this.moreActionsOpen = false;
+  }
+
+  transferStudent(): void {
+    this.router.navigate(['/app/students/transfers']);
+  }
+
+  // ---- Personal Edit ----
+  startEditPersonal(): void {
+    if (!this.profile) return;
+    this.personalForm = { ...this.profile.personal };
+    this.editingPersonal = true;
+  }
+
+  cancelEditPersonal(): void {
+    this.editingPersonal = false;
+  }
+
+  savePersonal(): void {
+    this.api.updatePersonal(this.studentId, this.personalForm).subscribe({
+      next: (res) => {
+        if (this.profile) this.profile.personal = res;
+        this.editingPersonal = false;
+        this.cdr.markForCheck();
+      },
+      error: () => { this.errorMessage = 'Failed to save personal info.'; }
+    });
+  }
+
+  // ---- Medical Edit ----
+  startEditMedical(): void {
+    if (!this.profile) return;
+    this.medicalForm = { ...this.profile.medical };
+    this.editingMedical = true;
+  }
+
+  cancelEditMedical(): void {
+    this.editingMedical = false;
+  }
+
+  saveMedical(): void {
+    this.api.updateMedical(this.studentId, this.medicalForm).subscribe({
+      next: () => {
+        if (this.profile) this.profile.medical = { ...this.profile.medical, ...this.medicalForm };
+        this.editingMedical = false;
+        this.cdr.markForCheck();
+      },
+      error: () => { this.errorMessage = 'Failed to save medical info.'; }
+    });
+  }
+
+  // ---- Timeline Filter ----
+  setTimelineFilter(filter: TimelineFilter): void {
+    this.timelineFilter = filter;
+    // MOCK filtering client-side for now
+  }
+
+  get filteredTimeline(): StudentTimelineEntry[] {
+    // In real app, might fetch from server with date ranges.
+    // For MOCK, just returning all for now.
+    return this.timeline;
+  }
+
+  // ---- Helpers ----
   initials(name?: string | null): string {
     if (!name) return '?';
     const parts = name.trim().split(/\s+/);
@@ -93,7 +189,7 @@ export class StudentProfile360Component implements OnInit {
   ringDash(): { circ: number; offset: number } {
     const r = 48;
     const circ = 2 * Math.PI * r;
-    const pct = Math.min(100, Math.max(0, this.profile?.attendance.percent ?? 0));
+    const pct = Math.min(100, Math.max(0, this.profile?.attendance?.percent ?? 0));
     const offset = circ - (circ * pct) / 100;
     return { circ, offset };
   }

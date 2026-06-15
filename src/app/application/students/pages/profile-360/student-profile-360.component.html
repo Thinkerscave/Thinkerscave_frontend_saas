@@ -1,212 +1,590 @@
-<section class="adm-workspace" *ngIf="!loading && profile">
-  <!-- Breadcrumb / back -->
-  <div style="display:flex; align-items:center; gap:8px; font-size:0.86rem; color:var(--tc-text-muted);">
-    <a (click)="back()" style="cursor:pointer; color:var(--tc-primary-600);">Students</a>
-    <i class="pi pi-angle-right"></i>
-    <span>{{ profile.overview.fullName }}</span>
-    <i class="pi pi-angle-right"></i>
-    <span>{{ tabs[0].label }}</span>
+<section class="adm-workspace" style="padding-top:16px;" (click)="closeMenus()">
+
+  <!-- Breadcrumb -->
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.84rem;margin-bottom:-8px;color:var(--tc-text-muted);">
+    <a routerLink="/app/students/directory" style="color:var(--tc-text-muted);text-decoration:none;cursor:pointer;">
+      <i class="pi pi-home"></i> Students
+    </a>
+    <i class="pi pi-angle-right" style="font-size:0.75rem;"></i>
+    <span style="font-weight:600;color:var(--tc-text);">{{ profile?.overview?.fullName || 'Profile' }}</span>
   </div>
 
-  <!-- Hero -->
-  <header class="stu-hero">
-    <div class="stu-photo stu-photo--xl stu-photo--initials"
-         style="font-size:2rem;">{{ initials(profile.overview.fullName) }}</div>
-    <div class="stu-hero__meta">
-      <h1>{{ profile.overview.fullName }}</h1>
-      <p>{{ profile.overview.admissionNumber }} · {{ profile.overview.className || '—' }} {{ profile.overview.sectionName ? '· ' + profile.overview.sectionName : '' }}</p>
-      <div class="stu-hero-chips">
-        <span class="stu-hero-chip"><i class="pi pi-calendar"></i> DOB {{ profile.overview.dateOfBirth || '—' }}</span>
-        <span class="stu-hero-chip"><i class="pi pi-user"></i> {{ profile.overview.gender || '—' }} · {{ profile.overview.ageYears || '—' }}y</span>
-        <span class="stu-hero-chip"><i class="pi pi-phone"></i> {{ profile.overview.mobile || '—' }}</span>
-        <span class="stu-hero-chip"><i class="pi pi-envelope"></i> {{ profile.overview.email || '—' }}</span>
-        <span class="adm-badge" [attr.data-tone]="profile.overview.active ? 'success' : 'neutral'">
-          {{ profile.overview.active ? 'Active' : 'Inactive' }}
-        </span>
-      </div>
-    </div>
-    <div class="stu-hero__actions">
-      <button type="button" class="adm-btn"><i class="pi pi-pencil"></i> Edit Profile</button>
-      <button type="button" class="adm-btn adm-btn--primary"><i class="pi pi-ellipsis-v"></i> More Actions</button>
-    </div>
-  </header>
-
-  <!-- Tabs -->
-  <nav class="adm-tabs">
-    <button *ngFor="let t of tabs"
-            [class.is-active]="activeTab === t.key"
-            (click)="go(t.key)">
-      <i [class]="t.icon" style="margin-right:6px;"></i>{{ t.label }}
-    </button>
-  </nav>
-
-  <!-- ============ OVERVIEW ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'OVERVIEW'">
-    <div class="stu-snapshot-grid">
-      <!-- Academic snapshot -->
-      <div class="stu-snapshot">
-        <div class="stu-snapshot__head"><h3><i class="pi pi-book"></i> Academic</h3><a (click)="go('ACADEMICS')">View</a></div>
-        <div class="stu-snapshot__rows">
-          <div><span>Class</span><strong>{{ profile.academics.currentClass || '—' }}</strong></div>
-          <div><span>Section</span><strong>{{ profile.academics.currentSection || '—' }}</strong></div>
-          <div><span>Roll Number</span><strong>{{ profile.academics.rollNumber || '—' }}</strong></div>
-          <div><span>Academic Year</span><strong>{{ profile.academics.academicYear || '—' }}</strong></div>
-          <div><span>Admission Date</span><strong>{{ profile.academics.admissionDate || '—' }}</strong></div>
-        </div>
-      </div>
-
-      <!-- Attendance ring -->
-      <div class="stu-snapshot">
-        <div class="stu-snapshot__head"><h3><i class="pi pi-calendar-times"></i> Attendance (this month)</h3></div>
-        <div class="stu-ring">
-          <svg viewBox="0 0 110 110">
-            <circle class="stu-ring__track" cx="55" cy="55" r="48" stroke-width="9" fill="none"/>
-            <circle class="stu-ring__fill" cx="55" cy="55" r="48" stroke-width="9" fill="none"
-                    [attr.stroke-dasharray]="ringDash().circ"
-                    [attr.stroke-dashoffset]="ringDash().offset"
-                    stroke-linecap="round"/>
-          </svg>
-          <div class="stu-ring__label">
-            <strong>{{ profile.attendance.percent }}%</strong>
-            <small>{{ profile.attendance.present }} / {{ profile.attendance.totalWorkingDays }} days</small>
-          </div>
-        </div>
-        <div class="stu-snapshot__rows">
-          <div><span>Present</span><strong>{{ profile.attendance.present }}</strong></div>
-          <div><span>Absent</span><strong>{{ profile.attendance.absent }}</strong></div>
-          <div><span>Late</span><strong>{{ profile.attendance.late }}</strong></div>
-        </div>
-      </div>
-
-      <!-- Fee snapshot -->
-      <div class="stu-snapshot">
-        <div class="stu-snapshot__head"><h3><i class="pi pi-credit-card"></i> Fee</h3></div>
-        <div class="stu-snapshot__rows">
-          <div><span>Total</span><strong>₹{{ profile.fees.totalFee | number }}</strong></div>
-          <div><span>Paid</span><strong style="color:var(--tc-success)">₹{{ profile.fees.paid | number }}</strong></div>
-          <div><span>Pending</span><strong style="color:var(--tc-warning)">₹{{ profile.fees.pending | number }}</strong></div>
-        </div>
-        <div class="stu-fee-bar"><span [style.width.%]="feePercent()"></span></div>
-        <span class="adm-badge" [attr.data-tone]="profile.fees.pending > 0 ? 'warning' : 'success'">{{ profile.fees.status }}</span>
-      </div>
-    </div>
+  <!-- Loading -->
+  <div class="adm-loading" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading profile…
+  </div>
+  
+  <!-- Error -->
+  <div *ngIf="errorMessage" class="adm-toast is-error">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <!-- ============ PERSONAL ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'PERSONAL'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Personal Details</h2></div>
-      <dl class="adm-dl">
-        <div><dt>Full Name</dt><dd>{{ profile.personal.fullName }}</dd></div>
-        <div><dt>Gender</dt><dd>{{ profile.personal.gender || '—' }}</dd></div>
-        <div><dt>Date of Birth</dt><dd>{{ profile.personal.dateOfBirth || '—' }}</dd></div>
-        <div><dt>Blood Group</dt><dd>{{ profile.personal.bloodGroup || '—' }}</dd></div>
-        <div><dt>Nationality</dt><dd>{{ profile.personal.nationality || '—' }}</dd></div>
-        <div><dt>Religion</dt><dd>{{ profile.personal.religion || '—' }}</dd></div>
-        <div><dt>Mother Tongue</dt><dd>{{ profile.personal.motherTongue || '—' }}</dd></div>
-        <div><dt>Permanent Address</dt><dd>{{ profile.personal.permanentAddress || '—' }}</dd></div>
-        <div><dt>Current Address</dt><dd>{{ profile.personal.currentAddress || '—' }}</dd></div>
-        <div><dt>Remarks</dt><dd>{{ profile.personal.remarks || '—' }}</dd></div>
-      </dl>
-    </div>
-  </div>
+  <ng-container *ngIf="!loading && profile">
+    
+    <!-- ════════════════════════ HERO HEADER ════════════════════════ -->
+    <header class="stu-hero">
+      <div class="stu-photo stu-photo--lg stu-photo--initials" style="font-size:2rem;">
+        <img *ngIf="profile.overview.photoUrl" [src]="profile.overview.photoUrl" [alt]="profile.overview.fullName"
+             style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
+        <span *ngIf="!profile.overview.photoUrl">{{ initials(profile.overview.fullName) }}</span>
+      </div>
+      
+      <div class="stu-hero__meta">
+        <h1 style="display:flex;align-items:center;gap:10px;">
+          {{ profile.overview.fullName }}
+          <span class="stu-status" [attr.data-status]="profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE')">
+            {{ profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE') | titlecase }}
+          </span>
+        </h1>
+        <p>{{ profile.overview.className || '—' }} – {{ profile.overview.sectionName || '—' }} | Admission: {{ profile.overview.admissionNumber }}</p>
+        
+        <div class="stu-hero-chips">
+          <span class="stu-hero-chip"><i class="pi pi-hashtag"></i> Roll No: {{ profile.overview.rollNumber || '—' }}</span>
+          <span class="stu-hero-chip"><i class="pi pi-id-card"></i> {{ profile.overview.studentCode || 'N/A' }}</span>
+          <span class="stu-hero-chip"><i class="pi pi-calendar"></i> Age: {{ profile.overview.ageYears || '—' }} Years</span>
+        </div>
+      </div>
 
-  <!-- ============ FAMILY ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'FAMILY'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Guardians</h2></div>
-      <div class="stu-snapshot-grid" *ngIf="profile.family.guardians.length; else noGuardians">
-        <div class="stu-snapshot" *ngFor="let g of profile.family.guardians">
-          <div class="stu-snapshot__head"><h3><i class="pi pi-user"></i> {{ g.name }}</h3>
-            <span class="adm-badge" data-tone="info">{{ g.relation || 'Guardian' }}</span>
-          </div>
-          <div class="stu-snapshot__rows">
-            <div><span>Mobile</span><strong>{{ g.mobile || '—' }}</strong></div>
-            <div><span>Email</span><strong>{{ g.email || '—' }}</strong></div>
-            <div><span>Address</span><strong>{{ g.address || '—' }}</strong></div>
-            <div *ngIf="g.occupation"><span>Occupation</span><strong>{{ g.occupation }}</strong></div>
+      <div class="stu-hero__actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="go('PERSONAL')">
+          <i class="pi pi-pencil"></i> Edit Profile
+        </button>
+        
+        <div class="stu-more-menu">
+          <button type="button" class="adm-icon-btn" style="background:var(--tc-surface-0);" 
+                  (click)="toggleMoreActions($event)">
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <div class="stu-more-menu__panel" *ngIf="moreActionsOpen">
+            <button class="stu-more-menu__item" (click)="transferStudent()">
+              <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
+            </button>
+            <button class="stu-more-menu__item">
+              <i class="pi pi-print"></i> Print Profile
+            </button>
+            <button class="stu-more-menu__item">
+              <i class="pi pi-id-card"></i> Print ID Card
+            </button>
+            <button class="stu-more-menu__item is-danger">
+              <i class="pi pi-ban"></i> Deactivate
+            </button>
           </div>
         </div>
       </div>
-      <ng-template #noGuardians><div class="adm-empty"><i class="pi pi-users"></i><h3>No guardians on file</h3></div></ng-template>
-    </div>
+    </header>
 
-    <div class="adm-panel" *ngIf="profile.family.siblings.length">
-      <div class="adm-panel__header"><h2>Siblings</h2><small class="adm-panel__hint">{{ profile.family.siblings.length }} record(s)</small></div>
-      <div class="stu-table-wrap">
-        <table class="stu-table">
-          <thead><tr><th>Name</th><th>Relationship</th><th>Class</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let s of profile.family.siblings">
-              <td>{{ s.name }}</td>
-              <td>{{ s.relationship }}</td>
-              <td>{{ s.className || '—' }} / {{ s.sectionName || '—' }}</td>
-              <td><span class="adm-badge" [attr.data-tone]="s.active ? 'success' : 'neutral'">{{ s.active ? 'Active' : 'Inactive' }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+    <!-- ════════════════════════ TABS ════════════════════════ -->
+    <nav class="adm-tabs">
+      <button *ngFor="let tab of tabs" 
+              [class.is-active]="activeTab === tab.key"
+              (click)="go(tab.key)">
+        <i class="{{ tab.icon }}" style="margin-right:6px;"></i> {{ tab.label }}
+      </button>
+    </nav>
 
-  <!-- ============ ACADEMICS ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'ACADEMICS'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Academic Profile</h2></div>
-      <dl class="adm-dl">
-        <div><dt>Current Class</dt><dd>{{ profile.academics.currentClass || '—' }}</dd></div>
-        <div><dt>Current Section</dt><dd>{{ profile.academics.currentSection || '—' }}</dd></div>
-        <div><dt>Roll Number</dt><dd>{{ profile.academics.rollNumber || '—' }}</dd></div>
-        <div><dt>Academic Year</dt><dd>{{ profile.academics.academicYear || '—' }}</dd></div>
-        <div><dt>Admission Date</dt><dd>{{ profile.academics.admissionDate || '—' }}</dd></div>
-        <div><dt>Admission Age</dt><dd>{{ profile.academics.admissionAgeYears || '—' }} years</dd></div>
-        <div><dt>Course Count</dt><dd>{{ profile.academics.courseCount }}</dd></div>
-        <div><dt>Subject Count</dt><dd>{{ profile.academics.subjectCount }}</dd></div>
-      </dl>
-    </div>
-  </div>
+    <!-- ════════════════════════ MAIN CONTENT ════════════════════════ -->
+    <div class="adm-tab-panel">
 
-  <!-- ============ DOCUMENTS ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'DOCUMENTS'">
-    <div class="adm-panel">
-      <div class="adm-panel__header">
-        <h2>Documents</h2>
-        <a routerLink="/app/students/documents" style="font-size:0.82rem; color:var(--tc-primary-600);">Open Document Vault →</a>
-      </div>
-      <div class="adm-empty">
-        <i class="pi pi-file"></i>
-        <h3>Document Vault</h3>
-        <p>Manage uploads, verification and missing-document tracking from the Document Vault.</p>
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- ============ TIMELINE ============ -->
-  <div class="adm-tab-panel" *ngIf="activeTab === 'TIMELINE'">
-    <div class="adm-panel">
-      <div class="adm-panel__header"><h2>Lifecycle Timeline</h2><small class="adm-panel__hint">{{ timeline.length }} events</small></div>
-      <div class="adm-timeline" *ngIf="timeline.length; else noTimeline">
-        <div class="adm-timeline__item" *ngFor="let e of timeline" [attr.data-tone]="e.tone">
-          <div class="adm-timeline__dot"><i [class]="e.icon"></i></div>
-          <div class="adm-timeline__body">
-            <strong>{{ e.action }}</strong>
-            <p>{{ e.description }}</p>
-            <small>{{ e.performedBy }} · {{ e.performedAt | date:'medium' }}</small>
+      <!-- ================= OVERVIEW TAB ================= -->
+      <ng-container *ngIf="activeTab === 'OVERVIEW'">
+        
+        <!-- KPI Row -->
+        <div class="stu-kpi-mini-grid">
+          <div class="stu-kpi-mini">
+            <div class="stu-kpi-mini__icon" data-tone="success">
+              <i class="pi pi-calendar-times"></i>
+            </div>
+            <div class="stu-kpi-mini__body">
+              <strong>{{ profile.attendance?.percent || 0 }}%</strong>
+              <span>Attendance</span>
+            </div>
+          </div>
+          
+          <div class="stu-kpi-mini">
+            <div class="stu-kpi-mini__icon" [attr.data-tone]="(profile.fees?.pending || 0) > 0 ? 'warning' : 'success'">
+              <i class="pi pi-wallet"></i>
+            </div>
+            <div class="stu-kpi-mini__body">
+              <strong>₹{{ profile.fees?.pending || 0 }}</strong>
+              <span>Pending Fees</span>
+            </div>
+          </div>
+          
+          <div class="stu-kpi-mini">
+            <div class="stu-kpi-mini__icon" data-tone="info">
+              <i class="pi pi-file"></i>
+            </div>
+            <div class="stu-kpi-mini__body">
+              <strong>{{ studentDocs.length || 0 }}</strong>
+              <span>Documents</span>
+            </div>
+          </div>
+          
+          <div class="stu-kpi-mini">
+            <div class="stu-completion" style="width:100%;flex-direction:column;align-items:flex-start;gap:4px;">
+              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:600;text-transform:uppercase;">Profile Completion</span>
+              <div style="display:flex;align-items:center;width:100%;gap:10px;">
+                <div class="stu-completion__bar">
+                  <span [style.width.%]="profile.overview.profileCompletion || 60"></span>
+                </div>
+                <strong class="stu-completion__pct">{{ profile.overview.profileCompletion || 60 }}%</strong>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <ng-template #noTimeline><div class="adm-empty"><i class="pi pi-history"></i><h3>No events recorded</h3></div></ng-template>
+
+        <!-- Snapshots Layout -->
+        <div class="stu-profile-layout">
+          <!-- Left: Snapshots -->
+          <div class="stu-snapshot-grid" style="align-content:flex-start;">
+            <div class="stu-snapshot">
+              <div class="stu-snapshot__head">
+                <h3>Student Summary</h3>
+                <a (click)="go('PERSONAL')">View All</a>
+              </div>
+              <div class="stu-snapshot__rows">
+                <div><span>Gender</span><strong>{{ profile.personal?.gender || '—' }}</strong></div>
+                <div><span>DOB</span><strong>{{ profile.personal?.dateOfBirth || '—' }}</strong></div>
+                <div><span>Blood Group</span><strong>{{ profile.personal?.bloodGroup || '—' }}</strong></div>
+                <div><span>Mother Tongue</span><strong>{{ profile.personal?.motherTongue || '—' }}</strong></div>
+                <div><span>Religion</span><strong>{{ profile.personal?.religion || '—' }}</strong></div>
+                <div><span>Nationality</span><strong>{{ profile.personal?.nationality || '—' }}</strong></div>
+              </div>
+            </div>
+
+            <div class="stu-snapshot">
+              <div class="stu-snapshot__head">
+                <h3>Academic Summary</h3>
+                <a (click)="go('ACADEMICS')">View All</a>
+              </div>
+              <div class="stu-snapshot__rows">
+                <div><span>Academic Year</span><strong>{{ profile.academics?.academicYear || '—' }}</strong></div>
+                <div><span>Admission Date</span><strong>{{ profile.academics?.admissionDate || '—' }}</strong></div>
+                <div><span>Enrollment Status</span>
+                  <span class="stu-status" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics?.enrollmentStatus || 'ACTIVE'">
+                    {{ profile.academics?.enrollmentStatus || 'Active' | titlecase }}
+                  </span>
+                </div>
+                <div><span>Current Class</span><strong>{{ profile.academics?.currentClass || '—' }}</strong></div>
+                <div><span>Current Section</span><strong>{{ profile.academics?.currentSection || '—' }}</strong></div>
+                <div><span>Enrolled Courses</span><strong>{{ profile.academics?.courseCount || 0 }}</strong></div>
+              </div>
+            </div>
+            
+            <div class="stu-snapshot">
+              <div class="stu-snapshot__head">
+                <h3>Contact Info</h3>
+                <a (click)="go('PERSONAL')">View All</a>
+              </div>
+              <div class="stu-snapshot__rows">
+                <div><span>Mobile</span><strong>{{ profile.personal?.mobile || '—' }}</strong></div>
+                <div><span>Email</span><strong>{{ profile.personal?.email || '—' }}</strong></div>
+                <div style="flex-direction:column;gap:4px;margin-top:4px;">
+                  <span>Current Address</span>
+                  <strong style="line-height:1.4;">{{ profile.personal?.currentAddressLine1 || '—' }}<br>{{ profile.personal?.currentCity || '' }} {{ profile.personal?.currentState || '' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Rings -->
+          <div class="stu-aside">
+            <div class="adm-panel" style="align-items:center;text-align:center;">
+              <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Attendance</h3>
+              <div class="stu-ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="stu-ring__track" cx="50" cy="50" r="48" fill="none" stroke-width="4"></circle>
+                  <circle class="stu-ring__fill" cx="50" cy="50" r="48" fill="none" stroke-width="4"
+                          [attr.stroke-dasharray]="ringDash().circ"
+                          [attr.stroke-dashoffset]="ringDash().offset" stroke-linecap="round"></circle>
+                </svg>
+                <div class="stu-ring__label">
+                  <strong>{{ profile.attendance?.percent || 0 }}%</strong>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;font-size:0.8rem;margin-top:8px;">
+                <div style="display:flex;flex-direction:column;color:var(--tc-success);">
+                  <strong>{{ profile.attendance?.present || 0 }}</strong><span>Present</span>
+                </div>
+                <div style="display:flex;flex-direction:column;color:var(--tc-danger);">
+                  <strong>{{ profile.attendance?.absent || 0 }}</strong><span>Absent</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="adm-panel">
+              <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Fees Overview</h3>
+              <div class="stu-fee-bar" style="margin:10px 0;">
+                <span [style.width.%]="feePercent()"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                <span style="color:var(--tc-text-muted);">Paid: <strong style="color:var(--tc-text);">₹{{ profile.fees?.paid || 0 }}</strong></span>
+                <span style="color:var(--tc-text-muted);">Due: <strong style="color:var(--tc-danger);">₹{{ profile.fees?.pending || 0 }}</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= PERSONAL TAB ================= -->
+      <ng-container *ngIf="activeTab === 'PERSONAL'">
+        <div class="adm-panel" *ngIf="!editingPersonal">
+          <div class="adm-panel__header">
+            <h2>Personal Details</h2>
+            <button class="adm-btn" (click)="startEditPersonal()">
+              <i class="pi pi-pencil"></i> Edit
+            </button>
+          </div>
+          <dl class="adm-dl">
+            <div><dt>Full Name</dt><dd>{{ profile.personal?.fullName || '—' }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ profile.personal?.gender || '—' }}</dd></div>
+            <div><dt>Date of Birth</dt><dd>{{ profile.personal?.dateOfBirth || '—' }}</dd></div>
+            <div><dt>Nationality</dt><dd>{{ profile.personal?.nationality || '—' }}</dd></div>
+            <div><dt>Religion</dt><dd>{{ profile.personal?.religion || '—' }}</dd></div>
+            <div><dt>Mother Tongue</dt><dd>{{ profile.personal?.motherTongue || '—' }}</dd></div>
+            <div><dt>Blood Group</dt><dd>{{ profile.personal?.bloodGroup || '—' }}</dd></div>
+            <div><dt>Mobile</dt><dd>{{ profile.personal?.mobile || '—' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ profile.personal?.email || '—' }}</dd></div>
+          </dl>
+          
+          <h3 style="margin:10px 0 0;font-size:1rem;color:var(--tc-text);padding-top:16px;border-top:1px dashed var(--tc-border);">Address Details</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div>
+              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Current Address</span>
+              <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
+                {{ profile.personal?.currentAddressLine1 || '—' }}<br>
+                {{ profile.personal?.currentCity || '' }} {{ profile.personal?.currentState || '' }}<br>
+                {{ profile.personal?.currentPincode || '' }}
+              </p>
+            </div>
+            <div>
+              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Permanent Address</span>
+              <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
+                {{ profile.personal?.permanentAddressLine1 || '—' }}<br>
+                {{ profile.personal?.permanentCity || '' }} {{ profile.personal?.permanentState || '' }}<br>
+                {{ profile.personal?.permanentPincode || '' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Edit: Personal -->
+        <div class="adm-panel stu-inline-edit" *ngIf="editingPersonal">
+          <div class="stu-inline-edit__header">
+            <h3>Edit Personal Details</h3>
+          </div>
+          <div class="stu-inline-edit__form">
+            <div class="adm-field">
+              <label>First Name</label>
+              <input type="text" [(ngModel)]="personalForm.firstName"/>
+            </div>
+            <div class="adm-field">
+              <label>Last Name</label>
+              <input type="text" [(ngModel)]="personalForm.lastName"/>
+            </div>
+            <div class="adm-field">
+              <label>Gender</label>
+              <select [(ngModel)]="personalForm.gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="adm-field">
+              <label>Date of Birth</label>
+              <input type="date" [(ngModel)]="personalForm.dateOfBirth"/>
+            </div>
+            <div class="adm-field">
+              <label>Mobile</label>
+              <input type="tel" [(ngModel)]="personalForm.mobile"/>
+            </div>
+            <div class="adm-field">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="personalForm.email"/>
+            </div>
+            <div class="adm-field adm-field--full">
+              <label>Current Address</label>
+              <input type="text" [(ngModel)]="personalForm.currentAddressLine1"/>
+            </div>
+            <div class="adm-field">
+              <label>City</label>
+              <input type="text" [(ngModel)]="personalForm.currentCity"/>
+            </div>
+            <div class="adm-field">
+              <label>State</label>
+              <input type="text" [(ngModel)]="personalForm.currentState"/>
+            </div>
+          </div>
+          <div class="stu-inline-edit__actions">
+            <button class="adm-btn adm-btn--ghost" (click)="cancelEditPersonal()">Cancel</button>
+            <button class="adm-btn adm-btn--primary" (click)="savePersonal()">Save Changes</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= FAMILY TAB ================= -->
+      <ng-container *ngIf="activeTab === 'FAMILY'">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <button class="adm-btn adm-btn--primary"><i class="pi pi-plus"></i> Add Guardian</button>
+        </div>
+        
+        <div class="stu-family-grid">
+          <div *ngFor="let g of profile.family?.guardians" 
+               class="stu-family-card"
+               [class.stu-family-card--primary]="g.isPrimaryContact">
+            
+            <div class="stu-family-card__actions">
+              <button class="adm-icon-btn"><i class="pi pi-pencil"></i></button>
+            </div>
+
+            <div class="stu-family-card__head">
+              <div class="stu-photo stu-photo--initials">
+                <img *ngIf="g.photoUrl" [src]="g.photoUrl"/>
+                <span *ngIf="!g.photoUrl">{{ initials(g.name) }}</span>
+              </div>
+              <div class="stu-family-card__head-meta">
+                <strong>{{ g.name }}</strong>
+                <span>{{ g.relation || 'Guardian' }}</span>
+              </div>
+            </div>
+
+            <div class="stu-family-card__badges" *ngIf="g.isPrimaryContact || g.isPickupAuthorized">
+              <span class="adm-badge" data-tone="success" *ngIf="g.isPrimaryContact">Primary Contact</span>
+              <span class="adm-badge" data-tone="info" *ngIf="g.isPickupAuthorized">Pickup Authorized</span>
+            </div>
+
+            <div class="stu-family-card__rows">
+              <div><i class="pi pi-phone"></i><span>Mobile</span><strong>{{ g.mobile || '—' }}</strong></div>
+              <div><i class="pi pi-envelope"></i><span>Email</span><strong>{{ g.email || '—' }}</strong></div>
+              <div><i class="pi pi-briefcase"></i><span>Occupation</span><strong>{{ g.occupation || '—' }}</strong></div>
+              <div *ngIf="g.organization"><i class="pi pi-building"></i><span>Organization</span><strong>{{ g.organization }}</strong></div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= ACADEMICS TAB ================= -->
+      <ng-container *ngIf="activeTab === 'ACADEMICS'">
+        <div class="adm-panel">
+          <div class="adm-panel__header">
+            <h2>Current Enrollment</h2>
+          </div>
+          <dl class="adm-dl">
+            <div><dt>Academic Year</dt><dd>{{ profile.academics?.academicYear || '—' }}</dd></div>
+            <div><dt>Class</dt><dd>{{ profile.academics?.currentClass || '—' }}</dd></div>
+            <div><dt>Section</dt><dd>{{ profile.academics?.currentSection || '—' }}</dd></div>
+            <div><dt>Roll Number</dt><dd>{{ profile.academics?.rollNumber || '—' }}</dd></div>
+            <div><dt>Enrollment Date</dt><dd>{{ profile.academics?.enrollmentDate || '—' }}</dd></div>
+            <div><dt>Status</dt>
+              <dd>
+                <span class="stu-status" [attr.data-status]="profile.academics?.enrollmentStatus || 'ACTIVE'">
+                  {{ profile.academics?.enrollmentStatus || 'Active' | titlecase }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="adm-panel">
+          <div class="adm-panel__header">
+            <h2>Academic History</h2>
+            <button class="adm-btn"><i class="pi pi-print"></i> Generate Transcript</button>
+          </div>
+          <div class="stu-table-wrap">
+            <table class="stu-table">
+              <thead>
+                <tr>
+                  <th>Academic Year</th>
+                  <th>Class</th>
+                  <th>Section</th>
+                  <th>Roll No</th>
+                  <th>Result</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of academicHistory">
+                  <td><strong>{{ h.academicYear }}</strong></td>
+                  <td>{{ h.className }}</td>
+                  <td>{{ h.sectionName }}</td>
+                  <td>{{ h.rollNumber || '—' }}</td>
+                  <td>
+                    <span class="stu-status" [attr.data-status]="h.result === 'Promoted' ? 'ACTIVE' : 'neutral'">
+                      {{ h.result || '—' }}
+                    </span>
+                  </td>
+                  <td style="color:var(--tc-text-muted);">{{ h.remarks || '—' }}</td>
+                </tr>
+                <tr *ngIf="!academicHistory.length">
+                  <td colspan="6" style="text-align:center;color:var(--tc-text-muted);padding:24px;">No academic history available.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= DOCUMENTS TAB ================= -->
+      <ng-container *ngIf="activeTab === 'DOCUMENTS'">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <button class="adm-btn adm-btn--primary"><i class="pi pi-upload"></i> Upload Document</button>
+        </div>
+
+        <div class="stu-doc-grid">
+          <div *ngFor="let d of studentDocs" class="stu-doc-card" [attr.data-status]="d.status">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div class="stu-doc-card__icon">
+                <i class="pi pi-file"></i>
+              </div>
+              <div style="flex:1;">
+                <div class="stu-doc-card__name">{{ d.documentName }}</div>
+                <div class="stu-doc-card__meta">{{ d.uploadedDate || 'Not uploaded' }}</div>
+                <span class="stu-status" style="margin-top:6px;" [attr.data-status]="d.status">
+                  {{ d.status | titlecase }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="stu-doc-card__actions">
+              <button class="adm-btn" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status !== 'MISSING'">
+                <i class="pi pi-eye"></i> View
+              </button>
+              <button class="adm-btn adm-btn--primary" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status === 'MISSING'">
+                <i class="pi pi-upload"></i> Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= MEDICAL TAB ================= -->
+      <ng-container *ngIf="activeTab === 'MEDICAL'">
+        <div class="adm-panel" *ngIf="!editingMedical">
+          <div class="adm-panel__header">
+            <h2>Medical Information</h2>
+            <button class="adm-btn" (click)="startEditMedical()">
+              <i class="pi pi-pencil"></i> Edit
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Blood Group</span>
+                <strong style="font-size:1.1rem;color:var(--tc-danger);">{{ profile.medical?.bloodGroup || '—' }}</strong>
+              </div>
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Allergies</span>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.allergies || 'None reported' }}</p>
+              </div>
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Medical Conditions</span>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.medicalConditions || 'None reported' }}</p>
+              </div>
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Ongoing Medications</span>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.medications || 'None' }}</p>
+              </div>
+            </div>
+            
+            <div style="display:flex;flex-direction:column;gap:16px;padding-left:24px;border-left:1px dashed var(--tc-border);">
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Family Doctor</span>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">
+                  <strong>{{ profile.medical?.doctorName || '—' }}</strong><br>
+                  <i class="pi pi-phone" style="font-size:0.8rem;color:var(--tc-primary-600);"></i> {{ profile.medical?.doctorContact || '—' }}
+                </p>
+              </div>
+              <div>
+                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Emergency Notes</span>
+                <div style="margin:4px 0 0;padding:12px;background:color-mix(in srgb, var(--tc-warning) 8%, transparent);border-radius:10px;border:1px solid color-mix(in srgb, var(--tc-warning) 30%, transparent);">
+                  <p style="margin:0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.emergencyNotes || 'No specific emergency instructions provided.' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Edit: Medical -->
+        <div class="adm-panel stu-inline-edit" *ngIf="editingMedical">
+          <div class="stu-inline-edit__header">
+            <h3>Edit Medical Details</h3>
+          </div>
+          <div class="stu-inline-edit__form">
+            <div class="adm-field">
+              <label>Blood Group</label>
+              <select [(ngModel)]="medicalForm.bloodGroup">
+                <option value="A+">A+</option>
+                <option value="B+">B+</option>
+                <option value="O+">O+</option>
+                <option value="AB+">AB+</option>
+                <option value="A-">A-</option>
+                <option value="B-">B-</option>
+                <option value="O-">O-</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+            <div class="adm-field">
+              <label>Doctor Name</label>
+              <input type="text" [(ngModel)]="medicalForm.doctorName"/>
+            </div>
+            <div class="adm-field">
+              <label>Doctor Contact</label>
+              <input type="tel" [(ngModel)]="medicalForm.doctorContact"/>
+            </div>
+            <div class="adm-field adm-field--full">
+              <label>Allergies</label>
+              <textarea [(ngModel)]="medicalForm.allergies"></textarea>
+            </div>
+            <div class="adm-field adm-field--full">
+              <label>Medical Conditions</label>
+              <textarea [(ngModel)]="medicalForm.medicalConditions"></textarea>
+            </div>
+            <div class="adm-field adm-field--full">
+              <label>Emergency Notes</label>
+              <textarea [(ngModel)]="medicalForm.emergencyNotes"></textarea>
+            </div>
+          </div>
+          <div class="stu-inline-edit__actions">
+            <button class="adm-btn adm-btn--ghost" (click)="cancelEditMedical()">Cancel</button>
+            <button class="adm-btn adm-btn--primary" (click)="saveMedical()">Save Changes</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= TIMELINE TAB ================= -->
+      <ng-container *ngIf="activeTab === 'TIMELINE'">
+        <div class="adm-panel">
+          <div class="adm-panel__header">
+            <h2>Activity Timeline</h2>
+            <div class="stu-timeline-filters">
+              <button [class.is-active]="timelineFilter === 'TODAY'" (click)="setTimelineFilter('TODAY')">Today</button>
+              <button [class.is-active]="timelineFilter === 'WEEK'" (click)="setTimelineFilter('WEEK')">This Week</button>
+              <button [class.is-active]="timelineFilter === 'MONTH'" (click)="setTimelineFilter('MONTH')">This Month</button>
+              <button [class.is-active]="timelineFilter === 'ALL'" (click)="setTimelineFilter('ALL')">All Time</button>
+            </div>
+          </div>
+
+          <div class="adm-timeline" *ngIf="filteredTimeline.length">
+            <div class="adm-timeline__item" *ngFor="let t of filteredTimeline" [attr.data-tone]="t.tone">
+              <div class="adm-timeline__dot">
+                <i class="{{ t.icon }}"></i>
+              </div>
+              <div class="adm-timeline__body">
+                <strong>{{ t.action }}</strong>
+                <p>{{ t.description }}</p>
+                <small>{{ t.performedAt | date:'medium' }} · by {{ t.performedBy }}</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="adm-empty" *ngIf="!filteredTimeline.length" style="padding:32px 0;">
+            <i class="pi pi-history"></i>
+            <h3>No activities found</h3>
+            <p>No timeline events match the selected filter.</p>
+          </div>
+        </div>
+      </ng-container>
+
     </div>
-  </div>
-
-</section>
-
-<section class="adm-workspace" *ngIf="loading">
-  <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading student profile…</div>
-</section>
-
-<section class="adm-workspace" *ngIf="errorMessage && !loading">
-  <div class="adm-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
+  </ng-container>
 </section>

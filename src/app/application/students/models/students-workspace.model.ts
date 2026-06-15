@@ -15,7 +15,7 @@ export interface StudentSearchRequest {
   keyword?: string | null;
   classId?: string | null;
   sectionId?: string | null;
-  status?: 'ACTIVE' | 'INACTIVE' | null;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ALUMNI' | null;
   parentName?: string | null;
 }
 
@@ -53,11 +53,78 @@ export interface StudentCreateRequest {
   guardianAddress?: string | null;
 }
 
+/** Extended create request matching the 5-step wizard */
+export interface StudentWizardRequest {
+  // Step 1: Student Information
+  admissionNumber?: string | null;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  religion?: string | null;
+  nationality?: string | null;
+  motherTongue?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  currentAddressLine1?: string | null;
+  currentAddressLine2?: string | null;
+  currentCity?: string | null;
+  currentState?: string | null;
+  currentPincode?: string | null;
+  permanentAddressLine1?: string | null;
+  permanentAddressLine2?: string | null;
+  permanentCity?: string | null;
+  permanentState?: string | null;
+  permanentPincode?: string | null;
+  sameAsCurrentAddress?: boolean;
+  photoUrl?: string | null;
+
+  // Step 2: Parent Information
+  parents?: ParentInfo[];
+
+  // Step 3: Academic Information
+  academicYear?: string | null;
+  classId?: number | null;
+  sectionId?: number | null;
+  rollNumber?: string | null;
+  enrollmentDate?: string | null;
+  enrollmentStatus?: string | null;
+
+  // Step 4: Medical Information
+  bloodGroup?: string | null;
+  allergies?: string | null;
+  medicalConditions?: string | null;
+  medications?: string | null;
+  doctorName?: string | null;
+  doctorContact?: string | null;
+  emergencyNotes?: string | null;
+}
+
+export interface ParentInfo {
+  relationship: string; // 'FATHER' | 'MOTHER' | 'GUARDIAN'
+  firstName: string;
+  lastName: string;
+  mobile: string;
+  email?: string | null;
+  occupation?: string | null;
+  organization?: string | null;
+  qualification?: string | null;
+  annualIncome?: string | null;
+  isPrimaryContact?: boolean;
+  isPickupAuthorized?: boolean;
+  receiveSms?: boolean;
+  receiveEmail?: boolean;
+}
+
 export type AttendanceStatusToday = 'PRESENT_TODAY' | 'ABSENT_TODAY' | 'PENDING';
+
+export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'ALUMNI' | 'PENDING';
 
 export interface StudentDirectoryCard {
   studentId: number;
   admissionNumber: string;
+  studentCode?: string | null;       // e.g. STU000136
   fullName: string;
   rollNumber?: string | null;
   classId?: number | null;
@@ -70,6 +137,7 @@ export interface StudentDirectoryCard {
   gender?: string | null;
   photoUrl?: string | null;
   active?: boolean | null;
+  status?: StudentStatus | null;
   attendanceStatus: AttendanceStatusToday;
   dateOfBirth?: string | null;
   guardianName?: string | null;
@@ -79,6 +147,7 @@ export interface StudentDirectoryCard {
 export interface StudentOverview {
   studentId: number;
   admissionNumber: string;
+  studentCode?: string | null;
   rollNumber?: string | null;
   fullName: string;
   className?: string | null;
@@ -91,36 +160,61 @@ export interface StudentOverview {
   photoUrl?: string | null;
   academicYear?: string | null;
   admissionDate?: string | null;
+  enrollmentDate?: string | null;
+  enrollmentStatus?: string | null;
   active?: boolean | null;
+  status?: StudentStatus | null;
   bloodGroup?: string | null;
   motherTongue?: string | null;
   nationality?: string | null;
   religion?: string | null;
   house?: string | null;
   transport?: string | null;
+  profileCompletion?: number | null;
 }
 
 export interface StudentPersonal {
   fullName: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
   nationality?: string | null;
   religion?: string | null;
   bloodGroup?: string | null;
   motherTongue?: string | null;
+  mobile?: string | null;
+  email?: string | null;
   permanentAddress?: string | null;
   currentAddress?: string | null;
+  permanentAddressLine1?: string | null;
+  permanentCity?: string | null;
+  permanentState?: string | null;
+  permanentPincode?: string | null;
+  currentAddressLine1?: string | null;
+  currentCity?: string | null;
+  currentState?: string | null;
+  currentPincode?: string | null;
   remarks?: string | null;
 }
 
 export interface GuardianInfo {
   guardianId?: number | null;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
   relation?: string | null;
   email?: string | null;
   mobile?: string | null;
   address?: string | null;
   occupation?: string | null;
+  organization?: string | null;
+  qualification?: string | null;
+  annualIncome?: string | null;
+  photoUrl?: string | null;
+  isPrimaryContact?: boolean;
+  isPickupAuthorized?: boolean;
 }
 
 export interface SiblingInfo {
@@ -144,9 +238,20 @@ export interface AcademicsSnapshot {
   rollNumber?: string | null;
   academicYear?: string | null;
   admissionDate?: string | null;
+  enrollmentDate?: string | null;
+  enrollmentStatus?: string | null;
   admissionAgeYears?: number | null;
   courseCount: number;
   subjectCount: number;
+}
+
+export interface AcademicHistoryRow {
+  academicYear: string;
+  className: string;
+  sectionName: string;
+  rollNumber?: string | null;
+  result?: string | null;
+  remarks?: string | null;
 }
 
 export interface AttendanceSnapshot {
@@ -167,9 +272,25 @@ export interface FeeSnapshot {
 export interface MedicalSnapshot {
   bloodGroup?: string | null;
   allergies?: string | null;
+  medicalConditions?: string | null;
   medications?: string | null;
+  doctorName?: string | null;
+  doctorContact?: string | null;
+  emergencyNotes?: string | null;
   emergencyContact?: string | null;
   notes?: string | null;
+}
+
+export interface StudentDocumentEntry {
+  documentId?: number | null;
+  studentId: number;
+  documentName: string;
+  documentType: string;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'MISSING';
+  uploadedDate?: string | null;
+  category?: string | null;
 }
 
 export interface StudentProfile360 {
@@ -244,6 +365,15 @@ export interface AlumniResponse {
   linkedIn?: string | null;
 }
 
+export interface AlumniFilters {
+  passoutYear?: string | null;
+  course?: string | null;
+  batch?: string | null;
+  city?: string | null;
+  occupation?: string | null;
+  keyword?: string | null;
+}
+
 export interface DocumentVaultKpi {
   totalDocuments: number;
   verifiedDocuments: number;
@@ -311,12 +441,17 @@ export interface PromotionRecord {
   reason?: string | null;
 }
 
-export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'CERTIFICATE_ISSUED' | 'REJECTED' | 'CANCELLED';
+/** Simplified spec-aligned transfer status (REQUESTED → APPROVED → COMPLETED or REJECTED) */
+export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'CERTIFICATE_ISSUED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 
 export interface TransferRequest {
   id?: number;
+  transferNumber?: string | null;
   requestNumber?: string | null;
   studentId?: number | null;
+  studentName?: string | null;
+  className?: string | null;
+  sectionName?: string | null;
   enrollmentId?: number | null;
   requestedOn?: string | null;
   reason?: string | null;
@@ -327,4 +462,16 @@ export interface TransferRequest {
   certificateNumber?: string | null;
   certificateIssuedOn?: string | null;
   remarks?: string | null;
+}
+
+export interface ClassOption {
+  id: number;
+  label: string;
+  code?: string | null;
+}
+
+export interface SectionOption {
+  id: number;
+  label: string;
+  classId: number;
 }

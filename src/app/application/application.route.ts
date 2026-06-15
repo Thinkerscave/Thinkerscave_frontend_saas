@@ -220,18 +220,18 @@ export const APPLICATION_ROUTES: Routes = [
       // Spec taxonomy: Students | Academic Movement | Student Movement | Documents | Alumni
       { path: 'directory',          loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
       { path: 'profile/:id',        loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
-      { path: 'add-student',        loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
-      { path: 'student-movement',   loadComponent: () => import('./students/pages/student-movement/student-movement.component').then(m => m.StudentMovementComponent) },
-      { path: 'documents',          loadComponent: () => import('./students/pages/document-vault/document-vault.component').then(m => m.DocumentVaultComponent) },
+      { path: 'transfers',          loadComponent: () => import('./students/pages/student-movement/student-movement.component').then(m => m.StudentMovementComponent) },
       { path: 'alumni',             loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
       // Legacy paths kept as redirects so deep links and bookmarks remain stable.
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
       { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
+      { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
       { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
       { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
       { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
       { path: 'promotion', pathMatch: 'full', redirectTo: 'academic-movement' },
-      { path: 'transfer', pathMatch: 'full', redirectTo: 'student-movement' },
+      { path: 'student-movement', pathMatch: 'full', redirectTo: 'transfers' },
+      { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
       { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
       { path: 'id-cards', pathMatch: 'full', redirectTo: 'directory' },
       ...STUDENT_MANAGEMENT_ROUTES
