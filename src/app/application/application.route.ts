@@ -237,32 +237,33 @@ export const APPLICATION_ROUTES: Routes = [
       ...STUDENT_MANAGEMENT_ROUTES
     ]
   },
-  // ─── Academics module (spec: Academic Setup / Timetable / Teacher Arrangement / Academic Calendar / Syllabus Tracker / Settings) ─
+  // ─── Academics module (refactored 5-page structure) ─
   {
     path: 'academics',
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'academic-setup', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: '', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'setup', data: { workspacePage: 'setup' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'timetable', data: { workspacePage: 'timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'teacher-arrangement', data: { workspacePage: 'teacher-allocation' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'academic-calendar', data: { workspacePage: 'calendar' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'syllabus-tracker', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      // Legacy paths kept reachable as redirects.
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'years', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'classes', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'structure', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'hierarchy', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'courses', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'subjects', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'curriculum', pathMatch: 'full', redirectTo: 'syllabus-tracker' },
-      { path: 'syllabus', pathMatch: 'full', redirectTo: 'syllabus-tracker' },
-      { path: 'syllabus/history/:id', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'tracker', pathMatch: 'full', redirectTo: 'syllabus-tracker' },
+      { path: 'teacher-arrangement', data: { workspacePage: 'teacher-arrangement' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'calendar', data: { workspacePage: 'calendar' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'syllabus', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      // Legacy redirects (kept for back-compat)
+      { path: 'academic-setup', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'academic-calendar', pathMatch: 'full', redirectTo: 'calendar' },
+      { path: 'syllabus-tracker', pathMatch: 'full', redirectTo: 'syllabus' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'years', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'classes', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'structure', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'hierarchy', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'courses', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'subjects', pathMatch: 'full', redirectTo: 'setup' },
+      { path: 'curriculum', pathMatch: 'full', redirectTo: 'syllabus' },
+      { path: 'syllabus/history/:id', pathMatch: 'full', redirectTo: 'syllabus' },
+      { path: 'tracker', pathMatch: 'full', redirectTo: 'syllabus' },
       { path: 'teacher-allocation', pathMatch: 'full', redirectTo: 'teacher-arrangement' },
       { path: 'class-teacher-allocation', pathMatch: 'full', redirectTo: 'teacher-arrangement' },
-      { path: 'calendar', pathMatch: 'full', redirectTo: 'academic-calendar' }
+      { path: 'settings', pathMatch: 'full', redirectTo: 'setup' }
     ]
   },
   {
