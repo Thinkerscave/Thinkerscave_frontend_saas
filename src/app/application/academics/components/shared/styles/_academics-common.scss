@@ -1,0 +1,59 @@
+/* ─── Shared Academics UI Components ─── */
+.acad-page { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Buttons */
+.acad-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; white-space: nowrap; }
+.acad-btn-primary { background: var(--tc-primary-600); color: #fff; border-color: var(--tc-primary-600); }
+.acad-btn-primary:hover { opacity: 0.9; }
+.acad-btn-outline { background: transparent; color: var(--tc-text); border-color: var(--tc-border); }
+.acad-btn-outline:hover { background: var(--tc-bg-muted); }
+.acad-btn-ghost { background: transparent; color: var(--tc-text-muted); border-color: transparent; }
+.acad-btn-ghost:hover { background: var(--tc-bg-muted); }
+.acad-btn-danger { background: #EF4444; color: #fff; }
+.acad-btn-sm { padding: 0.25rem 0.55rem; font-size: 0.78rem; }
+
+.acad-icon-btn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--tc-border); background: transparent; color: var(--tc-text-muted); cursor: pointer; transition: all 0.15s; }
+.acad-icon-btn:hover { background: var(--tc-bg-muted); color: var(--tc-heading); }
+
+/* Inputs */
+.acad-input { padding: 0.5rem 0.65rem; border: 1px solid var(--tc-border); border-radius: 8px; background: var(--tc-bg); color: var(--tc-text); font-size: 0.85rem; }
+.acad-input:focus { outline: none; border-color: var(--tc-primary-600); }
+.acad-search { padding: 0.4rem 0.6rem; border: 1px solid var(--tc-border); border-radius: 6px; background: var(--tc-bg); color: var(--tc-text); min-width: 200px; font-size: 0.82rem; }
+.acad-dropdown { width: 100%; }
+
+/* Table */
+.acad-table { width: 100%; }
+.acad-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--tc-text-muted); padding: 0.55rem 0.65rem !important; }
+.acad-table td { padding: 0.5rem 0.65rem !important; font-size: 0.82rem; }
+.acad-pill { display: inline-flex; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; background: var(--tc-bg-muted); color: var(--tc-text-muted); }
+.acad-pill.active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.acad-code { display: inline-flex; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; background: var(--tc-bg-muted); color: var(--tc-primary-600); font-family: monospace; }
+
+/* Status Badges */
+.acad-status { display: inline-flex; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.acad-status.pending { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.acad-status.approved { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.acad-status.rejected { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
+.acad-status.overridden { background: rgba(99, 102, 241, 0.12); color: #6366F1; }
+.acad-status.not-started { background: rgba(148, 163, 184, 0.12); color: #94A3B8; }
+.acad-status.in-progress { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.acad-status.completed { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+
+/* Empty state */
+.acad-empty { text-align: center; padding: 2rem 1rem; color: var(--tc-text-muted); }
+.acad-empty i { font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.4; }
+.acad-empty p { margin: 0; font-size: 0.85rem; }
+.acad-empty-cell { text-align: center; padding: 2.5rem 1rem !important; color: var(--tc-text-muted); }
+.acad-empty-cell i { font-size: 1.5rem; margin-bottom: 0.35rem; display: block; opacity: 0.4; }
+
+/* Summary cards */
+.acad-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
+.acad-summary-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem; background: var(--tc-surface-card); border: 1px solid var(--tc-border); border-radius: 8px; }
+.acad-summary-card i { font-size: 1.2rem; }
+.acad-summary-card span { display: block; font-size: 0.72rem; color: var(--tc-text-muted); }
+.acad-summary-card strong { font-size: 1.15rem; color: var(--tc-heading); }
+
+/* View tabs */
+.acad-view-tabs { display: flex; background: var(--tc-bg-muted); border-radius: 6px; padding: 0.15rem; }
+.acad-view-tab { padding: 0.3rem 0.7rem; border: none; background: transparent; color: var(--tc-text-muted); font-size: 0.8rem; cursor: pointer; border-radius: 5px; transition: all 0.15s; }
+.acad-view-tab.active { background: var(--tc-surface-card); color: var(--tc-heading); font-weight: 600; }

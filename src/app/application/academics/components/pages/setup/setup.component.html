@@ -1,0 +1,250 @@
+<div class="setup-page">
+  <!-- Header with Academic Year Controls -->
+  <div class="setup-header">
+    <div class="setup-header-left">
+      <div class="setup-eyebrow">Academic Setup</div>
+      <h1 class="setup-title">Configure School Structure</h1>
+    </div>
+    <div class="setup-header-right">
+      <p-dropdown [options]="academicYearOptions" [(ngModel)]="selectedYearId" optionLabel="label" optionValue="value"
+        placeholder="Academic Year" (onChange)="onYearChange()" styleClass="setup-year-dropdown">
+      </p-dropdown>
+      <button class="acad-btn acad-btn-outline" (click)="openDialog('clone')"><i class="pi pi-copy"></i> Clone Year</button>
+      <button class="acad-btn acad-btn-primary" (click)="openDialog('year')"><i class="pi pi-plus"></i> Start New Year</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="setup-content">
+    <!-- Left: Academic Structure Tree -->
+    <div class="setup-tree-panel">
+      <div class="setup-panel-title"><i class="pi pi-sitemap"></i> Academic Structure</div>
+      <div class="setup-tree-body">
+        <p-tree [value]="treeNodes" selectionMode="single" [(selection)]="selectedTreeNode"
+          (onNodeSelect)="onTreeNodeSelect($event)" styleClass="setup-tree">
+        </p-tree>
+        <div class="acad-empty" *ngIf="!treeNodes.length">
+          <i class="pi pi-sitemap"></i><p>No classes configured yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Tabbed Configuration -->
+    <div class="setup-tab-panel">
+      <div class="setup-tabs">
+        <button class="setup-tab" [class.active]="activeTab === 'classes'" (click)="activeTab = 'classes'"><i class="pi pi-th-large"></i>Classes & Sections</button>
+        <button class="setup-tab" [class.active]="activeTab === 'subjects'" (click)="activeTab = 'subjects'"><i class="pi pi-book"></i>Subjects</button>
+        <button class="setup-tab" [class.active]="activeTab === 'teachers'" (click)="activeTab = 'teachers'"><i class="pi pi-users"></i>Teacher Assignment</button>
+        <button class="setup-tab" [class.active]="activeTab === 'shifts'" (click)="activeTab = 'shifts'"><i class="pi pi-clock"></i>Shift & Templates</button>
+      </div>
+
+      <div class="setup-tab-body">
+        <!-- Classes Tab -->
+        <ng-container *ngIf="activeTab === 'classes'">
+          <div class="setup-tab-actions">
+            <button class="acad-btn acad-btn-primary" (click)="openDialog('class')"><i class="pi pi-plus"></i> Add Class</button>
+            <button class="acad-btn acad-btn-outline" (click)="openDialog('section')"><i class="pi pi-plus"></i> Add Section</button>
+          </div>
+          <p-table #classTable [value]="sectionData" [paginator]="true" [rows]="10" [globalFilterFields]="['sectionName','classEntity.className','classTeacher']" styleClass="acad-table">
+            <ng-template pTemplate="caption">
+              <div class="setup-table-hdr"><span>Sections Overview</span><input pInputText (input)="onSearch($event, classTable)" placeholder="Search..." class="acad-search"></div>
+            </ng-template>
+            <ng-template pTemplate="header">
+              <tr><th>Section</th><th>Class</th><th>Capacity</th><th>Class Teacher</th><th>Students</th><th>Status</th><th>Actions</th></tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-s>
+              <tr>
+                <td><strong>{{ s.sectionName }}</strong></td>
+                <td>{{ s.classEntity?.className || 'N/A' }}</td>
+                <td>{{ s.capacity || '—' }}</td>
+                <td>{{ s.classTeacher }}</td>
+                <td>{{ s.studentCount || 0 }}</td>
+                <td><span class="acad-pill" [class.active]="s.isActive !== false">Active</span></td>
+                <td class="setup-actions">
+                  <button class="acad-icon-btn" pTooltip="Edit"><i class="pi pi-pencil"></i></button>
+                  <button class="acad-icon-btn" pTooltip="Deactivate" (click)="deactivateSection(s)"><i class="pi pi-ban"></i></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr><td colspan="7" class="acad-empty-cell"><i class="pi pi-sitemap"></i><p>No sections configured.</p></td></tr>
+            </ng-template>
+          </p-table>
+        </ng-container>
+
+        <!-- Subjects Tab -->
+        <ng-container *ngIf="activeTab === 'subjects'">
+          <div class="setup-tab-actions">
+            <button class="acad-btn acad-btn-primary" (click)="openDialog('subject')"><i class="pi pi-plus"></i> Add Subject</button>
+          </div>
+          <p-table #subjectTable [value]="data.subjects" [paginator]="true" [rows]="10" [globalFilterFields]="['subjectCode','subjectName','subjectType']" styleClass="acad-table">
+            <ng-template pTemplate="caption">
+              <div class="setup-table-hdr"><span>Subject Library</span><input pInputText (input)="onSearch($event, subjectTable)" placeholder="Search..." class="acad-search"></div>
+            </ng-template>
+            <ng-template pTemplate="header">
+              <tr><th>Code</th><th>Subject Name</th><th>Type</th><th>Weekly Periods</th><th>Status</th><th>Actions</th></tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-subj>
+              <tr>
+                <td><span class="acad-code">{{ subj.subjectCode }}</span></td>
+                <td><strong>{{ subj.subjectName }}</strong></td>
+                <td>{{ subj.subjectType || subj.category || 'CORE' }}</td>
+                <td>{{ subj.weeklyPeriods || subj.credits || 0 }}</td>
+                <td><span class="acad-pill" [class.active]="subj.isActive !== false">Active</span></td>
+                <td class="setup-actions">
+                  <button class="acad-icon-btn" pTooltip="Edit"><i class="pi pi-pencil"></i></button>
+                  <button class="acad-icon-btn" pTooltip="Deactivate" (click)="deactivateSubject(subj)"><i class="pi pi-ban"></i></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr><td colspan="6" class="acad-empty-cell"><i class="pi pi-book"></i><p>No subjects added.</p></td></tr>
+            </ng-template>
+          </p-table>
+        </ng-container>
+
+        <!-- Teachers Tab -->
+        <ng-container *ngIf="activeTab === 'teachers'">
+          <div class="setup-tab-actions">
+            <button class="acad-btn acad-btn-primary" (click)="openDialog('teacher')"><i class="pi pi-user-plus"></i> Assign Teacher</button>
+          </div>
+          <p-table #teacherTable [value]="data.teacherAllocations" [paginator]="true" [rows]="10" [globalFilterFields]="['subjectName','primaryTeacherName','className']" styleClass="acad-table">
+            <ng-template pTemplate="caption">
+              <div class="setup-table-hdr"><span>Teacher Assignments</span><input pInputText (input)="onSearch($event, teacherTable)" placeholder="Search..." class="acad-search"></div>
+            </ng-template>
+            <ng-template pTemplate="header">
+              <tr><th>Subject</th><th>Primary Teacher</th><th>Secondary Teacher</th><th>Class</th><th>Weekly Load</th><th>Actions</th></tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-a>
+              <tr>
+                <td><strong>{{ a.subjectName }}</strong></td>
+                <td>{{ a.primaryTeacherName || a.teacherName || 'Not assigned' }}</td>
+                <td>{{ a.secondaryTeacherName || '—' }}</td>
+                <td>{{ a.className }} {{ a.sectionName || '' }}</td>
+                <td>{{ a.periodsPerWeek || a.weeklyLoad || 0 }} periods</td>
+                <td class="setup-actions">
+                  <button class="acad-icon-btn" pTooltip="Reassign" (click)="editAllocation(a)"><i class="pi pi-refresh"></i></button>
+                  <button class="acad-icon-btn" pTooltip="Remove" (click)="removeAllocation(a)"><i class="pi pi-trash"></i></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr><td colspan="6" class="acad-empty-cell"><i class="pi pi-users"></i><p>No teacher assignments yet.</p></td></tr>
+            </ng-template>
+          </p-table>
+        </ng-container>
+
+        <!-- Shifts Tab -->
+        <ng-container *ngIf="activeTab === 'shifts'">
+          <div class="setup-tab-actions">
+            <button class="acad-btn acad-btn-primary" (click)="openDialog('shift')"><i class="pi pi-plus"></i> Create Shift</button>
+            <button class="acad-btn acad-btn-outline" (click)="openDialog('template')"><i class="pi pi-plus"></i> Create Template</button>
+          </div>
+          <div class="setup-shifts-grid">
+            <div class="setup-shift-card" *ngFor="let shift of data.shifts">
+              <div class="setup-shift-hdr">
+                <i class="pi pi-clock"></i>
+                <h3>{{ shift.shiftName }}</h3>
+                <span class="setup-shift-time">{{ shift.startTime }} - {{ shift.endTime }}</span>
+              </div>
+              <div class="setup-shift-body">
+                <div class="setup-shift-stat"><span>Total Periods</span><strong>{{ shift.totalPeriods }}</strong></div>
+                <div class="setup-shift-templates">
+                  <div class="setup-tpl-item" *ngFor="let tpl of getTemplatesForShift(shift.shiftId)">
+                    <span class="setup-tpl-period">P{{ tpl.periodNumber }}</span>
+                    <span>{{ tpl.startTime }} - {{ tpl.endTime }}</span>
+                    <span class="setup-tpl-break" *ngIf="tpl.isBreak">Break</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="setup-shift-empty" *ngIf="!data.shifts.length">
+              <i class="pi pi-plus-circle"></i><p>No shifts configured. Create your first shift.</p>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Dialog -->
+<p-dialog [header]="dialogTitle" [(visible)]="showDialog" [modal]="true" [style]="{width: dialogMode === 'subject' ? '1000px' : '800px'}" [draggable]="false" [resizable]="false">
+  <div class="setup-form">
+    <!-- Class -->
+    <ng-container *ngIf="dialogMode === 'class'">
+      <div class="setup-frow"><label>Class Name <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.className" placeholder="e.g., Class 1" class="acad-input"></div>
+      <div class="setup-frow"><label>Academic Stage</label><p-dropdown [options]="academicStageOptions" [(ngModel)]="formModel.academicStage" placeholder="Select Stage" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Display Order</label><input pInputText type="number" [(ngModel)]="formModel.displayOrder" placeholder="e.g., 1" class="acad-input"></div>
+      <div class="setup-frow"><label>Status</label><p-dropdown [options]="statusOptions" [(ngModel)]="formModel.isActive" styleClass="acad-dropdown"></p-dropdown></div>
+    </ng-container>
+
+    <!-- Subject -->
+    <ng-container *ngIf="dialogMode === 'subject'">
+      <div class="setup-frow"><label>Subject Code <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.subjectCode" placeholder="e.g., MATH01" class="acad-input"></div>
+      <div class="setup-frow"><label>Subject Name <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.subjectName" placeholder="e.g., Mathematics" class="acad-input"></div>
+      <div class="setup-frow"><label>Subject Type</label><p-dropdown [options]="subjectTypeOptions" [(ngModel)]="formModel.subjectType" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Applicable Levels</label><input pInputText [(ngModel)]="formModel.applicableLevels" placeholder="e.g., PRIMARY,MIDDLE" class="acad-input"></div>
+      <div class="setup-frow"><label>Weekly Periods</label><input pInputText type="number" [(ngModel)]="formModel.weeklyPeriods" placeholder="e.g., 5" class="acad-input"></div>
+      <div class="setup-frow"><label>Status</label><p-dropdown [options]="statusOptions" [(ngModel)]="formModel.isActive" styleClass="acad-dropdown"></p-dropdown></div>
+    </ng-container>
+
+    <!-- Teacher -->
+    <ng-container *ngIf="dialogMode === 'teacher'">
+      <div class="setup-frow"><label>Class <span class="req">*</span></label><p-dropdown [options]="classOptions" [(ngModel)]="formModel.classId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Section</label><p-dropdown [options]="sectionOptions" [(ngModel)]="formModel.sectionId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Subject <span class="req">*</span></label><p-dropdown [options]="subjectOptions" [(ngModel)]="formModel.subjectId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Teacher <span class="req">*</span></label><p-dropdown [options]="teacherOptions" [(ngModel)]="formModel.teacherId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Weekly Periods</label><input pInputText type="number" [(ngModel)]="formModel.periodsPerWeek" placeholder="e.g., 5" class="acad-input"></div>
+      <div class="setup-frow"><label>Effective From</label><input pInputText type="date" [(ngModel)]="formModel.effectiveFrom" class="acad-input"></div>
+      <div class="setup-frow"><label>Effective To</label><input pInputText type="date" [(ngModel)]="formModel.effectiveTo" class="acad-input"></div>
+    </ng-container>
+
+    <!-- Year -->
+    <ng-container *ngIf="dialogMode === 'year'">
+      <div class="setup-frow"><label>Year Code <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.yearCode" placeholder="e.g., 2025-26" class="acad-input"></div>
+      <div class="setup-frow"><label>Year Name</label><input pInputText [(ngModel)]="formModel.yearName" placeholder="e.g., Academic Year 2025-26" class="acad-input"></div>
+      <div class="setup-frow"><label>Start Date <span class="req">*</span></label><input pInputText type="date" [(ngModel)]="formModel.startDate" class="acad-input"></div>
+      <div class="setup-frow"><label>End Date <span class="req">*</span></label><input pInputText type="date" [(ngModel)]="formModel.endDate" class="acad-input"></div>
+    </ng-container>
+
+    <!-- Clone -->
+    <ng-container *ngIf="dialogMode === 'clone'">
+      <div class="setup-frow"><label>Source Year</label><p-dropdown [options]="academicYearOptions" [(ngModel)]="formModel.sourceYearId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>New Year Code <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.newYearCode" placeholder="e.g., 2026-27" class="acad-input"></div>
+    </ng-container>
+
+    <!-- Section -->
+    <ng-container *ngIf="dialogMode === 'section'">
+      <div class="setup-frow"><label>Class <span class="req">*</span></label><p-dropdown [options]="classOptions" [(ngModel)]="formModel.classId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Section Name <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.sectionName" placeholder="e.g., A" class="acad-input"></div>
+      <div class="setup-frow"><label>Capacity</label><input pInputText type="number" [(ngModel)]="formModel.capacity" placeholder="e.g., 40" class="acad-input"></div>
+    </ng-container>
+
+    <!-- Shift -->
+    <ng-container *ngIf="dialogMode === 'shift'">
+      <div class="setup-frow"><label>Shift Name <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.shiftName" placeholder="e.g., Morning Shift" class="acad-input"></div>
+      <div class="setup-frow"><label>Start Time <span class="req">*</span></label><input pInputText type="time" [(ngModel)]="formModel.startTime" class="acad-input"></div>
+      <div class="setup-frow"><label>End Time <span class="req">*</span></label><input pInputText type="time" [(ngModel)]="formModel.endTime" class="acad-input"></div>
+      <div class="setup-frow"><label>Total Periods</label><input pInputText type="number" [(ngModel)]="formModel.totalPeriods" placeholder="e.g., 8" class="acad-input"></div>
+    </ng-container>
+
+    <!-- Template -->
+    <ng-container *ngIf="dialogMode === 'template'">
+      <div class="setup-frow"><label>Template Name <span class="req">*</span></label><input pInputText [(ngModel)]="formModel.templateName" placeholder="e.g., Regular Period" class="acad-input"></div>
+      <div class="setup-frow"><label>Shift</label><p-dropdown [options]="shiftOptions" [(ngModel)]="formModel.shiftId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+      <div class="setup-frow"><label>Period Number</label><input pInputText type="number" [(ngModel)]="formModel.periodNumber" placeholder="e.g., 1" class="acad-input"></div>
+      <div class="setup-frow"><label>Start Time</label><input pInputText type="time" [(ngModel)]="formModel.startTime" class="acad-input"></div>
+      <div class="setup-frow"><label>End Time</label><input pInputText type="time" [(ngModel)]="formModel.endTime" class="acad-input"></div>
+      <div class="setup-frow"><label>Duration (min)</label><input pInputText type="number" [(ngModel)]="formModel.durationMinutes" placeholder="e.g., 45" class="acad-input"></div>
+      <div class="setup-frow"><label>Is Break</label><p-dropdown [options]="booleanOptions" [(ngModel)]="formModel.isBreak" styleClass="acad-dropdown"></p-dropdown></div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="acad-btn acad-btn-ghost" (click)="showDialog = false">Cancel</button>
+    <button class="acad-btn acad-btn-primary" (click)="saveDialog()" [disabled]="saving"><i class="pi pi-check"></i> {{ saving ? 'Saving...' : 'Save' }}</button>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{width: '500px'}"></p-confirmDialog>
+<p-toast position="top-right"></p-toast>
