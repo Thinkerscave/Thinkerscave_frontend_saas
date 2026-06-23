@@ -1,74 +1,93 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
-  StaffProfile360,
-  StaffTimelineEntry,
-  TeachingProfileRequest
-} from '../../models/staff-workspace.model';
-import { StaffWorkspaceService } from '../../services/staff-workspace.service';
+  Payroll,
+  ResponsibilityAssignment,
+  ResponsibilityAssignmentRequest,
+  Responsibility,
+  SalaryStructure,
+  SalaryStructureRequest,
+  SalaryType,
+  StaffDetail,
+  PageResponse
+} from '../../models/staff.model';
+import { StaffService } from '../../services/staff.service';
 
-type Tab = 'overview' | 'personal' | 'employment' | 'teaching' | 'responsibilities'
-         | 'documents' | 'leave' | 'payroll' | 'timeline';
+type ProfileTab = 'overview' | 'responsibilities' | 'salary' | 'payroll' | 'documents' | 'activity';
+
+interface TabConfig { id: ProfileTab; label: string; icon: string; }
 
 @Component({
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule],
-  styleUrls: ['../../../admissions/admissions.shared.scss', '../../staff.shared.scss'],
+  styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
 export class StaffProfile360Component implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
-  private readonly api = inject(StaffWorkspaceService);
+  private readonly api = inject(StaffService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly messageService = inject(MessageService);
 
   loading = true;
-  saving = false;
   errorMessage = '';
+  actionLoading = false;
 
   staffId = 0;
-  profile?: StaffProfile360;
-  timeline: StaffTimelineEntry[] = [];
+  profile?: StaffDetail;
+  salaryHistory: SalaryStructure[] = [];
+  payrollPage?: PageResponse<Payroll>;
+  loadingPayroll = false;
 
-  activeTab: Tab = 'overview';
+  activeTab: ProfileTab = 'overview';
 
-  readonly tabs: { value: Tab; label: string; icon: string }[] = [
-    { value: 'overview',         label: 'Overview',         icon: 'pi pi-user' },
-    { value: 'personal',         label: 'Personal',         icon: 'pi pi-id-card' },
-    { value: 'employment',       label: 'Employment',       icon: 'pi pi-briefcase' },
-    { value: 'teaching',         label: 'Teaching Profile', icon: 'pi pi-book' },
-    { value: 'responsibilities', label: 'Responsibilities', icon: 'pi pi-sitemap' },
-    { value: 'documents',        label: 'Documents',        icon: 'pi pi-folder' },
-    { value: 'leave',            label: 'Leave',            icon: 'pi pi-calendar-minus' },
-    { value: 'payroll',          label: 'Payroll',          icon: 'pi pi-money-bill' },
-    { value: 'timeline',         label: 'Timeline',         icon: 'pi pi-history' }
+  readonly tabs: TabConfig[] = [
+    { id: 'overview',         label: 'Overview',         icon: 'pi-user' },
+    { id: 'responsibilities', label: 'Responsibilities', icon: 'pi-sitemap' },
+    { id: 'salary',           label: 'Salary',           icon: 'pi-money-bill' },
+    { id: 'payroll',          label: 'Payroll',          icon: 'pi-wallet' },
+    { id: 'documents',        label: 'Documents',        icon: 'pi-folder-open' },
+    { id: 'activity',         label: 'Activity',         icon: 'pi-history' }
   ];
 
-  // Editable teaching profile form
-  teachingForm: TeachingProfileRequest = {
-    staffId: 0,
-    subjectsCanTeach: '',
-    preferredSubjects: '',
-    teachingLevels: '',
-    canSubstituteFor: '',
-    cannotSubstituteFor: '',
-    qualification: '',
-    experienceYears: 0,
-    remarks: ''
-  };
+  // ── Assign Responsibility Modal ──────────────────────────────────────────────
+  showAssignModal = false;
+  allResponsibilities: Responsibility[] = [];
+  assignForm: ResponsibilityAssignmentRequest = this.emptyAssignForm();
+
+  // ── Salary Modal ──────────────────────────────────────────────────────────────
+  showSalaryModal = false;
+  salaryForm: SalaryStructureRequest = this.emptySalaryForm();
+  editSalaryId: number | null = null;
+  savingSalary = false;
+
+  readonly salaryTypeOptions: { value: SalaryType; label: string }[] = [
+    { value: 'MONTHLY',    label: 'Monthly' },
+    { value: 'DAILY_WAGE', label: 'Daily Wage' }
+  ];
+
+  get grossSalary(): number {
+    return (this.salaryForm.basicPay ?? 0) + (this.salaryForm.hra ?? 0)
+         + (this.salaryForm.da ?? 0) + (this.salaryForm.specialAllowance ?? 0)
+         + (this.salaryForm.transportAllowance ?? 0) + (this.salaryForm.otherAllowance ?? 0);
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(p => {
       const id = Number(p.get('id'));
-      if (!id) { this.errorMessage = 'Invalid employee id.'; this.loading = false; this.cdr.markForCheck(); return; }
+      if (!id) { this.errorMessage = 'Invalid staff ID.'; this.loading = false; this.cdr.markForCheck(); return; }
       this.staffId = id;
       this.load();
     });
@@ -76,30 +95,149 @@ export class StaffProfile360Component implements OnInit {
 
   load(): void {
     this.loading = true;
-    forkJoin({
-      profile: this.api.profile(this.staffId),
-      timeline: this.api.timeline(this.staffId)
-    })
+    this.api.getStaffDetail(this.staffId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: ({ profile, timeline }) => {
-          this.profile = profile;
-          this.timeline = timeline;
-          this.teachingForm = {
-            staffId: this.staffId,
-            subjectsCanTeach: profile.teaching?.subjectsCanTeach ?? '',
-            preferredSubjects: profile.teaching?.preferredSubjects ?? '',
-            teachingLevels: profile.teaching?.teachingLevels ?? '',
-            canSubstituteFor: profile.teaching?.canSubstituteFor ?? '',
-            cannotSubstituteFor: profile.teaching?.cannotSubstituteFor ?? '',
-            qualification: profile.teaching?.qualification ?? '',
-            experienceYears: profile.teaching?.experienceYears ?? 0,
-            remarks: profile.teaching?.remarks ?? ''
-          };
-        },
+        next: profile => { this.profile = profile; },
         error: () => { this.errorMessage = 'Unable to load profile.'; }
       });
   }
+
+  setTab(tab: ProfileTab): void {
+    this.activeTab = tab;
+    if (tab === 'payroll' && !this.payrollPage) { this.loadPayroll(); }
+    if (tab === 'salary' && this.salaryHistory.length === 0) { this.loadSalaryHistory(); }
+  }
+
+  loadPayroll(): void {
+    this.loadingPayroll = true;
+    this.api.getPayrollList({ staffId: this.staffId, size: 12 })
+      .pipe(finalize(() => { this.loadingPayroll = false; this.cdr.markForCheck(); }))
+      .subscribe({ next: page => { this.payrollPage = page; } });
+  }
+
+  loadSalaryHistory(): void {
+    this.api.getSalaryHistory(this.staffId)
+      .subscribe({ next: h => { this.salaryHistory = h; this.cdr.markForCheck(); } });
+  }
+
+  // ── Quick Actions ────────────────────────────────────────────────────────────
+
+  editProfile(): void {
+    this.router.navigate(['/app/staff/edit', this.staffId]);
+  }
+
+  toggleActive(): void {
+    if (!this.profile) { return; }
+    this.actionLoading = true;
+    const obs = this.profile.active
+      ? this.api.deactivateStaff(this.staffId)
+      : this.api.activateStaff(this.staffId);
+    obs.pipe(finalize(() => { this.actionLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({ next: () => { if (this.profile) { this.profile.active = !this.profile.active; } } });
+  }
+
+  // ── Assign Responsibility ────────────────────────────────────────────────────
+
+  openAssignModal(): void {
+    if (this.allResponsibilities.length === 0) {
+      this.api.getResponsibilities().subscribe(r => {
+        this.allResponsibilities = r;
+        this.cdr.markForCheck();
+      });
+    }
+    this.assignForm = this.emptyAssignForm();
+    this.showAssignModal = true;
+  }
+
+  emptyAssignForm(): ResponsibilityAssignmentRequest {
+    return {
+      staffId: this.staffId,
+      responsibilityId: 0,
+      scope: '',
+      effectiveFrom: new Date().toISOString().substring(0, 10)
+    };
+  }
+
+  saveAssignment(): void {
+    if (!this.assignForm.responsibilityId) { return; }
+    this.assignForm.staffId = this.staffId;
+    this.api.assignResponsibility(this.assignForm)
+      .subscribe({
+        next: () => {
+          this.showAssignModal = false;
+          this.load();
+        }
+      });
+  }
+
+  removeAssignment(assignment: ResponsibilityAssignment): void {
+    if (!confirm(`Remove responsibility "${assignment.responsibilityName}"?`)) { return; }
+    this.api.removeAssignment(assignment.assignmentId)
+      .subscribe({ next: () => { this.load(); } });
+  }
+
+  // ── Salary Modal ─────────────────────────────────────────────────────────────
+
+  openSalaryModal(existing?: SalaryStructure): void {
+    if (existing) {
+      this.editSalaryId = existing.salaryStructureId;
+      this.salaryForm = {
+        staffId: this.staffId,
+        salaryType: existing.salaryType,
+        basicPay: existing.basicPay,
+        hra: existing.hra,
+        da: existing.da,
+        specialAllowance: existing.specialAllowance,
+        transportAllowance: existing.transportAllowance,
+        otherAllowance: existing.otherAllowance,
+        bankName: existing.bankName,
+        accountHolderName: existing.accountHolderName,
+        accountNumber: existing.accountNumber,
+        ifscCode: existing.ifscCode,
+        effectiveFrom: existing.effectiveFrom
+      };
+    } else {
+      this.editSalaryId = null;
+      this.salaryForm = this.emptySalaryForm();
+    }
+    this.showSalaryModal = true;
+  }
+
+  emptySalaryForm(): SalaryStructureRequest {
+    return {
+      staffId: this.staffId,
+      salaryType: 'MONTHLY',
+      effectiveFrom: new Date().toISOString().substring(0, 10)
+    };
+  }
+
+  saveSalary(): void {
+    if (!this.salaryForm.effectiveFrom) { return; }
+    this.savingSalary = true;
+    this.salaryForm.staffId = this.staffId;
+    const obs = this.editSalaryId
+      ? this.api.updateSalaryStructure(this.editSalaryId, this.salaryForm)
+      : this.api.createSalaryStructure(this.salaryForm);
+    obs.pipe(finalize(() => { this.savingSalary = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: () => {
+          this.showSalaryModal = false;
+          this.loadSalaryHistory();
+          this.load();
+        }
+      });
+  }
+
+  // ── Payroll ───────────────────────────────────────────────────────────────────
+
+  markPaid(payroll: Payroll): void {
+    this.api.markPaid(payroll.payrollId).subscribe({
+      next: () => { payroll.status = 'PAID'; this.cdr.markForCheck(); }
+    });
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
 
   initials(name?: string): string {
     if (!name) { return '?'; }
@@ -108,20 +246,11 @@ export class StaffProfile360Component implements OnInit {
 
   back(): void { this.router.navigate(['/app/staff/directory']); }
 
-  setTab(t: Tab): void { this.activeTab = t; }
-
-  saveTeaching(): void {
-    this.saving = true;
-    this.api.saveTeachingProfile(this.teachingForm)
-      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: snap => {
-          if (this.profile) { this.profile.teaching = snap; }
-          this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Teaching profile updated.' });
-        },
-        error: () => this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Unable to save teaching profile.' })
-      });
+  monthName(month: number): string {
+    return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' });
   }
 
   trackByIdx(i: number): number { return i; }
+  trackByPayrollId(_: number, p: Payroll): number { return p.payrollId; }
+  trackByAssignId(_: number, a: ResponsibilityAssignment): number { return a.assignmentId; }
 }

@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { LEAD_MANAGEMENT_ROUTES } from './lead-management/lead-management.routes';
 import { EXAM_MANAGEMENT_ROUTES } from './exam-management/exam-management.routes';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
@@ -131,8 +131,11 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'directory' },
       { path: 'directory', loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
+      { path: 'create', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
+      { path: 'edit/:id', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
       { path: 'profile/:id', loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
       { path: 'responsibilities', loadComponent: () => import('./staff/pages/responsibilities/staff-responsibilities.component').then(m => m.StaffResponsibilitiesComponent) },
+      { path: 'payroll', loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
       { path: 'leave-availability', loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
       { path: 'documents', loadComponent: () => import('./staff/pages/documents/staff-documents.component').then(m => m.StaffDocumentsComponent) },
       { path: 'alumni', loadComponent: () => import('./staff/pages/alumni/staff-alumni.component').then(m => m.StaffAlumniComponent) },

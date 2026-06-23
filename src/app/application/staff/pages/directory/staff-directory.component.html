@@ -1,168 +1,240 @@
-<section class="adm-workspace">
+<section class="sd-workspace" (click)="closeMenu()">
 
-  <header class="adm-hero">
-    <div class="adm-hero__title">
-      <h1>Employees</h1>
-      <p>Search and manage all employees.</p>
-      <span class="adm-count"><i class="pi pi-id-card"></i> {{ kpi.totalEmployees }} employees</span>
+  <!-- ───────── HEADER ───────── -->
+  <header class="sd-header">
+    <div class="sd-header__left">
+      <h1 class="sd-header__title">Staff</h1>
+      <p class="sd-header__sub">Manage teaching and non-teaching staff across the organization.</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn adm-btn--primary" (click)="addStaff()">
-        <i class="pi pi-plus"></i> Add Employee
+    <div class="sd-header__actions">
+      <button id="btn-import-staff" type="button" class="sd-btn sd-btn--ghost">
+        <i class="pi pi-upload"></i> Import
       </button>
-      <button type="button" class="adm-btn"><i class="pi pi-download"></i> Export</button>
+      <button id="btn-export-staff" type="button" class="sd-btn sd-btn--ghost">
+        <i class="pi pi-download"></i> Export
+      </button>
+      <button id="btn-add-staff" type="button" class="sd-btn sd-btn--primary" (click)="addStaff()">
+        <i class="pi pi-plus"></i> Add Staff
+      </button>
     </div>
   </header>
 
-  <div class="adm-kpi-grid">
-    <button *ngFor="let tile of kpiTiles"
-            type="button"
-            class="adm-kpi"
-            [class.is-active]="activeKpi === tile.key"
-            [attr.data-tone]="tile.tone"
-            (click)="toggleKpiFilter(tile)">
-      <span class="adm-kpi__label">{{ tile.label }}</span>
-      <span class="adm-kpi__value">{{ kpi[tile.key] }}</span>
-      <span class="adm-kpi__hint">{{ tile.hint }}</span>
-    </button>
+  <!-- ───────── KPI TILES ───────── -->
+  <div class="sd-kpi-row">
+    <div *ngFor="let tile of kpiTiles"
+         class="sd-kpi-card"
+         [attr.data-color]="tile.color">
+      <div class="sd-kpi-card__icon">
+        <i class="pi" [ngClass]="tile.icon"></i>
+      </div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value">{{ dashboard[tile.key] }}</span>
+        <span class="sd-kpi-card__label">{{ tile.label }}</span>
+      </div>
+    </div>
   </div>
 
-  <div class="adm-panel">
-    <div class="adm-panel__header">
-      <div class="adm-panel__title">
-        <h2>Employee Directory</h2>
-        <small class="adm-panel__hint">{{ staff.length }} result(s)</small>
+  <!-- ───────── FILTER BAR ───────── -->
+  <div class="sd-filter-panel">
+    <div class="sd-filter-panel__search">
+      <i class="pi pi-search sd-filter-panel__search-icon"></i>
+      <input id="staff-keyword-input"
+             type="text"
+             [(ngModel)]="filters.keyword"
+             placeholder="Search name, staff ID, mobile, email..."
+             (keyup.enter)="search()"/>
+    </div>
+    <div class="sd-filter-panel__selects">
+      <select id="filter-staff-type" [(ngModel)]="filters.staffType" (change)="search()">
+        <option *ngFor="let o of staffTypeOptions" [value]="o.value">{{ o.label }}</option>
+      </select>
+      <select id="filter-emp-category" [(ngModel)]="filters.employmentCategory" (change)="search()">
+        <option *ngFor="let o of categoryOptions" [value]="o.value">{{ o.label }}</option>
+      </select>
+      <select id="filter-emp-status" [(ngModel)]="filters.employmentStatus" (change)="search()">
+        <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
+      </select>
+    </div>
+    <div class="sd-filter-panel__actions">
+      <button id="btn-clear-filters" type="button" class="sd-btn sd-btn--ghost" (click)="clearFilters()">
+        Clear Filters
+      </button>
+      <button id="btn-search-staff" type="button" class="sd-btn sd-btn--primary" (click)="search()" [disabled]="searching">
+        <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
+        Search
+      </button>
+    </div>
+    <div class="sd-filter-panel__view">
+      <button id="btn-view-cards" type="button" [class.is-active]="view === 'cards'" (click)="view = 'cards'">
+        <i class="pi pi-th-large"></i> Cards
+      </button>
+      <button id="btn-view-table" type="button" [class.is-active]="view === 'table'" (click)="view = 'table'">
+        <i class="pi pi-list"></i> Table
+      </button>
+    </div>
+  </div>
+
+  <!-- ───────── ERROR ───────── -->
+  <div *ngIf="errorMessage" class="sd-error-banner">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- ───────── LOADING ───────── -->
+  <div *ngIf="loading" class="sd-loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Loading staff members...</span>
+  </div>
+
+  <!-- ───────── EMPTY ───────── -->
+  <div *ngIf="!loading && staffPage.content.length === 0 && !errorMessage" class="sd-empty">
+    <i class="pi pi-users"></i>
+    <h3>No staff found</h3>
+    <p>Try adjusting your filters or <button type="button" (click)="addStaff()">add a new staff member</button>.</p>
+  </div>
+
+  <!-- ═══════ CARD VIEW ═══════ -->
+  <div *ngIf="!loading && view === 'cards' && staffPage.content.length > 0" class="sd-card-grid">
+    <article *ngFor="let s of staffPage.content; trackBy: trackByStaff"
+             class="sd-card"
+             (click)="openProfile(s)">
+
+      <!-- Three-dot menu -->
+      <button id="btn-menu-{{ s.staffId }}" class="sd-card__menu-btn" type="button"
+              (click)="toggleMenu(s.staffId, $event)">
+        <i class="pi pi-ellipsis-v"></i>
+      </button>
+      <div *ngIf="openMenuId === s.staffId" class="sd-dropdown" (click)="$event.stopPropagation()">
+        <button type="button" (click)="openProfile(s)">
+          <i class="pi pi-eye"></i> View Profile
+        </button>
+        <button type="button" (click)="editStaff(s, $event)">
+          <i class="pi pi-pencil"></i> Edit
+        </button>
+        <button type="button" (click)="toggleActive(s, $event)">
+          <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+          {{ s.active ? 'Deactivate' : 'Activate' }}
+        </button>
+        <button type="button" class="danger" (click)="deleteStaff(s, $event)">
+          <i class="pi pi-trash"></i> Delete
+        </button>
       </div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div class="stu-chip-bar">
-          <button [class.is-active]="view === 'grid'" (click)="view = 'grid'"><i class="pi pi-th-large"></i> Grid</button>
-          <button [class.is-active]="view === 'list'" (click)="view = 'list'"><i class="pi pi-list"></i> List</button>
+
+      <!-- Avatar -->
+      <div class="sd-card__avatar">
+        <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar"/>
+        <div *ngIf="!s.photoUrl" class="sd-avatar sd-avatar--initials">{{ initials(s.fullName) }}</div>
+        <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
+      </div>
+
+      <!-- Name block -->
+      <div class="sd-card__info">
+        <strong class="sd-card__name">{{ s.fullName }}</strong>
+        <span class="sd-card__code">{{ s.staffCode }}</span>
+        <span class="sd-card__designation">{{ s.designation }}</span>
+      </div>
+
+      <!-- Meta row -->
+      <div class="sd-card__meta">
+        <span class="sd-meta-chip">{{ categoryLabel(s.employmentCategory) }}</span>
+        <span class="sd-meta-chip">Joined {{ s.joiningDate | date:'d MMM yyyy' }}</span>
+      </div>
+
+      <!-- Footer -->
+      <div class="sd-card__footer">
+        <span class="sd-status-pill" [attr.data-status]="s.employmentStatus">
+          {{ s.employmentStatus | titlecase }}
+        </span>
+        <div class="sd-card__contact-icons">
+          <a [href]="'tel:' + s.mobileNumber" (click)="$event.stopPropagation()" title="Call">
+            <i class="pi pi-phone"></i>
+          </a>
+          <a [href]="'mailto:' + s.email" (click)="$event.stopPropagation()" title="Email">
+            <i class="pi pi-envelope"></i>
+          </a>
         </div>
       </div>
-    </div>
+    </article>
+  </div>
 
-    <div class="adm-filter-bar">
-      <div class="adm-field">
-        <label>Search</label>
-        <input type="text" [(ngModel)]="filter.query" placeholder="Name, employee ID, mobile, email…" (keyup.enter)="runSearch()"/>
-      </div>
-      <div class="adm-field">
-        <label>Department</label>
-        <select [(ngModel)]="filter.department">
-          <option [ngValue]="undefined">All</option>
-          <option value="Mathematics">Mathematics</option>
-          <option value="Science">Science</option>
-          <option value="English">English</option>
-          <option value="Computer Science">Computer Science</option>
-          <option value="Administration">Administration</option>
-          <option value="Finance">Finance</option>
-          <option value="Student Services">Student Services</option>
-          <option value="Sports">Sports</option>
-        </select>
-      </div>
-      <div class="adm-field">
-        <label>Branch</label>
-        <select [(ngModel)]="filter.branch">
-          <option [ngValue]="undefined">All</option>
-          <option value="Main Campus">Main Campus</option>
-          <option value="Whitefield Campus">Whitefield Campus</option>
-          <option value="Electronic City Campus">Electronic City Campus</option>
-        </select>
-      </div>
-      <div class="adm-field">
-        <label>Status</label>
-        <select [(ngModel)]="filter.status">
-          <option [ngValue]="undefined">All</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-        </select>
-      </div>
-      <div class="adm-field">
-        <label>&nbsp;</label>
-        <div style="display:flex; gap:6px;">
-          <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
-            <i class="pi" [class.pi-spin]="searching" [class.pi-search]="!searching" [class.pi-spinner]="searching"></i> Search
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
-      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-    </div>
-
-    <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading employees...</div>
-
-    <div *ngIf="!loading && staff.length === 0 && !errorMessage" class="adm-empty">
-      <i class="pi pi-inbox"></i>
-      <p>No employees match your filter.</p>
-    </div>
-
-    <!-- Grid view -->
-    <div *ngIf="!loading && view === 'grid' && staff.length" class="staff-card-grid">
-      <article *ngFor="let s of staff; trackBy: trackByStaff"
-               class="staff-card"
-               (click)="openProfile(s)">
-        <div class="staff-card__head">
-          <div class="staff-photo staff-photo--initials">{{ initials(s.fullName) }}</div>
-          <div class="staff-card__name">
-            <strong>{{ s.fullName }}</strong>
-            <small>{{ s.staffCode }} · {{ s.designation }}</small>
-          </div>
-          <span class="staff-pill" [attr.data-state]="s.availabilityStatus">{{ s.availabilityStatus }}</span>
-        </div>
-        <div class="staff-card__rows">
-          <div><i class="pi pi-briefcase"></i> {{ s.department }}</div>
-          <div><i class="pi pi-map-marker"></i> {{ s.branch }}</div>
-          <div><i class="pi pi-calendar-plus"></i> Joined {{ s.joinedDate || '—' }}</div>
-        </div>
-        <div class="staff-card__icons">
-          <a [attr.href]="'tel:' + s.contact" (click)="$event.stopPropagation()" title="Call"><i class="pi pi-phone"></i></a>
-          <a [attr.href]="'mailto:' + s.email" (click)="$event.stopPropagation()" title="Email"><i class="pi pi-envelope"></i></a>
-          <a (click)="$event.stopPropagation(); openProfile(s)" title="Open Profile"><i class="pi pi-id-card"></i></a>
-        </div>
-      </article>
-    </div>
-
-    <!-- List view -->
-    <div *ngIf="!loading && view === 'list' && staff.length" class="staff-table-wrap">
-      <table class="staff-table">
-        <thead>
-          <tr>
-            <th>Employee</th>
-            <th>Designation</th>
-            <th>Department</th>
-            <th>Branch</th>
-            <th>Joined</th>
-            <th>Availability</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of staff; trackBy: trackByStaff">
-            <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div class="staff-photo staff-photo--initials" style="width:32px;height:32px;font-size:0.8rem;">{{ initials(s.fullName) }}</div>
-                <div>
-                  <strong>{{ s.fullName }}</strong><br>
-                  <small style="color:var(--tc-text-muted)">{{ s.staffCode }}</small>
-                </div>
+  <!-- ═══════ TABLE VIEW ═══════ -->
+  <div *ngIf="!loading && view === 'table' && staffPage.content.length > 0" class="sd-table-wrap">
+    <table class="sd-table">
+      <thead>
+        <tr>
+          <th>Staff Member</th>
+          <th>Staff ID</th>
+          <th>Designation</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Joining Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of staffPage.content; trackBy: trackByStaff">
+          <td>
+            <div class="sd-table-staff">
+              <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar sd-avatar--sm"/>
+              <div *ngIf="!s.photoUrl" class="sd-avatar sd-avatar--sm sd-avatar--initials">{{ initials(s.fullName) }}</div>
+              <div>
+                <strong>{{ s.fullName }}</strong>
+                <small>{{ s.email }}</small>
               </div>
-            </td>
-            <td>{{ s.designation }}</td>
-            <td>{{ s.department }}</td>
-            <td>{{ s.branch }}</td>
-            <td>{{ s.joinedDate || '—' }}</td>
-            <td><span class="staff-pill" [attr.data-state]="s.availabilityStatus">{{ s.availabilityStatus }}</span></td>
-            <td>
-              <button type="button" class="adm-btn adm-btn--ghost" (click)="openProfile(s)">
-                <i class="pi pi-eye"></i> View
+            </div>
+          </td>
+          <td><code>{{ s.staffCode }}</code></td>
+          <td>{{ s.designation }}</td>
+          <td>
+            <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
+          </td>
+          <td>{{ categoryLabel(s.employmentCategory) }}</td>
+          <td>
+            <span class="sd-status-pill" [attr.data-status]="s.employmentStatus">
+              {{ s.employmentStatus | titlecase }}
+            </span>
+          </td>
+          <td>{{ s.joiningDate | date:'d MMM yyyy' }}</td>
+          <td>
+            <div class="sd-table-actions">
+              <button type="button" class="sd-icon-btn" title="View Profile" (click)="openProfile(s)">
+                <i class="pi pi-eye"></i>
               </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <button type="button" class="sd-icon-btn" title="Edit" (click)="editStaff(s, $event)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="sd-icon-btn" [title]="s.active ? 'Deactivate' : 'Activate'"
+                      (click)="toggleActive(s, $event)">
+                <i class="pi" [class.pi-ban]="s.active" [class.pi-check]="!s.active"></i>
+              </button>
+              <button type="button" class="sd-icon-btn danger" title="Delete" (click)="deleteStaff(s, $event)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ───────── PAGINATION ───────── -->
+  <div *ngIf="!loading && staffPage.totalPages > 1" class="sd-pagination">
+    <button type="button" class="sd-page-btn" [disabled]="staffPage.number === 0"
+            (click)="goToPage(staffPage.number - 1)">
+      <i class="pi pi-chevron-left"></i>
+    </button>
+    <button *ngFor="let p of pageNumbers" type="button"
+            class="sd-page-btn" [class.is-active]="p === staffPage.number"
+            (click)="goToPage(p)">{{ p + 1 }}</button>
+    <button type="button" class="sd-page-btn"
+            [disabled]="staffPage.number >= staffPage.totalPages - 1"
+            (click)="goToPage(staffPage.number + 1)">
+      <i class="pi pi-chevron-right"></i>
+    </button>
+    <span class="sd-page-info">
+      Showing {{ staffPage.number * staffPage.size + 1 }}–{{ [staffPage.number * staffPage.size + staffPage.content.length, staffPage.totalElements] | min }}
+      of {{ staffPage.totalElements }}
+    </span>
   </div>
 
 </section>

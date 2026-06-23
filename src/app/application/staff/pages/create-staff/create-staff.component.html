@@ -1,0 +1,303 @@
+<div class="sw-wizard-page">
+
+  <!-- Header -->
+  <div class="sw-wizard-header">
+    <div class="sw-wizard-header__left">
+      <button type="button" class="sw-back-btn" (click)="cancel()">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <div>
+        <h1>{{ isEditMode ? 'Edit Staff Profile' : 'Create Staff Profile' }}</h1>
+        <p>{{ isEditMode ? 'Update staff member details.' : 'Add a new staff member to the organization.' }}</p>
+      </div>
+    </div>
+    <div class="sw-wizard-header__actions">
+      <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
+        <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
+        {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div *ngIf="errorMessage" class="sw-error">
+    <i class="pi pi-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="sw-wizard-body">
+
+    <!-- ──── Step Sidebar ──── -->
+    <aside class="sw-step-sidebar">
+      <button *ngFor="let step of steps; let i = index"
+              type="button"
+              class="sw-step-item"
+              [class.is-active]="activeStep === step.id"
+              [class.is-done]="i < activeStepIndex"
+              (click)="setStep(step.id)">
+        <div class="sw-step-item__num">
+          <i *ngIf="i < activeStepIndex" class="pi pi-check"></i>
+          <span *ngIf="i >= activeStepIndex">{{ step.num }}</span>
+        </div>
+        <div class="sw-step-item__info">
+          <span class="sw-step-item__label">{{ step.label }}</span>
+        </div>
+        <i class="pi pi-chevron-right sw-step-item__arrow"></i>
+      </button>
+    </aside>
+
+    <!-- ──── Form Panel ──── -->
+    <div class="sw-form-panel">
+
+      <!-- PERSONAL INFORMATION -->
+      <div *ngIf="activeStep === 'personal'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Personal Information</h2>
+
+        <!-- Photo -->
+        <div class="sw-photo-row">
+          <div class="sw-photo-preview">
+            <img *ngIf="photoUrl" [src]="photoUrl" alt="Photo"/>
+            <div *ngIf="!photoUrl" class="sw-photo-placeholder">
+              <i class="pi pi-camera"></i>
+            </div>
+          </div>
+          <div class="sw-photo-upload">
+            <label class="sw-label">Profile Photo</label>
+            <input id="photo-url-input" type="text" [(ngModel)]="photoUrl"
+                   placeholder="Paste photo URL or upload..."/>
+            <small>JPG, PNG up to 2MB</small>
+          </div>
+        </div>
+
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">First Name <span class="req">*</span></label>
+            <input id="input-first-name" type="text" [(ngModel)]="firstName" placeholder="Arjun"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Middle Name</label>
+            <input id="input-middle-name" type="text" [(ngModel)]="middleName" placeholder="Kumar"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Last Name <span class="req">*</span></label>
+            <input id="input-last-name" type="text" [(ngModel)]="lastName" placeholder="Sharma"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Gender <span class="req">*</span></label>
+            <select id="select-gender" [(ngModel)]="gender">
+              <option value="">Select gender</option>
+              <option *ngFor="let g of genderOptions" [value]="g">{{ g }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Date of Birth <span class="req">*</span></label>
+            <input id="input-dob" type="date" [(ngModel)]="dateOfBirth"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Blood Group</label>
+            <select id="select-blood-group" [(ngModel)]="bloodGroup">
+              <option value="">Select blood group</option>
+              <option *ngFor="let bg of bloodGroupOptions" [value]="bg">{{ bg }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Religion</label>
+            <select id="select-religion" [(ngModel)]="religion">
+              <option value="">Select religion</option>
+              <option *ngFor="let r of religionOptions" [value]="r">{{ r }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Nationality</label>
+            <select id="select-nationality" [(ngModel)]="nationality">
+              <option value="">Select nationality</option>
+              <option *ngFor="let n of nationalityOptions" [value]="n">{{ n }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Mobile Number <span class="req">*</span></label>
+            <input id="input-mobile" type="tel" [(ngModel)]="mobileNumber" placeholder="+91 98765 43210"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Email <span class="req">*</span></label>
+            <input id="input-email" type="email" [(ngModel)]="email" placeholder="arjun.sharma@school.com"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Highest Qualification</label>
+            <input id="input-qualification" type="text" [(ngModel)]="highestQualification"
+                   placeholder="M.Sc. Mathematics, B.Ed."/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Experience (Years)</label>
+            <input id="input-experience" type="number" [(ngModel)]="experienceYears" min="0" placeholder="5"/>
+          </div>
+          <div class="sw-field sw-field--full">
+            <label class="sw-label">Remarks</label>
+            <textarea id="input-remarks" [(ngModel)]="remarks" rows="3"
+                      placeholder="Additional notes..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPLOYMENT INFORMATION -->
+      <div *ngIf="activeStep === 'employment'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Employment Information</h2>
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Staff Type <span class="req">*</span></label>
+            <select id="select-staff-type" [(ngModel)]="staffType">
+              <option *ngFor="let o of staffTypeOptions" [value]="o.value">{{ o.label }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Designation <span class="req">*</span></label>
+            <input id="input-designation" type="text" [(ngModel)]="designation"
+                   placeholder="Mathematics Teacher"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Employment Category <span class="req">*</span></label>
+            <select id="select-emp-category" [(ngModel)]="employmentCategory">
+              <option *ngFor="let o of categoryOptions" [value]="o.value">{{ o.label }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Employment Status <span class="req">*</span></label>
+            <select id="select-emp-status" [(ngModel)]="employmentStatus">
+              <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Joining Date <span class="req">*</span></label>
+            <input id="input-joining-date" type="date" [(ngModel)]="joiningDate"/>
+          </div>
+          <div class="sw-field" *ngIf="employmentCategory === 'CONTRACT'">
+            <label class="sw-label">Contract Start Date</label>
+            <input id="input-contract-start" type="date" [(ngModel)]="contractStartDate"/>
+          </div>
+          <div class="sw-field" *ngIf="employmentCategory === 'CONTRACT'">
+            <label class="sw-label">Contract End Date</label>
+            <input id="input-contract-end" type="date" [(ngModel)]="contractEndDate"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- SALARY INFORMATION -->
+      <div *ngIf="activeStep === 'salary'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Salary Information</h2>
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Salary Type <span class="req">*</span></label>
+            <select id="select-salary-type" [(ngModel)]="salaryType">
+              <option *ngFor="let o of salaryTypeOptions" [value]="o.value">{{ o.label }}</option>
+            </select>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Effective From <span class="req">*</span></label>
+            <input id="input-salary-effective" type="date" [(ngModel)]="salaryEffectiveFrom"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Basic Pay (₹)</label>
+            <input id="input-basic-pay" type="number" [(ngModel)]="basicPay" min="0" placeholder="40,000"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">HRA (₹)</label>
+            <input id="input-hra" type="number" [(ngModel)]="hra" min="0" placeholder="8,000"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">DA (₹)</label>
+            <input id="input-da" type="number" [(ngModel)]="da" min="0" placeholder="4,000"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Special Allowance (₹)</label>
+            <input id="input-special-allowance" type="number" [(ngModel)]="specialAllowance" min="0"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Transport Allowance (₹)</label>
+            <input id="input-transport" type="number" [(ngModel)]="transportAllowance" min="0"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Other Allowance (₹)</label>
+            <input id="input-other-allowance" type="number" [(ngModel)]="otherAllowance" min="0"/>
+          </div>
+        </div>
+
+        <!-- Gross Salary Preview -->
+        <div class="sw-salary-summary">
+          <div class="sw-salary-summary__row">
+            <span>Gross Salary</span>
+            <strong>₹ {{ grossSalary | number }}</strong>
+          </div>
+        </div>
+
+        <h3 class="sw-form-section__sub">Bank Details</h3>
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Bank Name</label>
+            <input id="input-bank-name" type="text" [(ngModel)]="bankName" placeholder="State Bank of India"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Account Holder Name</label>
+            <input id="input-account-holder" type="text" [(ngModel)]="accountHolderName"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Account Number</label>
+            <input id="input-account-number" type="text" [(ngModel)]="accountNumber"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">IFSC Code</label>
+            <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="SBIN0001234"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMERGENCY CONTACT -->
+      <div *ngIf="activeStep === 'emergency'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Emergency Contact</h2>
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Contact Name</label>
+            <input id="input-emergency-name" type="text" [(ngModel)]="emergencyContactName"
+                   placeholder="Full name"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Relation</label>
+            <input id="input-emergency-relation" type="text" [(ngModel)]="emergencyContactRelation"
+                   placeholder="Spouse / Parent / Sibling"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Phone Number</label>
+            <input id="input-emergency-phone" type="tel" [(ngModel)]="emergencyContactNumber"
+                   placeholder="+91 99887 76655"/>
+          </div>
+        </div>
+
+        <!-- Final submit box -->
+        <div class="sw-final-box">
+          <i class="pi pi-check-circle"></i>
+          <div>
+            <strong>Ready to {{ isEditMode ? 'update' : 'create' }}</strong>
+            <p>Review all information and click <em>{{ isEditMode ? 'Update Staff' : 'Create Staff' }}</em> when ready.</p>
+          </div>
+          <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
+            <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
+            {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Step navigation buttons -->
+      <div class="sw-step-nav">
+        <button type="button" class="sd-btn sd-btn--ghost"
+                *ngIf="activeStepIndex > 0"
+                (click)="prevStep()">
+          <i class="pi pi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="sd-btn sd-btn--primary"
+                *ngIf="activeStepIndex < steps.length - 1"
+                (click)="nextStep()">
+          Continue <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

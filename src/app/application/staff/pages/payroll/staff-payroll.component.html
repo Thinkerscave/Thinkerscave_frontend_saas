@@ -1,0 +1,179 @@
+<section class="sd-workspace">
+  <!-- ───────── HEADER ───────── -->
+  <header class="sd-header">
+    <div class="sd-header__left">
+      <h1 class="sd-header__title">Payroll Management</h1>
+      <p class="sd-header__sub">Generate, manage and pay staff salaries.</p>
+    </div>
+    <div class="sd-header__actions">
+      <button type="button" class="sd-btn sd-btn--primary" (click)="openGenerate()">
+        <i class="pi pi-bolt"></i> Generate Payroll
+      </button>
+    </div>
+  </header>
+
+  <!-- ───────── KPI TILES ───────── -->
+  <div class="sd-kpi-row" *ngIf="!loadingDashboard">
+    <div *ngFor="let tile of kpiTiles" class="sd-kpi-card" [attr.data-color]="tile.color">
+      <div class="sd-kpi-card__icon"><i class="pi" [ngClass]="tile.icon"></i></div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value" *ngIf="tile.key === 'currentMonth'">{{ currentMonthName }}</span>
+        <span class="sd-kpi-card__value" *ngIf="tile.key !== 'currentMonth'">
+          {{ tile.isCurrency ? '₹' : '' }}{{ dashboard[tile.key] | number }}
+        </span>
+        <span class="sd-kpi-card__label">{{ tile.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── FILTER BAR ───────── -->
+  <div class="sd-filter-panel">
+    <div class="sd-filter-panel__selects">
+      <select [(ngModel)]="filters.year" (change)="search()">
+        <option [value]="2023">2023</option>
+        <option [value]="2024">2024</option>
+        <option [value]="2025">2025</option>
+        <option [value]="2026">2026</option>
+      </select>
+      <select [(ngModel)]="filters.month" (change)="search()">
+        <option *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="m">{{ monthName(m) }}</option>
+      </select>
+      <select [(ngModel)]="filters.status" (change)="search()">
+        <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
+      </select>
+    </div>
+    <div class="sd-filter-panel__actions">
+      <button type="button" class="sd-btn sd-btn--ghost" *ngIf="selectedIds.size > 0" (click)="selectedIds.clear()">
+        Clear Selection
+      </button>
+      <button type="button" class="sd-btn sd-btn--primary" *ngIf="selectedIds.size > 0"
+              (click)="markPaidBulk()" [disabled]="bulkLoading">
+        <i *ngIf="bulkLoading" class="pi pi-spin pi-spinner"></i>
+        Mark Paid ({{ selectedIds.size }})
+      </button>
+      <button type="button" class="sd-btn sd-btn--ghost" (click)="search()">
+        <i class="pi" [class.pi-refresh]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ───────── TABLE ───────── -->
+  <div *ngIf="loading" class="sd-loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading payroll...
+  </div>
+
+  <div *ngIf="!loading && payrollPage.content.length > 0" class="sd-table-wrap">
+    <table class="sd-table">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">
+            <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll()"/>
+          </th>
+          <th>Staff Member</th>
+          <th>Gross Salary</th>
+          <th>Deductions</th>
+          <th>Net Salary</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payrollPage.content; trackBy: trackById">
+          <td style="text-align: center;">
+            <input type="checkbox" [checked]="selectedIds.has(p.payrollId)" (change)="toggleSelect(p.payrollId)"/>
+          </td>
+          <td>
+            <div class="sd-table-staff">
+              <div>
+                <strong>{{ p.staffName }}</strong>
+                <small>{{ p.staffCode }}</small>
+              </div>
+            </div>
+          </td>
+          <td>₹{{ p.grossSalary | number }}</td>
+          <td>₹{{ p.totalDeductions | number }}</td>
+          <td><strong>₹{{ p.netSalary | number }}</strong></td>
+          <td>
+            <span class="sd-status-pill" [attr.data-payroll]="p.status">
+              {{ p.status | titlecase }}
+            </span>
+          </td>
+          <td>
+            <div class="sd-table-actions">
+              <button *ngIf="p.status !== 'PAID'" type="button" class="sd-btn sd-btn--ghost" style="padding: 4px 8px; font-size: 0.75rem;" (click)="markPaidSingle(p)">
+                Mark Paid
+              </button>
+              <button type="button" class="sd-icon-btn" title="Download Payslip">
+                <i class="pi pi-download"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ───────── EMPTY ───────── -->
+  <div *ngIf="!loading && payrollPage.content.length === 0" class="sd-empty">
+    <i class="pi pi-wallet"></i>
+    <h3>No payroll found</h3>
+    <p>No payroll generated for the selected month/year. Try adjusting filters or generating payroll.</p>
+  </div>
+
+  <!-- ───────── PAGINATION ───────── -->
+  <div *ngIf="!loading && payrollPage.totalPages > 1" class="sd-pagination">
+    <button type="button" class="sd-page-btn" [disabled]="payrollPage.number === 0"
+            (click)="goToPage(payrollPage.number - 1)">
+      <i class="pi pi-chevron-left"></i>
+    </button>
+    <button *ngFor="let p of pageNumbers" type="button"
+            class="sd-page-btn" [class.is-active]="p === payrollPage.number"
+            (click)="goToPage(p)">{{ p + 1 }}</button>
+    <button type="button" class="sd-page-btn"
+            [disabled]="payrollPage.number >= payrollPage.totalPages - 1"
+            (click)="goToPage(payrollPage.number + 1)">
+      <i class="pi pi-chevron-right"></i>
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     GENERATE MODAL
+════════════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="showGenerateModal" class="sm-overlay" (click)="closeGenerate()">
+  <div class="sm-modal" (click)="$event.stopPropagation()">
+    <div class="sm-modal__head">
+      <h2>Generate Payroll</h2>
+      <button type="button" (click)="closeGenerate()"><i class="pi pi-times"></i></button>
+    </div>
+    <div class="sm-modal__body">
+      <p style="margin-top: 0; margin-bottom: 16px; color: var(--tc-text-muted);">
+        Select the year and month to generate payroll for all active staff members.
+      </p>
+      <div class="sw-form-grid">
+        <div class="sw-field">
+          <label class="sw-label">Year <span class="req">*</span></label>
+          <select [(ngModel)]="generateYear">
+            <option [value]="2023">2023</option>
+            <option [value]="2024">2024</option>
+            <option [value]="2025">2025</option>
+            <option [value]="2026">2026</option>
+          </select>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">Month <span class="req">*</span></label>
+          <select [(ngModel)]="generateMonth">
+            <option *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="m">{{ monthName(m) }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="sm-modal__foot">
+      <button type="button" class="sd-btn sd-btn--ghost" (click)="closeGenerate()">Cancel</button>
+      <button type="button" class="sd-btn sd-btn--primary" (click)="generatePayroll()" [disabled]="generating">
+        <i *ngIf="generating" class="pi pi-spin pi-spinner"></i>
+        Generate
+      </button>
+    </div>
+  </div>
+</div>

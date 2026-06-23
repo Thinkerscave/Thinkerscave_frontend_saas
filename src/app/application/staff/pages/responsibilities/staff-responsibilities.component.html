@@ -1,138 +1,150 @@
-<section class="adm-workspace">
-  <p-confirmDialog></p-confirmDialog>
-
-  <header class="adm-hero">
-    <div class="adm-hero__title">
-      <h1>Responsibilities Management</h1>
-      <p>Class teachers, coordinators, committees, and custom responsibilities.</p>
+<section class="sd-workspace">
+  <!-- ───────── HEADER ───────── -->
+  <header class="sd-header">
+    <div class="sd-header__left">
+      <h1 class="sd-header__title">Responsibilities</h1>
+      <p class="sd-header__sub">Manage organizational roles and responsibilities.</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn adm-btn--primary" (click)="openAdd()">
-        <i class="pi pi-plus"></i> Add Responsibility
+    <div class="sd-header__actions">
+      <button type="button" class="sd-btn sd-btn--primary" (click)="openAdd()">
+        <i class="pi pi-plus"></i> Create Responsibility
       </button>
     </div>
   </header>
 
-  <div class="adm-kpi-grid">
-    <div *ngFor="let t of kpiTiles" class="adm-kpi" [attr.data-tone]="t.tone">
-      <span class="adm-kpi__label">{{ t.label }}</span>
-      <span class="adm-kpi__value">{{ kpi[t.key] }}</span>
-      <span class="adm-kpi__hint">{{ t.hint }}</span>
+  <!-- ───────── KPI TILES ───────── -->
+  <div class="sd-kpi-row">
+    <div class="sd-kpi-card" data-color="blue">
+      <div class="sd-kpi-card__icon"><i class="pi pi-sitemap"></i></div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value">{{ list.length }}</span>
+        <span class="sd-kpi-card__label">Total Responsibilities</span>
+      </div>
+    </div>
+    <div class="sd-kpi-card" data-color="green">
+      <div class="sd-kpi-card__icon"><i class="pi pi-check-circle"></i></div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value">{{ activeCount }}</span>
+        <span class="sd-kpi-card__label">Active</span>
+      </div>
+    </div>
+    <div class="sd-kpi-card" data-color="amber">
+      <div class="sd-kpi-card__icon"><i class="pi pi-ban"></i></div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value">{{ inactiveCount }}</span>
+        <span class="sd-kpi-card__label">Inactive</span>
+      </div>
+    </div>
+    <div class="sd-kpi-card" data-color="violet">
+      <div class="sd-kpi-card__icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="sd-kpi-card__body">
+        <span class="sd-kpi-card__value">{{ customCount }}</span>
+        <span class="sd-kpi-card__label">Custom Defined</span>
+      </div>
     </div>
   </div>
 
-  <div class="adm-panel">
-    <div class="adm-panel__header">
-      <div class="adm-panel__title">
-        <h2>Responsibilities</h2>
-        <small class="adm-panel__hint">{{ filtered.length }} record(s)</small>
-      </div>
-      <div class="adm-field" style="min-width:260px;">
-        <input type="search" [(ngModel)]="searchQuery" placeholder="Search responsibility, employee, or type..."/>
-      </div>
-    </div>
-
-    <div *ngIf="loading" class="adm-empty"><i class="pi pi-spin pi-spinner"></i> Loading...</div>
-    <div *ngIf="errorMessage" class="adm-empty">{{ errorMessage }}</div>
-
-    <div *ngIf="!loading && !filtered.length" class="adm-empty">
-      <i class="pi pi-sitemap"></i>
-      <p>No responsibilities defined yet.</p>
-    </div>
-
-    <div *ngIf="!loading && filtered.length" class="staff-table-wrap">
-      <table class="staff-table">
-        <thead>
-          <tr>
-            <th>Responsibility Name</th>
-            <th>Assigned To</th>
-            <th>Type</th>
-            <th>Effective Date</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of filtered; trackBy: trackById">
-            <td><strong>{{ r.responsibilityName }}</strong><br><small style="color:var(--tc-text-muted)">{{ r.scope || '—' }}</small></td>
-            <td>{{ r.staffName || '— Unassigned' }}</td>
-            <td>{{ r.responsibilityType }}</td>
-            <td>{{ r.effectiveFrom || '—' }}</td>
-            <td><span class="staff-pill" [attr.data-state]="r.status">{{ r.status }}</span></td>
-            <td>
-              <button type="button" class="adm-btn adm-btn--ghost" (click)="openEdit(r)" title="Edit"><i class="pi pi-pencil"></i></button>
-              <button type="button" class="adm-btn adm-btn--ghost adm-btn--danger" (click)="confirmDelete(r)" title="Delete"><i class="pi pi-trash"></i></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="sd-filter-panel">
+    <div class="sd-filter-panel__search" style="flex: 1;">
+      <i class="pi pi-search sd-filter-panel__search-icon"></i>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Search responsibility name or code..."/>
     </div>
   </div>
 
-  <!-- Add / Edit Modal -->
-  <div class="staff-modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="staff-modal" (click)="$event.stopPropagation()">
-      <div class="staff-modal__head">
-        <h2>{{ editingId ? 'Edit' : 'Add' }} Responsibility</h2>
-        <button type="button" (click)="closeModal()"><i class="pi pi-times"></i></button>
+  <div *ngIf="errorMessage" class="sd-error-banner">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="sd-loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading responsibilities...
+  </div>
+
+  <div class="sd-table-wrap" *ngIf="!loading && filtered.length > 0">
+    <table class="sd-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Responsibility Name</th>
+          <th>Description</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filtered; trackBy: trackById">
+          <td><code>{{ r.responsibilityCode }}</code></td>
+          <td><strong>{{ r.responsibilityName }}</strong></td>
+          <td>{{ r.description || '—' }}</td>
+          <td>
+            <span class="sd-type-badge" [attr.data-type]="r.systemDefined ? 'SYSTEM' : 'CUSTOM'">
+              {{ r.systemDefined ? 'System' : 'Custom' }}
+            </span>
+          </td>
+          <td>
+            <span class="sd-status-pill" [attr.data-status]="r.active ? 'ACTIVE' : 'INACTIVE'">
+              {{ r.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            <div class="sd-table-actions">
+              <button type="button" class="sd-icon-btn" title="Edit" (click)="openEdit(r)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="sd-icon-btn" [title]="r.active ? 'Deactivate' : 'Activate'"
+                      (click)="toggleActive(r)">
+                <i class="pi" [class.pi-ban]="r.active" [class.pi-check]="!r.active"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div *ngIf="!loading && filtered.length === 0 && !errorMessage" class="sd-empty">
+    <i class="pi pi-sitemap"></i>
+    <p>No responsibilities match your search.</p>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div *ngIf="showModal" class="sm-overlay" (click)="closeModal()">
+  <div class="sm-modal" (click)="$event.stopPropagation()">
+    <div class="sm-modal__head">
+      <h2>{{ editingId ? 'Edit Responsibility' : 'Create Responsibility' }}</h2>
+      <button type="button" (click)="closeModal()"><i class="pi pi-times"></i></button>
+    </div>
+    <div class="sm-modal__body">
+      <div class="sw-field">
+        <label class="sw-label">Responsibility Name <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="form.responsibilityName"/>
       </div>
-      <div class="staff-modal__body">
-        <div class="adm-filter-bar">
-          <div class="adm-field">
-            <label>Responsibility Name *</label>
-            <input type="text" [(ngModel)]="form.responsibilityName" placeholder="e.g. Class Teacher - 8-A"/>
-          </div>
-          <div class="adm-field">
-            <label>Type *</label>
-            <select [(ngModel)]="form.responsibilityType">
-              <option value="CLASS_TEACHER">Class Teacher</option>
-              <option value="COORDINATOR">Coordinator</option>
-              <option value="COMMITTEE">Committee</option>
-              <option value="LAB_INCHARGE">Lab Incharge</option>
-              <option value="CUSTOM">Custom</option>
-            </select>
-          </div>
-          <div class="adm-field">
-            <label>Assigned To</label>
-            <select [(ngModel)]="form.staffId">
-              <option [ngValue]="undefined">— Unassigned —</option>
-              <option *ngFor="let s of staffOptions" [ngValue]="s.staffId">{{ s.fullName }} ({{ s.staffCode }})</option>
-            </select>
-          </div>
-          <div class="adm-field">
-            <label>Scope</label>
-            <input type="text" [(ngModel)]="form.scope" placeholder="e.g. School-wide"/>
-          </div>
-          <div class="adm-field">
-            <label>Effective From</label>
-            <input type="date" [(ngModel)]="form.effectiveFrom"/>
-          </div>
-          <div class="adm-field">
-            <label>Effective To</label>
-            <input type="date" [(ngModel)]="form.effectiveTo"/>
-          </div>
-          <div class="adm-field">
-            <label>Status</label>
-            <select [(ngModel)]="form.status">
-              <option value="ASSIGNED">Assigned</option>
-              <option value="UNASSIGNED">Unassigned</option>
-              <option value="ENDED">Ended</option>
-            </select>
-          </div>
-          <div class="adm-field" style="grid-column: 1 / -1;">
-            <label>Remarks</label>
-            <input type="text" [(ngModel)]="form.remarks" placeholder="Optional notes"/>
-          </div>
+      <div class="sw-form-grid">
+        <div class="sw-field">
+          <label class="sw-label">Responsibility Code <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.responsibilityCode"/>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">Display Order</label>
+          <input type="number" [(ngModel)]="form.displayOrder"/>
         </div>
       </div>
-      <div class="staff-modal__foot">
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="closeModal()">Cancel</button>
-        <button type="button" class="adm-btn adm-btn--primary" (click)="save()" [disabled]="saving">
-          <i class="pi" [class.pi-spin]="saving" [class.pi-save]="!saving" [class.pi-spinner]="saving"></i>
-          {{ editingId ? 'Update' : 'Save' }}
-        </button>
+      <div class="sw-field sw-field--full">
+        <label class="sw-label">Description</label>
+        <textarea [(ngModel)]="form.description" rows="3"></textarea>
+      </div>
+      <div class="sw-field sw-field--full">
+        <label class="sw-label">Remarks</label>
+        <input type="text" [(ngModel)]="form.remarks"/>
       </div>
     </div>
+    <div class="sm-modal__foot">
+      <button type="button" class="sd-btn sd-btn--ghost" (click)="closeModal()">Cancel</button>
+      <button type="button" class="sd-btn sd-btn--primary" (click)="save()" [disabled]="saving || !form.responsibilityName || !form.responsibilityCode">
+        <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
+        {{ editingId ? 'Update' : 'Create' }}
+      </button>
+    </div>
   </div>
-
-</section>
+</div>
