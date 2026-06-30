@@ -270,38 +270,48 @@ export class CreateStaffComponent implements OnInit {
       remarks:               this.remarks || undefined
     };
 
-    const obs = this.isEditMode && this.editStaffId
-      ? this.api.updateStaff(this.editStaffId, request)
-      : this.api.createStaff(request);
-
-    obs.pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: (res: any) => {
-          // If create, also set salary structure if filled in
-          const newId = this.isEditMode ? this.editStaffId! : (res?.staffId ?? 0);
-          if (this.salaryEffectiveFrom && !this.isEditMode && newId > 0) {
-            const salReq: SalaryStructureRequest = {
-              staffId: newId,
-              salaryType: this.salaryType,
-              basicPay: this.basicPay ?? undefined,
-              hra: this.hra ?? undefined,
-              da: this.da ?? undefined,
-              specialAllowance: this.specialAllowance ?? undefined,
-              transportAllowance: this.transportAllowance ?? undefined,
-              otherAllowance: this.otherAllowance ?? undefined,
-              bankName: this.bankName || undefined,
-              accountHolderName: this.accountHolderName || undefined,
-              accountNumber: this.accountNumber || undefined,
-              ifscCode: this.ifscCode || undefined,
-              effectiveFrom: this.salaryEffectiveFrom
-            };
-            this.api.createSalaryStructure(salReq).subscribe();
+    if (this.isEditMode && this.editStaffId) {
+      this.api.updateStaff(this.editStaffId, request)
+        .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => {
+            this.router.navigate(['/app/staff/profile', this.editStaffId]);
+          },
+          error: (err: any) => {
+            this.errorMessage = err?.error?.message ?? 'Update failed.';
           }
-          this.router.navigate(['/app/staff/profile', newId]);
-        },
-        error: (err: any) => {
-          this.errorMessage = err?.error?.message ?? (this.isEditMode ? 'Update failed.' : 'Creation failed.');
-        }
-      });
+        });
+    } else {
+      this.api.createStaff(request)
+        .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: (res: any) => {
+            // If create, also set salary structure if filled in
+            const newId = res?.staffId ?? 0;
+            if (this.salaryEffectiveFrom && newId > 0) {
+              const salReq: SalaryStructureRequest = {
+                staffId: newId,
+                salaryType: this.salaryType,
+                basicPay: this.basicPay ?? undefined,
+                hra: this.hra ?? undefined,
+                da: this.da ?? undefined,
+                specialAllowance: this.specialAllowance ?? undefined,
+                transportAllowance: this.transportAllowance ?? undefined,
+                otherAllowance: this.otherAllowance ?? undefined,
+                bankName: this.bankName || undefined,
+                accountHolderName: this.accountHolderName || undefined,
+                accountNumber: this.accountNumber || undefined,
+                ifscCode: this.ifscCode || undefined,
+                effectiveFrom: this.salaryEffectiveFrom
+              };
+              this.api.createSalaryStructure(salReq).subscribe();
+            }
+            this.router.navigate(['/app/staff/profile', newId]);
+          },
+          error: (err: any) => {
+            this.errorMessage = err?.error?.message ?? 'Creation failed.';
+          }
+        });
+    }
   }
 }

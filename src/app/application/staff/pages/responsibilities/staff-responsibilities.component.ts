@@ -98,17 +98,25 @@ export class StaffResponsibilitiesComponent implements OnInit {
       return;
     }
     this.saving = true;
-    const obs = this.editingId
-      ? this.api.updateResponsibility(this.editingId, this.form)
-      : this.api.createResponsibility(this.form);
-
-    obs.pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: () => {
-          this.closeModal();
-          this.load();
-        }
-      });
+    if (this.editingId) {
+      this.api.updateResponsibility(this.editingId, this.form)
+        .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => {
+            this.closeModal();
+            this.load();
+          }
+        });
+    } else {
+      this.api.createResponsibility(this.form)
+        .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => {
+            this.closeModal();
+            this.load();
+          }
+        });
+    }
   }
 
   toggleActive(r: Responsibility): void {

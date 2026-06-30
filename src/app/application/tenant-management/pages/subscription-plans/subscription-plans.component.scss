@@ -1,176 +1,83 @@
 .subscription-plans {
-  &__toggle {
+  &__billing {
     display: inline-flex;
-    background: var(--saas-surface);
-    border: 1px solid var(--saas-border);
-    border-radius: 999px;
+    gap: 6px;
     padding: 4px;
-    margin-right: 8px;
-
-    button {
-      background: transparent;
-      border: 0;
-      padding: 6px 16px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--saas-text-muted);
-      font-size: 0.85rem;
-      transition: all 0.18s ease;
-
-      &.is-active {
-        background: var(--saas-primary);
-        color: #fff;
-      }
-    }
+    border-radius: 10px;
+    background: var(--saas-surface-muted);
+    border: 1px solid var(--saas-border);
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px;
+    gap: 16px;
   }
 }
 
 .plan-card {
-  background: var(--saas-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
   border: 1px solid var(--saas-border);
-  border-radius: 18px;
-  padding: 24px 22px;
-  display: flex; flex-direction: column; gap: 18px;
-  position: relative;
-  transition: all 0.2s ease;
+  border-radius: var(--saas-radius);
+  background: var(--saas-surface);
+  box-shadow: var(--saas-shadow-sm);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 
-  &.is-popular {
+  header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+
+    h3 { margin: 0; color: var(--saas-text); font-size: 18px; }
+    p { margin: 4px 0 0; color: var(--saas-text-muted); font-size: 13px; }
+  }
+
+  &--popular {
     border-color: var(--saas-primary);
-    box-shadow: 0 12px 30px -16px rgba(44, 91, 255, 0.45);
-    transform: translateY(-4px);
+    box-shadow: 0 16px 40px -24px rgba(44, 91, 255, 0.45);
   }
-
-  &__badge {
-    position: absolute;
-    top: -10px; right: 20px;
-    background: var(--saas-primary);
-    color: #fff;
-    padding: 4px 14px;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  &__icon {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    background: var(--saas-primary-soft);
-    color: var(--saas-primary);
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-  }
-
-  &--info .plan-card__icon { background: var(--saas-info-soft); color: var(--saas-info); }
-  &--purple .plan-card__icon { background: rgba(168, 85, 247, 0.12); color: var(--saas-purple); }
-  &--warning .plan-card__icon { background: var(--saas-warning-soft); color: var(--saas-warning); }
-
-  &__head h3 { margin: 12px 0 4px; font-size: 1.1rem; color: var(--saas-text); }
-  &__head p  { margin: 0; color: var(--saas-text-soft); font-size: 0.82rem; }
 
   &__price {
-    display: flex; align-items: baseline; gap: 6px;
-    strong { font-size: 2rem; color: var(--saas-text); font-weight: 700; letter-spacing: -0.03em; }
-    small { color: var(--saas-text-soft); font-size: 0.85rem; }
+    strong { font-size: 28px; color: var(--saas-primary); }
+    small { color: var(--saas-text-muted); margin-left: 4px; }
   }
 
-  &__features {
-    list-style: none; padding: 0; margin: 0;
-    display: flex; flex-direction: column; gap: 10px;
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
     li {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 0.85rem; color: var(--saas-text);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--saas-text-muted);
+      font-size: 13px;
 
-      i { color: var(--saas-success); font-size: 0.85rem; }
+      i { color: var(--saas-success); font-size: 12px; }
     }
   }
 
-  &__modules {
-    border-top: 1px dashed var(--saas-border);
-    padding-top: 14px;
-    small {
-      display: block;
-      color: var(--saas-text-soft);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 8px;
-    }
-    > div { display: flex; flex-wrap: wrap; gap: 6px; }
-  }
-
-  &__foot button { width: 100%; justify-content: center; }
-
-  &--custom-cta {
-    border-style: dashed;
-    text-align: center;
-    cursor: pointer;
+  footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-
-    .plan-card__icon { margin: 0 auto; background: var(--saas-warning-soft); color: var(--saas-warning); }
-    h3 { margin: 12px 0 4px; }
-    p { margin: 0 0 12px; color: var(--saas-text-soft); font-size: 0.85rem; }
-    button { width: auto; }
-
-    &:hover {
-      border-color: var(--saas-primary);
-      background: var(--saas-primary-soft);
-    }
+    padding-top: 12px;
+    border-top: 1px solid var(--saas-border);
   }
-}
 
-.subscription-plans__wizard {
-  width: min(720px, 100vw - 32px);
-}
-
-.wizard-step {
-  display: flex; flex-direction: column; gap: 14px;
-  margin-top: 18px;
-
-  h3 { margin: 0; font-size: 1rem; color: var(--saas-text); }
-  > p { margin: 0; color: var(--saas-text-soft); font-size: 0.85rem; }
-}
-.wizard-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-  &--quad { grid-template-columns: repeat(4, 1fr); }
-  @media (max-width: 720px) { grid-template-columns: 1fr 1fr; &--quad { grid-template-columns: 1fr 1fr; } }
-}
-.wizard-modules {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
-}
-.wizard-module {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid var(--saas-border);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.88rem;
-  transition: all 0.15s ease;
-
-  i { color: var(--saas-text-soft); }
-  &.is-checked {
-    border-color: var(--saas-primary);
-    background: var(--saas-primary-soft);
-    color: var(--saas-primary);
-    i { color: var(--saas-primary); }
+  &__code {
+    font-size: 11px;
+    color: var(--saas-text-soft);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
-}
-.wizard-review dl {
-  display: grid; grid-template-columns: 180px 1fr;
-  gap: 6px 14px;
-  margin: 12px 0 0;
-
-  > div { display: contents; }
-  dt { color: var(--saas-text-soft); font-size: 0.82rem; }
-  dd { margin: 0; color: var(--saas-text); font-size: 0.88rem; font-weight: 500; }
 }

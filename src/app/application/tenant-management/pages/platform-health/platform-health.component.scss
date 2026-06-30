@@ -1,22 +1,14 @@
-:host { display: block; padding: 1.5rem; background: var(--saas-bg, #F4F6FB); min-height: 100%; }
+.platform-health {
+  &__refreshed {
+    color: var(--saas-text-soft);
+    font-size: 12px;
+    align-self: center;
+  }
 
-.btn-primary {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--saas-primary, #1F3A93); color: #fff; border: 0; border-radius: 8px;
-  padding: 0.55rem 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
-  &:hover { background: #163175; }
-}
-
-.refresh-meta { color: #8A95AD; margin-right: 0.5rem; }
-
-.ph-grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; margin-top: 1.25rem; }
-@media (min-width: 1280px) { .ph-grid { grid-template-columns: 1fr 1fr; } .ph-grid > :last-child { grid-column: 1 / -1; } }
-
-.ph-table {
-  overflow-x: auto;
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 0.75rem 1rem; text-align: left; font-size: 0.88rem; border-bottom: 1px solid #EEF1F6; vertical-align: middle; }
-  th { color: #6C7A93; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; font-size: 0.7rem; background: #FAFBFE; }
-  td.num, th.num { text-align: right; }
-  td.muted { color: #6C7A93; }
+  code {
+    font-size: 12px;
+    background: var(--saas-surface-muted);
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
 }

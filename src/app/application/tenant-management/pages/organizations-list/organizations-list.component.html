@@ -1,11 +1,12 @@
 <div class="saas-page organizations-list">
+  <p-toast></p-toast>
+
   <tc-saas-page-header
     title="Organizations"
-    subtitle="Tenants onboarded on the ThinkersCave platform"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Platform Admin'},{label:'Organizations'}]">
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
-    <button type="button" class="saas-btn"><i class="pi pi-download"></i>Export</button>
-    <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-plus"></i>Create Organization</a>
+    subtitle="Manage customer organizations and tenant workspaces"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Organizations'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-plus"></i> New Organization</a>
   </tc-saas-page-header>
 
   <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
@@ -13,98 +14,89 @@
   <tc-saas-filter-row>
     <label class="saas-search">
       <i class="pi pi-search"></i>
-      <input type="text" [(ngModel)]="search" placeholder="Search organization, code, or owner...">
+      <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search organization, code, email...">
     </label>
     <label class="saas-field"><span>Status</span>
-      <select [(ngModel)]="statusFilter">
-        <option *ngFor="let s of statusChips" [value]="s.id">{{ s.label }}</option>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let s of statusChips" [ngValue]="s.id">{{ s.label }}</option>
       </select>
     </label>
-    <label class="saas-field"><span>Plan</span>
-      <select [(ngModel)]="planFilter">
-        <option value="all">All Plans</option>
-        <option *ngFor="let p of planOptions" [value]="p">{{ p }}</option>
+    <label class="saas-field"><span>Type</span>
+      <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let t of typeOptions" [ngValue]="t.id">{{ t.label }}</option>
       </select>
     </label>
-    <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i>Reset</button>
+    <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
   </tc-saas-filter-row>
 
-  <tc-saas-panel [title]="'All Organizations'" [subtitle]="filtered.length + ' organizations'">
+  <tc-saas-panel [title]="'All Organizations'" [subtitle]="totalRecords + ' organizations'">
     <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
-      <i class="pi pi-exclamation-triangle" style="color: var(--saas-warning);"></i>
+      <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
       <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
     </div>
 
-    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading tenants...</div>
+    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading organizations...</div>
 
-    <div *ngIf="!loading && !filtered.length && !errorMessage" class="saas-empty">
+    <div *ngIf="!loading && !organizations.length && !errorMessage" class="saas-empty">
       <i class="pi pi-building"></i>
-      <strong>No organizations match your filters</strong>
-      <p>Try clearing the search or adjusting filters above.</p>
+      <strong>No organizations found</strong>
+      <p>Try adjusting filters or provision a new organization.</p>
+      <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create">Provision Organization</a>
     </div>
 
-    <div *ngIf="!loading && filtered.length" class="saas-table-wrap">
+    <div *ngIf="!loading && organizations.length" class="saas-table-wrap">
       <table class="saas-data-table organizations-list__table">
         <thead>
           <tr>
             <th>Organization</th>
+            <th>Owner / Customer</th>
             <th>Type</th>
             <th>Plan</th>
-            <th>Users</th>
-            <th>Students</th>
             <th>Status</th>
             <th>Created</th>
-            <th>Renewal</th>
+            <th>Domain</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let org of filtered; trackBy: trackById" (click)="openWorkspace(org, $event)">
+          <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org, $event)">
             <td>
               <div class="cell-main organizations-list__cell">
-                <span class="organizations-list__avatar" [attr.data-tier]="org.planTier">{{ org.initials }}</span>
+                <span class="organizations-list__avatar">{{ orgInitials(org.organizationName) }}</span>
                 <div>
-                  <strong>{{ org.name }}</strong>
-                  <small>{{ org.code }} · {{ org.location }}</small>
+                  <strong>{{ org.organizationName }}</strong>
+                  <small>{{ org.organizationCode }} · {{ org.city || '—' }}</small>
                 </div>
               </div>
             </td>
-            <td>{{ org.type }}</td>
-            <td><tc-saas-pill [label]="org.plan" [tone]="planTone(org.planTier)"></tc-saas-pill></td>
-            <td>{{ org.users | number }}</td>
-            <td>{{ org.students | number }}</td>
-            <td><tc-saas-pill [label]="org.statusLabel" [tone]="statusTone(org.status)"></tc-saas-pill></td>
-            <td>{{ org.createdDate }}</td>
-            <td>{{ org.expiryDate }}</td>
+            <td>{{ org.customerName || org.email || '—' }}</td>
+            <td>{{ institutionLabel(org.institutionType) }}</td>
+            <td><tc-saas-pill [label]="org.planName || '—'" tone="primary"></tc-saas-pill></td>
+            <td><tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="pillTone(org.status)"></tc-saas-pill></td>
+            <td>{{ formatDate(org.createdOn) }}</td>
+            <td>{{ org.tenantIdentifier ? org.tenantIdentifier + '.thinkerscave.app' : '—' }}</td>
             <td class="cell-actions">
               <div class="organizations-list__menu-wrap">
-                <button type="button" class="saas-icon-btn" (click)="toggleMenu(org.id, $event)" aria-label="Actions">
-                  <i class="pi pi-ellipsis-v"></i>
-                </button>
-                <div class="organizations-list__menu" *ngIf="openMenuFor === org.id" (click)="$event.stopPropagation()">
-                  <button type="button" (click)="openWorkspace(org)"><i class="pi pi-eye"></i>View details</button>
-                  <button type="button" (click)="runQuickAction(org, 'upgrade', $event)"><i class="pi pi-arrow-up-right"></i>Upgrade plan</button>
-                  <button type="button" (click)="runQuickAction(org, 'renew', $event)"><i class="pi pi-refresh"></i>Renew subscription</button>
-                  <button type="button" (click)="runQuickAction(org, 'view-audit', $event)"><i class="pi pi-history"></i>Audit trail</button>
-                  <button type="button" (click)="runQuickAction(org, org.status === 'suspended' ? 'activate' : 'suspend', $event)">
-                    <i class="pi" [ngClass]="org.status === 'suspended' ? 'pi-check-circle' : 'pi-ban'"></i>{{ org.status === 'suspended' ? 'Activate' : 'Suspend' }}
-                  </button>
+                <button type="button" class="saas-icon-btn" (click)="toggleMenu(org.id, $event)"><i class="pi pi-ellipsis-v"></i></button>
+                <div class="organizations-list__menu" *ngIf="openMenuFor === org.id">
+                  <button type="button" (click)="runQuickAction(org, 'view', $event)"><i class="pi pi-eye"></i> View workspace</button>
+                  <button type="button" *ngIf="org.status === 'ACTIVE'" (click)="runQuickAction(org, 'suspend', $event)"><i class="pi pi-ban"></i> Suspend</button>
+                  <button type="button" *ngIf="org.status === 'SUSPENDED'" (click)="runQuickAction(org, 'activate', $event)"><i class="pi pi-check"></i> Activate</button>
                 </div>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
 
-    <footer class="organizations-list__pagination" *ngIf="filtered.length">
-      <span>Showing {{ filtered.length }} of {{ organizations.length }} organizations</span>
-      <div>
-        <button type="button" class="saas-icon-btn" disabled><i class="pi pi-chevron-left"></i></button>
-        <button type="button" class="saas-icon-btn saas-icon-btn--active">1</button>
-        <button type="button" class="saas-icon-btn" disabled><i class="pi pi-chevron-right"></i></button>
-      </div>
-    </footer>
+      <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [first]="page * pageSize"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
+    </div>
   </tc-saas-panel>
 </div>

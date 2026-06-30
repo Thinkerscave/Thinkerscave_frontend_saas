@@ -1,0 +1,126 @@
+<div class="saas-page migration-center">
+  <p-toast position="top-right"></p-toast>
+
+  <tc-saas-page-header
+    title="Migration Center"
+    subtitle="Monitor tenant provisioning jobs and schema migrations"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Migration Center'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="saas-empty migration-center__error">
+    <i class="pi pi-exclamation-triangle"></i>
+    <strong>{{ errorMessage }}</strong>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+  </div>
+
+  <div *ngIf="loading && !jobs.length && !tenants.length" class="saas-loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading migration center...
+  </div>
+
+  <ng-container *ngIf="!loading || jobs.length || tenants.length">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <tc-saas-panel title="Provisioning Jobs" subtitle="Recent tenant provisioning and onboarding runs">
+      <div *ngIf="!jobs.length && !loading" class="saas-empty">
+        <i class="pi pi-cog"></i>
+        <strong>No provisioning jobs</strong>
+        <p>Jobs appear here when organizations are provisioned.</p>
+      </div>
+
+      <div *ngIf="jobs.length" class="saas-table-wrap">
+        <table class="saas-data-table migration-center__table">
+          <thead>
+            <tr>
+              <th>Job Code</th>
+              <th>Organization</th>
+              <th>Status</th>
+              <th class="num">Progress</th>
+              <th>Current Step</th>
+              <th>Started</th>
+              <th>Error</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let job of jobs; trackBy: trackByJobId">
+              <td><strong class="migration-center__mono">{{ job.jobCode }}</strong></td>
+              <td>{{ job.organizationName || '—' }}</td>
+              <td><tc-saas-pill [label]="provisionJobStatusLabel(job.status)" [tone]="provisionJobTone(job.status)"></tc-saas-pill></td>
+              <td class="num">
+                <span class="migration-center__progress">{{ progressLabel(job) }}</span>
+              </td>
+              <td class="muted">{{ job.currentStep || '—' }}</td>
+              <td>{{ formatDateTime(job.startedAt) }}</td>
+              <td class="migration-center__error-cell">{{ job.errorMessage || '—' }}</td>
+              <td class="cell-actions">
+                <button
+                  *ngIf="job.status === 'FAILED'"
+                  type="button"
+                  class="saas-btn saas-btn--sm saas-btn--primary"
+                  [disabled]="retryingId === job.id"
+                  (click)="retryJob(job)">
+                  <i class="pi" [ngClass]="retryingId === job.id ? 'pi-spin pi-spinner' : 'pi-replay'"></i>
+                  Retry
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Tenant Registry" subtitle="Schema versions, storage and migration status per tenant">
+      <div *ngIf="!tenants.length && !loading" class="saas-empty">
+        <i class="pi pi-database"></i>
+        <strong>No tenants registered</strong>
+        <p>Provision an organization to create tenant registry entries.</p>
+      </div>
+
+      <div *ngIf="tenants.length" class="saas-table-wrap">
+        <table class="saas-data-table migration-center__table">
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>Tenant</th>
+              <th>Migration Version</th>
+              <th>Database Version</th>
+              <th>Provision Status</th>
+              <th class="num">Storage</th>
+              <th>Maintenance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let tenant of tenants; trackBy: trackByTenantId">
+              <td><strong>{{ tenant.organizationName || '—' }}</strong></td>
+              <td class="migration-center__mono">{{ tenant.tenantIdentifier }}</td>
+              <td>{{ tenant.migrationVersion || '—' }}</td>
+              <td>{{ tenant.databaseVersion || '—' }}</td>
+              <td><tc-saas-pill [label]="provisionStatusLabel(tenant.provisionStatus)" [tone]="provisionStatusTone(tenant.provisionStatus)"></tc-saas-pill></td>
+              <td class="num">{{ formatStorageMb(tenant.storageUsedMb) }}</td>
+              <td>
+                <tc-saas-pill
+                  [label]="tenant.maintenanceMode ? 'On' : 'Off'"
+                  [tone]="tenant.maintenanceMode ? 'warning' : 'neutral'">
+                </tc-saas-pill>
+              </td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="saas-btn saas-btn--sm"
+                  [disabled]="migratingId === tenant.id"
+                  (click)="triggerMigration(tenant)">
+                  <i class="pi" [ngClass]="migratingId === tenant.id ? 'pi-spin pi-spinner' : 'pi-arrow-right-arrow-left'"></i>
+                  Migrate
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

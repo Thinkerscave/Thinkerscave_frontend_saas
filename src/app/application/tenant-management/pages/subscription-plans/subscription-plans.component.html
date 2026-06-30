@@ -1,137 +1,74 @@
 <div class="saas-page subscription-plans">
-  <p-toast position="top-right"></p-toast>
+  <p-toast></p-toast>
 
   <tc-saas-page-header
     title="Subscription Plans"
-    subtitle="Choose the right plan for each organization"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Platform Admin'},{label:'Subscription Plans'}]">
-    <div class="subscription-plans__toggle">
-      <button type="button" [class.is-active]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>
-      <button type="button" [class.is-active]="billing === 'annual'" (click)="billing = 'annual'">Annual<span class="saas-chip" style="margin-left: 6px;">Save 17%</span></button>
+    subtitle="Manage commercial plans, limits and bundled modules"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Subscription Plans'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <div class="subscription-plans__billing">
+      <button type="button" class="saas-btn" [class.saas-btn--primary]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>
+      <button type="button" class="saas-btn" [class.saas-btn--primary]="billing === 'yearly'" (click)="billing = 'yearly'">Yearly</button>
     </div>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="openWizard()"><i class="pi pi-plus"></i>Create Custom Plan</button>
   </tc-saas-page-header>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading subscription plans...</div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading plans...</div>
 
   <div *ngIf="!loading && !plans.length" class="saas-empty">
-    <i class="pi pi-credit-card"></i>
+    <i class="pi pi-tags"></i>
     <strong>No subscription plans configured</strong>
-    <p>Click Create Custom Plan to define your first plan.</p>
+    <p>Create plans via the platform API or seed data in the backend.</p>
   </div>
 
-  <div *ngIf="!loading && plans.length" class="subscription-plans__grid">
-    <article *ngFor="let plan of plans; trackBy: trackByPlan" class="plan-card" [ngClass]="toneClass(plan)" [class.is-popular]="plan.popular">
-      <span class="plan-card__badge" *ngIf="plan.popular">Most Popular</span>
-      <header class="plan-card__head">
-        <span class="plan-card__icon"><i class="pi pi-bolt"></i></span>
-        <h3>{{ plan.raw.planName }}</h3>
-        <p>{{ plan.raw.description || 'Tailored experience' }}</p>
+  <div class="subscription-plans__grid" *ngIf="!loading && plans.length">
+    <article *ngFor="let plan of plans; trackBy: trackByPlan" class="plan-card" [class.plan-card--popular]="plan.recommended">
+      <header>
+        <div>
+          <h3>{{ plan.planName }}</h3>
+          <p>{{ plan.description || plan.planCode }}</p>
+        </div>
+        <tc-saas-pill *ngIf="plan.recommended" label="Most Popular" tone="primary"></tc-saas-pill>
+        <tc-saas-pill *ngIf="plan.customPlan" label="Custom" tone="warning"></tc-saas-pill>
       </header>
-
       <div class="plan-card__price">
         <strong>{{ priceLabel(plan) }}</strong>
-        <small>/ {{ billing === 'annual' ? 'year' : 'month' }}</small>
+        <small>/ {{ billing === 'yearly' ? 'year' : 'month' }}</small>
       </div>
-
-      <ul class="plan-card__features">
-        <li *ngFor="let f of plan.features"><i class="pi pi-check"></i>{{ f }}</li>
+      <ul>
+        <li *ngFor="let limit of limits(plan)"><i class="pi pi-check"></i> {{ limit }}</li>
+        <li *ngIf="plan.trialDays"><i class="pi pi-clock"></i> {{ plan.trialDays }}-day trial</li>
       </ul>
-
-      <div *ngIf="plan.modules.length" class="plan-card__modules">
-        <small>Included modules</small>
-        <div>
-          <tc-saas-pill *ngFor="let m of plan.modules" [label]="m" tone="neutral"></tc-saas-pill>
-        </div>
-      </div>
-
-      <footer class="plan-card__foot">
-        <button type="button" class="saas-btn" [ngClass]="{'saas-btn--primary': plan.popular}">Choose Plan</button>
+      <footer>
+        <tc-saas-pill [label]="plan.active ? 'Active' : 'Inactive'" [tone]="plan.active ? 'success' : 'neutral'"></tc-saas-pill>
+        <span class="plan-card__code">{{ plan.planCode }}</span>
       </footer>
-    </article>
-
-    <article class="plan-card plan-card--custom-cta" (click)="openWizard()">
-      <span class="plan-card__icon"><i class="pi pi-sliders-h"></i></span>
-      <h3>Custom Plan</h3>
-      <p>Build a plan that fits the unique requirements of an organization.</p>
-      <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-plus"></i>Create Custom Plan</button>
     </article>
   </div>
 
-  <!-- Wizard modal -->
-  <div *ngIf="wizardOpen" class="saas-modal-backdrop" (click)="closeWizard()">
-    <div class="saas-modal subscription-plans__wizard" (click)="$event.stopPropagation()">
-      <header class="saas-modal__header">
-        <h2>Create Custom Subscription Plan</h2>
-        <button type="button" class="saas-icon-btn" (click)="closeWizard()"><i class="pi pi-times"></i></button>
-      </header>
-      <div class="saas-modal__body">
-        <tc-saas-stepper [steps]="wizardSteps" [activeIndex]="step"></tc-saas-stepper>
-
-        <section *ngIf="step === 0" class="wizard-step">
-          <h3>Basic Information</h3>
-          <p>Give the plan a clear name, description, and pricing.</p>
-          <div class="wizard-row">
-            <label class="saas-field"><span>Plan Name</span><input type="text" [(ngModel)]="draft.planName" placeholder="Eg. Enterprise Plus"></label>
-            <label class="saas-field"><span>Currency</span>
-              <select [(ngModel)]="draft.currency"><option value="INR">INR (₹)</option><option value="USD">USD ($)</option></select>
-            </label>
-          </div>
-          <label class="saas-field"><span>Description</span><textarea rows="3" [(ngModel)]="draft.description" placeholder="One-line summary shown to customers"></textarea></label>
-          <div class="wizard-row">
-            <label class="saas-field"><span>Monthly Price</span><input type="number" min="0" [(ngModel)]="draft.monthlyPrice"></label>
-            <label class="saas-field"><span>Annual Price</span><input type="number" min="0" [(ngModel)]="draft.annualPrice"></label>
-            <label class="saas-field"><span>Support Tier</span>
-              <select [(ngModel)]="draft.supportTier"><option>Standard</option><option>Priority</option><option>Premium 24x7</option></select>
-            </label>
-          </div>
-        </section>
-
-        <section *ngIf="step === 1" class="wizard-step">
-          <h3>Limits & Quotas</h3>
-          <p>Set the boundaries for what this plan includes.</p>
-          <div class="wizard-row wizard-row--quad">
-            <label class="saas-field"><span>Max Students</span><input type="number" min="0" [(ngModel)]="draft.maxStudents"></label>
-            <label class="saas-field"><span>Max Staff</span><input type="number" min="0" [(ngModel)]="draft.maxStaff"></label>
-            <label class="saas-field"><span>Max Users</span><input type="number" min="0" [(ngModel)]="draft.maxUsers"></label>
-            <label class="saas-field"><span>Storage (GB)</span><input type="number" min="0" [(ngModel)]="draft.storageGb"></label>
-          </div>
-        </section>
-
-        <section *ngIf="step === 2" class="wizard-step">
-          <h3>Modules Included</h3>
-          <p>Pick the modules that this plan unlocks.</p>
-          <div class="wizard-modules">
-            <label *ngFor="let m of moduleOptions" class="wizard-module" [class.is-checked]="selectedModules.has(m)" (click)="toggleModule(m)">
-              <i class="pi" [ngClass]="selectedModules.has(m) ? 'pi-check-square' : 'pi-stop'"></i>
-              <span>{{ m }}</span>
-            </label>
-          </div>
-        </section>
-
-        <section *ngIf="step === 3" class="wizard-step wizard-review">
-          <h3>Review</h3>
-          <p>Confirm the plan details before saving.</p>
-          <dl>
-            <div><dt>Plan Name</dt><dd>{{ draft.planName }}</dd></div>
-            <div><dt>Description</dt><dd>{{ draft.description || '—' }}</dd></div>
-            <div><dt>Pricing</dt><dd>{{ draft.currency }} {{ draft.monthlyPrice | number }} / month · {{ draft.annualPrice | number }} / year</dd></div>
-            <div><dt>Limits</dt><dd>{{ draft.maxStudents }} students · {{ draft.maxStaff }} staff · {{ draft.maxUsers }} users · {{ draft.storageGb }} GB</dd></div>
-            <div><dt>Support Tier</dt><dd>{{ draft.supportTier }}</dd></div>
-            <div><dt>Modules</dt><dd>{{ selectedModules.size }} modules selected</dd></div>
-          </dl>
-        </section>
-      </div>
-      <footer class="saas-modal__footer">
-        <button type="button" class="saas-btn" (click)="prev()" [disabled]="step === 0"><i class="pi pi-arrow-left"></i>Back</button>
-        <div style="margin-left:auto; display: flex; gap: 8px;">
-          <button type="button" class="saas-btn" (click)="closeWizard()">Cancel</button>
-          <button type="button" *ngIf="step < wizardSteps.length - 1" class="saas-btn saas-btn--primary" (click)="next()">Next<i class="pi pi-arrow-right"></i></button>
-          <button type="button" *ngIf="step === wizardSteps.length - 1" class="saas-btn saas-btn--primary" (click)="submitPlan()" [disabled]="saving">
-            <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>Save Plan
-          </button>
-        </div>
-      </footer>
+  <tc-saas-panel *ngIf="!loading && plans.length" title="Plan Comparison" subtitle="Feature matrix across plans">
+    <div class="saas-table-wrap">
+      <table class="saas-data-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Students</th>
+            <th>Staff</th>
+            <th>Branches</th>
+            <th>Storage</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let plan of plans; trackBy: trackByPlan">
+            <td><strong>{{ plan.planName }}</strong><br><small>{{ plan.planCode }}</small></td>
+            <td>{{ plan.studentLimit ?? '—' }}</td>
+            <td>{{ plan.staffLimit ?? '—' }}</td>
+            <td>{{ plan.branchLimit ?? '—' }}</td>
+            <td>{{ plan.storageLimitGb ? plan.storageLimitGb + ' GB' : '—' }}</td>
+            <td><tc-saas-pill [label]="plan.active ? 'Active' : 'Inactive'" [tone]="plan.active ? 'success' : 'neutral'"></tc-saas-pill></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </tc-saas-panel>
 </div>

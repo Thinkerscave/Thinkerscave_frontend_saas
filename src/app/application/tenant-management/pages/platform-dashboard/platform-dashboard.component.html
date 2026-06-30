@@ -1,0 +1,72 @@
+<div class="saas-page platform-dashboard">
+  <tc-saas-page-header
+    title="Platform Dashboard"
+    subtitle="ThinkersCave platform-wide overview for super administrators"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Dashboard'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="saas-empty platform-dashboard__error">
+    <i class="pi pi-exclamation-triangle"></i>
+    <strong>{{ errorMessage }}</strong>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+  </div>
+
+  <div *ngIf="loading && !dashboard" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading platform metrics...</div>
+
+  <ng-container *ngIf="dashboard">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <div class="platform-dashboard__grid">
+      <tc-saas-panel title="Organizations Overview" subtitle="Active, trial and suspended trend">
+        <div class="platform-dashboard__chart">
+          <p-chart type="line" [data]="orgTrendData" [options]="orgTrendOptions" height="280px"></p-chart>
+        </div>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Subscription Distribution" subtitle="Plan mix across tenants">
+        <div class="platform-dashboard__chart platform-dashboard__chart--donut">
+          <p-chart type="doughnut" [data]="planDistData" [options]="planDistOptions" height="280px"></p-chart>
+        </div>
+      </tc-saas-panel>
+    </div>
+
+    <div class="platform-dashboard__grid platform-dashboard__grid--bottom">
+      <tc-saas-panel title="Recent Activities" subtitle="Latest platform events">
+        <ul class="platform-dashboard__activity">
+          <li *ngFor="let item of activities">
+            <span class="platform-dashboard__activity-icon"><i [class]="item.icon"></i></span>
+            <div>
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.detail }}</p>
+              <small>{{ item.time }}</small>
+            </div>
+          </li>
+        </ul>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Quick Actions" subtitle="Common platform operations">
+        <div class="platform-dashboard__actions">
+          <button type="button" class="platform-dashboard__action" (click)="navigate('/app/tenant-management/organizations/create')">
+            <i class="pi pi-plus-circle"></i>
+            <div><strong>New Organization</strong><span>Provision a tenant workspace</span></div>
+          </button>
+          <button type="button" class="platform-dashboard__action" (click)="navigate('/app/tenant-management/promotions')">
+            <i class="pi pi-percentage"></i>
+            <div><strong>Create Promotion</strong><span>Discounts & commercial offers</span></div>
+          </button>
+          <button type="button" class="platform-dashboard__action" (click)="navigate('/app/tenant-management/subscription-plans')">
+            <i class="pi pi-tags"></i>
+            <div><strong>Subscription Plans</strong><span>Manage plan catalog</span></div>
+          </button>
+          <button type="button" class="platform-dashboard__action" (click)="navigate('/app/tenant-management/migration-center')">
+            <i class="pi pi-arrow-right-arrow-left"></i>
+            <div><strong>View Migrations</strong><span>Tenant version upgrades</span></div>
+          </button>
+        </div>
+      </tc-saas-panel>
+    </div>
+  </ng-container>
+</div>

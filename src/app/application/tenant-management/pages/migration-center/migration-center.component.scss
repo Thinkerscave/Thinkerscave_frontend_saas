@@ -1,0 +1,44 @@
+.migration-center {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  &__error {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__table {
+    td.num,
+    th.num {
+      text-align: right;
+    }
+
+    td.muted {
+      color: var(--saas-text-soft);
+      max-width: 200px;
+    }
+  }
+
+  &__mono {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 0.82rem;
+    color: var(--saas-text);
+  }
+
+  &__progress {
+    display: inline-block;
+    min-width: 2.5rem;
+    font-weight: 600;
+    color: var(--saas-primary);
+  }
+
+  &__error-cell {
+    max-width: 220px;
+    color: var(--saas-danger);
+    font-size: 0.82rem;
+    word-break: break-word;
+  }
+}

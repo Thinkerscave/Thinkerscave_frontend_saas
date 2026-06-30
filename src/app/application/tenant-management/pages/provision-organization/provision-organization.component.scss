@@ -1,0 +1,396 @@
+.provision-organization {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  tc-saas-stepper {
+    display: block;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  &__banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    border: 1px solid var(--saas-border);
+
+    i { margin-top: 2px; }
+
+    &--danger {
+      background: var(--saas-danger-soft, rgba(239, 68, 68, 0.08));
+      border-color: rgba(239, 68, 68, 0.25);
+      color: var(--saas-danger, #ef4444);
+    }
+
+    &--warning {
+      background: var(--saas-warning-soft);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: var(--saas-warning);
+    }
+  }
+
+  &__mode-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    cursor: pointer;
+
+    input { accent-color: var(--saas-primary); }
+    span { color: var(--saas-text-muted); font-size: 0.85rem; }
+  }
+
+  &__plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  &__feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  &__nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--saas-border);
+    flex-wrap: wrap;
+  }
+
+  &__nav-end {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  &--success {
+    .provision-organization__success-card {
+      background: var(--saas-surface);
+      border: 1px solid var(--saas-border);
+      border-radius: var(--saas-radius, 16px);
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: var(--saas-shadow);
+
+      > i {
+        font-size: 2.5rem;
+        color: var(--saas-success);
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        color: var(--saas-text);
+        font-size: 1.35rem;
+      }
+
+      > p {
+        margin: 0 0 22px;
+        color: var(--saas-text-soft);
+        max-width: 520px;
+        margin-inline: auto;
+      }
+
+      tc-saas-stat-grid {
+        display: block;
+        text-align: left;
+        margin-bottom: 20px;
+      }
+    }
+  }
+
+  &__success-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 22px;
+  }
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__title {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--saas-text);
+  }
+
+  &__lead {
+    margin: 0;
+    color: var(--saas-text-soft);
+    font-size: 0.85rem;
+  }
+
+  &__subtitle {
+    margin: 8px 0 0;
+    font-size: 0.9rem;
+    color: var(--saas-text);
+  }
+}
+
+.wizard-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+
+  &--triple { grid-template-columns: repeat(3, 1fr); }
+  &--quad { grid-template-columns: repeat(4, 1fr); }
+
+  @media (max-width: 900px) {
+    &--quad { grid-template-columns: 1fr 1fr; }
+    &--triple { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    &--quad { grid-template-columns: 1fr; }
+  }
+}
+
+.saas-field--wide { grid-column: span 1; }
+.saas-field--full { grid-column: 1 / -1; }
+
+.saas-field--toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.wizard-summary-card {
+  padding: 14px 16px;
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  background: var(--saas-surface-muted);
+
+  strong { color: var(--saas-text); }
+  p { margin: 4px 0 10px; color: var(--saas-text-soft); font-size: 0.85rem; }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &--inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    p { margin: 0; }
+  }
+}
+
+.plan-card {
+  position: relative;
+  text-align: left;
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    strong { color: var(--saas-text); font-size: 0.95rem; }
+    small { color: var(--saas-text-soft); font-size: 0.75rem; }
+  }
+
+  p {
+    margin: 0;
+    color: var(--saas-text-soft);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--saas-text);
+
+      i { color: var(--saas-success); font-size: 0.75rem; }
+    }
+  }
+
+  &__price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--saas-text);
+
+    small {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--saas-text-soft);
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: -8px;
+    right: 14px;
+    background: var(--saas-primary);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  &__check {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--saas-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 0.7rem;
+    transition: all 0.15s ease;
+  }
+
+  &.is-selected {
+    border-color: var(--saas-primary);
+    background: var(--saas-primary-soft);
+    box-shadow: 0 8px 24px -12px rgba(44, 91, 255, 0.45);
+
+    .plan-card__check {
+      background: var(--saas-primary);
+      border-color: var(--saas-primary);
+      color: #fff;
+    }
+  }
+
+  &.is-recommended:not(.is-selected) {
+    border-color: rgba(44, 91, 255, 0.35);
+  }
+}
+
+.feature-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  input { margin-top: 4px; accent-color: var(--saas-primary); }
+
+  strong {
+    display: block;
+    color: var(--saas-text);
+    font-size: 0.88rem;
+  }
+
+  small {
+    color: var(--saas-text-soft);
+    font-size: 0.75rem;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--saas-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    grid-column: 2;
+  }
+
+  tc-saas-pill { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+
+  &.is-on {
+    border-color: var(--saas-primary);
+    background: var(--saas-primary-soft);
+  }
+
+  &.is-plan-default:not(.is-on) {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: var(--saas-warning-soft);
+  }
+}
+
+.wizard-review {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 8px 16px;
+  margin: 8px 0 0;
+
+  > div { display: contents; }
+
+  dt {
+    color: var(--saas-text-soft);
+    font-size: 0.82rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--saas-text);
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  &--compact {
+    text-align: left;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--saas-border);
+    }
+  }
+}

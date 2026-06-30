@@ -1,63 +1,57 @@
-<tc-saas-page-header
-  title="Platform Health"
-  subtitle="Service status, scheduled jobs and active incidents"
-  [breadcrumbs]="[{ label: 'Platform Administration', route: '/app/tenant-management/organizations' }, { label: 'Platform Health' }]">
-  <small class="refresh-meta">Refreshed {{ refreshedAt() | date:'short' }}</small>
-  <button type="button" class="btn-primary" (click)="refresh()"><i class="pi pi-refresh"></i>Refresh</button>
-</tc-saas-page-header>
+<div class="saas-page platform-health">
+  <tc-saas-page-header
+    title="Tenant Health"
+    subtitle="Monitor tenant infrastructure, schema versions and storage"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Tenant Health'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <small class="platform-health__refreshed">Updated {{ refreshedAt | date:'short' }}</small>
+  </tc-saas-page-header>
 
-<tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading tenant health...</div>
 
-<div class="ph-grid">
-  <tc-saas-panel title="Services" subtitle="Real-time status of core platform services">
-    <div class="ph-table">
-      <table>
-        <thead><tr><th>Service</th><th>Status</th><th class="num">Latency</th><th class="num">Uptime</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let s of services()">
-            <td><strong>{{ s.name }}</strong></td>
-            <td><tc-saas-pill [label]="s.status" [tone]="serviceTone(s.status)"></tc-saas-pill></td>
-            <td class="num">{{ s.latencyMs }} ms</td>
-            <td class="num">{{ s.uptime }}</td>
-            <td class="muted">{{ s.description }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </tc-saas-panel>
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-  <tc-saas-panel title="Scheduled Jobs" subtitle="Background and cron job execution history">
-    <div class="ph-table">
-      <table>
-        <thead><tr><th>Job</th><th>Last run</th><th>Status</th><th class="num">Duration</th><th>Next run</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let j of jobs()">
-            <td><strong>{{ j.jobName }}</strong></td>
-            <td class="muted">{{ j.lastRun }}</td>
-            <td><tc-saas-pill [label]="j.status" [tone]="jobTone(j.status)"></tc-saas-pill></td>
-            <td class="num">{{ formatMs(j.durationMs) }}</td>
-            <td class="muted">{{ j.nextRun || '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </tc-saas-panel>
-
-  <tc-saas-panel title="Active Incidents" subtitle="Open and recently resolved platform incidents">
-    <div class="ph-table">
-      <table>
-        <thead><tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Opened</th><th>Assignee</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let i of incidents()">
-            <td><strong>{{ i.id }}</strong></td>
-            <td>{{ i.title }}</td>
-            <td><tc-saas-pill [label]="i.severity | titlecase" [tone]="incidentTone(i.severity)"></tc-saas-pill></td>
-            <td><tc-saas-pill [label]="i.status" [tone]="i.status === 'Open' ? 'warning' : i.status === 'Mitigated' ? 'info' : 'success'"></tc-saas-pill></td>
-            <td class="muted">{{ i.openedAt }}</td>
-            <td>{{ i.assignee }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </tc-saas-panel>
+    <tc-saas-panel title="Tenant Registry" subtitle="Health scores derived from provision status and maintenance mode">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>Tenant ID</th>
+              <th>Schema</th>
+              <th>DB Version</th>
+              <th>Migration</th>
+              <th>Storage</th>
+              <th>Status</th>
+              <th>Health</th>
+              <th>Last Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tenants()">
+              <td><strong>{{ t.organizationName || '—' }}</strong></td>
+              <td><code>{{ t.tenantIdentifier }}</code></td>
+              <td>{{ t.schemaName || '—' }}</td>
+              <td>{{ t.databaseVersion || '—' }}</td>
+              <td>{{ t.migrationVersion || '—' }}</td>
+              <td>{{ formatStorageMb(t.storageUsedMb) }}</td>
+              <td>
+                <tc-saas-pill [label]="provisionStatusLabel(t.provisionStatus)" [tone]="statusPillTone(t.provisionStatus)"></tc-saas-pill>
+                <tc-saas-pill *ngIf="t.maintenanceMode" label="Maintenance" tone="warning"></tc-saas-pill>
+              </td>
+              <td>
+                <tc-saas-pill [label]="healthScore(t) + '%'" [tone]="tenantTone(t)"></tc-saas-pill>
+              </td>
+              <td>{{ formatDateTime(t.lastHealthCheckAt || t.lastMigrationAt) }}</td>
+            </tr>
+            <tr *ngIf="!tenants().length">
+              <td colspan="9" class="empty">No tenant registry records found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
 </div>

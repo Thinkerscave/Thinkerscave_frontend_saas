@@ -2,174 +2,298 @@
   <p-toast position="top-right"></p-toast>
 
   <tc-saas-page-header
-    [title]="org?.name || 'Organization'"
-    [subtitle]="org ? (org.code + ' · ' + org.type + ' · ' + org.location) : 'Loading...'"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organizations',route:'/app/tenant-management/organizations'},{label: org?.name || 'Detail'}]">
-    <button type="button" class="saas-btn" (click)="back()"><i class="pi pi-arrow-left"></i>Back</button>
-    <button type="button" class="saas-btn" (click)="renew()"><i class="pi pi-refresh"></i>Renew</button>
-    <button type="button" class="saas-btn" (click)="changePlan()"><i class="pi pi-arrow-up-right"></i>Change Plan</button>
-    <button type="button" class="saas-btn saas-btn--danger" (click)="toggleSuspension()" *ngIf="org">
-      <i class="pi pi-ban"></i>{{ org.status === 'suspended' ? 'Activate' : 'Suspend' }}
+    [title]="org?.organizationName || 'Organization'"
+    [subtitle]="subtitle"
+    [breadcrumbs]="[
+      { label: 'Home', route: '/app' },
+      { label: 'Organizations', route: '/app/tenant-management/organizations' },
+      { label: org?.organizationName || 'Detail' }
+    ]">
+    <div class="organization-workspace__header-meta" *ngIf="org">
+      <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
+      <span class="organization-workspace__type-pill">{{ institutionLabel(org.institutionType) }}</span>
+    </div>
+    <button type="button" class="saas-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
+    <button
+      type="button"
+      class="saas-btn saas-btn--primary"
+      *ngIf="org && canActivate()"
+      [disabled]="actionLoading"
+      (click)="activate()">
+      <i class="pi pi-check-circle"></i> Activate
+    </button>
+    <button
+      type="button"
+      class="saas-btn saas-btn--danger"
+      *ngIf="org && canSuspend()"
+      [disabled]="actionLoading"
+      (click)="suspend()">
+      <i class="pi pi-ban"></i> Suspend
     </button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty">
-    <i class="pi pi-exclamation-triangle" style="color: var(--saas-warning);"></i>
+  <div *ngIf="errorMessage" class="saas-empty organization-workspace__error">
+    <i class="pi pi-exclamation-triangle"></i>
     <strong>{{ errorMessage }}</strong>
+    <button type="button" class="saas-btn" (click)="load(orgId)"><i class="pi pi-refresh"></i> Retry</button>
     <button type="button" class="saas-btn saas-btn--primary" (click)="back()">Back to organizations</button>
   </div>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization...</div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading organization...</div>
 
   <ng-container *ngIf="!loading && org">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 
     <ng-container [ngSwitch]="activeTab">
-      <!-- Overview tab -->
-      <section *ngSwitchCase="'overview'" class="organization-workspace__grid">
-        <tc-saas-panel title="Organization Information">
-          <dl class="org-dl">
-            <div><dt>Name</dt><dd>{{ org.name }}</dd></div>
-            <div><dt>Code</dt><dd>{{ org.code }}</dd></div>
-            <div><dt>Type</dt><dd>{{ org.type }}</dd></div>
-            <div><dt>Address</dt><dd>{{ org.location }}</dd></div>
-            <div><dt>Phone</dt><dd>—</dd></div>
-            <div><dt>Email</dt><dd>{{ org.ownerEmail }}</dd></div>
-            <div><dt>Website</dt><dd>{{ org.domain }}</dd></div>
-            <div><dt>Owner</dt><dd>{{ org.ownerName }}</dd></div>
-          </dl>
-        </tc-saas-panel>
+      <!-- Overview -->
+      <section *ngSwitchCase="'overview'" class="organization-workspace__tab">
+        <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-        <tc-saas-panel title="Subscription Summary">
-          <ng-container panel-actions><tc-saas-pill [label]="org.statusLabel" [tone]="statusTone()"></tc-saas-pill></ng-container>
-          <dl class="org-dl">
-            <div><dt>Plan</dt><dd><strong>{{ org.plan }}</strong></dd></div>
-            <div><dt>Start Date</dt><dd>{{ org.createdDate }}</dd></div>
-            <div><dt>Renewal</dt><dd>{{ org.expiryDate }}</dd></div>
-            <div><dt>Status</dt><dd>{{ org.statusLabel }}</dd></div>
-          </dl>
-          <button type="button" class="saas-btn saas-btn--primary" (click)="changePlan()" style="margin-top: 12px; width: 100%; justify-content: center;">
-            <i class="pi pi-arrow-up-right"></i>Manage Subscription
-          </button>
-        </tc-saas-panel>
+        <div class="organization-workspace__grid">
+          <tc-saas-panel title="Organization Information" subtitle="Core profile and contact details">
+            <dl class="org-dl">
+              <div><dt>Organization Name</dt><dd>{{ org.organizationName }}</dd></div>
+              <div><dt>Code</dt><dd>{{ org.organizationCode }}</dd></div>
+              <div><dt>Short Name</dt><dd>{{ org.shortName || '—' }}</dd></div>
+              <div><dt>Institution Type</dt><dd>{{ institutionLabel(org.institutionType) }}</dd></div>
+              <div><dt>Board</dt><dd>{{ org.boardName || '—' }}</dd></div>
+              <div><dt>Email</dt><dd>{{ org.email || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ org.mobileNumber || '—' }}</dd></div>
+              <div><dt>Website</dt><dd>{{ org.website || '—' }}</dd></div>
+              <div><dt>Address</dt><dd>{{ org.addressLine1 || '—' }}</dd></div>
+              <div><dt>City / State</dt><dd>{{ locationLabel || '—' }}</dd></div>
+              <div><dt>Time Zone</dt><dd>{{ org.timeZone || '—' }}</dd></div>
+              <div><dt>Currency</dt><dd>{{ org.currency || '—' }}</dd></div>
+            </dl>
+          </tc-saas-panel>
 
-        <tc-saas-panel title="Usage Summary" subtitle="Live consumption against this plan">
-          <div class="usage-row">
-            <div class="usage-row__label">Students <span>{{ org.students }} / 2000</span></div>
-            <div class="cmp-bar"><span [style.width.%]="(org.students / 2000) * 100" data-tone="success"></span></div>
-          </div>
-          <div class="usage-row">
-            <div class="usage-row__label">Users <span>{{ totalUsers }} / 500</span></div>
-            <div class="cmp-bar"><span [style.width.%]="(totalUsers / 500) * 100" data-tone="warning"></span></div>
-          </div>
-          <div class="usage-row">
-            <div class="usage-row__label">Storage <span>{{ org.storageLabel }}</span></div>
-            <div class="cmp-bar"><span [style.width.%]="org.storagePercent" [attr.data-tone]="org.storagePercent >= 90 ? 'danger' : org.storagePercent >= 75 ? 'warning' : 'success'"></span></div>
-          </div>
-        </tc-saas-panel>
+          <tc-saas-panel title="Customer Information" subtitle="Linked billing account">
+            <dl class="org-dl org-dl--single">
+              <div><dt>Customer Name</dt><dd>{{ org.customerName || '—' }}</dd></div>
+              <div><dt>Customer Code</dt><dd>{{ org.customerCode || '—' }}</dd></div>
+              <div><dt>Customer ID</dt><dd>{{ org.customerId ?? '—' }}</dd></div>
+              <div><dt>Onboarding</dt><dd>{{ org.onboardingCompleted ? 'Completed' : 'Pending' }}</dd></div>
+            </dl>
+          </tc-saas-panel>
+
+          <tc-saas-panel title="Status & Limits" subtitle="Operational snapshot">
+            <ng-container panel-actions>
+              <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
+            </ng-container>
+            <dl class="org-dl org-dl--single">
+              <div><dt>Active</dt><dd>{{ org.active ? 'Yes' : 'No' }}</dd></div>
+              <div><dt>Max Students</dt><dd>{{ org.configuration?.maxStudents ?? '—' }}</dd></div>
+              <div><dt>Max Staff</dt><dd>{{ org.configuration?.maxStaff ?? '—' }}</dd></div>
+              <div><dt>Max Branches</dt><dd>{{ org.configuration?.maxBranches ?? '—' }}</dd></div>
+              <div><dt>Storage Limit</dt><dd>{{ org.configuration?.storageLimitGb ? org.configuration!.storageLimitGb + ' GB' : '—' }}</dd></div>
+              <div><dt>Created</dt><dd>{{ formatDate(org.createdOn) }}</dd></div>
+            </dl>
+          </tc-saas-panel>
+        </div>
       </section>
 
-      <!-- Subscription tab -->
-      <section *ngSwitchCase="'subscription'">
-        <tc-saas-panel title="Current Subscription">
-          <div class="subscription-detail">
-            <div>
+      <!-- Subscription & Plan -->
+      <section *ngSwitchCase="'subscription'" class="organization-workspace__tab">
+        <tc-saas-panel
+          *ngIf="org.subscription; else noSubscription"
+          title="Subscription & Plan"
+          [subtitle]="org.subscription.planName || org.subscription.planCode || 'Active subscription'">
+          <ng-container panel-actions>
+            <tc-saas-pill
+              [label]="subscriptionStatusLabel(org.subscription.status)"
+              [tone]="subStatusTone()">
+            </tc-saas-pill>
+          </ng-container>
+
+          <div class="subscription-grid">
+            <div class="subscription-grid__item">
               <small>Plan</small>
-              <strong>{{ org.plan }}</strong>
+              <strong>{{ org.subscription.planName || org.subscription.planCode || '—' }}</strong>
             </div>
-            <div>
-              <small>Renewal</small>
-              <strong>{{ org.expiryDate }}</strong>
+            <div class="subscription-grid__item">
+              <small>Billing Cycle</small>
+              <strong>{{ billingCycleLabel(org.subscription.billingCycle) }}</strong>
             </div>
-            <div>
-              <small>Status</small>
-              <tc-saas-pill [label]="org.statusLabel" [tone]="statusTone()"></tc-saas-pill>
+            <div class="subscription-grid__item">
+              <small>Start Date</small>
+              <strong>{{ formatDate(org.subscription.startDate) }}</strong>
             </div>
-            <div>
-              <small>Health Score</small>
-              <strong>{{ org.healthScore }}</strong>
+            <div class="subscription-grid__item">
+              <small>End Date</small>
+              <strong>{{ formatDate(org.subscription.endDate) }}</strong>
             </div>
-            <button type="button" class="saas-btn saas-btn--primary" (click)="changePlan()"><i class="pi pi-arrow-up-right"></i>Change Plan</button>
+            <div class="subscription-grid__item">
+              <small>Trial Ends</small>
+              <strong>{{ formatDate(org.subscription.trialEndDate) }}</strong>
+            </div>
+            <div class="subscription-grid__item">
+              <small>Auto Renew</small>
+              <strong>{{ org.subscription.autoRenew ? 'Enabled' : 'Disabled' }}</strong>
+            </div>
+          </div>
+
+          <div class="subscription-amounts">
+            <div class="subscription-amounts__card">
+              <small>Plan Price</small>
+              <strong>{{ formatCurrency(org.subscription.planPrice, org.currency || 'INR') }}</strong>
+            </div>
+            <div class="subscription-amounts__card">
+              <small>Discount</small>
+              <strong>{{ formatCurrency(org.subscription.discountAmount, org.currency || 'INR') }}</strong>
+            </div>
+            <div class="subscription-amounts__card subscription-amounts__card--highlight">
+              <small>Final Amount</small>
+              <strong>{{ formatCurrency(org.subscription.finalAmount, org.currency || 'INR') }}</strong>
+            </div>
+          </div>
+
+          <div class="subscription-overrides" *ngIf="org.subscription.promotionCode || org.subscription.studentLimitOverride">
+            <h4>Overrides & Promotions</h4>
+            <dl class="org-dl">
+              <div *ngIf="org.subscription.promotionCode"><dt>Promotion</dt><dd>{{ org.subscription.promotionCode }}</dd></div>
+              <div *ngIf="org.subscription.studentLimitOverride"><dt>Student Limit</dt><dd>{{ org.subscription.studentLimitOverride }}</dd></div>
+              <div *ngIf="org.subscription.staffLimitOverride"><dt>Staff Limit</dt><dd>{{ org.subscription.staffLimitOverride }}</dd></div>
+              <div *ngIf="org.subscription.branchLimitOverride"><dt>Branch Limit</dt><dd>{{ org.subscription.branchLimitOverride }}</dd></div>
+              <div *ngIf="org.subscription.storageLimitOverride"><dt>Storage Limit</dt><dd>{{ org.subscription.storageLimitOverride }} GB</dd></div>
+            </dl>
           </div>
         </tc-saas-panel>
+
+        <ng-template #noSubscription>
+          <tc-saas-panel title="Subscription & Plan">
+            <div class="saas-empty">
+              <i class="pi pi-credit-card"></i>
+              <strong>No subscription assigned</strong>
+              <p>This organization does not have an active subscription record.</p>
+            </div>
+          </tc-saas-panel>
+        </ng-template>
       </section>
 
-      <!-- Users tab -->
-      <section *ngSwitchCase="'users'">
-        <tc-saas-panel [title]="'Recent Users'" [subtitle]="totalUsers + ' users in this tenant'">
-          <div class="saas-table-wrap">
-            <table class="saas-data-table">
-              <thead><tr><th>User</th><th>Email</th><th>Roles</th><th>Last Login</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr *ngIf="!recentUsers.length"><td colspan="5"><div class="saas-empty"><i class="pi pi-users"></i><strong>No users scoped to this tenant yet</strong></div></td></tr>
-                <tr *ngFor="let u of recentUsers">
-                  <td><strong>{{ u.fullName }}</strong></td>
-                  <td>{{ u.email }}</td>
-                  <td>{{ (u.roles || []).join(', ') }}</td>
-                  <td>{{ u.lastLoginDate ? (u.lastLoginDate | date:'medium') : '—' }}</td>
-                  <td><tc-saas-pill [label]="u.blocked ? 'Blocked' : 'Active'" [tone]="u.blocked ? 'danger' : 'success'"></tc-saas-pill></td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- Feature Overrides -->
+      <section *ngSwitchCase="'features'" class="organization-workspace__tab">
+        <tc-saas-panel
+          title="Feature Overrides"
+          [subtitle]="featureOverrides.length + ' override(s) on this subscription'">
+          <div *ngIf="!featureOverrides.length" class="saas-empty">
+            <i class="pi pi-sliders-h"></i>
+            <strong>No feature overrides</strong>
+            <p>All features follow the default plan configuration.</p>
           </div>
-        </tc-saas-panel>
-      </section>
 
-      <!-- Storage tab -->
-      <section *ngSwitchCase="'storage'">
-        <tc-saas-panel title="Storage Breakdown" subtitle="Tenant consumption across categories">
-          <div class="usage-row">
-            <div class="usage-row__label">Total Storage <span>{{ org.storageLabel }}</span></div>
-            <div class="cmp-bar"><span [style.width.%]="org.storagePercent" [attr.data-tone]="org.storagePercent >= 90 ? 'danger' : org.storagePercent >= 75 ? 'warning' : 'success'"></span></div>
-          </div>
-          <p style="margin-top: 12px; color: var(--saas-text-soft); font-size: 0.85rem;">
-            Detailed storage analytics will be available once telemetry collection is enabled for this tenant.
-          </p>
-        </tc-saas-panel>
-      </section>
-
-      <!-- Activity tab -->
-      <section *ngSwitchCase="'activity'">
-        <tc-saas-panel title="Activity Timeline" subtitle="Recent audit events">
-          <div class="saas-empty" *ngIf="!activity.length"><i class="pi pi-history"></i><strong>No recent activity</strong></div>
-          <ul class="activity-list" *ngIf="activity.length">
-            <li *ngFor="let a of activity">
-              <span class="activity-list__dot"></span>
-              <div>
-                <strong>{{ a.action }}</strong> <span class="muted">on {{ a.entityType || 'system' }}</span>
-                <p>{{ a.summary || a.eventType }}</p>
-                <small>{{ a.actorUsername }} · {{ a.occurredAt | date:'medium' }}</small>
+          <ul class="feature-list" *ngIf="featureOverrides.length">
+            <li *ngFor="let f of featureOverrides" class="feature-list__item">
+              <div class="feature-list__info">
+                <strong>{{ f.featureName || f.featureCode || ('Feature #' + f.featureId) }}</strong>
+                <span *ngIf="f.featureCode" class="feature-list__code">{{ f.featureCode }}</span>
+                <p *ngIf="f.remarks">{{ f.remarks }}</p>
               </div>
+              <tc-saas-pill
+                [label]="f.enabled ? 'Enabled' : 'Disabled'"
+                [tone]="f.enabled ? 'success' : 'danger'">
+              </tc-saas-pill>
             </li>
           </ul>
         </tc-saas-panel>
       </section>
 
-      <!-- Settings tab -->
-      <section *ngSwitchCase="'settings'">
-        <tc-saas-panel title="Tenant Settings" subtitle="Restricted to platform administrators">
-          <div class="settings-action-row">
-            <div>
-              <strong>{{ org.status === 'suspended' ? 'Activate tenant' : 'Suspend tenant' }}</strong>
-              <p>Temporarily disable access for all users in this tenant.</p>
+      <!-- Tenant Details -->
+      <section *ngSwitchCase="'tenant'" class="organization-workspace__tab">
+        <tc-saas-panel
+          *ngIf="org.tenant; else noTenant"
+          title="Tenant Details"
+          [subtitle]="org.tenant.tenantIdentifier">
+          <ng-container panel-actions>
+            <tc-saas-pill
+              [label]="provisionStatusLabel(org.tenant.provisionStatus)"
+              [tone]="provisionTone(org.tenant.provisionStatus)">
+            </tc-saas-pill>
+            <tc-saas-pill
+              *ngIf="org.tenant.maintenanceMode"
+              label="Maintenance"
+              tone="warning">
+            </tc-saas-pill>
+          </ng-container>
+
+          <div class="tenant-grid">
+            <div class="tenant-grid__section">
+              <h4>Schema & Versions</h4>
+              <dl class="org-dl org-dl--single">
+                <div><dt>Schema Name</dt><dd>{{ org.tenant.schemaName || '—' }}</dd></div>
+                <div><dt>Database Version</dt><dd>{{ org.tenant.databaseVersion || '—' }}</dd></div>
+                <div><dt>Migration Version</dt><dd>{{ org.tenant.migrationVersion || '—' }}</dd></div>
+                <div><dt>Template Version</dt><dd>{{ org.tenant.templateVersion || '—' }}</dd></div>
+              </dl>
             </div>
-            <button type="button" class="saas-btn saas-btn--danger" (click)="toggleSuspension()"><i class="pi pi-ban"></i>{{ org.status === 'suspended' ? 'Activate' : 'Suspend' }}</button>
-          </div>
-          <div class="settings-action-row">
-            <div>
-              <strong>Deactivate tenant</strong>
-              <p>Permanently remove the tenant from active provisioning. Data is retained.</p>
+
+            <div class="tenant-grid__section">
+              <h4>Storage & Health</h4>
+              <dl class="org-dl org-dl--single">
+                <div><dt>Database Size</dt><dd>{{ formatStorageMb(org.tenant.databaseSizeMb) }}</dd></div>
+                <div><dt>Storage Used</dt><dd>{{ formatStorageMb(org.tenant.storageUsedMb) }}</dd></div>
+                <div><dt>Last Health Check</dt><dd>{{ formatDate(org.tenant.lastHealthCheckAt) }}</dd></div>
+                <div><dt>Last Migration</dt><dd>{{ formatDate(org.tenant.lastMigrationAt) }}</dd></div>
+                <div><dt>Last Backup</dt><dd>{{ formatDate(org.tenant.lastBackupAt) }}</dd></div>
+              </dl>
             </div>
-            <button type="button" class="saas-btn saas-btn--danger" (click)="deactivate()"><i class="pi pi-trash"></i>Deactivate</button>
-          </div>
-          <div class="settings-action-row">
-            <div>
-              <strong>Impersonate admin</strong>
-              <p>Sign in as the owner with a fully audited session.</p>
+
+            <div class="tenant-grid__section">
+              <h4>Domain & Access</h4>
+              <dl class="org-dl org-dl--single">
+                <div><dt>Tenant Domain</dt><dd>{{ org.tenant.tenantDomain || org.domain?.subdomain || '—' }}</dd></div>
+                <div><dt>Custom Domain</dt><dd>{{ org.tenant.customDomain || org.domain?.customDomain || '—' }}</dd></div>
+                <div><dt>SSL Enabled</dt><dd>{{ org.domain?.sslEnabled ? 'Yes' : 'No' }}</dd></div>
+                <div><dt>Maintenance Mode</dt><dd>{{ org.tenant.maintenanceMode ? 'On' : 'Off' }}</dd></div>
+                <div><dt>Active</dt><dd>{{ org.tenant.active ? 'Yes' : 'No' }}</dd></div>
+              </dl>
             </div>
-            <button type="button" class="saas-btn" (click)="impersonate()"><i class="pi pi-user-edit"></i>Impersonate</button>
           </div>
+
+          <div class="tenant-actions">
+            <button type="button" class="saas-btn" [disabled]="actionLoading" (click)="setMaintenance()">
+              <i class="pi pi-wrench"></i> Set Maintenance
+            </button>
+            <button type="button" class="saas-btn" [disabled]="actionLoading" (click)="resumeTenant()">
+              <i class="pi pi-play"></i> Resume Tenant
+            </button>
+            <button type="button" class="saas-btn" [disabled]="actionLoading" (click)="triggerBackup()">
+              <i class="pi pi-cloud-upload"></i> Trigger Backup
+            </button>
+            <button type="button" class="saas-btn saas-btn--primary" [disabled]="actionLoading" (click)="triggerMigration()">
+              <i class="pi pi-sync"></i> Trigger Migration
+            </button>
+          </div>
+        </tc-saas-panel>
+
+        <ng-template #noTenant>
+          <tc-saas-panel title="Tenant Details">
+            <div class="saas-empty">
+              <i class="pi pi-server"></i>
+              <strong>No tenant provisioned</strong>
+              <p>This organization has not been provisioned to a tenant registry yet.</p>
+            </div>
+          </tc-saas-panel>
+        </ng-template>
+      </section>
+
+      <!-- Timeline -->
+      <section *ngSwitchCase="'timeline'" class="organization-workspace__tab">
+        <tc-saas-panel title="Timeline" subtitle="Key dates and remarks for this organization">
+          <div *ngIf="!timelineEvents.length" class="saas-empty">
+            <i class="pi pi-history"></i>
+            <strong>No timeline events</strong>
+          </div>
+
+          <ul class="activity-list" *ngIf="timelineEvents.length">
+            <li *ngFor="let event of timelineEvents">
+              <span class="activity-list__icon"><i [class]="event.icon"></i></span>
+              <div>
+                <strong>{{ event.title }}</strong>
+                <p>{{ event.detail }}</p>
+                <small *ngIf="event.date">{{ formatDate(event.date) }}</small>
+              </div>
+            </li>
+          </ul>
         </tc-saas-panel>
       </section>
     </ng-container>

@@ -1,0 +1,182 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { platformApi } from '../../../shared/constants/api.endpoint';
+import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
+import {
+  Customer,
+  CustomerQuery,
+  OrganizationDetail,
+  OrganizationQuery,
+  OrganizationSummary,
+  PlatformDashboard,
+  PlatformFeature,
+  Promotion,
+  ProvisionOrganizationPayload,
+  ProvisioningJob,
+  ProvisioningResult,
+  SpringPage,
+  SubscriptionPlan,
+  TenantRegistry
+} from '../models/platform.model';
+
+@Injectable({ providedIn: 'root' })
+export class PlatformManagementService {
+  private readonly http = inject(HttpClient);
+
+  getDashboard(): Observable<PlatformDashboard> {
+    return this.http.get<unknown>(platformApi.dashboard).pipe(
+      map(r => unwrapApiResponse<PlatformDashboard>(r, this.emptyDashboard()))
+    );
+  }
+
+  getOrganizations(query: OrganizationQuery = {}): Observable<SpringPage<OrganizationSummary>> {
+    let params = new HttpParams();
+    if (query.status) params = params.set('status', query.status);
+    if (query.institutionType) params = params.set('institutionType', query.institutionType);
+    if (query.customerId) params = params.set('customerId', query.customerId);
+    if (query.search) params = params.set('search', query.search);
+    params = params.set('page', String(query.page ?? 0));
+    params = params.set('size', String(query.size ?? 20));
+    if (query.sort) params = params.set('sort', query.sort);
+
+    return this.http.get<unknown>(platformApi.organizations, { params }).pipe(
+      map(r => unwrapApiResponse<SpringPage<OrganizationSummary>>(r, this.emptyPage()))
+    );
+  }
+
+  getOrganization(id: number): Observable<OrganizationDetail> {
+    return this.http.get<unknown>(platformApi.organizationById(id)).pipe(
+      map(r => unwrapApiResponse<OrganizationDetail>(r, {} as OrganizationDetail))
+    );
+  }
+
+  activateOrganization(id: number): Observable<OrganizationSummary> {
+    return this.http.post<unknown>(platformApi.activateOrganization(id), {}).pipe(
+      map(r => unwrapApiResponse<OrganizationSummary>(r, {} as OrganizationSummary))
+    );
+  }
+
+  suspendOrganization(id: number): Observable<OrganizationSummary> {
+    return this.http.post<unknown>(platformApi.suspendOrganization(id), {}).pipe(
+      map(r => unwrapApiResponse<OrganizationSummary>(r, {} as OrganizationSummary))
+    );
+  }
+
+  archiveOrganization(id: number): Observable<void> {
+    return this.http.post<unknown>(platformApi.archiveOrganization(id), {}).pipe(map(() => undefined));
+  }
+
+  getCustomers(query: CustomerQuery = {}): Observable<SpringPage<Customer>> {
+    let params = new HttpParams();
+    if (query.status) params = params.set('status', query.status);
+    if (query.customerType) params = params.set('customerType', query.customerType);
+    if (query.search) params = params.set('search', query.search);
+    params = params.set('page', String(query.page ?? 0));
+    params = params.set('size', String(query.size ?? 20));
+
+    return this.http.get<unknown>(platformApi.customers, { params }).pipe(
+      map(r => unwrapApiResponse<SpringPage<Customer>>(r, this.emptyPage()))
+    );
+  }
+
+  getSubscriptionPlans(): Observable<SubscriptionPlan[]> {
+    return this.http.get<unknown>(platformApi.subscriptionPlans).pipe(
+      map(r => unwrapApiResponse<SubscriptionPlan[]>(r, []))
+    );
+  }
+
+  getFeatures(): Observable<PlatformFeature[]> {
+    return this.http.get<unknown>(platformApi.features).pipe(
+      map(r => unwrapApiResponse<PlatformFeature[]>(r, []))
+    );
+  }
+
+  getPromotions(): Observable<Promotion[]> {
+    return this.http.get<unknown>(platformApi.promotions).pipe(
+      map(r => unwrapApiResponse<Promotion[]>(r, []))
+    );
+  }
+
+  createPromotion(payload: Partial<Promotion>): Observable<Promotion> {
+    return this.http.post<unknown>(platformApi.promotions, payload).pipe(
+      map(r => unwrapApiResponse<Promotion>(r, {} as Promotion))
+    );
+  }
+
+  updatePromotion(id: number, payload: Partial<Promotion>): Observable<Promotion> {
+    return this.http.put<unknown>(platformApi.promotionById(id), payload).pipe(
+      map(r => unwrapApiResponse<Promotion>(r, {} as Promotion))
+    );
+  }
+
+  archivePromotion(id: number): Observable<void> {
+    return this.http.delete<unknown>(platformApi.promotionById(id)).pipe(map(() => undefined));
+  }
+
+  getTenantRegistry(page = 0, size = 20, search?: string): Observable<SpringPage<TenantRegistry>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (search) params = params.set('search', search);
+    return this.http.get<unknown>(platformApi.tenantRegistry, { params }).pipe(
+      map(r => unwrapApiResponse<SpringPage<TenantRegistry>>(r, this.emptyPage()))
+    );
+  }
+
+  setTenantMaintenance(id: number): Observable<TenantRegistry> {
+    return this.http.post<unknown>(platformApi.tenantMaintenance(id), {}).pipe(
+      map(r => unwrapApiResponse<TenantRegistry>(r, {} as TenantRegistry))
+    );
+  }
+
+  resumeTenant(id: number): Observable<TenantRegistry> {
+    return this.http.post<unknown>(platformApi.tenantResume(id), {}).pipe(
+      map(r => unwrapApiResponse<TenantRegistry>(r, {} as TenantRegistry))
+    );
+  }
+
+  triggerTenantMigration(id: number): Observable<void> {
+    return this.http.post<unknown>(platformApi.tenantMigrate(id), {}).pipe(map(() => undefined));
+  }
+
+  triggerTenantBackup(id: number): Observable<void> {
+    return this.http.post<unknown>(platformApi.tenantBackup(id), {}).pipe(map(() => undefined));
+  }
+
+  getProvisionJobs(page = 0, size = 20, search?: string): Observable<SpringPage<ProvisioningJob>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (search) params = params.set('search', search);
+    return this.http.get<unknown>(platformApi.provisionJobs, { params }).pipe(
+      map(r => unwrapApiResponse<SpringPage<ProvisioningJob>>(r, this.emptyPage()))
+    );
+  }
+
+  retryProvisionJob(id: number): Observable<ProvisioningJob> {
+    return this.http.post<unknown>(platformApi.retryProvisionJob(id), {}).pipe(
+      map(r => unwrapApiResponse<ProvisioningJob>(r, {} as ProvisioningJob))
+    );
+  }
+
+  provisionOrganization(payload: ProvisionOrganizationPayload): Observable<ProvisioningResult> {
+    return this.http.post<unknown>(platformApi.provision, payload).pipe(
+      map(r => unwrapApiResponse<ProvisioningResult>(r, {} as ProvisioningResult))
+    );
+  }
+
+  private emptyPage<T>(): SpringPage<T> {
+    return { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 };
+  }
+
+  private emptyDashboard(): PlatformDashboard {
+    return {
+      totalCustomers: 0,
+      totalOrganizations: 0,
+      activeOrganizations: 0,
+      trialOrganizations: 0,
+      suspendedOrganizations: 0,
+      renewalDue30Days: 0,
+      provisioningInProgress: 0,
+      totalSubscriptionPlans: 0,
+      activePromotions: 0
+    };
+  }
+}

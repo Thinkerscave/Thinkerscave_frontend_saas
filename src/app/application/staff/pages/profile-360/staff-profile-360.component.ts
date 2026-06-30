@@ -216,17 +216,27 @@ export class StaffProfile360Component implements OnInit {
     if (!this.salaryForm.effectiveFrom) { return; }
     this.savingSalary = true;
     this.salaryForm.staffId = this.staffId;
-    const obs = this.editSalaryId
-      ? this.api.updateSalaryStructure(this.editSalaryId, this.salaryForm)
-      : this.api.createSalaryStructure(this.salaryForm);
-    obs.pipe(finalize(() => { this.savingSalary = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: () => {
-          this.showSalaryModal = false;
-          this.loadSalaryHistory();
-          this.load();
-        }
-      });
+    if (this.editSalaryId) {
+      this.api.updateSalaryStructure(this.editSalaryId, this.salaryForm)
+        .pipe(finalize(() => { this.savingSalary = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => {
+            this.showSalaryModal = false;
+            this.loadSalaryHistory();
+            this.load();
+          }
+        });
+    } else {
+      this.api.createSalaryStructure(this.salaryForm)
+        .pipe(finalize(() => { this.savingSalary = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => {
+            this.showSalaryModal = false;
+            this.loadSalaryHistory();
+            this.load();
+          }
+        });
+    }
   }
 
   // ── Payroll ───────────────────────────────────────────────────────────────────

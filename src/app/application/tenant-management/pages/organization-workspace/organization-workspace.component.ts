@@ -1,13 +1,24 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { Observable } from 'rxjs';
 
-import { AdminAuditEvent, AdminBranch, AdminControlCenter, AdminUserAccess } from '../../../administration/models/admin-control.model';
-import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
-import { TenantOrgView, mapOrganization } from '../../data/tenant-view.model';
+import { OrganizationDetail } from '../../models/platform.model';
+import { PlatformManagementService } from '../../services/platform-management.service';
+import {
+  formatCurrency,
+  formatDate,
+  healthScore,
+  healthTone,
+  institutionLabel,
+  organizationStatusLabel,
+  statusTone,
+  subscriptionStatusLabel,
+  subscriptionTone
+} from '../../utils/platform-display.util';
 
 import {
   SaasPageHeaderComponent,
@@ -18,11 +29,21 @@ import {
   SaasStat
 } from '../../../../shared/ui/saas';
 
+type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
+
 @Component({
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, ToastModule, SaasPageHeaderComponent, SaasPanelComponent, SaasTabsComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [
+    CommonModule,
+    ToastModule,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    SaasTabsComponent,
+    SaasPillComponent,
+    SaasStatGridComponent
+  ],
   providers: [MessageService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
@@ -32,95 +53,307 @@ export class OrganizationWorkspaceComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly adminData = inject(AdminControlDataService);
-  private readonly messageService = inject(MessageService);
+  private readonly api = inject(PlatformManagementService);
+  private readonly messages = inject(MessageService);
 
   loading = true;
+  actionLoading = false;
   errorMessage = '';
-  workspace: AdminControlCenter | null = null;
-  org: TenantOrgView | null = null;
-  branches: AdminBranch[] = [];
-  recentUsers: AdminUserAccess[] = [];
-  activity: AdminAuditEvent[] = [];
-  totalUsers = 0;
+  org: OrganizationDetail | null = null;
+  orgId = 0;
   activeTab = 'overview';
 
   readonly tabs = [
-    { key: 'overview',     label: 'Overview',          icon: 'pi pi-id-card' },
-    { key: 'subscription', label: 'Subscription',      icon: 'pi pi-credit-card' },
-    { key: 'users',        label: 'Users',             icon: 'pi pi-users' },
-    { key: 'storage',      label: 'Storage',           icon: 'pi pi-database' },
-    { key: 'activity',     label: 'Activity Timeline', icon: 'pi pi-history' },
-    { key: 'settings',     label: 'Settings',          icon: 'pi pi-cog' }
+    { key: 'overview', label: 'Overview', icon: 'pi pi-id-card' },
+    { key: 'subscription', label: 'Subscription & Plan', icon: 'pi pi-credit-card' },
+    { key: 'features', label: 'Feature Overrides', icon: 'pi pi-sliders-h' },
+    { key: 'tenant', label: 'Tenant Details', icon: 'pi pi-server' },
+    { key: 'timeline', label: 'Timeline', icon: 'pi pi-history' }
   ];
 
+  readonly institutionLabel = institutionLabel;
+  readonly organizationStatusLabel = organizationStatusLabel;
+  readonly subscriptionStatusLabel = subscriptionStatusLabel;
+  readonly formatDate = formatDate;
+  readonly formatCurrency = formatCurrency;
+  readonly healthScore = healthScore;
+  readonly healthTone = healthTone;
+
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('orgId'));
-    this.load(id);
+    this.orgId = Number(this.route.snapshot.paramMap.get('orgId'));
+    this.load(this.orgId);
   }
 
   load(orgId: number): void {
+    if (!orgId || Number.isNaN(orgId)) {
+      this.errorMessage = 'Invalid organization identifier.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
-    this.adminData.loadWorkspace()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ws => {
-          this.workspace = ws;
-          const source = (ws?.organizations || []).find(o => o.orgId === orgId);
-          if (!source) {
-            this.errorMessage = 'Tenant not found. It may have been removed or your access was revoked.';
-            this.loading = false; this.cdr.markForCheck(); return;
-          }
-          this.org = mapOrganization(source);
-          this.branches = (ws?.branches || []).filter(b => b.organizationId === orgId);
-          const scoped = (ws?.users || []).filter(u => u.organizations?.some(o => o === source.orgName || o === source.brandName));
-          this.recentUsers = scoped.slice(0, 8);
-          this.totalUsers = scoped.length || this.org.users;
-          this.activity = (ws?.auditLogs || [])
-            .filter(a => !source.tenantId || a.entityId?.toString() === source.tenantId || a.summary?.includes(source.orgName))
-            .slice(0, 10);
-          this.loading = false;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.errorMessage = 'Unable to load this tenant. Check your connection and retry.';
-          this.loading = false; this.cdr.markForCheck();
+    this.api.getOrganization(orgId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: org => {
+        if (!org?.id) {
+          this.errorMessage = 'Organization not found. It may have been removed or your access was revoked.';
+          this.org = null;
+        } else {
+          this.org = org;
         }
-      });
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorMessage = 'Unable to load this organization. Check your connection and retry.';
+        this.org = null;
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  get subtitle(): string {
+    if (!this.org) return 'Loading...';
+    const parts = [
+      this.org.organizationCode,
+      institutionLabel(this.org.institutionType),
+      this.locationLabel
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }
+
+  get locationLabel(): string {
+    if (!this.org) return '';
+    return [this.org.city, this.org.state, this.org.country].filter(Boolean).join(', ');
+  }
+
+  get featureOverrides() {
+    return this.org?.subscription?.featureOverrides ?? [];
   }
 
   get stats(): SaasStat[] {
     if (!this.org) return [];
-    const o = this.org;
+    const sub = this.org.subscription;
+    const tenant = this.org.tenant;
+    const score = healthScore(tenant);
+    const storageMb = tenant?.storageUsedMb ?? 0;
+    const storageLimit = this.org.configuration?.storageLimitGb;
+
     return [
-      { key: 'users', label: 'Active Users', value: this.totalUsers.toLocaleString(), helper: 'Across all roles', icon: 'pi pi-users', tone: 'primary' },
-      { key: 'students', label: 'Students', value: o.students.toLocaleString(), helper: 'Enrolled', icon: 'pi pi-graduation-cap', tone: 'success' },
-      { key: 'storage', label: 'Storage Used', value: o.storageLabel.split(' / ')[0] || '0 MB', helper: o.storageLimitMb > 0 ? `${o.storagePercent}% of ${(o.storageLimitMb / 1024).toFixed(1)} GB` : 'Unlimited', icon: 'pi pi-database', tone: o.storagePercent >= 90 ? 'danger' : o.storagePercent >= 75 ? 'warning' : 'info' },
-      { key: 'api', label: 'API Calls (24h)', value: o.apiUsageToday.toLocaleString(), helper: 'No daily cap', icon: 'pi pi-bolt', tone: 'warning' }
+      {
+        key: 'status',
+        label: 'Organization Status',
+        value: organizationStatusLabel(this.org.status),
+        helper: sub ? subscriptionStatusLabel(sub.status) + ' subscription' : 'No subscription',
+        icon: 'pi pi-building',
+        tone: statusTone(this.org.status) as SaasStat['tone']
+      },
+      {
+        key: 'plan',
+        label: 'Current Plan',
+        value: sub?.planName ?? '—',
+        helper: sub?.billingCycle ? this.billingCycleLabel(sub.billingCycle) : 'Not assigned',
+        icon: 'pi pi-credit-card',
+        tone: 'primary'
+      },
+      {
+        key: 'health',
+        label: 'Tenant Health',
+        value: score + '%',
+        helper: tenant?.provisionStatus?.replace(/_/g, ' ') ?? 'Not provisioned',
+        icon: 'pi pi-heart',
+        tone: healthTone(score)
+      },
+      {
+        key: 'storage',
+        label: 'Storage Used',
+        value: this.formatStorageMb(storageMb),
+        helper: storageLimit ? `of ${storageLimit} GB limit` : 'No limit configured',
+        icon: 'pi pi-database',
+        tone: storageLimit && storageMb / (storageLimit * 1024) >= 0.9 ? 'danger' : 'info'
+      }
     ];
   }
 
-  statusTone(): 'success' | 'warning' | 'danger' | 'neutral' {
-    if (!this.org) return 'neutral';
-    if (this.org.status === 'active') return 'success';
-    if (this.org.status === 'trial') return 'warning';
-    if (this.org.status === 'suspended') return 'danger';
-    return 'neutral';
+  get timelineEvents(): { title: string; detail: string; date?: string; icon: string }[] {
+    if (!this.org) return [];
+    const events: { title: string; detail: string; date?: string; icon: string }[] = [];
+
+    if (this.org.createdOn) {
+      events.push({
+        title: 'Organization created',
+        detail: this.org.createdBy ? `Created by ${this.org.createdBy}` : 'Initial provisioning',
+        date: this.org.createdOn,
+        icon: 'pi pi-plus-circle'
+      });
+    }
+    if (this.org.updatedOn) {
+      events.push({
+        title: 'Last updated',
+        detail: 'Organization profile or configuration changed',
+        date: this.org.updatedOn,
+        icon: 'pi pi-pencil'
+      });
+    }
+    if (this.org.remarks?.trim()) {
+      events.push({
+        title: 'Remarks',
+        detail: this.org.remarks.trim(),
+        icon: 'pi pi-comment'
+      });
+    }
+    if (this.org.tenant?.lastMigrationAt) {
+      events.push({
+        title: 'Last migration',
+        detail: `Schema ${this.org.tenant.migrationVersion ?? '—'}`,
+        date: this.org.tenant.lastMigrationAt,
+        icon: 'pi pi-sync'
+      });
+    }
+    if (this.org.tenant?.lastBackupAt) {
+      events.push({
+        title: 'Last backup',
+        detail: 'Tenant database backup completed',
+        date: this.org.tenant.lastBackupAt,
+        icon: 'pi pi-cloud-upload'
+      });
+    }
+
+    return events;
   }
 
-  changePlan(): void { this.router.navigate(['/app/tenant-management/subscription-plans']); }
-  back(): void { this.router.navigate(['/app/tenant-management/organizations']); }
+  orgStatusTone(): PillTone {
+    return statusTone(this.org?.status) as PillTone;
+  }
 
-  toggleSuspension(): void {
+  subStatusTone(): PillTone {
+    return subscriptionTone(this.org?.subscription?.status) as PillTone;
+  }
+
+  canActivate(): boolean {
+    const s = this.org?.status;
+    return s === 'SUSPENDED' || s === 'INACTIVE' || s === 'PENDING';
+  }
+
+  canSuspend(): boolean {
+    return this.org?.status === 'ACTIVE';
+  }
+
+  back(): void {
+    this.router.navigate(['/app/tenant-management/organizations']);
+  }
+
+  activate(): void {
     if (!this.org) return;
-    this.comingSoon(this.org.status === 'suspended' ? 'Lift suspension' : 'Suspend tenant');
+    this.runAction(() => this.api.activateOrganization(this.org!.id), 'Activated', 'Organization activated successfully.');
   }
-  deactivate(): void { this.comingSoon('Deactivate tenant'); }
-  impersonate(): void { this.comingSoon('Impersonate admin'); }
-  renew(): void { this.comingSoon('Renew subscription'); }
 
-  private comingSoon(action: string): void {
-    this.messageService.add({ severity: 'info', summary: 'Coming soon', detail: `${action} will be available in an upcoming release.`, life: 3500 });
+  suspend(): void {
+    if (!this.org) return;
+    this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.');
+  }
+
+  setMaintenance(): void {
+    const tenantId = this.org?.tenant?.id;
+    if (!tenantId) {
+      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
+      return;
+    }
+    this.runAction(
+      () => this.api.setTenantMaintenance(tenantId),
+      'Maintenance mode',
+      'Tenant placed in maintenance mode.'
+    );
+  }
+
+  resumeTenant(): void {
+    const tenantId = this.org?.tenant?.id;
+    if (!tenantId) {
+      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
+      return;
+    }
+    this.runAction(
+      () => this.api.resumeTenant(tenantId),
+      'Tenant resumed',
+      'Tenant resumed from maintenance.'
+    );
+  }
+
+  triggerBackup(): void {
+    const tenantId = this.org?.tenant?.id;
+    if (!tenantId) {
+      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
+      return;
+    }
+    this.runAction(
+      () => this.api.triggerTenantBackup(tenantId),
+      'Backup started',
+      'Tenant backup job has been triggered.'
+    );
+  }
+
+  triggerMigration(): void {
+    const tenantId = this.org?.tenant?.id;
+    if (!tenantId) {
+      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
+      return;
+    }
+    this.runAction(
+      () => this.api.triggerTenantMigration(tenantId),
+      'Migration started',
+      'Tenant migration job has been triggered.'
+    );
+  }
+
+  billingCycleLabel(cycle?: string | null): string {
+    if (!cycle) return '—';
+    return cycle.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  formatStorageMb(mb?: number | null): string {
+    if (mb == null) return '—';
+    if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+    return `${mb} MB`;
+  }
+
+  provisionStatusLabel(status?: string | null): string {
+    if (!status) return 'Unknown';
+    return status.replace(/_/g, ' ');
+  }
+
+  provisionTone(status?: string | null): PillTone {
+    switch (status) {
+      case 'COMPLETED': return 'success';
+      case 'IN_PROGRESS':
+      case 'PENDING': return 'warning';
+      case 'FAILED': return 'danger';
+      case 'MAINTENANCE': return 'info';
+      default: return 'neutral';
+    }
+  }
+
+  private runAction<T>(fn: () => Observable<T>, summary: string, detail: string): void {
+    this.actionLoading = true;
+    this.cdr.markForCheck();
+    fn().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.actionLoading = false;
+        this.toast('success', summary, detail);
+        this.load(this.orgId);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.actionLoading = false;
+        this.toast('error', 'Failed', `Could not complete: ${summary.toLowerCase()}.`);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private toast(severity: 'success' | 'error' | 'warn' | 'info', summary: string, detail: string): void {
+    const map = { success: 'success', error: 'error', warn: 'warn', info: 'info' } as const;
+    this.messages.add({ severity: map[severity], summary, detail, life: 4000 });
   }
 }

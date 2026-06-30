@@ -232,7 +232,7 @@
       <i class="pi pi-chevron-right"></i>
     </button>
     <span class="sd-page-info">
-      Showing {{ staffPage.number * staffPage.size + 1 }}–{{ [staffPage.number * staffPage.size + staffPage.content.length, staffPage.totalElements] | min }}
+      Showing {{ staffPage.number * staffPage.size + 1 }}–{{ getMin(staffPage.number * staffPage.size + staffPage.content.length, staffPage.totalElements) }}
       of {{ staffPage.totalElements }}
     </span>
   </div>

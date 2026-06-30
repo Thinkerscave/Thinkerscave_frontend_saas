@@ -221,4 +221,6 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   trackByStaff(_: number, item: StaffSummary): number { return item.staffId; }
+
+  getMin(a: number, b: number): number { return Math.min(a, b); }
 }

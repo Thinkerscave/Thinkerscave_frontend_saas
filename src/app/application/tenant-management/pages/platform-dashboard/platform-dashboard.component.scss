@@ -1,0 +1,132 @@
+.platform-dashboard {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+
+    &--bottom {
+      grid-template-columns: 1fr 1fr;
+
+      @media (max-width: 900px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  &__chart {
+    min-height: 280px;
+
+    &--donut {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+  }
+
+  &__activity {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed var(--saas-border);
+
+      &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+    }
+
+    strong {
+      display: block;
+      color: var(--saas-text);
+      font-size: 14px;
+    }
+
+    p {
+      margin: 4px 0 0;
+      color: var(--saas-text-muted);
+      font-size: 13px;
+    }
+
+    small {
+      color: var(--saas-text-soft);
+      font-size: 11px;
+    }
+  }
+
+  &__activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--saas-primary-soft);
+    color: var(--saas-primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__action {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+    border: 1px solid var(--saas-border);
+    border-radius: var(--saas-radius-sm);
+    background: var(--saas-surface-muted);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+
+    i {
+      font-size: 20px;
+      color: var(--saas-primary);
+      margin-top: 2px;
+    }
+
+    strong {
+      display: block;
+      color: var(--saas-text);
+      font-size: 14px;
+    }
+
+    span {
+      display: block;
+      margin-top: 4px;
+      color: var(--saas-text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    &:hover {
+      border-color: var(--saas-primary);
+      transform: translateY(-1px);
+      box-shadow: var(--saas-shadow);
+    }
+  }
+
+  &__error {
+    margin-bottom: 8px;
+  }
+}

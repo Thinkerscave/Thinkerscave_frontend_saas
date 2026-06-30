@@ -22,13 +22,19 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'tenant-management',
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'organizations' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', loadComponent: () => import('./tenant-management/pages/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent) },
       { path: 'organizations', loadComponent: () => import('./tenant-management/pages/organizations-list/organizations-list.component').then(m => m.OrganizationsListComponent) },
-      { path: 'organizations/create', loadComponent: () => import('./tenant-management/pages/create-organization/create-organization.component').then(m => m.CreateOrganizationComponent) },
+      { path: 'organizations/create', loadComponent: () => import('./tenant-management/pages/provision-organization/provision-organization.component').then(m => m.ProvisionOrganizationComponent) },
       { path: 'organizations/:orgId', loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
       { path: 'subscription-plans', loadComponent: () => import('./tenant-management/pages/subscription-plans/subscription-plans.component').then(m => m.SubscriptionPlansComponent) },
       { path: 'subscription-plans/create', pathMatch: 'full', redirectTo: 'subscription-plans' },
       { path: 'subscription-plans/:planId', redirectTo: 'subscription-plans' },
+      { path: 'promotions', loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
+      { path: 'feature-catalog', loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
+      { path: 'tenant-health', loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
+      { path: 'platform-health', pathMatch: 'full', redirectTo: 'tenant-health' },
+      { path: 'migration-center', loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent) },
       { path: 'audit-center', loadComponent: () => import('./tenant-management/pages/audit-center/audit-center.component').then(m => m.AuditCenterComponent) }
     ]
   },
@@ -37,7 +43,7 @@ export const APPLICATION_ROUTES: Routes = [
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'organizations/:orgId', redirectTo: '/app/tenant-management/organizations/:orgId' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
@@ -65,14 +71,14 @@ export const APPLICATION_ROUTES: Routes = [
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
       { path: 'access', pathMatch: 'full', redirectTo: '/app/organization/access-control' },
-      { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/admin/platform-health' },
+      { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' },
-      { path: 'feature-catalog', loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
-      { path: 'platform-health', loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) }
+      { path: 'feature-catalog', pathMatch: 'full', redirectTo: '/app/tenant-management/feature-catalog' },
+      { path: 'platform-health', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' }
     ]
   },
   {

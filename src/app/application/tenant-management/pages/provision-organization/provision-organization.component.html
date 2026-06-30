@@ -1,0 +1,381 @@
+<div class="saas-page provision-organization" *ngIf="!successResult; else successView">
+  <tc-saas-page-header
+    title="Provision Organization"
+    subtitle="Guided wizard to onboard a new tenant with subscription, features, and commercials"
+    [breadcrumbs]="[
+      { label: 'Home', route: '/app' },
+      { label: 'Platform Management' },
+      { label: 'Organizations', route: '/app/tenant-management/organizations' },
+      { label: 'Provision' }
+    ]">
+    <button type="button" class="saas-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="provision-organization__banner provision-organization__banner--danger" role="alert">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="loading" class="saas-loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    Loading customers, plans, and catalog...
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stepper [steps]="wizardSteps" [activeIndex]="step"></tc-saas-stepper>
+
+    <div *ngIf="stepError" class="provision-organization__banner provision-organization__banner--warning" role="alert">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ stepError }}</span>
+    </div>
+
+    <tc-saas-panel>
+      <!-- Step 1: Customer -->
+      <section *ngIf="step === 0" class="wizard-step">
+        <h3 class="wizard-step__title">Customer</h3>
+        <p class="wizard-step__lead">Link to an existing platform customer or create a new customer record.</p>
+
+        <div class="provision-organization__mode-toggle">
+          <button type="button" class="saas-btn" [class.saas-btn--primary]="form.customerMode === 'existing'" (click)="setCustomerMode('existing')">
+            <i class="pi pi-users"></i> Existing Customer
+          </button>
+          <button type="button" class="saas-btn" [class.saas-btn--primary]="form.customerMode === 'new'" (click)="setCustomerMode('new')">
+            <i class="pi pi-user-plus"></i> New Customer
+          </button>
+        </div>
+
+        <ng-container *ngIf="form.customerMode === 'existing'">
+          <label class="saas-field saas-field--full">
+            <span>Select customer</span>
+            <select [(ngModel)]="form.existingCustomerId" (ngModelChange)="onCustomerSelected()">
+              <option [ngValue]="null">— Choose customer —</option>
+              <option *ngFor="let c of customers; trackBy: trackById" [ngValue]="c.id">
+                {{ c.displayName }} ({{ c.customerCode }})
+              </option>
+            </select>
+          </label>
+
+          <div *ngIf="selectedCustomer" class="wizard-summary-card">
+            <strong>{{ selectedCustomer.displayName }}</strong>
+            <p>{{ selectedCustomer.legalName }}</p>
+            <div class="wizard-summary-card__meta">
+              <tc-saas-pill *ngIf="selectedCustomer.email" [label]="selectedCustomer.email" tone="neutral" icon="pi pi-envelope"></tc-saas-pill>
+              <tc-saas-pill *ngIf="selectedCustomer.city" [label]="selectedCustomer.city + ', ' + (selectedCustomer.country || '')" tone="info" icon="pi pi-map-marker"></tc-saas-pill>
+            </div>
+          </div>
+
+          <div *ngIf="!customers.length" class="saas-empty" style="padding: 24px 0;">
+            <i class="pi pi-users"></i>
+            <strong>No active customers found</strong>
+            <p>Switch to New Customer to create one during provisioning.</p>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="form.customerMode === 'new'">
+          <div class="wizard-row">
+            <label class="saas-field"><span>Legal name</span><input type="text" [(ngModel)]="form.customerLegalName" placeholder="Northstar Education Pvt Ltd"></label>
+            <label class="saas-field"><span>Display name</span><input type="text" [(ngModel)]="form.customerDisplayName" placeholder="Northstar Education"></label>
+          </div>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.customerEmail" placeholder="billing@customer.com"></label>
+            <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.customerMobile" placeholder="+91"></label>
+          </div>
+        </ng-container>
+      </section>
+
+      <!-- Step 2: Organization Details -->
+      <section *ngIf="step === 1" class="wizard-step">
+        <h3 class="wizard-step__title">Organization Details</h3>
+        <p class="wizard-step__lead">Core identity and regional settings for the new institution.</p>
+
+        <div class="wizard-row">
+          <label class="saas-field saas-field--wide"><span>Organization name</span><input type="text" [(ngModel)]="form.organizationName" placeholder="Northstar Institute of Technology"></label>
+          <label class="saas-field"><span>Short name</span><input type="text" [(ngModel)]="form.shortName" placeholder="NIST"></label>
+        </div>
+        <div class="wizard-row">
+          <label class="saas-field"><span>Institution type</span>
+            <select [(ngModel)]="form.institutionType">
+              <option *ngFor="let t of institutionTypes" [ngValue]="t">{{ institutionLabel(t) }}</option>
+            </select>
+          </label>
+          <label class="saas-field"><span>Board / affiliation</span><input type="text" [(ngModel)]="form.boardName" placeholder="CBSE, AICTE, etc."></label>
+        </div>
+        <div class="wizard-row wizard-row--triple">
+          <label class="saas-field"><span>Timezone</span>
+            <select [(ngModel)]="form.timeZone">
+              <option *ngFor="let tz of timeZones" [value]="tz">{{ tz }}</option>
+            </select>
+          </label>
+          <label class="saas-field"><span>Currency</span>
+            <select [(ngModel)]="form.currency">
+              <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
+            </select>
+          </label>
+          <label class="saas-field"><span>Language</span>
+            <select [(ngModel)]="form.language">
+              <option *ngFor="let l of languages" [value]="l">{{ l | uppercase }}</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 3: Institution Profile -->
+      <section *ngIf="step === 2" class="wizard-step">
+        <h3 class="wizard-step__title">Institution Profile</h3>
+        <p class="wizard-step__lead">Contact details and location for the organization.</p>
+
+        <div class="wizard-row">
+          <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.orgEmail" placeholder="info@institution.edu"></label>
+          <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.orgMobile" placeholder="+91"></label>
+        </div>
+        <label class="saas-field saas-field--full"><span>Address</span><input type="text" [(ngModel)]="form.addressLine1" placeholder="Street address"></label>
+        <div class="wizard-row wizard-row--triple">
+          <label class="saas-field"><span>City</span><input type="text" [(ngModel)]="form.city" placeholder="Bengaluru"></label>
+          <label class="saas-field"><span>State</span><input type="text" [(ngModel)]="form.state" placeholder="Karnataka"></label>
+          <label class="saas-field"><span>Country</span>
+            <select [(ngModel)]="form.country">
+              <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+            </select>
+          </label>
+        </div>
+        <label class="saas-field saas-field--full"><span>Logo URL (optional)</span><input type="url" [(ngModel)]="form.logoUrl" placeholder="https://"></label>
+      </section>
+
+      <!-- Step 4: Admin User -->
+      <section *ngIf="step === 3" class="wizard-step">
+        <h3 class="wizard-step__title">Admin User</h3>
+        <p class="wizard-step__lead">The first administrator who will receive access to the tenant workspace.</p>
+
+        <div class="wizard-row">
+          <label class="saas-field"><span>First name</span><input type="text" [(ngModel)]="form.adminFirstName" placeholder="Aarav"></label>
+          <label class="saas-field"><span>Last name</span><input type="text" [(ngModel)]="form.adminLastName" placeholder="Mehta"></label>
+        </div>
+        <div class="wizard-row">
+          <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.adminEmail" placeholder="admin@institution.edu"></label>
+          <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.adminMobile" placeholder="+91"></label>
+        </div>
+      </section>
+
+      <!-- Step 5: Subscription Plan -->
+      <section *ngIf="step === 4" class="wizard-step">
+        <h3 class="wizard-step__title">Subscription Plan</h3>
+        <p class="wizard-step__lead">Choose a plan, billing cycle, and whether to start with a trial period.</p>
+
+        <div class="wizard-row">
+          <label class="saas-field"><span>Billing cycle</span>
+            <select [(ngModel)]="form.billingCycle">
+              <option *ngFor="let b of billingCycles" [ngValue]="b.id">{{ b.label }}</option>
+            </select>
+          </label>
+          <label class="saas-field saas-field--toggle">
+            <span>Trial period</span>
+            <label class="provision-organization__switch">
+              <input type="checkbox" [(ngModel)]="form.trialEnabled">
+              <span>{{ form.trialEnabled ? 'Enabled' : 'Disabled' }}</span>
+            </label>
+          </label>
+        </div>
+
+        <div *ngIf="!plans.length" class="saas-empty" style="padding: 24px 0;">
+          <i class="pi pi-credit-card"></i>
+          <strong>No subscription plans available</strong>
+          <p>Configure plans in Platform Management before provisioning.</p>
+        </div>
+
+        <div class="provision-organization__plan-grid" *ngIf="plans.length">
+          <button
+            type="button"
+            *ngFor="let plan of plans; trackBy: trackById"
+            class="plan-card"
+            [class.is-selected]="form.subscriptionPlanId === plan.id"
+            [class.is-recommended]="plan.recommended"
+            (click)="selectPlan(plan.id)">
+            <span class="plan-card__badge" *ngIf="plan.recommended">Recommended</span>
+            <header>
+              <strong>{{ plan.planName }}</strong>
+              <small>{{ plan.planCode }}</small>
+            </header>
+            <p>{{ plan.description || 'Subscription package' }}</p>
+            <div class="plan-card__price">{{ planPrice(plan) }}<small>/ {{ form.billingCycle | lowercase }}</small></div>
+            <ul *ngIf="plan.studentLimit || plan.staffLimit">
+              <li *ngIf="plan.studentLimit"><i class="pi pi-check"></i>{{ plan.studentLimit | number }} students</li>
+              <li *ngIf="plan.staffLimit"><i class="pi pi-check"></i>{{ plan.staffLimit | number }} staff</li>
+              <li *ngIf="plan.storageLimitGb"><i class="pi pi-check"></i>{{ plan.storageLimitGb }} GB storage</li>
+            </ul>
+            <span class="plan-card__check" aria-hidden="true"><i class="pi pi-check"></i></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 6: Feature Customization -->
+      <section *ngIf="step === 5" class="wizard-step">
+        <h3 class="wizard-step__title">Feature Customization</h3>
+        <p class="wizard-step__lead">Override plan defaults by enabling or disabling platform features.</p>
+
+        <div *ngIf="selectedPlan" class="wizard-summary-card wizard-summary-card--inline">
+          <span>Plan baseline: <strong>{{ selectedPlan.planName }}</strong></span>
+          <tc-saas-pill label="Overrides apply on top of plan" tone="info" icon="pi pi-sliders-h"></tc-saas-pill>
+        </div>
+
+        <div *ngIf="!features.length" class="saas-empty" style="padding: 24px 0;">
+          <i class="pi pi-th-large"></i>
+          <strong>No features in catalog</strong>
+        </div>
+
+        <div class="provision-organization__feature-grid" *ngIf="features.length">
+          <label
+            *ngFor="let feature of features; trackBy: trackById"
+            class="feature-toggle"
+            [class.is-on]="isFeatureEnabled(feature.id)"
+            [class.is-plan-default]="featureIncludedInPlan(feature.id)">
+            <input type="checkbox" [checked]="isFeatureEnabled(feature.id)" (change)="toggleFeature(feature.id)">
+            <div>
+              <strong>{{ feature.displayName || feature.featureName }}</strong>
+              <small>{{ feature.featureCode }}<span *ngIf="feature.category"> · {{ feature.category }}</span></small>
+              <p *ngIf="feature.description">{{ feature.description }}</p>
+            </div>
+            <tc-saas-pill
+              *ngIf="featureIncludedInPlan(feature.id)"
+              label="In plan"
+              tone="success"
+              icon="pi pi-check">
+            </tc-saas-pill>
+            <tc-saas-pill
+              *ngIf="feature.premiumFeature && !featureIncludedInPlan(feature.id)"
+              label="Premium"
+              tone="warning"
+              icon="pi pi-star">
+            </tc-saas-pill>
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 7: Commercials -->
+      <section *ngIf="step === 6" class="wizard-step">
+        <h3 class="wizard-step__title">Commercials</h3>
+        <p class="wizard-step__lead">Apply promotions and optional limit overrides for this tenant.</p>
+
+        <label class="saas-field saas-field--full">
+          <span>Promotion (optional)</span>
+          <select [(ngModel)]="form.promotionId">
+            <option [ngValue]="null">— No promotion —</option>
+            <option *ngFor="let promo of promotions; trackBy: trackById" [ngValue]="promo.id">
+              {{ promo.promotionName }} ({{ promo.promotionCode }})
+            </option>
+          </select>
+        </label>
+
+        <div *ngIf="selectedPromotion" class="wizard-summary-card">
+          <strong>{{ selectedPromotion.promotionName }}</strong>
+          <p>{{ selectedPromotion.description || 'Active promotional offer' }}</p>
+          <tc-saas-pill [label]="selectedPromotion.discountType" tone="primary" icon="pi pi-percentage"></tc-saas-pill>
+        </div>
+
+        <h4 class="wizard-step__subtitle">Limit overrides (optional)</h4>
+        <div class="wizard-row wizard-row--quad">
+          <label class="saas-field"><span>Student limit</span><input type="number" min="0" [(ngModel)]="form.studentLimitOverride" placeholder="Plan default"></label>
+          <label class="saas-field"><span>Staff limit</span><input type="number" min="0" [(ngModel)]="form.staffLimitOverride" placeholder="Plan default"></label>
+          <label class="saas-field"><span>Branch limit</span><input type="number" min="0" [(ngModel)]="form.branchLimitOverride" placeholder="Plan default"></label>
+          <label class="saas-field"><span>Storage (GB)</span><input type="number" min="0" [(ngModel)]="form.storageLimitOverride" placeholder="Plan default"></label>
+        </div>
+
+        <label class="saas-field saas-field--full"><span>Internal remarks</span><textarea rows="3" [(ngModel)]="form.remarks" placeholder="Notes for provisioning team"></textarea></label>
+      </section>
+
+      <!-- Step 8: Review & Confirm -->
+      <section *ngIf="step === 7" class="wizard-step wizard-review">
+        <h3 class="wizard-step__title">Review &amp; Confirm</h3>
+        <p class="wizard-step__lead">Verify all details before provisioning the organization.</p>
+
+        <dl class="wizard-review">
+          <div><dt>Customer</dt><dd>{{ form.customerMode === 'existing' ? (selectedCustomer?.displayName || '—') : form.customerDisplayName }}</dd></div>
+          <div><dt>Organization</dt><dd>{{ form.organizationName || '—' }} · {{ institutionLabel(form.institutionType) }}</dd></div>
+          <div><dt>Location</dt><dd>{{ form.city || '—' }}, {{ form.state || '—' }}, {{ form.country }}</dd></div>
+          <div><dt>Institution contact</dt><dd>{{ form.orgEmail }} · {{ form.orgMobile }}</dd></div>
+          <div><dt>Admin</dt><dd>{{ form.adminFirstName }} {{ form.adminLastName }} · {{ form.adminEmail }}</dd></div>
+          <div><dt>Subscription</dt><dd>{{ selectedPlan?.planName || '—' }} · {{ form.billingCycle }}<span *ngIf="form.trialEnabled"> · Trial</span></dd></div>
+          <div><dt>Promotion</dt><dd>{{ selectedPromotion?.promotionName || 'None' }}</dd></div>
+          <div><dt>Feature overrides</dt><dd>{{ features.length }} features configured</dd></div>
+          <div *ngIf="form.studentLimitOverride || form.staffLimitOverride || form.branchLimitOverride || form.storageLimitOverride">
+            <dt>Limit overrides</dt>
+            <dd>
+              <span *ngIf="form.studentLimitOverride">Students: {{ form.studentLimitOverride }}</span>
+              <span *ngIf="form.staffLimitOverride"> · Staff: {{ form.staffLimitOverride }}</span>
+              <span *ngIf="form.branchLimitOverride"> · Branches: {{ form.branchLimitOverride }}</span>
+              <span *ngIf="form.storageLimitOverride"> · Storage: {{ form.storageLimitOverride }} GB</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer class="provision-organization__nav">
+        <button type="button" class="saas-btn" (click)="prev()" [disabled]="step === 0 || submitting">
+          <i class="pi pi-arrow-left"></i> Back
+        </button>
+        <div class="provision-organization__nav-end">
+          <button type="button" class="saas-btn" (click)="cancel()" [disabled]="submitting">Cancel</button>
+          <button
+            type="button"
+            *ngIf="step < wizardSteps.length - 1"
+            class="saas-btn saas-btn--primary"
+            (click)="next()"
+            [disabled]="submitting">
+            Next <i class="pi pi-arrow-right"></i>
+          </button>
+          <button
+            type="button"
+            *ngIf="step === wizardSteps.length - 1"
+            class="saas-btn saas-btn--primary"
+            (click)="provision()"
+            [disabled]="submitting">
+            <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-rocket'"></i>
+            {{ submitting ? 'Provisioning…' : 'Provision' }}
+          </button>
+        </div>
+      </footer>
+    </tc-saas-panel>
+  </ng-container>
+</div>
+
+<ng-template #successView>
+  <div class="saas-page provision-organization provision-organization--success">
+    <tc-saas-page-header
+      title="Organization provisioned"
+      [subtitle]="successResult?.organizationName + ' is ready'"
+      [breadcrumbs]="[
+        { label: 'Home', route: '/app' },
+        { label: 'Platform Management' },
+        { label: 'Organizations', route: '/app/tenant-management/organizations' },
+        { label: 'Success' }
+      ]">
+    </tc-saas-page-header>
+
+    <div class="provision-organization__success-card">
+      <i class="pi pi-check-circle"></i>
+      <h2>Provisioning complete</h2>
+      <p *ngIf="successResult?.message; else defaultSuccessMsg">{{ successResult?.message }}</p>
+      <ng-template #defaultSuccessMsg>
+        <p>The tenant has been created. Share the admin email and domain details with the institution owner.</p>
+      </ng-template>
+
+      <tc-saas-stat-grid [stats]="successStats"></tc-saas-stat-grid>
+
+      <dl class="wizard-review wizard-review--compact" *ngIf="successResult">
+        <div><dt>Organization code</dt><dd>{{ successResult.organizationCode }}</dd></div>
+        <div *ngIf="successResult.jobCode"><dt>Provisioning job</dt><dd>{{ successResult.jobCode }}</dd></div>
+      </dl>
+
+      <div class="provision-organization__success-actions">
+        <button type="button" class="saas-btn saas-btn--primary" (click)="goToWorkspace()">
+          <i class="pi pi-external-link"></i> Open organization workspace
+        </button>
+        <button type="button" class="saas-btn" (click)="goToList()">
+          <i class="pi pi-list"></i> Back to organizations
+        </button>
+        <button type="button" class="saas-btn" (click)="provisionAnother()">
+          <i class="pi pi-plus"></i> Provision another
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>

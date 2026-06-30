@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { PlatformFeature } from '../../models/platform.model';
+import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   SaasFilterRowComponent,
   SaasPageHeaderComponent,
@@ -9,16 +13,6 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-
-interface FeatureModule {
-  code: string;
-  name: string;
-  category: 'Core' | 'Premium' | 'Add-on';
-  description: string;
-  plans: string[];
-  status: 'Active' | 'Beta' | 'Deprecated';
-  tenants: number;
-}
 
 @Component({
   selector: 'tc-feature-catalog',
@@ -36,57 +30,72 @@ interface FeatureModule {
   templateUrl: './feature-catalog.component.html',
   styleUrl: './feature-catalog.component.scss'
 })
-export class FeatureCatalogComponent {
-  readonly search = signal('');
-  readonly categoryFilter = signal<'all' | FeatureModule['category']>('all');
-  readonly statusFilter = signal<'all' | FeatureModule['status']>('all');
+export class FeatureCatalogComponent implements OnInit {
+  private readonly api = inject(PlatformManagementService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly modules = signal<FeatureModule[]>([
-    { code: 'MOD_STUDENT', name: 'Student Management', category: 'Core', description: '360° student records, parents, alumni and movement', plans: ['Starter', 'Growth', 'Enterprise'], status: 'Active', tenants: 248 },
-    { code: 'MOD_STAFF', name: 'Staff & HR', category: 'Core', description: 'Directory, responsibilities, leave and documents', plans: ['Starter', 'Growth', 'Enterprise'], status: 'Active', tenants: 232 },
-    { code: 'MOD_ACADEMICS', name: 'Academics', category: 'Core', description: 'Setup, timetable, teacher allocation, syllabus tracker', plans: ['Starter', 'Growth', 'Enterprise'], status: 'Active', tenants: 226 },
-    { code: 'MOD_ATTENDANCE', name: 'Attendance', category: 'Core', description: 'Student & staff attendance with calendar and reports', plans: ['Starter', 'Growth', 'Enterprise'], status: 'Active', tenants: 218 },
-    { code: 'MOD_ADMISSIONS', name: 'Admissions', category: 'Core', description: 'Inquiry centre, admission centre and conversion wizard', plans: ['Starter', 'Growth', 'Enterprise'], status: 'Active', tenants: 198 },
-    { code: 'MOD_FEES', name: 'Fee Management', category: 'Premium', description: 'Structures, invoices, collections and reconciliation', plans: ['Growth', 'Enterprise'], status: 'Active', tenants: 164 },
-    { code: 'MOD_EXAMS', name: 'Examinations', category: 'Premium', description: 'Term/unit exams, grade book and report cards', plans: ['Growth', 'Enterprise'], status: 'Active', tenants: 142 },
-    { code: 'MOD_COMMS', name: 'Communication', category: 'Premium', description: 'Announcements, conversations, templates and delivery logs', plans: ['Growth', 'Enterprise'], status: 'Active', tenants: 188 },
-    { code: 'MOD_TRANSPORT', name: 'Transport', category: 'Add-on', description: 'Routes, vehicles, drivers and live tracking', plans: ['Enterprise'], status: 'Beta', tenants: 36 },
-    { code: 'MOD_HOSTEL', name: 'Hostel', category: 'Add-on', description: 'Rooms, allocations and warden tools', plans: ['Enterprise'], status: 'Beta', tenants: 22 },
-    { code: 'MOD_LIBRARY', name: 'Library', category: 'Add-on', description: 'Catalogue, issuance, fines and reservations', plans: ['Enterprise'], status: 'Beta', tenants: 18 }
-  ]);
+  loading = true;
+  errorMessage = '';
+  readonly search = signal('');
+  readonly categoryFilter = signal('all');
+  readonly modules = signal<PlatformFeature[]>([]);
+
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.api.getFeatures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: list => {
+        this.modules.set(list.filter(f => f.active !== false));
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorMessage = 'Unable to load feature catalog from platform API.';
+        this.modules.set([]);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  readonly categories = computed(() => {
+    const cats = new Set(this.modules().map(m => m.category || m.module || 'General'));
+    return ['all', ...Array.from(cats).sort()];
+  });
 
   readonly stats = computed<SaasStat[]>(() => {
     const list = this.modules();
+    const premium = list.filter(m => m.premiumFeature).length;
     return [
-      { key: 'total', label: 'Total Modules', value: list.length, helper: 'Catalogue items', icon: 'pi pi-th-large', tone: 'primary' },
-      { key: 'core', label: 'Core Modules', value: list.filter(m => m.category === 'Core').length, helper: 'Bundled with every plan', icon: 'pi pi-box', tone: 'info' },
-      { key: 'premium', label: 'Premium Modules', value: list.filter(m => m.category === 'Premium').length, helper: 'Growth & Enterprise', icon: 'pi pi-star', tone: 'warning' },
-      { key: 'addon', label: 'Add-ons', value: list.filter(m => m.category === 'Add-on').length, helper: 'Optional entitlements', icon: 'pi pi-plus-circle', tone: 'success' }
+      { key: 'total', label: 'Total Features', value: list.length, helper: 'Catalogue items', icon: 'pi pi-th-large', tone: 'primary' },
+      { key: 'premium', label: 'Premium Features', value: premium, helper: 'Paid add-ons', icon: 'pi pi-star', tone: 'warning' },
+      { key: 'enabled', label: 'Default Enabled', value: list.filter(m => m.defaultEnabled).length, helper: 'On by default', icon: 'pi pi-check', tone: 'success' },
+      { key: 'modules', label: 'Modules', value: new Set(list.map(m => m.module).filter(Boolean)).size, helper: 'Distinct modules', icon: 'pi pi-box', tone: 'info' }
     ];
   });
 
-  readonly filtered = computed<FeatureModule[]>(() => {
+  readonly filtered = computed<PlatformFeature[]>(() => {
     const q = this.search().trim().toLowerCase();
     const cat = this.categoryFilter();
-    const status = this.statusFilter();
-    return this.modules().filter(m =>
-      (cat === 'all' || m.category === cat) &&
-      (status === 'all' || m.status === status) &&
-      (!q || m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q) || m.description.toLowerCase().includes(q))
-    );
+    return this.modules().filter(m => {
+      const category = m.category || m.module || 'General';
+      if (cat !== 'all' && category !== cat) return false;
+      if (!q) return true;
+      return (m.featureName?.toLowerCase().includes(q) || m.featureCode?.toLowerCase().includes(q) || m.description?.toLowerCase().includes(q));
+    });
   });
 
-  pillTone(s: FeatureModule['status']): 'success' | 'warning' | 'danger' {
-    return s === 'Active' ? 'success' : s === 'Beta' ? 'warning' : 'danger';
-  }
-
-  categoryTone(c: FeatureModule['category']): 'info' | 'warning' | 'success' {
-    return c === 'Core' ? 'info' : c === 'Premium' ? 'warning' : 'success';
+  pillTone(feature: PlatformFeature): 'success' | 'warning' | 'neutral' {
+    if (feature.premiumFeature) return 'warning';
+    if (feature.defaultEnabled) return 'success';
+    return 'neutral';
   }
 
   reset(): void {
     this.search.set('');
     this.categoryFilter.set('all');
-    this.statusFilter.set('all');
   }
 }

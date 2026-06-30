@@ -1,65 +1,65 @@
-<tc-saas-page-header
-  title="Feature Catalog"
-  subtitle="Master catalogue of platform modules and entitlements"
-  [breadcrumbs]="[{ label: 'Platform Administration', route: '/app/tenant-management/organizations' }, { label: 'Feature Catalog' }]">
-  <button type="button" class="btn-primary" (click)="reset()"><i class="pi pi-refresh"></i>Reset Filters</button>
-</tc-saas-page-header>
+<div class="saas-page feature-catalog">
+  <tc-saas-page-header
+    title="Feature Catalog"
+    subtitle="Master catalogue of platform modules and entitlements"
+    [breadcrumbs]="[{ label: 'Home', route: '/app' }, { label: 'Platform Management' }, { label: 'Feature Catalog' }]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset Filters</button>
+  </tc-saas-page-header>
 
-<tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading features...</div>
 
-<tc-saas-panel title="Catalogue" subtitle="All platform modules and feature flags available for subscription plans" [actions]="true">
-  <tc-saas-filter-row>
-    <label>Search<input type="search" placeholder="Search by module name or code" [ngModel]="search()" (ngModelChange)="search.set($event)"></label>
-    <label>Category
-      <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
-        <option value="all">All categories</option>
-        <option value="Core">Core</option>
-        <option value="Premium">Premium</option>
-        <option value="Add-on">Add-on</option>
-      </select>
-    </label>
-    <label>Status
-      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-        <option value="all">All statuses</option>
-        <option value="Active">Active</option>
-        <option value="Beta">Beta</option>
-        <option value="Deprecated">Deprecated</option>
-      </select>
-    </label>
-  </tc-saas-filter-row>
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-  <div class="catalog-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Module</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th>Available in plans</th>
-          <th>Status</th>
-          <th class="num">Tenants</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let m of filtered()">
-          <td>
-            <div class="module-cell">
-              <strong>{{ m.name }}</strong>
-              <small>{{ m.code }}</small>
-            </div>
-          </td>
-          <td><tc-saas-pill [label]="m.category" [tone]="categoryTone(m.category)"></tc-saas-pill></td>
-          <td class="muted">{{ m.description }}</td>
-          <td>
-            <span class="plan-chip" *ngFor="let p of m.plans">{{ p }}</span>
-          </td>
-          <td><tc-saas-pill [label]="m.status" [tone]="pillTone(m.status)"></tc-saas-pill></td>
-          <td class="num">{{ m.tenants }}</td>
-        </tr>
-        <tr *ngIf="!filtered().length">
-          <td colspan="6" class="empty">No modules match the current filters.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</tc-saas-panel>
+    <tc-saas-panel title="Catalogue" subtitle="Features available for subscription plans and overrides">
+      <tc-saas-filter-row>
+        <label class="saas-search"><i class="pi pi-search"></i>
+          <input type="search" placeholder="Search by name or code" [ngModel]="search()" (ngModelChange)="search.set($event)">
+        </label>
+        <label class="saas-field"><span>Category</span>
+          <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
+            <option *ngFor="let c of categories()" [value]="c">{{ c === 'all' ? 'All categories' : c }}</option>
+          </select>
+        </label>
+      </tc-saas-filter-row>
+
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Module</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of filtered()">
+              <td>
+                <div class="module-cell">
+                  <strong>{{ m.displayName || m.featureName }}</strong>
+                  <small>{{ m.featureCode }}</small>
+                </div>
+              </td>
+              <td>{{ m.module || '—' }}</td>
+              <td>{{ m.category || '—' }}</td>
+              <td class="muted">{{ m.description || '—' }}</td>
+              <td>
+                <tc-saas-pill
+                  [label]="m.premiumFeature ? 'Premium' : (m.defaultEnabled ? 'Core' : 'Optional')"
+                  [tone]="pillTone(m)">
+                </tc-saas-pill>
+              </td>
+            </tr>
+            <tr *ngIf="!filtered().length">
+              <td colspan="5" class="empty">No features match the current filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

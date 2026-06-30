@@ -3,6 +3,8 @@ import { environment } from '../../../environments/environment';
 const BASE = environment.baseUrl; // e.g. http://localhost:8181/api/v1
 // Password reset lives at /api/password/... (outside /v1 versioning)
 const PASS_BASE = environment.baseUrl.replace(/\/api\/v\d+$/, '/api');
+// Platform management APIs live at /api/platform/* (SUPER_ADMIN only)
+const PLATFORM_BASE = `${PASS_BASE}/platform`;
 
 export const loginApi = {
   loginUrl: `${BASE}/users/login`,
@@ -198,4 +200,42 @@ export const organizationApi = {
   byCode: (orgCode: string) => `${BASE}/organizations/${orgCode}`,
   updateOwner: `${BASE}/organizations/owner/update`,
   provision: `${BASE}/tenant-onboarding/provision`,
+};
+
+// ─── Platform Management (ThinkersCave Super Admin) ───────────────────────────
+export const platformApi = {
+  dashboard: `${PLATFORM_BASE}/dashboard`,
+  organizations: `${PLATFORM_BASE}/organizations`,
+  organizationById: (id: number) => `${PLATFORM_BASE}/organizations/${id}`,
+  activateOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/activate`,
+  suspendOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/suspend`,
+  archiveOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/archive`,
+  customers: `${PLATFORM_BASE}/customers`,
+  customerById: (id: number) => `${PLATFORM_BASE}/customers/${id}`,
+  customerOrganizations: (id: number) => `${PLATFORM_BASE}/customers/${id}/organizations`,
+  subscriptionPlans: `${PLATFORM_BASE}/subscription-plans`,
+  subscriptionPlanById: (id: number) => `${PLATFORM_BASE}/subscription-plans/${id}`,
+  planFeatures: (planId: number) => `${PLATFORM_BASE}/subscription-plans/${planId}/features`,
+  features: `${PLATFORM_BASE}/features`,
+  featureById: (id: number) => `${PLATFORM_BASE}/features/${id}`,
+  promotions: `${PLATFORM_BASE}/promotions`,
+  promotionById: (id: number) => `${PLATFORM_BASE}/promotions/${id}`,
+  organizationSubscriptions: `${PLATFORM_BASE}/organization-subscriptions`,
+  organizationSubscriptionById: (id: number) => `${PLATFORM_BASE}/organization-subscriptions/${id}`,
+  subscriptionFeatureOverrides: (subId: number) => `${PLATFORM_BASE}/organization-subscriptions/${subId}/feature-overrides`,
+  featureOverrides: `${PLATFORM_BASE}/feature-overrides`,
+  featureOverrideById: (id: number) => `${PLATFORM_BASE}/feature-overrides/${id}`,
+  provision: `${PLATFORM_BASE}/provision`,
+  provisionJobs: `${PLATFORM_BASE}/provision/jobs`,
+  provisionJobById: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}`,
+  retryProvisionJob: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/retry`,
+  tenantRegistry: `${PLATFORM_BASE}/tenant-registry`,
+  tenantById: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}`,
+  tenantMaintenance: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/maintenance`,
+  tenantResume: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/resume`,
+  tenantBackup: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/backup`,
+  tenantMigrate: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/migrate`,
+  provisioningTemplates: `${PLATFORM_BASE}/provisioning-templates`,
+  maintenanceSchedules: `${PLATFORM_BASE}/maintenance`,
+  orgConfiguration: (orgId: number) => `${PLATFORM_BASE}/organization-configurations/${orgId}`,
 };
