@@ -1,0 +1,42 @@
+<div class="saas-page security-policy">
+  <tc-saas-page-header
+    title="Security Policy"
+    subtitle="Password complexity, lockout rules and session controls"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Security Policy'}]">
+    <button type="button" class="saas-btn" (click)="reset()" [disabled]="loading">Reset defaults</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
+      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Policy
+    </button>
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading policy...</div>
+
+  <ng-container *ngIf="!loading">
+    <div class="security-policy__grid">
+      <tc-saas-panel title="Password Rules">
+        <div class="security-policy__form">
+          <label class="saas-field"><span>Minimum length</span><input type="number" min="6" max="128" [(ngModel)]="policy.minPasswordLength"></label>
+          <label class="saas-field"><span>Expiry (days, 0 = never)</span><input type="number" min="0" [(ngModel)]="policy.passwordExpiryDays"></label>
+          <label class="saas-field"><span>Password history count</span><input type="number" min="0" [(ngModel)]="policy.passwordHistoryCount"></label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.requireUppercase"> Require uppercase</label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.requireLowercase"> Require lowercase</label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.requireNumbers"> Require numbers</label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.requireSpecialChars"> Require special characters</label>
+        </div>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Account Lockout & Sessions">
+        <div class="security-policy__form">
+          <label class="saas-field"><span>Max failed attempts</span><input type="number" min="1" [(ngModel)]="policy.maxFailedAttempts"></label>
+          <label class="saas-field"><span>Lockout duration (minutes)</span><input type="number" min="1" [(ngModel)]="policy.lockoutDurationMinutes"></label>
+          <label class="saas-field"><span>Session timeout (minutes)</span><input type="number" min="5" [(ngModel)]="policy.sessionTimeoutMinutes"></label>
+          <label class="saas-field"><span>Max concurrent sessions</span><input type="number" min="1" [(ngModel)]="policy.maxConcurrentSessions"></label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.allowRememberMe"> Allow remember me</label>
+          <label class="saas-check"><input type="checkbox" [(ngModel)]="policy.requireTwoFactor"> Require two-factor auth</label>
+        </div>
+      </tc-saas-panel>
+    </div>
+  </ng-container>
+</div>

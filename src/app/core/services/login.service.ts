@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, from, Observable, Subject, switchMap } from 'rxjs';
+import { BehaviorSubject, from, Observable, of, Subject, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { loginApi, passwordApi } from '../../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
@@ -91,6 +91,35 @@ export class LoginService {
     return this.http.post<LoginResponse>(loginApi.loginUrl, loginData);
   }
 
+  /** Maps backend AuthResponse user summary into the frontend UserInfo shape. */
+  public mapAuthUser(loginUser: any, firstTimeLogin?: boolean): UserInfo | null {
+    if (!loginUser) {
+      return null;
+    }
+
+    const roles = Array.isArray(loginUser.roles)
+      ? loginUser.roles.map((role: any) => role?.roleType || role?.roleCode || role?.roleName).filter(Boolean)
+      : [];
+
+    return {
+      id: loginUser.id != null ? String(loginUser.id) : undefined,
+      userCode: loginUser.userCode ?? '',
+      userName: loginUser.username ?? loginUser.userName ?? '',
+      firstName: loginUser.firstName ?? '',
+      lastName: loginUser.lastName ?? '',
+      name: loginUser.displayName ?? `${loginUser.firstName ?? ''} ${loginUser.lastName ?? ''}`.trim(),
+      email: loginUser.email ?? '',
+      mobile: loginUser.mobileNumber ?? loginUser.mobile ?? '',
+      roles,
+      privileges: loginUser.privileges ?? [],
+      orgId: loginUser.organizationId ?? loginUser.orgId ?? 0,
+      organizationId: loginUser.organizationId ?? loginUser.orgId,
+      orgCode: loginUser.orgCode ?? '',
+      isActive: loginUser.status ? loginUser.status === 'ACTIVE' : true,
+      firstTimeLogin: firstTimeLogin ?? loginUser.firstTimeLogin ?? false
+    };
+  }
+
   /**
    * Changes the authenticated user's password (first-time login flow).
    * Calls PATCH /api/v1/users/changePassword with the stored JWT in the Authorization header.
@@ -102,8 +131,18 @@ export class LoginService {
     }, { responseType: 'text' });
   }
 
-  public getCurrentUser() {
-    return this.http.get<ApiResponse<UserInfo>>(loginApi.currentUserInfo);
+  public getCurrentUser(): Observable<ApiResponse<UserInfo>> {
+    const userStr = this.readItem('user');
+    if (!userStr) {
+      return of({ success: false, message: 'No user in session', data: null as unknown as UserInfo });
+    }
+    try {
+      const parsed = JSON.parse(userStr);
+      const user = parsed?.data && parsed.firstName === undefined ? parsed.data : parsed;
+      return of({ success: true, message: 'ok', data: user as UserInfo });
+    } catch {
+      return of({ success: false, message: 'Invalid user session', data: null as unknown as UserInfo });
+    }
   }
 
   /**
@@ -249,7 +288,8 @@ export class LoginService {
   public logOut() {
     const refreshToken = this.getRefreshToken();
     if (refreshToken) {
-      this.http.post(loginApi.logOutUrl, { token: refreshToken })
+      const params = new HttpParams().set('refreshToken', refreshToken);
+      this.http.post(loginApi.logOutUrl, null, { params })
         .subscribe({ next: () => { }, error: () => { } });
     }
     this.clearAllStorage();
@@ -262,11 +302,20 @@ export class LoginService {
   }
 
   public refreshAccessToken(refreshToken: string): Observable<string> {
-    return this.http.post<RefreshTokenResponse>(loginApi.refreshTokenUrl, { token: refreshToken }
+    const params = new HttpParams().set('refreshToken', refreshToken);
+    return this.http.post<ApiResponse<{ accessToken: string; refreshToken?: string }>>(
+      loginApi.refreshTokenUrl,
+      null,
+      { params }
     ).pipe(
-      switchMap((res: RefreshTokenResponse) => {
-        this.setAccessToken(res.accessToken);
-        return from([res.accessToken]);
+      switchMap((res) => {
+        const payload = res?.data ?? res as any;
+        const accessToken = payload.accessToken;
+        if (payload.refreshToken) {
+          this.storage.setItem('refreshToken', payload.refreshToken);
+        }
+        this.setAccessToken(accessToken);
+        return from([accessToken]);
       })
     );
   }

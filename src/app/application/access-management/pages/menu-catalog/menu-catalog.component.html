@@ -1,0 +1,37 @@
+<div class="saas-page menu-catalog">
+  <tc-saas-page-header
+    title="Menu Catalog"
+    subtitle="Organization navigation modules and pages"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Menus'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading menus...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <tc-saas-panel title="Menu Tree" [subtitle]="filtered.length + ' items'">
+      <input type="search" class="saas-search menu-catalog__search" [(ngModel)]="search" placeholder="Search menus...">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Route</th><th>Parent</th><th>Sidebar</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of filtered; trackBy: trackById">
+              <td><i class="pi" [ngClass]="m.menuType === 'MODULE' ? 'pi-folder' : 'pi-file'"></i> <strong>{{ m.menuName }}</strong></td>
+              <td><code>{{ m.menuCode }}</code></td>
+              <td>{{ m.menuType || '—' }}</td>
+              <td><code>{{ m.route || '—' }}</code></td>
+              <td>{{ m.parentMenuName || '—' }}</td>
+              <td>{{ m.showInSidebar !== false ? 'Yes' : 'No' }}</td>
+              <td><tc-saas-pill [label]="m.active === false ? 'Inactive' : 'Active'" [tone]="m.active === false ? 'danger' : 'success'"></tc-saas-pill></td>
+              <td><button type="button" class="saas-icon-btn" (click)="toggleMenu(m)"><i class="pi pi-power-off"></i></button></td>
+            </tr>
+            <tr *ngIf="!filtered.length"><td colspan="8" class="empty">No menus match your search.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

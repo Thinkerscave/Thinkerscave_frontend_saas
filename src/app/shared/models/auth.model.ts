@@ -1,6 +1,8 @@
 export interface LoginRequest {
-  userName: string;
+  usernameOrEmail: string;
   password: string;
+  rememberMe?: boolean;
+  deviceName?: string;
 }
 
 export interface LoginResponse {

@@ -1,0 +1,38 @@
+<div class="saas-page user-permissions">
+  <tc-saas-page-header
+    [title]="user ? userDisplayName(user) + ' — Overrides' : 'User Permissions'"
+    subtitle="Custom permissions applied on top of role defaults"
+    [breadcrumbs]="[
+      {label:'Home', route:'/app'},
+      {label:'Access Management', route:'/app/access-management/dashboard'},
+      {label:'Users', route:'/app/access-management/users'},
+      {label: user ? userDisplayName(user) : 'User'}
+    ]">
+    <a class="saas-btn" routerLink="/app/access-management/users"><i class="pi pi-arrow-left"></i> Back</a>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
+      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Overrides
+    </button>
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading permissions...</div>
+
+  <tc-saas-panel *ngIf="!loading && !errorMessage" title="Effective Permissions" subtitle="Checked rows with override badge are saved as user-level exceptions">
+    <div class="saas-table-wrap">
+      <table class="saas-data-table">
+        <thead><tr><th>Menu</th><th>View</th><th>Manage</th><th>Approve</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of permissions; trackBy: trackByMenuId">
+            <td><strong>{{ p.menuName }}</strong><br><code>{{ p.menuCode }}</code></td>
+            <td class="permission-cell"><input type="checkbox" [checked]="p.canView" (change)="toggle(p, 'canView')"></td>
+            <td class="permission-cell"><input type="checkbox" [checked]="p.canManage" (change)="toggle(p, 'canManage')"></td>
+            <td class="permission-cell"><input type="checkbox" [checked]="p.canApprove" (change)="toggle(p, 'canApprove')"></td>
+            <td><tc-saas-pill [label]="p.isOverride ? 'Override' : 'Role'" [tone]="p.isOverride ? 'warning' : 'neutral'"></tc-saas-pill></td>
+          </tr>
+          <tr *ngIf="!permissions.length"><td colspan="5" class="empty">No permissions found for this user.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </tc-saas-panel>
+</div>

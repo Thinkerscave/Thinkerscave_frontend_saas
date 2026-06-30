@@ -1,0 +1,42 @@
+<div class="saas-page login-history">
+  <tc-saas-page-header
+    title="Login History"
+    subtitle="Sign-in audit trail for your organization"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Login History'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading history...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <tc-saas-panel title="Recent Sign-ins" [subtitle]="totalRecords + ' total events'">
+      <div class="login-history__toolbar">
+        <select class="saas-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+          <option value="all">All statuses</option>
+          <option value="SUCCESS">Success</option>
+          <option value="FAILED">Failed</option>
+          <option value="LOCKED">Locked</option>
+          <option value="LOGGED_OUT">Logged out</option>
+        </select>
+      </div>
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Logout</th><th>IP</th><th>Client</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let e of entries; trackBy: trackById">
+              <td><strong>{{ e.displayName || e.username }}</strong></td>
+              <td><tc-saas-pill [label]="loginStatusLabel(e.status)" [tone]="loginStatusTone(e.status)"></tc-saas-pill></td>
+              <td>{{ formatDateTime(e.loginTime) }}</td>
+              <td>{{ formatDateTime(e.logoutTime) }}</td>
+              <td>{{ e.ipAddress || '—' }}</td>
+              <td>{{ e.browser || e.operatingSystem || '—' }}</td>
+            </tr>
+            <tr *ngIf="!entries.length"><td colspan="6" class="empty">No login events found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

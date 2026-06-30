@@ -5,10 +5,11 @@ export type InstitutionType =
   | 'PRE_SCHOOL' | 'PRIMARY_SCHOOL' | 'HIGH_SCHOOL' | 'HIGHER_SECONDARY' | 'SCHOOL'
   | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'OTHER';
 export type CustomerStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'PENDING';
-export type CustomerType = 'INDIVIDUAL' | 'BUSINESS' | 'INSTITUTION' | 'GOVERNMENT' | 'OTHER';
+export type CustomerType = 'INDIVIDUAL' | 'BUSINESS' | 'INSTITUTION' | 'GOVERNMENT' | 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'EDUCATION_GROUP' | 'TRUST' | 'COMPANY' | 'OTHER';
 export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'SUSPENDED';
 export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
-export type DiscountType = 'PERCENTAGE' | 'FLAT' | 'FREE_MONTHS';
+/** Backend supports PERCENTAGE and FLAT_AMOUNT; FLAT is kept for legacy seed/display mapping. */
+export type DiscountType = 'PERCENTAGE' | 'FLAT_AMOUNT' | 'FLAT';
 export type PromotionStatus = 'DRAFT' | 'ACTIVE' | 'EXPIRED' | 'ARCHIVED';
 export type ProvisionStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'MAINTENANCE';
 export type ProvisionJobStatus = 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -347,4 +348,32 @@ export interface CustomerQuery {
   search?: string;
   page?: number;
   size?: number;
+}
+
+export interface PlatformAuditLog {
+  id: number;
+  organizationId?: number;
+  tenantCode?: string;
+  eventType?: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  actorUserId?: number;
+  actorUsername?: string;
+  sourceIp?: string;
+  changes?: string;
+  summary?: string;
+  occurredAt: string;
+}
+
+export interface PlatformSecurityAuditLog {
+  id: number;
+  eventCode: string;
+  username?: string;
+  tenantCode?: string;
+  sourceIp?: string;
+  success: boolean;
+  severity?: string;
+  message?: string;
+  occurredAt: string;
 }

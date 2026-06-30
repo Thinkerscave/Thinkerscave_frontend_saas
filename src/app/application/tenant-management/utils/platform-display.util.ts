@@ -101,8 +101,8 @@ export function formatDateTime(value?: string | null): string {
 
 const DISCOUNT_TYPE_LABELS: Record<DiscountType, string> = {
   PERCENTAGE: 'Percentage',
-  FLAT: 'Flat amount',
-  FREE_MONTHS: 'Free months'
+  FLAT_AMOUNT: 'Flat amount',
+  FLAT: 'Flat amount'
 };
 
 const PROMOTION_STATUS_LABELS: Record<PromotionStatus, string> = {
@@ -184,7 +184,8 @@ export function formatDiscountValue(type?: DiscountType | string | null, value?:
   if (value == null) return '—';
   switch (type) {
     case 'PERCENTAGE': return `${value}%`;
-    case 'FLAT': return formatCurrency(value);
+    case 'FLAT':
+    case 'FLAT_AMOUNT': return formatCurrency(value);
     case 'FREE_MONTHS': return value === 1 ? '1 month' : `${value} months`;
     default: return String(value);
   }

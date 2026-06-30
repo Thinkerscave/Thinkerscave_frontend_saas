@@ -63,7 +63,7 @@ export class PromotionsComponent implements OnInit {
   createOpen = false;
   draft: PromotionDraft = this.emptyDraft();
 
-  readonly discountTypes: DiscountType[] = ['PERCENTAGE', 'FLAT', 'FREE_MONTHS'];
+  readonly discountTypes: DiscountType[] = ['PERCENTAGE', 'FLAT_AMOUNT'];
 
   readonly formatDate = formatDate;
   readonly discountTypeLabel = discountTypeLabel;

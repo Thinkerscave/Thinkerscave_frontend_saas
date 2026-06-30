@@ -1,0 +1,65 @@
+<div class="saas-page role-workspace">
+  <tc-saas-page-header
+    [title]="role?.roleName || 'Role Workspace'"
+    [subtitle]="role?.roleCode || 'Permission assignment'"
+    [breadcrumbs]="[
+      {label:'Home', route:'/app'},
+      {label:'Access Management', route:'/app/access-management/dashboard'},
+      {label:'Roles', route:'/app/access-management/roles'},
+      {label: role?.roleName || 'Role'}
+    ]">
+    <a class="saas-btn" routerLink="/app/access-management/roles"><i class="pi pi-arrow-left"></i> Back</a>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
+      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Permissions
+    </button>
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading role...</div>
+
+  <ng-container *ngIf="!loading && role">
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
+
+    <section *ngIf="activeTab === 'overview'">
+      <tc-saas-panel title="Role Details">
+        <dl class="role-workspace__meta">
+          <div><dt>Code</dt><dd><code>{{ role.roleCode }}</code></dd></div>
+          <div><dt>Type</dt><dd>{{ roleTypeLabel(role.roleType) }}</dd></div>
+          <div><dt>Users</dt><dd>{{ role.activeUserCount ?? 0 }}</dd></div>
+          <div><dt>Status</dt><dd><tc-saas-pill [label]="role.active === false ? 'Inactive' : 'Active'" [tone]="role.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
+          <div *ngIf="role.description"><dt>Description</dt><dd>{{ role.description }}</dd></div>
+        </dl>
+      </tc-saas-panel>
+    </section>
+
+    <section *ngIf="activeTab === 'permissions'">
+      <tc-saas-panel title="Menu Permission Matrix" subtitle="View · Manage · Approve per menu page">
+        <div class="saas-table-wrap">
+          <table class="saas-data-table permission-matrix">
+            <thead>
+              <tr>
+                <th>Menu</th>
+                <th>Module</th>
+                <th>View</th>
+                <th>Manage</th>
+                <th>Approve</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of rows; trackBy: trackByMenuId">
+                <td><strong>{{ row.menuName }}</strong><br><code>{{ row.menuCode }}</code></td>
+                <td>{{ row.parentMenuName || '—' }}</td>
+                <td class="permission-cell"><input type="checkbox" [checked]="row.canView" (change)="toggle(row, 'canView')"></td>
+                <td class="permission-cell"><input type="checkbox" [checked]="row.canManage" (change)="toggle(row, 'canManage')"></td>
+                <td class="permission-cell"><input type="checkbox" [checked]="row.canApprove" (change)="toggle(row, 'canApprove')"></td>
+              </tr>
+              <tr *ngIf="!rows.length"><td colspan="5" class="empty">No menu permissions configured for this role.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </tc-saas-panel>
+    </section>
+  </ng-container>
+</div>

@@ -1,0 +1,63 @@
+<div class="saas-page roles-list">
+  <tc-saas-page-header
+    title="Roles & Responsibilities"
+    subtitle="Define organizational roles and assign menu permissions"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Roles'}]">
+    <button type="button" class="saas-btn saas-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> New Role</button>
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading roles...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <tc-saas-panel *ngIf="createOpen" title="Create Role" subtitle="Use ROLE_ prefix for role codes">
+      <div class="roles-list__form">
+        <label class="saas-field"><span>Role Code</span><input [(ngModel)]="draft.roleCode" placeholder="ROLE_COORDINATOR"></label>
+        <label class="saas-field"><span>Role Name</span><input [(ngModel)]="draft.roleName" placeholder="Academic Coordinator"></label>
+        <label class="saas-field"><span>Role Type</span>
+          <select [(ngModel)]="draft.roleType"><option *ngFor="let t of roleTypes" [ngValue]="t">{{ roleTypeLabel(t) }}</option></select>
+        </label>
+        <label class="saas-field"><span>Description</span><input [(ngModel)]="draft.description" placeholder="Optional description"></label>
+        <div class="roles-list__form-actions">
+          <button type="button" class="saas-btn" (click)="closeCreate()">Cancel</button>
+          <button type="button" class="saas-btn saas-btn--primary" [disabled]="saving" (click)="submitCreate()">
+            <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Role
+          </button>
+        </div>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="All Roles" [subtitle]="filtered.length + ' roles'">
+      <div class="roles-list__toolbar">
+        <input type="search" class="saas-search" [(ngModel)]="search" placeholder="Search roles...">
+      </div>
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead>
+            <tr><th>Role</th><th>Type</th><th>Users</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of filtered; trackBy: trackById" (click)="openWorkspace(r)" class="roles-list__row">
+              <td><strong>{{ r.roleName }}</strong><br><code>{{ r.roleCode }}</code></td>
+              <td>{{ roleTypeLabel(r.roleType) }}</td>
+              <td>{{ r.activeUserCount ?? 0 }}</td>
+              <td>
+                <tc-saas-pill [label]="r.active === false ? 'Inactive' : 'Active'" [tone]="r.active === false ? 'danger' : 'success'"></tc-saas-pill>
+                <tc-saas-pill *ngIf="r.systemRole" label="System" tone="info"></tc-saas-pill>
+              </td>
+              <td>
+                <button type="button" class="saas-icon-btn" (click)="$event.stopPropagation(); openWorkspace(r)" title="Permissions"><i class="pi pi-key"></i></button>
+                <button type="button" class="saas-icon-btn" *ngIf="!r.systemRole" (click)="$event.stopPropagation(); toggleActive(r)" title="Toggle status"><i class="pi pi-power-off"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="!filtered.length"><td colspan="5" class="empty">No roles found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

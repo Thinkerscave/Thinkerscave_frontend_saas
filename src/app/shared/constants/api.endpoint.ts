@@ -5,18 +5,55 @@ const BASE = environment.baseUrl; // e.g. http://localhost:8181/api/v1
 const PASS_BASE = environment.baseUrl.replace(/\/api\/v\d+$/, '/api');
 // Platform management APIs live at /api/platform/* (SUPER_ADMIN only)
 const PLATFORM_BASE = `${PASS_BASE}/platform`;
+// Access management APIs live at /api/access/* (org admin / owner)
+const ACCESS_BASE = `${PASS_BASE}/access`;
+
+export const accessApi = {
+  roles: `${ACCESS_BASE}/roles`,
+  roleById: (id: number) => `${ACCESS_BASE}/roles/${id}`,
+  roleSearch: `${ACCESS_BASE}/roles/search`,
+  activateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/activate`,
+  deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
+  rolePermissions: (roleId: number, organizationId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions?organizationId=${organizationId}`,
+  menus: `${ACCESS_BASE}/menus`,
+  menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
+  menuTree: `${ACCESS_BASE}/menus/tree`,
+  menuSearch: `${ACCESS_BASE}/menus/search`,
+  activateMenu: (id: number) => `${ACCESS_BASE}/menus/${id}/activate`,
+  deactivateMenu: (id: number) => `${ACCESS_BASE}/menus/${id}/deactivate`,
+  sidebar: (userId: number, organizationId: number) =>
+    `${ACCESS_BASE}/menus/sidebar?userId=${userId}&organizationId=${organizationId}`,
+  orgUsers: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/users`,
+  orgUserById: (orgId: number, userId: number) => `${ACCESS_BASE}/organizations/${orgId}/users/${userId}`,
+  activateUser: (orgId: number, userId: number) => `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/activate`,
+  deactivateUser: (orgId: number, userId: number) => `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/deactivate`,
+  lockUser: (orgId: number, userId: number) => `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/lock`,
+  unlockUser: (orgId: number, userId: number) => `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/unlock`,
+  assignRole: (orgId: number, userId: number, roleId: number) =>
+    `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/roles/${roleId}`,
+  removeRole: (orgId: number, userId: number, roleId: number) =>
+    `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/roles/${roleId}`,
+  userEffectivePermissions: (orgId: number, userId: number) =>
+    `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/effective-permissions`,
+  userPermissions: (userId: number, organizationId: number) =>
+    `${ACCESS_BASE}/users/${userId}/permissions?organizationId=${organizationId}`,
+  securityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy`,
+  resetSecurityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy/reset`,
+  orgLoginHistory: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}`,
+  userLoginHistory: (userId: number) => `${ACCESS_BASE}/login-history/users/${userId}`,
+};
 
 export const loginApi = {
-  loginUrl: `${BASE}/users/login`,
-  currentUserInfo: `${BASE}/users/currentUserInfo`,
-  logOutUrl: `${BASE}/users/logout`,
-  refreshTokenUrl: `${BASE}/users/refreshToken`,
+  loginUrl: `${PASS_BASE}/auth/login`,
+  logOutUrl: `${PASS_BASE}/auth/logout`,
+  refreshTokenUrl: `${PASS_BASE}/auth/refresh`,
 };
 
 export const passwordApi = {
-  forgot: `${PASS_BASE}/password/forgot`,
-  verifyOtp: `${PASS_BASE}/password/verify-otp`,
-  reset: `${PASS_BASE}/password/reset`,
+  forgot: `${PASS_BASE}/auth/forgot-password`,
+  verifyOtp: `${PASS_BASE}/auth/verify-otp`,
+  reset: `${PASS_BASE}/auth/reset-password`,
 };
 
 export const attendanceApi = {
@@ -181,6 +218,12 @@ export const dashboardApi = {
   base: `${BASE}/dashboard`,
   workspace: `${BASE}/dashboard/workspace`,
   search: `${BASE}/dashboard/search`,
+};
+
+// ─── Audit (platform-wide activity logs) ────────────────────────────────────────
+export const auditApi = {
+  logs: `${BASE}/audit/logs`,
+  security: `${BASE}/audit/security`,
 };
 
 // ─── Admin Control ──────────────────────────────────────────────────────────────

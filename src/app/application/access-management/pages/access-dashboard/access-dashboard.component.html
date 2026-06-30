@@ -1,0 +1,44 @@
+<div class="saas-page access-dashboard">
+  <tc-saas-page-header
+    title="Access Management"
+    subtitle="Roles, menus, user permissions and security policy for your organization"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="saas-empty" role="alert">
+    <i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+  </div>
+
+  <div *ngIf="loading && !errorMessage" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading access overview...</div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <div class="access-dashboard__actions">
+      <tc-saas-panel title="Quick Actions" subtitle="Common access administration tasks">
+        <div class="access-dashboard__grid">
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/roles')">
+            <i class="pi pi-user-edit"></i><span>Manage Roles</span><small>Define responsibilities and permission sets</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/menus')">
+            <i class="pi pi-th-large"></i><span>Menu Catalog</span><small>Review navigable modules and pages</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/users')">
+            <i class="pi pi-users"></i><span>User Access</span><small>Assign roles and custom overrides</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/security-policy')">
+            <i class="pi pi-shield"></i><span>Security Policy</span><small>Password rules and session controls</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/login-history')">
+            <i class="pi pi-history"></i><span>Login History</span><small>Audit sign-in activity</small>
+          </button>
+          <a class="access-dashboard__action" routerLink="/app/access-management/roles" [queryParams]="{create: true}">
+            <i class="pi pi-plus"></i><span>Create Role</span><small>Add a new organizational role</small>
+          </a>
+        </div>
+      </tc-saas-panel>
+    </div>
+  </ng-container>
+</div>

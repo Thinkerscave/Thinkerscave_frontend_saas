@@ -38,7 +38,7 @@ export const authInterceptor: HttpInterceptorFn = (
 
   // Attach Bearer token to all non-refresh requests
   let authReq = req;
-  if (token && !req.url.includes('/refreshToken')) {
+  if (token && !req.url.includes('/auth/refresh')) {
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });
@@ -48,20 +48,21 @@ export const authInterceptor: HttpInterceptorFn = (
     catchError((error: HttpErrorResponse) => {
 
       // 🚫 If refresh API itself fails — clear and redirect
-      if (req.url.includes('/refreshToken')) {
+      if (req.url.includes('/auth/refresh')) {
         loginService.clearTokens();
         loginService.redirectToSessionExpired();
         return throwError(() => error);
       }
 
       // Public API calls and login endpoint — do not redirect to session-expired
-      const isPublicApi = req.url.includes('/public/') || req.url.includes('/password/');
+      const isPublicApi = req.url.includes('/public/') || req.url.includes('/auth/forgot-password')
+        || req.url.includes('/auth/verify-otp') || req.url.includes('/auth/reset-password');
       if (error.status === 403) {
         return throwError(() => error);
       }
 
       if (error.status === 401) {
-        if (isPublicApi || req.url.includes('/login')) {
+        if (isPublicApi || req.url.includes('/auth/login')) {
           return throwError(() => error);
         }
 

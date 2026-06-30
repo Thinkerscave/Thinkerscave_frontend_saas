@@ -1,0 +1,15 @@
+.roles-list {
+  &__toolbar { margin-bottom: 1rem; }
+  &__row { cursor: pointer; }
+  &__form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  &__form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+  }
+}

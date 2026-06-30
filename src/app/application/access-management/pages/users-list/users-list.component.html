@@ -1,0 +1,48 @@
+<div class="saas-page users-list">
+  <tc-saas-page-header
+    title="Users & Access"
+    subtitle="Manage user accounts, roles and permission overrides"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Users'}]">
+  </tc-saas-page-header>
+
+  <p-toast></p-toast>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading users...</div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <tc-saas-panel title="Organization Users" [subtitle]="totalRecords + ' total'">
+      <div class="users-list__toolbar">
+        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search users...">
+        <select class="saas-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+          <option value="all">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+          <option value="LOCKED">Locked</option>
+          <option value="SUSPENDED">Suspended</option>
+        </select>
+      </div>
+      <div class="saas-table-wrap">
+        <table class="saas-data-table">
+          <thead><tr><th>User</th><th>Email</th><th>Roles</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of users; trackBy: trackById">
+              <td>
+                <span class="users-list__avatar">{{ userInitials(u) }}</span>
+                <strong>{{ userDisplayName(u) }}</strong><br><small>{{ u.username }}</small>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>{{ formatRoles(u) }}</td>
+              <td><tc-saas-pill [label]="userStatusLabel(u.status)" [tone]="userStatusTone(u.status)"></tc-saas-pill></td>
+              <td>
+                <button type="button" class="saas-icon-btn" (click)="openPermissions(u)" title="Permissions"><i class="pi pi-key"></i></button>
+                <button type="button" class="saas-icon-btn" (click)="toggleLock(u)" title="Lock/unlock"><i class="pi pi-lock"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="!users.length"><td colspan="5" class="empty">No users found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

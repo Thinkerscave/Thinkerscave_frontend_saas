@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { platformApi } from '../../../shared/constants/api.endpoint';
+import { platformApi, auditApi } from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
 import {
   Customer,
@@ -15,6 +15,8 @@ import {
   ProvisionOrganizationPayload,
   ProvisioningJob,
   ProvisioningResult,
+  PlatformAuditLog,
+  PlatformSecurityAuditLog,
   SpringPage,
   SubscriptionPlan,
   TenantRegistry
@@ -160,6 +162,39 @@ export class PlatformManagementService {
     return this.http.post<unknown>(platformApi.provision, payload).pipe(
       map(r => unwrapApiResponse<ProvisioningResult>(r, {} as ProvisioningResult))
     );
+  }
+
+  getAuditLogs(page = 0, size = 100): Observable<SpringPage<PlatformAuditLog>> {
+    const params = new HttpParams().set('page', String(page)).set('size', String(size));
+    return this.http.get<unknown>(auditApi.logs, { params }).pipe(
+      map(r => this.mapPageResponse<PlatformAuditLog>(r))
+    );
+  }
+
+  getSecurityAuditLogs(page = 0, size = 100): Observable<SpringPage<PlatformSecurityAuditLog>> {
+    const params = new HttpParams().set('page', String(page)).set('size', String(size));
+    return this.http.get<unknown>(auditApi.security, { params }).pipe(
+      map(r => this.mapPageResponse<PlatformSecurityAuditLog>(r))
+    );
+  }
+
+  private mapPageResponse<T>(response: unknown): SpringPage<T> {
+    const page = unwrapApiResponse<{
+      content?: T[];
+      totalElements?: number;
+      totalPages?: number;
+      page?: number;
+      number?: number;
+      size?: number;
+    }>(response, { content: [], totalElements: 0, totalPages: 0, page: 0, size: 20 });
+
+    return {
+      content: page.content ?? [],
+      totalElements: page.totalElements ?? 0,
+      totalPages: page.totalPages ?? 0,
+      number: page.number ?? page.page ?? 0,
+      size: page.size ?? 20
+    };
   }
 
   private emptyPage<T>(): SpringPage<T> {

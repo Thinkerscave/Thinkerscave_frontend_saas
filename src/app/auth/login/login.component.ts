@@ -61,8 +61,10 @@ export class LoginComponent {
     const { username, password, rememberMe } = this.loginForm.value;
 
     const loginPayload = {
-      userName: username,
-      password
+      usernameOrEmail: username,
+      password,
+      rememberMe: !!rememberMe,
+      deviceName: 'ThinkersCave Web'
     };
 
     this.loader.start('login-flow');
@@ -96,32 +98,15 @@ export class LoginComponent {
           rememberMe
         );
 
-        // 2. Fetch current user details
-        this.loginService.getCurrentUser().subscribe({
-          next: (res: any) => {
-            // Backend wraps response in ApiResponse<T>: { success, message, data: {...} }
-            const user = res?.data ?? res;
-            this.loginService.setUser(user);
+        const mappedUser = this.loginService.mapAuthUser(loginUser, loginData.firstTimeLogin);
+        if (mappedUser) {
+          this.loginService.setUser(mappedUser);
+        }
 
-            // 3. Fetch Tenant Config
-            this.tenantConfigService.fetchConfigFromServer().subscribe({
-              next: () => this.redirectUser(user),
-              error: (err) => {
-                console.error('[LOGIN COMPONENT] Failed to fetch tenant config', err);
-                this.redirectUser(user);
-              }
-            });
-          },
-          error: (err: any) => {
-            console.error('[LOGIN COMPONENT] Error fetching user details:', err);
-            this.loader.stop('login-flow');
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to retrieve user details. Please try again.',
-              life: 5000
-            });
-          }
+        // 2. Fetch tenant config then redirect
+        this.tenantConfigService.fetchConfigFromServer().subscribe({
+          next: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!),
+          error: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!)
         });
       },
       error: (e: any) => {

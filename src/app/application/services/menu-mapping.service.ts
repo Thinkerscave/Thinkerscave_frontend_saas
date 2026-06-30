@@ -1,10 +1,20 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { catchError, map, Observable, of, Subject, tap, throwError } from 'rxjs';
-import { menuMappingeApi } from '../../shared/constants/api_menu.endpoint';
-import { unwrapApiList } from '../../shared/utils/api-response.util';
+import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { accessApi } from '../../shared/constants/api.endpoint';
+import { unwrapApiList, unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
+
+interface SidebarMenuNode {
+  id?: number;
+  menuCode?: string;
+  menuName?: string;
+  route?: string;
+  icon?: string;
+  children?: SidebarMenuNode[];
+}
 
 interface WorkspaceMenuLeaf {
   item: MenuItem;
@@ -176,12 +186,37 @@ export class MenuMappingService {
       return of(this.menuCache);
     }
 
-    // 3. Fetch from API (always fresh — localStorage cache removed to prevent stale menus)
-    return this.http.get<any>(menuMappingeApi.getSideMenuUrl).pipe(
-      map((response: any) => {
-        // Backend wraps response in ApiResponse<T>: { success, message, data: [...] }
-        // Handle both a raw array and the wrapped ApiResponse format.
-        return this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(unwrapApiList<MenuItem>(response))));
+    // 3. Fetch sidebar from access API (role + permission aware)
+    if (!userStr) {
+      return of([]);
+    }
+
+    let parsedUser: { id?: string | number };
+    try {
+      parsedUser = JSON.parse(userStr);
+      if (parsedUser && typeof parsedUser === 'object' && 'data' in parsedUser && !('id' in parsedUser)) {
+        parsedUser = (parsedUser as { data: { id?: string | number } }).data;
+      }
+    } catch {
+      return of([]);
+    }
+
+    const userId = Number(parsedUser?.id);
+    const orgId = Number(
+      sessionStorage.getItem('currentOrgId')
+      ?? localStorage.getItem('currentOrgId')
+      ?? environment.defaultOrganizationId
+    );
+
+    if (!userId || Number.isNaN(userId)) {
+      return of(this.applyNavigationRules(this.consolidateWorkspaceMenu([])));
+    }
+
+    return this.http.get<unknown>(accessApi.sidebar(userId, orgId)).pipe(
+      map((response: unknown) => {
+        const sidebar = unwrapApiResponse<SidebarMenuNode[]>(response, unwrapApiList<SidebarMenuNode>(response));
+        const items = (sidebar ?? []).map(node => this.mapSidebarNode(node));
+        return this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(items)));
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -190,7 +225,7 @@ export class MenuMappingService {
       }),
       catchError(err => {
         console.error('Failed to load side menus:', err);
-        return throwError(() => err);
+        return of([]);
       })
     );
   }
@@ -366,6 +401,7 @@ export class MenuMappingService {
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
     const roles = this.currentRoleTokens();
     const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
+    const isAccessManager = this.hasAnyRole(roles, ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN']);
 
     let menus = this.normalizeTenantRoutes(items);
 
@@ -379,7 +415,50 @@ export class MenuMappingService {
       menus = this.ensureMenuGroup(menus, this.tenantManagementMenuGroup());
     }
 
+    if (isAccessManager) {
+      menus = this.ensureMenuGroup(menus, this.accessManagementMenuGroup());
+    }
+
     return menus;
+  }
+
+  private mapSidebarNode(node: SidebarMenuNode): MenuItem {
+    const route = node.route?.trim();
+    let routerLink: MenuItem['routerLink'];
+    if (route) {
+      if (route.startsWith('/app') || route.startsWith('/auth') || route.startsWith('/public')) {
+        routerLink = [route];
+      } else if (route.startsWith('app/')) {
+        routerLink = [`/${route}`];
+      } else if (route.startsWith('/')) {
+        routerLink = [`/app${route}`];
+      } else {
+        routerLink = [`/app/${route.replace(/^\/+/, '')}`];
+      }
+    }
+
+    return {
+      label: node.menuName,
+      icon: node.icon,
+      routerLink,
+      items: node.children?.length ? node.children.map(child => this.mapSidebarNode(child)) : undefined
+    };
+  }
+
+  private accessManagementMenuGroup(): MenuItem {
+    return {
+      label: 'Access Management',
+      icon: 'pi pi-lock',
+      routerLink: ['/app/access-management/dashboard'],
+      items: [
+        { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: ['/app/access-management/dashboard'] },
+        { label: 'Roles', icon: 'pi pi-user-edit', routerLink: ['/app/access-management/roles'] },
+        { label: 'Menu Catalog', icon: 'pi pi-th-large', routerLink: ['/app/access-management/menus'] },
+        { label: 'Users', icon: 'pi pi-users', routerLink: ['/app/access-management/users'] },
+        { label: 'Security Policy', icon: 'pi pi-shield', routerLink: ['/app/access-management/security-policy'] },
+        { label: 'Login History', icon: 'pi pi-history', routerLink: ['/app/access-management/login-history'] }
+      ]
+    };
   }
 
   private normalizeTenantRoutes(items: MenuItem[]): MenuItem[] {
@@ -444,12 +523,17 @@ export class MenuMappingService {
 
   private tenantManagementMenuGroup(): MenuItem {
     return {
-      label: 'Tenant Management',
-      icon: 'pi pi-building',
-      routerLink: ['/app/tenant-management/organizations'],
+      label: 'Platform Administration',
+      icon: 'pi pi-shield',
+      routerLink: ['/app/tenant-management/dashboard'],
       items: [
+        { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: ['/app/tenant-management/dashboard'] },
         { label: 'Organizations', icon: 'pi pi-building', routerLink: ['/app/tenant-management/organizations'] },
         { label: 'Subscription Plans', icon: 'pi pi-credit-card', routerLink: ['/app/tenant-management/subscription-plans'] },
+        { label: 'Feature Catalog', icon: 'pi pi-th-large', routerLink: ['/app/tenant-management/feature-catalog'] },
+        { label: 'Promotions', icon: 'pi pi-percentage', routerLink: ['/app/tenant-management/promotions'] },
+        { label: 'Tenant Health', icon: 'pi pi-server', routerLink: ['/app/tenant-management/tenant-health'] },
+        { label: 'Migration Center', icon: 'pi pi-sync', routerLink: ['/app/tenant-management/migration-center'] },
         { label: 'Audit Center', icon: 'pi pi-history', routerLink: ['/app/tenant-management/audit-center'] }
       ]
     };
@@ -459,6 +543,12 @@ export class MenuMappingService {
     const route = this.routerLinkText(item.routerLink).toLowerCase();
     const label = (item.label ?? '').toLowerCase();
     return route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || label.includes('tenant management') || label.includes('platform control center');
+  }
+
+  private isAccessManagementItem(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    const label = (item.label ?? '').toLowerCase();
+    return route.includes('/app/access-management') || route.includes('/app/organization/access-control') || label.includes('access management') || label.includes('access control');
   }
 
   private isOrganizationProfileItem(item: MenuItem): boolean {
@@ -504,9 +594,20 @@ export class MenuMappingService {
     try {
       const parsed = JSON.parse(userStr);
       const user = parsed?.data && parsed.firstName === undefined ? parsed.data : parsed;
-      const roleValues = [user.role, user.roleCode, user.roleName, ...(Array.isArray(user.roles) ? user.roles : [])];
+      const roleValues = [
+        user.role,
+        user.roleCode,
+        user.roleName,
+        user.roleType,
+        ...(Array.isArray(user.roles) ? user.roles : [])
+      ];
       return roleValues
-        .flatMap((role: any) => [role?.roleCode, role?.roleName, role?.name, role])
+        .flatMap((role: any) => {
+          if (role && typeof role === 'object') {
+            return [role.roleType, role.roleCode, role.roleName, role.name];
+          }
+          return [role];
+        })
         .filter(Boolean)
         .map((role: any) => this.normalizeRoleToken(String(role)));
     } catch {

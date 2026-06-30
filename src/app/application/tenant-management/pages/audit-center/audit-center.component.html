@@ -11,7 +11,14 @@
     </div>
   </header>
 
-  <div class="tc-insight-strip">
+  <div *ngIf="errorMessage" class="tc-empty tc-empty--error" role="alert">
+    <i class="pi pi-exclamation-triangle"></i>
+    <h3>Could not load audit data</h3>
+    <p>{{ errorMessage }}</p>
+    <div class="tc-empty__actions"><button type="button" class="tc-btn tc-btn--ghost" (click)="load()">Retry</button></div>
+  </div>
+
+  <div class="tc-insight-strip" *ngIf="!errorMessage">
     <div class="tc-insight"><span class="tc-insight__label">Events recorded</span><span class="tc-insight__value">{{ kpis.total }}</span><span class="tc-insight__hint">Across all tenants</span></div>
     <div class="tc-insight tc-insight--warn"><span class="tc-insight__label">Critical alerts</span><span class="tc-insight__value">{{ kpis.critical }}</span><span class="tc-insight__hint">Severity flagged</span></div>
     <div class="tc-insight"><span class="tc-insight__label">Failed sign-ins</span><span class="tc-insight__value">{{ kpis.failedAuth }}</span><span class="tc-insight__hint">Auth issues to review</span></div>
@@ -51,9 +58,9 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="tc-skeleton-block" aria-hidden="true"></div>
+  <div *ngIf="loading && !errorMessage" class="tc-skeleton-block" aria-hidden="true"></div>
 
-  <ol *ngIf="!loading && filtered.length" class="tc-audit__timeline">
+  <ol *ngIf="!loading && !errorMessage && filtered.length" class="tc-audit__timeline">
     <li *ngFor="let e of filtered" class="tc-audit__event tc-audit__event--{{ e.severity }}">
       <div class="tc-audit__marker"><i class="pi {{ e.icon }}"></i></div>
       <div class="tc-audit__content">
@@ -74,7 +81,7 @@
     </li>
   </ol>
 
-  <div *ngIf="!loading && !filtered.length" class="tc-empty">
+  <div *ngIf="!loading && !errorMessage && !filtered.length" class="tc-empty">
     <i class="pi pi-inbox"></i>
     <h3>No events match these filters</h3>
     <p>Loosen the filters or extend the date range to surface more activity.</p>

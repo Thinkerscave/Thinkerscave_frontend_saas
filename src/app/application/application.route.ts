@@ -11,6 +11,7 @@ import { roleGuard } from '../core/guard/role.guard';
 
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
+const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
 export const APPLICATION_ROUTES: Routes = [
   {
@@ -52,6 +53,21 @@ export const APPLICATION_ROUTES: Routes = [
     ]
   },
   {
+    path: 'access-management',
+    canActivate: [roleGuard(ACCESS_MANAGEMENT_ROLES)],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', loadComponent: () => import('./access-management/pages/access-dashboard/access-dashboard.component').then(m => m.AccessDashboardComponent) },
+      { path: 'roles', loadComponent: () => import('./access-management/pages/roles-list/roles-list.component').then(m => m.RolesListComponent) },
+      { path: 'roles/:roleId', loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
+      { path: 'menus', loadComponent: () => import('./access-management/pages/menu-catalog/menu-catalog.component').then(m => m.MenuCatalogComponent) },
+      { path: 'users', loadComponent: () => import('./access-management/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
+      { path: 'users/:userId/permissions', loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'security-policy', loadComponent: () => import('./access-management/pages/security-policy/security-policy.component').then(m => m.SecurityPolicyComponent) },
+      { path: 'login-history', loadComponent: () => import('./access-management/pages/login-history/login-history.component').then(m => m.LoginHistoryComponent) }
+    ]
+  },
+  {
     path: 'organization-profile',
     canActivate: [roleGuard(ORGANIZATION_PROFILE_ROLES)],
     loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent)
@@ -62,7 +78,7 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
       { path: 'profile', loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent) },
-      { path: 'access-control', loadComponent: () => import('./organization-profile/pages/access-control/access-control.component').then(m => m.AccessControlComponent) },
+      { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
       { path: 'activity-logs', loadComponent: () => import('./organization-profile/pages/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) }
     ]
   },
@@ -74,7 +90,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
-      { path: 'access', pathMatch: 'full', redirectTo: '/app/organization/access-control' },
+      { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
       { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' },
       { path: 'feature-catalog', pathMatch: 'full', redirectTo: '/app/tenant-management/feature-catalog' },
@@ -84,7 +100,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'navigation-access',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'system-settings',
@@ -99,22 +115,22 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'manage-menu',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'manage-sub-menu',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'menu-sequence',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'role-menu-mapping',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'organization-registration',
@@ -178,12 +194,12 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'role/manage',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'role/privilege-mapping',
     pathMatch: 'full',
-    redirectTo: 'admin/access'
+    redirectTo: 'access-management/dashboard'
   },
   {
     path: 'public/admission',

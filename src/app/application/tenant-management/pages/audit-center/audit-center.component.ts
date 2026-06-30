@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { AdminAuditEvent, AdminControlCenter, AdminSecurityEvent } from '../../../administration/models/admin-control.model';
-import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
+import { forkJoin } from 'rxjs';
+import { PlatformAuditLog, PlatformSecurityAuditLog } from '../../models/platform.model';
+import { PlatformManagementService } from '../../services/platform-management.service';
 
 type EventCategory = 'all' | 'user' | 'tenant' | 'security' | 'auth' | 'subscription' | 'configuration';
 type Severity = 'all' | 'info' | 'warn' | 'critical';
@@ -35,10 +36,10 @@ export class AuditCenterComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly adminData = inject(AdminControlDataService);
+  private readonly platformApi = inject(PlatformManagementService);
 
   loading = true;
-  workspace: AdminControlCenter | null = null;
+  errorMessage = '';
   events: TimelineEvent[] = [];
 
   search = '';
@@ -67,24 +68,32 @@ export class AuditCenterComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.adminData.loadWorkspace()
+    this.errorMessage = '';
+    forkJoin({
+      audit: this.platformApi.getAuditLogs(0, 200),
+      security: this.platformApi.getSecurityAuditLogs(0, 200)
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ws => {
-          this.workspace = ws;
+        next: ({ audit, security }) => {
           this.events = [
-            ...(ws?.auditLogs || []).map(e => this.fromAudit(e)),
-            ...(ws?.securityEvents || []).map(e => this.fromSecurity(e))
+            ...(audit.content ?? []).map(e => this.fromAudit(e)),
+            ...(security.content ?? []).map(e => this.fromSecurity(e))
           ].sort((a, b) => (b.occurredAt || '').localeCompare(a.occurredAt || ''));
           this.loading = false;
           this.cdr.markForCheck();
         },
-        error: () => { this.loading = false; this.cdr.markForCheck(); }
+        error: () => {
+          this.events = [];
+          this.errorMessage = 'Unable to load audit events. Verify backend access and try again.';
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
       });
   }
 
-  private fromAudit(e: AdminAuditEvent): TimelineEvent {
-    const cat = this.deriveCategory(e.eventType, e.action, e.entityType);
+  private fromAudit(e: PlatformAuditLog): TimelineEvent {
+    const cat = this.deriveCategory(e.eventType ?? '', e.action, e.entityType);
     return {
       id: `a-${e.id}`,
       category: cat,
@@ -92,7 +101,7 @@ export class AuditCenterComponent implements OnInit {
       severity: 'info',
       icon: this.iconFor(cat),
       actor: e.actorUsername || 'system',
-      tenant: e.entityType === 'TENANT' ? (e.entityId || 'platform') : 'platform',
+      tenant: e.tenantCode || (e.entityType === 'TENANT' ? (e.entityId || 'platform') : 'platform'),
       action: e.action,
       summary: e.summary || e.changes || '—',
       occurredAt: e.occurredAt,
@@ -101,7 +110,7 @@ export class AuditCenterComponent implements OnInit {
     };
   }
 
-  private fromSecurity(e: AdminSecurityEvent): TimelineEvent {
+  private fromSecurity(e: PlatformSecurityAuditLog): TimelineEvent {
     const sev: Severity = (e.severity || '').toLowerCase().includes('critical') ? 'critical' : (e.success ? 'info' : 'warn');
     return {
       id: `s-${e.id}`,
@@ -110,7 +119,7 @@ export class AuditCenterComponent implements OnInit {
       severity: sev,
       icon: e.success ? 'pi-shield' : 'pi-exclamation-triangle',
       actor: e.username || 'unknown',
-      tenant: 'platform',
+      tenant: e.tenantCode || 'platform',
       action: e.eventCode,
       summary: e.message || '—',
       occurredAt: e.occurredAt,
