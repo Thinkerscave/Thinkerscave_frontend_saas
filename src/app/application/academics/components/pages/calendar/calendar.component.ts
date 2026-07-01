@@ -108,14 +108,21 @@ export class AcademicCalendarPageComponent implements OnInit {
 
   save() {
     if (!this.formModel.eventType || !this.formModel.title || !this.formModel.startDate) return;
+    const yearId = Number(this.data.currentYear?.academicYearId ?? this.data.currentYear?.id ?? this.data.academicYears[0]?.academicYearId);
+    if (!yearId) {
+      this.ms.add({ severity: 'warn', summary: 'No academic year selected' });
+      return;
+    }
     this.saving = true;
     const p = {
       eventType: this.formModel.eventType, title: this.formModel.title,
-      startDate: this.formModel.startDate instanceof Date ? this.formModel.startDate.toISOString() : this.formModel.startDate,
-      endDate: this.formModel.endDate instanceof Date ? this.formModel.endDate.toISOString() : this.formModel.endDate,
-      location: this.formModel.location, audience: this.formModel.audience, description: this.formModel.description
+      startDate: this.formModel.startDate instanceof Date ? this.formModel.startDate.toISOString().slice(0, 10) : this.formModel.startDate,
+      endDate: this.formModel.endDate instanceof Date ? this.formModel.endDate.toISOString().slice(0, 10) : this.formModel.endDate,
+      description: this.formModel.description
     };
-    const obs = this.editingEvent ? this.ws.updateCalendarEvent(Number(this.editingEvent.eventId), p) : this.ws.createCalendarEvent(p);
+    const obs = this.editingEvent
+      ? this.ws.updateCalendarEvent(Number(this.editingEvent.eventId), p)
+      : this.ws.createCalendarEvent(yearId, p);
     obs.pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.dr))
       .subscribe({ next: () => { this.ms.add({ severity: 'success', summary: this.editingEvent ? 'Updated' : 'Created' }); this.dataChanged.emit(); }, error: () => this.ms.add({ severity: 'error', summary: 'Failed' }) });
   }

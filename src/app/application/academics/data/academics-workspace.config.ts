@@ -14,7 +14,7 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     eyebrow: 'Configure school structure',
     description: 'Manage academic years, classes, sections, subjects, teacher allocation, shifts and period templates.',
     icon: 'pi pi-cog',
-    route: '/app/academics/setup',
+    route: '/app/academics/academic-setup',
     primaryAction: 'Configure',
     actionMode: 'class'
   },
@@ -47,7 +47,7 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     eyebrow: 'Planning calendar',
     description: 'Coordinate exams, holidays, PTMs, activities and school events through month, week and agenda views.',
     icon: 'pi pi-calendar',
-    route: '/app/academics/calendar',
+    route: '/app/academics/academic-calendar',
     primaryAction: 'Add event',
     actionMode: 'calendar-event'
   },
@@ -58,7 +58,7 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     eyebrow: 'Teaching progress',
     description: 'Track syllabus structure, units, chapters, topics and monitor completion progress.',
     icon: 'pi pi-list-check',
-    route: '/app/academics/syllabus',
+    route: '/app/academics/syllabus-tracker',
     primaryAction: 'Update progress',
     actionMode: 'syllabus-progress'
   }

@@ -267,12 +267,12 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'academics',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'academic-setup', data: { workspacePage: 'dashboard' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'academic-setup', data: { workspacePage: 'setup' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'timetable', data: { workspacePage: 'timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'teacher-arrangement', data: { workspacePage: 'teacher-allocation' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'teacher-arrangement', data: { workspacePage: 'teacher-arrangement' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'academic-calendar', data: { workspacePage: 'calendar' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'syllabus-tracker', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'settings', pathMatch: 'full', redirectTo: 'academic-setup' },
       // Legacy paths kept reachable as redirects.
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'academic-setup' },
       { path: 'years', pathMatch: 'full', redirectTo: 'academic-setup' },

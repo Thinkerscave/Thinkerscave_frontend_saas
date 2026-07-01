@@ -8,6 +8,50 @@ const PLATFORM_BASE = `${PASS_BASE}/platform`;
 // Access management APIs live at /api/access/* (org admin / owner)
 const ACCESS_BASE = `${PASS_BASE}/access`;
 
+export const academicsApi = {
+  years: `${BASE}/academics/years`,
+  yearById: (id: number) => `${BASE}/academics/years/${id}`,
+  setCurrentYear: (id: number) => `${BASE}/academics/years/${id}/set-current`,
+  deactivateYear: (id: number) => `${BASE}/academics/years/${id}/deactivate`,
+  cloneYear: (id: number) => `${BASE}/academics/years/${id}/clone`,
+  classesByYear: (yearId: number) => `${BASE}/academics/years/${yearId}/classes`,
+  structureByYear: (yearId: number) => `${BASE}/academics/years/${yearId}/structure`,
+  classes: `${BASE}/academics/classes`,
+  classById: (id: number) => `${BASE}/academics/classes/${id}`,
+  deactivateClass: (id: number) => `${BASE}/academics/classes/${id}/deactivate`,
+  sectionsByClass: (classId: number) => `${BASE}/academics/classes/${classId}/sections`,
+  sectionById: (id: number) => `${BASE}/academics/sections/${id}`,
+  deactivateSection: (id: number) => `${BASE}/academics/sections/${id}/deactivate`,
+  subjects: `${BASE}/academics/subjects`,
+  subjectById: (id: number) => `${BASE}/academics/subjects/${id}`,
+  deactivateSubject: (id: number) => `${BASE}/academics/subjects/${id}/deactivate`,
+  classTeachers: `${BASE}/academics/allocations/class-teachers`,
+  classTeacherById: (id: number) => `${BASE}/academics/allocations/class-teachers/${id}`,
+  subjectAssignments: `${BASE}/academics/allocations/subjects`,
+  subjectAssignmentById: (id: number) => `${BASE}/academics/allocations/subjects/${id}`,
+  schedulesByYear: (yearId: number) => `${BASE}/academics/schedules/year/${yearId}`,
+  schedules: `${BASE}/academics/schedules`,
+  scheduleById: (id: number) => `${BASE}/academics/schedules/${id}`,
+  scheduleTemplates: (scheduleId: number) => `${BASE}/academics/schedules/${scheduleId}/templates`,
+  templatePeriods: (templateId: number) => `${BASE}/academics/schedules/templates/${templateId}/periods`,
+  timetableByClass: (classId: number) => `${BASE}/academics/timetable/class/${classId}`,
+  timetableSlots: `${BASE}/academics/timetable/slots`,
+  timetableSlotById: (id: number) => `${BASE}/academics/timetable/slots/${id}`,
+  calendarEventsByYear: (yearId: number) => `${BASE}/academics/calendar/years/${yearId}/events`,
+  calendarEventById: (id: number) => `${BASE}/academics/calendar/events/${id}`,
+  calendarUpcoming: `${BASE}/academics/calendar/events/upcoming`,
+  arrangements: `${BASE}/academics/arrangements`,
+  arrangementsByDate: `${BASE}/academics/arrangements/by-date`,
+  arrangementById: (id: number) => `${BASE}/academics/arrangements/${id}`,
+  approveArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/approve`,
+  rejectArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/reject`,
+  syllabus: `${BASE}/academics/syllabus`,
+  syllabusById: (id: number) => `${BASE}/academics/syllabus/${id}`,
+  syllabusProgress: (id: number) => `${BASE}/academics/syllabus/${id}/progress`,
+  topicProgress: (topicId: number) => `${BASE}/academics/syllabus/topics/${topicId}/progress`,
+  staffAll: `${BASE}/staff/getAllStaff`,
+};
+
 export const accessApi = {
   roles: `${ACCESS_BASE}/roles`,
   roleById: (id: number) => `${ACCESS_BASE}/roles/${id}`,
@@ -189,19 +233,7 @@ export const academicStructureApi = {
   generateDynamic: `${BASE}/academic-structure/generate-dynamic`,
 };
 
-// ─── Academics Workspace ────────────────────────────────────────────────────────
-export const academicsApi = {
-  saveClass: `${BASE}/classes/saveOrUpdate`,
-  saveSection: `${BASE}/sections/saveOrUpdate`,
-  allocations: `${BASE}/allocations`,
-  allocationsByClass: (classId: number) => `${BASE}/allocations/class/${classId}`,
-  classTeachers: `${BASE}/academics/class-teachers`,
-  timetableSlots: `${BASE}/academics/timetable-slots`,
-  calendarEvents: `${BASE}/academics/calendar-events`,
-  settings: `${BASE}/academics/settings`,
-};
-
-// ─── Syllabus ───────────────────────────────────────────────────────────────────
+// ─── Syllabus (legacy paths) ───────────────────────────────────────────────────
 export const syllabusApi = {
   base: `${BASE}/syllabus`,
   byId: (id: number) => `${BASE}/syllabus/${id}`,

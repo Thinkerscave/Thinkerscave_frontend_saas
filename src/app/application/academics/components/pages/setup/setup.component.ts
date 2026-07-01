@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, ChangeDetectionStrategy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -40,7 +40,7 @@ interface TreeNode {
   templateUrl: './setup.component.html',
   styleUrls: ['./setup.component.scss']
 })
-export class AcademicSetupPageComponent implements OnInit {
+export class AcademicSetupPageComponent implements OnInit, OnChanges {
   private readonly workspaceService = inject(AcademicsWorkspaceService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -48,6 +48,7 @@ export class AcademicSetupPageComponent implements OnInit {
 
   @Input({ required: true }) data!: AcademicsWorkspaceData;
   @Output() dataChanged = new EventEmitter<void>();
+  @Output() yearChanged = new EventEmitter<number>();
 
   activeTab: 'classes' | 'subjects' | 'teachers' | 'shifts' = 'classes';
   saving = false;
@@ -70,10 +71,26 @@ export class AcademicSetupPageComponent implements OnInit {
   readonly booleanOptions = [{ label: 'Yes', value: true }, { label: 'No', value: false }];
 
   ngOnInit() {
+    this.syncYearSelection();
     this.buildTree();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['data'] && !changes['data'].firstChange) {
+      this.syncYearSelection();
+      this.buildTree();
+    }
+  }
+
+  private syncYearSelection(): void {
     if (this.data.currentYear) {
       this.selectedYearId = this.data.currentYear.academicYearId ?? this.data.currentYear.id ?? null;
     }
+  }
+
+  private currentYearId(): number | undefined {
+    const id = this.selectedYearId ?? this.data.currentYear?.academicYearId ?? this.data.currentYear?.id;
+    return id ? Number(id) : undefined;
   }
 
   get academicYearOptions() {
@@ -129,7 +146,9 @@ export class AcademicSetupPageComponent implements OnInit {
     if (event.node.type === 'class') this.activeTab = 'classes';
   }
 
-  onYearChange() { this.dataChanged.emit(); }
+  onYearChange() {
+    if (this.selectedYearId) this.yearChanged.emit(Number(this.selectedYearId));
+  }
 
   // ─── Dialogs ───────────────────────────────────────────────────────
   openDialog(mode: string) {
@@ -169,8 +188,13 @@ export class AcademicSetupPageComponent implements OnInit {
   // ─── CRUD Operations ───────────────────────────────────────────────
   saveClass() {
     if (!this.formModel.className) return;
+    const yearId = this.currentYearId();
+    if (!yearId) {
+      this.messageService.add({ severity: 'warn', summary: 'Select academic year' });
+      return;
+    }
     this.saving = true;
-    this.workspaceService.createClass(this.formModel)
+    this.workspaceService.createClass({ ...this.formModel, academicYearId: yearId }, yearId)
       .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Class created' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }
@@ -209,8 +233,10 @@ export class AcademicSetupPageComponent implements OnInit {
 
   saveAllocation() {
     if (!this.formModel.classId || !this.formModel.subjectId || !this.formModel.teacherId) return;
+    const yearId = this.currentYearId();
+    if (!yearId) return;
     this.saving = true;
-    this.workspaceService.allocateTeacher(this.formModel)
+    this.workspaceService.allocateTeacher({ ...this.formModel, academicYearId: yearId, periodsPerWeek: this.formModel.periodsPerWeek ?? 5 })
       .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Teacher assigned' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }
@@ -247,17 +273,19 @@ export class AcademicSetupPageComponent implements OnInit {
   }
 
   saveShift() {
-    if (!this.formModel.shiftName || !this.formModel.startTime || !this.formModel.endTime) return;
+    if (!this.formModel.shiftName) return;
+    const yearId = this.currentYearId();
+    if (!yearId) return;
     this.saving = true;
-    this.workspaceService.createShift(this.formModel)
+    this.workspaceService.createShift(yearId, this.formModel)
       .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Shift created' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }
 
   saveTemplate() {
-    if (!this.formModel.templateName) return;
+    if (!this.formModel.templateName || !this.formModel.shiftId) return;
     this.saving = true;
-    this.workspaceService.createPeriodTemplate(this.formModel)
+    this.workspaceService.createPeriodTemplate(Number(this.formModel.shiftId), this.formModel)
       .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Template created' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }

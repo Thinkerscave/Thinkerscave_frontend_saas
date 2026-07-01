@@ -82,11 +82,9 @@
   <div class="setup-form">
     <div class="setup-frow"><label>Day <span class="req">*</span></label><p-dropdown [options]="dayOptions" [(ngModel)]="formModel.dayOfWeek" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
     <div class="setup-frow"><label>Period <span class="req">*</span></label><p-dropdown [options]="periodNumbers" [(ngModel)]="formModel.periodNumber" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
-    <div class="setup-frow"><label>Subject <span class="req">*</span></label><p-dropdown [options]="subjectOptions" [(ngModel)]="formModel.subjectId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
-    <div class="setup-frow"><label>Teacher <span class="req">*</span></label><p-dropdown [options]="teacherOptions" [(ngModel)]="formModel.teacherId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
+    <div class="setup-frow"><label>Subject Assignment <span class="req">*</span></label><p-dropdown [options]="assignmentOptions" [(ngModel)]="formModel.subjectAssignmentId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
     <div class="setup-frow"><label>Class</label><p-dropdown [options]="classOptions" [(ngModel)]="formModel.classId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
     <div class="setup-frow"><label>Section</label><p-dropdown [options]="sectionOptions" [(ngModel)]="formModel.sectionId" optionLabel="label" optionValue="value" styleClass="acad-dropdown"></p-dropdown></div>
-    <div class="setup-frow"><label>Room</label><input pInputText [(ngModel)]="formModel.roomName" placeholder="e.g., Room 201" class="acad-input"></div>
   </div>
   <ng-template pTemplate="footer">
     <button class="acad-btn acad-btn-ghost" (click)="showDialog = false">Cancel</button>
