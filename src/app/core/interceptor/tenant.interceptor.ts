@@ -1,32 +1,27 @@
-import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LoginService } from '../../core/services/login.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
 
 /**
- * A functional HTTP interceptor that adds the X-Tenant-ID header to outgoing requests.
- * @param req The outgoing request object to handle.
- * @param next The next interceptor in the chain, or the backend if no others remain.
- * @returns An Observable of the event stream.
+ * Adds X-Tenant-ID and X-Organization-ID headers to outgoing requests.
  */
 export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
   const loginService = inject(LoginService);
+  const orgContext = inject(OrganizationContextService);
 
-  // Get tenant ID from current user context
-  const tenantId = loginService.getTenant();
-  const orgId = loginService.getCurrentOrganizationId();
+  const tenantId = loginService.isLoggedIn()
+    ? loginService.getTenant()
+    : orgContext.resolveTenantId();
+  const orgId = loginService.getCurrentOrganizationId() ?? orgContext.resolveOrganizationId();
 
-  // Clone the request to add the new header.
-  let headers = req.headers.set('X-Tenant-ID', tenantId || ''); // Should we send 'public' or empty? existing code sent tenantId.toString()
+  let headers = req.headers.set('X-Tenant-ID', tenantId || '');
 
   if (orgId) {
     headers = headers.set('X-Organization-ID', orgId);
   }
 
-  const modifiedRequest = req.clone({
-    headers: headers
-  });
-
-  return next(modifiedRequest);
+  return next(req.clone({ headers }));
 };
 

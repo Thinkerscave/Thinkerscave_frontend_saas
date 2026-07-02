@@ -1,7 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guard/auth.guard';
+import { orgSelectionGuard, orgSelectPageGuard } from './core/guard/org-selection.guard';
 
 export const routes: Routes = [
+    {
+        path: '',
+        loadComponent: () => import('./marketing/landing/landing.component').then(m => m.LandingComponent),
+        pathMatch: 'full'
+    },
     {
         path: 'public',
         loadComponent: () => import('./layout/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
@@ -19,11 +25,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./common/public-inquiry/public-inquiry.component').then(m => m.PublicInquiryComponent)
             }
         ]
-    },
-    {
-        path: '',
-        redirectTo: 'auth/login',
-        pathMatch: 'full'
     },
     {
         path: 'session-expired',
@@ -50,12 +51,19 @@ export const routes: Routes = [
         loadComponent: () => import('./auth/auth-layout/auth-layout.component').then(m => m.AuthLayoutComponent),
         children: [
             {
+                path: 'select-organization',
+                canActivate: [orgSelectPageGuard],
+                loadComponent: () => import('./auth/org-select/org-select.component').then(m => m.OrgSelectComponent)
+            },
+            {
                 path: 'login',
+                canActivate: [orgSelectionGuard],
                 loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
             },
             {
                 path: 'forgot-password',
-                loadComponent: () => import('./auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+                redirectTo: 'login',
+                pathMatch: 'full'
             },
             {
                 path: 'first-time-login',
@@ -76,7 +84,6 @@ export const routes: Routes = [
         ]
     },
 
-    // 404 — Not Found
     {
         path: '**',
         loadComponent: () => import('./shared/pages/not-found/not-found.component').then(m => m.NotFoundComponent)

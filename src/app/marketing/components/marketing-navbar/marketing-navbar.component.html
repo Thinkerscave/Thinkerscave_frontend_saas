@@ -1,0 +1,37 @@
+<header class="tc-nav" [class.tc-nav--scrolled]="scrolled()" role="banner">
+  <div class="tc-nav__inner">
+    <a routerLink="/" class="tc-nav__brand" aria-label="ThinkerScave home">
+      <span class="tc-nav__logo" aria-hidden="true">
+        <i class="pi pi-graduation-cap"></i>
+      </span>
+      <span class="tc-nav__brand-text">
+        <strong>ThinkerScave</strong>
+        <small>School ERP Redefined</small>
+      </span>
+    </a>
+
+    <nav class="tc-nav__links" aria-label="Primary">
+      @for (link of navLinks; track link.href) {
+        <a [href]="link.href" class="tc-nav__link" (click)="closeMobile()">{{ link.label }}</a>
+      }
+    </nav>
+
+    <div class="tc-nav__actions">
+      <a [routerLink]="loginRoute()" class="tc-btn tc-btn--ghost">Login</a>
+      <a href="#cta" class="tc-btn tc-btn--primary">Request Demo</a>
+      <button type="button" class="tc-nav__menu-btn" (click)="toggleMobile()" [attr.aria-expanded]="mobileOpen()" aria-label="Toggle menu">
+        <i class="pi" [class.pi-bars]="!mobileOpen()" [class.pi-times]="mobileOpen()"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (mobileOpen()) {
+    <div class="tc-nav__mobile" role="dialog" aria-label="Mobile navigation">
+      @for (link of navLinks; track link.href) {
+        <a [href]="link.href" class="tc-nav__mobile-link" (click)="closeMobile()">{{ link.label }}</a>
+      }
+      <a [routerLink]="loginRoute()" class="tc-btn tc-btn--ghost" (click)="closeMobile()">Login</a>
+      <a href="#cta" class="tc-btn tc-btn--primary" (click)="closeMobile()">Request Demo</a>
+    </div>
+  }
+</header>

@@ -1,14 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, from, Observable, of, Subject, switchMap } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { loginApi, passwordApi } from '../../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
-import { LoginRequest, LoginResponse, UserInfo, UserOrganization, RefreshTokenResponse, PasswordResetPayload, ApiResponse } from '../../shared/models/auth.model';
+import { LoginRequest, LoginResponse, UserInfo, UserOrganization, PasswordResetPayload, ApiResponse } from '../../shared/models/auth.model';
+import { TokenSessionService } from './token-session.service';
+import { OrganizationContextService } from './organization-context.service';
 
-/** All keys managed by this service */
+/** Keys persisted across sessions (access token is memory-only via TokenSessionService). */
 const STORAGE_KEYS = [
-  'accessToken', 'refreshToken', 'tenantId', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
+  'refreshToken', 'tenantId', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
 ] as const;
 
 @Injectable({
@@ -16,14 +18,59 @@ const STORAGE_KEYS = [
 })
 export class LoginService {
 
+  private readonly tokenSession = inject(TokenSessionService);
+  private readonly orgContext = inject(OrganizationContextService);
+
   public loginStatusSubject = new Subject<boolean>();
 
   /** Emits the current organization ID whenever it changes. Components subscribe to this. */
   public currentOrgId$ = new BehaviorSubject<string | null>(null);
 
   constructor(private http: HttpClient, private router: Router) {
-    // Initialise from storage on service creation
     this.currentOrgId$.next(this.readItem('currentOrgId'));
+    this.tokenSession.onTokenRefreshed$.subscribe((signal) => {
+      if (signal === 'proactive-refresh') {
+        this.proactiveRefresh();
+      }
+    });
+  }
+
+  /** Clears session state while preserving dev org selection for the login screen. */
+  prepareLoginScreen(): void {
+    const pendingOrg = this.orgContext.getSelectedOrganization();
+    this.logOut(false);
+    if (pendingOrg) {
+      this.setTenant(pendingOrg.tenantId);
+      this.setCurrentOrganization(String(pendingOrg.id));
+    }
+  }
+
+  /** Attempt silent refresh on app bootstrap when a refresh token exists. */
+  restoreSessionFromRefreshToken(): Observable<string | null> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken && !environment.authUseHttpOnlyRefresh) {
+      return of(null);
+    }
+    return this.refreshAccessToken(refreshToken ?? '').pipe(
+      tap(() => this.loginStatusSubject.next(true)),
+      catchError(() => {
+        this.clearTokens();
+        return of(null);
+      })
+    );
+  }
+
+  private proactiveRefresh(): void {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken && !environment.authUseHttpOnlyRefresh) {
+      return;
+    }
+    this.refreshAccessToken(refreshToken ?? '').subscribe({
+      error: () => {
+        this.clearTokens();
+        this.redirectToSessionExpired();
+      }
+    });
   }
 
   // ── Storage helpers (Issue 8: Remember Me aware) ──────────────────────
@@ -39,7 +86,7 @@ export class LoginService {
       return localStorage;
     }
     // If tokens already exist in sessionStorage, keep using it.
-    if (sessionStorage.getItem('accessToken')) {
+    if (sessionStorage.getItem('refreshToken')) {
       return sessionStorage;
     }
     // Default fallback
@@ -165,8 +212,10 @@ export class LoginService {
     }
 
     const store = this.storage;
-    store.setItem('accessToken', accessToken);
-    store.setItem('refreshToken', refreshToken);
+    this.tokenSession.setAccessToken(accessToken);
+    if (!environment.authUseHttpOnlyRefresh && refreshToken) {
+      store.setItem('refreshToken', refreshToken);
+    }
     if (tenantId) {
       store.setItem('tenantId', tenantId);
     }
@@ -188,6 +237,7 @@ export class LoginService {
       store.removeItem('currentOrgId');
     }
 
+    this.loginStatusSubject.next(true);
     return true;
   }
 
@@ -222,26 +272,24 @@ export class LoginService {
    * A stored-but-expired token is treated as logged-out, triggering redirect to /auth/login.
    */
   public isLoggedIn(): boolean {
-    const token = this.readItem('accessToken');
+    const token = this.tokenSession.getAccessToken();
     if (!token) return false;
     try {
       const payloadBase64 = token.split('.')[1];
       if (!payloadBase64) return false;
       const payload = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
-      // exp is in seconds; Date.now() is in milliseconds
       return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
     } catch {
-      // Malformed token — treat as logged out
       return false;
     }
   }
 
   public getAccessToken(): string | null {
-    return this.readItem('accessToken');
+    return this.tokenSession.getAccessToken();
   }
 
   public setAccessToken(accessToken: string) {
-    this.storage.setItem('accessToken', accessToken);
+    this.tokenSession.setAccessToken(accessToken);
   }
 
   public getRefreshToken(): string | null {
@@ -282,40 +330,53 @@ export class LoginService {
       sessionStorage.removeItem(key);
     });
     localStorage.removeItem('rememberMe');
+    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
+    this.tokenSession.clear();
     this.loginStatusSubject.next(false);
   }
 
-  public logOut() {
+  public logOut(clearOrgSelection = true) {
     const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      const params = new HttpParams().set('refreshToken', refreshToken);
-      this.http.post(loginApi.logOutUrl, null, { params })
-        .subscribe({ next: () => { }, error: () => { } });
+    if (refreshToken || environment.authUseHttpOnlyRefresh) {
+      const params = refreshToken ? new HttpParams().set('refreshToken', refreshToken) : undefined;
+      this.http.post(loginApi.logOutUrl, null, {
+        params,
+        withCredentials: environment.authUseHttpOnlyRefresh
+      }).subscribe({ next: () => { }, error: () => { } });
     }
     this.clearAllStorage();
+    if (clearOrgSelection) {
+      this.orgContext.clearSelectedOrganization();
+    }
     return true;
   }
 
   logOutAndRedirect(): void {
     this.logOut();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/']);
   }
 
   public refreshAccessToken(refreshToken: string): Observable<string> {
-    const params = new HttpParams().set('refreshToken', refreshToken);
+    const options: { withCredentials: boolean; params?: HttpParams } = {
+      withCredentials: environment.authUseHttpOnlyRefresh
+    };
+    if (!environment.authUseHttpOnlyRefresh && refreshToken) {
+      options.params = new HttpParams().set('refreshToken', refreshToken);
+    }
+
     return this.http.post<ApiResponse<{ accessToken: string; refreshToken?: string }>>(
       loginApi.refreshTokenUrl,
       null,
-      { params }
+      options
     ).pipe(
       switchMap((res) => {
-        const payload = res?.data ?? res as any;
-        const accessToken = payload.accessToken;
-        if (payload.refreshToken) {
+        const payload = res?.data ?? (res as unknown as { accessToken: string; refreshToken?: string });
+        this.tokenSession.setAccessToken(payload.accessToken);
+        if (payload.refreshToken && !environment.authUseHttpOnlyRefresh) {
           this.storage.setItem('refreshToken', payload.refreshToken);
         }
-        this.setAccessToken(accessToken);
-        return from([accessToken]);
+        return of(payload.accessToken);
       })
     );
   }

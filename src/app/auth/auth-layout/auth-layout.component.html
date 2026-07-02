@@ -2,13 +2,38 @@
   <p-toast></p-toast>
   <div class="auth-card">
     <div class="auth-pane auth-pane--form">
-      <span class="brand-pill">ThinkerScave</span>
+      <a routerLink="/" class="brand-pill" aria-label="ThinkerScave home">
+        <i class="pi pi-graduation-cap" aria-hidden="true"></i>
+        ThinkerScave
+      </a>
       <router-outlet></router-outlet>
     </div>
-    <div class="auth-pane auth-pane--preview">
-      <div class="preview-hero">
-        <img src="assets/images/2.jpg" alt="Team collaboration illustration" />
-        <div class="preview-hero__overlay"></div>
+    <div class="auth-pane auth-pane--preview" aria-hidden="true">
+      <div class="preview-scene">
+        <div class="preview-scene__glow"></div>
+        <div class="preview-card preview-card--main">
+          <div class="preview-card__row">
+            <span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span>
+          </div>
+          <div class="preview-metrics">
+            <div><small>Attendance</small><strong>94.6%</strong></div>
+            <div><small>Students</small><strong>18,765</strong></div>
+          </div>
+          <div class="preview-bars">
+            <span style="--h: 55%"></span>
+            <span style="--h: 78%"></span>
+            <span style="--h: 42%"></span>
+            <span style="--h: 88%"></span>
+          </div>
+        </div>
+        <div class="preview-card preview-card--float preview-card--notify">
+          <i class="pi pi-bell"></i>
+          <div><strong>Fee reminder</strong><small>142 parents notified</small></div>
+        </div>
+        <div class="preview-card preview-card--float preview-card--mobile">
+          <i class="pi pi-mobile"></i>
+          <div><strong>Parent App</strong><small>Live updates</small></div>
+        </div>
       </div>
     </div>
   </div>

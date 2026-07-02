@@ -1,0 +1,296 @@
+<div class="tc-landing">
+  <tc-marketing-navbar />
+
+  <!-- Hero -->
+  <section class="tc-hero" aria-labelledby="hero-heading">
+    <div class="tc-hero__glow" aria-hidden="true"></div>
+    <div class="tc-hero__inner">
+      <div class="tc-hero__content">
+        <span class="tc-badge"><i class="pi pi-shield"></i> Cloud-Based ERP Platform</span>
+        <h1 id="hero-heading">Run Your Institution.<br /><span>Smarter. Together.</span></h1>
+        <p class="tc-hero__lead">
+          ThinkerScave is an all-in-one platform for admissions, academics, attendance, finance, HR,
+          communication, transport, examinations, hostel, library, and analytics — unified for modern institutions.
+        </p>
+        <div class="tc-hero__cta">
+          <a href="#cta" class="tc-btn tc-btn--primary tc-btn--lg">
+            <i class="pi pi-calendar"></i> Request Demo
+          </a>
+          <a [routerLink]="loginRoute()" class="tc-btn tc-btn--outline tc-btn--lg">
+            <i class="pi pi-play"></i> Explore Platform
+          </a>
+        </div>
+        <ul class="tc-hero__trust" aria-label="Platform highlights">
+          <li><i class="pi pi-check"></i> Easy to Use</li>
+          <li><i class="pi pi-check"></i> Cloud Secure</li>
+          <li><i class="pi pi-check"></i> Scalable</li>
+          <li><i class="pi pi-check"></i> 24/7 Support</li>
+        </ul>
+      </div>
+
+      <div class="tc-hero__visual" aria-hidden="true">
+        <div class="tc-float tc-float--main">
+          <div class="tc-float__header">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="tc-float__metrics">
+            <div class="tc-metric"><small>Students</small><strong>18,765</strong></div>
+            <div class="tc-metric"><small>Attendance</small><strong>94.6%</strong></div>
+            <div class="tc-metric"><small>Revenue</small><strong>₹2.45 Cr</strong></div>
+          </div>
+          <div class="tc-float__chart">
+            <div class="tc-bar" style="--h: 60%"></div>
+            <div class="tc-bar" style="--h: 85%"></div>
+            <div class="tc-bar" style="--h: 45%"></div>
+            <div class="tc-bar" style="--h: 72%"></div>
+            <div class="tc-bar" style="--h: 90%"></div>
+          </div>
+        </div>
+        <div class="tc-float tc-float--card tc-float--notify">
+          <i class="pi pi-bell"></i>
+          <div><strong>Fee reminder sent</strong><small>142 parents notified</small></div>
+        </div>
+        <div class="tc-float tc-float--card tc-float--mobile">
+          <i class="pi pi-mobile"></i>
+          <div><strong>Parent App</strong><small>Live attendance</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  @defer (on viewport) {
+    <!-- Trusted -->
+    <section class="tc-section tc-trusted" id="solutions" aria-labelledby="trusted-heading">
+      <div class="tc-section__inner tc-trusted__grid">
+        <div>
+          <h2 id="trusted-heading">Trusted by Institutions Across India</h2>
+          <p>Leading schools and universities rely on ThinkerScave to run operations at scale.</p>
+        </div>
+        <div class="tc-trusted__logos">
+          @for (logo of logos; track logo) {
+            <span class="tc-logo-pill">{{ logo }}</span>
+          }
+        </div>
+        <div class="tc-trusted__metrics">
+          @for (m of metrics; track m.label) {
+            <div class="tc-stat-card">
+              <strong>{{ m.value }}</strong>
+              <span>{{ m.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Platform -->
+    <section class="tc-section" id="platform" aria-labelledby="platform-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="platform-heading">One Platform.<br />Every Department.</h2>
+          <p>Everything you need to manage your institution efficiently.</p>
+        </header>
+        <div class="tc-module-grid">
+          @for (mod of modules; track mod.title) {
+            <article class="tc-module-card" [style.--accent]="mod.color">
+              <span class="tc-module-card__icon"><i [class]="'pi ' + mod.icon"></i></span>
+              <h3>{{ mod.title }}</h3>
+              <p>{{ mod.description }}</p>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Why -->
+    <section class="tc-section tc-section--alt" id="product" aria-labelledby="why-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="why-heading">Why ThinkerScave</h2>
+          <p>Outcomes that matter — not just features on a checklist.</p>
+        </header>
+        <div class="tc-benefit-grid">
+          @for (b of benefits; track b.title) {
+            <article class="tc-benefit-card">
+              <span class="tc-benefit-card__icon"><i [class]="'pi ' + b.icon"></i></span>
+              <h3>{{ b.title }}</h3>
+              <p>{{ b.description }}</p>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Experience -->
+    <section class="tc-section" aria-labelledby="experience-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="experience-heading">Product Experience</h2>
+          <p>Designed for every role in your institution.</p>
+        </header>
+        <div class="tc-carousel">
+          <button type="button" class="tc-carousel__nav" (click)="prevSlide()" aria-label="Previous slide">
+            <i class="pi pi-chevron-left"></i>
+          </button>
+          <div class="tc-carousel__stage">
+            <div class="tc-carousel__preview" [style.--accent]="carousel[activeSlide()].accent">
+              <div class="tc-carousel__mock">
+                <div class="tc-carousel__mock-bar"></div>
+                <div class="tc-carousel__mock-body"></div>
+              </div>
+            </div>
+            <div class="tc-carousel__info">
+              <h3>{{ carousel[activeSlide()].title }}</h3>
+              <p>{{ carousel[activeSlide()].description }}</p>
+              <div class="tc-carousel__dots">
+                @for (item of carousel; track item.title; let i = $index) {
+                  <button
+                    type="button"
+                    [class.active]="activeSlide() === i"
+                    (click)="setSlide(i)"
+                    [attr.aria-label]="'Go to ' + item.title"
+                  ></button>
+                }
+              </div>
+            </div>
+          </div>
+          <button type="button" class="tc-carousel__nav" (click)="nextSlide()" aria-label="Next slide">
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capabilities -->
+    <section class="tc-section tc-section--alt" aria-labelledby="capabilities-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="capabilities-heading">Platform Capabilities</h2>
+          <p>Enterprise power without enterprise complexity.</p>
+        </header>
+        <div class="tc-cap-grid">
+          @for (c of capabilities; track c.title) {
+            <article class="tc-cap-card">
+              <i [class]="'pi ' + c.icon"></i>
+              <h3>{{ c.title }}</h3>
+              <p>{{ c.description }}</p>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Integrations -->
+    <section class="tc-section" id="resources" aria-labelledby="integrations-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="integrations-heading">Integrations</h2>
+          <p>Connect with the tools your institution already uses.</p>
+        </header>
+        <div class="tc-integration-row">
+          @for (int of integrations; track int.name) {
+            <div class="tc-integration-pill">
+              <i [class]="'pi ' + int.icon"></i>
+              <span>{{ int.name }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="tc-section tc-section--alt" aria-labelledby="stories-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="stories-heading">Customer Stories</h2>
+          <p>Real results from institutions like yours.</p>
+        </header>
+        <div class="tc-testimonial-grid">
+          @for (t of testimonials; track t.institution) {
+            <blockquote class="tc-testimonial">
+              <p>"{{ t.quote }}"</p>
+              <footer>
+                <strong>{{ t.author }}</strong>
+                <span>{{ t.role }}, {{ t.institution }}</span>
+              </footer>
+            </blockquote>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="tc-section" id="pricing" aria-labelledby="pricing-heading">
+      <div class="tc-section__inner">
+        <header class="tc-section__header">
+          <h2 id="pricing-heading">Simple, Transparent Pricing</h2>
+          <p>Core features included. Scale as your institution grows.</p>
+        </header>
+
+        <div class="tc-billing-toggle">
+          <button type="button" [class.active]="!yearlyBilling()" (click)="yearlyBilling.set(false)">Monthly</button>
+          <button type="button" [class.active]="yearlyBilling()" (click)="yearlyBilling.set(true)">
+            Yearly <span class="tc-save">Save 20%</span>
+          </button>
+        </div>
+
+        <div class="tc-pricing-grid">
+          @for (plan of plans; track plan.id) {
+            <article class="tc-price-card" [class.tc-price-card--popular]="plan.popular" [class.tc-price-card--enterprise]="plan.enterprise">
+              @if (plan.popular) {
+                <span class="tc-price-card__badge"><i class="pi pi-crown"></i> Most Popular</span>
+              }
+              <h3>{{ plan.name }}</h3>
+              <div class="tc-price-card__amount">
+                {{ priceForPlan(plan) }}
+                @if (!plan.enterprise) {
+                  <small>/{{ yearlyBilling() ? 'year' : 'month' }}</small>
+                }
+              </div>
+              <p>{{ plan.description }}</p>
+              <ul>
+                @for (f of plan.features; track f) {
+                  <li><i class="pi pi-check"></i> {{ f }}</li>
+                }
+              </ul>
+              <a href="#cta" class="tc-btn" [class.tc-btn--primary]="plan.popular" [class.tc-btn--outline]="!plan.popular">
+                {{ plan.enterprise ? 'Contact Sales' : 'Get Started' }}
+              </a>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="tc-section tc-section--alt" aria-labelledby="faq-heading">
+      <div class="tc-section__inner tc-faq">
+        <header class="tc-section__header">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+        </header>
+        <p-accordion [multiple]="true">
+          @for (faq of faqs; track faq.question) {
+            <p-accordionTab [header]="faq.question">
+              <p>{{ faq.answer }}</p>
+            </p-accordionTab>
+          }
+        </p-accordion>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="tc-cta" id="cta" aria-labelledby="cta-heading">
+      <div class="tc-cta__inner">
+        <h2 id="cta-heading">Ready to Transform Your Institution?</h2>
+        <p>Join hundreds of institutions running smarter on ThinkerScave.</p>
+        <div class="tc-cta__actions">
+          <a href="mailto:sales@thinkerscave.com" class="tc-btn tc-btn--primary tc-btn--lg">Request Demo</a>
+          <a href="mailto:sales@thinkerscave.com" class="tc-btn tc-btn--outline tc-btn--lg">Contact Sales</a>
+        </div>
+      </div>
+    </section>
+
+    <tc-marketing-footer />
+  } @placeholder {
+    <div class="tc-skeleton" aria-hidden="true"></div>
+  }
+</div>

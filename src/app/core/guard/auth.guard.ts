@@ -1,19 +1,21 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { LoginService } from '../../core/services/login.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
 
 /**
  * Functional auth guard that protects routes requiring authentication.
- * - Redirects unauthenticated users to the login page.
- * - Redirects first-time login users to the change-password screen.
  */
 export const authGuard: CanActivateFn = (route, state) => {
     const loginService = inject(LoginService);
+    const orgContext = inject(OrganizationContextService);
     const router = inject(Router);
 
     if (!loginService.isLoggedIn()) {
-        // Not authenticated — redirect to login
-        router.navigate(['/auth/login']);
+        const target = orgContext.requiresSelection
+            ? ['/auth/select-organization']
+            : ['/auth/login'];
+        router.navigate(target);
         return false;
     }
 

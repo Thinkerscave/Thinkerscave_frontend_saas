@@ -5,5 +5,7 @@ export const environment = {
     baseUrl: 'https://api.thinkerscave.com/api/v1',
     defaultTenantId: '',
     defaultOrganizationId: null,
-    h2ConsoleUrl: ''
+    h2ConsoleUrl: '',
+    requireOrganizationSelection: false,
+    authUseHttpOnlyRefresh: false
 };

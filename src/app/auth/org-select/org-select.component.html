@@ -1,0 +1,54 @@
+<section class="org-select fade-in" aria-labelledby="org-select-heading">
+  <header class="org-select__header">
+    <p class="eyebrow">Workspace Access</p>
+    <h2 id="org-select-heading">Select your institution</h2>
+    <p class="subtitle">Choose the organization you belong to before signing in.</p>
+  </header>
+
+  <div class="org-select__field">
+    <label for="org-search">Institution</label>
+    <div class="org-select__combobox">
+      <input
+        id="org-search"
+        type="text"
+        pInputText
+        [ngModel]="query()"
+        (ngModelChange)="onSearch($event)"
+        (focus)="dropdownOpen.set(true)"
+        placeholder="Search institutions..."
+        autocomplete="off"
+        role="combobox"
+        aria-expanded="dropdownOpen()"
+        aria-controls="org-listbox"
+      />
+      @if (dropdownOpen() && filteredOrgs().length) {
+        <ul id="org-listbox" class="org-select__list" role="listbox">
+          @for (org of filteredOrgs(); track org.id) {
+            <li>
+              <button type="button" role="option" (click)="selectOrg(org)">
+                <span class="org-avatar" aria-hidden="true">{{ initials(org.name) }}</span>
+                <span class="org-meta">
+                  <strong>{{ org.name }}</strong>
+                  <small>{{ org.tenantId }}</small>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  <button
+    pButton
+    type="button"
+    label="Continue"
+    class="accent-button"
+    [disabled]="!selected()"
+    (click)="continue()"
+  ></button>
+
+  <p class="org-select__hint">
+    <a routerLink="/" class="link">Back to home</a>
+  </p>
+</section>

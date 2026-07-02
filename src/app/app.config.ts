@@ -1,11 +1,12 @@
-import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Aura from '@primeng/themes/aura';
+import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
 import { NgxUiLoaderModule } from 'ngx-ui-loader';
 import { authInterceptor } from './core/interceptor/auth.interceptor';
@@ -14,12 +15,17 @@ import { MessageService } from 'primeng/api';
 import { GlobalErrorHandler } from './core/error/global-error-handler';
 import { GlobalSearchProvider } from './shared/components/global-search/global-search.provider';
 import { ApplicationGlobalSearchProvider } from './application/services/application-global-search.provider';
+import { LoginService } from './core/services/login.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
+    provideAppInitializer(() => {
+      const loginService = inject(LoginService);
+      return firstValueFrom(loginService.restoreSessionFromRefreshToken());
+    }),
     provideHttpClient(
       withInterceptors([
         tenantInterceptor,

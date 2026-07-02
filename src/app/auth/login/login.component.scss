@@ -207,6 +207,43 @@
   font-weight: 600;
 }
 
+.link--button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.org-context {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--tc-radius-md);
+  background: var(--tc-surface-hover);
+  font-size: 0.85rem;
+  color: var(--tc-text-muted);
+
+  strong {
+    color: var(--tc-heading);
+  }
+}
+
+.org-context__avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2563eb, #6366f1);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .login-panel__meta,
   .login-panel__foot {

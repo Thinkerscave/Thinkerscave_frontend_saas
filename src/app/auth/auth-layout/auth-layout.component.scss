@@ -7,10 +7,14 @@
 .auth-shell {
   min-height: 100vh;
   padding: 2rem;
-  background: var(--tc-bg-gradient);
+  background: linear-gradient(180deg, #f8fbff 0%, #eef2ff 50%, #f8fafc 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+:host-context(.tc-theme-dark) .auth-shell {
+  background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
 }
 
 .auth-card {
@@ -38,44 +42,147 @@
 
 .brand-pill {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: var(--tc-surface-hover);
-  padding: 0.35rem 1.5rem;
+  padding: 0.35rem 1.25rem;
   border-radius: var(--tc-radius-pill);
   font-weight: 600;
   font-size: 0.95rem;
   color: var(--tc-heading);
   border: 1px solid var(--tc-border);
-  letter-spacing: 0;
+  text-decoration: none;
+
+  i {
+    color: #2563eb;
+  }
 }
 
 .auth-pane--preview {
   position: relative;
-  padding: 0;
-  background: var(--tc-topbar-bg);
+  padding: 2rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #4f46e5 60%, #7c3aed 100%);
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.preview-hero {
+.preview-scene {
   position: relative;
   width: 100%;
-  height: 100%;
+  max-width: 380px;
+  min-height: 360px;
+}
 
-  img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.preview-scene__glow {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+}
+
+.preview-card {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.preview-card--main {
+  padding: 1.25rem;
+  animation: float 6s ease-in-out infinite;
+}
+
+.preview-card__row {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.preview-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.preview-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  div {
+    padding: 0.65rem;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  small {
+    display: block;
+    font-size: 0.65rem;
+    color: #64748b;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    color: #0f172a;
   }
 }
 
-.preview-hero__overlay {
+.preview-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 72px;
+
+  span {
+    flex: 1;
+    height: var(--h);
+    border-radius: 4px 4px 2px 2px;
+    background: linear-gradient(180deg, #818cf8, #2563eb);
+  }
+}
+
+.preview-card--float {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.58) 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+
+  i {
+    font-size: 1.1rem;
+    color: #2563eb;
+  }
+
+  strong {
+    display: block;
+    color: #0f172a;
+  }
+
+  small {
+    color: #64748b;
+  }
+}
+
+.preview-card--notify {
+  top: 8%;
+  right: -8%;
+  animation: float 5s ease-in-out infinite 0.4s;
+}
+
+.preview-card--mobile {
+  bottom: 10%;
+  left: -10%;
+  animation: float 7s ease-in-out infinite 0.8s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 @media (max-width: 1024px) {
@@ -84,7 +191,7 @@
   }
 
   .auth-pane--preview {
-    min-height: 420px;
+    min-height: 280px;
   }
 }
 
@@ -96,10 +203,4 @@
   .auth-pane--form {
     padding: 2rem 1.5rem;
   }
-
-  .preview-task {
-    position: static;
-    align-self: flex-end;
-  }
 }
-

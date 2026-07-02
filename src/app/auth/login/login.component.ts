@@ -1,39 +1,54 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, viewChild } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DividerModule } from 'primeng/divider';
-import { LoginService } from '../../core/services/login.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
+import { LoginService } from '../../core/services/login.service';
 import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
 import { TenantConfigService } from '../../core/services/tenant-config.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { UserInfo } from '../../shared/models/auth.model';
+import { ForgotPasswordModalComponent } from '../components/forgot-password-modal/forgot-password-modal.component';
 
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule,
+  imports: [
+    CommonModule,
     RouterModule,
     ReactiveFormsModule,
     InputTextModule,
     PasswordModule,
     ButtonModule,
-    CardModule,
-    DividerModule, CheckboxModule, FloatLabelModule, ToastModule],
+    CheckboxModule,
+    FloatLabelModule,
+    ToastModule,
+    ForgotPasswordModalComponent
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly loginService = inject(LoginService);
+  private readonly messageService = inject(MessageService);
+  private readonly loader = inject(NgxUiLoaderService);
+  private readonly idleTimeoutService = inject(IdleTimeoutService);
+  private readonly tenantConfigService = inject(TenantConfigService);
+  private readonly orgContext = inject(OrganizationContextService);
+
+  readonly forgotModal = viewChild.required(ForgotPasswordModalComponent);
+
+  readonly selectedOrg = this.orgContext.getSelectedOrganization();
 
   loginForm: FormGroup = this.fb.group({
     username: ['', Validators.required],
@@ -41,22 +56,23 @@ export class LoginComponent {
     rememberMe: [false]
   });
 
-  constructor(
-    private router: Router,
-    private loginService: LoginService,
-    private messageService: MessageService,
-    private loader: NgxUiLoaderService,
-    private idleTimeoutService: IdleTimeoutService,
-    private tenantConfigService: TenantConfigService
-  ) { }
-
   ngOnInit(): void {
-    // Clear local storage every time the login page is loaded
-    this.loginService.logOut();
+    if (this.orgContext.requiresSelection && !this.orgContext.getSelectedOrganization()) {
+      this.router.navigate(['/auth/select-organization']);
+      return;
+    }
+    this.loginService.prepareLoginScreen();
   }
 
-  login() {
-    if (this.loginForm.invalid) return;
+  openForgotPassword(): void {
+    this.forgotModal().open();
+  }
+
+  login(): void {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
     const { username, password, rememberMe } = this.loginForm.value;
 
@@ -77,7 +93,6 @@ export class LoginComponent {
         const loginUser = loginData.user;
 
         if (!accessToken) {
-          console.error('[LOGIN COMPONENT] No access token found in response');
           this.loader.stop('login-flow');
           this.messageService.add({
             severity: 'error',
@@ -88,7 +103,6 @@ export class LoginComponent {
           return;
         }
 
-        // 1. Store token and tenant (pass rememberMe preference)
         this.loginService.loginUser(
           accessToken,
           refreshToken,
@@ -103,19 +117,14 @@ export class LoginComponent {
           this.loginService.setUser(mappedUser);
         }
 
-        // 2. Fetch tenant config then redirect
         this.tenantConfigService.fetchConfigFromServer().subscribe({
           next: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!),
           error: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!)
         });
       },
       error: (e: any) => {
-        console.error('[LOGIN COMPONENT] Login generation error:', e);
         this.loader.stop('login-flow');
-
-        // Extract error message from backend response or use default
         const errorMessage = e.error?.message || e.error?.detail || 'Invalid username or password or server error';
-
         this.messageService.add({
           severity: 'error',
           summary: 'Login Failed',
@@ -126,19 +135,13 @@ export class LoginComponent {
     });
   }
 
-  private redirectUser(user: UserInfo) {
+  private redirectUser(user: UserInfo): void {
     this.loader.stop('login-flow');
     if (user.firstTimeLogin) {
-      this.router.navigate(['/auth/first-time-login']).then(success => {
-        if (!success) {
-          this.messageService.add({ severity: 'error', summary: 'Navigation Error', detail: 'Could not redirect to first time login page.' });
-        }
-      });
-    } else {
-      this.idleTimeoutService.start();
-      this.router.navigate(['/app']);
+      this.router.navigate(['/auth/first-time-login']);
+      return;
     }
+    this.idleTimeoutService.start();
+    this.router.navigate(['/app']);
   }
-
 }
-
