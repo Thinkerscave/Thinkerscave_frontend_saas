@@ -248,11 +248,13 @@ export interface StaffDocument {
 // ─── Payroll ──────────────────────────────────────────────────────────────────
 
 export interface PayrollDashboard {
+  currentMonth?: string;
   totalStaff: number;
   generatedPayroll: number;
   pendingPayroll: number;
   paidPayroll: number;
-  totalAmount: number;
+  /** Computed client-side from payroll list when not returned by API */
+  totalAmount?: number;
 }
 
 export interface Payroll {

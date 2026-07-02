@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AccordionModule } from 'primeng/accordion';
+import { HeroVisualComponent } from '../components/hero-visual/hero-visual.component';
 import { MarketingNavbarComponent } from '../components/marketing-navbar/marketing-navbar.component';
 import { MarketingFooterComponent } from '../components/marketing-footer/marketing-footer.component';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
@@ -26,7 +27,8 @@ import {
     RouterModule,
     AccordionModule,
     MarketingNavbarComponent,
-    MarketingFooterComponent
+    MarketingFooterComponent,
+    HeroVisualComponent
   ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss'

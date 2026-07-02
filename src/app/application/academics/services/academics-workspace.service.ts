@@ -480,8 +480,22 @@ export class AcademicsWorkspaceService {
   }
 
   private getStaff(): Observable<StaffModel[]> {
-    return this.http.get<unknown>(academicsApi.staffAll).pipe(
-      map(r => unwrapApiList<StaffModel>(r)),
+    const params = new HttpParams().set('page', '0').set('size', '500');
+    return this.http.get<unknown>(academicsApi.staffAll, { params }).pipe(
+      map((r) => {
+        const page = unwrapApiResponse<{ content?: StaffModel[] }>(r, {});
+        const rows = page?.content ?? unwrapApiList<StaffModel>(r);
+        return rows.map((s: StaffModel & { staffId?: number; fullName?: string; mobileNumber?: string; active?: boolean }) => ({
+          id: s.staffId ?? s.id,
+          staffId: s.staffId ?? s.id,
+          staffCode: s.staffCode,
+          firstName: s.firstName ?? s.fullName?.split(' ')[0],
+          lastName: s.lastName ?? s.fullName?.split(' ').slice(1).join(' '),
+          email: s.email,
+          phone: s.phone ?? s.mobileNumber,
+          isActive: s.isActive ?? s.active
+        }));
+      }),
       catchError(() => of([]))
     );
   }

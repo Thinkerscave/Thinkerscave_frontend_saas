@@ -1,0 +1,51 @@
+<div class="auth-illus" [class.auth-illus--deep]="tone() === 'deep'" role="img" aria-label="Educational campus illustration">
+  <div class="auth-illus__sky">
+    <span class="auth-illus__particle auth-illus__particle--1"></span>
+    <span class="auth-illus__particle auth-illus__particle--2"></span>
+    <span class="auth-illus__particle auth-illus__particle--3"></span>
+    <span class="auth-illus__cloud auth-illus__cloud--1"></span>
+    <span class="auth-illus__cloud auth-illus__cloud--2"></span>
+  </div>
+
+  <svg class="auth-illus__scene" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="240" cy="290" rx="200" ry="18" fill="currentColor" class="auth-illus__ground-shadow"/>
+    <path d="M60 250 Q120 220 180 250 T300 250 T420 250 L420 280 L60 280 Z" class="auth-illus__hill"/>
+    <g class="auth-illus__trees">
+      <ellipse cx="95" cy="248" rx="28" ry="36" class="auth-illus__tree"/>
+      <rect x="90" y="248" width="10" height="22" class="auth-illus__trunk"/>
+      <ellipse cx="385" cy="245" rx="32" ry="40" class="auth-illus__tree"/>
+      <rect x="380" y="245" width="10" height="24" class="auth-illus__trunk"/>
+    </g>
+    <g class="auth-illus__building">
+      <rect x="155" y="130" width="170" height="120" rx="4" class="auth-illus__wall"/>
+      <path d="M140 130 L240 70 L340 130 Z" class="auth-illus__roof"/>
+      <rect x="225" y="95" width="30" height="40" rx="2" class="auth-illus__tower"/>
+      <path d="M218 95 L240 72 L262 95 Z" class="auth-illus__tower-roof"/>
+      <circle cx="240" cy="82" r="6" class="auth-illus__clock"/>
+      <g class="auth-illus__windows">
+        <rect x="175" y="155" width="22" height="18" rx="2"/>
+        <rect x="210" y="155" width="22" height="18" rx="2"/>
+        <rect x="248" y="155" width="22" height="18" rx="2"/>
+        <rect x="283" y="155" width="22" height="18" rx="2"/>
+        <rect x="175" y="190" width="22" height="18" rx="2"/>
+        <rect x="210" y="190" width="22" height="18" rx="2"/>
+        <rect x="248" y="190" width="22" height="18" rx="2"/>
+        <rect x="283" y="190" width="22" height="18" rx="2"/>
+      </g>
+      <rect x="218" y="215" width="44" height="35" rx="3" class="auth-illus__door"/>
+    </g>
+    <g class="auth-illus__students">
+      <circle cx="130" cy="258" r="7" class="auth-illus__person-head"/>
+      <rect x="125" y="265" width="10" height="14" rx="3" class="auth-illus__person-body"/>
+      <circle cx="350" cy="260" r="7" class="auth-illus__person-head"/>
+      <rect x="345" y="267" width="10" height="14" rx="3" class="auth-illus__person-body"/>
+    </g>
+    <path d="M155 120 Q200 100 240 108 Q280 116 325 120" class="auth-illus__bird" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+
+  <div class="auth-illus__copy">
+    <p class="auth-illus__headline">{{ headline() }}</p>
+    <p class="auth-illus__subline">{{ subline() }}</p>
+    <p class="auth-illus__caption">{{ caption() }}</p>
+  </div>
+</div>

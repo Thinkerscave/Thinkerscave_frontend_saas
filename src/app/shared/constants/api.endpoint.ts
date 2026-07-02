@@ -49,7 +49,7 @@ export const academicsApi = {
   syllabusById: (id: number) => `${BASE}/academics/syllabus/${id}`,
   syllabusProgress: (id: number) => `${BASE}/academics/syllabus/${id}/progress`,
   topicProgress: (topicId: number) => `${BASE}/academics/syllabus/topics/${topicId}/progress`,
-  staffAll: `${BASE}/staff/getAllStaff`,
+  staffAll: `${BASE}/staff`,
 };
 
 export const accessApi = {
@@ -134,10 +134,34 @@ export const tenantApi = {
 
 // ─── Staff, Branch, Department (previously /api/* — now /api/v1/*) ──────────
 export const staffApi = {
+  base: `${BASE}/staff`,
+  dashboard: `${BASE}/staff/dashboard`,
+  byId: (id: number) => `${BASE}/staff/${id}`,
+  activate: (id: number) => `${BASE}/staff/${id}/activate`,
+  deactivate: (id: number) => `${BASE}/staff/${id}/deactivate`,
+  responsibilities: `${BASE}/staff/responsibilities`,
+  responsibilityById: (id: number) => `${BASE}/staff/responsibilities/${id}`,
+  responsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
+  staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
+  salaryStructures: `${BASE}/staff/salary-structures`,
+  salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
+  salaryStructureForStaff: (staffId: number) => `${BASE}/staff/${staffId}/salary-structure`,
+  salaryHistory: (staffId: number) => `${BASE}/staff/${staffId}/salary-history`,
+  /** @deprecated legacy endpoints — do not use */
   saveOrUpdate: `${BASE}/staff/saveOrUpdateStaff`,
   getAll: `${BASE}/staff/getAllStaff`,
   getByCode: (code: string) => `${BASE}/staff/getStaffByCode/${code}`,
   toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
+};
+
+export const staffPayrollApi = {
+  dashboard: `${BASE}/payroll/dashboard`,
+  generate: `${BASE}/payroll/generate`,
+  list: `${BASE}/payroll`,
+  byId: (id: number) => `${BASE}/payroll/${id}`,
+  markPaid: (id: number) => `${BASE}/payroll/${id}/mark-paid`,
+  bulkMarkPaid: `${BASE}/payroll/mark-paid`,
+  payslip: (id: number) => `${BASE}/payroll/${id}/payslip`,
 };
 
 export const branchApi = {

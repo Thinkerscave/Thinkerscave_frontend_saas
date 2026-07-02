@@ -102,7 +102,11 @@ export class StaffPayrollComponent implements OnInit {
     this.loadingDashboard = true;
     this.api.getPayrollDashboard()
       .pipe(finalize(() => { this.loadingDashboard = false; this.cdr.markForCheck(); }))
-      .subscribe({ next: d => { this.dashboard = d; } });
+      .subscribe({
+        next: (d) => {
+          this.dashboard = { ...d, totalAmount: d.totalAmount ?? 0 };
+        }
+      });
   }
 
   loadList(): void {
@@ -111,7 +115,10 @@ export class StaffPayrollComponent implements OnInit {
     this.api.getPayrollList(this.filters)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: page => { this.payrollPage = page; },
+        next: (page) => {
+          this.payrollPage = page;
+          this.dashboard.totalAmount = page.content.reduce((sum, p) => sum + (p.netSalary || 0), 0);
+        },
         error: () => { this.errorMessage = 'Unable to load payroll.'; }
       });
   }

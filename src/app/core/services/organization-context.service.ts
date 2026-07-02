@@ -5,18 +5,20 @@ export interface DevOrganization {
   id: number;
   name: string;
   tenantId: string;
+  location: string;
   logoUrl?: string;
 }
 
 const PENDING_ORG_KEY = 'pendingOrg';
+const RECENT_ORGS_KEY = 'recentOrganizations';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationContextService {
   readonly devOrganizations: DevOrganization[] = [
-    { id: 1, name: 'Xavier University', tenantId: 'public', logoUrl: undefined },
-    { id: 2, name: 'Delhi Public School', tenantId: 'dps', logoUrl: undefined },
-    { id: 3, name: 'ABC College', tenantId: 'abc-college', logoUrl: undefined },
-    { id: 4, name: 'ThinkerScave Demo School', tenantId: 'demo', logoUrl: undefined }
+    { id: 1, name: 'Xavier University', tenantId: 'public', location: 'Mumbai, Maharashtra' },
+    { id: 2, name: 'Delhi Public School', tenantId: 'dps', location: 'New Delhi, Delhi' },
+    { id: 3, name: 'ABC College', tenantId: 'abc-college', location: 'Bengaluru, Karnataka' },
+    { id: 4, name: 'ThinkerScave Demo School', tenantId: 'demo', location: 'Pune, Maharashtra' }
   ];
 
   get requiresSelection(): boolean {
@@ -37,6 +39,28 @@ export class OrganizationContextService {
 
   setSelectedOrganization(org: DevOrganization): void {
     sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(org));
+    this.trackRecentOrganization(org);
+  }
+
+  getRecentOrganizations(): DevOrganization[] {
+    const raw = sessionStorage.getItem(RECENT_ORGS_KEY);
+    if (!raw) {
+      return this.devOrganizations.slice(0, 3);
+    }
+    try {
+      const ids = JSON.parse(raw) as number[];
+      return ids
+        .map((id) => this.devOrganizations.find((o) => o.id === id))
+        .filter((o): o is DevOrganization => !!o);
+    } catch {
+      return this.devOrganizations.slice(0, 3);
+    }
+  }
+
+  private trackRecentOrganization(org: DevOrganization): void {
+    const existing = this.getRecentOrganizations().filter((o) => o.id !== org.id);
+    const next = [org, ...existing].slice(0, 5);
+    sessionStorage.setItem(RECENT_ORGS_KEY, JSON.stringify(next.map((o) => o.id)));
   }
 
   clearSelectedOrganization(): void {

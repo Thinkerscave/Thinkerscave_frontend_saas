@@ -1,46 +1,71 @@
 <section class="login-panel fade-in">
-  <div class="login-panel__header">
-    @if (selectedOrg) {
-      <p class="org-context">
-        <span class="org-context__avatar" aria-hidden="true">{{ selectedOrg.name.charAt(0) }}</span>
-        Signing in to <strong>{{ selectedOrg.name }}</strong>
-        <a routerLink="/auth/select-organization" class="link">Change</a>
-      </p>
-    }
-    <p class="eyebrow">Workspace Access</p>
-    <h2>Welcome back</h2>
-    <p class="subtitle">Sign in to your ThinkerScave workspace</p>
-  </div>
+  @if (selectedOrg) {
+    <div class="login-org" role="status">
+      <span class="login-org__label">Signing in to</span>
+      <div class="login-org__row">
+        <span class="login-org__avatar" aria-hidden="true">{{ selectedOrg.name.charAt(0) }}</span>
+        <strong>{{ selectedOrg.name }}</strong>
+        <a routerLink="/auth/select-organization" class="login-org__change">Change</a>
+      </div>
+    </div>
+  }
+
+  <header class="login-panel__header">
+    <h1>Welcome back</h1>
+    <p class="login-panel__subtitle">Sign in to continue to your ThinkerScave workspace.</p>
+  </header>
 
   <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-panel__form" novalidate>
-    <p-floatlabel variant="on" class="form-field">
-      <input id="username" type="text" pInputText formControlName="username" autocomplete="username" />
-      <label for="username">Username or email</label>
-    </p-floatlabel>
-
-    <p-floatlabel variant="on" class="form-field">
-      <p-password
-        id="password"
-        formControlName="password"
-        [feedback]="false"
-        [toggleMask]="true"
-        styleClass="login-password"
-        inputStyleClass="login-password__input"
-        autocomplete="current-password"
-      ></p-password>
-      <label for="password">Password</label>
-    </p-floatlabel>
-
-    <div class="login-panel__meta">
-      <div class="remember-me">
-        <p-checkbox inputId="remember" binary="true" formControlName="rememberMe"></p-checkbox>
-        <label for="remember">Remember this device</label>
-      </div>
-      <button type="button" class="link link--button" (click)="openForgotPassword()">Forgot password?</button>
+    <div class="field">
+      <label for="username" class="sr-only">Username or email</label>
+      <span class="field__icon" aria-hidden="true"><i class="pi pi-envelope"></i></span>
+      <input
+        id="username"
+        type="text"
+        formControlName="username"
+        placeholder="Username or email"
+        autocomplete="username"
+        [class.field__input--invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
+      />
     </div>
 
-    <button pButton type="submit" label="Sign In" class="accent-button" [disabled]="loginForm.invalid"></button>
+    <div class="field">
+      <label for="password" class="sr-only">Password</label>
+      <span class="field__icon" aria-hidden="true"><i class="pi pi-lock"></i></span>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        [class.field__input--invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+      />
+    </div>
+
+    <div class="login-panel__meta">
+      <label class="remember">
+        <input type="checkbox" formControlName="rememberMe" />
+        <span>Remember this device</span>
+      </label>
+      <button type="button" class="link-btn" (click)="openForgotPassword()">Forgot password?</button>
+    </div>
+
+    <button type="submit" class="sign-in-btn" [disabled]="loginForm.invalid || submitting()">
+      @if (submitting()) {
+        <span class="sign-in-btn__spinner" aria-hidden="true"></span>
+        Signing in...
+      } @else {
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        Sign In
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+      }
+    </button>
   </form>
+
+  <p class="login-panel__security">
+    <i class="pi pi-shield" aria-hidden="true"></i>
+    Protected by enterprise-grade security. Your data is encrypted and secure.
+  </p>
 
   <app-forgot-password-modal />
 </section>

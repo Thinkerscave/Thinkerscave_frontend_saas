@@ -17,7 +17,7 @@
     <div *ngFor="let tile of kpiTiles" class="sd-kpi-card" [attr.data-color]="tile.color">
       <div class="sd-kpi-card__icon"><i class="pi" [ngClass]="tile.icon"></i></div>
       <div class="sd-kpi-card__body">
-        <span class="sd-kpi-card__value" *ngIf="tile.key === 'currentMonth'">{{ currentMonthName }}</span>
+        <span class="sd-kpi-card__value" *ngIf="tile.key === 'currentMonth'">{{ dashboard.currentMonth || currentMonthName }}</span>
         <span class="sd-kpi-card__value" *ngIf="tile.key !== 'currentMonth'">
           {{ tile.isCurrency ? '₹' : '' }}{{ dashboard[tile.key] | number }}
         </span>

@@ -1,54 +1,64 @@
 <section class="org-select fade-in" aria-labelledby="org-select-heading">
   <header class="org-select__header">
-    <p class="eyebrow">Workspace Access</p>
-    <h2 id="org-select-heading">Select your institution</h2>
-    <p class="subtitle">Choose the organization you belong to before signing in.</p>
+    <p class="org-select__eyebrow">Workspace Access</p>
+    <h1 id="org-select-heading">Welcome <span aria-hidden="true">👋</span></h1>
+    <p class="org-select__subtitle">Let's find your institution.</p>
   </header>
 
-  <div class="org-select__field">
-    <label for="org-search">Institution</label>
-    <div class="org-select__combobox">
-      <input
-        id="org-search"
-        type="text"
-        pInputText
-        [ngModel]="query()"
-        (ngModelChange)="onSearch($event)"
-        (focus)="dropdownOpen.set(true)"
-        placeholder="Search institutions..."
-        autocomplete="off"
-        role="combobox"
-        aria-expanded="dropdownOpen()"
-        aria-controls="org-listbox"
-      />
-      @if (dropdownOpen() && filteredOrgs().length) {
-        <ul id="org-listbox" class="org-select__list" role="listbox">
-          @for (org of filteredOrgs(); track org.id) {
-            <li>
-              <button type="button" role="option" (click)="selectOrg(org)">
-                <span class="org-avatar" aria-hidden="true">{{ initials(org.name) }}</span>
-                <span class="org-meta">
-                  <strong>{{ org.name }}</strong>
-                  <small>{{ org.tenantId }}</small>
-                </span>
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </div>
+  <div class="org-select__search">
+    <label class="sr-only" for="org-search">Search institutions</label>
+    <i class="pi pi-search org-select__search-icon" aria-hidden="true"></i>
+    <input
+      id="org-search"
+      type="search"
+      [ngModel]="query()"
+      (ngModelChange)="onSearch($event)"
+      placeholder="Search by institution name..."
+      autocomplete="off"
+    />
   </div>
 
-  <button
-    pButton
-    type="button"
-    label="Continue"
-    class="accent-button"
-    [disabled]="!selected()"
-    (click)="continue()"
-  ></button>
+  <div class="org-select__list-wrap">
+    <p class="org-select__list-label">
+      {{ query() ? 'Search results' : 'Recent institutions' }}
+    </p>
+    <ul class="org-select__list" role="listbox" aria-label="Institutions">
+      @for (org of displayOrgs(); track org.id) {
+        <li>
+          <button
+            type="button"
+            class="org-card"
+            [class.org-card--selected]="isSelected(org)"
+            role="option"
+            [attr.aria-selected]="isSelected(org)"
+            (click)="selectOrg(org)"
+          >
+            <span class="org-card__avatar" aria-hidden="true">{{ initials(org.name) }}</span>
+            <span class="org-card__meta">
+              <strong>{{ org.name }}</strong>
+              <small>{{ org.location }}</small>
+            </span>
+            <i class="pi pi-chevron-right org-card__chevron" aria-hidden="true"></i>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
 
-  <p class="org-select__hint">
-    <a routerLink="/" class="link">Back to home</a>
-  </p>
+  <div class="org-select__footer">
+    <p class="org-select__support">
+      Can't find your institution?
+      <a href="mailto:support@thinkerscave.com">Contact your administrator</a>
+    </p>
+    <button
+      pButton
+      type="button"
+      class="org-select__continue"
+      [disabled]="!selected()"
+      (click)="continue()"
+    >
+      Continue
+      <i class="pi pi-arrow-right" aria-hidden="true"></i>
+    </button>
+  </div>
 </section>

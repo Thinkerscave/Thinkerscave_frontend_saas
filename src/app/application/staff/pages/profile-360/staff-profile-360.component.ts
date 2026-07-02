@@ -89,6 +89,10 @@ export class StaffProfile360Component implements OnInit {
       const id = Number(p.get('id'));
       if (!id) { this.errorMessage = 'Invalid staff ID.'; this.loading = false; this.cdr.markForCheck(); return; }
       this.staffId = id;
+      const tab = this.route.snapshot.queryParamMap.get('tab') as ProfileTab | null;
+      if (tab && this.tabs.some(t => t.id === tab)) {
+        this.activeTab = tab;
+      }
       this.load();
     });
   }

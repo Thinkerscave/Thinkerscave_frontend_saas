@@ -1,0 +1,206 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.auth-illus {
+  --illus-sky: linear-gradient(165deg, #e8f2ff 0%, #dbeafe 45%, #e0e7ff 100%);
+  --illus-accent: #2563eb;
+  --illus-text: #0f172a;
+  --illus-muted: rgba(15, 23, 42, 0.62);
+
+  position: relative;
+  height: 100%;
+  min-height: 100%;
+  padding: 2.5rem 2rem 6.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--illus-sky);
+  overflow: hidden;
+  color: var(--illus-text);
+}
+
+.auth-illus--deep {
+  --illus-sky: linear-gradient(165deg, #1e3a8a 0%, #312e81 50%, #1e1b4b 100%);
+  --illus-text: #f8fafc;
+  --illus-muted: rgba(248, 250, 252, 0.72);
+}
+
+.auth-illus__sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.auth-illus__particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.35);
+  animation: drift 8s ease-in-out infinite;
+}
+
+.auth-illus--deep .auth-illus__particle {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.auth-illus__particle--1 { top: 18%; left: 22%; animation-delay: 0s; }
+.auth-illus__particle--2 { top: 35%; right: 18%; animation-delay: 2s; width: 4px; height: 4px; }
+.auth-illus__particle--3 { bottom: 38%; left: 35%; animation-delay: 4s; }
+
+.auth-illus__cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(1px);
+  animation: cloud-float 12s ease-in-out infinite;
+}
+
+.auth-illus--deep .auth-illus__cloud {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-illus__cloud--1 {
+  width: 100px;
+  height: 36px;
+  top: 12%;
+  left: 10%;
+}
+
+.auth-illus__cloud--2 {
+  width: 72px;
+  height: 28px;
+  top: 22%;
+  right: 12%;
+  animation-delay: 3s;
+}
+
+.auth-illus__scene {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 420px);
+  height: auto;
+  color: #93c5fd;
+  margin-bottom: 1.5rem;
+  animation: scene-rise 0.8s ease-out;
+}
+
+.auth-illus--deep .auth-illus__scene {
+  color: #60a5fa;
+}
+
+.auth-illus__hill { fill: #bbf7d0; opacity: 0.55; }
+.auth-illus--deep .auth-illus__hill { fill: #166534; opacity: 0.35; }
+
+.auth-illus__tree { fill: #86efac; opacity: 0.85; }
+.auth-illus--deep .auth-illus__tree { fill: #22c55e; opacity: 0.5; }
+
+.auth-illus__trunk { fill: #a16207; }
+.auth-illus--deep .auth-illus__trunk { fill: #854d0e; opacity: 0.7; }
+
+.auth-illus__wall { fill: #f8fafc; }
+.auth-illus--deep .auth-illus__wall { fill: #e2e8f0; }
+
+.auth-illus__roof,
+.auth-illus__tower-roof { fill: #3b82f6; }
+.auth-illus--deep .auth-illus__roof,
+.auth-illus--deep .auth-illus__tower-roof { fill: #60a5fa; }
+
+.auth-illus__tower { fill: #f1f5f9; }
+.auth-illus__clock { fill: #fbbf24; }
+
+.auth-illus__windows rect { fill: #bfdbfe; }
+.auth-illus--deep .auth-illus__windows rect { fill: #93c5fd; }
+
+.auth-illus__door { fill: #1d4ed8; }
+.auth-illus__ground-shadow { fill: rgba(15, 23, 42, 0.06); }
+.auth-illus--deep .auth-illus__ground-shadow { fill: rgba(0, 0, 0, 0.2); }
+
+.auth-illus__person-head { fill: #fcd34d; }
+.auth-illus__person-body { fill: #2563eb; }
+.auth-illus--deep .auth-illus__person-body { fill: #818cf8; }
+
+.auth-illus__bird {
+  fill: none;
+  stroke: #64748b;
+  opacity: 0.5;
+}
+
+.auth-illus__copy {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 340px;
+  animation: fade-up 0.9s ease-out 0.15s both;
+}
+
+.auth-illus__headline {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--illus-text);
+}
+
+.auth-illus__subline {
+  margin: 0.15rem 0 0.75rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--illus-accent);
+}
+
+.auth-illus--deep .auth-illus__subline {
+  color: #93c5fd;
+}
+
+.auth-illus__caption {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--illus-muted);
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-14px); opacity: 1; }
+}
+
+@keyframes cloud-float {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+
+@keyframes scene-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1024px) {
+  .auth-illus {
+    min-height: 280px;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  .auth-illus__scene {
+    width: min(100%, 300px);
+  }
+
+  .auth-illus__copy {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  :host {
+    display: none;
+  }
+}

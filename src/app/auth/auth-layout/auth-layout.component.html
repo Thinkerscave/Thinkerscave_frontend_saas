@@ -2,39 +2,36 @@
   <p-toast></p-toast>
   <div class="auth-card">
     <div class="auth-pane auth-pane--form">
-      <a routerLink="/" class="brand-pill" aria-label="ThinkerScave home">
-        <i class="pi pi-graduation-cap" aria-hidden="true"></i>
-        ThinkerScave
+      <a routerLink="/" class="auth-brand" aria-label="ThinkerScave home">
+        <span class="auth-brand__mark" aria-hidden="true"><i class="pi pi-graduation-cap"></i></span>
+        <span class="auth-brand__name">ThinkerScave</span>
       </a>
-      <router-outlet></router-outlet>
+      <main class="auth-pane__main">
+        <router-outlet></router-outlet>
+      </main>
     </div>
-    <div class="auth-pane auth-pane--preview" aria-hidden="true">
-      <div class="preview-scene">
-        <div class="preview-scene__glow"></div>
-        <div class="preview-card preview-card--main">
-          <div class="preview-card__row">
-            <span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span>
-          </div>
-          <div class="preview-metrics">
-            <div><small>Attendance</small><strong>94.6%</strong></div>
-            <div><small>Students</small><strong>18,765</strong></div>
-          </div>
-          <div class="preview-bars">
-            <span style="--h: 55%"></span>
-            <span style="--h: 78%"></span>
-            <span style="--h: 42%"></span>
-            <span style="--h: 88%"></span>
-          </div>
+
+    <aside class="auth-pane auth-pane--visual" aria-hidden="true">
+      @if (isOrgSelect()) {
+        <tc-auth-illustration
+          tone="light"
+          headline="Empowering Education."
+          subline="Inspiring Futures."
+          caption="One intelligent platform connecting students, teachers, administrators, and parents."
+        />
+        <div class="auth-pane__trust">
+          <tc-auth-trust-strip />
         </div>
-        <div class="preview-card preview-card--float preview-card--notify">
-          <i class="pi pi-bell"></i>
-          <div><strong>Fee reminder</strong><small>142 parents notified</small></div>
-        </div>
-        <div class="preview-card preview-card--float preview-card--mobile">
-          <i class="pi pi-mobile"></i>
-          <div><strong>Parent App</strong><small>Live updates</small></div>
-        </div>
-      </div>
-    </div>
+      } @else if (isLogin()) {
+        <tc-auth-illustration
+          tone="deep"
+          headline="Building Smarter Institutions."
+          subline="Creating Better Learning Experiences."
+          caption="Technology that empowers educators. Experiences that inspire students."
+        />
+      } @else {
+        <tc-auth-illustration tone="light" />
+      }
+    </aside>
   </div>
 </div>

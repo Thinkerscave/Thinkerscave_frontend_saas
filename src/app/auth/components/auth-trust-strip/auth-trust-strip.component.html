@@ -1,0 +1,11 @@
+<ul class="trust-strip" aria-label="Platform trust indicators">
+  @for (item of items; track item.label) {
+    <li>
+      <span class="trust-strip__icon" aria-hidden="true"><i [class]="'pi ' + item.icon"></i></span>
+      <span class="trust-strip__text">
+        <strong>{{ item.label }}</strong>
+        <small>{{ item.detail }}</small>
+      </span>
+    </li>
+  }
+</ul>

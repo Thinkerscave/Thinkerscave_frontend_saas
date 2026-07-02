@@ -1,0 +1,53 @@
+.trust-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  justify-content: center;
+}
+
+.trust-strip li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.trust-strip__icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.65);
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.trust-strip__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+
+  strong {
+    font-size: 0.75rem;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  small {
+    font-size: 0.68rem;
+    color: #64748b;
+  }
+}
+
+@media (max-width: 480px) {
+  .trust-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

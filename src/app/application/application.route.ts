@@ -149,21 +149,26 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'staff',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF'])],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'directory', loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
       { path: 'create', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
       { path: 'edit/:id', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
       { path: 'profile/:id', loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
-      { path: 'responsibilities', loadComponent: () => import('./staff/pages/responsibilities/staff-responsibilities.component').then(m => m.StaffResponsibilitiesComponent) },
-      { path: 'payroll', loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
-      { path: 'leave-availability', loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
-      { path: 'documents', loadComponent: () => import('./staff/pages/documents/staff-documents.component').then(m => m.StaffDocumentsComponent) },
-      { path: 'alumni', loadComponent: () => import('./staff/pages/alumni/staff-alumni.component').then(m => m.StaffAlumniComponent) },
-      // Legacy redirects (kept for back-compat with old links and seed-menu fallbacks)
-      { path: 'dashboard',  pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'operations', pathMatch: 'full', redirectTo: 'leave-availability' }
+      {
+        path: '',
+        loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
+          { path: 'responsibilities', data: { workspacePage: 'responsibilities' }, loadComponent: () => import('./staff/pages/responsibilities/staff-responsibilities.component').then(m => m.StaffResponsibilitiesComponent) },
+          { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
+          { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
+          { path: 'documents', data: { workspacePage: 'documents' }, loadComponent: () => import('./staff/pages/documents/staff-documents.component').then(m => m.StaffDocumentsComponent) },
+          { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./staff/pages/alumni/staff-alumni.component').then(m => m.StaffAlumniComponent) },
+          { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'operations', pathMatch: 'full', redirectTo: 'leave-availability' }
+        ]
+      }
     ]
   },
   {

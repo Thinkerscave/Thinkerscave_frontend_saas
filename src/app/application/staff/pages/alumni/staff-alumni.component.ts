@@ -1,26 +1,81 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
+import { EmploymentStatus, StaffSummary } from '../../models/staff.model';
+import { StaffService } from '../../services/staff.service';
+
+const ALUMNI_STATUSES: EmploymentStatus[] = ['RESIGNED', 'RETIRED', 'CONTRACT_COMPLETED'];
 
 @Component({
   selector: 'app-staff-alumni',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   styleUrls: ['../../staff.shared.scss'],
-  template: `
-    <section class="sd-workspace">
-      <header class="sd-header">
-        <div class="sd-header__left">
-          <h1 class="sd-header__title">Alumni Staff</h1>
-          <p class="sd-header__sub">View past staff members.</p>
-        </div>
-      </header>
-      <div class="sp-empty-state" style="background: var(--tc-surface-0); border: 1px solid var(--tc-border); border-radius: 12px;">
-        <i class="pi pi-users"></i>
-        <h3>Coming Soon</h3>
-        <p>The alumni staff module is currently being redesigned.</p>
-      </div>
-    </section>
-  `
+  templateUrl: './staff-alumni.component.html'
 })
-export class StaffAlumniComponent {}
+export class StaffAlumniComponent implements OnInit {
+  private readonly api = inject(StaffService);
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  loading = true;
+  errorMessage = '';
+  keyword = '';
+  alumni: StaffSummary[] = [];
+
+  readonly statusLabels: Record<string, string> = {
+    RESIGNED: 'Resigned',
+    RETIRED: 'Retired',
+    CONTRACT_COMPLETED: 'Contract Completed'
+  };
+
+  ngOnInit(): void {
+    this.loadAlumni();
+  }
+
+  loadAlumni(): void {
+    this.loading = true;
+    this.api.getStaffList({ page: 0, size: 500, sort: 'createdOn,desc' })
+      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (page) => {
+          this.alumni = page.content.filter((s) => ALUMNI_STATUSES.includes(s.employmentStatus));
+          this.errorMessage = '';
+        },
+        error: () => { this.errorMessage = 'Unable to load alumni staff records.'; }
+      });
+  }
+
+  filteredAlumni(): StaffSummary[] {
+    const q = this.keyword.trim().toLowerCase();
+    if (!q) {
+      return this.alumni;
+    }
+    return this.alumni.filter((s) =>
+      s.fullName.toLowerCase().includes(q) ||
+      s.staffCode.toLowerCase().includes(q) ||
+      s.designation.toLowerCase().includes(q)
+    );
+  }
+
+  openProfile(staff: StaffSummary): void {
+    this.router.navigate(['/app/staff/profile', staff.staffId]);
+  }
+
+  initials(name: string): string {
+    return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  trackByStaff(_: number, s: StaffSummary): number {
+    return s.staffId;
+  }
+}

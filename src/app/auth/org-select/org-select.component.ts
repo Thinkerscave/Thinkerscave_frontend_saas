@@ -1,15 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { OrganizationContextService, DevOrganization } from '../../core/services/organization-context.service';
 
 @Component({
   selector: 'app-org-select',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, FormsModule, InputTextModule, ButtonModule],
+  imports: [CommonModule, RouterModule, FormsModule, ButtonModule],
   templateUrl: './org-select.component.html',
   styleUrl: './org-select.component.scss'
 })
@@ -17,30 +16,31 @@ export class OrgSelectComponent {
   private readonly orgContext = inject(OrganizationContextService);
   private readonly router = inject(Router);
 
-  readonly organizations = this.orgContext.devOrganizations;
   readonly query = signal('');
   readonly selected = signal<DevOrganization | null>(null);
-  readonly dropdownOpen = signal(false);
 
-  filteredOrgs(): DevOrganization[] {
+  readonly displayOrgs = computed(() => {
     const q = this.query().trim().toLowerCase();
-    if (!q) {
-      return this.organizations;
-    }
-    return this.organizations.filter(o =>
-      o.name.toLowerCase().includes(q) || o.tenantId.toLowerCase().includes(q)
-    );
-  }
+    const pool = q
+      ? this.orgContext.devOrganizations.filter(
+          (o) =>
+            o.name.toLowerCase().includes(q) ||
+            o.location.toLowerCase().includes(q) ||
+            o.tenantId.toLowerCase().includes(q)
+        )
+      : this.orgContext.getRecentOrganizations();
+
+    return pool.length ? pool : this.orgContext.devOrganizations;
+  });
 
   onSearch(value: string): void {
     this.query.set(value);
-    this.dropdownOpen.set(true);
+    this.selected.set(null);
   }
 
   selectOrg(org: DevOrganization): void {
     this.selected.set(org);
     this.query.set(org.name);
-    this.dropdownOpen.set(false);
   }
 
   continue(): void {
@@ -53,6 +53,15 @@ export class OrgSelectComponent {
   }
 
   initials(name: string): string {
-    return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return name
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  isSelected(org: DevOrganization): boolean {
+    return this.selected()?.id === org.id;
   }
 }

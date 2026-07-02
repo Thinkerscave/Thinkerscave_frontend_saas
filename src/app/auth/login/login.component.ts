@@ -1,14 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, inject, viewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, viewChild, signal } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
-import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
-import { FloatLabelModule } from 'primeng/floatlabel';
-import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
 import { LoginService } from '../../core/services/login.service';
@@ -25,12 +18,6 @@ import { ForgotPasswordModalComponent } from '../components/forgot-password-moda
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    InputTextModule,
-    PasswordModule,
-    ButtonModule,
-    CheckboxModule,
-    FloatLabelModule,
-    ToastModule,
     ForgotPasswordModalComponent
   ],
   templateUrl: './login.component.html',
@@ -47,6 +34,7 @@ export class LoginComponent {
   private readonly orgContext = inject(OrganizationContextService);
 
   readonly forgotModal = viewChild.required(ForgotPasswordModalComponent);
+  readonly submitting = signal(false);
 
   readonly selectedOrg = this.orgContext.getSelectedOrganization();
 
@@ -75,17 +63,15 @@ export class LoginComponent {
     }
 
     const { username, password, rememberMe } = this.loginForm.value;
+    this.submitting.set(true);
+    this.loader.start('login-flow');
 
-    const loginPayload = {
+    this.loginService.generateToken({
       usernameOrEmail: username,
       password,
       rememberMe: !!rememberMe,
       deviceName: 'ThinkersCave Web'
-    };
-
-    this.loader.start('login-flow');
-
-    this.loginService.generateToken(loginPayload).subscribe({
+    }).subscribe({
       next: (res: any) => {
         const loginData = res?.data ?? res;
         const accessToken = loginData.accessToken || loginData.token;
@@ -93,7 +79,7 @@ export class LoginComponent {
         const loginUser = loginData.user;
 
         if (!accessToken) {
-          this.loader.stop('login-flow');
+          this.finishSubmit();
           this.messageService.add({
             severity: 'error',
             summary: 'Login Error',
@@ -123,8 +109,8 @@ export class LoginComponent {
         });
       },
       error: (e: any) => {
-        this.loader.stop('login-flow');
-        const errorMessage = e.error?.message || e.error?.detail || 'Invalid username or password or server error';
+        this.finishSubmit();
+        const errorMessage = e.error?.message || e.error?.detail || 'Invalid username or password';
         this.messageService.add({
           severity: 'error',
           summary: 'Login Failed',
@@ -135,8 +121,13 @@ export class LoginComponent {
     });
   }
 
-  private redirectUser(user: UserInfo): void {
+  private finishSubmit(): void {
+    this.submitting.set(false);
     this.loader.stop('login-flow');
+  }
+
+  private redirectUser(user: UserInfo): void {
+    this.finishSubmit();
     if (user.firstTimeLogin) {
       this.router.navigate(['/auth/first-time-login']);
       return;
