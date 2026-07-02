@@ -244,27 +244,33 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'students',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'STAFF', 'RECEPTIONIST'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF', 'RECEPTIONIST'])],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'directory' },
-      // Spec taxonomy: Students | Academic Movement | Student Movement | Documents | Alumni
-      { path: 'directory',          loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
-      { path: 'profile/:id',        loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
-      { path: 'transfers',          loadComponent: () => import('./students/pages/student-movement/student-movement.component').then(m => m.StudentMovementComponent) },
-      { path: 'alumni',             loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
-      // Legacy paths kept as redirects so deep links and bookmarks remain stable.
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
-      { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
-      { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
-      { path: 'promotion', pathMatch: 'full', redirectTo: 'academic-movement' },
-      { path: 'student-movement', pathMatch: 'full', redirectTo: 'transfers' },
-      { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
-      { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
-      { path: 'id-cards', pathMatch: 'full', redirectTo: 'directory' },
-      ...STUDENT_MANAGEMENT_ROUTES
+      { path: 'profile/:id', loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
+      {
+        path: '',
+        loadComponent: () => import('./students/components/students-workspace/students-workspace.component').then(m => m.StudentsWorkspaceComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
+          { path: 'transfers', data: { workspacePage: 'transfers' }, loadComponent: () => import('./students/pages/student-movement/student-movement.component').then(m => m.StudentMovementComponent) },
+          { path: 'documents', data: { workspacePage: 'documents' }, loadComponent: () => import('./students/pages/document-vault/document-vault.component').then(m => m.DocumentVaultComponent) },
+          { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
+          // Legacy paths kept as redirects so deep links and bookmarks remain stable.
+          { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
+          { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
+          { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
+          { path: 'promotion', pathMatch: 'full', redirectTo: 'academic-movement' },
+          { path: 'student-movement', pathMatch: 'full', redirectTo: 'transfers' },
+          { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
+          { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'id-cards', pathMatch: 'full', redirectTo: 'directory' },
+          ...STUDENT_MANAGEMENT_ROUTES
+        ]
+      }
     ]
   },
   // ━━━ Academics module (spec: Academic Setup / Timetable / Teacher Arrangement / Academic Calendar / Syllabus Tracker / Settings) ━━━

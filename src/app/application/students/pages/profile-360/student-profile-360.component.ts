@@ -83,9 +83,9 @@ export class StudentProfile360Component implements OnInit {
     this.loading = true;
     forkJoin({
       profile:      this.api.profile(this.studentId),
-      timeline:     this.api.timelineMock(this.studentId), // MOCK fallback
-      history:      this.api.academicHistory(this.studentId), // MOCK fallback
-      docs:         this.api.studentDocuments(this.studentId) // MOCK fallback
+      timeline:     this.api.timeline(this.studentId),
+      history:      this.api.academicHistory(this.studentId),
+      docs:         this.api.studentDocuments(this.studentId)
     })
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({

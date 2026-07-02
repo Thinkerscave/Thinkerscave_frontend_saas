@@ -65,6 +65,10 @@ export class AddStudentDrawerComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.api.listAcademicYears().subscribe(years => {
+      this.academicYears = years.map(y => y.label);
+      this.cdr.markForCheck();
+    });
     this.api.listClasses().subscribe(classes => {
       this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
       this.cdr.markForCheck();

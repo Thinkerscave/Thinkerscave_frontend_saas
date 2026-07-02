@@ -50,15 +50,13 @@ export class StudentMovementComponent implements OnInit {
     this.loading = true;
     forkJoin({
       transfers: this.api.listTransfers(),
-      students: this.api.search({ status: 'ACTIVE' }),
-      documents: this.api.documents()
+      students: this.api.search({ status: 'ACTIVE' }, 0, 200)
     })
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: ({ transfers, students, documents }) => {
+        next: ({ transfers, students }) => {
           this.transfers = transfers ?? [];
           this.students = students.content ?? [];
-          this.documents = documents ?? [];
           this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Could not load transfer requests.'; }
@@ -75,7 +73,7 @@ export class StudentMovementComponent implements OnInit {
       { label: 'All Requests', count: this.transfers.length, status: 'ALL', tone: 'info', icon: 'pi-list' },
       { label: 'Requested', count: this.transfers.filter(t => t.status === 'REQUESTED').length, status: 'REQUESTED', tone: 'warning', icon: 'pi-clock' },
       { label: 'Approved', count: this.transfers.filter(t => t.status === 'APPROVED').length, status: 'APPROVED', tone: 'success', icon: 'pi-check-circle' },
-      { label: 'Completed', count: this.transfers.filter(t => t.status === 'COMPLETED').length, status: 'COMPLETED', tone: 'info', icon: 'pi-flag' },
+      { label: 'Certificate Issued', count: this.transfers.filter(t => t.status === 'CERTIFICATE_ISSUED').length, status: 'CERTIFICATE_ISSUED', tone: 'info', icon: 'pi pi-flag' },
       { label: 'Rejected', count: this.transfers.filter(t => t.status === 'REJECTED').length, status: 'REJECTED', tone: 'danger', icon: 'pi-times-circle' }
     ];
   }
@@ -130,15 +128,20 @@ export class StudentMovementComponent implements OnInit {
 
   complete(req: TransferRequest, event: Event): void {
     event.stopPropagation();
-    this.transition(req, 'COMPLETED');
+    this.transition(req, 'CERTIFICATE_ISSUED');
   }
 
   onStudentChanged(): void {
     const student = this.students.find(s => s.studentId === Number(this.newRequest.studentId));
-    this.newRequest.enrollmentId = student?.activeEnrollmentId ?? undefined;
     this.newRequest.studentName = student?.fullName;
     this.newRequest.className = student?.className;
     this.newRequest.sectionName = student?.sectionName;
+    if (student?.studentId) {
+      this.api.getActiveEnrollment(student.studentId).subscribe({
+        next: en => { this.newRequest.enrollmentId = en.enrollmentId; this.cdr.markForCheck(); },
+        error: () => { this.newRequest.enrollmentId = undefined; }
+      });
+    }
   }
 
   statusTone(s?: TransferStatus | null): string {

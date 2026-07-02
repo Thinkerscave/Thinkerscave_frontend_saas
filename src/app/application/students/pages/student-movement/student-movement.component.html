@@ -90,9 +90,9 @@
                 <i class="pi pi-times"></i>
               </button>
               
-              <!-- Complete (if approved) -->
-              <button class="adm-icon-btn" style="color:var(--tc-info);" title="Mark Completed" 
-                      *ngIf="req.status === 'APPROVED' || req.status === 'CERTIFICATE_ISSUED'" (click)="complete(req, $event)">
+              <!-- Issue certificate (if approved) -->
+              <button class="adm-icon-btn" style="color:var(--tc-info);" title="Issue Certificate" 
+                      *ngIf="req.status === 'APPROVED'" (click)="complete(req, $event)">
                 <i class="pi pi-flag"></i>
               </button>
             </div>

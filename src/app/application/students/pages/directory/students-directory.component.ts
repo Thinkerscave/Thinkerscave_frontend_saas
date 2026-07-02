@@ -58,6 +58,7 @@ export class StudentsDirectoryComponent implements OnInit {
   importFile: File | null = null;
   importLoading = false;
   importResult: { total: number; success: number; failed: number } | null = null;
+  importJobId = '';
   importError = '';
 
   // ---- More menu per card ----
@@ -211,24 +212,36 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   downloadTemplate(): void {
-    const headers = [
-      'Admission Number', 'First Name', 'Middle Name', 'Last Name',
-      'Gender', 'Date Of Birth', 'Mobile', 'Email',
-      'Academic Year', 'Class Code', 'Section Code', 'Roll Number',
-      'Father Name', 'Father Mobile', 'Mother Name', 'Mother Mobile',
-      'Address', 'Blood Group', 'Remarks'
-    ].join(',');
-    const sample = ['ADM001', 'Rahul', '', 'Sharma', 'Male', '2010-05-15',
-      '9876543210', 'rahul@example.com', '2025-2026', 'CLS6', 'SEC-A', '1',
-      'Rajesh Sharma', '9876543211', 'Priya Sharma', '9876543212',
-      '45 Green Park, New Delhi', 'B+', ''].join(',');
-    const blob = new Blob([headers + '\n' + sample], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Student_Import_Template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    this.api.downloadImportTemplate().subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'student_import_template.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        const headers = [
+          'Admission Number', 'First Name', 'Middle Name', 'Last Name',
+          'Gender', 'Date Of Birth', 'Mobile', 'Email',
+          'Academic Year', 'Class Code', 'Section Code', 'Roll Number',
+          'Father Name', 'Father Mobile', 'Mother Name', 'Mother Mobile',
+          'Address', 'Blood Group', 'Remarks'
+        ].join(',');
+        const sample = ['ADM001', 'Rahul', '', 'Sharma', 'Male', '2010-05-15',
+          '9876543210', 'rahul@example.com', '2025-2026', 'CLS6', 'SEC-A', '1',
+          'Rajesh Sharma', '9876543211', 'Priya Sharma', '9876543212',
+          '45 Green Park, New Delhi', 'B+', ''].join(',');
+        const blob = new Blob([headers + '\n' + sample], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Student_Import_Template.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
   }
 
   uploadImport(): void {
@@ -237,24 +250,41 @@ export class StudentsDirectoryComponent implements OnInit {
       return;
     }
     this.importLoading = true;
-    // MOCK: Simulate import result until backend is ready
-    setTimeout(() => {
-      this.importResult = { total: 25, success: 23, failed: 2 };
-      this.importStep = 'result';
-      this.importLoading = false;
-      this.cdr.markForCheck();
-    }, 1500);
+    this.api.importStudents(this.importFile)
+      .pipe(finalize(() => { this.importLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: result => {
+          this.importResult = { total: result.total, success: result.success, failed: result.failed };
+          this.importJobId = result.jobId;
+          this.importStep = 'result';
+          if (result.failed > 0) this.loadAll();
+        },
+        error: () => { this.importError = 'Import failed. Please check the file format and retry.'; }
+      });
   }
 
   downloadErrorReport(): void {
-    const content = 'Row,Error\n5,Invalid date of birth format\n18,Class code not found';
-    const blob = new Blob([content], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Import_Error_Report.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!this.importJobId) {
+      const content = 'Row,Error\n5,Invalid date of birth format\n18,Class code not found';
+      const blob = new Blob([content], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Import_Error_Report.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+    this.api.downloadImportErrors(this.importJobId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `student_import_errors_${this.importJobId}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
   }
 
   // ---- Export ----
@@ -285,9 +315,11 @@ export class StudentsDirectoryComponent implements OnInit {
   deactivateStudent(s: StudentDirectoryCard, event: Event): void {
     event.stopPropagation();
     this.openMoreMenuId = null;
-    // MOCK: Would call API to deactivate
     if (confirm(`Deactivate ${s.fullName}?`)) {
-      console.log('Deactivate student', s.studentId);
+      this.api.updateStudentStatus(s.studentId, 'INACTIVE').subscribe({
+        next: () => this.loadAll(),
+        error: () => { this.errorMessage = 'Could not deactivate student.'; this.cdr.markForCheck(); }
+      });
     }
   }
 

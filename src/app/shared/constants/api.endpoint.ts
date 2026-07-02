@@ -174,13 +174,33 @@ export const departmentApi = {
 
 // ─── Student, Class, Section (previously /api/* — now /api/v1/*) ─────────────
 export const studentApi = {
+  base: `${BASE}/students`,
   register: `${BASE}/students/registerStudent`,
+  directory: `${BASE}/students`,
+  search: `${BASE}/students/search`,
   getAll: `${BASE}/students/getStudents`,
   getById: (id: number) => `${BASE}/students/${id}`,
+  create: `${BASE}/students`,
   update: (id: number) => `${BASE}/students/${id}`,
   delete: (id: number) => `${BASE}/students/${id}`,
+  status: (id: number) => `${BASE}/students/${id}/status`,
+  profile360: (id: number) => `${BASE}/students/${id}/profile-360`,
+  personal: (id: number) => `${BASE}/students/${id}/personal`,
+  medical: (id: number) => `${BASE}/students/${id}/medical`,
+  timeline: (id: number) => `${BASE}/students/${id}/timeline`,
   documents: (id: number) => `${BASE}/students/${id}/documents`,
   downloadDoc: (docId: number) => `${BASE}/students/document/${docId}/download`,
+  alumni: `${BASE}/students/alumni`,
+  import: `${BASE}/students/import`,
+  importTemplate: `${BASE}/students/import/template`,
+  importSummary: (jobId: string) => `${BASE}/students/import/${jobId}`,
+  importErrors: (jobId: string) => `${BASE}/students/import/${jobId}/errors`,
+  classes: `${BASE}/students/classes`,
+  sections: `${BASE}/students/sections`,
+  academicYears: `${BASE}/students/academic-years`,
+  bloodGroups: `${BASE}/students/blood-groups`,
+  transfers: `${BASE}/students/transfers`,
+  activeEnrollment: (id: number) => `${BASE}/students/${id}/enrollment/active`,
 };
 
 export const classApi = {
