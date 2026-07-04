@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostBinding, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, HostBinding, inject, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -27,6 +27,7 @@ export class SideMenuComponent implements OnInit {
   private sideMenuService = inject(MenuMappingService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef);
   private breadcrumbService = inject(BreadCrumbService);
   private elementRef = inject(ElementRef<HTMLElement>);
 
@@ -44,11 +45,13 @@ export class SideMenuComponent implements OnInit {
       next: (menus) => {
         this.items = this.normalizeItems(menus);
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error loading menu:', err);
         this.items = [];
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
 

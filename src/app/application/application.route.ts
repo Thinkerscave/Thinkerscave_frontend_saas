@@ -183,7 +183,7 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'attendance',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'HR_MANAGER'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'TEACHER', 'HR_MANAGER', 'STAFF', 'STUDENT'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'students' },
       { path: 'students', loadComponent: () => import('./attendance/pages/student/attendance-student.component').then(m => m.AttendanceStudentComponent) },

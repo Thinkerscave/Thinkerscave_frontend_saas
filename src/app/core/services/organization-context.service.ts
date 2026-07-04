@@ -15,10 +15,10 @@ const RECENT_ORGS_KEY = 'recentOrganizations';
 @Injectable({ providedIn: 'root' })
 export class OrganizationContextService {
   readonly devOrganizations: DevOrganization[] = [
-    { id: 1, name: 'Xavier University', tenantId: 'public', location: 'Mumbai, Maharashtra' },
-    { id: 2, name: 'Delhi Public School', tenantId: 'dps', location: 'New Delhi, Delhi' },
-    { id: 3, name: 'ABC College', tenantId: 'abc-college', location: 'Bengaluru, Karnataka' },
-    { id: 4, name: 'ThinkerScave Demo School', tenantId: 'demo', location: 'Pune, Maharashtra' }
+    { id: 1, name: 'Javier School Bhubaneswar', tenantId: 'jsb-bhubaneswar', location: 'Patia, Bhubaneswar, Odisha' },
+    { id: 2, name: 'Javier School Cuttack', tenantId: 'jsc-cuttack', location: 'Sector 5, Cuttack, Odisha' },
+    { id: 3, name: 'ABC School Puri', tenantId: 'abc-puri', location: 'Marine Drive, Puri, Odisha' },
+    { id: 4, name: 'Kalinga College Cuttack', tenantId: 'kcc-cuttack', location: 'Badambadi, Cuttack, Odisha' }
   ];
 
   get requiresSelection(): boolean {

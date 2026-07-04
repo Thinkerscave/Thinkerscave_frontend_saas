@@ -303,7 +303,7 @@ export const admissionsApi = {
 
 export const dashboardApi = {
   base: `${BASE}/dashboard`,
-  workspace: `${BASE}/dashboard/workspace`,
+  workspace: `${BASE}/dashboard/summary`,
   search: `${BASE}/dashboard/search`,
 };
 

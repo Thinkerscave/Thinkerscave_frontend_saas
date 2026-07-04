@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { accessApi } from '../../shared/constants/api.endpoint';
 import { unwrapApiList, unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
@@ -38,7 +39,10 @@ export class MenuMappingService {
 
   readonly menuRefresh$ = this.menuRefreshSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private orgContext: OrganizationContextService
+  ) { }
 
   loadMenu(): Observable<MenuItem[]> {
     // 1. Check for specific roles (e.g., Counsellor)
@@ -205,6 +209,7 @@ export class MenuMappingService {
     const orgId = Number(
       sessionStorage.getItem('currentOrgId')
       ?? localStorage.getItem('currentOrgId')
+      ?? this.orgContext.resolveOrganizationId()
       ?? environment.defaultOrganizationId
     );
 
@@ -216,7 +221,17 @@ export class MenuMappingService {
       map((response: unknown) => {
         const sidebar = unwrapApiResponse<SidebarMenuNode[]>(response, unwrapApiList<SidebarMenuNode>(response));
         const items = (sidebar ?? []).map(node => this.mapSidebarNode(node));
-        return this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(items)));
+        const normalized = this.normalizeMenuItems(items);
+        const consolidated = this.consolidateWorkspaceMenu(normalized);
+        const filtered = this.applyNavigationRules(consolidated);
+
+        // Guardrail: if role filtering/grouping accidentally removes everything,
+        // fall back to normalized server sidebar so users still get navigation.
+        if (filtered.length === 0 && normalized.length > 0) {
+          return normalized;
+        }
+
+        return filtered;
       }),
       tap(menus => {
         this.menuCache = menus;

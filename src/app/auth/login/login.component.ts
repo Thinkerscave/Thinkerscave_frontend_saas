@@ -103,6 +103,10 @@ export class LoginComponent {
           this.loginService.setUser(mappedUser);
         }
 
+        if (!this.loginService.getCurrentOrganizationId() && this.selectedOrg) {
+          this.loginService.setCurrentOrganization(String(this.selectedOrg.id));
+        }
+
         this.tenantConfigService.fetchConfigFromServer().subscribe({
           next: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!),
           error: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!)

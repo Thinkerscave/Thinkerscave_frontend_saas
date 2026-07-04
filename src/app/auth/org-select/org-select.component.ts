@@ -20,13 +20,14 @@ export class OrgSelectComponent {
   readonly selected = signal<DevOrganization | null>(null);
 
   readonly displayOrgs = computed(() => {
-    const q = this.query().trim().toLowerCase();
+    const rawQuery = this.query();
+    const q = (rawQuery ?? '').toString().trim().toLowerCase();
     const pool = q
       ? this.orgContext.devOrganizations.filter(
           (o) =>
-            o.name.toLowerCase().includes(q) ||
-            o.location.toLowerCase().includes(q) ||
-            o.tenantId.toLowerCase().includes(q)
+            (o.name ?? '').toLowerCase().includes(q) ||
+            (o.location ?? '').toLowerCase().includes(q) ||
+            (o.tenantId ?? '').toLowerCase().includes(q)
         )
       : this.orgContext.getRecentOrganizations();
 
