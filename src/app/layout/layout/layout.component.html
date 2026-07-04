@@ -1,8 +1,8 @@
 <div class="layout-container">
   <app-top-bar class="topbar"></app-top-bar>
 
-  <div class="main-content">
-    <app-side-menu class="sidemenu" [expanded]="true"></app-side-menu>
+  <div class="main-content" [class.sidebar-is-expanded]="sidebarLayout.displayExpanded()">
+    <app-side-menu class="sidemenu"></app-side-menu>
 
     <div class="page-content">
       <tc-page-shell>

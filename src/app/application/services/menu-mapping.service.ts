@@ -427,6 +427,7 @@ export class MenuMappingService {
     menus = this.filterNavigationItems(menus, item => this.isOrganizationProfileItem(item));
 
     if (isTenantManager) {
+      menus = this.filterNavigationItems(menus, item => this.isRedundantTenantMenuStub(item));
       menus = this.ensureMenuGroup(menus, this.tenantManagementMenuGroup());
     }
 
@@ -552,6 +553,15 @@ export class MenuMappingService {
         { label: 'Audit Center', icon: 'pi pi-history', routerLink: ['/app/tenant-management/audit-center'] }
       ]
     };
+  }
+
+  private isRedundantTenantMenuStub(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    const label = (item.label ?? '').toLowerCase();
+    if (label !== 'tenant management') {
+      return false;
+    }
+    return route === '/app/tenant-management' || route.endsWith('/tenant-management');
   }
 
   private isTenantManagementItem(item: MenuItem): boolean {

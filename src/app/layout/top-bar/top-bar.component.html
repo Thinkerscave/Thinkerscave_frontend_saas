@@ -1,8 +1,12 @@
 <header class="topbar-container">
   <div class="topbar-left">
-    <button type="button" class="brand-identity" (click)="navigateHome()" aria-label="Go to dashboard">
+    <button type="button" class="icon-btn nav-toggle" (click)="toggleNavigation()" aria-label="Toggle navigation">
+      <i class="pi pi-bars"></i>
+    </button>
+
+    <button type="button" class="brand-identity brand-identity--compact" (click)="navigateHome()" aria-label="Go to dashboard">
       <span class="brand-logo"><img src="thinkerscave2.ico" alt="" aria-hidden="true"></span>
-      <div>
+      <div class="brand-copy">
         <strong>ThinkerScave</strong>
         <small>{{ getOrganizationName() }}</small>
       </div>

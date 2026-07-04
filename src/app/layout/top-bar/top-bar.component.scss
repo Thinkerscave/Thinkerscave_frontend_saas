@@ -20,8 +20,13 @@
 .topbar-left {
   display: flex;
   align-items: center;
+  gap: 0.35rem;
   width: 30%;
   min-width: 230px;
+}
+
+.nav-toggle {
+  display: none;
 }
 
 .brand-identity {
@@ -42,6 +47,12 @@
     background: var(--tc-topbar-hover);
     transform: translateY(-1px);
   }
+}
+
+.brand-identity--compact .brand-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
 .brand-logo {
@@ -385,6 +396,27 @@ app-global-search {
       color: var(--tc-text-muted);
       font-size: 0.8rem;
     }
+  }
+}
+
+@media (min-width: 1024px) {
+  .nav-toggle {
+    display: none !important;
+  }
+
+  .topbar-left {
+    min-width: 230px;
+    width: auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .brand-identity--compact .brand-logo {
+    display: none;
   }
 }
 

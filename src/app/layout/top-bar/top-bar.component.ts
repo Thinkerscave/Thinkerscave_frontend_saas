@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { LoginService } from '../../core/services/login.service';
+import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { NotificationCenterComponent } from '../notification-center/notification-center.component';
@@ -18,6 +19,7 @@ export class TopBarComponent {
   loginService = inject(LoginService);
   themeService = inject(ThemeService);
   router = inject(Router);
+  sidebarLayout = inject(SidebarLayoutService);
 
   isDarkTheme = this.themeService.isDarkTheme;
   currentUser = this.loginService.getUser();
@@ -34,6 +36,10 @@ export class TopBarComponent {
   toggleTheme() { this.themeService.toggleTheme(); }
 
   navigateHome() { this.router.navigate([this.dashboardRoute()]); }
+
+  toggleNavigation(): void {
+    this.sidebarLayout.toggleShellNavigation();
+  }
 
   logout() { this.loginService.logOutAndRedirect(); }
 
