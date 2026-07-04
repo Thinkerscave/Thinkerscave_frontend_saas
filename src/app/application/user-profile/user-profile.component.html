@@ -18,7 +18,7 @@
     <p>{{ user()?.email || user()?.userName }}</p>
     <div class="hero-pills">
       <tc-saas-pill [label]="roleLabel()" tone="info" icon="pi pi-shield"></tc-saas-pill>
-      <tc-saas-pill *ngIf="user()?.mobileNumber" [label]="user()?.mobileNumber" tone="neutral" icon="pi pi-phone"></tc-saas-pill>
+      <tc-saas-pill *ngIf="user()?.mobile || user()?.mobileNumber" [label]="user()?.mobile || user()?.mobileNumber" tone="neutral" icon="pi pi-phone"></tc-saas-pill>
       <tc-saas-pill *ngIf="user()?.city" [label]="user()?.city" tone="neutral" icon="pi pi-map-marker"></tc-saas-pill>
     </div>
   </div>
@@ -32,7 +32,7 @@
     <div><dt>First Name</dt><dd>{{ user()?.firstName || '—' }}</dd></div>
     <div><dt>Last Name</dt><dd>{{ user()?.lastName || '—' }}</dd></div>
     <div><dt>Email</dt><dd>{{ user()?.email || '—' }}</dd></div>
-    <div><dt>Mobile</dt><dd>{{ user()?.mobileNumber || '—' }}</dd></div>
+    <div><dt>Mobile</dt><dd>{{ user()?.mobile || user()?.mobileNumber || '—' }}</dd></div>
     <div><dt>Role</dt><dd>{{ roleLabel() }}</dd></div>
     <div><dt>City</dt><dd>{{ user()?.city || '—' }}</dd></div>
     <div><dt>State</dt><dd>{{ user()?.state || '—' }}</dd></div>
@@ -43,10 +43,8 @@
   <form class="form-grid" (submit)="saveProfile(); $event.preventDefault()">
     <label>First Name<input type="text" [ngModel]="edit().firstName" (ngModelChange)="updateEditField('firstName', $event)" name="firstName"></label>
     <label>Last Name<input type="text" [ngModel]="edit().lastName" (ngModelChange)="updateEditField('lastName', $event)" name="lastName"></label>
-    <label>Email<input type="email" [ngModel]="edit().email" (ngModelChange)="updateEditField('email', $event)" name="email"></label>
+    <label>Email (read-only)<input type="email" [ngModel]="edit().email" name="email" readonly></label>
     <label>Mobile<input type="tel" [ngModel]="edit().mobile" (ngModelChange)="updateEditField('mobile', $event)" name="mobile"></label>
-    <label>City<input type="text" [ngModel]="edit().city" (ngModelChange)="updateEditField('city', $event)" name="city"></label>
-    <label>State<input type="text" [ngModel]="edit().state" (ngModelChange)="updateEditField('state', $event)" name="state"></label>
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="editStatus() === 'saving'">
         <i class="pi" [class.pi-spinner]="editStatus() === 'saving'" [class.pi-check]="editStatus() !== 'saving'"></i>
@@ -69,6 +67,7 @@
       <span class="status saved"    *ngIf="passwordStatus() === 'saved'">Password changed</span>
       <span class="status error"    *ngIf="passwordStatus() === 'mismatch'">New passwords do not match</span>
       <span class="status error"    *ngIf="passwordStatus() === 'weak'">Password must be at least 8 characters</span>
+      <span class="status error"    *ngIf="passwordStatus() === 'error'">Could not update password. Check your current password.</span>
     </div>
   </form>
 </tc-saas-panel>

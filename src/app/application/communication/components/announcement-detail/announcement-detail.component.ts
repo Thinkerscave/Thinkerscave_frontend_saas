@@ -54,11 +54,11 @@ export class AnnouncementDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.api.listNotices()
+    this.api.getNotice(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: list => {
-          this.notice = list?.find(n => n.id === id) || null;
+        next: notice => {
+          this.notice = notice;
           this.loading = false;
           this.cdr.markForCheck();
         },

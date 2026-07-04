@@ -44,7 +44,7 @@
             <tr *ngFor="let n of filtered">
               <td>#{{ n.id }}</td>
               <td>{{ n.subject }}</td>
-              <td>User #{{ n.recipientUserId }}</td>
+              <td>{{ n.totalRecipients ?? '—' }} recipients</td>
               <td><tc-saas-pill [label]="n.channel" tone="info"></tc-saas-pill></td>
               <td>{{ n.sentAt | date:'medium' }}</td>
               <td><tc-saas-pill [label]="n.status" [tone]="statusTone(n.status)"></tc-saas-pill></td>

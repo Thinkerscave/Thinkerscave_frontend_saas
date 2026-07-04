@@ -10,6 +10,7 @@ import {
 } from '../../shared/ui/saas';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { LoginService } from '../../core/services/login.service';
+import { UserPreferencesService } from '../services/user-preferences.service';
 
 type TabKey = 'appearance' | 'notifications' | 'localization' | 'accessibility' | 'security';
 
@@ -30,6 +31,7 @@ type TabKey = 'appearance' | 'notifications' | 'localization' | 'accessibility' 
 })
 export class GlobalSettingsComponent {
   private readonly themeService = inject(ThemeService);
+  private readonly preferencesService = inject(UserPreferencesService);
   private readonly loginService = inject(LoginService);
   private readonly router = inject(Router);
 
@@ -85,8 +87,9 @@ export class GlobalSettingsComponent {
     this.writeBool('tc.reduceMotion', this.reduceMotion());
     this.writeBool('tc.largeText', this.largeText());
     this.writeBool('tc.highContrast', this.highContrast());
-    this.applyAccent();
-    this.applyA11y();
+    this.preferencesService.applyAccent(this.accent());
+    this.preferencesService.applyA11y(this.reduceMotion(), this.largeText(), this.highContrast());
+    document.documentElement.dataset['density'] = this.density();
   }
 
   reset(): void {

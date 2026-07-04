@@ -307,6 +307,20 @@ export const dashboardApi = {
   search: `${BASE}/dashboard/search`,
 };
 
+export const profileApi = {
+  me: `${BASE}/profile/me`,
+  changePassword: `${BASE}/profile/me/change-password`,
+};
+
+export const communicationApi = {
+  notices: `${BASE}/communication/notices`,
+  noticeById: (id: number) => `${BASE}/communication/notices/${id}`,
+  publishNotice: (id: number) => `${BASE}/communication/notices/${id}/publish`,
+  notifications: `${BASE}/communication/notifications`,
+  messageThreads: `${BASE}/communication/messages/threads`,
+  threadMessages: (threadId: number) => `${BASE}/communication/messages/threads/${threadId}`,
+};
+
 // ─── Audit (platform-wide activity logs) ────────────────────────────────────────
 export const auditApi = {
   logs: `${BASE}/audit/logs`,

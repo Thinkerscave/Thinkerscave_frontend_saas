@@ -16,15 +16,20 @@
     </header>
 
     <div class="notification-center__list">
-      @for (notification of notifications; track notification.title) {
+      @for (notification of notifications; track notification.id) {
         <article class="notification-card" [class.is-unread]="notification.unread" [attr.data-tone]="notification.tone">
           <span class="notification-card__dot"></span>
           <div>
             <strong>{{ notification.title }}</strong>
             <p>{{ notification.message }}</p>
             <small>{{ notification.time }}</small>
+            @if (notification.link) {
+              <a [routerLink]="notification.link" class="notification-card__link">View delivery logs</a>
+            }
           </div>
         </article>
+      } @empty {
+        <p class="notification-empty">No recent notifications.</p>
       }
     </div>
   </section>

@@ -82,7 +82,7 @@ export class DeliveryLogsComponent implements OnInit {
     this.filtered.forEach(n => rows.push([
       String(n.id),
       n.subject || '',
-      String(n.recipientUserId),
+      String(n.totalRecipients ?? ''),
       n.channel,
       n.sentAt || '',
       n.status

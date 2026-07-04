@@ -3,7 +3,6 @@
     title="Conversations"
     subtitle="Direct messages with parents, students and staff"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Conversations'}]">
-    <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-plus"></i>New Message</button>
   </tc-saas-page-header>
 
   <div class="messenger">
@@ -13,14 +12,11 @@
       <nav class="messenger__tabs">
         <button type="button" [class.is-active]="activeTab === 'all'" (click)="selectTab('all')">All</button>
         <button type="button" [class.is-active]="activeTab === 'unread'" (click)="selectTab('unread')">Unread</button>
-        <button type="button" [class.is-active]="activeTab === 'parents'" (click)="selectTab('parents')">Parents</button>
-        <button type="button" [class.is-active]="activeTab === 'students'" (click)="selectTab('students')">Students</button>
-        <button type="button" [class.is-active]="activeTab === 'staff'" (click)="selectTab('staff')">Staff</button>
       </nav>
 
       <ul class="messenger__list">
         <li *ngFor="let c of filtered" [class.is-active]="c.id === selectedId" (click)="loadMessages(c.id)">
-          <span class="avatar" [attr.data-online]="c.online">{{ c.avatar }}</span>
+          <span class="avatar">{{ c.name.slice(0, 2).toUpperCase() }}</span>
           <div class="info">
             <div class="info__top"><strong>{{ c.name }}</strong><small>{{ c.lastAt | date:'shortTime' }}</small></div>
             <div class="info__bottom"><span>{{ c.lastMessage }}</span><span class="badge" *ngIf="c.unread">{{ c.unread }}</span></div>
@@ -32,12 +28,12 @@
     <section class="messenger__chat">
       <ng-container *ngIf="selected; else noChat">
         <header class="messenger__chat-header">
-          <span class="avatar" [attr.data-online]="selected.online">{{ selected.avatar }}</span>
+          <span class="avatar">{{ selected.name.slice(0, 2).toUpperCase() }}</span>
           <div>
             <strong>{{ selected.name }}</strong>
-            <small>{{ selected.online ? 'Online' : 'Offline' }} · {{ selected.role }}</small>
+            <small>Message thread</small>
           </div>
-          <tc-saas-pill [label]="selected.role" tone="info"></tc-saas-pill>
+          <tc-saas-pill label="Thread" tone="info"></tc-saas-pill>
         </header>
 
         <div class="messenger__thread">
@@ -49,13 +45,12 @@
         </div>
 
         <footer class="messenger__compose">
-          <button type="button" class="saas-icon-btn"><i class="pi pi-paperclip"></i></button>
           <input type="text" placeholder="Type a message..." [(ngModel)]="draft" (keydown.enter)="send()">
           <button type="button" class="saas-btn saas-btn--primary" (click)="send()"><i class="pi pi-send"></i>Send</button>
         </footer>
       </ng-container>
       <ng-template #noChat>
-        <div class="saas-empty"><i class="pi pi-comments"></i><strong>Select a conversation to begin</strong></div>
+        <div class="saas-empty"><i class="pi pi-comments"></i><strong>{{ loading ? 'Loading threads…' : 'Select a conversation to begin' }}</strong></div>
       </ng-template>
     </section>
   </div>

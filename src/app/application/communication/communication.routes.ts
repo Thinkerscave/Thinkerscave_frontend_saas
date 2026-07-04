@@ -1,12 +1,18 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '../../core/guard/role.guard';
 
-const COMMS_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STAFF'];
+const COMMS_ROLES = [
+  'SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER',
+  'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF', 'RECEPTIONIST'
+];
 
 export const COMMUNICATION_ROUTES: Routes = [
   {
     path: 'communication',
     canActivate: [roleGuard(COMMS_ROLES)],
+    loadComponent: () =>
+      import('./components/communication-workspace/communication-workspace.component')
+        .then(m => m.CommunicationWorkspaceComponent),
     children: [
       { path: '', redirectTo: 'announcements', pathMatch: 'full' },
       {

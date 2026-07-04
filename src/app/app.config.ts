@@ -16,6 +16,7 @@ import { GlobalErrorHandler } from './core/error/global-error-handler';
 import { GlobalSearchProvider } from './shared/components/global-search/global-search.provider';
 import { ApplicationGlobalSearchProvider } from './application/services/application-global-search.provider';
 import { LoginService } from './core/services/login.service';
+import { UserPreferencesService } from './application/services/user-preferences.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,6 +25,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideAppInitializer(() => {
       const loginService = inject(LoginService);
+      const preferencesService = inject(UserPreferencesService);
+      preferencesService.applyStoredPreferences();
       return firstValueFrom(loginService.restoreSessionFromRefreshToken());
     }),
     provideHttpClient(

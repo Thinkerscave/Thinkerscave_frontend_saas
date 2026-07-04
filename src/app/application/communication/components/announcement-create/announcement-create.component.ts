@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inje
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, switchMap, of } from 'rxjs';
 
 import { CommunicationService } from '../../services/communication.service';
 import {
@@ -99,9 +99,13 @@ export class AnnouncementCreateComponent {
       title: this.draft.title,
       body: this.draft.body,
       audience: this.audienceLabel,
-      status: this.draft.scheduleNow ? 'PUBLISHED' : 'DRAFT'
+      status: 'DRAFT'
     })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+      .pipe(
+        switchMap(notice => this.draft.scheduleNow ? this.api.publishNotice(notice.id) : of(notice)),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => { this.saving = false; this.cdr.markForCheck(); })
+      )
       .subscribe({
         next: () => this.router.navigate(['/app/communication/announcements']),
         error: () => { /* toast handled globally */ }
