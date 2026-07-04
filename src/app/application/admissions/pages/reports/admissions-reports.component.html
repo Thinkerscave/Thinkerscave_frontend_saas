@@ -1,0 +1,85 @@
+<p-toast />
+
+<section class="adm-workspace">
+  <tc-saas-page-header
+    title="Admissions Reports"
+    subtitle="Funnel analytics, source analysis, and counselor performance."
+  >
+    <button type="button" class="adm-btn" (click)="loadReports()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <div class="adm-toast is-error" *ngIf="errorMessage">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="adm-loading" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading reports…
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid *ngIf="overviewStats.length" [stats]="overviewStats" />
+
+    <div class="adm-grid-2">
+      <tc-saas-panel title="Admission funnel" [actions]="true">
+        <div panel-actions>
+          <button type="button" class="adm-btn" (click)="exportFunnelCsv()" [disabled]="!funnelEntries.length">
+            <i class="pi pi-download"></i> Export CSV
+          </button>
+        </div>
+
+        <div class="funnel-list" *ngIf="funnelEntries.length">
+          <div *ngFor="let row of funnelEntries" class="funnel-row">
+            <span class="funnel-row__label">{{ row.label }}</span>
+            <div class="funnel-row__bar">
+              <span [style.width.%]="row.pct"></span>
+            </div>
+            <span class="funnel-row__value">{{ row.value }}</span>
+          </div>
+        </div>
+
+        <div class="adm-empty" *ngIf="!funnelEntries.length" style="padding: 32px;">
+          <i class="pi pi-chart-bar"></i>
+          <p>No funnel data available.</p>
+        </div>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Source breakdown">
+        <div class="source-grid" *ngIf="sourceEntries.length">
+          <div *ngFor="let src of sourceEntries" class="source-item">
+            <strong>{{ src.value }}</strong>
+            <span>{{ src.label }} · {{ src.pct }}%</span>
+          </div>
+        </div>
+
+        <div class="adm-empty" *ngIf="!sourceEntries.length" style="padding: 32px;">
+          <i class="pi pi-tag"></i>
+          <p>No source analysis data available.</p>
+        </div>
+      </tc-saas-panel>
+    </div>
+
+    <tc-saas-panel title="Counselor performance">
+      <div class="counselor-table-wrap" *ngIf="counselorRows.length">
+        <table class="counselor-table">
+          <thead>
+            <tr>
+              <th *ngFor="let col of counselorColumns">{{ formatLabel(col) }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of counselorRows">
+              <td *ngFor="let col of counselorColumns">{{ formatCell(row[col]) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="adm-empty" *ngIf="!counselorRows.length" style="padding: 32px;">
+        <i class="pi pi-users"></i>
+        <p>No counselor performance data available.</p>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</section>

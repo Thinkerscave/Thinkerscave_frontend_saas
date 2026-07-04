@@ -1,0 +1,88 @@
+<p-toast />
+
+<section class="adm-workspace">
+  <tc-saas-page-header
+    title="Admissions Settings"
+    subtitle="Sources, statuses, document checklist, and numbering rules."
+  >
+    <button type="button" class="adm-btn adm-btn--primary" (click)="refresh()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <div class="adm-panel" style="background: color-mix(in srgb, var(--tc-info) 8%, var(--tc-surface-0)); border-color: color-mix(in srgb, var(--tc-info) 25%, var(--tc-border));">
+    <p style="margin: 0; font-size: 0.88rem; color: var(--tc-text);">
+      <i class="pi pi-info-circle" style="color: var(--tc-info); margin-right: 6px;"></i>
+      Settings are read-only. Backend edit APIs are not available yet — contact your administrator to change configuration.
+    </p>
+  </div>
+
+  <div class="adm-toast is-error" *ngIf="errorMessage">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="adm-loading" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading settings…
+  </div>
+
+  <div *ngIf="!loading && settings" class="adm-settings-grid">
+    <tc-saas-panel title="Inquiry sources">
+      <div class="adm-chip-row">
+        <span *ngFor="let s of settings.inquirySources" class="adm-chip is-active">{{ s }}</span>
+      </div>
+      <div class="adm-empty" *ngIf="!settings.inquirySources.length" style="padding: 24px;">
+        <p>No sources configured.</p>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Inquiry statuses">
+      <div class="adm-chip-row">
+        <span *ngFor="let s of settings.inquiryStatuses" class="adm-chip is-active">{{ s }}</span>
+      </div>
+      <div class="adm-empty" *ngIf="!settings.inquiryStatuses.length" style="padding: 24px;">
+        <p>No statuses configured.</p>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Required documents">
+      <div class="adm-chip-row">
+        <span *ngFor="let d of settings.requiredDocuments" class="adm-chip is-active">
+          <i class="pi pi-file"></i> {{ d }}
+        </span>
+      </div>
+      <div class="adm-empty" *ngIf="!settings.requiredDocuments.length" style="padding: 24px;">
+        <p>No required documents configured.</p>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Numbering rules">
+      <div class="adm-config-grid">
+        <div *ngFor="let entry of settings.numbering | keyvalue" class="adm-config-row">
+          <span>{{ formatLabel(entry.key) }}</span>
+          <strong>{{ entry.value }}</strong>
+        </div>
+      </div>
+      <div class="adm-empty" *ngIf="!hasEntries(settings.numbering)" style="padding: 24px;">
+        <p>No numbering rules configured.</p>
+      </div>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Reminder rules">
+      <div class="adm-config-grid">
+        <div *ngFor="let entry of settings.reminderRules | keyvalue" class="adm-config-row">
+          <span>{{ formatLabel(entry.key) }}</span>
+          <strong>{{ entry.value }}</strong>
+        </div>
+      </div>
+      <div class="adm-empty" *ngIf="!hasEntries(settings.reminderRules)" style="padding: 24px;">
+        <p>No reminder rules configured.</p>
+      </div>
+    </tc-saas-panel>
+  </div>
+
+  <div class="adm-empty" *ngIf="!loading && !settings && !errorMessage">
+    <i class="pi pi-cog"></i>
+    <h3>No settings loaded</h3>
+    <p>Click Refresh to load configuration from the server.</p>
+  </div>
+</section>

@@ -91,13 +91,13 @@ export class CounsellorDashboardComponent implements OnInit {
   /** Open lead detail in admissions module. */
   viewLead(lead: Lead): void {
     if (!lead?.id) return;
-    this.router.navigate(['/app/admissions/detail', lead.id]);
+    this.router.navigate(['/app/admissions/lead', lead.id]);
   }
 
   /** Move lead through pipeline using the standard action stage. */
   takeAction(lead: Lead): void {
     if (!lead?.id) return;
-    this.router.navigate(['/app/admissions/detail', lead.id], { queryParams: { action: 'follow-up' } });
+    this.router.navigate(['/app/admissions/lead', lead.id], { queryParams: { action: 'follow-up' } });
   }
 
   /** Launch admission conversion wizard. */

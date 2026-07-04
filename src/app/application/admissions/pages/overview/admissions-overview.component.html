@@ -1,0 +1,136 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>{{ pageConfig.title }}</h1>
+      <p>{{ pageConfig.description }}</p>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn" (click)="load()" [disabled]="loading()">
+        <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
+      </button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="newLead()">
+        <i class="pi pi-plus"></i> New Lead
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="adm-empty" role="alert">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Could not load overview</h3>
+      <p>{{ error() }}</p>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
+    </div>
+  } @else if (loading()) {
+    <div class="adm-skeleton-grid" aria-busy="true" aria-label="Loading overview">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="adm-skeleton"></div>
+      }
+    </div>
+    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading pipeline summary…</div>
+  } @else {
+    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+
+    <div class="adm-quick-grid">
+      @for (tile of quickTiles; track tile.key) {
+        <button type="button" class="adm-quick" [attr.data-tone]="tile.tone" (click)="navigateQuick(tile)">
+          <span class="adm-quick__icon"><i [class]="tile.icon"></i></span>
+          <span class="adm-quick__meta">
+            <strong>{{ quick()?.[tile.key] ?? 0 }} · {{ tile.label }}</strong>
+            <small>{{ tile.hint }}</small>
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="adm-overview-grid">
+      <tc-saas-panel title="Lead Funnel" subtitle="Stage-wise pipeline distribution">
+        @if (funnelEntries().length) {
+          <div class="adm-funnel-list">
+            @for (row of funnelEntries(); track row.label) {
+              <div class="adm-funnel-row">
+                <small>{{ row.label }}</small>
+                <div class="adm-funnel-track">
+                  <div class="adm-funnel-fill" [style.width.%]="row.pct"></div>
+                </div>
+                <strong>{{ row.value }}</strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="adm-empty">
+            <i class="pi pi-chart-bar"></i>
+            <h3>No funnel data</h3>
+            <p>Funnel metrics will appear once leads enter the pipeline.</p>
+          </div>
+        }
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Lead Sources" subtitle="Where inquiries originate">
+        @if (sourceEntries().length) {
+          <div class="adm-source-list">
+            @for (src of sourceEntries(); track src.label) {
+              <div class="adm-source-row">
+                <span>{{ src.label }}</span>
+                <em>{{ src.value }} ({{ src.pct }}%)</em>
+                <div class="adm-source-bar"><i [style.width.%]="src.pct"></i></div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="adm-empty">
+            <i class="pi pi-chart-pie"></i>
+            <h3>No source data</h3>
+            <p>Source breakdown will populate as leads are captured.</p>
+          </div>
+        }
+      </tc-saas-panel>
+    </div>
+
+    <tc-saas-panel title="Today's Follow-ups" subtitle="Scheduled interactions for today">
+      @if (todayFollowUps().length) {
+        <div class="stu-table-wrap">
+          <table class="stu-table">
+            <thead>
+              <tr>
+                <th>Lead ID</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Status After</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fu of todayFollowUps(); track fu.followUpId) {
+                <tr (click)="openFollowUp(fu)" style="cursor:pointer;">
+                  <td>
+                    @if (fu.inquiryId) {
+                      <a [routerLink]="['/app/admissions/lead', fu.inquiryId]" (click)="$event.stopPropagation()">
+                        #{{ fu.inquiryId }}
+                      </a>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>{{ fu.followUpType }}</td>
+                  <td>{{ fu.followUpDate | date:'mediumDate' }}</td>
+                  <td><span class="adm-badge">{{ fu.statusAfter || '—' }}</span></td>
+                  <td>{{ fu.remarks || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="adm-empty">
+          <i class="pi pi-calendar"></i>
+          <h3>No follow-ups today</h3>
+          <p>You're all caught up for today.</p>
+          <a class="adm-btn" routerLink="/app/admissions/follow-ups">Open Follow-up Center</a>
+        </div>
+      }
+    </tc-saas-panel>
+  }
+</section>
+
+<p-toast />

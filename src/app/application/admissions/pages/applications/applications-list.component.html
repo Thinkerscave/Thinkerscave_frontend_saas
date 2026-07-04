@@ -1,0 +1,145 @@
+<p-toast />
+<p-confirmDialog />
+
+<section class="adm-workspace">
+  <tc-saas-page-header
+    title="Applications"
+    subtitle="Track admission applications through review and approval."
+  >
+    <button type="button" class="adm-btn adm-btn--primary" (click)="newApplication()">
+      <i class="pi pi-plus"></i> New Application
+    </button>
+    <button type="button" class="adm-btn" (click)="exportCsv()" [disabled]="!applications.length">
+      <i class="pi pi-download"></i> Export CSV
+    </button>
+  </tc-saas-page-header>
+
+  <tc-saas-tabs
+    [tabs]="statusTabs"
+    [active]="activeStatusTab"
+    (changeTab)="onStatusTabChange($event)"
+  />
+
+  <tc-saas-panel title="Application workspace" [actions]="true">
+    <div panel-actions>
+      <small class="adm-panel__hint">{{ totalElements }} total</small>
+    </div>
+
+    <div class="adm-filter-bar">
+      <div class="adm-field">
+        <label>Search</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.keyword"
+          placeholder="Name, mobile, parent…"
+          (keyup.enter)="onSearch()"
+        />
+      </div>
+      <div class="adm-field">
+        <label>Application #</label>
+        <input type="text" [(ngModel)]="filter.admissionId" placeholder="APP-…" />
+      </div>
+      <div class="adm-field">
+        <label>Student name</label>
+        <input type="text" [(ngModel)]="filter.studentName" />
+      </div>
+      <div class="adm-field">
+        <label>Class</label>
+        <input type="text" [(ngModel)]="filter.classApplied" placeholder="e.g. Grade 5" />
+      </div>
+      <div class="adm-field">
+        <label>&nbsp;</label>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="adm-btn adm-btn--primary" (click)="onSearch()" [disabled]="searching">
+            <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
+            Search
+          </button>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="adm-toast is-error" *ngIf="errorMessage">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+
+    <div class="adm-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i> Loading applications…
+    </div>
+
+    <div class="adm-table-wrap" *ngIf="!loading && applications.length">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>Applicant</th>
+            <th>Class</th>
+            <th>Contact</th>
+            <th>Parent</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let app of applications" (click)="openApplication(app)">
+            <td>{{ app.applicationNumber || ('#' + app.applicationId) }}</td>
+            <td>{{ app.applicantName }}</td>
+            <td>{{ app.applyingForClass || '—' }}</td>
+            <td>{{ app.contactNumber || '—' }}</td>
+            <td>{{ app.parentName || '—' }}</td>
+            <td>
+              <tc-saas-pill
+                [label]="statusLabel(app.status)"
+                [tone]="statusTone(app.status)"
+              />
+            </td>
+            <td>{{ app.createdOn | date: 'mediumDate' }}</td>
+            <td>
+              <div class="adm-row-actions" (click)="$event.stopPropagation()">
+                <button
+                  *ngIf="canReview(app)"
+                  type="button"
+                  class="adm-btn adm-btn--primary"
+                  (click)="approve(app, $event)"
+                >
+                  Approve
+                </button>
+                <button
+                  *ngIf="canReview(app)"
+                  type="button"
+                  class="adm-btn adm-btn--danger"
+                  (click)="reject(app, $event)"
+                >
+                  Reject
+                </button>
+                <button type="button" class="adm-btn" (click)="openApplication(app)">
+                  Open
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="adm-pagination">
+        <p-paginator
+          [rows]="pageSize"
+          [totalRecords]="totalElements"
+          [first]="pageIndex * pageSize"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          (onPageChange)="onPageChange($event)"
+        />
+      </div>
+    </div>
+
+    <div class="adm-empty" *ngIf="!loading && !applications.length">
+      <i class="pi pi-folder-open"></i>
+      <h3>No applications found</h3>
+      <p>Adjust filters or create a new application to get started.</p>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="newApplication()">
+        <i class="pi pi-plus"></i> New Application
+      </button>
+    </div>
+  </tc-saas-panel>
+</section>

@@ -211,35 +211,50 @@ export const APPLICATION_ROUTES: Routes = [
     pathMatch: 'full',
     redirectTo: '/public/admission'
   },
-  // ━━━ Admissions module (spec: Inquiry Center / Admission Center / Settings) ━━━
+  // ━━━ Admissions CRM module (EduReach workspace) ━━━
   {
     path: 'admissions',
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'STAFF', 'RECEPTIONIST'])],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'inquiry-center' },
-      { path: 'inquiry-center',   loadComponent: () => import('./admissions/pages/inquiry-center/inquiry-center.component').then(m => m.InquiryCenterComponent) },
-      { path: 'admission-center', loadComponent: () => import('./admissions/pages/admission-center/admission-center.component').then(m => m.AdmissionCenterComponent) },
-      { path: 'settings',         loadComponent: () => import('./admissions/pages/admissions-settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
-      { path: 'detail/:id',       loadComponent: () => import('./admissions/pages/inquiry-detail/inquiry-detail-workspace.component').then(m => m.InquiryDetailWorkspaceComponent) },
-      { path: 'wizard/:id',       loadComponent: () => import('./admissions/pages/admission-wizard/admission-wizard.component').then(m => m.AdmissionWizardComponent) }
+      { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
+      { path: 'wizard/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      {
+        path: '',
+        loadComponent: () => import('./admissions/components/admissions-workspace/admissions-workspace.component').then(m => m.AdmissionsWorkspaceComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'overview', data: { workspacePage: 'overview' }, loadComponent: () => import('./admissions/pages/overview/admissions-overview.component').then(m => m.AdmissionsOverviewComponent) },
+          { path: 'leads', data: { workspacePage: 'leads' }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
+          { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
+          { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
+          { path: 'enrollment', data: { workspacePage: 'enrollment' }, loadComponent: () => import('./admissions/pages/enrollment/enrollment-list.component').then(m => m.EnrollmentListComponent) },
+          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
+          { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
+          // Legacy redirects
+          { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
+          { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
+          { path: 'detail/:id', redirectTo: 'lead/:id' }
+        ]
+      }
     ]
   },
-  // ━━━ Legacy /app/inquiry/* routes ━━━ kept reachable but redirect to spec routes ━━━
+  // ━━━ Legacy /app/inquiry/* routes ━━━
   {
     path: 'inquiry',
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'pipeline', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'management', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'follow-ups', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'counseling', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'applications', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
-      { path: 'documents', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
-      { path: 'communication', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/inquiry-center' },
-      { path: 'detail/:id', redirectTo: '/app/admissions/detail/:id' }
+      { path: '', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
+      { path: 'pipeline', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'management', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'follow-ups', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
+      { path: 'counseling', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'applications', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
+      { path: 'documents', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
+      { path: 'communication', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/reports' },
+      { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
+      { path: 'detail/:id', redirectTo: '/app/admissions/lead/:id' }
     ]
   },
   {
@@ -260,7 +275,7 @@ export const APPLICATION_ROUTES: Routes = [
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/admission-center' },
+          { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'promotion', pathMatch: 'full', redirectTo: 'academic-movement' },

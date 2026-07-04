@@ -289,7 +289,18 @@ export const syllabusApi = {
   saveStudentProgress: (topicId: number) => `${BASE}/syllabus/progress/topic/${topicId}`,
 };
 
-// ─── Dashboard ──────────────────────────────────────────────────────────────────
+// ─── Admissions CRM ─────────────────────────────────────────────────────────────
+export const admissionsApi = {
+  workspace: `${BASE}/admissions/workspace`,
+  leads: `${BASE}/admissions/leads`,
+  leadById: (id: number) => `${BASE}/admissions/leads/${id}`,
+  applications: `${BASE}/admissions/applications`,
+  applicationById: (id: number) => `${BASE}/admissions/applications/${id}`,
+  followUps: `${BASE}/admissions/follow-ups`,
+  reports: `${BASE}/admissions/reports`,
+  settings: `${BASE}/admissions/workspace/settings`,
+};
+
 export const dashboardApi = {
   base: `${BASE}/dashboard`,
   workspace: `${BASE}/dashboard/workspace`,

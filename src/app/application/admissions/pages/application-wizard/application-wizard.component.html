@@ -1,0 +1,212 @@
+<p-toast />
+
+<section class="adm-workspace adm-wizard">
+  <tc-saas-page-header
+    [title]="applicationId ? 'Edit Application' : 'New Application'"
+    subtitle="Complete all steps to submit for admission review."
+  >
+    <button type="button" class="adm-btn adm-btn--ghost" (click)="cancel()">
+      <i class="pi pi-times"></i> Cancel
+    </button>
+  </tc-saas-page-header>
+
+  <div class="adm-toast is-error" *ngIf="errorMessage">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="adm-loading" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i> Loading application…
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stepper [steps]="steps" [activeIndex]="activeStep" />
+
+    <div class="adm-wizard__progress">
+      <div class="adm-wizard__bar">
+        <span [style.width.%]="completionPercent()"></span>
+      </div>
+      <span class="adm-wizard__pct">{{ completionPercent() }}%</span>
+    </div>
+
+    <tc-saas-panel [title]="steps[activeStep].label">
+      <form [formGroup]="form">
+        <!-- Step 1: Student Info -->
+        <div class="adm-wizard__body" *ngIf="activeStep === 0" formGroupName="student">
+          <div class="adm-field">
+            <label>Applicant name *</label>
+            <input type="text" formControlName="applicantName" />
+          </div>
+          <div class="adm-field">
+            <label>Date of birth *</label>
+            <input type="date" formControlName="dateOfBirth" />
+          </div>
+          <div class="adm-field">
+            <label>Gender *</label>
+            <select formControlName="gender">
+              <option value="">Select</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Applying for class *</label>
+            <input type="text" formControlName="applyingForClass" placeholder="e.g. Grade 5" />
+          </div>
+          <div class="adm-field">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+          </div>
+          <div class="adm-field">
+            <label>Contact number *</label>
+            <input type="tel" formControlName="contactNumber" />
+          </div>
+        </div>
+
+        <!-- Step 2: Parents -->
+        <div class="adm-wizard__body" *ngIf="activeStep === 1" formGroupName="parents">
+          <div class="adm-field">
+            <label>Parent / guardian name *</label>
+            <input type="text" formControlName="parentName" />
+          </div>
+          <div class="adm-field">
+            <label>Parent contact *</label>
+            <input type="tel" formControlName="parentContact" />
+          </div>
+          <div class="adm-field adm-field--full">
+            <label>Parent email</label>
+            <input type="email" formControlName="parentEmail" />
+          </div>
+        </div>
+
+        <!-- Step 3: Address -->
+        <div class="adm-wizard__body" *ngIf="activeStep === 2" formGroupName="address">
+          <div class="adm-field adm-field--full">
+            <label>Address line *</label>
+            <input type="text" formControlName="line1" />
+          </div>
+          <div class="adm-field">
+            <label>City *</label>
+            <input type="text" formControlName="city" />
+          </div>
+          <div class="adm-field">
+            <label>State *</label>
+            <input type="text" formControlName="state" />
+          </div>
+          <div class="adm-field">
+            <label>PIN code *</label>
+            <input type="text" formControlName="pinCode" />
+          </div>
+        </div>
+
+        <!-- Step 4: Academic -->
+        <div class="adm-wizard__body" *ngIf="activeStep === 3" formGroupName="academic">
+          <div class="adm-field adm-field--full">
+            <label>Academic notes</label>
+            <textarea formControlName="academicNotes" placeholder="Previous school, marks, special requirements…"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 5: Documents -->
+        <div class="adm-wizard__body" *ngIf="activeStep === 4">
+          <div class="adm-field adm-field--full">
+            <label>Add document reference</label>
+            <div style="display: flex; gap: 8px;">
+              <input
+                type="text"
+                [(ngModel)]="newDocumentName"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="e.g. Birth certificate"
+                (keyup.enter)="addDocument()"
+              />
+              <button type="button" class="adm-btn adm-btn--primary" (click)="addDocument()">
+                <i class="pi pi-plus"></i> Add
+              </button>
+            </div>
+          </div>
+          <div class="adm-chip-row" *ngIf="uploadedDocuments.length">
+            <span *ngFor="let doc of uploadedDocuments" class="adm-chip is-active">
+              <i class="pi pi-file"></i> {{ doc }}
+              <button
+                type="button"
+                class="adm-icon-btn"
+                style="width: 22px; height: 22px; margin-left: 4px;"
+                (click)="removeDocument(doc)"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </span>
+          </div>
+          <div class="adm-empty" *ngIf="!uploadedDocuments.length" style="padding: 24px;">
+            <i class="pi pi-file"></i>
+            <p>No documents listed yet.</p>
+          </div>
+        </div>
+
+        <!-- Step 6: Review -->
+        <div *ngIf="activeStep === 5">
+          <div class="adm-dl">
+            <div *ngFor="let entry of reviewSummary() | keyvalue">
+              <dt>{{ entry.key }}</dt>
+              <dd>{{ entry.value }}</dd>
+            </div>
+          </div>
+          <div style="margin-top: 16px;" *ngIf="progress">
+            <tc-saas-pill [label]="progress.status" tone="info" />
+            <small style="display: block; margin-top: 8px; color: var(--tc-text-muted);">
+              {{ progress.completedSteps }} of {{ progress.totalSteps }} steps complete
+            </small>
+          </div>
+        </div>
+      </form>
+
+      <div class="adm-wizard__footer">
+        <div>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="back()" [disabled]="activeStep === 0">
+            <i class="pi pi-arrow-left"></i> Back
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="adm-btn" (click)="saveDraft()" [disabled]="saving">
+            Save draft
+          </button>
+          <button
+            *ngIf="applicationId"
+            type="button"
+            class="adm-btn"
+            (click)="update()"
+            [disabled]="saving"
+          >
+            Update
+          </button>
+          <button
+            *ngIf="activeStep < steps.length - 1"
+            type="button"
+            class="adm-btn adm-btn--primary"
+            (click)="next()"
+          >
+            Next <i class="pi pi-arrow-right"></i>
+          </button>
+          <button
+            *ngIf="activeStep === steps.length - 1"
+            type="button"
+            class="adm-btn adm-btn--primary"
+            (click)="submit()"
+            [disabled]="saving"
+          >
+            Submit application
+          </button>
+          <button
+            *ngIf="activeStep === steps.length - 1 && applicationId && canApprove()"
+            type="button"
+            class="adm-btn adm-btn--primary"
+            (click)="approve()"
+            [disabled]="saving"
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</section>

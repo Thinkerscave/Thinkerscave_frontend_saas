@@ -1,0 +1,170 @@
+<p-toast />
+
+<section class="adm-workspace">
+  <tc-saas-page-header
+    title="Enrollment"
+    subtitle="Finalize approved applications and create student records."
+  >
+    <div class="adm-view-toggle">
+      <button
+        type="button"
+        class="adm-btn"
+        [class.is-active]="view === 'grid'"
+        (click)="view = 'grid'"
+      >
+        <i class="pi pi-th-large"></i> Cards
+      </button>
+      <button
+        type="button"
+        class="adm-btn"
+        [class.is-active]="view === 'table'"
+        (click)="view = 'table'"
+      >
+        <i class="pi pi-list"></i> Table
+      </button>
+    </div>
+  </tc-saas-page-header>
+
+  <tc-saas-panel title="Approved applications" [actions]="true">
+    <div panel-actions>
+      <small class="adm-panel__hint">{{ totalElements }} ready to enroll</small>
+    </div>
+
+    <div class="adm-toast is-error" *ngIf="errorMessage">
+      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+    </div>
+
+    <div class="adm-loading" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i> Loading approved applications…
+    </div>
+
+    <!-- Card view -->
+    <div class="adm-card-grid" *ngIf="!loading && view === 'grid' && applications.length">
+      <article *ngFor="let app of applications" class="adm-card">
+        <header class="adm-card__head">
+          <div class="adm-avatar">{{ initials(app.applicantName) }}</div>
+          <div class="adm-card__title">
+            <strong>{{ app.applicantName }}</strong>
+            <small>{{ app.applicationNumber || ('#' + app.applicationId) }} · {{ app.applyingForClass || '—' }}</small>
+          </div>
+          <tc-saas-pill label="Approved" tone="success" />
+        </header>
+
+        <div class="adm-card__meta">
+          <span><i class="pi pi-phone"></i> {{ app.contactNumber || '—' }}</span>
+          <span><i class="pi pi-user"></i> {{ app.parentName || '—' }}</span>
+          <span><i class="pi pi-envelope"></i> {{ app.email || '—' }}</span>
+          <span><i class="pi pi-calendar"></i> {{ app.createdOn | date: 'mediumDate' }}</span>
+        </div>
+
+        <footer class="adm-card__footer">
+          <small style="color: var(--tc-text-muted); font-size: 0.74rem;">
+            Ready for enrollment
+          </small>
+          <button
+            type="button"
+            class="adm-btn adm-btn--primary"
+            (click)="openEnrollmentDrawer(app, $event)"
+          >
+            <i class="pi pi-check"></i> Enroll
+          </button>
+        </footer>
+      </article>
+    </div>
+
+    <!-- Table view -->
+    <div class="adm-table-wrap" *ngIf="!loading && view === 'table' && applications.length">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>Applicant</th>
+            <th>Class</th>
+            <th>Contact</th>
+            <th>Parent</th>
+            <th>Approved on</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let app of applications">
+            <td>{{ app.applicationNumber || ('#' + app.applicationId) }}</td>
+            <td>{{ app.applicantName }}</td>
+            <td>{{ app.applyingForClass || '—' }}</td>
+            <td>{{ app.contactNumber || '—' }}</td>
+            <td>{{ app.parentName || '—' }}</td>
+            <td>{{ app.createdOn | date: 'mediumDate' }}</td>
+            <td>
+              <button type="button" class="adm-btn adm-btn--primary" (click)="openEnrollmentDrawer(app)">
+                Enroll
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="adm-pagination" *ngIf="!loading && applications.length">
+      <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalElements"
+        [first]="pageIndex * pageSize"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        (onPageChange)="onPageChange($event)"
+      />
+    </div>
+
+    <div class="adm-empty" *ngIf="!loading && !applications.length">
+      <i class="pi pi-check-circle"></i>
+      <h3>No approved applications</h3>
+      <p>Applications appear here once they are approved in the Applications workspace.</p>
+    </div>
+  </tc-saas-panel>
+</section>
+
+<!-- Enrollment drawer -->
+<div class="adm-drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()">
+  <aside class="adm-drawer" (click)="$event.stopPropagation()">
+    <div class="adm-drawer__header">
+      <div>
+        <h2>Enroll student</h2>
+        <small style="color: var(--tc-text-muted);">
+          {{ selected?.applicantName }} · {{ selected?.applicationNumber || selected?.applicationId }}
+        </small>
+      </div>
+      <button type="button" class="adm-icon-btn" (click)="closeDrawer()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="adm-field">
+      <label>Academic year</label>
+      <input type="text" [(ngModel)]="enrollmentForm.academicYear" placeholder="2025-2026" />
+    </div>
+    <div class="adm-field">
+      <label>Class</label>
+      <input type="text" [(ngModel)]="enrollmentForm.className" />
+    </div>
+    <div class="adm-field">
+      <label>Section</label>
+      <input type="text" [(ngModel)]="enrollmentForm.section" placeholder="e.g. A" />
+    </div>
+
+    <p style="font-size: 0.82rem; color: var(--tc-text-muted); margin: 0;">
+      Enrollment details are recorded as remarks. Student record creation happens in the Students directory.
+    </p>
+
+    <div style="display: flex; gap: 8px; margin-top: auto;">
+      <button type="button" class="adm-btn adm-btn--ghost" (click)="closeDrawer()">Cancel</button>
+      <button
+        type="button"
+        class="adm-btn adm-btn--primary"
+        (click)="enroll()"
+        [disabled]="enrolling"
+      >
+        <i class="pi" [class.pi-check]="!enrolling" [class.pi-spin]="enrolling" [class.pi-spinner]="enrolling"></i>
+        Confirm enrollment
+      </button>
+    </div>
+  </aside>
+</div>

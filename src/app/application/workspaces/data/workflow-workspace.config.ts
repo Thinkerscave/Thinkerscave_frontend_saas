@@ -4,8 +4,12 @@ import { PipelineStage, WorkspaceNavItem } from '../models/workflow-workspace.mo
 // Legacy page IDs (pipeline, follow-ups, counseling, applications, documents, communication, analytics)
 // remain reachable via /app/inquiry/* redirects but are no longer surfaced as separate tabs.
 export const INQUIRY_NAV_ITEMS: WorkspaceNavItem[] = [
-  { id: 'dashboard', label: 'Inquiry Center', route: '/app/admissions/inquiry-center', icon: 'pi pi-sparkles', description: 'Inquiry pipeline, follow-ups, counseling' },
-  { id: 'applications', label: 'Admission Center', route: '/app/admissions/admission-center', icon: 'pi pi-file-edit', description: 'Admissions, documents, enrollment' },
+  { id: 'overview', label: 'Overview', route: '/app/admissions/overview', icon: 'pi pi-chart-bar', description: 'Pipeline KPIs, funnel, and today\'s follow-ups' },
+  { id: 'leads', label: 'Leads', route: '/app/admissions/leads', icon: 'pi pi-users', description: 'Prospective families and lead pipeline' },
+  { id: 'follow-ups', label: 'Follow-ups', route: '/app/admissions/follow-ups', icon: 'pi pi-calendar', description: 'Today\'s schedule and overdue items' },
+  { id: 'applications', label: 'Applications', route: '/app/admissions/applications', icon: 'pi pi-file-edit', description: 'Admission applications and review' },
+  { id: 'enrollment', label: 'Enrollment', route: '/app/admissions/enrollment', icon: 'pi pi-check-circle', description: 'Finalize approved applications' },
+  { id: 'reports', label: 'Reports', route: '/app/admissions/reports', icon: 'pi pi-chart-line', description: 'Funnel and counselor analytics' },
   { id: 'settings', label: 'Settings', route: '/app/admissions/settings', icon: 'pi pi-cog', description: 'Sources, statuses, documents, rules' }
 ];
 

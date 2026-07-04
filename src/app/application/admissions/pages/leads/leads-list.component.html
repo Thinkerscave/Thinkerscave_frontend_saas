@@ -1,0 +1,243 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>{{ pageConfig.title }}</h1>
+      <p>{{ pageConfig.description }}</p>
+      <span class="adm-count"><i class="pi pi-users"></i> {{ totalElements() }} leads</span>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn" (click)="exportCsv()">
+        <i class="pi pi-download"></i> Export
+      </button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="openDrawer()">
+        <i class="pi pi-plus"></i> New Lead
+      </button>
+    </div>
+  </header>
+
+  <tc-saas-panel title="Lead workspace" [actions]="true">
+    <div panel-actions class="stu-chip-bar">
+      <button type="button" [class.is-active]="viewMode() === 'table'" (click)="setView('table')">
+        <i class="pi pi-list"></i> Table
+      </button>
+      <button type="button" [class.is-active]="viewMode() === 'card'" (click)="setView('card')">
+        <i class="pi pi-th-large"></i> Cards
+      </button>
+    </div>
+
+    <div class="adm-filter-bar">
+      <div class="adm-field" style="flex:2; min-width:200px;">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, mobile, email…"
+               (keyup.enter)="runSearch()" />
+      </div>
+      <div class="adm-field">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status">
+          <option [ngValue]="null">All</option>
+          @for (s of statusOptions; track s) {
+            <option [ngValue]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Source</label>
+        <select [(ngModel)]="filter.inquirySource">
+          <option [ngValue]="null">All</option>
+          @for (src of sourceOptions; track src) {
+            <option [ngValue]="src">{{ src }}</option>
+          }
+        </select>
+      </div>
+      <div class="adm-field">
+        <label>Class</label>
+        <input type="text" [(ngModel)]="filter.classInterested" placeholder="e.g. Grade 10" />
+      </div>
+      <div class="adm-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching()">
+          <i class="pi" [class.pi-search]="!searching()" [class.pi-spin]="searching()" [class.pi-spinner]="searching()"></i>
+          Search
+        </button>
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Reset</button>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="adm-toast is-error" role="alert">
+        <i class="pi pi-exclamation-triangle"></i> {{ error() }}
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="loadInitial()">Retry</button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
+    } @else if (!leads().length) {
+      <div class="adm-empty">
+        <i class="pi pi-inbox"></i>
+        <h3>No leads found</h3>
+        <p>Adjust filters or capture a new lead to get started.</p>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="openDrawer()">
+          <i class="pi pi-plus"></i> New Lead
+        </button>
+      </div>
+    } @else if (viewMode() === 'card') {
+      <div class="adm-card-grid">
+        @for (lead of leads(); track lead.inquiryId) {
+          <article class="adm-card" (click)="openLead(lead)">
+            <header class="adm-card__head">
+              <div class="adm-avatar">{{ (lead.name || '?').charAt(0) }}</div>
+              <div class="adm-card__title">
+                <strong>{{ lead.name }}</strong>
+                <small>LEAD-{{ lead.inquiryId }} · {{ lead.classInterestedIn }}</small>
+              </div>
+              <span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ lead.status }}</span>
+            </header>
+            <div class="adm-card__meta">
+              <span><i class="pi pi-phone"></i> {{ lead.mobileNumber || '—' }}</span>
+              <span><i class="pi pi-envelope"></i> {{ lead.email || '—' }}</span>
+              <span><i class="pi pi-tag"></i> {{ lead.inquirySource || '—' }}</span>
+              <span><i class="pi pi-calendar"></i> {{ lead.nextFollowUpDate || '—' }}</span>
+            </div>
+            <footer class="adm-card__footer">
+              <small>{{ lead.createdOn | date:'mediumDate' }}</small>
+              <div class="adm-card__actions">
+                <button class="adm-icon-btn" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
+                <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
+                <button class="adm-icon-btn" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
+                <button class="adm-icon-btn" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
+                <button class="adm-icon-btn" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
+                <button class="adm-icon-btn" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
+              </div>
+            </footer>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="stu-table-wrap">
+        <table class="stu-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Mobile</th>
+              <th>Class</th>
+              <th>Source</th>
+              <th>Status</th>
+              <th>Next Follow-up</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (lead of leads(); track lead.inquiryId; let i = $index) {
+              <tr (click)="openLead(lead)" style="cursor:pointer;">
+                <td>{{ pageIndex * pageSize + i + 1 }}</td>
+                <td>
+                  <strong>{{ lead.name }}</strong>
+                  <small style="display:block;color:var(--tc-text-muted);">#{{ lead.inquiryId }}</small>
+                </td>
+                <td>{{ lead.mobileNumber }}</td>
+                <td>{{ lead.classInterestedIn }}</td>
+                <td>{{ lead.inquirySource || '—' }}</td>
+                <td><span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ lead.status }}</span></td>
+                <td>{{ lead.nextFollowUpDate || '—' }}</td>
+                <td (click)="$event.stopPropagation()">
+                  <div style="display:flex;gap:4px;">
+                    <button class="adm-icon-btn" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
+                    <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
+                    <button class="adm-icon-btn" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
+                    <button class="adm-icon-btn" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
+                    <button class="adm-icon-btn" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
+                    <button class="adm-icon-btn" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (!loading() && totalElements() > pageSize) {
+      <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalElements()"
+        [first]="pageIndex * pageSize"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        (onPageChange)="onPageChange($event)" />
+    }
+  </tc-saas-panel>
+</section>
+
+@if (drawerOpen()) {
+  <div class="stu-drawer-overlay" (click)="closeDrawer()"></div>
+  <div class="stu-drawer">
+    <div class="stu-drawer__header">
+      <div>
+        <h2>{{ editingLead() ? 'Edit Lead' : 'New Lead' }}</h2>
+        <p>{{ editingLead() ? 'Update lead information' : 'Capture a new prospective family' }}</p>
+      </div>
+      <button type="button" class="stu-drawer__close" (click)="closeDrawer()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="stu-drawer__body">
+      <form [formGroup]="leadForm" class="adm-wizard__body" (ngSubmit)="saveLead()">
+        <div class="adm-field">
+          <label>Name *</label>
+          <input type="text" formControlName="name" placeholder="Student / parent name" />
+        </div>
+        <div class="adm-field">
+          <label>Mobile *</label>
+          <input type="tel" formControlName="mobileNumber" placeholder="+91…" />
+        </div>
+        <div class="adm-field">
+          <label>Email</label>
+          <input type="email" formControlName="email" />
+        </div>
+        <div class="adm-field">
+          <label>Class interested *</label>
+          <input type="text" formControlName="classInterestedIn" placeholder="e.g. Grade 10" />
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Address</label>
+          <textarea formControlName="address" rows="2"></textarea>
+        </div>
+        <div class="adm-field">
+          <label>Source</label>
+          <select formControlName="inquirySource">
+            <option value="">Select source</option>
+            @for (src of sourceOptions; track src) {
+              <option [value]="src">{{ src }}</option>
+            }
+          </select>
+        </div>
+        <div class="adm-field">
+          <label>Referred by</label>
+          <input type="text" formControlName="referredBy" />
+        </div>
+        <div class="adm-field">
+          <label>Counselor ID</label>
+          <input type="number" formControlName="assignedCounselorId" />
+        </div>
+        <div class="adm-field">
+          <label>Next follow-up</label>
+          <input type="date" formControlName="nextFollowUpDate" />
+        </div>
+        <div class="adm-field adm-field--full">
+          <label>Comments</label>
+          <textarea formControlName="comments" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="stu-drawer__footer" style="justify-content:flex-end;">
+      <button type="button" class="adm-btn" (click)="closeDrawer()">Cancel</button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="saveLead()" [disabled]="saving() || leadForm.invalid">
+        <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
+        {{ editingLead() ? 'Update Lead' : 'Create Lead' }}
+      </button>
+    </div>
+  </div>
+}
+
+<p-toast />
+<p-confirmDialog />

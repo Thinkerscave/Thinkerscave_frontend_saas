@@ -1,0 +1,142 @@
+<section class="adm-workspace">
+  <header class="adm-hero">
+    <div class="adm-hero__title">
+      <h1>{{ pageConfig.title }}</h1>
+      <p>{{ pageConfig.description }}</p>
+    </div>
+    <div class="adm-hero__actions">
+      <button type="button" class="adm-btn" (click)="load()" [disabled]="loading()">
+        <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
+      </button>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="toggleScheduleForm()">
+        <i class="pi pi-plus"></i> Schedule Follow-up
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="adm-empty" role="alert">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Could not load follow-ups</h3>
+      <p>{{ error() }}</p>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
+    </div>
+  } @else if (loading()) {
+    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading follow-up queue…</div>
+  } @else {
+    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
+
+    @if (showScheduleForm()) {
+      <tc-saas-panel title="Schedule New Follow-up" subtitle="Enter lead ID and follow-up details">
+        <form [formGroup]="scheduleForm" class="adm-wizard__body" (ngSubmit)="submitSchedule()">
+          <div class="adm-field">
+            <label>Lead ID *</label>
+            <input type="number" formControlName="leadId" placeholder="e.g. 1042" />
+            <small style="color:var(--tc-text-muted);font-size:0.76rem;">
+              Or <a routerLink="/app/admissions/leads">browse leads</a> to find the ID.
+            </small>
+          </div>
+          <div class="adm-field">
+            <label>Type *</label>
+            <select formControlName="followUpType">
+              @for (t of followUpTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Follow-up date</label>
+            <input type="date" formControlName="followUpDate" />
+          </div>
+          <div class="adm-field">
+            <label>Next follow-up</label>
+            <input type="date" formControlName="nextFollowUpDate" />
+          </div>
+          <div class="adm-field">
+            <label>Status after</label>
+            <select formControlName="statusAfter">
+              <option value="CONTACTED">CONTACTED</option>
+              <option value="INTERESTED">INTERESTED</option>
+              <option value="COUNSELING">COUNSELING</option>
+              <option value="FOLLOW_UP_REQUIRED">FOLLOW_UP_REQUIRED</option>
+              <option value="READY_FOR_ADMISSION">READY_FOR_ADMISSION</option>
+            </select>
+          </div>
+          <div class="adm-field adm-field--full">
+            <label>Remarks *</label>
+            <textarea formControlName="remarks" rows="3" placeholder="What was discussed or planned"></textarea>
+          </div>
+          <div class="adm-field adm-field--full" style="flex-direction:row; justify-content:flex-end; gap:8px;">
+            <button type="button" class="adm-btn" (click)="toggleScheduleForm()">Cancel</button>
+            <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || scheduleForm.invalid">
+              <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
+              Schedule
+            </button>
+          </div>
+        </form>
+      </tc-saas-panel>
+    }
+
+    <tc-saas-panel [title]="panelTitle()" subtitle="Manage and complete scheduled interactions">
+      @if (visibleItems().length) {
+        <div class="stu-table-wrap">
+          <table class="stu-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of visibleItems(); track item.followUpId) {
+                <tr>
+                  <td>
+                    @if (item.inquiryId) {
+                      <a [routerLink]="['/app/admissions/lead', item.inquiryId]">Lead #{{ item.inquiryId }}</a>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>{{ item.followUpType }}</td>
+                  <td>{{ item.followUpDate | date:'mediumDate' }}</td>
+                  <td>
+                    <span class="adm-badge" [attr.data-tone]="isOverdue(item) ? 'danger' : 'info'">
+                      {{ isOverdue(item) ? 'OVERDUE' : (item.statusAfter || 'PENDING') }}
+                    </span>
+                  </td>
+                  <td>{{ item.remarks || '—' }}</td>
+                  <td>
+                    <div style="display:flex;gap:6px;">
+                      @if (item.inquiryId) {
+                        <button type="button" class="adm-btn adm-btn--ghost" (click)="openLead(item.inquiryId)">
+                          <i class="pi pi-eye"></i>
+                        </button>
+                      }
+                      <button type="button" class="adm-btn adm-btn--primary" (click)="complete(item)">
+                        <i class="pi pi-check"></i> Complete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="adm-empty">
+          <i class="pi pi-calendar"></i>
+          <h3>No follow-ups in this view</h3>
+          <p>Schedule a new follow-up or check another tab.</p>
+        </div>
+      }
+    </tc-saas-panel>
+  }
+</section>
+
+<p-toast />

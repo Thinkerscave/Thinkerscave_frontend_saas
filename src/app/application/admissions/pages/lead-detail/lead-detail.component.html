@@ -1,0 +1,295 @@
+<section class="adm-workspace adm-detail">
+  @if (loading()) {
+    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading lead detail…</div>
+  } @else if (error()) {
+    <div class="adm-empty" role="alert">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Could not load lead</h3>
+      <p>{{ error() }}</p>
+      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
+      <button type="button" class="adm-btn" (click)="goBack()">Back to Leads</button>
+    </div>
+  } @else {
+    @if (detail(); as d) {
+    <div class="adm-detail__hero">
+      <div class="adm-detail__hero-left">
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="goBack()" title="Back">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        <div class="adm-avatar">{{ (d.inquiry.name || '?').charAt(0) }}</div>
+        <div class="adm-detail__title">
+          <strong>{{ d.inquiry.name }}</strong>
+          <small>LEAD-{{ d.inquiry.inquiryId }} · {{ d.inquiry.classInterestedIn }} · {{ d.inquiry.inquirySource || 'Unknown source' }}</small>
+        </div>
+      </div>
+      <div class="adm-hero__actions">
+        <tc-saas-pill [label]="d.inquiry.status" [tone]="statusTone(d.inquiry.status)"></tc-saas-pill>
+        <button type="button" class="adm-btn" (click)="markInterested()">
+          <i class="pi pi-thumbs-up"></i> Interested
+        </button>
+        <button type="button" class="adm-btn adm-btn--danger" (click)="openLostDialog()">
+          <i class="pi pi-times-circle"></i> Mark Lost
+        </button>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="proceedToApplication()">
+          <i class="pi pi-arrow-right"></i> Proceed to Application
+        </button>
+      </div>
+    </div>
+
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
+
+    @switch (activeTab()) {
+      @case ('overview') {
+        <div class="adm-tab-panel">
+          <div class="adm-panel">
+            <div class="adm-panel__header"><h2>Lead overview</h2></div>
+            <dl class="adm-dl">
+              <div><dt>Mobile</dt><dd>{{ d.inquiry.mobileNumber || '—' }}</dd></div>
+              <div><dt>Email</dt><dd>{{ d.inquiry.email || '—' }}</dd></div>
+              <div><dt>Class interested</dt><dd>{{ d.inquiry.classInterestedIn }}</dd></div>
+              <div><dt>Source</dt><dd>{{ d.inquiry.inquirySource || '—' }}</dd></div>
+              <div><dt>Referred by</dt><dd>{{ d.inquiry.referredBy || '—' }}</dd></div>
+              <div><dt>Address</dt><dd>{{ d.inquiry.address || '—' }}</dd></div>
+              <div><dt>Assigned counselor</dt><dd>{{ d.inquiry.assignedCounselorId || 'Unassigned' }}</dd></div>
+              <div><dt>Last follow-up</dt><dd>{{ (d.inquiry.lastFollowUpDate | date:'medium') || '—' }} · {{ d.inquiry.lastFollowUpType || '' }}</dd></div>
+              <div><dt>Next follow-up</dt><dd>{{ d.inquiry.nextFollowUpDate || '—' }}</dd></div>
+              <div><dt>Comments</dt><dd>{{ d.inquiry.comments || '—' }}</dd></div>
+            </dl>
+          </div>
+
+          <div class="adm-panel">
+            <div class="adm-panel__header"><h2>Assign counselor</h2></div>
+            <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="adm-filter-bar">
+              <div class="adm-field">
+                <label>Counselor ID</label>
+                <input type="number" formControlName="counselorId" placeholder="e.g. 12" />
+              </div>
+              <div class="adm-field">
+                <label>&nbsp;</label>
+                <button type="submit" class="adm-btn adm-btn--primary" [disabled]="assignForm.invalid">
+                  <i class="pi pi-user-plus"></i> Assign
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+      @case ('activities') {
+        <div class="adm-tab-panel">
+          <div class="adm-grid-2">
+            <div class="adm-panel">
+              <div class="adm-panel__header">
+                <h2>Follow-up history</h2>
+                <small class="adm-panel__hint">{{ d.followUps.length }} entries</small>
+              </div>
+              @if (!d.followUps.length) {
+                <div class="adm-empty">
+                  <i class="pi pi-history"></i>
+                  <h3>No follow-ups yet</h3>
+                  <p>Log the first interaction using the form.</p>
+                </div>
+              } @else {
+                @for (f of d.followUps; track trackFollow($index, f)) {
+                  <article class="adm-card" style="cursor:default;">
+                    <header class="adm-card__head">
+                      <div class="adm-avatar"><i class="pi pi-phone"></i></div>
+                      <div class="adm-card__title">
+                        <strong>{{ f.followUpType }} · {{ f.statusAfter || '—' }}</strong>
+                        <small>{{ f.followUpDate | date:'medium' }} · by {{ f.createdBy || 'system' }}</small>
+                      </div>
+                    </header>
+                    <p style="margin:0;font-size:0.88rem;">{{ f.remarks }}</p>
+                    @if (f.nextFollowUpDate) {
+                      <small style="color:var(--tc-text-muted);font-size:0.78rem;">Next: {{ f.nextFollowUpDate }}</small>
+                    }
+                  </article>
+                }
+              }
+            </div>
+
+            <div class="adm-panel">
+              <div class="adm-panel__header"><h2>Add follow-up</h2></div>
+              <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-wizard__body">
+                <div class="adm-field">
+                  <label>Type</label>
+                  <select formControlName="followUpType">
+                    @for (t of followUpTypes; track t) {
+                      <option [value]="t">{{ t }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="adm-field">
+                  <label>Status after</label>
+                  <select formControlName="statusAfter">
+                    <option value="CONTACTED">CONTACTED</option>
+                    <option value="INTERESTED">INTERESTED</option>
+                    <option value="COUNSELING">COUNSELING</option>
+                    <option value="DOCUMENTS_PENDING">DOCUMENTS_PENDING</option>
+                    <option value="FOLLOW_UP_REQUIRED">FOLLOW_UP_REQUIRED</option>
+                    <option value="READY_FOR_ADMISSION">READY_FOR_ADMISSION</option>
+                    <option value="LOST">LOST</option>
+                  </select>
+                </div>
+                <div class="adm-field">
+                  <label>Follow-up date</label>
+                  <input type="date" formControlName="followUpDate" />
+                </div>
+                <div class="adm-field">
+                  <label>Next follow-up</label>
+                  <input type="date" formControlName="nextFollowUpDate" />
+                </div>
+                <div class="adm-field adm-field--full">
+                  <label>Remarks *</label>
+                  <textarea formControlName="remarks" rows="3"></textarea>
+                </div>
+                <div class="adm-field adm-field--full" style="flex-direction:row;justify-content:flex-end;">
+                  <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || followUpForm.invalid">
+                    <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
+                    Save follow-up
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      }
+      @case ('counseling') {
+        <div class="adm-tab-panel">
+          <div class="adm-grid-2">
+            <div class="adm-panel">
+              <div class="adm-panel__header">
+                <h2>Counseling notes</h2>
+                <small class="adm-panel__hint">{{ d.counselingNotes.length }} notes</small>
+              </div>
+              @if (!d.counselingNotes.length) {
+                <div class="adm-empty">
+                  <i class="pi pi-comments"></i>
+                  <h3>No counseling notes</h3>
+                  <p>Capture the first counseling conversation.</p>
+                </div>
+              } @else {
+                @for (n of d.counselingNotes; track trackNote($index, n)) {
+                  <article class="adm-card" style="cursor:default;">
+                    <header class="adm-card__head">
+                      <div class="adm-avatar"><i class="pi pi-comment"></i></div>
+                      <div class="adm-card__title">
+                        <strong>{{ n.createdBy || 'Counselor' }}</strong>
+                        <small>{{ n.createdOn | date:'medium' }}</small>
+                      </div>
+                    </header>
+                    <dl class="adm-dl">
+                      @if (n.studentRequirements) {
+                        <div><dt>Requirements</dt><dd>{{ n.studentRequirements }}</dd></div>
+                      }
+                      @if (n.parentConcerns) {
+                        <div><dt>Parent concerns</dt><dd>{{ n.parentConcerns }}</dd></div>
+                      }
+                      @if (n.campusVisitInfo) {
+                        <div><dt>Campus visit</dt><dd>{{ n.campusVisitInfo }}</dd></div>
+                      }
+                      @if (n.recommendations) {
+                        <div><dt>Recommendations</dt><dd>{{ n.recommendations }}</dd></div>
+                      }
+                      @if (n.notes) {
+                        <div><dt>Notes</dt><dd>{{ n.notes }}</dd></div>
+                      }
+                    </dl>
+                  </article>
+                }
+              }
+            </div>
+
+            <div class="adm-panel">
+              <div class="adm-panel__header"><h2>Add counseling note</h2></div>
+              <form [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-wizard__body">
+                <div class="adm-field adm-field--full">
+                  <label>Student requirements</label>
+                  <textarea formControlName="studentRequirements" rows="2"></textarea>
+                </div>
+                <div class="adm-field adm-field--full">
+                  <label>Parent concerns</label>
+                  <textarea formControlName="parentConcerns" rows="2"></textarea>
+                </div>
+                <div class="adm-field adm-field--full">
+                  <label>Campus visit info</label>
+                  <textarea formControlName="campusVisitInfo" rows="2"></textarea>
+                </div>
+                <div class="adm-field adm-field--full">
+                  <label>Recommendations</label>
+                  <textarea formControlName="recommendations" rows="2"></textarea>
+                </div>
+                <div class="adm-field adm-field--full">
+                  <label>Notes *</label>
+                  <textarea formControlName="notes" rows="3"></textarea>
+                </div>
+                <div class="adm-field adm-field--full" style="flex-direction:row;justify-content:flex-end;">
+                  <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || counselingForm.invalid">
+                    <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
+                    Save note
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      }
+      @case ('timeline') {
+        <div class="adm-tab-panel">
+          <div class="adm-panel">
+            <div class="adm-panel__header">
+              <h2>Lead timeline</h2>
+              <small class="adm-panel__hint">{{ d.timeline.length }} events</small>
+            </div>
+            @if (!d.timeline.length) {
+              <div class="adm-empty">
+                <i class="pi pi-clock"></i>
+                <h3>No activity yet</h3>
+                <p>Every interaction will be tracked here automatically.</p>
+              </div>
+            } @else {
+              <div class="adm-timeline">
+                @for (t of d.timeline; track trackTimeline($index, t)) {
+                  <div class="adm-timeline__item" [attr.data-tone]="t.tone || 'neutral'">
+                    <div class="adm-timeline__dot"><i [class]="t.icon || 'pi pi-circle-fill'"></i></div>
+                    <div class="adm-timeline__body">
+                      <strong>{{ t.action }}</strong>
+                      @if (t.description) {
+                        <p>{{ t.description }}</p>
+                      }
+                      <small>{{ t.performedAt | date:'medium' }} · {{ t.performedBy }}</small>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+    }
+  }
+</section>
+
+@if (showLostDialog()) {
+  <div class="adm-lost-dialog" role="dialog" aria-modal="true" aria-labelledby="lost-title">
+    <div class="adm-lost-dialog__panel">
+      <h2 id="lost-title" style="margin:0;font-size:1.1rem;">Mark Lead as Lost</h2>
+      <p style="margin:0;color:var(--tc-text-muted);font-size:0.88rem;">Provide a reason for closing this opportunity.</p>
+      <form [formGroup]="lostForm" (ngSubmit)="confirmMarkLost()" class="adm-wizard__body">
+        <div class="adm-field adm-field--full">
+          <label>Reason *</label>
+          <textarea formControlName="reason" rows="3" placeholder="e.g. Chose another school"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;">
+          <button type="button" class="adm-btn" (click)="closeLostDialog()">Cancel</button>
+          <button type="submit" class="adm-btn adm-btn--danger" [disabled]="lostForm.invalid">
+            Confirm Mark Lost
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<p-toast />
+<p-confirmDialog />
