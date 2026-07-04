@@ -1,0 +1,140 @@
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  tc-saas-stepper {
+    display: block;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  &__banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    border: 1px solid var(--tc-border, var(--saas-border));
+
+    i { margin-top: 2px; }
+
+    &--danger {
+      background: var(--saas-danger-soft, rgba(239, 68, 68, 0.08));
+      border-color: rgba(239, 68, 68, 0.25);
+      color: var(--saas-danger, #ef4444);
+    }
+
+    &--warning {
+      background: var(--saas-warning-soft);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: var(--saas-warning);
+    }
+  }
+
+  &__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  &__flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--tc-text-muted, var(--saas-text-soft));
+    font-size: 0.85rem;
+
+    input { accent-color: var(--tc-primary-600, var(--saas-primary)); }
+  }
+
+  &__nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--tc-border, var(--saas-border));
+    flex-wrap: wrap;
+  }
+
+  &__nav-end {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__title {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--saas-text);
+  }
+
+  &__lead {
+    margin: 0;
+    color: var(--saas-text-soft);
+    font-size: 0.85rem;
+  }
+}
+
+.wizard-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+
+  &--triple { grid-template-columns: repeat(3, 1fr); }
+
+  @media (max-width: 900px) {
+    &--triple { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.saas-field--full { grid-column: 1 / -1; }
+
+.wizard-review {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 8px 16px;
+  margin: 8px 0 0;
+
+  > div { display: contents; }
+
+  dt {
+    color: var(--saas-text-soft);
+    font-size: 0.82rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--saas-text);
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--saas-border);
+    }
+  }
+}

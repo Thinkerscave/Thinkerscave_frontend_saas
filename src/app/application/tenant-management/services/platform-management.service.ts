@@ -5,6 +5,12 @@ import { platformApi, auditApi } from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
 import {
   Customer,
+  CustomerContact,
+  CustomerContactPayload,
+  CustomerCreatePayload,
+  CustomerDashboard,
+  CustomerDetail,
+  CustomerMetadata,
   CustomerQuery,
   OrganizationDetail,
   OrganizationQuery,
@@ -74,11 +80,63 @@ export class PlatformManagementService {
     if (query.status) params = params.set('status', query.status);
     if (query.customerType) params = params.set('customerType', query.customerType);
     if (query.search) params = params.set('search', query.search);
+    if (query.activeOnly === false) params = params.set('activeOnly', 'false');
     params = params.set('page', String(query.page ?? 0));
     params = params.set('size', String(query.size ?? 20));
 
     return this.http.get<unknown>(platformApi.customers, { params }).pipe(
       map(r => unwrapApiResponse<SpringPage<Customer>>(r, this.emptyPage()))
+    );
+  }
+
+  getCustomerDashboard(): Observable<CustomerDashboard> {
+    return this.http.get<unknown>(platformApi.customerDashboard).pipe(
+      map(r => unwrapApiResponse<CustomerDashboard>(r, {
+        totalCustomers: 0, activeCustomers: 0, trialCustomers: 0, suspendedCustomers: 0,
+        archivedCustomers: 0, totalOrganizations: 0, annualRevenue: 0, renewals30Days: 0
+      }))
+    );
+  }
+
+  getCustomerMetadata(): Observable<CustomerMetadata> {
+    return this.http.get<unknown>(platformApi.customerMetadata).pipe(
+      map(r => unwrapApiResponse<CustomerMetadata>(r, { statuses: [], customerTypes: [], preferredCommunications: [] }))
+    );
+  }
+
+  getCustomer(id: number): Observable<CustomerDetail> {
+    return this.http.get<unknown>(platformApi.customerById(id)).pipe(
+      map(r => unwrapApiResponse<CustomerDetail>(r, {} as CustomerDetail))
+    );
+  }
+
+  createCustomer(payload: CustomerCreatePayload): Observable<Customer> {
+    return this.http.post<unknown>(platformApi.customers, payload).pipe(
+      map(r => unwrapApiResponse<Customer>(r, {} as Customer))
+    );
+  }
+
+  updateCustomer(id: number, payload: CustomerCreatePayload): Observable<Customer> {
+    return this.http.put<unknown>(platformApi.customerById(id), payload).pipe(
+      map(r => unwrapApiResponse<Customer>(r, {} as Customer))
+    );
+  }
+
+  archiveCustomer(id: number): Observable<void> {
+    return this.http.delete<unknown>(platformApi.customerById(id)).pipe(map(() => undefined));
+  }
+
+  restoreCustomer(id: number): Observable<void> {
+    return this.http.post<unknown>(platformApi.customerRestore(id), {}).pipe(map(() => undefined));
+  }
+
+  permanentlyDeleteCustomer(id: number): Observable<void> {
+    return this.http.delete<unknown>(platformApi.customerPermanentDelete(id)).pipe(map(() => undefined));
+  }
+
+  addCustomerContact(customerId: number, payload: CustomerContactPayload): Observable<CustomerContact> {
+    return this.http.post<unknown>(platformApi.customerContacts(customerId), payload).pipe(
+      map(r => unwrapApiResponse<CustomerContact>(r, {} as CustomerContact))
     );
   }
 

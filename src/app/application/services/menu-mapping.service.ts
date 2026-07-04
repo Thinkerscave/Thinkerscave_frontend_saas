@@ -55,48 +55,13 @@ export class MenuMappingService {
       // Mock Counsellor menu (only for mock login)
       if (user.role === 'COUNSELLOR' || (user.roles && user.roles.includes('COUNSELLOR'))) {
         const counsellorMenu: MenuItem[] = [
-          {
-            label: 'Overview',
-            icon: 'pi pi-home',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'overview' }
-          },
-          {
-            label: 'All Leads',
-            icon: 'pi pi-list',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'all-leads' }
-          },
-          {
-            label: 'Today\'s Follow-ups',
-            icon: 'pi pi-calendar',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'today-followups' }
-          },
-          {
-            label: 'Overdue Follow-ups',
-            icon: 'pi pi-exclamation-circle',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'overdue-followups' }
-          },
-          {
-            label: 'Interested Leads',
-            icon: 'pi pi-heart-fill',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'interested-leads' }
-          },
-          {
-            label: 'New Leads',
-            icon: 'pi pi-star-fill',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'new-leads' }
-          },
-          {
-            label: 'Statistics',
-            icon: 'pi pi-chart-bar',
-            routerLink: ['/app/counsellor-dashboard'],
-            queryParams: { tab: 'lead-statistics' }
-          }
+          { label: 'Overview', icon: 'pi pi-home', routerLink: ['/app/admissions/overview'] },
+          { label: 'All Leads', icon: 'pi pi-list', routerLink: ['/app/admissions/leads'] },
+          { label: 'Today\'s Follow-ups', icon: 'pi pi-calendar', routerLink: ['/app/admissions/follow-ups'] },
+          { label: 'Overdue Follow-ups', icon: 'pi pi-exclamation-circle', routerLink: ['/app/admissions/follow-ups'] },
+          { label: 'Interested Leads', icon: 'pi pi-heart-fill', routerLink: ['/app/admissions/leads'] },
+          { label: 'New Leads', icon: 'pi pi-star-fill', routerLink: ['/app/admissions/leads'] },
+          { label: 'Statistics', icon: 'pi pi-chart-bar', routerLink: ['/app/admissions/reports'] }
         ];
         return of(this.applyNavigationRules(this.consolidateWorkspaceMenu(this.normalizeMenuItems(counsellorMenu))));
       }
@@ -428,7 +393,6 @@ export class MenuMappingService {
 
     if (isTenantManager) {
       menus = this.filterNavigationItems(menus, item => this.isRedundantTenantMenuStub(item));
-      menus = this.ensureMenuGroup(menus, this.tenantManagementMenuGroup());
     }
 
     if (isAccessManager) {
@@ -535,24 +499,6 @@ export class MenuMappingService {
     const next = [...items];
     next.splice(dashboardIndex >= 0 ? dashboardIndex + 1 : next.length, 0, menuItem);
     return next;
-  }
-
-  private tenantManagementMenuGroup(): MenuItem {
-    return {
-      label: 'Platform Administration',
-      icon: 'pi pi-shield',
-      routerLink: ['/app/tenant-management/dashboard'],
-      items: [
-        { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: ['/app/tenant-management/dashboard'] },
-        { label: 'Organizations', icon: 'pi pi-building', routerLink: ['/app/tenant-management/organizations'] },
-        { label: 'Subscription Plans', icon: 'pi pi-credit-card', routerLink: ['/app/tenant-management/subscription-plans'] },
-        { label: 'Feature Catalog', icon: 'pi pi-th-large', routerLink: ['/app/tenant-management/feature-catalog'] },
-        { label: 'Promotions', icon: 'pi pi-percentage', routerLink: ['/app/tenant-management/promotions'] },
-        { label: 'Tenant Health', icon: 'pi pi-server', routerLink: ['/app/tenant-management/tenant-health'] },
-        { label: 'Migration Center', icon: 'pi pi-sync', routerLink: ['/app/tenant-management/migration-center'] },
-        { label: 'Audit Center', icon: 'pi pi-history', routerLink: ['/app/tenant-management/audit-center'] }
-      ]
-    };
   }
 
   private isRedundantTenantMenuStub(item: MenuItem): boolean {

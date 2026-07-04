@@ -4,8 +4,9 @@ export type OrganizationStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'
 export type InstitutionType =
   | 'PRE_SCHOOL' | 'PRIMARY_SCHOOL' | 'HIGH_SCHOOL' | 'HIGHER_SECONDARY' | 'SCHOOL'
   | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'OTHER';
-export type CustomerStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'PENDING';
-export type CustomerType = 'INDIVIDUAL' | 'BUSINESS' | 'INSTITUTION' | 'GOVERNMENT' | 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'EDUCATION_GROUP' | 'TRUST' | 'COMPANY' | 'OTHER';
+export type CustomerStatus = 'LEAD' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
+export type CustomerType = 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'EDUCATION_GROUP' | 'TRUST' | 'COMPANY' | 'OTHER';
+export type PreferredCommunication = 'EMAIL' | 'PHONE' | 'WHATSAPP' | 'SMS';
 export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'SUSPENDED';
 export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 /** Backend supports PERCENTAGE and FLAT_AMOUNT; FLAT is kept for legacy seed/display mapping. */
@@ -185,11 +186,110 @@ export interface Customer {
   status?: CustomerStatus;
   email?: string;
   mobileNumber?: string;
+  alternateMobileNumber?: string;
+  website?: string;
+  taxNumber?: string;
+  registrationNumber?: string;
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
   state?: string;
   country?: string;
-  organizationCount?: number;
+  postalCode?: string;
+  logoUrl?: string;
+  preferredCommunication?: PreferredCommunication;
+  onboardingCompleted?: boolean;
   active?: boolean;
+  remarks?: string;
+  organizationCount?: number;
+  createdOn?: string;
+  createdBy?: string;
+  updatedOn?: string;
+  updatedBy?: string;
+}
+
+export interface CustomerContact {
+  id: number;
+  contactCode?: string;
+  customerId?: number;
+  fullName: string;
+  designation?: string;
+  contactType?: string;
+  email?: string;
+  mobileNumber?: string;
+  alternateMobileNumber?: string;
+  officePhone?: string;
+  department?: string;
+  primaryContact?: boolean;
+  billingContact?: boolean;
+  technicalContact?: boolean;
+  salesContact?: boolean;
+  supportContact?: boolean;
+  active?: boolean;
+  remarks?: string;
+  createdOn?: string;
+}
+
+export interface CustomerDetail extends Customer {
+  contacts?: CustomerContact[];
+  organizations?: OrganizationSummary[];
+}
+
+export interface CustomerDashboard {
+  totalCustomers: number;
+  activeCustomers: number;
+  trialCustomers: number;
+  suspendedCustomers: number;
+  archivedCustomers: number;
+  totalOrganizations: number;
+  annualRevenue: number;
+  renewals30Days: number;
+}
+
+export interface EnumOption {
+  code: string;
+  label: string;
+}
+
+export interface CustomerMetadata {
+  statuses: EnumOption[];
+  customerTypes: EnumOption[];
+  preferredCommunications: EnumOption[];
+}
+
+export interface CustomerCreatePayload {
+  legalName: string;
+  displayName: string;
+  customerType: CustomerType;
+  email: string;
+  mobileNumber: string;
+  alternateMobileNumber?: string;
+  website?: string;
+  taxNumber?: string;
+  registrationNumber?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  logoUrl?: string;
+  preferredCommunication?: PreferredCommunication;
+  status?: CustomerStatus;
+  remarks?: string;
+}
+
+export interface CustomerContactPayload {
+  fullName: string;
+  designation?: string;
+  email?: string;
+  mobileNumber?: string;
+  alternateMobileNumber?: string;
+  primaryContact?: boolean;
+  billingContact?: boolean;
+  technicalContact?: boolean;
+  supportContact?: boolean;
+  remarks?: string;
 }
 
 export interface SubscriptionPlanFeature {
@@ -346,6 +446,7 @@ export interface CustomerQuery {
   status?: CustomerStatus;
   customerType?: CustomerType;
   search?: string;
+  activeOnly?: boolean;
   page?: number;
   size?: number;
 }

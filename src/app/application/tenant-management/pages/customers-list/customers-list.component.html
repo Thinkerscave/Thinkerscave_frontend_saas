@@ -1,0 +1,124 @@
+<div class="saas-page customers-list">
+  <p-toast></p-toast>
+
+  <tc-saas-page-header
+    title="Customers"
+    subtitle="Commercial relationships between ThinkerScave and education groups"
+    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Customers'}]">
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <a class="saas-btn" routerLink="/app/tenant-management/customers/archived"><i class="pi pi-inbox"></i> Archive</a>
+    <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers/new"><i class="pi pi-plus"></i> New Customer</a>
+  </tc-saas-page-header>
+
+  <div class="customers-list__stat-row">
+    <button type="button" class="customers-list__stat-chip" *ngFor="let stat of stats" (click)="onStatClick(stat.key)">
+      <i [class]="stat.icon"></i>
+      <div>
+        <small>{{ stat.label }}</small>
+        <strong>{{ stat.value }}</strong>
+      </div>
+    </button>
+  </div>
+
+  <tc-saas-filter-row>
+    <label class="saas-search">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name, code, email, phone...">
+    </label>
+    <label class="saas-field"><span>Status</span>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let s of statusOptions" [ngValue]="s.id">{{ s.label }}</option>
+      </select>
+    </label>
+    <label class="saas-field"><span>Industry</span>
+      <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let t of typeOptions" [ngValue]="t.id">{{ t.label }}</option>
+      </select>
+    </label>
+    <div class="customers-list__view-switch">
+      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view"><i class="pi pi-th-large"></i></button>
+      <button type="button" [class.is-active]="viewMode === 'grid'" (click)="setViewMode('grid')" title="Grid view"><i class="pi pi-table"></i></button>
+      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view"><i class="pi pi-list"></i></button>
+    </div>
+    <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
+  </tc-saas-filter-row>
+
+  <tc-saas-panel [title]="'All Customers'" [subtitle]="totalRecords + ' customers'">
+    <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>{{ errorMessage }}</strong>
+      <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+    </div>
+
+    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading customers...</div>
+
+    <div *ngIf="!loading && !customers.length && !errorMessage" class="saas-empty">
+      <i class="pi pi-users"></i>
+      <strong>No customers found</strong>
+      <p>Try adjusting filters or create your first customer account.</p>
+      <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers/new">Create First Customer</a>
+    </div>
+
+    <div *ngIf="!loading && customers.length && viewMode !== 'table'" [class]="'customers-list__cards customers-list__cards--' + viewMode">
+      <article class="customer-card" *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)">
+        <div class="customer-card__head">
+          <span class="customer-card__logo" [class.has-image]="c.logoUrl">
+            <img *ngIf="c.logoUrl" [src]="c.logoUrl" alt="">
+            <span *ngIf="!c.logoUrl">{{ customerInitials(c.displayName) }}</span>
+          </span>
+          <div class="customer-card__title">
+            <strong>{{ c.displayName }}</strong>
+            <small>{{ c.customerCode }} · {{ customerTypeLabel(c.customerType) }}</small>
+          </div>
+          <tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill>
+        </div>
+        <div class="customer-card__meta">
+          <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} orgs</span>
+          <span><i class="pi pi-envelope"></i> {{ c.email || '—' }}</span>
+        </div>
+        <div class="customer-card__actions" (click)="$event.stopPropagation()">
+          <button type="button" class="saas-btn saas-btn--ghost" (click)="openCustomer(c, $event)">View</button>
+          <a class="saas-btn saas-btn--ghost" [routerLink]="['/app/tenant-management/customers', c.id, 'edit']">Edit</a>
+          <button type="button" class="saas-btn saas-btn--ghost" (click)="addOrganization(c, $event)">Add Org</button>
+        </div>
+        <footer class="customer-card__footer">View Details <i class="pi pi-arrow-right"></i></footer>
+      </article>
+    </div>
+
+    <div *ngIf="!loading && customers.length && viewMode === 'table'" class="saas-table-wrap">
+      <table class="saas-data-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Business Name</th>
+            <th>Organizations</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)">
+            <td>
+              <div class="cell-main">
+                <span class="customers-list__avatar">{{ customerInitials(c.displayName) }}</span>
+                <div><strong>{{ c.displayName }}</strong><small>{{ c.customerCode }}</small></div>
+              </div>
+            </td>
+            <td>{{ c.legalName }}</td>
+            <td>{{ c.organizationCount ?? 0 }}</td>
+            <td><tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill></td>
+            <td>{{ formatDate(c.createdOn) }}</td>
+            <td class="cell-actions">
+              <a class="saas-btn saas-btn--ghost" [routerLink]="['/app/tenant-management/customers', c.id]">Open</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator *ngIf="!loading && totalRecords > pageSize"
+      [rows]="pageSize" [totalRecords]="totalRecords" [first]="page * pageSize"
+      (onPageChange)="onPageChange($event)"></p-paginator>
+  </tc-saas-panel>
+</div>

@@ -1,0 +1,99 @@
+<div class="saas-page customers-archive">
+  <p-toast position="top-right"></p-toast>
+
+  <tc-saas-page-header
+    title="Archived Customers"
+    subtitle="Review, restore, or permanently remove archived customer accounts"
+    [breadcrumbs]="[
+      { label: 'Home', route: '/app' },
+      { label: 'Platform Management' },
+      { label: 'Customers', route: '/app/tenant-management/customers' },
+      { label: 'Archive' }
+    ]">
+    <button type="button" class="saas-btn" (click)="loadCustomers()" [disabled]="loading">
+      <i class="pi pi-refresh"></i> Refresh
+    </button>
+    <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers">
+      <i class="pi pi-arrow-left"></i> Active Customers
+    </a>
+  </tc-saas-page-header>
+
+  <tc-saas-filter-row>
+    <label class="saas-search">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name, code, email…">
+    </label>
+    <label class="saas-field">
+      <span>Filter</span>
+      <select [(ngModel)]="archivedOnly" (ngModelChange)="onFilterChange()">
+        <option [ngValue]="true">Archived only</option>
+        <option [ngValue]="false">All inactive</option>
+      </select>
+    </label>
+    <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
+  </tc-saas-filter-row>
+
+  <tc-saas-panel [title]="'Archived Customers'" [subtitle]="totalRecords + ' record(s)'">
+    <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>{{ errorMessage }}</strong>
+      <button type="button" class="saas-btn saas-btn--primary" (click)="loadCustomers()">Retry</button>
+    </div>
+
+    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading archived customers…</div>
+
+    <div *ngIf="!loading && !customers.length && !errorMessage" class="saas-empty">
+      <i class="pi pi-inbox"></i>
+      <strong>No archived customers</strong>
+      <p>Archived accounts will appear here when customers are removed from the active list.</p>
+      <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers">Back to Customers</a>
+    </div>
+
+    <div *ngIf="!loading && customers.length" class="customers-archive__list">
+      <article
+        class="archive-card"
+        *ngFor="let c of customers; trackBy: trackById"
+        (click)="openCustomer(c)">
+        <div class="archive-card__head">
+          <span class="archive-card__logo">{{ customerInitials(c.displayName) }}</span>
+          <div class="archive-card__title">
+            <strong>{{ c.displayName }}</strong>
+            <small>{{ c.customerCode }} · {{ customerTypeLabel(c.customerType) }}</small>
+          </div>
+          <tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill>
+        </div>
+        <div class="archive-card__meta">
+          <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} orgs</span>
+          <span><i class="pi pi-calendar"></i> {{ formatDate(c.createdOn) }}</span>
+          <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
+        </div>
+        <div class="archive-card__actions" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="saas-btn saas-btn--primary"
+            [disabled]="actionLoadingId === c.id"
+            (click)="restore(c, $event)">
+            <i class="pi" [ngClass]="actionLoadingId === c.id ? 'pi-spin pi-spinner' : 'pi-replay'"></i>
+            Restore
+          </button>
+          <button
+            type="button"
+            class="saas-btn saas-btn--danger"
+            [disabled]="actionLoadingId === c.id"
+            (click)="permanentDelete(c, $event)">
+            <i class="pi pi-trash"></i>
+            Permanent Delete
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <p-paginator
+      *ngIf="!loading && totalRecords > pageSize"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [first]="page * pageSize"
+      (onPageChange)="onPageChange($event)">
+    </p-paginator>
+  </tc-saas-panel>
+</div>

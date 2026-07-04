@@ -65,11 +65,11 @@ export class DashboardComponent implements OnInit {
     if (!this.workspace) return;
     const role = this.workspace.context.primaryRoleName.toLowerCase();
     if (role.includes('admin')) {
-      this.router.navigate(['/app/administration/manageinquiry']);
+      this.router.navigate(['/app/admissions/leads']);
     } else if (role.includes('teacher')) {
-      this.router.navigate(['/app/academics/daily-attendance']);
+      this.router.navigate(['/app/attendance/students']);
     } else if (role.includes('student')) {
-      this.router.navigate(['/app/academics/assignment-student']);
+      this.router.navigate(['/app/students/directory']);
     } else {
       this.loadWorkspace();
     }

@@ -1,0 +1,244 @@
+<div class="saas-page customer-workspace">
+  <p-toast position="top-right"></p-toast>
+
+  <tc-saas-page-header
+    [title]="customer?.displayName || 'Customer'"
+    [subtitle]="subtitle"
+    [breadcrumbs]="[
+      { label: 'Home', route: '/app' },
+      { label: 'Customers', route: '/app/tenant-management/customers' },
+      { label: customer?.displayName || 'Detail' }
+    ]">
+    <div class="customer-workspace__header-meta" *ngIf="customer">
+      <span class="customer-workspace__avatar" [class.has-image]="customer.logoUrl">
+        <img *ngIf="customer.logoUrl" [src]="customer.logoUrl" alt="">
+        <span *ngIf="!customer.logoUrl">{{ customerInitials(customer.displayName) }}</span>
+      </span>
+      <div class="customer-workspace__header-text">
+        <tc-saas-pill [label]="customerStatusLabel(customer.status)" [tone]="statusTone()"></tc-saas-pill>
+        <span class="customer-workspace__code">{{ customer.customerCode }}</span>
+      </div>
+    </div>
+    <button type="button" class="saas-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
+    <button type="button" class="saas-btn" *ngIf="customer" (click)="edit()"><i class="pi pi-pencil"></i> Edit</button>
+    <button type="button" class="saas-btn saas-btn--primary" *ngIf="customer" (click)="addOrganization()">
+      <i class="pi pi-plus"></i> Add Organization
+    </button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="saas-empty customer-workspace__error">
+    <i class="pi pi-exclamation-triangle"></i>
+    <strong>{{ errorMessage }}</strong>
+    <button type="button" class="saas-btn" (click)="load(customerId)"><i class="pi pi-refresh"></i> Retry</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="back()">Back to customers</button>
+  </div>
+
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading customer…</div>
+
+  <ng-container *ngIf="!loading && customer">
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
+
+    <ng-container [ngSwitch]="activeTab">
+      <!-- Overview -->
+      <section *ngSwitchCase="'overview'" class="customer-workspace__tab">
+        <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+        <div class="customer-workspace__grid">
+          <tc-saas-panel title="Business Profile" subtitle="Core identity and contact details">
+            <dl class="cust-dl">
+              <div><dt>Legal name</dt><dd>{{ customer.legalName }}</dd></div>
+              <div><dt>Display name</dt><dd>{{ customer.displayName }}</dd></div>
+              <div><dt>Customer code</dt><dd>{{ customer.customerCode }}</dd></div>
+              <div><dt>Type</dt><dd>{{ customerTypeLabel(customer.customerType) }}</dd></div>
+              <div><dt>Email</dt><dd>{{ customer.email || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ customer.mobileNumber || '—' }}</dd></div>
+              <div><dt>Website</dt><dd>{{ customer.website || '—' }}</dd></div>
+              <div><dt>Tax number</dt><dd>{{ customer.taxNumber || '—' }}</dd></div>
+            </dl>
+          </tc-saas-panel>
+
+          <tc-saas-panel title="Address" subtitle="Registered or billing location">
+            <dl class="cust-dl cust-dl--single">
+              <div><dt>Address</dt><dd>{{ customer.addressLine1 || '—' }}</dd></div>
+              <div *ngIf="customer.addressLine2"><dt>Line 2</dt><dd>{{ customer.addressLine2 }}</dd></div>
+              <div><dt>City / State</dt><dd>{{ locationLabel || '—' }}</dd></div>
+              <div><dt>Postal code</dt><dd>{{ customer.postalCode || '—' }}</dd></div>
+            </dl>
+          </tc-saas-panel>
+
+          <tc-saas-panel title="Account" subtitle="Lifecycle and metadata">
+            <ng-container panel-actions>
+              <tc-saas-pill [label]="customerStatusLabel(customer.status)" [tone]="statusTone()"></tc-saas-pill>
+            </ng-container>
+            <dl class="cust-dl cust-dl--single">
+              <div><dt>Active</dt><dd>{{ customer.active ? 'Yes' : 'No' }}</dd></div>
+              <div><dt>Onboarding</dt><dd>{{ customer.onboardingCompleted ? 'Completed' : 'Pending' }}</dd></div>
+              <div><dt>Created</dt><dd>{{ formatDate(customer.createdOn) }}</dd></div>
+              <div><dt>Updated</dt><dd>{{ formatDate(customer.updatedOn) }}</dd></div>
+              <div *ngIf="customer.remarks"><dt>Remarks</dt><dd>{{ customer.remarks }}</dd></div>
+            </dl>
+          </tc-saas-panel>
+        </div>
+      </section>
+
+      <!-- Organizations -->
+      <section *ngSwitchCase="'organizations'" class="customer-workspace__tab">
+        <tc-saas-panel
+          title="Organizations"
+          [subtitle]="organizations.length + ' organization(s) under this customer'">
+          <ng-container panel-actions>
+            <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">
+              <i class="pi pi-plus"></i> Add Organization
+            </button>
+          </ng-container>
+
+          <div *ngIf="!organizations.length" class="saas-empty">
+            <i class="pi pi-building"></i>
+            <strong>No organizations yet</strong>
+            <p>Provision the first institution under this customer account.</p>
+            <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">Add Organization</button>
+          </div>
+
+          <div *ngIf="organizations.length" class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>City</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openOrganization(org)">
+                  <td>
+                    <div class="cell-main">
+                      <strong>{{ org.organizationName }}</strong>
+                      <small>{{ org.organizationCode }}</small>
+                    </div>
+                  </td>
+                  <td>{{ institutionLabel(org.institutionType) }}</td>
+                  <td>
+                    <tc-saas-pill
+                      [label]="organizationStatusLabel(org.status)"
+                      [tone]="orgStatusTone(org.status)">
+                    </tc-saas-pill>
+                  </td>
+                  <td>{{ org.city || '—' }}</td>
+                  <td>{{ formatDate(org.createdOn) }}</td>
+                  <td class="cell-actions">
+                    <button type="button" class="saas-btn saas-btn--ghost" (click)="openOrganization(org); $event.stopPropagation()">
+                      Open
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Commercial -->
+      <section *ngSwitchCase="'commercial'" class="customer-workspace__tab">
+        <tc-saas-panel title="Commercial" subtitle="Billing preferences and account notes">
+          <dl class="cust-dl">
+            <div><dt>Preferred communication</dt><dd>{{ customer.preferredCommunication || '—' }}</dd></div>
+            <div><dt>Tax / GST</dt><dd>{{ customer.taxNumber || '—' }}</dd></div>
+            <div><dt>Registration</dt><dd>{{ customer.registrationNumber || '—' }}</dd></div>
+            <div><dt>Organizations</dt><dd>{{ organizations.length || (customer.organizationCount ?? 0) }}</dd></div>
+          </dl>
+          <div *ngIf="customer.remarks" class="customer-workspace__remarks">
+            <h4>Remarks</h4>
+            <p>{{ customer.remarks }}</p>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Contacts -->
+      <section *ngSwitchCase="'contacts'" class="customer-workspace__tab">
+        <tc-saas-panel title="Contacts" [subtitle]="contacts.length + ' contact(s)'">
+          <div *ngIf="!contacts.length" class="saas-empty">
+            <i class="pi pi-users"></i>
+            <strong>No contacts on file</strong>
+            <p>Edit the customer to add a primary contact.</p>
+            <button type="button" class="saas-btn saas-btn--primary" (click)="edit()">Edit Customer</button>
+          </div>
+
+          <div *ngIf="contacts.length" class="customer-workspace__contact-grid">
+            <article class="contact-card" *ngFor="let c of contacts; trackBy: trackById">
+              <header class="contact-card__head">
+                <span class="contact-card__avatar">{{ customerInitials(c.fullName) }}</span>
+                <div>
+                  <strong>{{ c.fullName }}</strong>
+                  <small>{{ c.designation || 'Contact' }}</small>
+                </div>
+              </header>
+              <div class="contact-card__meta">
+                <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
+                <span *ngIf="c.mobileNumber"><i class="pi pi-phone"></i> {{ c.mobileNumber }}</span>
+              </div>
+              <div class="contact-card__pills">
+                <tc-saas-pill *ngIf="c.primaryContact" label="Primary" tone="primary"></tc-saas-pill>
+                <tc-saas-pill *ngIf="c.billingContact" label="Billing" tone="info"></tc-saas-pill>
+                <tc-saas-pill *ngIf="c.technicalContact" label="Technical" tone="success"></tc-saas-pill>
+                <tc-saas-pill *ngIf="c.supportContact" label="Support" tone="neutral"></tc-saas-pill>
+              </div>
+            </article>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Documents -->
+      <section *ngSwitchCase="'documents'" class="customer-workspace__tab">
+        <tc-saas-panel title="Documents" subtitle="Contracts, invoices, and uploaded files">
+          <div class="saas-empty">
+            <i class="pi pi-file"></i>
+            <strong>No documents yet</strong>
+            <p>Document management for customer accounts will be available in a future release.</p>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Activity -->
+      <section *ngSwitchCase="'activity'" class="customer-workspace__tab">
+        <tc-saas-panel title="Activity" subtitle="Recent actions and timeline events">
+          <div class="saas-empty">
+            <i class="pi pi-history"></i>
+            <strong>No activity feed yet</strong>
+            <p>Customer activity timeline will appear here once event streaming is enabled.</p>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <!-- Audit -->
+      <section *ngSwitchCase="'audit'" class="customer-workspace__tab">
+        <tc-saas-panel title="Audit" subtitle="Platform audit events for this customer">
+          <div *ngIf="auditLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading audit logs…</div>
+
+          <div *ngIf="!auditLoading && !auditLogs.length" class="saas-empty">
+            <i class="pi pi-shield"></i>
+            <strong>No audit events found</strong>
+            <p>No customer-scoped audit entries were returned from the platform log.</p>
+          </div>
+
+          <ul class="audit-list" *ngIf="!auditLoading && auditLogs.length">
+            <li *ngFor="let log of auditLogs; trackBy: trackById">
+              <span class="audit-list__icon"><i class="pi pi-shield"></i></span>
+              <div>
+                <strong>{{ log.action }}</strong>
+                <p>{{ log.summary || log.changes || '—' }}</p>
+                <small>
+                  {{ formatDateTime(log.occurredAt) }}
+                  <span *ngIf="log.actorUsername"> · {{ log.actorUsername }}</span>
+                  <span *ngIf="log.sourceIp"> · {{ log.sourceIp }}</span>
+                </small>
+              </div>
+            </li>
+          </ul>
+        </tc-saas-panel>
+      </section>
+    </ng-container>
+  </ng-container>
+</div>

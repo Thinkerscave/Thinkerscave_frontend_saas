@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, finalize } from 'rxjs';
 
 import {
@@ -97,6 +97,7 @@ export class ProvisionOrganizationComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   loading = true;
   submitting = false;
@@ -149,6 +150,14 @@ export class ProvisionOrganizationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReferenceData();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const customerId = Number(params.get('customerId'));
+      if (customerId && !Number.isNaN(customerId)) {
+        this.form.customerMode = 'existing';
+        this.form.existingCustomerId = customerId;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   get selectedPlan(): SubscriptionPlan | undefined {

@@ -1,12 +1,10 @@
 import { Routes } from '@angular/router';
-import { LEAD_MANAGEMENT_ROUTES } from './lead-management/lead-management.routes';
 import { EXAM_MANAGEMENT_ROUTES } from './exam-management/exam-management.routes';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { ENROLLMENT_MANAGEMENT_ROUTES } from './enrollment-management/enrollment-management.routes';
 import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
 import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
-import { STUDENT_MANAGEMENT_ROUTES } from './student-management/student-management.route';
 import { roleGuard } from '../core/guard/role.guard';
 
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
@@ -25,6 +23,11 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./tenant-management/pages/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent) },
+      { path: 'customers', loadComponent: () => import('./tenant-management/pages/customers-list/customers-list.component').then(m => m.CustomersListComponent) },
+      { path: 'customers/new', loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
+      { path: 'customers/archived', loadComponent: () => import('./tenant-management/pages/customers-archive/customers-archive.component').then(m => m.CustomersArchiveComponent) },
+      { path: 'customers/:id/edit', loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
+      { path: 'customers/:id', loadComponent: () => import('./tenant-management/pages/customer-workspace/customer-workspace.component').then(m => m.CustomerWorkspaceComponent) },
       { path: 'organizations', loadComponent: () => import('./tenant-management/pages/organizations-list/organizations-list.component').then(m => m.OrganizationsListComponent) },
       { path: 'organizations/create', loadComponent: () => import('./tenant-management/pages/provision-organization/provision-organization.component').then(m => m.ProvisionOrganizationComponent) },
       { path: 'organizations/:orgId', loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
@@ -43,7 +46,10 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'platform',
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
+      { path: 'customers', pathMatch: 'full', redirectTo: '/app/tenant-management/customers' },
+      { path: 'customers/new', pathMatch: 'full', redirectTo: '/app/tenant-management/customers/new' },
+      { path: 'customers/:id', redirectTo: '/app/tenant-management/customers/:id' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'organizations/:orgId', redirectTo: '/app/tenant-management/organizations/:orgId' },
@@ -283,7 +289,7 @@ export const APPLICATION_ROUTES: Routes = [
           { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
           { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'id-cards', pathMatch: 'full', redirectTo: 'directory' },
-          ...STUDENT_MANAGEMENT_ROUTES
+          { path: 'syllabus-tracker', pathMatch: 'full', redirectTo: '/app/academics/syllabus-tracker' }
         ]
       }
     ]
@@ -317,8 +323,28 @@ export const APPLICATION_ROUTES: Routes = [
     ]
   },
   {
-    path: '',
-    children: LEAD_MANAGEMENT_ROUTES
+    path: 'counsellor-dashboard',
+    pathMatch: 'full',
+    redirectTo: 'admissions/overview'
+  },
+  {
+    path: 'manage-leads',
+    pathMatch: 'full',
+    redirectTo: 'admissions/leads'
+  },
+  {
+    path: 'lead-detail/:id',
+    redirectTo: 'admissions/lead/:id'
+  },
+  {
+    path: 'add-lead',
+    pathMatch: 'full',
+    redirectTo: 'admissions/leads'
+  },
+  {
+    path: 'follow-up-tracker',
+    pathMatch: 'full',
+    redirectTo: 'admissions/follow-ups'
   },
   {
     path: '',

@@ -1,4 +1,6 @@
 import {
+  CustomerStatus,
+  CustomerType,
   DiscountType,
   InstitutionType,
   OrganizationStatus,
@@ -36,6 +38,52 @@ const SUB_STATUS_LABELS: Record<SubscriptionStatus, string> = {
   CANCELLED: 'Cancelled',
   SUSPENDED: 'Suspended'
 };
+
+export function customerInitials(name?: string | null): string {
+  if (!name?.trim()) return 'CU';
+  return name.trim().split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('') || 'CU';
+}
+
+const CUSTOMER_STATUS_LABELS: Record<CustomerStatus, string> = {
+  LEAD: 'Lead',
+  TRIAL: 'Trial',
+  ACTIVE: 'Active',
+  SUSPENDED: 'Suspended',
+  ARCHIVED: 'Archived'
+};
+
+const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
+  SCHOOL: 'School',
+  COLLEGE: 'College',
+  UNIVERSITY: 'University',
+  COACHING: 'Coaching',
+  TRAINING_INSTITUTE: 'Training',
+  EDUCATION_GROUP: 'Education Group',
+  TRUST: 'Trust',
+  COMPANY: 'Company',
+  OTHER: 'Other'
+};
+
+export function customerStatusLabel(status?: CustomerStatus | string | null): string {
+  if (!status) return '—';
+  return CUSTOMER_STATUS_LABELS[status as CustomerStatus] ?? String(status).replace(/_/g, ' ');
+}
+
+export function customerTypeLabel(type?: CustomerType | string | null): string {
+  if (!type) return '—';
+  return CUSTOMER_TYPE_LABELS[type as CustomerType] ?? String(type).replace(/_/g, ' ');
+}
+
+export function customerStatusTone(status?: CustomerStatus | string | null): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
+  switch (status) {
+    case 'ACTIVE': return 'success';
+    case 'TRIAL':
+    case 'LEAD': return 'info';
+    case 'SUSPENDED': return 'warning';
+    case 'ARCHIVED': return 'danger';
+    default: return 'neutral';
+  }
+}
 
 export function institutionLabel(type?: InstitutionType | string | null): string {
   if (!type) return '—';
