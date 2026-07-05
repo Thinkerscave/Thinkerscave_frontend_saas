@@ -1,14 +1,7 @@
 <div class="saas-page organization-workspace">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    [title]="org?.organizationName || 'Organization'"
-    [subtitle]="subtitle"
-    [breadcrumbs]="[
-      { label: 'Home', route: '/app' },
-      { label: 'Organizations', route: '/app/tenant-management/organizations' },
-      { label: org?.organizationName || 'Detail' }
-    ]">
+  <tc-saas-page-header>
     <div class="organization-workspace__header-meta" *ngIf="org">
       <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
       <span class="organization-workspace__type-pill">{{ institutionLabel(org.institutionType) }}</span>

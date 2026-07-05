@@ -1,10 +1,7 @@
 <div class="saas-page migration-center">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    title="Migration Center"
-    subtitle="Monitor tenant provisioning jobs and schema migrations"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Migration Center'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>

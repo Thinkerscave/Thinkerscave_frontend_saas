@@ -1,8 +1,5 @@
 <div class="saas-page feature-catalog">
-  <tc-saas-page-header
-    title="Feature Catalog"
-    subtitle="Master catalogue of platform modules and entitlements"
-    [breadcrumbs]="[{ label: 'Home', route: '/app' }, { label: 'Platform Management' }, { label: 'Feature Catalog' }]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset Filters</button>
   </tc-saas-page-header>

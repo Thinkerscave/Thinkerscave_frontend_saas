@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { BreadCrumbService } from '../../../core/services/bread-crumb.service';
 
 /* ============================================================
    ThinkersCave SaaS premium primitives — match inspired images.
@@ -22,35 +22,37 @@ export interface SaasStat {
 export interface SaasTab { key: string; label: string; icon?: string; }
 export interface SaasStep { key: string; label: string; }
 
-/* -------- Page header with breadcrumb + actions -------- */
+/* -------- Page toolbar (actions only; title + subtitle live in layout shell) -------- */
 @Component({
   selector: 'tc-saas-page-header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="saas-page-header">
-      <div class="saas-page-header__main">
+    <header class="saas-page-header" [class.saas-page-header--actions-only]="!showTitle">
+      <div class="saas-page-header__main" *ngIf="showTitle">
         <h1>{{ title }}</h1>
-        <p *ngIf="subtitle">{{ subtitle }}</p>
       </div>
-      <div class="saas-page-header__meta">
-        <nav class="saas-breadcrumb" *ngIf="breadcrumbs.length">
-          <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
-            <a *ngIf="crumb.route && !last" [routerLink]="crumb.route">{{ crumb.label }}</a>
-            <span *ngIf="!crumb.route || last" [class.is-active]="last">{{ crumb.label }}</span>
-            <i *ngIf="!last" class="pi pi-angle-right"></i>
-          </ng-container>
-        </nav>
-        <div class="saas-page-header__actions"><ng-content></ng-content></div>
-      </div>
+      <div class="saas-page-header__actions"><ng-content></ng-content></div>
     </header>
   `
 })
-export class SaasPageHeaderComponent {
+export class SaasPageHeaderComponent implements OnChanges {
+  private readonly pageHeader = inject(BreadCrumbService);
+
+  /** When false (default), page title is shown only in the layout shell breadcrumb. */
+  @Input() showTitle = false;
   @Input() title = '';
+  /** Dynamic subtitle override — registers with shell header (static pages use route data). */
   @Input() subtitle?: string;
+  /** @deprecated Breadcrumbs are rendered once in the layout shell. */
   @Input() breadcrumbs: SaasBreadcrumb[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('subtitle' in changes && this.subtitle) {
+      this.pageHeader.setPageSubtitle(this.subtitle);
+    }
+  }
 }
 
 /* -------- KPI stat card -------- */

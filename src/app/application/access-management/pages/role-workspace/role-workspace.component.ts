@@ -9,6 +9,7 @@ import { finalize, forkJoin } from 'rxjs';
 import { AccessRole, PermissionMatrixRow } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
 import { roleTypeLabel } from '../../utils/access-display.util';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -34,6 +35,7 @@ export class RoleWorkspaceComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   saving = false;
@@ -72,6 +74,10 @@ export class RoleWorkspaceComponent implements OnInit {
       next: ({ role, matrix }) => {
         this.role = role;
         this.rows = (matrix.rows ?? []).map(r => ({ ...r }));
+        this.pageHeader.setPageHeader({
+          title: role?.roleName || 'Role Workspace'
+        });
+        this.pageHeader.setPageSubtitle(role?.roleCode || 'Permission assignment');
       },
       error: () => {
         this.errorMessage = 'Unable to load role workspace.';

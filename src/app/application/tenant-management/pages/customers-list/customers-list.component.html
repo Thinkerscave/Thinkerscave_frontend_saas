@@ -1,10 +1,7 @@
 <div class="saas-page customers-list">
   <p-toast></p-toast>
 
-  <tc-saas-page-header
-    title="Customers"
-    subtitle="Commercial relationships between ThinkerScave and education groups"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Customers'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <a class="saas-btn" routerLink="/app/tenant-management/customers/archived"><i class="pi pi-inbox"></i> Archive</a>
     <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers/new"><i class="pi pi-plus"></i> New Customer</a>

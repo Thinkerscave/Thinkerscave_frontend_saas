@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PlatformAuditLog, PlatformSecurityAuditLog } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 type EventCategory = 'all' | 'user' | 'tenant' | 'security' | 'auth' | 'subscription' | 'configuration';
 type Severity = 'all' | 'info' | 'warn' | 'critical';
@@ -28,7 +29,7 @@ interface TimelineEvent {
 @Component({
   selector: 'app-audit-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent],
   templateUrl: './audit-center.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

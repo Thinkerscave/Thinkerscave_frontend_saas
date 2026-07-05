@@ -1,10 +1,7 @@
 <div class="saas-page promotions">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    title="Promotions"
-    subtitle="Manage discount codes and commercial offers for subscriptions"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Promotions'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>

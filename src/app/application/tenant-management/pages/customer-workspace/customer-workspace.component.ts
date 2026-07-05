@@ -17,6 +17,7 @@ import {
   organizationStatusLabel,
   statusTone
 } from '../../utils/platform-display.util';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -50,6 +51,7 @@ export class CustomerWorkspaceComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(PlatformManagementService);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   auditLoading = false;
@@ -99,6 +101,10 @@ export class CustomerWorkspaceComponent implements OnInit {
           this.customer = null;
         } else {
           this.customer = customer;
+          this.pageHeader.setPageHeader({
+            title: customer.displayName || 'Customer Details'
+          });
+          this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.loading = false;
         this.cdr.markForCheck();

@@ -9,6 +9,7 @@ import { finalize, forkJoin } from 'rxjs';
 import { AccessUser, EffectivePermission } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
 import { userDisplayName } from '../../utils/access-display.util';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '../../../../shared/ui/saas';
 
 @Component({
@@ -26,6 +27,7 @@ export class UserPermissionsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   saving = false;
@@ -56,6 +58,9 @@ export class UserPermissionsComponent implements OnInit {
         this.user = user;
         this.permissions = (permissions ?? []).map(p => ({ ...p }));
         this.overrideMenuIds = new Set(permissions.filter(p => p.isOverride).map(p => p.menuId));
+        this.pageHeader.setPageHeader({
+          title: user ? `${userDisplayName(user)} — Overrides` : 'User Permissions'
+        });
       },
       error: () => {
         this.errorMessage = 'Unable to load user permissions.';

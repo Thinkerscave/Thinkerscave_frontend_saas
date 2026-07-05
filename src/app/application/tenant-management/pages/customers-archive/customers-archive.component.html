@@ -1,15 +1,7 @@
 <div class="saas-page customers-archive">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    title="Archived Customers"
-    subtitle="Review, restore, or permanently remove archived customer accounts"
-    [breadcrumbs]="[
-      { label: 'Home', route: '/app' },
-      { label: 'Platform Management' },
-      { label: 'Customers', route: '/app/tenant-management/customers' },
-      { label: 'Archive' }
-    ]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="loadCustomers()" [disabled]="loading">
       <i class="pi pi-refresh"></i> Refresh
     </button>

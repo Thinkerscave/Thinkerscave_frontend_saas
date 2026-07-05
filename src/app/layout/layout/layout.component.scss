@@ -42,7 +42,7 @@
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: var(--tc-space-3) var(--tc-space-4) var(--tc-space-4);
+      padding: 0.5rem var(--tc-space-4) var(--tc-space-3);
       background: var(--tc-bg-gradient);
       transition: padding 0.26s ease-in-out;
     }

@@ -1,15 +1,7 @@
 <div class="saas-page customer-form">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    [title]="pageTitle"
-    subtitle="Capture business profile, contacts, and commercial details for a platform customer"
-    [breadcrumbs]="[
-      { label: 'Home', route: '/app' },
-      { label: 'Platform Management' },
-      { label: 'Customers', route: '/app/tenant-management/customers' },
-      { label: isEditMode ? 'Edit' : 'New' }
-    ]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
   </tc-saas-page-header>
 

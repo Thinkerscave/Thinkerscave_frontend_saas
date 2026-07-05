@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { ACCESS_MGMT_ROOT, ACCESS_PAGES, TENANT_MGMT_ROOT, TENANT_PAGES } from '../core/config/page-route-meta';
 import { EXAM_MANAGEMENT_ROUTES } from './exam-management/exam-management.routes';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { ENROLLMENT_MANAGEMENT_ROUTES } from './enrollment-management/enrollment-management.routes';
@@ -20,26 +21,27 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'tenant-management',
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
+    data: { ...TENANT_MGMT_ROOT },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', loadComponent: () => import('./tenant-management/pages/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent) },
-      { path: 'customers', loadComponent: () => import('./tenant-management/pages/customers-list/customers-list.component').then(m => m.CustomersListComponent) },
-      { path: 'customers/new', loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
-      { path: 'customers/archived', loadComponent: () => import('./tenant-management/pages/customers-archive/customers-archive.component').then(m => m.CustomersArchiveComponent) },
-      { path: 'customers/:id/edit', loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
-      { path: 'customers/:id', loadComponent: () => import('./tenant-management/pages/customer-workspace/customer-workspace.component').then(m => m.CustomerWorkspaceComponent) },
-      { path: 'organizations', loadComponent: () => import('./tenant-management/pages/organizations-list/organizations-list.component').then(m => m.OrganizationsListComponent) },
-      { path: 'organizations/create', loadComponent: () => import('./tenant-management/pages/provision-organization/provision-organization.component').then(m => m.ProvisionOrganizationComponent) },
-      { path: 'organizations/:orgId', loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
-      { path: 'subscription-plans', loadComponent: () => import('./tenant-management/pages/subscription-plans/subscription-plans.component').then(m => m.SubscriptionPlansComponent) },
+      { path: 'dashboard', data: { ...TENANT_PAGES.dashboard }, loadComponent: () => import('./tenant-management/pages/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent) },
+      { path: 'customers', data: { ...TENANT_PAGES.customers }, loadComponent: () => import('./tenant-management/pages/customers-list/customers-list.component').then(m => m.CustomersListComponent) },
+      { path: 'customers/new', data: { ...TENANT_PAGES.customersNew }, loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
+      { path: 'customers/archived', data: { ...TENANT_PAGES.customersArchived }, loadComponent: () => import('./tenant-management/pages/customers-archive/customers-archive.component').then(m => m.CustomersArchiveComponent) },
+      { path: 'customers/:id/edit', data: { ...TENANT_PAGES.customersEdit }, loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
+      { path: 'customers/:id', data: { ...TENANT_PAGES.customerDetails }, loadComponent: () => import('./tenant-management/pages/customer-workspace/customer-workspace.component').then(m => m.CustomerWorkspaceComponent) },
+      { path: 'organizations', data: { ...TENANT_PAGES.organizations }, loadComponent: () => import('./tenant-management/pages/organizations-list/organizations-list.component').then(m => m.OrganizationsListComponent) },
+      { path: 'organizations/create', data: { ...TENANT_PAGES.organizationsCreate }, loadComponent: () => import('./tenant-management/pages/provision-organization/provision-organization.component').then(m => m.ProvisionOrganizationComponent) },
+      { path: 'organizations/:orgId', data: { ...TENANT_PAGES.organizationDetails }, loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
+      { path: 'subscription-plans', data: { ...TENANT_PAGES.subscriptionPlans }, loadComponent: () => import('./tenant-management/pages/subscription-plans/subscription-plans.component').then(m => m.SubscriptionPlansComponent) },
       { path: 'subscription-plans/create', pathMatch: 'full', redirectTo: 'subscription-plans' },
       { path: 'subscription-plans/:planId', redirectTo: 'subscription-plans' },
-      { path: 'promotions', loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
-      { path: 'feature-catalog', loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
-      { path: 'tenant-health', loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
+      { path: 'promotions', data: { ...TENANT_PAGES.promotions }, loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
+      { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
+      { path: 'tenant-health', data: { ...TENANT_PAGES.tenantHealth }, loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
       { path: 'platform-health', pathMatch: 'full', redirectTo: 'tenant-health' },
-      { path: 'migration-center', loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent) },
-      { path: 'audit-center', loadComponent: () => import('./tenant-management/pages/audit-center/audit-center.component').then(m => m.AuditCenterComponent) }
+      { path: 'migration-center', data: { ...TENANT_PAGES.migrationCenter }, loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent) },
+      { path: 'audit-center', data: { ...TENANT_PAGES.auditCenter }, loadComponent: () => import('./tenant-management/pages/audit-center/audit-center.component').then(m => m.AuditCenterComponent) }
     ]
   },
   {
@@ -61,16 +63,17 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'access-management',
     canActivate: [roleGuard(ACCESS_MANAGEMENT_ROLES)],
+    data: { ...ACCESS_MGMT_ROOT },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', loadComponent: () => import('./access-management/pages/access-dashboard/access-dashboard.component').then(m => m.AccessDashboardComponent) },
-      { path: 'roles', loadComponent: () => import('./access-management/pages/roles-list/roles-list.component').then(m => m.RolesListComponent) },
-      { path: 'roles/:roleId', loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
-      { path: 'menus', loadComponent: () => import('./access-management/pages/menu-catalog/menu-catalog.component').then(m => m.MenuCatalogComponent) },
-      { path: 'users', loadComponent: () => import('./access-management/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
-      { path: 'users/:userId/permissions', loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
-      { path: 'security-policy', loadComponent: () => import('./access-management/pages/security-policy/security-policy.component').then(m => m.SecurityPolicyComponent) },
-      { path: 'login-history', loadComponent: () => import('./access-management/pages/login-history/login-history.component').then(m => m.LoginHistoryComponent) }
+      { path: 'dashboard', data: { ...ACCESS_PAGES.dashboard }, loadComponent: () => import('./access-management/pages/access-dashboard/access-dashboard.component').then(m => m.AccessDashboardComponent) },
+      { path: 'roles', data: { ...ACCESS_PAGES.roles }, loadComponent: () => import('./access-management/pages/roles-list/roles-list.component').then(m => m.RolesListComponent) },
+      { path: 'roles/:roleId', data: { ...ACCESS_PAGES.roleWorkspace }, loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
+      { path: 'menus', data: { ...ACCESS_PAGES.menus }, loadComponent: () => import('./access-management/pages/menu-catalog/menu-catalog.component').then(m => m.MenuCatalogComponent) },
+      { path: 'users', data: { ...ACCESS_PAGES.users }, loadComponent: () => import('./access-management/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
+      { path: 'users/:userId/permissions', data: { ...ACCESS_PAGES.userPermissions }, loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'security-policy', data: { ...ACCESS_PAGES.securityPolicy }, loadComponent: () => import('./access-management/pages/security-policy/security-policy.component').then(m => m.SecurityPolicyComponent) },
+      { path: 'login-history', data: { ...ACCESS_PAGES.loginHistory }, loadComponent: () => import('./access-management/pages/login-history/login-history.component').then(m => m.LoginHistoryComponent) }
     ]
   },
   {

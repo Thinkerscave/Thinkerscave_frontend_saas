@@ -1,15 +1,8 @@
-<section class="tc-tenant-page tc-audit">
-  <header class="tc-tenant-page__header">
-    <div>
-      <p class="tc-tenant-page__eyebrow">Audit centre</p>
-      <h1 class="tc-tenant-page__title">Platform activity timeline</h1>
-      <p class="tc-tenant-page__subtitle">Every meaningful action across tenants, users and security — searchable, filterable and exportable.</p>
-    </div>
-    <div class="tc-tenant-page__actions">
-      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i><span>Refresh</span></button>
-      <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="exportCsv()" [disabled]="!filtered.length"><i class="pi pi-download"></i><span>Export CSV</span></button>
-    </div>
-  </header>
+<div class="saas-page tc-audit">
+  <tc-saas-page-header>
+    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="exportCsv()" [disabled]="!filtered.length"><i class="pi pi-download"></i> Export CSV</button>
+  </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="tc-empty tc-empty--error" role="alert">
     <i class="pi pi-exclamation-triangle"></i>
@@ -87,4 +80,4 @@
     <p>Loosen the filters or extend the date range to surface more activity.</p>
     <div class="tc-empty__actions"><button type="button" class="tc-btn tc-btn--ghost" (click)="resetFilters()">Reset filters</button></div>
   </div>
-</section>
+</div>

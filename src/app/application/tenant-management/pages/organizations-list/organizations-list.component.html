@@ -1,10 +1,7 @@
 <div class="saas-page organizations-list">
   <p-toast></p-toast>
 
-  <tc-saas-page-header
-    title="Organizations"
-    subtitle="Manage customer organizations and tenant workspaces"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Organizations'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-plus"></i> New Organization</a>
   </tc-saas-page-header>

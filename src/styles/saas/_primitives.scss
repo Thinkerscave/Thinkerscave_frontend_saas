@@ -51,21 +51,27 @@
 
 /* ---------------- Page wrapper ---------------- */
 .saas-page {
-  padding: 24px 28px 40px;
+  padding: 0 0 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   background: var(--saas-bg);
   min-height: 100%;
 }
 
-/* ---------------- Page header ---------------- */
+/* ---------------- Page header / toolbar ---------------- */
 .saas-page-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.saas-page-header--actions-only {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
 }
 
 .saas-page-header__main h1 {
@@ -76,42 +82,20 @@
   letter-spacing: -0.01em;
 }
 
-.saas-page-header__main p {
+.saas-page-header__main p,
+.saas-page-header__subtitle {
   margin: 0;
   color: var(--saas-text-muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
-
-.saas-page-header__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.saas-breadcrumb {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 0.82rem;
-  color: var(--saas-text-soft);
-}
-
-.saas-breadcrumb a {
-  color: var(--saas-text-muted);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.saas-breadcrumb a:hover { color: var(--saas-primary); }
-.saas-breadcrumb span.is-active { color: var(--saas-text); font-weight: 600; }
-.saas-breadcrumb i { font-size: 0.7rem; color: var(--saas-text-soft); }
 
 .saas-page-header__actions {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 /* ---------------- Buttons ---------------- */

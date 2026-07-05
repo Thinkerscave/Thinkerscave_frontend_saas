@@ -1,14 +1,7 @@
 <div class="saas-page customer-workspace">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header
-    [title]="customer?.displayName || 'Customer'"
-    [subtitle]="subtitle"
-    [breadcrumbs]="[
-      { label: 'Home', route: '/app' },
-      { label: 'Customers', route: '/app/tenant-management/customers' },
-      { label: customer?.displayName || 'Detail' }
-    ]">
+  <tc-saas-page-header>
     <div class="customer-workspace__header-meta" *ngIf="customer">
       <span class="customer-workspace__avatar" [class.has-image]="customer.logoUrl">
         <img *ngIf="customer.logoUrl" [src]="customer.logoUrl" alt="">

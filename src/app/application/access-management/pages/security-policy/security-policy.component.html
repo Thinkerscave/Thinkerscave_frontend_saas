@@ -1,8 +1,5 @@
 <div class="saas-page security-policy">
-  <tc-saas-page-header
-    title="Security Policy"
-    subtitle="Password complexity, lockout rules and session controls"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Access Management', route:'/app/access-management/dashboard'},{label:'Security Policy'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="reset()" [disabled]="loading">Reset defaults</button>
     <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
       <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Policy

@@ -1,13 +1,5 @@
 <div class="saas-page user-permissions">
-  <tc-saas-page-header
-    [title]="user ? userDisplayName(user) + ' — Overrides' : 'User Permissions'"
-    subtitle="Custom permissions applied on top of role defaults"
-    [breadcrumbs]="[
-      {label:'Home', route:'/app'},
-      {label:'Access Management', route:'/app/access-management/dashboard'},
-      {label:'Users', route:'/app/access-management/users'},
-      {label: user ? userDisplayName(user) : 'User'}
-    ]">
+  <tc-saas-page-header>
     <a class="saas-btn" routerLink="/app/access-management/users"><i class="pi pi-arrow-left"></i> Back</a>
     <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
       <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Overrides

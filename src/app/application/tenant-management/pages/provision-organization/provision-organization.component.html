@@ -1,13 +1,5 @@
 <div class="saas-page provision-organization" *ngIf="!successResult; else successView">
-  <tc-saas-page-header
-    title="Provision Organization"
-    subtitle="Guided wizard to onboard a new tenant with subscription, features, and commercials"
-    [breadcrumbs]="[
-      { label: 'Home', route: '/app' },
-      { label: 'Platform Management' },
-      { label: 'Organizations', route: '/app/tenant-management/organizations' },
-      { label: 'Provision' }
-    ]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
   </tc-saas-page-header>
 
@@ -341,13 +333,7 @@
   <div class="saas-page provision-organization provision-organization--success">
     <tc-saas-page-header
       title="Organization provisioned"
-      [subtitle]="successResult?.organizationName + ' is ready'"
-      [breadcrumbs]="[
-        { label: 'Home', route: '/app' },
-        { label: 'Platform Management' },
-        { label: 'Organizations', route: '/app/tenant-management/organizations' },
-        { label: 'Success' }
-      ]">
+      [subtitle]="successResult?.organizationName + ' is ready'">
     </tc-saas-page-header>
 
     <div class="provision-organization__success-card">

@@ -1,10 +1,7 @@
 <div class="saas-page subscription-plans">
   <p-toast></p-toast>
 
-  <tc-saas-page-header
-    title="Subscription Plans"
-    subtitle="Manage commercial plans, limits and bundled modules"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Subscription Plans'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <div class="subscription-plans__billing">
       <button type="button" class="saas-btn" [class.saas-btn--primary]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>

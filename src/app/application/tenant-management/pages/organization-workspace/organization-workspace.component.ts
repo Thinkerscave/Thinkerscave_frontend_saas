@@ -20,6 +20,8 @@ import {
   subscriptionTone
 } from '../../utils/platform-display.util';
 
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
+
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -55,6 +57,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(PlatformManagementService);
   private readonly messages = inject(MessageService);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   actionLoading = false;
@@ -101,6 +104,10 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.org = null;
         } else {
           this.org = org;
+          this.pageHeader.setPageHeader({
+            title: org.organizationName || 'Organization Details'
+          });
+          this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.loading = false;
         this.cdr.markForCheck();

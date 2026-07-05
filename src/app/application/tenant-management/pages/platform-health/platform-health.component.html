@@ -1,8 +1,5 @@
 <div class="saas-page platform-health">
-  <tc-saas-page-header
-    title="Tenant Health"
-    subtitle="Monitor tenant infrastructure, schema versions and storage"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Tenant Health'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <small class="platform-health__refreshed">Updated {{ refreshedAt | date:'short' }}</small>
   </tc-saas-page-header>

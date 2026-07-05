@@ -1,143 +1,661 @@
+import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
+
 import { filter } from 'rxjs';
+
 import { MenuItem } from 'primeng/api';
+
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 
+import { AppPageHeader, BreadCrumbService } from '../../core/services/bread-crumb.service';
+
+
+
+interface ResolvedCrumb {
+
+  label: string;
+
+  link: string[] | null;
+
+}
+
+
+
 @Component({
+
   selector: 'app-breadcrumb',
+
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BreadcrumbModule],
+
+  imports: [CommonModule, BreadcrumbModule],
+
   templateUrl: './breadcrumb.component.html',
+
   styleUrl: './breadcrumb.component.scss'
+
 })
+
 export class BreadcrumbComponent implements OnInit {
+
   items: MenuItem[] = [];
+
   home: MenuItem = { icon: 'pi pi-home', routerLink: ['/app'] };
+
   title = 'Dashboard';
 
+  subtitle: string | null = null;
+
+
+
   private readonly router = inject(Router);
+
   private readonly destroyRef = inject(DestroyRef);
+
   private readonly cdr = inject(ChangeDetectorRef);
 
-  ngOnInit() {
+  private readonly pageHeaderService = inject(BreadCrumbService);
+
+
+
+  private pageOverride: AppPageHeader | null = null;
+
+  private routeSubtitle: string | null = null;
+
+  private resolvedCrumbs: ResolvedCrumb[] = [];
+
+
+
+  ngOnInit(): void {
+
+    this.pageHeaderService.pageHeader$
+
+      .pipe(takeUntilDestroyed(this.destroyRef))
+
+      .subscribe(header => {
+
+        this.pageOverride = header;
+
+        this.applyHeader();
+
+        this.cdr.markForCheck();
+
+      });
+
+
+
     this.refreshBreadcrumb();
+
+
+
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
+
+      filter(event => event instanceof NavigationStart),
+
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.refreshBreadcrumb());
+
+    ).subscribe(() => {
+
+      this.pageOverride = null;
+
+      this.pageHeaderService.clearPageHeader();
+
+    });
+
+
+
+    this.router.events.pipe(
+
+      filter(event => event instanceof NavigationEnd),
+
+      takeUntilDestroyed(this.destroyRef)
+
+    ).subscribe(() => {
+
+      this.refreshBreadcrumb();
+
+    });
+
   }
+
+
 
   private refreshBreadcrumb(): void {
-    const labels = this.routeLabels(this.router.url);
-    this.title = labels.at(-1) ?? 'Dashboard';
-    this.items = labels.map(label => ({ label }));
+
+    const segments = this.urlSegments(this.router.url);
+
+    this.resolvedCrumbs = this.collectRouteCrumbs();
+
+    if (!this.resolvedCrumbs.length) {
+
+      const labels = this.routeLabels(segments);
+
+      this.resolvedCrumbs = labels.map((label, index) => ({
+
+        label,
+
+        link: index < labels.length - 1 ? this.crumbLink(segments, index) : null
+
+      }));
+
+    }
+
+    this.applyHeader();
+
     this.cdr.markForCheck();
+
   }
 
-  private routeLabels(url: string): string[] {
-    const cleanUrl = url.split('?')[0].split('#')[0];
-    const segments = cleanUrl.split('/').filter(Boolean);
 
-    if (!segments.length || cleanUrl === '/app') {
-      return ['Dashboard'];
+
+  private applyHeader(): void {
+
+    const labels = this.resolvedCrumbs.map(crumb => crumb.label);
+
+    this.title = this.pageOverride?.title ?? labels.at(-1) ?? 'Dashboard';
+
+    this.subtitle = this.pageOverride?.subtitle ?? this.routeSubtitle ?? null;
+
+
+
+    this.items = this.resolvedCrumbs.map((crumb, index) => {
+
+      const isLast = index === this.resolvedCrumbs.length - 1;
+
+      if (isLast || !crumb.link) {
+
+        return { label: crumb.label };
+
+      }
+
+      return { label: crumb.label, routerLink: crumb.link };
+
+    });
+
+  }
+
+
+
+  /** Walk the activated route tree — single source of truth from route `data`. */
+
+  private collectRouteCrumbs(): ResolvedCrumb[] {
+
+    const crumbs: ResolvedCrumb[] = [];
+
+    const pathParts: string[] = [];
+
+    this.routeSubtitle = null;
+
+
+
+    let route = this.router.routerState.root;
+
+    while (route.firstChild) {
+
+      route = route.firstChild;
+
+      const snap = route.snapshot;
+
+      pathParts.push(...snap.url.map(segment => segment.path));
+
+
+
+      const label = snap.data['breadcrumb'] as string | undefined;
+
+      if (label) {
+
+        const explicitLink = snap.data['breadcrumbLink'] as string[] | undefined;
+
+        crumbs.push({
+
+          label,
+
+          link: explicitLink ?? this.pathLink(pathParts)
+
+        });
+
+      }
+
+
+
+      const subtitle = snap.data['pageSubtitle'] as string | undefined;
+
+      if (subtitle) {
+
+        this.routeSubtitle = subtitle;
+
+      }
+
     }
+
+
+
+    if (crumbs.length) {
+
+      crumbs[crumbs.length - 1].link = null;
+
+    }
+
+
+
+    return crumbs;
+
+  }
+
+
+
+  private pathLink(pathParts: string[]): string[] {
+
+    return ['/' + pathParts.filter(Boolean).join('/')];
+
+  }
+
+
+
+  private urlSegments(url: string): string[] {
+
+    const cleanUrl = url.split('?')[0].split('#')[0];
+
+    return cleanUrl.split('/').filter(Boolean);
+
+  }
+
+
+
+  /** URL fallback when route `data` is not configured. */
+
+  private routeLabels(segments: string[]): string[] {
+
+    if (!segments.length || (segments[0] === 'app' && segments.length === 1)) {
+
+      return ['Dashboard'];
+
+    }
+
+
 
     if (segments[0] === 'public') {
+
       return ['Public', this.titleCase(segments[1] ?? 'admission')];
+
     }
 
-    const workspace = segments[1] ?? 'dashboard';
-    const page = segments[2] ?? '';
 
-    const workspaceLabels: Record<string, string> = {
-      'tenant-management': 'Tenant Management',
-      platform: 'Tenant Management',
-      organization: 'Organization Profile',
-      'organization-profile': 'Organization Profile',
-      admin: 'Administration',
-      students: 'Students',
-      staff: 'Staff',
-      attendance: 'Attendance',
-      inquiry: 'Admissions',
-      academics: 'Academics',
-      fees: 'Finance',
-      reports: 'Finance',
-      profile: 'Profile',
-      settings: 'Settings'
-    };
 
-    if (workspace === 'dashboard' || workspace === '') {
+    if (segments[0] !== 'app') {
+
+      return [this.titleCase(segments[0] ?? 'Page')];
+
+    }
+
+
+
+    const workspace = segments[1] ?? '';
+
+
+
+    if (!workspace || workspace === 'dashboard') {
+
       return ['Dashboard'];
+
     }
+
+
 
     if (workspace === 'tenant-management') {
+
       return this.tenantManagementLabels(segments);
+
     }
 
-    const rootLabel = workspaceLabels[workspace] ?? this.titleCase(workspace);
-    const pageLabel = this.routePageLabel(workspace, page);
-    return pageLabel ? [rootLabel, pageLabel] : [rootLabel];
-  }
 
-  private routePageLabel(workspace: string, page: string): string {
-    if (!page) {
-      return workspace === 'fees' ? 'Dashboard' : '';
+
+    if (workspace === 'access-management') {
+
+      return this.accessManagementLabels(segments);
+
     }
 
-    const labels: Record<string, Record<string, string>> = {
-      platform: { dashboard: 'Organizations', organizations: 'Organizations', subscriptions: 'Subscription Plans', monitoring: 'Organizations', audit: 'Audit Center' },
-      organization: { '': 'Organization Profile' },
-      'organization-profile': { '': 'Organization Profile' },
-      admin: { dashboard: 'Dashboard', access: 'Access Control', monitoring: 'Monitoring', audit: 'Audit Center' },
-      students: { dashboard: 'Dashboard', directory: 'Directory', profiles: 'Profiles', admissions: 'Admissions', classes: 'Classes', sections: 'Sections', promotion: 'Promotion Center', transfer: 'Transfer Center', documents: 'Documents', parents: 'Parents', 'id-cards': 'ID Cards', alumni: 'Alumni' },
-      staff: { dashboard: 'Dashboard', directory: 'Directory', operations: 'Operations' },
-      attendance: { dashboard: 'Dashboard', students: 'Student Attendance', staff: 'Staff Attendance' },
-      inquiry: { dashboard: 'Dashboard', pipeline: 'Pipeline', management: 'Management', 'follow-ups': 'Follow-ups', counseling: 'Counseling', applications: 'Applications', documents: 'Documents', communication: 'Communication', analytics: 'Analytics' },
-      academics: { dashboard: 'Dashboard', years: 'Academic Years', classes: 'Classes', subjects: 'Subjects', curriculum: 'Curriculum', syllabus: 'Syllabus', 'teacher-allocation': 'Teacher Allocation', 'class-teacher-allocation': 'Class Teachers', timetable: 'Timetable', calendar: 'Calendar', hierarchy: 'Hierarchy', settings: 'Settings' },
-      fees: { dashboard: 'Dashboard', setup: 'Setup', contracts: 'Contracts', ledger: 'Ledger', payments: 'Payments', receipts: 'Receipts', adjustments: 'Adjustments', controls: 'Controls', reports: 'Reports', audit: 'Audit Logs', 'my-fees': 'My Fees' }
+
+
+    const workspaceLabels: Record<string, string> = {
+
+      platform: 'Tenant Management',
+
+      organization: 'Organization Profile',
+
+      'organization-profile': 'Organization Profile',
+
+      admin: 'Administration',
+
+      students: 'Students',
+
+      staff: 'Staff',
+
+      attendance: 'Attendance',
+
+      inquiry: 'Admissions',
+
+      academics: 'Academics',
+
+      fees: 'Finance',
+
+      reports: 'Finance',
+
+      profile: 'Profile',
+
+      settings: 'Settings',
+
+      communication: 'Communication'
+
     };
 
-    return labels[workspace]?.[page] ?? this.titleCase(page);
+
+
+    const rootLabel = workspaceLabels[workspace] ?? this.titleCase(workspace);
+
+    const page = segments[2] ?? '';
+
+    const pageLabel = this.routePageLabel(workspace, page);
+
+    return pageLabel ? [rootLabel, pageLabel] : [rootLabel];
+
   }
 
-  private titleCase(value: string): string {
-    return value
-      .replace(/[-_]+/g, ' ')
-      .replace(/\b\w/g, char => char.toUpperCase());
-  }
+
 
   private tenantManagementLabels(segments: string[]): string[] {
+
     const page = segments[2] ?? '';
+
     const child = segments[3] ?? '';
-    const labels = ['Tenant Management'];
+
+    const grandchild = segments[4] ?? '';
+
+    const root = 'Tenant Management';
+
+
+
+    const pageLabels: Record<string, string> = {
+
+      dashboard: 'Dashboard',
+
+      customers: 'Customers',
+
+      organizations: 'Organizations',
+
+      'subscription-plans': 'Subscription Plans',
+
+      promotions: 'Promotions',
+
+      'feature-catalog': 'Feature Catalog',
+
+      'tenant-health': 'Tenant Health',
+
+      'platform-health': 'Tenant Health',
+
+      'migration-center': 'Migration Center',
+
+      'audit-center': 'Audit Center'
+
+    };
+
+
+
+    if (!page) {
+
+      return [root];
+
+    }
+
+
+
+    const pageLabel = pageLabels[page] ?? this.titleCase(page.replace(/-/g, ' '));
+
+    const labels = [root, pageLabel];
+
+
+
+    if (page === 'customers') {
+
+      if (child === 'new') labels.push('New Customer');
+
+      else if (child === 'archived') labels.push('Archive');
+
+      else if (child === 'edit') labels.push('Edit Customer');
+
+      else if (child) labels.push('Customer Details');
+
+      return labels;
+
+    }
+
+
 
     if (page === 'organizations') {
-      labels.push('Organizations');
-      if (child === 'create') {
-        labels.push('Create Organization');
-      } else if (child) {
-        labels.push('Organization Details');
-      }
+
+      if (child === 'create') labels.push('Provision Organization');
+
+      else if (child) labels.push('Organization Details');
+
       return labels;
+
     }
 
-    if (page === 'subscription-plans') {
-      labels.push('Subscription Plans');
-      if (child === 'create') {
-        labels.push('Create Plan');
-      } else if (child) {
-        labels.push('Plan Details');
-      }
+
+
+    if (page === 'subscription-plans' && child) {
+
+      labels.push(child === 'create' ? 'Create Plan' : 'Plan Details');
+
       return labels;
+
     }
 
-    if (page === 'audit-center') {
-      labels.push('Audit Center');
-      return labels;
+
+
+    if (grandchild) {
+
+      labels.push(this.titleCase(grandchild));
+
+    }
+
+
+
+    return labels;
+
+  }
+
+
+
+  private accessManagementLabels(segments: string[]): string[] {
+
+    const page = segments[2] ?? '';
+
+    const child = segments[3] ?? '';
+
+    const root = 'Access Management';
+
+
+
+    const pageLabels: Record<string, string> = {
+
+      dashboard: 'Access Management',
+
+      roles: 'Roles & Responsibilities',
+
+      menus: 'Menu Catalog',
+
+      users: 'Users & Access',
+
+      'security-policy': 'Security Policy',
+
+      'login-history': 'Login History'
+
+    };
+
+
+
+    if (!page) {
+
+      return [root];
+
+    }
+
+
+
+    const labels = [root, pageLabels[page] ?? this.titleCase(page)];
+
+    if (child) {
+
+      labels.push(page === 'roles' ? 'Role Workspace' : page === 'users' ? 'User Permissions' : this.titleCase(child));
+
     }
 
     return labels;
+
   }
+
+
+
+  private routePageLabel(workspace: string, page: string): string {
+
+    if (!page) {
+
+      return workspace === 'fees' ? 'Dashboard' : '';
+
+    }
+
+
+
+    const labels: Record<string, Record<string, string>> = {
+
+      organization: { '': 'Organization Profile' },
+
+      'organization-profile': { '': 'Organization Profile' },
+
+      admin: { dashboard: 'Dashboard', access: 'Access Control', monitoring: 'Monitoring', audit: 'Audit Center' },
+
+      students: { dashboard: 'Dashboard', directory: 'Directory' },
+
+      staff: { dashboard: 'Dashboard', directory: 'Directory' },
+
+      attendance: { dashboard: 'Dashboard', students: 'Student Attendance', staff: 'Staff Attendance' },
+
+      fees: { dashboard: 'Dashboard' },
+
+      communication: { announcements: 'Announcements', templates: 'Templates', conversations: 'Conversations', notices: 'Notices' }
+
+    };
+
+
+
+    return labels[workspace]?.[page] ?? this.titleCase(page);
+
+  }
+
+
+
+  private crumbLink(segments: string[], index: number): string[] | null {
+
+    if (segments[0] !== 'app') {
+
+      return null;
+
+    }
+
+
+
+    const workspace = segments[1];
+
+    const page = segments[2];
+
+    const child = segments[3];
+
+
+
+    if (workspace === 'tenant-management') {
+
+      if (index === 0) {
+
+        return ['/app/tenant-management/dashboard'];
+
+      }
+
+      if (index === 1 && page === 'customers') {
+
+        return ['/app/tenant-management/customers'];
+
+      }
+
+      if (index === 1 && page === 'organizations') {
+
+        return ['/app/tenant-management/organizations'];
+
+      }
+
+      if (index === 1 && page) {
+
+        return [`/app/tenant-management/${page}`];
+
+      }
+
+      if (index === 2 && page === 'customers' && child && child !== 'new' && child !== 'archived' && child !== 'edit') {
+
+        return ['/app/tenant-management/customers', child];
+
+      }
+
+    }
+
+
+
+    if (workspace === 'access-management') {
+
+      if (index === 0) {
+
+        return ['/app/access-management/dashboard'];
+
+      }
+
+      if (index === 1 && page) {
+
+        return [`/app/access-management/${page}`];
+
+      }
+
+    }
+
+
+
+    if (index === 0) {
+
+      return ['/app'];
+
+    }
+
+
+
+    return null;
+
+  }
+
+
+
+  private titleCase(value: string): string {
+
+    return value
+
+      .replace(/[-_]+/g, ' ')
+
+      .replace(/\b\w/g, char => char.toUpperCase());
+
+  }
+
 }
+
+

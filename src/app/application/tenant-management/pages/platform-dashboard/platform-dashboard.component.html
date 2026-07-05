@@ -1,8 +1,5 @@
 <div class="saas-page platform-dashboard">
-  <tc-saas-page-header
-    title="Platform Dashboard"
-    subtitle="ThinkersCave platform-wide overview for super administrators"
-    [breadcrumbs]="[{label:'Home', route:'/app'},{label:'Platform Management'},{label:'Dashboard'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
