@@ -1,110 +1,301 @@
-<div class="saas-page organizations-list">
+<div class="org-page">
   <p-toast></p-toast>
 
-  <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create"><i class="pi pi-plus"></i> New Organization</a>
-  </tc-saas-page-header>
-
+  <!-- ── Stat cards ── -->
   <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-  <tc-saas-filter-row>
-    <label class="saas-search">
-      <i class="pi pi-search"></i>
-      <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search organization, code, email...">
-    </label>
-    <label class="saas-field"><span>Status</span>
-      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let s of statusChips" [ngValue]="s.id">{{ s.label }}</option>
-      </select>
-    </label>
-    <label class="saas-field"><span>Type</span>
-      <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let t of typeOptions" [ngValue]="t.id">{{ t.label }}</option>
-      </select>
-    </label>
-    <div class="customers-list__view-switch organizations-list__view-switch">
-      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
-      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
-    </div>
-    <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
-  </tc-saas-filter-row>
+  <!-- ── Main workspace card ── -->
+  <div class="org-workspace">
 
-  <tc-saas-panel [title]="'All Organizations'" [subtitle]="totalRecords + ' organizations'">
-    <div *ngIf="errorMessage" class="saas-empty organizations-list__error">
+    <!-- ══ Toolbar ══ -->
+    <div class="org-toolbar">
+
+      <!-- Search — col-4 equivalent -->
+      <label class="org-toolbar__search">
+        <i class="pi pi-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search organizations, code, email, domain…">
+      </label>
+
+      <!-- Status -->
+      <p-select
+        class="org-toolbar__pselect"
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="onFilterChange()"
+        [options]="statusChips"
+        optionLabel="label"
+        optionValue="id"
+        placeholder="All Status">
+      </p-select>
+
+      <!-- Type -->
+      <p-select
+        class="org-toolbar__pselect"
+        [(ngModel)]="typeFilter"
+        (ngModelChange)="onFilterChange()"
+        [options]="typeOptions"
+        optionLabel="label"
+        optionValue="id"
+        placeholder="All Types">
+      </p-select>
+
+      <!-- Customer (client-side filter) -->
+      <p-select
+        class="org-toolbar__pselect"
+        [(ngModel)]="customerFilter"
+        [options]="customerOptions"
+        optionLabel="label"
+        optionValue="id"
+        placeholder="All Customers">
+      </p-select>
+
+      <!-- Spacer — pushes view/reset/new-org to the right -->
+      <div class="org-toolbar__spacer"></div>
+
+      <!-- View segmented control -->
+      <div class="org-view-seg" role="group" aria-label="Switch view">
+        <button type="button"
+                [class.is-active]="viewMode === 'cards'"
+                (click)="setViewMode('cards')"
+                aria-label="Grid view">
+          <i class="pi pi-th-large"></i><span>Grid</span>
+        </button>
+        <button type="button"
+                [class.is-active]="viewMode === 'table'"
+                (click)="setViewMode('table')"
+                aria-label="Table view">
+          <i class="pi pi-list"></i><span>Table</span>
+        </button>
+      </div>
+
+      <!-- Reset -->
+      <button type="button" class="org-toolbar__btn" (click)="resetFilters()">
+        <i class="pi pi-filter-slash"></i><span> Reset</span>
+      </button>
+
+      <!-- New org -->
+      <a class="org-toolbar__btn org-toolbar__btn--primary"
+         routerLink="/app/tenant-management/organizations/create">
+        <i class="pi pi-plus"></i><span> New Organization</span>
+      </a>
+
+    </div><!-- /org-toolbar -->
+
+
+    <!-- ── Error ── -->
+    <div *ngIf="errorMessage" class="org-alert org-alert--error">
       <i class="pi pi-exclamation-triangle"></i>
-      <strong>{{ errorMessage }}</strong>
-      <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+      <div class="org-alert__body">
+        <strong>Unable to load organizations</strong>
+        <p>{{ errorMessage }}</p>
+      </div>
+      <button type="button" class="org-toolbar__btn org-toolbar__btn--primary" (click)="load()">
+        <i class="pi pi-refresh"></i> Retry
+      </button>
     </div>
 
-    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading organizations...</div>
-
-    <div *ngIf="!loading && !organizations.length && !errorMessage" class="saas-empty">
-      <i class="pi pi-building"></i>
-      <strong>No organizations found</strong>
-      <p>Try adjusting filters or provision a new organization.</p>
-      <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create">Provision Organization</a>
+    <!-- ── Loading ── -->
+    <div *ngIf="loading" class="org-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading organizations…</span>
     </div>
 
-    <div *ngIf="!loading && organizations.length && viewMode === 'cards'" class="organizations-list__cards">
-      <article class="saas-org-card" *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org)">
-        <div class="saas-org-card__head">
-          <span class="saas-org-card__logo">{{ orgInitials(org.organizationName) || 'O' }}</span>
-          <div class="saas-org-card__title">
-            <strong>{{ org.organizationName }}</strong>
-            <small>{{ org.organizationCode }} · {{ institutionLabel(org.institutionType) }}</small>
+    <!-- ── Empty ── -->
+    <div *ngIf="!loading && !filteredOrganizations.length && !errorMessage" class="org-empty">
+      <div class="org-empty__icon"><i class="pi pi-building"></i></div>
+      <h3>No organizations found</h3>
+      <p>Try adjusting your filters or provision a new organization to get started.</p>
+      <a class="org-toolbar__btn org-toolbar__btn--primary"
+         routerLink="/app/tenant-management/organizations/create">
+        <i class="pi pi-plus"></i> Provision Organization
+      </a>
+    </div>
+
+    <!-- ════════════════ GRID VIEW ════════════════ -->
+    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'cards'" class="org-grid">
+
+      <article class="org-card"
+               *ngFor="let org of filteredOrganizations; trackBy: trackById"
+               (click)="openWorkspace(org)">
+
+        <!-- Head: avatar + name + status -->
+        <div class="org-card__head">
+          <span class="org-card__avatar" [attr.data-color]="orgColor(org.organizationName)">
+            {{ orgInitials(org.organizationName) || 'O' }}
+          </span>
+          <div class="org-card__identity">
+            <strong class="org-card__name">{{ org.organizationName }}</strong>
+            <span class="org-card__code">{{ org.organizationCode }}</span>
           </div>
-          <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="pillTone(org.status)"></tc-saas-pill>
+          <tc-saas-pill
+            [label]="organizationStatusLabel(org.status)"
+            [tone]="pillTone(org.status)">
+          </tc-saas-pill>
         </div>
-        <div class="saas-org-card__meta">
-          <span><i class="pi pi-user"></i> {{ org.customerName || org.email || '—' }}</span>
-          <span *ngIf="org.city"><i class="pi pi-map-marker"></i> {{ org.city }}</span>
-          <span *ngIf="org.tenantIdentifier"><i class="pi pi-globe"></i> {{ org.tenantIdentifier }}.thinkerscave.app</span>
-        </div>
-      </article>
-    </div>
 
-    <div *ngIf="!loading && organizations.length && viewMode === 'table'" class="saas-table-wrap">
-      <table class="saas-data-table organizations-list__table">
+        <!-- Institution type -->
+        <div class="org-card__type">
+          <i class="pi pi-building"></i>
+          {{ institutionLabel(org.institutionType) }}
+        </div>
+
+        <!-- Meta rows -->
+        <div class="org-card__meta">
+          <div class="org-card__row" *ngIf="org.email">
+            <i class="pi pi-envelope"></i>
+            <span>{{ org.email }}</span>
+          </div>
+          <div class="org-card__row" *ngIf="org.city">
+            <i class="pi pi-map-marker"></i>
+            <span>{{ org.city }}</span>
+          </div>
+          <div class="org-card__row" *ngIf="org.tenantIdentifier">
+            <i class="pi pi-globe"></i>
+            <span>{{ org.tenantIdentifier }}.thinkerscave.app</span>
+          </div>
+          <div class="org-card__row" *ngIf="!org.email && !org.city && !org.tenantIdentifier">
+            <span class="org-card__empty-meta">No contact info available</span>
+          </div>
+        </div>
+
+        <!-- Footer: customer + plan + action -->
+        <div class="org-card__footer">
+          <div class="org-card__pairs">
+            <div class="org-card__pair" *ngIf="org.customerName">
+              <span class="org-card__pair-label">Customer</span>
+              <strong class="org-card__pair-val">{{ org.customerName }}</strong>
+            </div>
+            <div class="org-card__pair" *ngIf="org.planName">
+              <span class="org-card__pair-label">Subscription</span>
+              <strong class="org-card__pair-val">{{ org.planName }}</strong>
+            </div>
+          </div>
+          <span class="org-card__action">
+            View Details <i class="pi pi-arrow-right"></i>
+          </span>
+        </div>
+
+      </article>
+
+    </div><!-- /org-grid -->
+
+    <!-- ════════════════ TABLE VIEW ════════════════ -->
+    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'table'"
+         class="org-table-wrap">
+      <table class="org-table">
         <thead>
           <tr>
             <th>Organization</th>
-            <th>Owner / Customer</th>
+            <th>Customer</th>
             <th>Type</th>
             <th>Plan</th>
             <th>Status</th>
-            <th>Created</th>
             <th>Domain</th>
+            <th>Created On</th>
+            <th class="org-table__actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org, $event)" class="clickable-row">
+          <tr *ngFor="let org of filteredOrganizations; trackBy: trackById"
+              (click)="openWorkspace(org, $event)">
+
+            <!-- Organization (avatar + name + code) -->
             <td>
-              <div class="cell-main organizations-list__cell">
-                <span class="organizations-list__avatar">{{ orgInitials(org.organizationName) }}</span>
-                <div>
+              <div class="org-table-cell">
+                <span class="org-table-avatar"
+                      [attr.data-color]="orgColor(org.organizationName)">
+                  {{ orgInitials(org.organizationName) }}
+                </span>
+                <div class="org-table-identity">
                   <strong>{{ org.organizationName }}</strong>
-                  <small>{{ org.organizationCode }} · {{ org.city || '—' }}</small>
+                  <small>{{ org.organizationCode }}</small>
                 </div>
               </div>
             </td>
-            <td>{{ org.customerName || org.email || '—' }}</td>
+
+            <td>{{ org.customerName || '—' }}</td>
             <td>{{ institutionLabel(org.institutionType) }}</td>
-            <td><tc-saas-pill [label]="org.planName || '—'" tone="primary"></tc-saas-pill></td>
-            <td><tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="pillTone(org.status)"></tc-saas-pill></td>
-            <td>{{ formatDate(org.createdOn) }}</td>
-            <td>{{ org.tenantIdentifier ? org.tenantIdentifier + '.thinkerscave.app' : '—' }}</td>
+
+            <!-- Plan -->
+            <td>
+              <span class="org-plan-tag">{{ org.planName || '—' }}</span>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <tc-saas-pill
+                [label]="organizationStatusLabel(org.status)"
+                [tone]="pillTone(org.status)">
+              </tc-saas-pill>
+            </td>
+
+            <!-- Domain -->
+            <td class="org-domain">
+              <span *ngIf="org.tenantIdentifier">
+                {{ org.tenantIdentifier }}.thinkerscave.app
+              </span>
+              <span *ngIf="!org.tenantIdentifier" class="org-muted">—</span>
+            </td>
+
+            <!-- Created -->
+            <td class="org-muted">{{ formatDate(org.createdOn) }}</td>
+
+            <!-- Actions -->
+            <td (click)="$event.stopPropagation()">
+              <div class="org-table-actions">
+                <button type="button" class="org-view-btn"
+                        (click)="openWorkspace(org)">
+                  View
+                </button>
+                <div class="org-menu-wrap">
+                  <button type="button" class="org-more-btn"
+                          (click)="toggleMenu(org.id, $event)"
+                          aria-label="More actions">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                  <div class="org-menu" *ngIf="openMenuFor === org.id">
+                    <button type="button"
+                            (click)="runQuickAction(org, 'view', $event)">
+                      <i class="pi pi-eye"></i> View Details
+                    </button>
+                    <button type="button"
+                            *ngIf="org.status === 'ACTIVE'"
+                            (click)="runQuickAction(org, 'suspend', $event)">
+                      <i class="pi pi-ban"></i> Suspend
+                    </button>
+                    <button type="button"
+                            *ngIf="org.status !== 'ACTIVE'"
+                            (click)="runQuickAction(org, 'activate', $event)">
+                      <i class="pi pi-check-circle"></i> Activate
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+
           </tr>
         </tbody>
       </table>
+    </div><!-- /org-table-wrap -->
 
+    <!-- ── Footer: count (left) + paginator (right) ── -->
+    <div class="org-footer" *ngIf="!loading && totalRecords > 0">
+      <span class="org-footer__count">
+        Showing <strong>{{ filteredOrganizations.length }}</strong> of
+        <strong>{{ totalRecords }}</strong> organizations
+      </span>
       <p-paginator
+        class="org-footer__paginator"
         [rows]="pageSize"
         [totalRecords]="totalRecords"
         [first]="page * pageSize"
-        [rowsPerPageOptions]="[10, 20, 50]"
+        [rowsPerPageOptions]="[12, 24, 48]"
         (onPageChange)="onPageChange($event)">
       </p-paginator>
     </div>
-  </tc-saas-panel>
+
+  </div><!-- /org-workspace -->
 </div>

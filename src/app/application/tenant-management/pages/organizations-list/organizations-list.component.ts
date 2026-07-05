@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PaginatorModule } from 'primeng/paginator';
+import { Select } from 'primeng/select';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
@@ -19,10 +20,7 @@ import {
 } from '../../utils/platform-display.util';
 
 import {
-  SaasPageHeaderComponent,
   SaasStatGridComponent,
-  SaasPanelComponent,
-  SaasFilterRowComponent,
   SaasPillComponent,
   SaasStat
 } from '../../../../shared/ui/saas';
@@ -36,8 +34,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterLink, PaginatorModule, ToastModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent,
-    SaasFilterRowComponent, SaasPillComponent
+    Select, SaasStatGridComponent, SaasPillComponent
   ],
   providers: [MessageService],
   templateUrl: './organizations-list.component.html',
@@ -58,6 +55,7 @@ export class OrganizationsListComponent implements OnInit {
   search = '';
   statusFilter: StatusFilter = 'all';
   typeFilter: 'all' | InstitutionType = 'all';
+  customerFilter = 'all';
   viewMode: 'cards' | 'table' = 'cards';
   openMenuFor: number | null = null;
   page = 0;
@@ -160,8 +158,31 @@ export class OrganizationsListComponent implements OnInit {
     ];
   }
 
+  /** Deterministic avatar colour based on org name's first character. */
+  orgColor(name: string): string {
+    const palette = ['indigo', 'violet', 'emerald', 'teal', 'amber', 'rose', 'sky', 'orange'];
+    return palette[(name?.charCodeAt(0) ?? 0) % palette.length];
+  }
+
+  /** Unique customer list for the customer filter dropdown (client-side from loaded page). */
+  get customerOptions(): { id: string; label: string }[] {
+    const seen = new Set<string>();
+    const opts: { id: string; label: string }[] = [{ id: 'all', label: 'All Customers' }];
+    for (const org of this.organizations) {
+      const name = org.customerName ?? '';
+      if (name && !seen.has(name)) { seen.add(name); opts.push({ id: name, label: name }); }
+    }
+    return opts;
+  }
+
+  /** Applies the client-side customer filter on top of the server-paged results. */
+  get filteredOrganizations(): OrganizationSummary[] {
+    if (this.customerFilter === 'all') return this.organizations;
+    return this.organizations.filter(o => (o.customerName ?? '') === this.customerFilter);
+  }
+
   openWorkspace(org: OrganizationSummary, event?: MouseEvent): void {
-    if (event && (event.target as HTMLElement).closest('.organizations-list__menu, .saas-icon-btn')) return;
+    if (event && (event.target as HTMLElement).closest('.org-menu-wrap, .org-more-btn')) return;
     this.router.navigate(['/app/tenant-management/organizations', org.id]);
   }
 
@@ -208,6 +229,7 @@ export class OrganizationsListComponent implements OnInit {
     this.search = '';
     this.statusFilter = 'all';
     this.typeFilter = 'all';
+    this.customerFilter = 'all';
     this.page = 0;
     this.loadOrganizations();
   }
