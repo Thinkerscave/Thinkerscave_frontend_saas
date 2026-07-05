@@ -24,7 +24,8 @@
                [class.is-active]="isLeafActive(item)"
                [attr.aria-current]="isLeafActive(item) ? 'page' : null"
                [attr.aria-label]="item.label"
-               (click)="selectItem(null, item, $event)">
+              (pointerdown)="onItemPointerDown(null, item, $event)"
+              (click)="onItemClick(null, item, $event)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
               <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
             </button>
@@ -35,7 +36,8 @@
                     [attr.aria-current]="isParentActive(item) ? 'true' : null"
                     [attr.aria-label]="item.label"
                     [attr.aria-expanded]="isGroupOpen(item)"
-                    (click)="toggleGroup(item)">
+                  (pointerdown)="onGroupPointerDown(item, $event)"
+                  (click)="onGroupClick(item, $event)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
               <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
               <span class="nav-chevron" [class.is-visible]="displayExpanded" aria-hidden="true">
@@ -56,7 +58,8 @@
                              [attr.aria-current]="isLeafActive(grandchild) ? 'page' : null"
                              [attr.aria-label]="grandchild.label"
                              [style.animation-delay]="(ci + gi) * 30 + 'ms'"
-                             (click)="selectItem(item, grandchild, $event)">
+                              (pointerdown)="onItemPointerDown(item, grandchild, $event)"
+                              (click)="onItemClick(item, grandchild, $event)">
                             <span class="submenu-icon"><i [ngClass]="grandchild.icon" aria-hidden="true"></i></span>
                             <span class="submenu-label">{{ grandchild.label }}</span>
                           </button>
@@ -70,7 +73,8 @@
                          [attr.aria-current]="isLeafActive(child) ? 'page' : null"
                          [attr.aria-label]="child.label"
                          [style.animation-delay]="ci * 30 + 'ms'"
-                         (click)="selectItem(item, child, $event)">
+                         (pointerdown)="onItemPointerDown(item, child, $event)"
+                         (click)="onItemClick(item, child, $event)">
                         <span class="submenu-icon"><i [ngClass]="child.icon" aria-hidden="true"></i></span>
                         <span class="submenu-label">{{ child.label }}</span>
                       </button>

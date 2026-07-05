@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Elem
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { TooltipModule } from 'primeng/tooltip';
 import { filter } from 'rxjs';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
@@ -14,7 +13,7 @@ import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
   selector: 'app-side-menu',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, TooltipModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })
@@ -36,6 +35,7 @@ export class SideMenuComponent implements OnInit {
 
   private activeLeafKey: string | null = null;
   private collapseHoverTimer: ReturnType<typeof setTimeout> | null = null;
+  private suppressPointerClickUntil = 0;
 
   get displayExpanded(): boolean {
     return this.expanded || this.sidebarLayout.displayExpanded();
@@ -302,6 +302,54 @@ export class SideMenuComponent implements OnInit {
 
     this.openGroups.clear();
     this.openGroups.add(key);
+  }
+
+  onGroupPointerDown(item: MenuItem, event: PointerEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+    this.markPointerHandled();
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleGroup(item);
+  }
+
+  onGroupClick(item: MenuItem, event: MouseEvent): void {
+    if (this.shouldSuppressPointerClick(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    this.toggleGroup(item);
+  }
+
+  onItemPointerDown(parent: MenuItem | null, item: MenuItem, event: PointerEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+    this.markPointerHandled();
+    this.selectItem(parent, item, event);
+  }
+
+  onItemClick(parent: MenuItem | null, item: MenuItem, event: MouseEvent): void {
+    if (this.shouldSuppressPointerClick(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    this.selectItem(parent, item, event);
+  }
+
+  private markPointerHandled(): void {
+    this.suppressPointerClickUntil = Date.now() + 400;
+  }
+
+  private shouldSuppressPointerClick(event: MouseEvent): boolean {
+    // Keep keyboard-triggered click events working (detail === 0).
+    if (event.detail === 0) {
+      return false;
+    }
+    return Date.now() <= this.suppressPointerClickUntil;
   }
 
   selectItem(parent: MenuItem | null, item: MenuItem, event?: Event): void {
