@@ -20,9 +20,45 @@
             <option *ngFor="let c of categories()" [value]="c">{{ c === 'all' ? 'All categories' : c }}</option>
           </select>
         </label>
+        <div class="customers-list__view-switch feature-catalog__view-switch">
+          <button type="button" [class.is-active]="viewMode() === 'grouped'" (click)="viewMode.set('grouped')" title="Grouped card view" aria-label="Switch to grouped card view"><i class="pi pi-th-large"></i></button>
+          <button type="button" [class.is-active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
+        </div>
       </tc-saas-filter-row>
 
-      <div class="saas-table-wrap">
+      <div *ngIf="viewMode() === 'grouped'" class="feature-catalog__grouped">
+        <div *ngFor="let group of groupedFeatures()" class="saas-section-group">
+          <h3 class="saas-section-title">
+            <i class="pi pi-box"></i> {{ group.module }}
+          </h3>
+          <div class="saas-card-grid">
+            <article class="saas-org-card feature-catalog__card" *ngFor="let m of group.features">
+              <div class="saas-org-card__head">
+                <div class="saas-org-card__title">
+                  <strong>{{ m.displayName || m.featureName }}</strong>
+                  <small>{{ m.featureCode }}</small>
+                </div>
+                <tc-saas-pill
+                  [label]="m.premiumFeature ? 'Premium' : (m.defaultEnabled ? 'Core' : 'Optional')"
+                  [tone]="pillTone(m)">
+                </tc-saas-pill>
+              </div>
+              <p class="feature-catalog__description">
+                {{ m.description || 'No description available.' }}
+              </p>
+              <div class="saas-org-card__meta">
+                <span *ngIf="m.category"><i class="pi pi-tags"></i> {{ m.category }}</span>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div *ngIf="!groupedFeatures().length" class="saas-empty">
+          <i class="pi pi-search"></i>
+          <strong>No features match the current filters.</strong>
+        </div>
+      </div>
+
+      <div *ngIf="viewMode() === 'table'" class="saas-table-wrap">
         <table class="saas-data-table">
           <thead>
             <tr>

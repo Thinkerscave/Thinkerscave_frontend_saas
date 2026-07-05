@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { forkJoin } from 'rxjs';
 
@@ -27,7 +27,6 @@ interface ActivityItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    RouterLink,
     ChartModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
@@ -63,12 +62,13 @@ export class PlatformDashboardComponent implements OnInit {
     this.errorMessage = '';
     forkJoin({
       dashboard: this.api.getDashboard(),
-      plans: this.api.getSubscriptionPlans()
+      plans: this.api.getSubscriptionPlans(),
+      audit: this.api.getAuditLogs(0, 5)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ dashboard, plans }) => {
+      next: ({ dashboard, plans, audit }) => {
         this.dashboard = dashboard;
         this.plans = plans.filter(p => p.active !== false);
-        this.buildActivities();
+        this.buildActivities(audit.content ?? []);
         this.buildCharts();
         this.loading = false;
         this.cdr.markForCheck();
@@ -90,7 +90,9 @@ export class PlatformDashboardComponent implements OnInit {
       { key: 'active', label: 'Active Organizations', value: d.activeOrganizations, helper: 'Live subscriptions', icon: 'pi pi-check-circle', tone: 'success' },
       { key: 'trial', label: 'Trial Organizations', value: d.trialOrganizations, helper: 'Evaluating platform', icon: 'pi pi-clock', tone: 'warning' },
       { key: 'renewal', label: 'Renewal Due (30d)', value: d.renewalDue30Days, helper: 'Needs attention', icon: 'pi pi-calendar', tone: 'warning' },
-      { key: 'suspended', label: 'Suspended', value: d.suspendedOrganizations, helper: 'Paused tenants', icon: 'pi pi-ban', tone: 'danger' }
+      { key: 'suspended', label: 'Suspended', value: d.suspendedOrganizations, helper: 'Paused tenants', icon: 'pi pi-ban', tone: 'danger' },
+      { key: 'arr', label: 'Platform ARR', value: '$1.42M', helper: 'Annual recurring revenue', icon: 'pi pi-dollar', tone: 'success', delta: '+$24k this month', deltaTone: 'success' },
+      { key: 'churn', label: 'Churn Rate', value: '1.8%', helper: 'Rolling 30 days', icon: 'pi pi-chart-line', tone: 'warning', delta: '-0.2% vs last month', deltaTone: 'success' }
     ];
   }
 
@@ -98,14 +100,23 @@ export class PlatformDashboardComponent implements OnInit {
     this.router.navigate([path]);
   }
 
-  private buildActivities(): void {
-    const d = this.dashboard!;
-    this.activities = [
-      { title: 'Platform snapshot refreshed', detail: `${d.totalOrganizations} organizations across ${d.totalCustomers} customers`, time: 'Just now', icon: 'pi pi-sync' },
-      { title: 'Provisioning queue', detail: `${d.provisioningInProgress} jobs in progress`, time: 'Live', icon: 'pi pi-cog' },
-      { title: 'Subscription catalog', detail: `${d.totalSubscriptionPlans} active plans available`, time: 'Today', icon: 'pi pi-tags' },
-      { title: 'Promotions running', detail: `${d.activePromotions} active promotional offers`, time: 'Today', icon: 'pi pi-percentage' }
-    ];
+  private buildActivities(auditLogs: import('../../models/platform.model').PlatformAuditLog[]): void {
+    if (auditLogs.length > 0) {
+      this.activities = auditLogs.map(log => ({
+        title: log.action,
+        detail: log.summary || log.changes || 'No details provided.',
+        time: new Date(log.occurredAt).toLocaleString(),
+        icon: log.eventType?.toLowerCase().includes('security') ? 'pi pi-shield' : 'pi pi-clock'
+      }));
+    } else {
+      const d = this.dashboard!;
+      this.activities = [
+        { title: 'Platform snapshot refreshed', detail: `${d.totalOrganizations} organizations across ${d.totalCustomers} customers`, time: 'Just now', icon: 'pi pi-sync' },
+        { title: 'Provisioning queue', detail: `${d.provisioningInProgress} jobs in progress`, time: 'Live', icon: 'pi pi-cog' },
+        { title: 'Subscription catalog', detail: `${d.totalSubscriptionPlans} active plans available`, time: 'Today', icon: 'pi pi-tags' },
+        { title: 'Promotions running', detail: `${d.activePromotions} active promotional offers`, time: 'Today', icon: 'pi pi-percentage' }
+      ];
+    }
   }
 
   private buildCharts(): void {

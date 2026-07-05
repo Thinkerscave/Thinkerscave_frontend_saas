@@ -10,7 +10,14 @@
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-    <tc-saas-panel title="Tenant Registry" subtitle="Health scores derived from provision status and maintenance mode">
+    <div class="platform-health__grid">
+      <tc-saas-panel title="Health Overview" subtitle="System-wide tenant status">
+        <div class="platform-health__chart-wrap">
+          <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions" [style]="{'width': '100%', 'max-width': '240px'}"></p-chart>
+        </div>
+      </tc-saas-panel>
+      
+      <tc-saas-panel title="Tenant Registry" subtitle="Health scores derived from provision status and maintenance mode">
       <div class="saas-table-wrap">
         <table class="saas-data-table">
           <thead>
@@ -27,7 +34,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let t of tenants()">
+            <tr *ngFor="let t of tenants()"
+                [class.health-row--danger]="healthScore(t) <= 50"
+                [class.health-row--warn]="healthScore(t) > 50 && healthScore(t) < 85"
+                [class.health-row--ok]="healthScore(t) >= 85">
               <td><strong>{{ t.organizationName || '—' }}</strong></td>
               <td><code>{{ t.tenantIdentifier }}</code></td>
               <td>{{ t.schemaName || '—' }}</td>
@@ -49,6 +59,7 @@
           </tbody>
         </table>
       </div>
-    </tc-saas-panel>
+      </tc-saas-panel>
+    </div>
   </ng-container>
 </div>

@@ -26,9 +26,15 @@
     <tc-saas-panel>
       <!-- Step 1: Business -->
       <section *ngIf="step === 0" class="wizard-step">
-        <h3 class="wizard-step__title">Business</h3>
-        <p class="wizard-step__lead">Legal identity and primary business contact for the customer account.</p>
+        <div class="wizard-step__header">
+          <div class="wizard-step__icon"><i class="pi pi-building"></i></div>
+          <div>
+            <h3 class="wizard-step__title">Business Identity</h3>
+            <p class="wizard-step__lead">Legal identity and primary business contact for the customer account.</p>
+          </div>
+        </div>
 
+        <div class="wizard-section-label">Core Details</div>
         <div class="wizard-row">
           <label class="saas-field"><span>Legal name</span>
             <input type="text" [(ngModel)]="form.legalName" placeholder="Northstar Education Pvt Ltd">
@@ -38,17 +44,19 @@
           </label>
         </div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Customer type</span>
+          <label class="saas-field wizard-field--cap"><span>Customer type</span>
             <select [(ngModel)]="form.customerType">
               <option *ngFor="let t of typeOptions" [ngValue]="t.code">{{ t.label }}</option>
             </select>
           </label>
-          <label class="saas-field"><span>Status</span>
+          <label class="saas-field wizard-field--cap"><span>Status</span>
             <select [(ngModel)]="form.status">
               <option *ngFor="let s of statusOptions" [ngValue]="s.code">{{ s.label }}</option>
             </select>
           </label>
         </div>
+
+        <div class="wizard-section-label">Contact</div>
         <div class="wizard-row">
           <label class="saas-field"><span>Business email</span>
             <input type="email" [(ngModel)]="form.email" placeholder="billing@customer.com">
@@ -65,6 +73,8 @@
             <input type="url" [(ngModel)]="form.website" placeholder="https://">
           </label>
         </div>
+
+        <div class="wizard-section-label">Registration</div>
         <div class="wizard-row">
           <label class="saas-field"><span>Tax / GST number</span>
             <input type="text" [(ngModel)]="form.taxNumber" placeholder="Optional">
@@ -80,11 +90,17 @@
 
       <!-- Step 2: Primary Contact -->
       <section *ngIf="step === 1" class="wizard-step">
-        <h3 class="wizard-step__title">Primary Contact</h3>
-        <p class="wizard-step__lead">
-          {{ isEditMode ? 'Update the primary contact details shown on the customer record.' : 'Optional on create — a contact record is added when a name is provided.' }}
-        </p>
+        <div class="wizard-step__header">
+          <div class="wizard-step__icon"><i class="pi pi-user"></i></div>
+          <div>
+            <h3 class="wizard-step__title">Primary Contact</h3>
+            <p class="wizard-step__lead">
+              {{ isEditMode ? 'Update the primary contact details shown on the customer record.' : 'Optional on create — a contact record is added when a name is provided.' }}
+            </p>
+          </div>
+        </div>
 
+        <div class="wizard-section-label">Contact Details</div>
         <div class="wizard-row">
           <label class="saas-field"><span>Full name</span>
             <input type="text" [(ngModel)]="form.contactFullName" placeholder="Priya Sharma">
@@ -105,6 +121,7 @@
           <input type="tel" [(ngModel)]="form.contactAlternateMobile" placeholder="Optional">
         </label>
 
+        <div class="wizard-section-label">Contact Roles</div>
         <div class="customer-form__flags">
           <label class="customer-form__flag">
             <input type="checkbox" [(ngModel)]="form.contactPrimary">
@@ -123,15 +140,23 @@
 
       <!-- Step 3: Address -->
       <section *ngIf="step === 2" class="wizard-step">
-        <h3 class="wizard-step__title">Address</h3>
-        <p class="wizard-step__lead">Registered or billing address for invoices and correspondence.</p>
+        <div class="wizard-step__header">
+          <div class="wizard-step__icon"><i class="pi pi-map-marker"></i></div>
+          <div>
+            <h3 class="wizard-step__title">Address</h3>
+            <p class="wizard-step__lead">Registered or billing address for invoices and correspondence.</p>
+          </div>
+        </div>
 
+        <div class="wizard-section-label">Street Address</div>
         <label class="saas-field saas-field--full"><span>Address line 1</span>
           <input type="text" [(ngModel)]="form.addressLine1" placeholder="Street, building, suite">
         </label>
         <label class="saas-field saas-field--full"><span>Address line 2</span>
           <input type="text" [(ngModel)]="form.addressLine2" placeholder="Optional">
         </label>
+
+        <div class="wizard-section-label">Locality</div>
         <div class="wizard-row wizard-row--triple">
           <label class="saas-field"><span>City</span>
             <input type="text" [(ngModel)]="form.city" placeholder="Mumbai">
@@ -143,7 +168,7 @@
             <input type="text" [(ngModel)]="form.postalCode" placeholder="400001">
           </label>
         </div>
-        <label class="saas-field"><span>Country</span>
+        <label class="saas-field wizard-field--cap"><span>Country</span>
           <select [(ngModel)]="form.country">
             <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
           </select>
@@ -152,14 +177,22 @@
 
       <!-- Step 4: Commercial -->
       <section *ngIf="step === 3" class="wizard-step">
-        <h3 class="wizard-step__title">Commercial</h3>
-        <p class="wizard-step__lead">Communication preferences and internal notes for the account team.</p>
+        <div class="wizard-step__header">
+          <div class="wizard-step__icon"><i class="pi pi-dollar"></i></div>
+          <div>
+            <h3 class="wizard-step__title">Commercial</h3>
+            <p class="wizard-step__lead">Communication preferences and internal notes for the account team.</p>
+          </div>
+        </div>
 
-        <label class="saas-field"><span>Preferred communication</span>
+        <div class="wizard-section-label">Preferences</div>
+        <label class="saas-field wizard-field--cap"><span>Preferred communication</span>
           <select [(ngModel)]="form.preferredCommunication">
             <option *ngFor="let c of communicationOptions" [ngValue]="c.code">{{ c.label }}</option>
           </select>
         </label>
+
+        <div class="wizard-section-label">Internal Notes</div>
         <label class="saas-field saas-field--full"><span>Remarks</span>
           <textarea rows="4" [(ngModel)]="form.remarks" placeholder="Internal notes, renewal context, or special terms"></textarea>
         </label>
@@ -167,21 +200,43 @@
 
       <!-- Step 5: Review -->
       <section *ngIf="step === 4" class="wizard-step">
-        <h3 class="wizard-step__title">Review</h3>
-        <p class="wizard-step__lead">Confirm details before {{ isEditMode ? 'updating' : 'creating' }} the customer.</p>
+        <div class="wizard-step__header">
+          <div class="wizard-step__icon"><i class="pi pi-check-circle"></i></div>
+          <div>
+            <h3 class="wizard-step__title">Review &amp; Confirm</h3>
+            <p class="wizard-step__lead">Confirm details before {{ isEditMode ? 'updating' : 'creating' }} the customer.</p>
+          </div>
+        </div>
 
-        <dl class="wizard-review">
-          <div><dt>Legal name</dt><dd>{{ form.legalName || '—' }}</dd></div>
-          <div><dt>Display name</dt><dd>{{ form.displayName || '—' }}</dd></div>
-          <div><dt>Type</dt><dd>{{ customerTypeLabel(form.customerType) }}</dd></div>
-          <div><dt>Status</dt><dd><tc-saas-pill [label]="customerStatusLabel(form.status)" tone="info"></tc-saas-pill></dd></div>
-          <div><dt>Business email</dt><dd>{{ form.email || '—' }}</dd></div>
-          <div><dt>Mobile</dt><dd>{{ form.mobileNumber || '—' }}</dd></div>
-          <div *ngIf="form.contactFullName"><dt>Primary contact</dt><dd>{{ form.contactFullName }} · {{ form.contactEmail || form.contactMobile || '—' }}</dd></div>
-          <div><dt>Address</dt><dd>{{ form.addressLine1 }}, {{ form.city }}, {{ form.country }}</dd></div>
-          <div><dt>Preferred communication</dt><dd>{{ form.preferredCommunication }}</dd></div>
-          <div *ngIf="form.remarks"><dt>Remarks</dt><dd>{{ form.remarks }}</dd></div>
-        </dl>
+        <div class="wizard-review-grid">
+          <div class="wizard-review-section">
+            <div class="wizard-review-section__label"><i class="pi pi-building"></i> Business</div>
+            <dl class="wizard-review">
+              <div><dt>Legal name</dt><dd>{{ form.legalName || '—' }}</dd></div>
+              <div><dt>Display name</dt><dd>{{ form.displayName || '—' }}</dd></div>
+              <div><dt>Type</dt><dd>{{ customerTypeLabel(form.customerType) }}</dd></div>
+              <div><dt>Status</dt><dd><tc-saas-pill [label]="customerStatusLabel(form.status)" tone="info"></tc-saas-pill></dd></div>
+              <div><dt>Email</dt><dd>{{ form.email || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ form.mobileNumber || '—' }}</dd></div>
+            </dl>
+          </div>
+          <div class="wizard-review-section" *ngIf="form.contactFullName">
+            <div class="wizard-review-section__label"><i class="pi pi-user"></i> Primary Contact</div>
+            <dl class="wizard-review">
+              <div><dt>Name</dt><dd>{{ form.contactFullName }}</dd></div>
+              <div><dt>Email</dt><dd>{{ form.contactEmail || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ form.contactMobile || '—' }}</dd></div>
+            </dl>
+          </div>
+          <div class="wizard-review-section">
+            <div class="wizard-review-section__label"><i class="pi pi-map-marker"></i> Address</div>
+            <dl class="wizard-review">
+              <div><dt>Address</dt><dd>{{ form.addressLine1 || '—' }}</dd></div>
+              <div><dt>City</dt><dd>{{ form.city }}, {{ form.state }}</dd></div>
+              <div><dt>Country</dt><dd>{{ form.country }}</dd></div>
+            </dl>
+          </div>
+        </div>
       </section>
 
       <footer class="customer-form__nav">

@@ -30,37 +30,56 @@
 
 .customers-list__view-switch {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
   border: 1px solid var(--tc-border);
-  border-radius: var(--tc-radius-md);
-  overflow: hidden;
+  border-radius: var(--tc-radius-pill, 999px);
+  background: var(--tc-surface-card-solid);
+  box-shadow: var(--tc-shadow-xs);
 
   button {
     border: 0;
     background: transparent;
-    padding: 0.45rem 0.65rem;
+    width: 32px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border-radius: var(--tc-radius-pill, 999px);
     color: var(--tc-text-muted);
     cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--tc-primary-600) 10%, transparent);
+      color: var(--tc-primary-600);
+    }
 
     &.is-active {
-      background: color-mix(in srgb, var(--tc-primary-600) 12%, transparent);
-      color: var(--tc-primary-600);
+      background: var(--tc-primary-600);
+      color: #fff;
     }
   }
 }
 
 .customers-list__cards {
   display: grid;
-  gap: 1rem;
+  gap: 20px;
 
   &--cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
   &--grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+
+.customers-list__error {
+  margin-bottom: 14px;
 }
 
 .customer-card {
   border: 1px solid var(--tc-border);
   border-radius: var(--tc-radius-xl);
   background: var(--tc-surface-card-solid);
-  padding: 1rem;
+  padding: 20px;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 

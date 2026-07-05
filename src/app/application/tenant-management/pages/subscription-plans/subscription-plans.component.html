@@ -3,11 +3,14 @@
 
   <tc-saas-page-header>
     <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <div class="subscription-plans__billing">
-      <button type="button" class="saas-btn" [class.saas-btn--primary]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>
-      <button type="button" class="saas-btn" [class.saas-btn--primary]="billing === 'yearly'" (click)="billing = 'yearly'">Yearly</button>
-    </div>
   </tc-saas-page-header>
+
+  <div class="subscription-plans__billing-wrap" *ngIf="!loading && plans.length">
+    <div class="subscription-plans__billing">
+      <button type="button" [class.is-active]="billing === 'monthly'" (click)="billing = 'monthly'">Monthly</button>
+      <button type="button" [class.is-active]="billing === 'yearly'" (click)="billing = 'yearly'">Yearly</button>
+    </div>
+  </div>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading plans...</div>
 
@@ -18,53 +21,91 @@
   </div>
 
   <div class="subscription-plans__grid" *ngIf="!loading && plans.length">
-    <article *ngFor="let plan of plans; trackBy: trackByPlan" class="plan-card" [class.plan-card--popular]="plan.recommended">
+    <article *ngFor="let plan of plans; trackBy: trackByPlan" class="plan-card" [class.plan-card--popular]="plan.id === recommendedPlanId">
       <header>
         <div>
           <h3>{{ plan.planName }}</h3>
           <p>{{ plan.description || plan.planCode }}</p>
         </div>
-        <tc-saas-pill *ngIf="plan.recommended" label="Most Popular" tone="primary"></tc-saas-pill>
+        <tc-saas-pill *ngIf="plan.id === recommendedPlanId" label="Most Popular" tone="primary"></tc-saas-pill>
         <tc-saas-pill *ngIf="plan.customPlan" label="Custom" tone="warning"></tc-saas-pill>
       </header>
+      
+      <div class="plan-card__promo" *ngIf="activePromoByPlan[plan.id]">
+        <tc-saas-pill [label]="'Promo: ' + activePromoByPlan[plan.id].promotionCode" tone="success" icon="pi pi-tag"></tc-saas-pill>
+      </div>
+
       <div class="plan-card__price">
-        <strong>{{ priceLabel(plan) }}</strong>
+        <ng-container *ngIf="discountedPriceLabel(plan); else noDiscount">
+          <strong class="price-discounted">{{ discountedPriceLabel(plan) }}</strong>
+          <small class="price-original">{{ priceLabel(plan) }}</small>
+        </ng-container>
+        <ng-template #noDiscount>
+          <strong>{{ priceLabel(plan) }}</strong>
+        </ng-template>
         <small>/ {{ billing === 'yearly' ? 'year' : 'month' }}</small>
       </div>
+      
       <ul>
         <li *ngFor="let limit of limits(plan)"><i class="pi pi-check"></i> {{ limit }}</li>
         <li *ngIf="plan.trialDays"><i class="pi pi-clock"></i> {{ plan.trialDays }}-day trial</li>
       </ul>
+      
       <footer>
-        <tc-saas-pill [label]="plan.active ? 'Active' : 'Inactive'" [tone]="plan.active ? 'success' : 'neutral'"></tc-saas-pill>
-        <span class="plan-card__code">{{ plan.planCode }}</span>
+        <button type="button" class="saas-btn saas-btn--sm" (click)="toggleActive(plan)">
+          <i class="pi" [ngClass]="plan.active ? 'pi-ban' : 'pi-check'"></i> {{ plan.active ? 'Deactivate' : 'Activate' }}
+        </button>
+        <button type="button" class="saas-btn saas-btn--sm" (click)="editPlan(plan)">
+          <i class="pi pi-pencil"></i> Edit
+        </button>
       </footer>
     </article>
   </div>
 
-  <tc-saas-panel *ngIf="!loading && plans.length" title="Plan Comparison" subtitle="Feature matrix across plans">
+  <tc-saas-panel *ngIf="!loading && plans.length" title="Plan Features & Modules" subtitle="Detailed feature matrix across platform tiers">
     <div class="saas-table-wrap">
-      <table class="saas-data-table">
+      <table class="saas-data-table feature-matrix-table">
         <thead>
           <tr>
-            <th>Plan</th>
-            <th>Students</th>
-            <th>Staff</th>
-            <th>Branches</th>
-            <th>Storage</th>
-            <th>Status</th>
+            <th>Module / Feature</th>
+            <th>Starter</th>
+            <th>Professional</th>
+            <th>Enterprise</th>
+            <th>Custom</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let plan of plans; trackBy: trackByPlan">
-            <td><strong>{{ plan.planName }}</strong><br><small>{{ plan.planCode }}</small></td>
-            <td>{{ plan.studentLimit ?? '—' }}</td>
-            <td>{{ plan.staffLimit ?? '—' }}</td>
-            <td>{{ plan.branchLimit ?? '—' }}</td>
-            <td>{{ plan.storageLimitGb ? plan.storageLimitGb + ' GB' : '—' }}</td>
-            <td><tc-saas-pill [label]="plan.active ? 'Active' : 'Inactive'" [tone]="plan.active ? 'success' : 'neutral'"></tc-saas-pill></td>
-          </tr>
-        </tbody>
+        <ng-container *ngFor="let group of featureMatrix">
+          <tbody>
+            <tr class="matrix-group-header">
+              <td colspan="5">
+                <i [class]="'pi ' + group.icon"></i> {{ group.title }}
+              </td>
+            </tr>
+            <tr *ngFor="let row of group.rows">
+              <td class="feature-matrix-table__label">{{ row.label }}</td>
+              <td>
+                <span *ngIf="row.values.starter.value === true"><i class="pi pi-check feature-matrix-table__check"></i></span>
+                <span *ngIf="row.values.starter.value === false"><i class="pi pi-minus feature-matrix-table__minus"></i></span>
+                <span *ngIf="row.values.starter.value !== true && row.values.starter.value !== false">{{ row.values.starter.value }}</span>
+              </td>
+              <td>
+                <span *ngIf="row.values.professional.value === true"><i class="pi pi-check feature-matrix-table__check"></i></span>
+                <span *ngIf="row.values.professional.value === false"><i class="pi pi-minus feature-matrix-table__minus"></i></span>
+                <span *ngIf="row.values.professional.value !== true && row.values.professional.value !== false">{{ row.values.professional.value }}</span>
+              </td>
+              <td>
+                <span *ngIf="row.values.enterprise.value === true"><i class="pi pi-check feature-matrix-table__check"></i></span>
+                <span *ngIf="row.values.enterprise.value === false"><i class="pi pi-minus feature-matrix-table__minus"></i></span>
+                <span *ngIf="row.values.enterprise.value !== true && row.values.enterprise.value !== false">{{ row.values.enterprise.value }}</span>
+              </td>
+              <td>
+                <span *ngIf="row.values.custom.value === true"><i class="pi pi-check feature-matrix-table__check"></i></span>
+                <span *ngIf="row.values.custom.value === false"><i class="pi pi-minus feature-matrix-table__minus"></i></span>
+                <span *ngIf="row.values.custom.value !== true && row.values.custom.value !== false">{{ row.values.custom.value }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </ng-container>
       </table>
     </div>
   </tc-saas-panel>

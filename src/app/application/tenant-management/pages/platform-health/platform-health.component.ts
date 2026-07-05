@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
+import { ChartModule } from 'primeng/chart';
 
 import { PlatformManagementService } from '../../services/platform-management.service';
 import { TenantRegistry } from '../../models/platform.model';
@@ -30,7 +31,8 @@ import {
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    ChartModule
   ],
   templateUrl: './platform-health.component.html',
   styleUrl: './platform-health.component.scss'
@@ -83,6 +85,31 @@ export class PlatformHealthComponent implements OnInit {
       { key: 'failed', label: 'Failed', value: failed, helper: 'Provisioning issues', icon: 'pi pi-times-circle', tone: 'danger' }
     ];
   });
+
+  readonly chartData = computed(() => {
+    const list = this.tenants();
+    const healthy = list.filter(t => healthScore(t) >= 85).length;
+    const warning = list.filter(t => healthScore(t) < 85 && healthScore(t) > 50).length;
+    const critical = list.filter(t => healthScore(t) <= 50).length;
+    
+    return {
+      labels: ['Healthy', 'Warning', 'Critical'],
+      datasets: [
+        {
+          data: [healthy, warning, critical],
+          backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+          hoverBackgroundColor: ['#16a34a', '#d97706', '#dc2626']
+        }
+      ]
+    };
+  });
+
+  readonly chartOptions = {
+    plugins: {
+      legend: { position: 'bottom' }
+    },
+    cutout: '60%'
+  };
 
   tenantTone(tenant: TenantRegistry): 'success' | 'warning' | 'danger' {
     return healthTone(healthScore(tenant));

@@ -1,17 +1,47 @@
 .subscription-plans {
+  &__billing-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
   &__billing {
     display: inline-flex;
-    gap: 6px;
     padding: 4px;
-    border-radius: 10px;
+    border-radius: 999px;
     background: var(--saas-surface-muted);
     border: 1px solid var(--saas-border);
+    box-shadow: var(--tc-shadow-xs, var(--saas-shadow-sm));
+
+    button {
+      height: 34px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--saas-text-muted);
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+
+      &:hover {
+        color: var(--saas-primary);
+      }
+
+      &.is-active {
+        background: var(--saas-primary);
+        color: #fff;
+        box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--saas-primary) 70%, transparent);
+      }
+    }
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+    gap: 20px;
   }
 }
 
@@ -44,6 +74,11 @@
   &__price {
     strong { font-size: 28px; color: var(--saas-primary); }
     small { color: var(--saas-text-muted); margin-left: 4px; }
+
+    .price-original {
+      margin-right: 8px;
+      text-decoration: line-through;
+    }
   }
 
   ul {
@@ -68,6 +103,8 @@
   footer {
     margin-top: auto;
     display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     padding-top: 12px;
@@ -79,5 +116,30 @@
     color: var(--saas-text-soft);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+}
+
+.feature-matrix-table {
+  .matrix-group-header td {
+    background: var(--tc-surface-hover, var(--saas-surface-muted));
+    border-top: 2px solid var(--tc-border, var(--saas-border));
+    color: var(--saas-primary);
+    font-weight: 700;
+
+    i {
+      margin-right: 8px;
+    }
+  }
+
+  &__label {
+    font-weight: 600;
+  }
+
+  &__check {
+    color: var(--saas-success);
+  }
+
+  &__minus {
+    color: var(--saas-text-muted);
   }
 }

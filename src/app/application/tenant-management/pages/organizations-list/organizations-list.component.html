@@ -23,11 +23,15 @@
         <option *ngFor="let t of typeOptions" [ngValue]="t.id">{{ t.label }}</option>
       </select>
     </label>
+    <div class="customers-list__view-switch organizations-list__view-switch">
+      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
+      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
+    </div>
     <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
   </tc-saas-filter-row>
 
   <tc-saas-panel [title]="'All Organizations'" [subtitle]="totalRecords + ' organizations'">
-    <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
+    <div *ngIf="errorMessage" class="saas-empty organizations-list__error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
       <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
@@ -42,7 +46,25 @@
       <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/organizations/create">Provision Organization</a>
     </div>
 
-    <div *ngIf="!loading && organizations.length" class="saas-table-wrap">
+    <div *ngIf="!loading && organizations.length && viewMode === 'cards'" class="organizations-list__cards">
+      <article class="saas-org-card" *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org)">
+        <div class="saas-org-card__head">
+          <span class="saas-org-card__logo">{{ orgInitials(org.organizationName) || 'O' }}</span>
+          <div class="saas-org-card__title">
+            <strong>{{ org.organizationName }}</strong>
+            <small>{{ org.organizationCode }} · {{ institutionLabel(org.institutionType) }}</small>
+          </div>
+          <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="pillTone(org.status)"></tc-saas-pill>
+        </div>
+        <div class="saas-org-card__meta">
+          <span><i class="pi pi-user"></i> {{ org.customerName || org.email || '—' }}</span>
+          <span *ngIf="org.city"><i class="pi pi-map-marker"></i> {{ org.city }}</span>
+          <span *ngIf="org.tenantIdentifier"><i class="pi pi-globe"></i> {{ org.tenantIdentifier }}.thinkerscave.app</span>
+        </div>
+      </article>
+    </div>
+
+    <div *ngIf="!loading && organizations.length && viewMode === 'table'" class="saas-table-wrap">
       <table class="saas-data-table organizations-list__table">
         <thead>
           <tr>
@@ -53,11 +75,10 @@
             <th>Status</th>
             <th>Created</th>
             <th>Domain</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org, $event)">
+          <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openWorkspace(org, $event)" class="clickable-row">
             <td>
               <div class="cell-main organizations-list__cell">
                 <span class="organizations-list__avatar">{{ orgInitials(org.organizationName) }}</span>
@@ -73,16 +94,6 @@
             <td><tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="pillTone(org.status)"></tc-saas-pill></td>
             <td>{{ formatDate(org.createdOn) }}</td>
             <td>{{ org.tenantIdentifier ? org.tenantIdentifier + '.thinkerscave.app' : '—' }}</td>
-            <td class="cell-actions">
-              <div class="organizations-list__menu-wrap">
-                <button type="button" class="saas-icon-btn" (click)="toggleMenu(org.id, $event)"><i class="pi pi-ellipsis-v"></i></button>
-                <div class="organizations-list__menu" *ngIf="openMenuFor === org.id">
-                  <button type="button" (click)="runQuickAction(org, 'view', $event)"><i class="pi pi-eye"></i> View workspace</button>
-                  <button type="button" *ngIf="org.status === 'ACTIVE'" (click)="runQuickAction(org, 'suspend', $event)"><i class="pi pi-ban"></i> Suspend</button>
-                  <button type="button" *ngIf="org.status === 'SUSPENDED'" (click)="runQuickAction(org, 'activate', $event)"><i class="pi pi-check"></i> Activate</button>
-                </div>
-              </div>
-            </td>
           </tr>
         </tbody>
       </table>

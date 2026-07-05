@@ -1,4 +1,18 @@
 .organizations-list {
+  &__view-switch {
+    margin-left: auto;
+  }
+
+  &__error {
+    margin-bottom: 14px;
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
   &__table {
     tbody tr { cursor: pointer; }
 

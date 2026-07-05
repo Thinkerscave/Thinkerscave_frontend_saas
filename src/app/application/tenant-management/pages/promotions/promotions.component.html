@@ -39,11 +39,11 @@
         </label>
         <label class="saas-field">
           <span>Valid From</span>
-          <input type="date" [(ngModel)]="draft.validFrom" name="validFrom">
+          <p-calendar [(ngModel)]="draft.validFrom" name="validFrom" dateFormat="yy-mm-dd" [showIcon]="true"></p-calendar>
         </label>
         <label class="saas-field">
           <span>Valid To</span>
-          <input type="date" [(ngModel)]="draft.validTo" name="validTo">
+          <p-calendar [(ngModel)]="draft.validTo" name="validTo" dateFormat="yy-mm-dd" [showIcon]="true"></p-calendar>
         </label>
       </div>
       <div class="promotions__form-actions">
@@ -57,6 +57,13 @@
   </tc-saas-panel>
 
   <tc-saas-panel title="All Promotions" [subtitle]="promotions.length + ' offers'">
+    <ng-container panel-actions>
+      <div class="customers-list__view-switch">
+        <button type="button" [class.is-active]="viewMode === 'cards'" (click)="viewMode = 'cards'" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
+        <button type="button" [class.is-active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
+      </div>
+    </ng-container>
+
     <div *ngIf="errorMessage" class="saas-empty promotions__error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
@@ -72,7 +79,32 @@
       <button type="button" class="saas-btn saas-btn--primary" (click)="openCreate()">Create Promotion</button>
     </div>
 
-    <div *ngIf="!loading && promotions.length" class="saas-table-wrap">
+    <div *ngIf="!loading && promotions.length && viewMode === 'cards'" class="promotions__cards">
+      <article class="saas-org-card promotions__card" *ngFor="let p of promotions; trackBy: trackById">
+        <div class="saas-org-card__head promotions__card-head">
+          <tc-saas-pill [label]="p.promotionCode" tone="primary" icon="pi pi-tag"></tc-saas-pill>
+          <div class="saas-inline-spacer"></div>
+          <tc-saas-pill [label]="promotionStatusLabel(p.status)" [tone]="promotionTone(p.status)"></tc-saas-pill>
+        </div>
+        <div class="saas-org-card__title">
+          <strong>{{ p.promotionName }}</strong>
+          <div class="promotions__discount">
+            {{ formatDiscountValue(p.discountType, p.discountValue) }} <span>OFF</span>
+          </div>
+        </div>
+        <div class="saas-org-card__meta">
+          <span><i class="pi pi-calendar"></i> Valid {{ formatDate(p.validFrom) }} to {{ formatDate(p.validTo) }}</span>
+          <span><i class="pi pi-shopping-cart"></i> {{ p.usedCount ?? 0 }} redemptions</span>
+        </div>
+        <footer class="promotions__card-footer">
+          <button type="button" class="saas-btn saas-btn--sm saas-btn--ghost" [disabled]="p.status === 'ARCHIVED' || archivingId === p.id" (click)="archive(p, $event)">
+            <i class="pi" [ngClass]="archivingId === p.id ? 'pi-spin pi-spinner' : 'pi-inbox'"></i> Archive
+          </button>
+        </footer>
+      </article>
+    </div>
+
+    <div *ngIf="!loading && promotions.length && viewMode === 'table'" class="saas-table-wrap">
       <table class="saas-data-table promotions__table">
         <thead>
           <tr>

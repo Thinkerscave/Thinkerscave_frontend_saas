@@ -20,7 +20,8 @@
   <ng-container *ngIf="!loading || jobs.length || tenants.length">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-    <tc-saas-panel title="Provisioning Jobs" subtitle="Recent tenant provisioning and onboarding runs">
+    <div class="migration-center__grid">
+      <tc-saas-panel title="Provisioning Jobs" subtitle="Recent tenant provisioning and onboarding runs">
       <div *ngIf="!jobs.length && !loading" class="saas-empty">
         <i class="pi pi-cog"></i>
         <strong>No provisioning jobs</strong>
@@ -46,8 +47,9 @@
               <td><strong class="migration-center__mono">{{ job.jobCode }}</strong></td>
               <td>{{ job.organizationName || '—' }}</td>
               <td><tc-saas-pill [label]="provisionJobStatusLabel(job.status)" [tone]="provisionJobTone(job.status)"></tc-saas-pill></td>
-              <td class="num">
-                <span class="migration-center__progress">{{ progressLabel(job) }}</span>
+              <td class="num migration-center__progress-cell">
+                <p-progressBar *ngIf="job.progressPercentage != null" [value]="job.progressPercentage" [showValue]="true" [style]="{'height': '14px', 'font-size': '10px'}"></p-progressBar>
+                <span *ngIf="job.progressPercentage == null" class="migration-center__progress">—</span>
               </td>
               <td class="muted">{{ job.currentStep || '—' }}</td>
               <td>{{ formatDateTime(job.startedAt) }}</td>
@@ -70,6 +72,12 @@
     </tc-saas-panel>
 
     <tc-saas-panel title="Tenant Registry" subtitle="Schema versions, storage and migration status per tenant">
+      <ng-container panel-actions>
+        <button *ngIf="outdatedTenants.length > 0" type="button" class="saas-btn saas-btn--primary" (click)="migrateAllOutdated()">
+          <i class="pi pi-bolt"></i> Migrate {{ outdatedTenants.length }} Out-of-Sync
+        </button>
+      </ng-container>
+
       <div *ngIf="!tenants.length && !loading" class="saas-empty">
         <i class="pi pi-database"></i>
         <strong>No tenants registered</strong>
@@ -91,8 +99,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let tenant of tenants; trackBy: trackByTenantId">
-              <td><strong>{{ tenant.organizationName || '—' }}</strong></td>
+            <tr *ngFor="let tenant of tenants; trackBy: trackByTenantId" [class.is-out-of-sync]="tenant.databaseVersion !== tenant.migrationVersion">
+              <td>
+                <strong>{{ tenant.organizationName || '—' }}</strong>
+                <span *ngIf="tenant.databaseVersion !== tenant.migrationVersion" class="migration-center__sync-warning"><i class="pi pi-exclamation-triangle"></i> Out of sync</span>
+              </td>
               <td class="migration-center__mono">{{ tenant.tenantIdentifier }}</td>
               <td>{{ tenant.migrationVersion || '—' }}</td>
               <td>{{ tenant.databaseVersion || '—' }}</td>
@@ -119,5 +130,6 @@
         </table>
       </div>
     </tc-saas-panel>
+    </div>
   </ng-container>
 </div>

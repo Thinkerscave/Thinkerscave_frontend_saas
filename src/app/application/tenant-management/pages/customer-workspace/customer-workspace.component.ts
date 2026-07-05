@@ -59,6 +59,7 @@ export class CustomerWorkspaceComponent implements OnInit {
   customer: CustomerDetail | null = null;
   customerId = 0;
   activeTab = 'overview';
+  orgViewMode: 'cards' | 'table' = 'cards';
   auditLogs: PlatformAuditLog[] = [];
 
   readonly tabs = [
@@ -66,12 +67,11 @@ export class CustomerWorkspaceComponent implements OnInit {
     { key: 'organizations', label: 'Organizations', icon: 'pi pi-building' },
     { key: 'commercial', label: 'Commercial', icon: 'pi pi-wallet' },
     { key: 'contacts', label: 'Contacts', icon: 'pi pi-users' },
-    { key: 'documents', label: 'Documents', icon: 'pi pi-file' },
-    { key: 'activity', label: 'Activity', icon: 'pi pi-history' },
-    { key: 'audit', label: 'Audit', icon: 'pi pi-shield' }
+    { key: 'activity', label: 'Activity', icon: 'pi pi-history' }
   ];
 
   readonly customerInitials = customerInitials;
+  readonly orgInitials = customerInitials;
   readonly customerStatusLabel = customerStatusLabel;
   readonly customerTypeLabel = customerTypeLabel;
   readonly organizationStatusLabel = organizationStatusLabel;
@@ -120,7 +120,7 @@ export class CustomerWorkspaceComponent implements OnInit {
 
   onTabChange(tab: string): void {
     this.activeTab = tab;
-    if (tab === 'audit' && !this.auditLogs.length && !this.auditLoading) {
+    if (tab === 'activity' && !this.auditLogs.length && !this.auditLoading) {
       this.loadAuditLogs();
     }
     this.cdr.markForCheck();

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { CalendarModule } from 'primeng/calendar';
 import { finalize } from 'rxjs';
 
 import { DiscountType, Promotion } from '../../models/platform.model';
@@ -43,7 +44,8 @@ interface PromotionDraft {
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    CalendarModule
   ],
   providers: [MessageService],
   templateUrl: './promotions.component.html',
@@ -61,6 +63,7 @@ export class PromotionsComponent implements OnInit {
   errorMessage = '';
   promotions: Promotion[] = [];
   createOpen = false;
+  viewMode: 'cards' | 'table' = 'cards';
   draft: PromotionDraft = this.emptyDraft();
 
   readonly discountTypes: DiscountType[] = ['PERCENTAGE', 'FLAT_AMOUNT'];
@@ -152,6 +155,10 @@ export class PromotionsComponent implements OnInit {
   archive(promotion: Promotion, event: Event): void {
     event.stopPropagation();
     if (promotion.status === 'ARCHIVED') return;
+    
+    if (!window.confirm(`Are you sure you want to archive promotion ${promotion.promotionCode}?`)) {
+      return;
+    }
 
     this.archivingId = promotion.id;
     this.api.archivePromotion(promotion.id)

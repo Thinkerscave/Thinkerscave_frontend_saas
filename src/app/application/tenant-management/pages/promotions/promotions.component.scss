@@ -30,9 +30,44 @@
   &__form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    padding-top: 4px;
+    gap: 10px;
+    padding-top: 16px;
     border-top: 1px solid var(--saas-border);
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  &__card {
+    padding: 20px;
+    min-height: 220px;
+  }
+
+  &__card-head {
+    align-items: center;
+  }
+
+  &__discount {
+    margin-top: 8px;
+    color: var(--tc-heading, var(--saas-text));
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+
+    span {
+      color: var(--tc-text-muted, var(--saas-text-soft));
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+  }
+
+  &__card-footer {
+    margin-top: auto;
+    padding-top: 12px;
   }
 
   &__table {

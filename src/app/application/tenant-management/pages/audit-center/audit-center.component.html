@@ -11,12 +11,7 @@
     <div class="tc-empty__actions"><button type="button" class="tc-btn tc-btn--ghost" (click)="load()">Retry</button></div>
   </div>
 
-  <div class="tc-insight-strip" *ngIf="!errorMessage">
-    <div class="tc-insight"><span class="tc-insight__label">Events recorded</span><span class="tc-insight__value">{{ kpis.total }}</span><span class="tc-insight__hint">Across all tenants</span></div>
-    <div class="tc-insight tc-insight--warn"><span class="tc-insight__label">Critical alerts</span><span class="tc-insight__value">{{ kpis.critical }}</span><span class="tc-insight__hint">Severity flagged</span></div>
-    <div class="tc-insight"><span class="tc-insight__label">Failed sign-ins</span><span class="tc-insight__value">{{ kpis.failedAuth }}</span><span class="tc-insight__hint">Auth issues to review</span></div>
-    <div class="tc-insight"><span class="tc-insight__label">Config changes</span><span class="tc-insight__value">{{ kpis.configChanges }}</span><span class="tc-insight__hint">Settings and access edits</span></div>
-  </div>
+  <tc-saas-stat-grid *ngIf="!errorMessage" [stats]="stats"></tc-saas-stat-grid>
 
   <div class="tc-audit__chrome">
     <div class="tc-chip-row">
@@ -48,31 +43,70 @@
       <div class="tc-field tc-field--inline"><label>From</label><input type="date" [(ngModel)]="fromDate" /></div>
       <div class="tc-field tc-field--inline"><label>To</label><input type="date" [(ngModel)]="toDate" /></div>
       <button type="button" class="tc-link" (click)="resetFilters()"><i class="pi pi-times"></i>Reset</button>
+      
+      <div class="customers-list__view-switch tc-audit__view-switch">
+        <button type="button" [class.is-active]="viewMode === 'timeline'" (click)="viewMode = 'timeline'" title="Timeline view" aria-label="Switch to timeline view"><i class="pi pi-list"></i></button>
+        <button type="button" [class.is-active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table view" aria-label="Switch to table view"><i class="pi pi-table"></i></button>
+      </div>
     </div>
   </div>
 
   <div *ngIf="loading && !errorMessage" class="tc-skeleton-block" aria-hidden="true"></div>
 
-  <ol *ngIf="!loading && !errorMessage && filtered.length" class="tc-audit__timeline">
-    <li *ngFor="let e of filtered" class="tc-audit__event tc-audit__event--{{ e.severity }}">
-      <div class="tc-audit__marker"><i class="pi {{ e.icon }}"></i></div>
-      <div class="tc-audit__content">
-        <header>
-          <h3>{{ e.action }}</h3>
-          <span class="tc-audit__pill tc-audit__pill--{{ e.severity }}">{{ e.severity }}</span>
-          <span class="tc-audit__category">{{ e.categoryLabel }}</span>
-        </header>
-        <p class="tc-audit__summary">{{ e.summary }}</p>
-        <footer>
-          <span><i class="pi pi-user"></i>{{ e.actor }}</span>
-          <span><i class="pi pi-building"></i>{{ e.tenant }}</span>
-          <span *ngIf="e.ip"><i class="pi pi-globe"></i>{{ e.ip }}</span>
-          <span><i class="pi pi-clock"></i>{{ e.occurredAt | date:'medium' }}</span>
-          <span class="tc-audit__tag" *ngFor="let t of e.tags">{{ t }}</span>
-        </footer>
-      </div>
-    </li>
-  </ol>
+  <div *ngIf="!loading && !errorMessage && filtered.length && viewMode === 'timeline'" class="tc-audit__timeline-wrapper">
+    <div *ngFor="let group of groupedFiltered" class="tc-audit__group">
+      <h3 class="tc-audit__group-title">
+        <i class="pi pi-calendar"></i> {{ group.date | date:'mediumDate' }}
+      </h3>
+      <ol class="tc-audit__timeline">
+        <li *ngFor="let e of group.events" class="tc-audit__event tc-audit__event--{{ e.severity }}">
+          <div class="tc-audit__marker"><i class="pi {{ e.icon }}"></i></div>
+          <div class="tc-audit__content">
+            <header>
+              <h3>{{ e.action }}</h3>
+              <span class="tc-audit__pill tc-audit__pill--{{ e.severity }}">{{ e.severity }}</span>
+              <span class="tc-audit__category">{{ e.categoryLabel }}</span>
+            </header>
+            <p class="tc-audit__summary">{{ e.summary }}</p>
+            <footer>
+              <span><i class="pi pi-user"></i>{{ e.actor }}</span>
+              <span><i class="pi pi-building"></i>{{ e.tenant }}</span>
+              <span *ngIf="e.ip"><i class="pi pi-globe"></i>{{ e.ip }}</span>
+              <span><i class="pi pi-clock"></i>{{ e.occurredAt | date:'shortTime' }}</span>
+              <span class="tc-audit__tag" *ngFor="let t of e.tags">{{ t }}</span>
+            </footer>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !errorMessage && filtered.length && viewMode === 'table'" class="saas-table-wrap">
+    <table class="saas-data-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Action</th>
+          <th>Category</th>
+          <th>Severity</th>
+          <th>Actor</th>
+          <th>Tenant</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of filtered">
+          <td class="saas-nowrap">{{ e.occurredAt | date:'short' }}</td>
+          <td><strong>{{ e.action }}</strong></td>
+          <td>{{ e.categoryLabel }}</td>
+          <td><tc-saas-pill [label]="e.severity" [tone]="e.severity === 'critical' ? 'danger' : (e.severity === 'warn' ? 'warning' : 'info')"></tc-saas-pill></td>
+          <td>{{ e.actor }}</td>
+          <td>{{ e.tenant }}</td>
+          <td class="muted">{{ e.summary }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <div *ngIf="!loading && !errorMessage && !filtered.length" class="tc-empty">
     <i class="pi pi-inbox"></i>

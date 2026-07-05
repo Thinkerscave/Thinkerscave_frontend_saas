@@ -39,6 +39,7 @@ export class FeatureCatalogComponent implements OnInit {
   errorMessage = '';
   readonly search = signal('');
   readonly categoryFilter = signal('all');
+  readonly viewMode = signal<'grouped' | 'table'>('grouped');
   readonly modules = signal<PlatformFeature[]>([]);
 
   ngOnInit(): void { this.load(); }
@@ -86,6 +87,19 @@ export class FeatureCatalogComponent implements OnInit {
       if (!q) return true;
       return (m.featureName?.toLowerCase().includes(q) || m.featureCode?.toLowerCase().includes(q) || m.description?.toLowerCase().includes(q));
     });
+  });
+
+  readonly groupedFeatures = computed<{ module: string; features: PlatformFeature[] }[]>(() => {
+    const list = this.filtered();
+    const map = new Map<string, PlatformFeature[]>();
+    for (const f of list) {
+      const mod = f.module || 'General';
+      if (!map.has(mod)) map.set(mod, []);
+      map.get(mod)!.push(f);
+    }
+    return Array.from(map.entries())
+      .map(([module, features]) => ({ module, features }))
+      .sort((a, b) => a.module.localeCompare(b.module));
   });
 
   pillTone(feature: PlatformFeature): 'success' | 'warning' | 'neutral' {

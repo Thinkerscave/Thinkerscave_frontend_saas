@@ -72,6 +72,15 @@
             </dl>
           </tc-saas-panel>
         </div>
+        
+        <div class="customer-workspace__grid customer-workspace__grid--single">
+          <tc-saas-panel title="Quick Actions">
+            <div class="customer-workspace__actions">
+              <button type="button" class="saas-btn" (click)="edit()"><i class="pi pi-pencil"></i> Edit Customer</button>
+              <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()"><i class="pi pi-building"></i> Add Organization</button>
+            </div>
+          </tc-saas-panel>
+        </div>
       </section>
 
       <!-- Organizations -->
@@ -80,6 +89,10 @@
           title="Organizations"
           [subtitle]="organizations.length + ' organization(s) under this customer'">
           <ng-container panel-actions>
+            <div class="customers-list__view-switch customer-workspace__view-switch">
+              <button type="button" [class.is-active]="orgViewMode === 'cards'" (click)="orgViewMode = 'cards'" title="Card view" aria-label="Switch organizations to card view"><i class="pi pi-th-large"></i></button>
+              <button type="button" [class.is-active]="orgViewMode === 'table'" (click)="orgViewMode = 'table'" title="Table view" aria-label="Switch organizations to table view"><i class="pi pi-list"></i></button>
+            </div>
             <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">
               <i class="pi pi-plus"></i> Add Organization
             </button>
@@ -92,7 +105,23 @@
             <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">Add Organization</button>
           </div>
 
-          <div *ngIf="organizations.length" class="saas-table-wrap">
+          <div *ngIf="organizations.length && orgViewMode === 'cards'" class="customer-workspace__contact-grid">
+            <article class="saas-org-card" *ngFor="let org of organizations; trackBy: trackById" (click)="openOrganization(org)">
+              <div class="saas-org-card__head">
+                <span class="saas-org-card__logo">{{ orgInitials(org.organizationName) || 'O' }}</span>
+                <div class="saas-org-card__title">
+                  <strong>{{ org.organizationName }}</strong>
+                  <small>{{ org.organizationCode }} · {{ institutionLabel(org.institutionType) }}</small>
+                </div>
+                <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone(org.status)"></tc-saas-pill>
+              </div>
+              <div class="saas-org-card__meta">
+                <span *ngIf="org.city"><i class="pi pi-map-marker"></i> {{ org.city }}</span>
+              </div>
+            </article>
+          </div>
+
+          <div *ngIf="organizations.length && orgViewMode === 'table'" class="saas-table-wrap">
             <table class="saas-data-table">
               <thead>
                 <tr>
@@ -101,11 +130,10 @@
                   <th>Status</th>
                   <th>City</th>
                   <th>Created</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openOrganization(org)">
+                <tr *ngFor="let org of organizations; trackBy: trackById" (click)="openOrganization(org)" class="clickable-row">
                   <td>
                     <div class="cell-main">
                       <strong>{{ org.organizationName }}</strong>
@@ -121,11 +149,6 @@
                   </td>
                   <td>{{ org.city || '—' }}</td>
                   <td>{{ formatDate(org.createdOn) }}</td>
-                  <td class="cell-actions">
-                    <button type="button" class="saas-btn saas-btn--ghost" (click)="openOrganization(org); $event.stopPropagation()">
-                      Open
-                    </button>
-                  </td>
                 </tr>
               </tbody>
             </table>
@@ -141,6 +164,8 @@
             <div><dt>Tax / GST</dt><dd>{{ customer.taxNumber || '—' }}</dd></div>
             <div><dt>Registration</dt><dd>{{ customer.registrationNumber || '—' }}</dd></div>
             <div><dt>Organizations</dt><dd>{{ organizations.length || (customer.organizationCount ?? 0) }}</dd></div>
+            <div><dt>Billing Cycle</dt><dd>Monthly</dd></div>
+            <div><dt>Contract Value</dt><dd>—</dd></div>
           </dl>
           <div *ngIf="customer.remarks" class="customer-workspace__remarks">
             <h4>Remarks</h4>
@@ -178,6 +203,10 @@
                 <tc-saas-pill *ngIf="c.technicalContact" label="Technical" tone="success"></tc-saas-pill>
                 <tc-saas-pill *ngIf="c.supportContact" label="Support" tone="neutral"></tc-saas-pill>
               </div>
+              <footer class="contact-card__actions">
+                <a *ngIf="c.email" [href]="'mailto:' + c.email" class="saas-btn saas-btn--ghost saas-btn--sm"><i class="pi pi-envelope"></i> Email</a>
+                <a *ngIf="c.mobileNumber" [href]="'tel:' + c.mobileNumber" class="saas-btn saas-btn--ghost saas-btn--sm"><i class="pi pi-phone"></i> Call</a>
+              </footer>
             </article>
           </div>
         </tc-saas-panel>
@@ -187,45 +216,34 @@
       <section *ngSwitchCase="'documents'" class="customer-workspace__tab">
         <tc-saas-panel title="Documents" subtitle="Contracts, invoices, and uploaded files">
           <div class="saas-empty">
-            <i class="pi pi-file"></i>
-            <strong>No documents yet</strong>
+            <i class="pi pi-folder-open"></i>
+            <strong>Coming Soon</strong>
             <p>Document management for customer accounts will be available in a future release.</p>
+            <button type="button" class="saas-btn saas-btn--primary" disabled><i class="pi pi-upload"></i> Upload Document</button>
           </div>
         </tc-saas-panel>
       </section>
 
       <!-- Activity -->
       <section *ngSwitchCase="'activity'" class="customer-workspace__tab">
-        <tc-saas-panel title="Activity" subtitle="Recent actions and timeline events">
-          <div class="saas-empty">
-            <i class="pi pi-history"></i>
-            <strong>No activity feed yet</strong>
-            <p>Customer activity timeline will appear here once event streaming is enabled.</p>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <!-- Audit -->
-      <section *ngSwitchCase="'audit'" class="customer-workspace__tab">
-        <tc-saas-panel title="Audit" subtitle="Platform audit events for this customer">
-          <div *ngIf="auditLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading audit logs…</div>
+        <tc-saas-panel title="Activity Timeline" subtitle="Recent actions and lifecycle events">
+          <div *ngIf="auditLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading timeline…</div>
 
           <div *ngIf="!auditLoading && !auditLogs.length" class="saas-empty">
-            <i class="pi pi-shield"></i>
-            <strong>No audit events found</strong>
-            <p>No customer-scoped audit entries were returned from the platform log.</p>
+            <i class="pi pi-history"></i>
+            <strong>No activity events found</strong>
+            <p>No customer-scoped events were returned from the platform stream.</p>
           </div>
 
           <ul class="audit-list" *ngIf="!auditLoading && auditLogs.length">
             <li *ngFor="let log of auditLogs; trackBy: trackById">
-              <span class="audit-list__icon"><i class="pi pi-shield"></i></span>
+              <span class="audit-list__icon"><i class="pi pi-history"></i></span>
               <div>
                 <strong>{{ log.action }}</strong>
                 <p>{{ log.summary || log.changes || '—' }}</p>
                 <small>
                   {{ formatDateTime(log.occurredAt) }}
                   <span *ngIf="log.actorUsername"> · {{ log.actorUsername }}</span>
-                  <span *ngIf="log.sourceIp"> · {{ log.sourceIp }}</span>
                 </small>
               </div>
             </li>

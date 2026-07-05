@@ -47,8 +47,18 @@
     cursor: pointer;
     color: var(--tc-text-muted, var(--saas-text-soft));
     font-size: 0.85rem;
+    padding: 8px 14px;
+    border: 1px solid var(--saas-border);
+    border-radius: 10px;
+    background: var(--saas-surface);
+    transition: border-color 140ms ease, background 140ms ease;
 
-    input { accent-color: var(--tc-primary-600, var(--saas-primary)); }
+    &:hover { border-color: var(--tc-primary-400, var(--saas-primary)); }
+
+    input {
+      accent-color: var(--tc-primary-600, var(--saas-primary));
+      width: 16px; height: 16px;
+    }
   }
 
   &__nav {
@@ -70,14 +80,36 @@
   }
 }
 
+// ── Wizard Step ────────────────────────────────
 .wizard-step {
   display: flex;
   flex-direction: column;
   gap: 14px;
 
+  &__header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--saas-border);
+    margin-bottom: 2px;
+  }
+
+  &__icon {
+    flex: 0 0 40px;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--tc-primary-500, var(--saas-primary)) 12%, transparent);
+    color: var(--tc-primary-700, var(--saas-primary));
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+  }
+
   &__title {
-    margin: 0;
+    margin: 0 0 4px;
     font-size: 1.05rem;
+    font-weight: 700;
     color: var(--saas-text);
   }
 
@@ -85,9 +117,23 @@
     margin: 0;
     color: var(--saas-text-soft);
     font-size: 0.85rem;
+    line-height: 1.5;
   }
 }
 
+// ── Section sub-label ──────────────────────────
+.wizard-section-label {
+  font-size: 0.73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--saas-text-muted);
+  padding: 10px 0 4px;
+  border-top: 1px dashed var(--saas-border);
+  margin-top: 4px;
+}
+
+// ── Grid rows ─────────────────────────────────
 .wizard-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -104,37 +150,63 @@
   }
 }
 
+// ── Capped select / field width ────────────────
+.wizard-field--cap {
+  max-width: 400px;
+  select { max-width: 400px; }
+}
+
 .saas-field--full { grid-column: 1 / -1; }
+
+// ── Review step ────────────────────────────────
+.wizard-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.wizard-review-section {
+  background: color-mix(in srgb, var(--tc-primary-500, var(--saas-primary)) 4%, var(--saas-surface));
+  border: 1px solid var(--saas-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tc-primary-700, var(--saas-primary));
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    i { font-size: 13px; }
+  }
+}
 
 .wizard-review {
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 8px 16px;
-  margin: 8px 0 0;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 12px;
+  margin: 0;
 
   > div { display: contents; }
 
   dt {
     color: var(--saas-text-soft);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 
   dd {
     margin: 0;
     color: var(--saas-text);
-    font-size: 0.88rem;
-    font-weight: 500;
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-
-    > div {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding-bottom: 10px;
-      border-bottom: 1px dashed var(--saas-border);
-    }
+    font-size: 0.85rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
   }
 }
+

@@ -95,17 +95,17 @@
               <i class="pi pi-calendar-times"></i>
             </div>
             <div class="stu-kpi-mini__body">
-              <strong>{{ profile.attendance?.percent || 0 }}%</strong>
+              <strong>{{ profile.attendance.percent || 0 }}%</strong>
               <span>Attendance</span>
             </div>
           </div>
           
           <div class="stu-kpi-mini">
-            <div class="stu-kpi-mini__icon" [attr.data-tone]="(profile.fees?.pending || 0) > 0 ? 'warning' : 'success'">
+            <div class="stu-kpi-mini__icon" [attr.data-tone]="(profile.fees.pending || 0) > 0 ? 'warning' : 'success'">
               <i class="pi pi-wallet"></i>
             </div>
             <div class="stu-kpi-mini__body">
-              <strong>₹{{ profile.fees?.pending || 0 }}</strong>
+              <strong>₹{{ profile.fees.pending || 0 }}</strong>
               <span>Pending Fees</span>
             </div>
           </div>
@@ -143,12 +143,12 @@
                 <a (click)="go('PERSONAL')">View All</a>
               </div>
               <div class="stu-snapshot__rows">
-                <div><span>Gender</span><strong>{{ profile.personal?.gender || '—' }}</strong></div>
-                <div><span>DOB</span><strong>{{ profile.personal?.dateOfBirth || '—' }}</strong></div>
-                <div><span>Blood Group</span><strong>{{ profile.personal?.bloodGroup || '—' }}</strong></div>
-                <div><span>Mother Tongue</span><strong>{{ profile.personal?.motherTongue || '—' }}</strong></div>
-                <div><span>Religion</span><strong>{{ profile.personal?.religion || '—' }}</strong></div>
-                <div><span>Nationality</span><strong>{{ profile.personal?.nationality || '—' }}</strong></div>
+                <div><span>Gender</span><strong>{{ profile.personal.gender || '—' }}</strong></div>
+                <div><span>DOB</span><strong>{{ profile.personal.dateOfBirth || '—' }}</strong></div>
+                <div><span>Blood Group</span><strong>{{ profile.personal.bloodGroup || '—' }}</strong></div>
+                <div><span>Mother Tongue</span><strong>{{ profile.personal.motherTongue || '—' }}</strong></div>
+                <div><span>Religion</span><strong>{{ profile.personal.religion || '—' }}</strong></div>
+                <div><span>Nationality</span><strong>{{ profile.personal.nationality || '—' }}</strong></div>
               </div>
             </div>
 
@@ -158,16 +158,16 @@
                 <a (click)="go('ACADEMICS')">View All</a>
               </div>
               <div class="stu-snapshot__rows">
-                <div><span>Academic Year</span><strong>{{ profile.academics?.academicYear || '—' }}</strong></div>
-                <div><span>Admission Date</span><strong>{{ profile.academics?.admissionDate || '—' }}</strong></div>
+                <div><span>Academic Year</span><strong>{{ profile.academics.academicYear || '—' }}</strong></div>
+                <div><span>Admission Date</span><strong>{{ profile.academics.admissionDate || '—' }}</strong></div>
                 <div><span>Enrollment Status</span>
-                  <span class="stu-status" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics?.enrollmentStatus || 'ACTIVE'">
-                    {{ profile.academics?.enrollmentStatus || 'Active' | titlecase }}
+                  <span class="stu-status" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
+                    {{ profile.academics.enrollmentStatus || 'Active' | titlecase }}
                   </span>
                 </div>
-                <div><span>Current Class</span><strong>{{ profile.academics?.currentClass || '—' }}</strong></div>
-                <div><span>Current Section</span><strong>{{ profile.academics?.currentSection || '—' }}</strong></div>
-                <div><span>Enrolled Courses</span><strong>{{ profile.academics?.courseCount || 0 }}</strong></div>
+                <div><span>Current Class</span><strong>{{ profile.academics.currentClass || '—' }}</strong></div>
+                <div><span>Current Section</span><strong>{{ profile.academics.currentSection || '—' }}</strong></div>
+                <div><span>Enrolled Courses</span><strong>{{ profile.academics.courseCount || 0 }}</strong></div>
               </div>
             </div>
             
@@ -177,11 +177,11 @@
                 <a (click)="go('PERSONAL')">View All</a>
               </div>
               <div class="stu-snapshot__rows">
-                <div><span>Mobile</span><strong>{{ profile.personal?.mobile || '—' }}</strong></div>
-                <div><span>Email</span><strong>{{ profile.personal?.email || '—' }}</strong></div>
+                <div><span>Mobile</span><strong>{{ profile.personal.mobile || '—' }}</strong></div>
+                <div><span>Email</span><strong>{{ profile.personal.email || '—' }}</strong></div>
                 <div style="flex-direction:column;gap:4px;margin-top:4px;">
                   <span>Current Address</span>
-                  <strong style="line-height:1.4;">{{ profile.personal?.currentAddressLine1 || '—' }}<br>{{ profile.personal?.currentCity || '' }} {{ profile.personal?.currentState || '' }}</strong>
+                  <strong style="line-height:1.4;">{{ profile.personal.currentAddressLine1 || '—' }}<br>{{ profile.personal.currentCity || '' }} {{ profile.personal.currentState || '' }}</strong>
                 </div>
               </div>
             </div>
@@ -199,15 +199,15 @@
                           [attr.stroke-dashoffset]="ringDash().offset" stroke-linecap="round"></circle>
                 </svg>
                 <div class="stu-ring__label">
-                  <strong>{{ profile.attendance?.percent || 0 }}%</strong>
+                  <strong>{{ profile.attendance.percent || 0 }}%</strong>
                 </div>
               </div>
               <div style="display:flex;gap:12px;font-size:0.8rem;margin-top:8px;">
                 <div style="display:flex;flex-direction:column;color:var(--tc-success);">
-                  <strong>{{ profile.attendance?.present || 0 }}</strong><span>Present</span>
+                  <strong>{{ profile.attendance.present || 0 }}</strong><span>Present</span>
                 </div>
                 <div style="display:flex;flex-direction:column;color:var(--tc-danger);">
-                  <strong>{{ profile.attendance?.absent || 0 }}</strong><span>Absent</span>
+                  <strong>{{ profile.attendance.absent || 0 }}</strong><span>Absent</span>
                 </div>
               </div>
             </div>
@@ -218,8 +218,8 @@
                 <span [style.width.%]="feePercent()"></span>
               </div>
               <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
-                <span style="color:var(--tc-text-muted);">Paid: <strong style="color:var(--tc-text);">₹{{ profile.fees?.paid || 0 }}</strong></span>
-                <span style="color:var(--tc-text-muted);">Due: <strong style="color:var(--tc-danger);">₹{{ profile.fees?.pending || 0 }}</strong></span>
+                <span style="color:var(--tc-text-muted);">Paid: <strong style="color:var(--tc-text);">₹{{ profile.fees.paid || 0 }}</strong></span>
+                <span style="color:var(--tc-text-muted);">Due: <strong style="color:var(--tc-danger);">₹{{ profile.fees.pending || 0 }}</strong></span>
               </div>
             </div>
           </div>
@@ -236,15 +236,15 @@
             </button>
           </div>
           <dl class="adm-dl">
-            <div><dt>Full Name</dt><dd>{{ profile.personal?.fullName || '—' }}</dd></div>
-            <div><dt>Gender</dt><dd>{{ profile.personal?.gender || '—' }}</dd></div>
-            <div><dt>Date of Birth</dt><dd>{{ profile.personal?.dateOfBirth || '—' }}</dd></div>
-            <div><dt>Nationality</dt><dd>{{ profile.personal?.nationality || '—' }}</dd></div>
-            <div><dt>Religion</dt><dd>{{ profile.personal?.religion || '—' }}</dd></div>
-            <div><dt>Mother Tongue</dt><dd>{{ profile.personal?.motherTongue || '—' }}</dd></div>
-            <div><dt>Blood Group</dt><dd>{{ profile.personal?.bloodGroup || '—' }}</dd></div>
-            <div><dt>Mobile</dt><dd>{{ profile.personal?.mobile || '—' }}</dd></div>
-            <div><dt>Email</dt><dd>{{ profile.personal?.email || '—' }}</dd></div>
+            <div><dt>Full Name</dt><dd>{{ profile.personal.fullName || '—' }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ profile.personal.gender || '—' }}</dd></div>
+            <div><dt>Date of Birth</dt><dd>{{ profile.personal.dateOfBirth || '—' }}</dd></div>
+            <div><dt>Nationality</dt><dd>{{ profile.personal.nationality || '—' }}</dd></div>
+            <div><dt>Religion</dt><dd>{{ profile.personal.religion || '—' }}</dd></div>
+            <div><dt>Mother Tongue</dt><dd>{{ profile.personal.motherTongue || '—' }}</dd></div>
+            <div><dt>Blood Group</dt><dd>{{ profile.personal.bloodGroup || '—' }}</dd></div>
+            <div><dt>Mobile</dt><dd>{{ profile.personal.mobile || '—' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ profile.personal.email || '—' }}</dd></div>
           </dl>
           
           <h3 style="margin:10px 0 0;font-size:1rem;color:var(--tc-text);padding-top:16px;border-top:1px dashed var(--tc-border);">Address Details</h3>
@@ -252,17 +252,17 @@
             <div>
               <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Current Address</span>
               <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
-                {{ profile.personal?.currentAddressLine1 || '—' }}<br>
-                {{ profile.personal?.currentCity || '' }} {{ profile.personal?.currentState || '' }}<br>
-                {{ profile.personal?.currentPincode || '' }}
+                {{ profile.personal.currentAddressLine1 || '—' }}<br>
+                {{ profile.personal.currentCity || '' }} {{ profile.personal.currentState || '' }}<br>
+                {{ profile.personal.currentPincode || '' }}
               </p>
             </div>
             <div>
               <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Permanent Address</span>
               <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
-                {{ profile.personal?.permanentAddressLine1 || '—' }}<br>
-                {{ profile.personal?.permanentCity || '' }} {{ profile.personal?.permanentState || '' }}<br>
-                {{ profile.personal?.permanentPincode || '' }}
+                {{ profile.personal.permanentAddressLine1 || '—' }}<br>
+                {{ profile.personal.permanentCity || '' }} {{ profile.personal.permanentState || '' }}<br>
+                {{ profile.personal.permanentPincode || '' }}
               </p>
             </div>
           </div>
@@ -329,7 +329,7 @@
         </div>
         
         <div class="stu-family-grid">
-          <div *ngFor="let g of profile.family?.guardians" 
+          <div *ngFor="let g of profile.family.guardians" 
                class="stu-family-card"
                [class.stu-family-card--primary]="g.isPrimaryContact">
             
@@ -370,15 +370,15 @@
             <h2>Current Enrollment</h2>
           </div>
           <dl class="adm-dl">
-            <div><dt>Academic Year</dt><dd>{{ profile.academics?.academicYear || '—' }}</dd></div>
-            <div><dt>Class</dt><dd>{{ profile.academics?.currentClass || '—' }}</dd></div>
-            <div><dt>Section</dt><dd>{{ profile.academics?.currentSection || '—' }}</dd></div>
-            <div><dt>Roll Number</dt><dd>{{ profile.academics?.rollNumber || '—' }}</dd></div>
-            <div><dt>Enrollment Date</dt><dd>{{ profile.academics?.enrollmentDate || '—' }}</dd></div>
+            <div><dt>Academic Year</dt><dd>{{ profile.academics.academicYear || '—' }}</dd></div>
+            <div><dt>Class</dt><dd>{{ profile.academics.currentClass || '—' }}</dd></div>
+            <div><dt>Section</dt><dd>{{ profile.academics.currentSection || '—' }}</dd></div>
+            <div><dt>Roll Number</dt><dd>{{ profile.academics.rollNumber || '—' }}</dd></div>
+            <div><dt>Enrollment Date</dt><dd>{{ profile.academics.enrollmentDate || '—' }}</dd></div>
             <div><dt>Status</dt>
               <dd>
-                <span class="stu-status" [attr.data-status]="profile.academics?.enrollmentStatus || 'ACTIVE'">
-                  {{ profile.academics?.enrollmentStatus || 'Active' | titlecase }}
+                <span class="stu-status" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
+                  {{ profile.academics.enrollmentStatus || 'Active' | titlecase }}
                 </span>
               </dd>
             </div>
@@ -470,19 +470,19 @@
             <div style="display:flex;flex-direction:column;gap:16px;">
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Blood Group</span>
-                <strong style="font-size:1.1rem;color:var(--tc-danger);">{{ profile.medical?.bloodGroup || '—' }}</strong>
+                <strong style="font-size:1.1rem;color:var(--tc-danger);">{{ profile.medical.bloodGroup || '—' }}</strong>
               </div>
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Allergies</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.allergies || 'None reported' }}</p>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.allergies || 'None reported' }}</p>
               </div>
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Medical Conditions</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.medicalConditions || 'None reported' }}</p>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.medicalConditions || 'None reported' }}</p>
               </div>
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Ongoing Medications</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.medications || 'None' }}</p>
+                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.medications || 'None' }}</p>
               </div>
             </div>
             
@@ -490,14 +490,14 @@
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Family Doctor</span>
                 <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">
-                  <strong>{{ profile.medical?.doctorName || '—' }}</strong><br>
-                  <i class="pi pi-phone" style="font-size:0.8rem;color:var(--tc-primary-600);"></i> {{ profile.medical?.doctorContact || '—' }}
+                  <strong>{{ profile.medical.doctorName || '—' }}</strong><br>
+                  <i class="pi pi-phone" style="font-size:0.8rem;color:var(--tc-primary-600);"></i> {{ profile.medical.doctorContact || '—' }}
                 </p>
               </div>
               <div>
                 <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Emergency Notes</span>
                 <div style="margin:4px 0 0;padding:12px;background:color-mix(in srgb, var(--tc-warning) 8%, transparent);border-radius:10px;border:1px solid color-mix(in srgb, var(--tc-warning) 30%, transparent);">
-                  <p style="margin:0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical?.emergencyNotes || 'No specific emergency instructions provided.' }}</p>
+                  <p style="margin:0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.emergencyNotes || 'No specific emergency instructions provided.' }}</p>
                 </div>
               </div>
             </div>

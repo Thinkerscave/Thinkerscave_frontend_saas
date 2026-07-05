@@ -27,7 +27,7 @@ import {
   formatDate
 } from '../../utils/platform-display.util';
 
-type ViewMode = 'cards' | 'grid' | 'table';
+type ViewMode = 'cards' | 'table';
 type StatusFilter = 'all' | CustomerStatus;
 type TypeFilter = 'all' | CustomerType;
 
@@ -40,7 +40,7 @@ const VIEW_KEY = 'tc-customer-view-mode';
   imports: [
     CommonModule, FormsModule, RouterLink, PaginatorModule, ToastModule,
     SaasPageHeaderComponent, SaasPanelComponent,
-    SaasFilterRowComponent, SaasPillComponent
+    SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent
   ],
   providers: [MessageService],
   templateUrl: './customers-list.component.html',
@@ -93,7 +93,7 @@ export class CustomersListComponent implements OnInit {
 
   ngOnInit(): void {
     const saved = localStorage.getItem(VIEW_KEY) as ViewMode | null;
-    if (saved === 'cards' || saved === 'grid' || saved === 'table') {
+    if (saved === 'cards' || saved === 'table') {
       this.viewMode = saved;
     }
     this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
@@ -166,7 +166,7 @@ export class CustomersListComponent implements OnInit {
   setViewMode(mode: ViewMode): void {
     this.viewMode = mode;
     localStorage.setItem(VIEW_KEY, mode);
-    this.pageSize = mode === 'grid' ? 24 : mode === 'table' ? 20 : 12;
+    this.pageSize = mode === 'table' ? 20 : 12;
     this.page = 0;
     this.loadCustomers();
   }

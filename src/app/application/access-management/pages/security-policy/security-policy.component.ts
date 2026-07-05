@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs';
@@ -15,7 +14,7 @@ import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/
   selector: 'app-security-policy',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, ToastModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [CommonModule, FormsModule, ToastModule, SaasPageHeaderComponent, SaasPanelComponent],
   providers: [MessageService],
   templateUrl: './security-policy.component.html',
   styleUrl: './security-policy.component.scss'

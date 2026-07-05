@@ -10,7 +10,19 @@
     gap: 12px;
   }
 
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+
   &__table {
+    tr.is-out-of-sync td {
+      background: color-mix(in srgb, var(--tc-warning, var(--saas-warning)) 8%, var(--saas-surface));
+    }
+
     td.num,
     th.num {
       text-align: right;
@@ -33,6 +45,23 @@
     min-width: 2.5rem;
     font-weight: 600;
     color: var(--saas-primary);
+  }
+
+  &__progress-cell {
+    width: 150px;
+  }
+
+  &__sync-warning {
+    display: block;
+    margin-top: 4px;
+    color: var(--tc-warning, var(--saas-warning));
+    font-size: 0.78rem;
+    font-weight: 600;
+
+    i {
+      margin-right: 4px;
+      font-size: 0.75rem;
+    }
   }
 
   &__error-cell {

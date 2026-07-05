@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PlatformAuditLog, PlatformSecurityAuditLog } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
-import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { SaasPageHeaderComponent, SaasStat, SaasStatGridComponent, SaasPillComponent } from '../../../../shared/ui/saas';
 
 type EventCategory = 'all' | 'user' | 'tenant' | 'security' | 'auth' | 'subscription' | 'configuration';
 type Severity = 'all' | 'info' | 'warn' | 'critical';
@@ -29,7 +29,7 @@ interface TimelineEvent {
 @Component({
   selector: 'app-audit-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent, SaasStatGridComponent, SaasPillComponent],
   templateUrl: './audit-center.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -42,6 +42,7 @@ export class AuditCenterComponent implements OnInit {
   loading = true;
   errorMessage = '';
   events: TimelineEvent[] = [];
+  viewMode: 'timeline' | 'table' = 'timeline';
 
   search = '';
   category: EventCategory = 'all';
@@ -167,13 +168,26 @@ export class AuditCenterComponent implements OnInit {
     });
   }
 
-  get kpis() {
-    return {
-      total: this.events.length,
-      critical: this.events.filter(e => e.severity === 'critical').length,
-      failedAuth: this.events.filter(e => e.category === 'auth' && e.severity !== 'info').length,
-      configChanges: this.events.filter(e => e.category === 'configuration').length
-    };
+  get groupedFiltered(): { date: string; events: TimelineEvent[] }[] {
+    const list = this.filtered;
+    const map = new Map<string, TimelineEvent[]>();
+    for (const e of list) {
+      const date = (e.occurredAt || '').split('T')[0];
+      if (!map.has(date)) map.set(date, []);
+      map.get(date)!.push(e);
+    }
+    return Array.from(map.entries())
+      .map(([date, events]) => ({ date, events }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  get stats(): SaasStat[] {
+    return [
+      { key: 'total', label: 'Events Recorded', value: this.events.length, helper: 'Across all tenants', icon: 'pi pi-list', tone: 'primary' },
+      { key: 'critical', label: 'Critical Alerts', value: this.events.filter(e => e.severity === 'critical').length, helper: 'Severity flagged', icon: 'pi pi-exclamation-triangle', tone: 'danger' },
+      { key: 'failedAuth', label: 'Failed Sign-ins', value: this.events.filter(e => e.category === 'auth' && e.severity !== 'info').length, helper: 'Auth issues to review', icon: 'pi pi-sign-in', tone: 'warning' },
+      { key: 'config', label: 'Config Changes', value: this.events.filter(e => e.category === 'configuration').length, helper: 'Settings and access edits', icon: 'pi pi-cog', tone: 'info' }
+    ];
   }
 
   resetFilters(): void {

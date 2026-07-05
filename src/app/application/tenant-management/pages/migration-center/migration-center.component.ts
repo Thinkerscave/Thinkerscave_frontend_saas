@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { finalize, forkJoin } from 'rxjs';
 
 import { ProvisioningJob, TenantRegistry } from '../../models/platform.model';
@@ -33,7 +34,8 @@ import {
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    ProgressBarModule
   ],
   providers: [MessageService],
   templateUrl: './migration-center.component.html',
@@ -148,6 +150,21 @@ export class MigrationCenterComponent implements OnInit {
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Migration failed', detail: 'Could not trigger tenant migration.' })
       });
+  }
+
+  get outdatedTenants(): TenantRegistry[] {
+    return this.tenants.filter(t => t.databaseVersion && t.migrationVersion && t.databaseVersion !== t.migrationVersion);
+  }
+
+  migrateAllOutdated(): void {
+    const outdated = this.outdatedTenants;
+    if (!outdated.length) return;
+
+    this.messages.add({ severity: 'info', summary: 'Batch Migration', detail: `Triggering migration for ${outdated.length} tenants...` });
+    // In a real app, this would call a batch API or queue them. For now, we simulate looping them.
+    for (const t of outdated) {
+      this.triggerMigration(t);
+    }
   }
 
   progressLabel(job: ProvisioningJob): string {

@@ -26,7 +26,7 @@
   </tc-saas-filter-row>
 
   <tc-saas-panel [title]="'Archived Customers'" [subtitle]="totalRecords + ' record(s)'">
-    <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
+    <div *ngIf="errorMessage" class="saas-empty customers-archive__error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
       <button type="button" class="saas-btn saas-btn--primary" (click)="loadCustomers()">Retry</button>

@@ -7,15 +7,7 @@
     <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers/new"><i class="pi pi-plus"></i> New Customer</a>
   </tc-saas-page-header>
 
-  <div class="customers-list__stat-row">
-    <button type="button" class="customers-list__stat-chip" *ngFor="let stat of stats" (click)="onStatClick(stat.key)">
-      <i [class]="stat.icon"></i>
-      <div>
-        <small>{{ stat.label }}</small>
-        <strong>{{ stat.value }}</strong>
-      </div>
-    </button>
-  </div>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
   <tc-saas-filter-row>
     <label class="saas-search">
@@ -33,15 +25,14 @@
       </select>
     </label>
     <div class="customers-list__view-switch">
-      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view"><i class="pi pi-th-large"></i></button>
-      <button type="button" [class.is-active]="viewMode === 'grid'" (click)="setViewMode('grid')" title="Grid view"><i class="pi pi-table"></i></button>
-      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view"><i class="pi pi-list"></i></button>
+      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
+      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
     </div>
     <button type="button" class="saas-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
   </tc-saas-filter-row>
 
   <tc-saas-panel [title]="'All Customers'" [subtitle]="totalRecords + ' customers'">
-    <div *ngIf="errorMessage" class="saas-empty" style="margin-bottom: 14px;">
+    <div *ngIf="errorMessage" class="saas-empty customers-list__error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
       <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
@@ -56,7 +47,7 @@
       <a class="saas-btn saas-btn--primary" routerLink="/app/tenant-management/customers/new">Create First Customer</a>
     </div>
 
-    <div *ngIf="!loading && customers.length && viewMode !== 'table'" [class]="'customers-list__cards customers-list__cards--' + viewMode">
+    <div *ngIf="!loading && customers.length && viewMode === 'cards'" class="customers-list__cards customers-list__cards--cards">
       <article class="customer-card" *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)">
         <div class="customer-card__head">
           <span class="customer-card__logo" [class.has-image]="c.logoUrl">
@@ -70,13 +61,9 @@
           <tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill>
         </div>
         <div class="customer-card__meta">
-          <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} orgs</span>
-          <span><i class="pi pi-envelope"></i> {{ c.email || '—' }}</span>
-        </div>
-        <div class="customer-card__actions" (click)="$event.stopPropagation()">
-          <button type="button" class="saas-btn saas-btn--ghost" (click)="openCustomer(c, $event)">View</button>
-          <a class="saas-btn saas-btn--ghost" [routerLink]="['/app/tenant-management/customers', c.id, 'edit']">Edit</a>
-          <button type="button" class="saas-btn saas-btn--ghost" (click)="addOrganization(c, $event)">Add Org</button>
+          <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} org{{ (c.organizationCount ?? 0) !== 1 ? 's' : '' }}</span>
+          <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
+          <span *ngIf="c.city"><i class="pi pi-map-marker"></i> {{ c.city }}</span>
         </div>
         <footer class="customer-card__footer">View Details <i class="pi pi-arrow-right"></i></footer>
       </article>
@@ -95,7 +82,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)">
+          <tr *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)" class="clickable-row">
             <td>
               <div class="cell-main">
                 <span class="customers-list__avatar">{{ customerInitials(c.displayName) }}</span>

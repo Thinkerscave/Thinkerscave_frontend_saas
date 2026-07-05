@@ -49,7 +49,7 @@
 
   &__grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 18px;
 
     @media (max-width: 1200px) {
@@ -59,6 +59,21 @@
     @media (max-width: 760px) {
       grid-template-columns: 1fr;
     }
+  }
+
+  &__grid--single {
+    grid-template-columns: 1fr;
+    margin-top: 18px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__view-switch {
+    margin-right: 12px;
   }
 
   &__remarks {
@@ -172,6 +187,13 @@
     flex-wrap: wrap;
     gap: 0.35rem;
   }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
 }
 
 .audit-list {
@@ -217,5 +239,83 @@
     color: var(--saas-primary);
 
     i { font-size: 0.95rem; }
+  }
+}
+
+.saas-org-card {
+  border: 1px solid var(--tc-border, var(--saas-border));
+  border-radius: var(--tc-radius-xl, 16px);
+  background: var(--tc-surface-card-solid, var(--saas-surface));
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &:hover {
+    border-color: var(--tc-primary-300, var(--saas-primary));
+    box-shadow: var(--tc-shadow-sm, 0 4px 12px rgba(0,0,0,0.05));
+    transform: translateY(-2px);
+  }
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  &__logo {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--tc-radius-md, 10px);
+    background: color-mix(in srgb, var(--tc-primary-600, var(--saas-primary)) 12%, transparent);
+    color: var(--tc-primary-600, var(--saas-primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+    overflow: hidden;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  &__title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    strong {
+      color: var(--tc-text-primary, var(--saas-text));
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+    small {
+      color: var(--tc-text-secondary, var(--saas-text-soft));
+      font-size: 0.78rem;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--tc-border-subtle, var(--saas-border));
+    font-size: 0.82rem;
+    color: var(--tc-text-secondary, var(--saas-text-soft));
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    i {
+      color: var(--tc-text-muted, var(--saas-text-soft));
+    }
   }
 }

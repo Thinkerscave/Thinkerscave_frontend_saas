@@ -56,7 +56,7 @@
             </div>
           </div>
 
-          <div *ngIf="!customers.length" class="saas-empty" style="padding: 24px 0;">
+          <div *ngIf="!customers.length" class="saas-empty provision-organization__compact-empty">
             <i class="pi pi-users"></i>
             <strong>No active customers found</strong>
             <p>Switch to New Customer to create one during provisioning.</p>
@@ -168,7 +168,7 @@
           </label>
         </div>
 
-        <div *ngIf="!plans.length" class="saas-empty" style="padding: 24px 0;">
+        <div *ngIf="!plans.length" class="saas-empty provision-organization__compact-empty">
           <i class="pi pi-credit-card"></i>
           <strong>No subscription plans available</strong>
           <p>Configure plans in Platform Management before provisioning.</p>
@@ -209,7 +209,7 @@
           <tc-saas-pill label="Overrides apply on top of plan" tone="info" icon="pi pi-sliders-h"></tc-saas-pill>
         </div>
 
-        <div *ngIf="!features.length" class="saas-empty" style="padding: 24px 0;">
+        <div *ngIf="!features.length" class="saas-empty provision-organization__compact-empty">
           <i class="pi pi-th-large"></i>
           <strong>No features in catalog</strong>
         </div>

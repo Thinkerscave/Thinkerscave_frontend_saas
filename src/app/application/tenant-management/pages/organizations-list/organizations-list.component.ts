@@ -58,9 +58,10 @@ export class OrganizationsListComponent implements OnInit {
   search = '';
   statusFilter: StatusFilter = 'all';
   typeFilter: 'all' | InstitutionType = 'all';
+  viewMode: 'cards' | 'table' = 'cards';
   openMenuFor: number | null = null;
   page = 0;
-  pageSize = 20;
+  pageSize = 24;
   totalRecords = 0;
 
   readonly statusChips: { id: StatusFilter; label: string }[] = [
@@ -131,6 +132,13 @@ export class OrganizationsListComponent implements OnInit {
   onPageChange(event: { page?: number; rows?: number }): void {
     this.page = event.page ?? 0;
     if (event.rows) this.pageSize = event.rows;
+    this.loadOrganizations();
+  }
+
+  setViewMode(mode: 'cards' | 'table'): void {
+    this.viewMode = mode;
+    this.pageSize = mode === 'table' ? 20 : 24;
+    this.page = 0;
     this.loadOrganizations();
   }
 
