@@ -336,7 +336,7 @@
   }
   &__search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--tc-text-muted); }
   &__selects { display: flex; gap: 12px; flex-wrap: wrap;
-    select { padding: 10px 32px 10px 12px; border-radius: 8px; border: 1px solid var(--tc-border); background: var(--tc-surface-50); font-family: inherit; font-size: 0.9rem; cursor: pointer; appearance: none; &:focus { outline: none; border-color: var(--tc-primary-500); } }
+    select { min-width: 160px; }
   }
   &__actions { display: flex; gap: 12px; }
 }

@@ -519,42 +519,20 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Global native select polish
-   Removes the ugly default OS select chevron and replaces it
-   with a crisp SVG arrow that matches the design system.
+   Select context refinements — base appearance comes from the
+   global `select` rule in styles.scss.
    ─────────────────────────────────────────────────────────────*/
 .saas-field select,
 .tc-field select,
-.tc-select select,
-select.saas-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A6479' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px !important;
-  cursor: pointer;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+.tc-select select {
+  // Ensures the select fills its container inside a field wrapper
+  width: 100%;
+  max-width: 100%;
 }
 
-/* standalone select — use when not inside .saas-field */
+/* standalone select helper class */
 select.saas-select {
-  display: block;
-  height: 38px;
-  padding: 0 36px 0 12px;
-  border: 1px solid var(--saas-border-strong);
-  border-radius: 9px;
-  background-color: var(--saas-surface);
-  color: var(--saas-text);
-  font-size: 0.88rem;
-  font-family: inherit;
-  width: 100%;
   max-width: 400px;
-}
-select.saas-select:focus {
-  outline: none;
-  border-color: var(--saas-primary);
-  box-shadow: 0 0 0 3px var(--saas-primary-soft);
 }
 
 /* ─────────────────────────────────────────────────────────────
