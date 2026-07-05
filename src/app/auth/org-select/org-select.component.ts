@@ -3,7 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { OrganizationContextService, DevOrganization } from '../../core/services/organization-context.service';
+import {
+  DevOrganization,
+  OrganizationContextService,
+  THINKERS_DEPARTMENT
+} from '../../core/services/organization-context.service';
 
 @Component({
   selector: 'app-org-select',
@@ -16,8 +20,10 @@ export class OrgSelectComponent {
   private readonly orgContext = inject(OrganizationContextService);
   private readonly router = inject(Router);
 
+  readonly thinkersDepartment = THINKERS_DEPARTMENT;
   readonly query = signal('');
   readonly selected = signal<DevOrganization | null>(null);
+  readonly platformSelected = signal(false);
 
   readonly displayOrgs = computed(() => {
     const rawQuery = this.query();
@@ -37,14 +43,28 @@ export class OrgSelectComponent {
   onSearch(value: string): void {
     this.query.set(value);
     this.selected.set(null);
+    this.platformSelected.set(false);
+  }
+
+  selectPlatform(): void {
+    this.platformSelected.set(true);
+    this.selected.set(null);
+    this.query.set('');
   }
 
   selectOrg(org: DevOrganization): void {
+    this.platformSelected.set(false);
     this.selected.set(org);
     this.query.set(org.name);
   }
 
   continue(): void {
+    if (this.platformSelected()) {
+      this.orgContext.setPlatformLogin();
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
     const org = this.selected();
     if (!org) {
       return;

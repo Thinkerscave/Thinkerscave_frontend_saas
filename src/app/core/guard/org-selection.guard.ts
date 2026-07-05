@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { OrganizationContextService } from '../services/organization-context.service';
 
-/** Ensures an organization is selected before showing the login form (dev only). */
+/** Ensures an organization or Thinkers Department is selected before login (dev only). */
 export const orgSelectionGuard: CanActivateFn = () => {
   const orgContext = inject(OrganizationContextService);
   const router = inject(Router);
@@ -11,7 +11,7 @@ export const orgSelectionGuard: CanActivateFn = () => {
     return true;
   }
 
-  if (orgContext.getSelectedOrganization()) {
+  if (orgContext.hasLoginTarget()) {
     return true;
   }
 

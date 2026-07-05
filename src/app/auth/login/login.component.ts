@@ -36,7 +36,13 @@ export class LoginComponent {
   readonly forgotModal = viewChild.required(ForgotPasswordModalComponent);
   readonly submitting = signal(false);
 
-  readonly selectedOrg = this.orgContext.getSelectedOrganization();
+  get loginTarget() {
+    return this.orgContext.getLoginTarget();
+  }
+
+  get isPlatformLogin() {
+    return this.orgContext.isPlatformLogin();
+  }
 
   loginForm: FormGroup = this.fb.group({
     username: ['', Validators.required],
@@ -45,7 +51,7 @@ export class LoginComponent {
   });
 
   ngOnInit(): void {
-    if (this.orgContext.requiresSelection && !this.orgContext.getSelectedOrganization()) {
+    if (this.orgContext.requiresSelection && !this.orgContext.hasLoginTarget()) {
       this.router.navigate(['/auth/select-organization']);
       return;
     }
@@ -95,7 +101,8 @@ export class LoginComponent {
           loginData.tenantId,
           loginUser?.orgType,
           loginUser?.organizations,
-          rememberMe
+          rememberMe,
+          loginData.loginContext === 'PLATFORM' ? 'PLATFORM' : 'TENANT'
         );
 
         const mappedUser = this.loginService.mapAuthUser(loginUser, loginData.firstTimeLogin);
@@ -103,8 +110,14 @@ export class LoginComponent {
           this.loginService.setUser(mappedUser);
         }
 
-        if (!this.loginService.getCurrentOrganizationId() && this.selectedOrg) {
-          this.loginService.setCurrentOrganization(String(this.selectedOrg.id));
+        if (this.isPlatformLogin) {
+          this.loginService.setTenant(loginData.tenantId || 'public');
+          if (mappedUser?.organizationId) {
+            this.loginService.setCurrentOrganization(String(mappedUser.organizationId));
+          }
+        } else if (!this.loginService.getCurrentOrganizationId() && this.loginTarget) {
+          this.loginService.setCurrentOrganization(String(this.loginTarget.id));
+          this.loginService.setTenant(loginData.tenantId || this.loginTarget.tenantId);
         }
 
         this.tenantConfigService.fetchConfigFromServer().subscribe({

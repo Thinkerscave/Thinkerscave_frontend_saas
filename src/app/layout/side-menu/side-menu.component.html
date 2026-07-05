@@ -1,3 +1,7 @@
+@if (showOverlayBackdrop) {
+  <button type="button" class="sidebar-backdrop" aria-label="Close navigation" (click)="closeMobileDrawer()"></button>
+}
+
 <aside class="sidebar-wrapper"
   [class.is-expanded]="displayExpanded"
   (mouseenter)="onSidebarEnter()"
@@ -13,22 +17,17 @@
     </div>
   } @else if (items.length) {
     <nav class="nav-list">
-      @for (item of items; track item.label; let idx = $index) {
+      @for (item of items; track getItemKey(item); let idx = $index) {
         <div class="nav-item-wrapper" [style.animation-delay]="idx * 40 + 'ms'">
           @if (!hasChildren(item)) {
-            <a class="nav-link"
-               [routerLink]="getRouterLink(item)"
-               [queryParams]="item.queryParams"
+            <button class="nav-link" type="button"
                [class.is-active]="isLeafActive(item)"
                [attr.aria-current]="isLeafActive(item) ? 'page' : null"
                [attr.aria-label]="item.label"
-               [pTooltip]="showTooltip() ? tooltipFor(item) : undefined"
-               tooltipPosition="right"
-               [tooltipDisabled]="!showTooltip()"
-               (click)="selectItem(null, item)">
+               (click)="selectItem(null, item, $event)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
               <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
-            </a>
+            </button>
           } @else {
             <button class="nav-link nav-parent" type="button"
                     [class.is-open]="isGroupOpen(item)"
@@ -36,9 +35,6 @@
                     [attr.aria-current]="isParentActive(item) ? 'true' : null"
                     [attr.aria-label]="item.label"
                     [attr.aria-expanded]="isGroupOpen(item)"
-                    [pTooltip]="showTooltip() ? tooltipFor(item) : undefined"
-                    tooltipPosition="right"
-                    [tooltipDisabled]="!showTooltip()"
                     (click)="toggleGroup(item)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
               <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
@@ -49,18 +45,37 @@
 
             @if (displayExpanded && isGroupOpen(item)) {
               <div class="submenu">
-                @for (child of item.items; track child.label; let ci = $index) {
-                  <a class="submenu-link"
-                     [routerLink]="getRouterLink(child)"
-                     [queryParams]="child.queryParams"
-                     [class.is-active]="isLeafActive(child)"
-                     [attr.aria-current]="isLeafActive(child) ? 'page' : null"
-                     [attr.aria-label]="child.label"
-                     [style.animation-delay]="ci * 30 + 'ms'"
-                     (click)="selectItem(item, child)">
-                    <span class="submenu-icon"><i [ngClass]="child.icon" aria-hidden="true"></i></span>
-                    <span class="submenu-label">{{ child.label }}</span>
-                  </a>
+                @for (child of item.items; track getItemKey(child); let ci = $index) {
+                  @if (hasChildren(child)) {
+                    <div class="submenu-nested">
+                      <span class="submenu-nested__label">{{ child.label }}</span>
+                      @for (grandchild of child.items; track getItemKey(grandchild); let gi = $index) {
+                        @if (resolveNavigableUrl(grandchild)) {
+                          <button type="button" class="submenu-link submenu-link--nested"
+                             [class.is-active]="isLeafActive(grandchild)"
+                             [attr.aria-current]="isLeafActive(grandchild) ? 'page' : null"
+                             [attr.aria-label]="grandchild.label"
+                             [style.animation-delay]="(ci + gi) * 30 + 'ms'"
+                             (click)="selectItem(item, grandchild, $event)">
+                            <span class="submenu-icon"><i [ngClass]="grandchild.icon" aria-hidden="true"></i></span>
+                            <span class="submenu-label">{{ grandchild.label }}</span>
+                          </button>
+                        }
+                      }
+                    </div>
+                  } @else {
+                    @if (resolveNavigableUrl(child)) {
+                      <button type="button" class="submenu-link"
+                         [class.is-active]="isLeafActive(child)"
+                         [attr.aria-current]="isLeafActive(child) ? 'page' : null"
+                         [attr.aria-label]="child.label"
+                         [style.animation-delay]="ci * 30 + 'ms'"
+                         (click)="selectItem(item, child, $event)">
+                        <span class="submenu-icon"><i [ngClass]="child.icon" aria-hidden="true"></i></span>
+                        <span class="submenu-label">{{ child.label }}</span>
+                      </button>
+                    }
+                  }
                 }
               </div>
             }
@@ -75,7 +90,3 @@
     </div>
   }
 </aside>
-
-@if (showOverlayBackdrop) {
-  <button type="button" class="sidebar-backdrop" aria-label="Close navigation" (click)="closeMobileDrawer()"></button>
-}

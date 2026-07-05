@@ -2,13 +2,21 @@
   display: block;
   height: 100%;
   width: var(--tc-sidebar-compact-width, 60px);
+  margin-right: 0;
   flex-shrink: 0;
   position: relative;
   z-index: 1100;
-  transition: width 0.26s ease-in-out;
+  transition: none;
 
   &.is-expanded {
     width: var(--tc-sidebar-expanded-width, 272px);
+  }
+
+  &.is-hover-expanded {
+    width: var(--tc-sidebar-expanded-width, 272px);
+    margin-right: calc(var(--tc-sidebar-compact-width, 60px) - var(--tc-sidebar-expanded-width, 272px));
+    z-index: 1300;
+    box-shadow: 12px 0 32px rgba(15, 23, 42, 0.12);
   }
 
   &.is-mobile-drawer,
@@ -24,6 +32,8 @@
 }
 
 .sidebar-wrapper {
+  position: relative;
+  z-index: 10;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -57,12 +67,16 @@
 
 .sidebar-backdrop {
   position: fixed;
-  inset: var(--tc-topbar-height, 60px) 0 var(--tc-footer-height, 40px) 0;
+  top: var(--tc-topbar-height, 60px);
+  bottom: var(--tc-footer-height, 40px);
+  left: min(var(--tc-sidebar-expanded-width, 272px), calc(100vw - 1rem));
+  right: 0;
   border: 0;
   background: rgba(15, 23, 42, 0.45);
-  z-index: 1250;
+  z-index: 1200;
   cursor: pointer;
   animation: tc-fade-in 0.2s ease;
+  pointer-events: auto;
 }
 
 .nav-list {
@@ -74,7 +88,8 @@
 }
 
 .nav-item-wrapper {
-  animation: tc-fade-in 0.24s ease backwards;
+  opacity: 1;
+  animation: none;
 }
 
 .nav-link {
@@ -233,16 +248,23 @@
 }
 
 .submenu-link {
+  width: 100%;
   min-height: 34px;
   display: flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.3rem 0.5rem;
+  border: none;
   border-radius: var(--tc-radius-md);
+  background: transparent;
   color: color-mix(in srgb, var(--tc-sidebar-text) 88%, transparent);
   text-decoration: none;
+  font: inherit;
   font-size: 0.8rem;
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
   transition: background 0.18s ease, color 0.18s ease;
 
   &:hover,
@@ -261,6 +283,26 @@
       color: var(--tc-primary-600);
     }
   }
+}
+
+.submenu-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  margin-top: 0.15rem;
+}
+
+.submenu-nested__label {
+  padding: 0.15rem 0.5rem 0.05rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tc-text-soft);
+}
+
+.submenu-link--nested {
+  padding-left: 0.75rem;
 }
 
 .submenu-icon {

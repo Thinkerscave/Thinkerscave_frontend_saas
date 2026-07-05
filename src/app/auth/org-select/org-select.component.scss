@@ -23,6 +23,21 @@
   border: 0;
 }
 
+.org-select__platform {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.org-card--platform {
+  border-color: #c7d2fe;
+  background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
+}
+
+.org-card__avatar--platform {
+  background: linear-gradient(135deg, #4338ca, #2563eb);
+}
+
 .org-select {
   display: flex;
   flex-direction: column;

@@ -10,7 +10,7 @@ import { OrganizationContextService } from './organization-context.service';
 
 /** Keys persisted across sessions (access token is memory-only via TokenSessionService). */
 const STORAGE_KEYS = [
-  'refreshToken', 'tenantId', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
+  'refreshToken', 'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
 ] as const;
 
 @Injectable({
@@ -37,11 +37,18 @@ export class LoginService {
 
   /** Clears session state while preserving dev org selection for the login screen. */
   prepareLoginScreen(): void {
+    const isPlatform = this.orgContext.isPlatformLogin();
     const pendingOrg = this.orgContext.getSelectedOrganization();
     this.logOut(false);
-    if (pendingOrg) {
+    if (isPlatform) {
+      this.setTenant(this.orgContext.resolveTenantId());
+      this.setLoginContext('PLATFORM');
+      this.storage.removeItem('currentOrgId');
+      this.currentOrgId$.next(null);
+    } else if (pendingOrg) {
       this.setTenant(pendingOrg.tenantId);
       this.setCurrentOrganization(String(pendingOrg.id));
+      this.setLoginContext('TENANT');
     }
   }
 
@@ -144,8 +151,17 @@ export class LoginService {
       return null;
     }
 
-    const roles = Array.isArray(loginUser.roles)
-      ? loginUser.roles.map((role: any) => role?.roleType || role?.roleCode || role?.roleName).filter(Boolean)
+    const roles: string[] = Array.isArray(loginUser.roles)
+      ? Array.from(new Set<string>(
+        loginUser.roles.flatMap((role: any) => {
+          if (typeof role === 'string') {
+            return [this.normalizeRoleToken(role)];
+          }
+          return [role?.roleType, role?.roleCode, role?.roleName, role?.name]
+            .filter(Boolean)
+            .map((value: string) => this.normalizeRoleToken(String(value)));
+        })
+      ))
       : [];
 
     return {
@@ -192,6 +208,10 @@ export class LoginService {
     }
   }
 
+  private normalizeRoleToken(role: string): string {
+    return role.trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase();
+  }
+
   /**
    * Store tokens after login.
    * @param rememberMe When true tokens persist in localStorage; otherwise sessionStorage.
@@ -202,7 +222,8 @@ export class LoginService {
     tenantId?: string,
     orgType?: string,
     organizations?: UserOrganization[],
-    rememberMe: boolean = false
+    rememberMe: boolean = false,
+    loginContext?: 'PLATFORM' | 'TENANT'
   ) {
     // Record the storage preference first
     if (rememberMe) {
@@ -218,6 +239,9 @@ export class LoginService {
     }
     if (tenantId) {
       store.setItem('tenantId', tenantId);
+    }
+    if (loginContext) {
+      store.setItem('loginContext', loginContext);
     }
     if (orgType) {
       store.setItem('orgType', orgType);
@@ -247,6 +271,15 @@ export class LoginService {
 
   public getTenant(): string {
     return this.readItem('tenantId') || 'public';
+  }
+
+  public getLoginContext(): 'PLATFORM' | 'TENANT' {
+    const value = this.readItem('loginContext');
+    return value === 'PLATFORM' ? 'PLATFORM' : 'TENANT';
+  }
+
+  public setLoginContext(context: 'PLATFORM' | 'TENANT'): void {
+    this.storage.setItem('loginContext', context);
   }
 
   public getOrgType(): string {

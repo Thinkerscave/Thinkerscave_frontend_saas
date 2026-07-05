@@ -35,6 +35,7 @@ export class SideMenuComponent implements OnInit {
   private readonly sidebarLayout = inject(SidebarLayoutService);
 
   private activeLeafKey: string | null = null;
+  private collapseHoverTimer: ReturnType<typeof setTimeout> | null = null;
 
   get displayExpanded(): boolean {
     return this.expanded || this.sidebarLayout.displayExpanded();
@@ -42,7 +43,7 @@ export class SideMenuComponent implements OnInit {
 
   @HostBinding('class.is-expanded')
   get hostExpanded(): boolean {
-    return this.displayExpanded;
+    return this.expanded || this.sidebarLayout.isTabletPinned() || this.sidebarLayout.isMobileDrawerOpen();
   }
 
   @HostBinding('class.is-hover-expanded')
@@ -92,14 +93,27 @@ export class SideMenuComponent implements OnInit {
   }
 
   onSidebarEnter(): void {
+    if (this.collapseHoverTimer) {
+      clearTimeout(this.collapseHoverTimer);
+      this.collapseHoverTimer = null;
+    }
     this.sidebarLayout.setHovered(true);
-    this.openActiveGroups();
+    if (this.openGroups.size === 0) {
+      this.openActiveGroups();
+    }
     this.cdr.markForCheck();
   }
 
   onSidebarLeave(): void {
-    this.sidebarLayout.setHovered(false);
-    this.cdr.markForCheck();
+    if (this.collapseHoverTimer) {
+      clearTimeout(this.collapseHoverTimer);
+    }
+    this.collapseHoverTimer = setTimeout(() => {
+      if (this.openGroups.size === 0) {
+        this.sidebarLayout.setHovered(false);
+        this.cdr.markForCheck();
+      }
+    }, 280);
   }
 
   expandFromFocus(): void {
@@ -110,10 +124,20 @@ export class SideMenuComponent implements OnInit {
 
   collapseFromFocus(event: FocusEvent): void {
     const nextTarget = event.relatedTarget as Node | null;
-    if (!nextTarget || !this.elementRef.nativeElement.contains(nextTarget)) {
+    if (nextTarget && this.elementRef.nativeElement.contains(nextTarget)) {
+      return;
+    }
+    setTimeout(() => {
+      const active = typeof document !== 'undefined' ? document.activeElement : null;
+      if (active && this.elementRef.nativeElement.contains(active)) {
+        return;
+      }
+      if (this.openGroups.size > 0) {
+        return;
+      }
       this.sidebarLayout.setHovered(false);
       this.cdr.markForCheck();
-    }
+    }, 0);
   }
 
   closeMobileDrawer(): void {
@@ -149,7 +173,10 @@ export class SideMenuComponent implements OnInit {
     if (!this.hasChildren(item) || !this.activeLeafKey) {
       return false;
     }
-    return item.items?.some(child => this.getItemKey(child) === this.activeLeafKey) ?? false;
+    return item.items?.some(child =>
+      this.getItemKey(child) === this.activeLeafKey
+      || (child.items?.some(grandchild => this.getItemKey(grandchild) === this.activeLeafKey) ?? false)
+    ) ?? false;
   }
 
   private syncActiveState(): void {
@@ -192,7 +219,10 @@ export class SideMenuComponent implements OnInit {
     }
 
     for (const item of this.items) {
-      if (this.hasChildren(item) && item.items?.some(child => this.getItemKey(child) === this.activeLeafKey)) {
+      if (this.hasChildren(item) && item.items?.some(child =>
+        this.getItemKey(child) === this.activeLeafKey
+        || (child.items?.some(grandchild => this.getItemKey(grandchild) === this.activeLeafKey) ?? false)
+      )) {
         return item;
       }
     }
@@ -241,7 +271,18 @@ export class SideMenuComponent implements OnInit {
   }
 
   getItemKey(item: MenuItem): string {
-    return item.label ?? item.routerLink?.toString() ?? 'menu-item';
+    if (item.id != null) {
+      return String(item.id);
+    }
+    const link = this.routerLinkText(item.routerLink);
+    return link || item.label || 'menu-item';
+  }
+
+  private routerLinkText(routerLink: MenuItem['routerLink']): string {
+    if (!routerLink) {
+      return '';
+    }
+    return Array.isArray(routerLink) ? routerLink.join('/') : String(routerLink);
   }
 
   isGroupOpen(item: MenuItem): boolean {
@@ -250,12 +291,7 @@ export class SideMenuComponent implements OnInit {
 
   toggleGroup(item: MenuItem): void {
     if (!this.displayExpanded) {
-      const routerLink = this.getRouterLink(item);
-      if (routerLink) {
-        const commands = Array.isArray(routerLink) ? routerLink : [routerLink];
-        void this.router.navigate(commands, { queryParams: item.queryParams });
-      }
-      return;
+      this.sidebarLayout.setHovered(true);
     }
 
     const key = this.getItemKey(item);
@@ -268,19 +304,59 @@ export class SideMenuComponent implements OnInit {
     this.openGroups.add(key);
   }
 
-  selectItem(parent: MenuItem | null, item: MenuItem): void {
-    this.breadcrumbService.setBreadcrumb(parent?.label ?? item.label ?? '', parent ? item.label ?? '' : '');
-    if (this.sidebarLayout.isMobileDrawerOpen() || this.sidebarLayout.isTabletPinned()) {
-      this.closeMobileDrawer();
+  selectItem(parent: MenuItem | null, item: MenuItem, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const targetUrl = this.resolveNavigableUrl(item);
+    if (!targetUrl) {
+      return;
     }
+
+    this.breadcrumbService.setBreadcrumb(parent?.label ?? item.label ?? '', parent ? item.label ?? '' : '');
+
+    if (parent) {
+      this.openGroups.add(this.getItemKey(parent));
+    }
+
+    this.sidebarLayout.setHovered(true);
+    const closeDrawer = this.sidebarLayout.isMobileDrawerOpen() || this.sidebarLayout.isTabletPinned();
+
+    void this.router.navigateByUrl(targetUrl).then(() => {
+      this.syncActiveState();
+      this.openActiveGroups();
+      if (closeDrawer) {
+        this.closeMobileDrawer();
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   getRouterLink(item: MenuItem): string | any[] | null {
-    if (item.routerLink) return item.routerLink as string | any[];
-    if (item.url) return item.url as string;
+    if (item.routerLink) {
+      return item.routerLink as string | any[];
+    }
+    if (item.url) {
+      return item.url as string;
+    }
     return null;
   }
 
+  resolveNavigableUrl(item: MenuItem): string | null {
+    const direct = this.itemPath(item);
+    if (direct) {
+      return direct;
+    }
+
+    for (const child of item.items ?? []) {
+      const nested = this.resolveNavigableUrl(child);
+      if (nested) {
+        return nested;
+      }
+    }
+
+    return null;
+  }
   isExact(item: MenuItem): boolean {
     const link = this.getRouterLink(item);
     if (!link) return false;

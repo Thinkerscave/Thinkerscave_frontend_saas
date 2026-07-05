@@ -25,13 +25,23 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => () => {
     const roleList = Array.isArray(rawRoles) ? rawRoles : [rawRoles].filter(Boolean);
 
     const userRoles: string[] = roleList
-        .flatMap((r: any) => [r?.roleCode, r?.roleName, r?.name, r])
+        .flatMap((r: any) => {
+            if (typeof r === 'string') {
+                return [r];
+            }
+            if (r && typeof r === 'object') {
+                return [r.roleType, r.roleCode, r.roleName, r.name, r].filter(Boolean);
+            }
+            return [r];
+        })
         .filter(Boolean)
-        .map((role: any) => normalizeRole(role));
+        .map((role: any) => normalizeRole(String(role)));
 
     const normalizedAllowedRoles = allowedRoles.map(role => normalizeRole(role));
 
-    const hasRole = normalizedAllowedRoles.some(required => userRoles.includes(required));
+    const hasRole = normalizedAllowedRoles.some(required => userRoles.includes(required))
+        || (normalizedAllowedRoles.includes('SUPER_ADMIN')
+            && userRoles.some(role => role === 'SUPER_ADMIN' || role.endsWith('_SUPER_ADMIN')));
 
     if (!hasRole) {
         router.navigate(['/unauthorized']);

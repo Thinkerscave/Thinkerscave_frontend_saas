@@ -187,8 +187,9 @@ export class MenuMappingService {
         const sidebar = unwrapApiResponse<SidebarMenuNode[]>(response, unwrapApiList<SidebarMenuNode>(response));
         const items = (sidebar ?? []).map(node => this.mapSidebarNode(node));
         const normalized = this.normalizeMenuItems(items);
-        const consolidated = this.consolidateWorkspaceMenu(normalized);
-        const filtered = this.applyNavigationRules(consolidated);
+        const consolidated = this.isTenantManagerRole() ? normalized : this.consolidateWorkspaceMenu(normalized);
+        const flattened = this.isTenantManagerRole() ? this.flattenGroupedMenus(consolidated) : consolidated;
+        const filtered = this.applyNavigationRules(flattened);
 
         // Guardrail: if role filtering/grouping accidentally removes everything,
         // fall back to normalized server sidebar so users still get navigation.
@@ -407,21 +408,55 @@ export class MenuMappingService {
     let routerLink: MenuItem['routerLink'];
     if (route) {
       if (route.startsWith('/app') || route.startsWith('/auth') || route.startsWith('/public')) {
-        routerLink = [route];
+        routerLink = route;
       } else if (route.startsWith('app/')) {
-        routerLink = [`/${route}`];
+        routerLink = `/${route}`;
       } else if (route.startsWith('/')) {
-        routerLink = [`/app${route}`];
+        routerLink = `/app${route}`;
       } else {
-        routerLink = [`/app/${route.replace(/^\/+/, '')}`];
+        routerLink = `/app/${route.replace(/^\/+/, '')}`;
       }
     }
 
     return {
+      id: node.id != null ? String(node.id) : node.menuCode,
+      title: node.menuCode,
       label: node.menuName,
       icon: node.icon,
       routerLink,
       items: node.children?.length ? node.children.map(child => this.mapSidebarNode(child)) : undefined
+    };
+  }
+
+  /** Ensures MODULE group children with routes are direct clickable leaves (handles extra nesting from API). */
+  private flattenGroupedMenus(items: MenuItem[]): MenuItem[] {
+    return (items ?? []).map(item => this.flattenGroupNode(item));
+  }
+
+  private flattenGroupNode(item: MenuItem): MenuItem {
+    if (!item.items?.length) {
+      return item;
+    }
+
+    const flattenedChildren = item.items.flatMap(child => {
+      if (this.routerLinkText(child.routerLink)) {
+        return [{ ...child, items: undefined }];
+      }
+      if (child.items?.length) {
+        return child.items.map(grandchild => ({
+          ...grandchild,
+          items: undefined,
+          title: child.label ? `${child.label} / ${grandchild.label}` : grandchild.label
+        }));
+      }
+      return [];
+    });
+
+    return {
+      ...item,
+      items: flattenedChildren.length
+        ? flattenedChildren.map(child => this.flattenGroupNode(child))
+        : undefined
     };
   }
 
@@ -589,6 +624,10 @@ export class MenuMappingService {
   private hasAnyRole(userRoles: string[], allowedRoles: string[]): boolean {
     const allowed = allowedRoles.map(role => this.normalizeRoleToken(role));
     return allowed.some(role => userRoles.includes(role));
+  }
+
+  private isTenantManagerRole(): boolean {
+    return this.hasAnyRole(this.currentRoleTokens(), ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
   }
 
   private normalizeRoleToken(role: string): string {

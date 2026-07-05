@@ -1,10 +1,10 @@
 <section class="login-panel fade-in">
-  @if (selectedOrg) {
-    <div class="login-org" role="status">
+  @if (loginTarget) {
+    <div class="login-org" role="status" [class.login-org--platform]="isPlatformLogin">
       <span class="login-org__label">Signing in to</span>
       <div class="login-org__row">
-        <span class="login-org__avatar" aria-hidden="true">{{ selectedOrg.name.charAt(0) }}</span>
-        <strong>{{ selectedOrg.name }}</strong>
+        <span class="login-org__avatar" aria-hidden="true">{{ isPlatformLogin ? 'TC' : loginTarget.name.charAt(0) }}</span>
+        <strong>{{ loginTarget.name }}</strong>
         <a routerLink="/auth/select-organization" class="login-org__change">Change</a>
       </div>
     </div>
@@ -12,7 +12,13 @@
 
   <header class="login-panel__header">
     <h1>Welcome back</h1>
-    <p class="login-panel__subtitle">Sign in to continue to your ThinkerScave workspace.</p>
+    <p class="login-panel__subtitle">
+      @if (isPlatformLogin) {
+        Sign in to the ThinkersCave platform control tower.
+      } @else {
+        Sign in to continue to your ThinkerScave workspace.
+      }
+    </p>
   </header>
 
   <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-panel__form" novalidate>

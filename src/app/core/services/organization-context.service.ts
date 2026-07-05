@@ -7,9 +7,19 @@ export interface DevOrganization {
   tenantId: string;
   location: string;
   logoUrl?: string;
+  isPlatform?: boolean;
 }
 
+export const THINKERS_DEPARTMENT: DevOrganization = {
+  id: 0,
+  name: 'Thinkers Department',
+  tenantId: environment.platformTenantId,
+  location: 'Platform administration & tenant management',
+  isPlatform: true
+};
+
 const PENDING_ORG_KEY = 'pendingOrg';
+const LOGIN_MODE_KEY = 'loginMode';
 const RECENT_ORGS_KEY = 'recentOrganizations';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +35,14 @@ export class OrganizationContextService {
     return environment.requireOrganizationSelection;
   }
 
+  isPlatformLogin(): boolean {
+    return sessionStorage.getItem(LOGIN_MODE_KEY) === 'platform';
+  }
+
+  hasLoginTarget(): boolean {
+    return this.isPlatformLogin() || !!this.getSelectedOrganization();
+  }
+
   getSelectedOrganization(): DevOrganization | null {
     const raw = sessionStorage.getItem(PENDING_ORG_KEY);
     if (!raw) {
@@ -37,9 +55,22 @@ export class OrganizationContextService {
     }
   }
 
+  getLoginTarget(): DevOrganization | null {
+    if (this.isPlatformLogin()) {
+      return THINKERS_DEPARTMENT;
+    }
+    return this.getSelectedOrganization();
+  }
+
   setSelectedOrganization(org: DevOrganization): void {
+    sessionStorage.removeItem(LOGIN_MODE_KEY);
     sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(org));
     this.trackRecentOrganization(org);
+  }
+
+  setPlatformLogin(): void {
+    sessionStorage.removeItem(PENDING_ORG_KEY);
+    sessionStorage.setItem(LOGIN_MODE_KEY, 'platform');
   }
 
   getRecentOrganizations(): DevOrganization[] {
@@ -65,12 +96,17 @@ export class OrganizationContextService {
 
   clearSelectedOrganization(): void {
     sessionStorage.removeItem(PENDING_ORG_KEY);
+    sessionStorage.removeItem(LOGIN_MODE_KEY);
   }
 
-  /**
-   * Resolves tenant from subdomain in production, or from dev org selection.
-   */
+  resolveLoginContext(): 'PLATFORM' | 'TENANT' {
+    return this.isPlatformLogin() ? 'PLATFORM' : 'TENANT';
+  }
+
   resolveTenantId(): string {
+    if (this.isPlatformLogin()) {
+      return environment.platformTenantId;
+    }
     if (this.requiresSelection) {
       return this.getSelectedOrganization()?.tenantId ?? environment.defaultTenantId;
     }
@@ -78,6 +114,9 @@ export class OrganizationContextService {
   }
 
   resolveOrganizationId(): string | null {
+    if (this.isPlatformLogin()) {
+      return null;
+    }
     if (this.requiresSelection) {
       const org = this.getSelectedOrganization();
       return org ? String(org.id) : null;
