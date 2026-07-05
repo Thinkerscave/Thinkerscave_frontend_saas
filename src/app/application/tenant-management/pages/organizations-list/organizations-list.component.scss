@@ -17,8 +17,12 @@
   background: var(--tc-surface-card-solid);
   border: 1px solid var(--tc-border);
   border-radius: var(--tc-radius-xl, 1.25rem);
-  overflow: hidden;
+  // overflow: hidden removed — it clips p-select / dropdown overlays
   box-shadow: var(--tc-shadow-sm);
+
+  // Keep rounded corners on the toolbar top edge and table bottom
+  .org-toolbar:first-child { border-radius: var(--tc-radius-xl, 1.25rem) var(--tc-radius-xl, 1.25rem) 0 0; }
+  .org-footer:last-child   { border-radius: 0 0 var(--tc-radius-xl, 1.25rem) var(--tc-radius-xl, 1.25rem); }
 }
 
 // ══════════════════════════════════════════════════════════════════

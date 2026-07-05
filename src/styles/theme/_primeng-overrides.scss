@@ -326,7 +326,12 @@
   list-style: none;
 }
 
-// ── Option items ──────────────────────────────────────────────────
+// ── Option items — staggered entrance animation ───────────────────
+@keyframes tc-option-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 .p-dropdown-item,
 .p-select-option,
 .p-multiselect-option {
@@ -341,6 +346,11 @@
   color: var(--tc-text);
   cursor: pointer;
   overflow: hidden;
+  // Staggered entrance via nth-child (first 12 items)
+  animation: tc-option-in 200ms var(--tc-anim-easing, ease) both;
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) { animation-delay: #{($i - 1) * 30}ms; }
+  }
   transition: background-color 120ms ease,
               color 120ms ease,
               padding-left 140ms var(--tc-anim-easing),

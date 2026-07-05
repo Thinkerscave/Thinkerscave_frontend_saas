@@ -1,5 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef,
+  HostListener, OnInit, inject
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -14,6 +17,7 @@ import {
   healthScore,
   healthTone,
   institutionLabel,
+  orgInitials,
   organizationStatusLabel,
   statusTone,
   subscriptionStatusLabel,
@@ -21,15 +25,7 @@ import {
 } from '../../utils/platform-display.util';
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-
-import {
-  SaasPageHeaderComponent,
-  SaasPanelComponent,
-  SaasTabsComponent,
-  SaasPillComponent,
-  SaasStatGridComponent,
-  SaasStat
-} from '../../../../shared/ui/saas';
+import { SaasPillComponent, SaasStatGridComponent, SaasStat } from '../../../../shared/ui/saas';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -37,15 +33,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    ToastModule,
-    SaasPageHeaderComponent,
-    SaasPanelComponent,
-    SaasTabsComponent,
-    SaasPillComponent,
-    SaasStatGridComponent
-  ],
+  imports: [CommonModule, ToastModule, SaasPillComponent, SaasStatGridComponent],
   providers: [MessageService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
@@ -65,28 +53,41 @@ export class OrganizationWorkspaceComponent implements OnInit {
   org: OrganizationDetail | null = null;
   orgId = 0;
   activeTab = 'overview';
+  actionsMenuOpen = false;
 
   readonly tabs = [
-    { key: 'overview', label: 'Overview', icon: 'pi pi-id-card' },
-    { key: 'subscription', label: 'Subscription & Plan', icon: 'pi pi-credit-card' },
-    { key: 'features', label: 'Feature Overrides', icon: 'pi pi-sliders-h' },
-    { key: 'tenant', label: 'Tenant Details', icon: 'pi pi-server' },
-    { key: 'timeline', label: 'Timeline', icon: 'pi pi-history' }
+    { key: 'overview',      label: 'Overview',           icon: 'pi pi-id-card' },
+    { key: 'subscription',  label: 'Subscription & Plan', icon: 'pi pi-credit-card' },
+    { key: 'features',      label: 'Feature Overrides',   icon: 'pi pi-sliders-h' },
+    { key: 'tenant',        label: 'Tenant Details',      icon: 'pi pi-server' },
+    { key: 'timeline',      label: 'Timeline',            icon: 'pi pi-history' }
   ];
 
-  readonly institutionLabel = institutionLabel;
+  // ── util references exposed to template ─────────────────────────
+  readonly orgInitials            = orgInitials;
+  readonly institutionLabel       = institutionLabel;
   readonly organizationStatusLabel = organizationStatusLabel;
   readonly subscriptionStatusLabel = subscriptionStatusLabel;
-  readonly formatDate = formatDate;
-  readonly formatCurrency = formatCurrency;
-  readonly healthScore = healthScore;
-  readonly healthTone = healthTone;
+  readonly formatDate              = formatDate;
+  readonly formatCurrency          = formatCurrency;
+  readonly healthScore             = healthScore;
+  readonly healthTone              = healthTone;
 
+  // ── lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
     this.orgId = Number(this.route.snapshot.paramMap.get('orgId'));
     this.load(this.orgId);
   }
 
+  // ── click-outside closes the actions menu ────────────────────────
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    if (!(e.target as HTMLElement).closest('.ow-actions-wrap')) {
+      this.actionsMenuOpen = false;
+    }
+  }
+
+  // ── data loading ─────────────────────────────────────────────────
   load(orgId: number): void {
     if (!orgId || Number.isNaN(orgId)) {
       this.errorMessage = 'Invalid organization identifier.';
@@ -94,7 +95,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
       this.cdr.markForCheck();
       return;
     }
-
     this.loading = true;
     this.errorMessage = '';
     this.api.getOrganization(orgId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -104,9 +104,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.org = null;
         } else {
           this.org = org;
-          this.pageHeader.setPageHeader({
-            title: org.organizationName || 'Organization Details'
-          });
+          this.pageHeader.setPageHeader({ title: org.organizationName || 'Organization Details' });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.loading = false;
@@ -121,14 +119,11 @@ export class OrganizationWorkspaceComponent implements OnInit {
     });
   }
 
+  // ── computed getters ─────────────────────────────────────────────
   get subtitle(): string {
     if (!this.org) return 'Loading...';
-    const parts = [
-      this.org.organizationCode,
-      institutionLabel(this.org.institutionType),
-      this.locationLabel
-    ].filter(Boolean);
-    return parts.join(' · ');
+    return [this.org.organizationCode, institutionLabel(this.org.institutionType), this.locationLabel]
+      .filter(Boolean).join(' · ');
   }
 
   get locationLabel(): string {
@@ -136,9 +131,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
     return [this.org.city, this.org.state, this.org.country].filter(Boolean).join(', ');
   }
 
-  get featureOverrides() {
-    return this.org?.subscription?.featureOverrides ?? [];
-  }
+  get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
 
   get stats(): SaasStat[] {
     if (!this.org) return [];
@@ -147,35 +140,27 @@ export class OrganizationWorkspaceComponent implements OnInit {
     const score = healthScore(tenant);
     const storageMb = tenant?.storageUsedMb ?? 0;
     const storageLimit = this.org.configuration?.storageLimitGb;
-
     return [
       {
-        key: 'status',
-        label: 'Organization Status',
+        key: 'status', label: 'Organization Status',
         value: organizationStatusLabel(this.org.status),
         helper: sub ? subscriptionStatusLabel(sub.status) + ' subscription' : 'No subscription',
-        icon: 'pi pi-building',
-        tone: statusTone(this.org.status) as SaasStat['tone']
+        icon: 'pi pi-building', tone: statusTone(this.org.status) as SaasStat['tone']
       },
       {
-        key: 'plan',
-        label: 'Current Plan',
+        key: 'plan', label: 'Current Plan',
         value: sub?.planName ?? '—',
         helper: sub?.billingCycle ? this.billingCycleLabel(sub.billingCycle) : 'Not assigned',
-        icon: 'pi pi-credit-card',
-        tone: 'primary'
+        icon: 'pi pi-credit-card', tone: 'primary'
       },
       {
-        key: 'health',
-        label: 'Tenant Health',
+        key: 'health', label: 'Tenant Health',
         value: score + '%',
         helper: tenant?.provisionStatus?.replace(/_/g, ' ') ?? 'Not provisioned',
-        icon: 'pi pi-heart',
-        tone: healthTone(score)
+        icon: 'pi pi-heart', tone: healthTone(score)
       },
       {
-        key: 'storage',
-        label: 'Storage Used',
+        key: 'storage', label: 'Storage Used',
         value: this.formatStorageMb(storageMb),
         helper: storageLimit ? `of ${storageLimit} GB limit` : 'No limit configured',
         icon: 'pi pi-database',
@@ -184,135 +169,80 @@ export class OrganizationWorkspaceComponent implements OnInit {
     ];
   }
 
-  get timelineEvents(): { title: string; detail: string; date?: string; icon: string }[] {
+  get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
     if (!this.org) return [];
-    const events: { title: string; detail: string; date?: string; icon: string }[] = [];
+    const events: { title: string; detail: string; date?: string; icon: string; color: string }[] = [];
 
-    if (this.org.createdOn) {
-      events.push({
-        title: 'Organization created',
-        detail: this.org.createdBy ? `Created by ${this.org.createdBy}` : 'Initial provisioning',
-        date: this.org.createdOn,
-        icon: 'pi pi-plus-circle'
-      });
-    }
-    if (this.org.updatedOn) {
-      events.push({
-        title: 'Last updated',
-        detail: 'Organization profile or configuration changed',
-        date: this.org.updatedOn,
-        icon: 'pi pi-pencil'
-      });
-    }
-    if (this.org.remarks?.trim()) {
-      events.push({
-        title: 'Remarks',
-        detail: this.org.remarks.trim(),
-        icon: 'pi pi-comment'
-      });
-    }
-    if (this.org.tenant?.lastMigrationAt) {
-      events.push({
-        title: 'Last migration',
-        detail: `Schema ${this.org.tenant.migrationVersion ?? '—'}`,
-        date: this.org.tenant.lastMigrationAt,
-        icon: 'pi pi-sync'
-      });
-    }
-    if (this.org.tenant?.lastBackupAt) {
-      events.push({
-        title: 'Last backup',
-        detail: 'Tenant database backup completed',
-        date: this.org.tenant.lastBackupAt,
-        icon: 'pi pi-cloud-upload'
-      });
-    }
-
+    if (this.org.createdOn) events.push({
+      title: 'Organization Created', color: 'blue',
+      detail: this.org.createdBy ? `Created by ${this.org.createdBy}` : 'Initial provisioning',
+      date: this.org.createdOn, icon: 'pi pi-plus-circle'
+    });
+    if (this.org.tenant?.provisionStatus === 'COMPLETED') events.push({
+      title: 'Schema Provisioned', color: 'green',
+      detail: `Schema ${this.org.tenant.schemaName ?? '—'} provisioned successfully`,
+      date: this.org.tenant.createdOn, icon: 'pi pi-server'
+    });
+    if (this.org.subscription) events.push({
+      title: 'Subscription Activated', color: 'indigo',
+      detail: `${this.org.subscription.planName ?? 'Plan'} activated`,
+      date: this.org.subscription.startDate, icon: 'pi pi-credit-card'
+    });
+    if (this.org.updatedOn) events.push({
+      title: 'Last Updated', color: 'orange',
+      detail: 'Organization profile or configuration changed',
+      date: this.org.updatedOn, icon: 'pi pi-pencil'
+    });
+    if (this.org.tenant?.lastMigrationAt) events.push({
+      title: 'Last Migration', color: 'purple',
+      detail: `Schema ${this.org.tenant.migrationVersion ?? '—'}`,
+      date: this.org.tenant.lastMigrationAt, icon: 'pi pi-sync'
+    });
+    if (this.org.tenant?.lastBackupAt) events.push({
+      title: 'Last Backup', color: 'teal',
+      detail: 'Tenant database backup completed',
+      date: this.org.tenant.lastBackupAt, icon: 'pi pi-cloud-upload'
+    });
+    if (this.org.remarks?.trim()) events.push({
+      title: 'Remarks', color: 'gray',
+      detail: this.org.remarks.trim(), icon: 'pi pi-comment'
+    });
     return events;
   }
 
-  orgStatusTone(): PillTone {
-    return statusTone(this.org?.status) as PillTone;
+  // ── display helpers ──────────────────────────────────────────────
+  orgColor(name: string): string {
+    const palette = ['indigo', 'violet', 'emerald', 'teal', 'amber', 'rose', 'sky', 'orange'];
+    return palette[(name?.charCodeAt(0) ?? 0) % palette.length];
   }
 
-  subStatusTone(): PillTone {
-    return subscriptionTone(this.org?.subscription?.status) as PillTone;
+  storagePercent(org: OrganizationDetail): number {
+    const used = org.tenant?.storageUsedMb ?? 0;
+    const limit = (org.configuration?.storageLimitGb ?? 0) * 1024;
+    if (!limit) return 0;
+    return Math.min(100, Math.round((used / limit) * 100));
   }
+
+  daysRemaining(endDate?: string | null): number {
+    if (!endDate) return 0;
+    const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86400000);
+    return Math.max(0, diff);
+  }
+
+  healthLabel(score: number): string {
+    if (score >= 80) return 'Healthy';
+    if (score >= 50) return 'At Risk';
+    return 'Critical';
+  }
+
+  orgStatusTone(): PillTone { return statusTone(this.org?.status) as PillTone; }
+  subStatusTone(): PillTone { return subscriptionTone(this.org?.subscription?.status) as PillTone; }
 
   canActivate(): boolean {
     const s = this.org?.status;
     return s === 'SUSPENDED' || s === 'INACTIVE' || s === 'PENDING';
   }
-
-  canSuspend(): boolean {
-    return this.org?.status === 'ACTIVE';
-  }
-
-  back(): void {
-    this.router.navigate(['/app/tenant-management/organizations']);
-  }
-
-  activate(): void {
-    if (!this.org) return;
-    this.runAction(() => this.api.activateOrganization(this.org!.id), 'Activated', 'Organization activated successfully.');
-  }
-
-  suspend(): void {
-    if (!this.org) return;
-    this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.');
-  }
-
-  setMaintenance(): void {
-    const tenantId = this.org?.tenant?.id;
-    if (!tenantId) {
-      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
-      return;
-    }
-    this.runAction(
-      () => this.api.setTenantMaintenance(tenantId),
-      'Maintenance mode',
-      'Tenant placed in maintenance mode.'
-    );
-  }
-
-  resumeTenant(): void {
-    const tenantId = this.org?.tenant?.id;
-    if (!tenantId) {
-      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
-      return;
-    }
-    this.runAction(
-      () => this.api.resumeTenant(tenantId),
-      'Tenant resumed',
-      'Tenant resumed from maintenance.'
-    );
-  }
-
-  triggerBackup(): void {
-    const tenantId = this.org?.tenant?.id;
-    if (!tenantId) {
-      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
-      return;
-    }
-    this.runAction(
-      () => this.api.triggerTenantBackup(tenantId),
-      'Backup started',
-      'Tenant backup job has been triggered.'
-    );
-  }
-
-  triggerMigration(): void {
-    const tenantId = this.org?.tenant?.id;
-    if (!tenantId) {
-      this.toast('warn', 'Unavailable', 'No tenant registry found for this organization.');
-      return;
-    }
-    this.runAction(
-      () => this.api.triggerTenantMigration(tenantId),
-      'Migration started',
-      'Tenant migration job has been triggered.'
-    );
-  }
+  canSuspend(): boolean { return this.org?.status === 'ACTIVE'; }
 
   billingCycleLabel(cycle?: string | null): string {
     if (!cycle) return '—';
@@ -332,35 +262,57 @@ export class OrganizationWorkspaceComponent implements OnInit {
 
   provisionTone(status?: string | null): PillTone {
     switch (status) {
-      case 'COMPLETED': return 'success';
+      case 'COMPLETED':   return 'success';
       case 'IN_PROGRESS':
-      case 'PENDING': return 'warning';
-      case 'FAILED': return 'danger';
+      case 'PENDING':     return 'warning';
+      case 'FAILED':      return 'danger';
       case 'MAINTENANCE': return 'info';
-      default: return 'neutral';
+      default:            return 'neutral';
     }
+  }
+
+  // ── actions ──────────────────────────────────────────────────────
+  back(): void { this.router.navigate(['/app/tenant-management/organizations']); }
+
+  activate(): void {
+    if (!this.org) return;
+    this.runAction(() => this.api.activateOrganization(this.org!.id), 'Activated', 'Organization activated successfully.');
+  }
+  suspend(): void {
+    if (!this.org) return;
+    this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.');
+  }
+  setMaintenance(): void {
+    const id = this.org?.tenant?.id;
+    if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
+    this.runAction(() => this.api.setTenantMaintenance(id), 'Maintenance mode', 'Tenant placed in maintenance mode.');
+  }
+  resumeTenant(): void {
+    const id = this.org?.tenant?.id;
+    if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
+    this.runAction(() => this.api.resumeTenant(id), 'Tenant resumed', 'Tenant resumed from maintenance.');
+  }
+  triggerBackup(): void {
+    const id = this.org?.tenant?.id;
+    if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
+    this.runAction(() => this.api.triggerTenantBackup(id), 'Backup started', 'Tenant backup job triggered.');
+  }
+  triggerMigration(): void {
+    const id = this.org?.tenant?.id;
+    if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
+    this.runAction(() => this.api.triggerTenantMigration(id), 'Migration started', 'Tenant migration job triggered.');
   }
 
   private runAction<T>(fn: () => Observable<T>, summary: string, detail: string): void {
     this.actionLoading = true;
     this.cdr.markForCheck();
     fn().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.actionLoading = false;
-        this.toast('success', summary, detail);
-        this.load(this.orgId);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.actionLoading = false;
-        this.toast('error', 'Failed', `Could not complete: ${summary.toLowerCase()}.`);
-        this.cdr.markForCheck();
-      }
+      next: () => { this.actionLoading = false; this.toast('success', summary, detail); this.load(this.orgId); this.cdr.markForCheck(); },
+      error: () => { this.actionLoading = false; this.toast('error', 'Failed', `Could not complete: ${summary.toLowerCase()}.`); this.cdr.markForCheck(); }
     });
   }
 
   private toast(severity: 'success' | 'error' | 'warn' | 'info', summary: string, detail: string): void {
-    const map = { success: 'success', error: 'error', warn: 'warn', info: 'info' } as const;
-    this.messages.add({ severity: map[severity], summary, detail, life: 4000 });
+    this.messages.add({ severity, summary, detail, life: 4000 });
   }
 }
