@@ -221,6 +221,36 @@
   }
 }
 
+.org-select__demo {
+  margin: 0.75rem 0;
+  font-size: 0.78rem;
+
+  summary {
+    cursor: pointer;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0;
+
+    i { color: #6366f1; }
+  }
+
+  small {
+    display: block;
+    margin-top: 0.4rem;
+    line-height: 1.5;
+    color: #475569;
+
+    code {
+      background: #f1f5f9;
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+  }
+}
+
 :host ::ng-deep .org-select__continue {
   width: 100%;
   border-radius: 12px;

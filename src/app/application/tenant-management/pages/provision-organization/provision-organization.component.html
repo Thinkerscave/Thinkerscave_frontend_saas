@@ -1,367 +1,877 @@
-<div class="saas-page provision-organization" *ngIf="!successResult; else successView">
-  <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
-  </tc-saas-page-header>
+<!-- ══════════════════════════════════════════════════════════════════
+     PROVISION ORGANIZATION WIZARD
+══════════════════════════════════════════════════════════════════ -->
 
-  <div *ngIf="errorMessage" class="provision-organization__banner provision-organization__banner--danger" role="alert">
+<!-- ── Success Screen ── -->
+<div class="po-success" *ngIf="successResult">
+  <div class="po-success__card">
+    <div class="po-success__icon">
+      <i class="pi pi-check"></i>
+    </div>
+    <h2>Organization Provisioned Successfully!</h2>
+    <p>The new tenant workspace is ready to use.</p>
+
+    <div class="po-success__details">
+      <div class="po-success__row">
+        <span>Organization</span>
+        <strong>{{ successResult.organizationName }}</strong>
+      </div>
+      <div class="po-success__row" *ngIf="successResult.tenantIdentifier">
+        <span>Tenant URL</span>
+        <div class="po-copy-row">
+          <span class="po-mono">{{ successResult.defaultDomain || successResult.tenantIdentifier + '.thinkerscave.app' }}</span>
+          <button class="po-copy-btn" (click)="copyToClipboard(successResult.defaultDomain || '')" title="Copy URL">
+            <i class="pi pi-copy"></i>
+          </button>
+        </div>
+      </div>
+      <div class="po-success__row" *ngIf="successResult.adminEmail">
+        <span>Admin Email</span>
+        <strong>{{ successResult.adminEmail }}</strong>
+      </div>
+      <div class="po-success__row" *ngIf="successResult.organizationCode">
+        <span>Org Code</span>
+        <span class="po-mono">{{ successResult.organizationCode }}</span>
+      </div>
+    </div>
+
+    <div class="po-success__actions">
+      <button type="button" class="po-btn po-btn--primary" (click)="goToWorkspace()">
+        <i class="pi pi-external-link"></i> Open Organization Workspace
+      </button>
+      <button type="button" class="po-btn po-btn--outline" (click)="goToList()">
+        <i class="pi pi-list"></i> View Organization Details
+      </button>
+      <button type="button" class="po-btn po-btn--ghost" (click)="provisionAnother()">
+        <i class="pi pi-plus"></i> Provision Another
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Wizard ── -->
+<div class="po-page" *ngIf="!successResult">
+
+  <!-- Page header -->
+  <div class="po-header">
+    <div class="po-header__left">
+      <h1>Provision Organization</h1>
+      <p>Create a new tenant with subscriptions, features, and commercials.</p>
+    </div>
+    <div class="po-header__right">
+      <button type="button" class="po-btn po-btn--ghost" (click)="cancel()">
+        <i class="pi pi-times"></i> Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div *ngIf="errorMessage" class="po-banner po-banner--error">
     <i class="pi pi-exclamation-triangle"></i>
     <span>{{ errorMessage }}</span>
   </div>
 
-  <div *ngIf="loading" class="saas-loading">
+  <!-- Loading -->
+  <div *ngIf="loading" class="po-loading">
     <i class="pi pi-spin pi-spinner"></i>
-    Loading customers, plans, and catalog...
+    <span>Loading customers, plans and catalog…</span>
   </div>
 
   <ng-container *ngIf="!loading">
-    <tc-saas-stepper [steps]="wizardSteps" [activeIndex]="step"></tc-saas-stepper>
 
-    <div *ngIf="stepError" class="provision-organization__banner provision-organization__banner--warning" role="alert">
-      <i class="pi pi-info-circle"></i>
+    <!-- ══ Progress Stepper ══ -->
+    <div class="po-stepper">
+      <div class="po-step"
+           *ngFor="let s of wizardSteps; let i = index; let last = last"
+           [class.is-done]="i < step"
+           [class.is-active]="i === step"
+           [class.is-clickable]="i < step"
+           (click)="i < step ? goToStep(i) : null">
+        <div class="po-step__bubble">
+          <i class="pi pi-check" *ngIf="i < step"></i>
+          <span *ngIf="i >= step">{{ i + 1 }}</span>
+        </div>
+        <span class="po-step__label">{{ s.label }}</span>
+        <div class="po-step__connector" *ngIf="!last"></div>
+      </div>
+    </div>
+
+    <!-- Step validation error -->
+    <div *ngIf="stepError" class="po-banner po-banner--warning">
+      <i class="pi pi-exclamation-circle"></i>
       <span>{{ stepError }}</span>
     </div>
 
-    <tc-saas-panel>
-      <!-- Step 1: Customer -->
-      <section *ngIf="step === 0" class="wizard-step">
-        <h3 class="wizard-step__title">Customer</h3>
-        <p class="wizard-step__lead">Link to an existing platform customer or create a new customer record.</p>
+    <!-- ══ Wizard Body ══ -->
+    <div class="po-body" [class.po-body--split]="step === 4 || step === 6">
 
-        <div class="provision-organization__mode-toggle">
-          <button type="button" class="saas-btn" [class.saas-btn--primary]="form.customerMode === 'existing'" (click)="setCustomerMode('existing')">
-            <i class="pi pi-users"></i> Existing Customer
-          </button>
-          <button type="button" class="saas-btn" [class.saas-btn--primary]="form.customerMode === 'new'" (click)="setCustomerMode('new')">
-            <i class="pi pi-user-plus"></i> New Customer
-          </button>
+      <!-- Main panel -->
+      <div class="po-main-panel">
+
+        <!-- Step heading -->
+        <div class="po-step-hdr">
+          <div class="po-step-hdr__icon">
+            <i [class]="wizardSteps[step].icon"></i>
+          </div>
+          <div>
+            <h2>{{ wizardSteps[step].label }}</h2>
+            <p>{{ wizardSteps[step].desc }}</p>
+          </div>
+          <span class="po-step-hdr__badge">Step {{ step + 1 }} of {{ wizardSteps.length }}</span>
         </div>
 
-        <ng-container *ngIf="form.customerMode === 'existing'">
-          <label class="saas-field saas-field--full">
-            <span>Select customer</span>
-            <select [(ngModel)]="form.existingCustomerId" (ngModelChange)="onCustomerSelected()">
-              <option [ngValue]="null">— Choose customer —</option>
-              <option *ngFor="let c of customers; trackBy: trackById" [ngValue]="c.id">
-                {{ c.displayName }} ({{ c.customerCode }})
+        <!-- ─────────────────── STEP 0: CUSTOMER ─────────────────── -->
+        <div class="po-step-body" *ngIf="step === 0">
+
+          <!-- Mode selector -->
+          <div class="po-mode-seg">
+            <button type="button"
+                    [class.is-active]="form.customerMode === 'existing'"
+                    (click)="setCustomerMode('existing')">
+              <i class="pi pi-users"></i> Existing Customer
+            </button>
+            <button type="button"
+                    [class.is-active]="form.customerMode === 'new'"
+                    (click)="setCustomerMode('new')">
+              <i class="pi pi-user-plus"></i> New Customer
+            </button>
+          </div>
+
+          <!-- Existing customer -->
+          <ng-container *ngIf="form.customerMode === 'existing'">
+            <div class="po-field po-field--full">
+              <label>Search Customer</label>
+              <div class="po-search-wrap">
+                <i class="pi pi-search"></i>
+                <input type="text" [(ngModel)]="customerSearch"
+                       placeholder="Search by name, code, email, city…">
+              </div>
+            </div>
+
+            <div *ngIf="!filteredCustomers.length" class="po-empty">
+              <i class="pi pi-users"></i>
+              <span>No active customers found. Switch to "New Customer" to create one.</span>
+            </div>
+
+            <div class="po-customer-list" *ngIf="filteredCustomers.length">
+              <div class="po-customer-item"
+                   *ngFor="let c of filteredCustomers; trackBy: trackById"
+                   [class.is-selected]="form.existingCustomerId === c.id"
+                   (click)="selectCustomer(c)">
+                <div class="po-customer-avatar">{{ c.displayName.charAt(0).toUpperCase() }}</div>
+                <div class="po-customer-info">
+                  <strong>{{ c.displayName }}</strong>
+                  <small>{{ c.customerCode }}
+                    <ng-container *ngIf="c.city"> · {{ c.city }}</ng-container>
+                  </small>
+                </div>
+                <tc-saas-pill *ngIf="c.status"
+                              [label]="c.status"
+                              [tone]="customerStatusTone(c.status)">
+                </tc-saas-pill>
+                <i class="pi pi-check po-customer-check" *ngIf="form.existingCustomerId === c.id"></i>
+              </div>
+            </div>
+
+            <!-- Selected summary card -->
+            <div class="po-selected-card" *ngIf="selectedCustomer">
+              <div class="po-selected-card__head">
+                <div class="po-selected-card__avatar">{{ selectedCustomer.displayName.charAt(0) }}</div>
+                <div>
+                  <strong>{{ selectedCustomer.displayName }}</strong>
+                  <small>{{ selectedCustomer.legalName }}</small>
+                </div>
+                <tc-saas-pill label="Selected" tone="success"></tc-saas-pill>
+              </div>
+              <div class="po-selected-card__meta">
+                <span *ngIf="selectedCustomer.email"><i class="pi pi-envelope"></i> {{ selectedCustomer.email }}</span>
+                <span *ngIf="selectedCustomer.mobileNumber"><i class="pi pi-phone"></i> {{ selectedCustomer.mobileNumber }}</span>
+                <span *ngIf="selectedCustomer.city"><i class="pi pi-map-marker"></i> {{ selectedCustomer.city }}, {{ selectedCustomer.country }}</span>
+                <span *ngIf="selectedCustomer.organizationCount != null">
+                  <i class="pi pi-building"></i> {{ selectedCustomer.organizationCount }} Organizations
+                </span>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- New customer form -->
+          <ng-container *ngIf="form.customerMode === 'new'">
+            <div class="po-grid po-grid--2">
+              <div class="po-field">
+                <label>Legal Name *</label>
+                <input type="text" [(ngModel)]="form.customerLegalName" placeholder="Northstar Education Pvt Ltd">
+              </div>
+              <div class="po-field">
+                <label>Display Name *</label>
+                <input type="text" [(ngModel)]="form.customerDisplayName" placeholder="Northstar Education">
+              </div>
+              <div class="po-field">
+                <label>Email</label>
+                <input type="email" [(ngModel)]="form.customerEmail" placeholder="billing@customer.com">
+              </div>
+              <div class="po-field">
+                <label>Mobile</label>
+                <input type="tel" [(ngModel)]="form.customerMobile" placeholder="+91 98765 43210">
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- ─────────────────── STEP 1: ORGANIZATION ─────────────── -->
+        <div class="po-step-body" *ngIf="step === 1">
+          <div class="po-grid po-grid--2">
+            <div class="po-field po-field--span2">
+              <label>Organization Name *</label>
+              <input type="text" [(ngModel)]="form.organizationName"
+                     placeholder="Northstar Institute of Technology">
+            </div>
+            <div class="po-field">
+              <label>Short Name</label>
+              <input type="text" [(ngModel)]="form.shortName" placeholder="NIST">
+            </div>
+            <div class="po-field">
+              <label>Organization Code <small>(auto-generated)</small></label>
+              <input type="text" [value]="'ORG' + (form.organizationName | uppercase | slice:0:3)" disabled class="po-input--disabled">
+            </div>
+          </div>
+
+          <!-- Institution Type Cards -->
+          <div class="po-field po-field--full">
+            <label>Institution Type *</label>
+            <div class="po-inst-grid">
+              <button type="button" class="po-inst-card"
+                      *ngFor="let t of institutionTypeCards"
+                      [class.is-selected]="form.institutionType === t.value"
+                      (click)="form.institutionType = t.value">
+                <i [class]="t.icon"></i>
+                <span>{{ t.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="po-grid po-grid--2">
+            <div class="po-field">
+              <label>Board / Affiliation</label>
+              <input type="text" [(ngModel)]="form.boardName" placeholder="CBSE, AICTE, UGC…">
+            </div>
+            <div class="po-field">
+              <label>Academic Session</label>
+              <select [(ngModel)]="form.academicSession">
+                <option *ngFor="let s of academicSessions" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="po-field">
+              <label>Country</label>
+              <select [(ngModel)]="form.country">
+                <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="po-field">
+              <label>State</label>
+              <input type="text" [(ngModel)]="form.state" placeholder="Karnataka">
+            </div>
+            <div class="po-field">
+              <label>City</label>
+              <input type="text" [(ngModel)]="form.city" placeholder="Bengaluru">
+            </div>
+            <div class="po-field">
+              <label>Timezone</label>
+              <select [(ngModel)]="form.timeZone">
+                <option *ngFor="let tz of timeZones" [value]="tz">{{ tz }}</option>
+              </select>
+            </div>
+            <div class="po-field">
+              <label>Currency</label>
+              <select [(ngModel)]="form.currency">
+                <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="po-field">
+              <label>Language</label>
+              <select [(ngModel)]="form.language">
+                <option *ngFor="let l of languages" [value]="l">{{ l | uppercase }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tenant subdomain -->
+          <div class="po-field po-field--full">
+            <label>Tenant Subdomain *
+              <span class="po-field__hint">Lowercase letters, numbers, hyphens only</span>
+            </label>
+            <div class="po-subdomain-wrap">
+              <input type="text" [(ngModel)]="form.tenantSubdomain"
+                     placeholder="myschool"
+                     (ngModelChange)="normalizeSubdomain($event)">
+              <span class="po-subdomain-suffix">.thinkerscave.app</span>
+            </div>
+            <div class="po-subdomain-preview" *ngIf="subdomainPreview">
+              <i class="pi pi-globe"></i> Preview: <strong>{{ subdomainPreview }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────── STEP 2: PROFILE ──────────────────── -->
+        <div class="po-step-body" *ngIf="step === 2">
+          <div class="po-grid po-grid--2">
+            <div class="po-field">
+              <label>Email *</label>
+              <input type="email" [(ngModel)]="form.orgEmail" placeholder="info@institution.edu.in">
+            </div>
+            <div class="po-field">
+              <label>Phone *</label>
+              <input type="tel" [(ngModel)]="form.orgMobile" placeholder="+91 80 1234 5678">
+            </div>
+            <div class="po-field po-field--span2">
+              <label>Address Line 1 *</label>
+              <input type="text" [(ngModel)]="form.addressLine1" placeholder="Plot 12, Patia">
+            </div>
+            <div class="po-field po-field--span2">
+              <label>Address Line 2</label>
+              <input type="text" [(ngModel)]="form.addressLine2" placeholder="Near City Center">
+            </div>
+            <div class="po-field">
+              <label>City *</label>
+              <input type="text" [(ngModel)]="form.city" placeholder="Bhubaneswar">
+            </div>
+            <div class="po-field">
+              <label>State</label>
+              <input type="text" [(ngModel)]="form.state" placeholder="Odisha">
+            </div>
+            <div class="po-field">
+              <label>Pincode</label>
+              <input type="text" [(ngModel)]="form.postalCode" placeholder="751024">
+            </div>
+            <div class="po-field">
+              <label>Country</label>
+              <select [(ngModel)]="form.country">
+                <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="po-field po-field--span2">
+              <label>Logo URL</label>
+              <input type="url" [(ngModel)]="form.logoUrl" placeholder="https://myschool.edu.in/logo.png">
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────── STEP 3: ADMIN USER ───────────────── -->
+        <div class="po-step-body" *ngIf="step === 3">
+          <div class="po-grid po-grid--2">
+            <div class="po-field">
+              <label>First Name *</label>
+              <input type="text" [(ngModel)]="form.adminFirstName" placeholder="Rajan">
+            </div>
+            <div class="po-field">
+              <label>Last Name *</label>
+              <input type="text" [(ngModel)]="form.adminLastName" placeholder="Mehta">
+            </div>
+            <div class="po-field">
+              <label>Email *</label>
+              <input type="email" [(ngModel)]="form.adminEmail"
+                     placeholder="admin@institution.edu.in">
+            </div>
+            <div class="po-field">
+              <label>Mobile *</label>
+              <input type="tel" [(ngModel)]="form.adminMobile" placeholder="+91 98765 43210">
+            </div>
+            <div class="po-field">
+              <label>Username
+                <span class="po-field__hint">Auto-suggested from email</span>
+              </label>
+              <input type="text"
+                     [(ngModel)]="form.adminUsername"
+                     [placeholder]="autoUsername || 'username'">
+            </div>
+            <div class="po-field">
+              <label>Designation</label>
+              <input type="text" [(ngModel)]="form.adminDesignation" placeholder="System Administrator">
+            </div>
+          </div>
+
+          <!-- Password options -->
+          <div class="po-option-card">
+            <div class="po-option-card__hdr">
+              <i class="pi pi-lock"></i>
+              <strong>Password Options</strong>
+            </div>
+            <div class="po-option-card__body">
+              <label class="po-radio-option" (click)="form.adminAutoPassword = true">
+                <span class="po-radio" [class.is-checked]="form.adminAutoPassword"></span>
+                <div>
+                  <strong>Auto Generate</strong>
+                  <small>System generates a secure temporary password</small>
+                </div>
+              </label>
+              <label class="po-radio-option" (click)="form.adminAutoPassword = false">
+                <span class="po-radio" [class.is-checked]="!form.adminAutoPassword"></span>
+                <div>
+                  <strong>Set Manually</strong>
+                  <small>Enter a custom password for the admin</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Checkboxes -->
+          <div class="po-check-group">
+            <label class="po-check-item">
+              <input type="checkbox" [(ngModel)]="form.adminSendWelcomeEmail">
+              <div>
+                <strong>Send Welcome Email</strong>
+                <small>Send welcome email with credentials to admin</small>
+              </div>
+            </label>
+            <label class="po-check-item">
+              <input type="checkbox" [(ngModel)]="form.adminForcePasswordChange">
+              <div>
+                <strong>Require Password Change on First Login</strong>
+                <small>Admin must set a new password on first login</small>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- ─────────────────── STEP 4: SUBSCRIPTION ─────────────── -->
+        <div class="po-step-body" *ngIf="step === 4">
+
+          <!-- Billing cycle + Trial -->
+          <div class="po-grid po-grid--2">
+            <div class="po-field">
+              <label>Billing Cycle</label>
+              <div class="po-billing-tabs">
+                <button type="button"
+                        *ngFor="let b of billingCycles"
+                        [class.is-active]="form.billingCycle === b.id"
+                        (click)="form.billingCycle = b.id">
+                  {{ b.label }}
+                </button>
+              </div>
+            </div>
+            <div class="po-field">
+              <label>Trial Period</label>
+              <div class="po-toggle-row">
+                <label class="po-toggle">
+                  <input type="checkbox" [(ngModel)]="form.trialEnabled">
+                  <span class="po-toggle__track"></span>
+                </label>
+                <span>{{ form.trialEnabled ? 'Enabled' : 'Disabled' }}</span>
+                <input type="number" *ngIf="form.trialEnabled"
+                       [(ngModel)]="form.trialDays" min="1" max="90"
+                       class="po-days-input">
+                <span *ngIf="form.trialEnabled" class="po-days-label">days</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan cards -->
+          <div *ngIf="!plans.length" class="po-empty">
+            <i class="pi pi-credit-card"></i>
+            <span>No subscription plans available. Configure plans in Platform Management first.</span>
+          </div>
+
+          <div class="po-plan-grid" *ngIf="plans.length">
+            <div class="po-plan-card"
+                 *ngFor="let plan of plans; trackBy: trackById"
+                 [class.is-selected]="form.subscriptionPlanId === plan.id"
+                 [class.is-recommended]="plan.recommended"
+                 (click)="selectPlan(plan.id)">
+              <div class="po-plan-card__badge" *ngIf="plan.recommended">
+                <i class="pi pi-star-fill"></i> Recommended
+              </div>
+              <div class="po-plan-card__check" *ngIf="form.subscriptionPlanId === plan.id">
+                <i class="pi pi-check"></i>
+              </div>
+              <h3 class="po-plan-card__name">{{ plan.planName }}</h3>
+              <p class="po-plan-card__desc">{{ plan.description || 'Subscription package' }}</p>
+              <div class="po-plan-card__price">
+                <span>{{ formatCurrency(planPrice(plan), form.currency) }}</span>
+                <small>/ {{ form.billingCycle | lowercase }}</small>
+              </div>
+              <ul class="po-plan-card__features">
+                <li *ngIf="plan.studentLimit"><i class="pi pi-check-circle"></i> {{ plan.studentLimit | number }} students</li>
+                <li *ngIf="plan.staffLimit"><i class="pi pi-check-circle"></i> {{ plan.staffLimit | number }} staff</li>
+                <li *ngIf="plan.branchLimit"><i class="pi pi-check-circle"></i> {{ plan.branchLimit }} branches</li>
+                <li *ngIf="plan.storageLimitGb"><i class="pi pi-check-circle"></i> {{ plan.storageLimitGb }} GB storage</li>
+                <li *ngIf="plan.trialDays"><i class="pi pi-check-circle"></i> {{ plan.trialDays }}-day trial</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────── STEP 5: FEATURES ─────────────────── -->
+        <div class="po-step-body" *ngIf="step === 5">
+
+          <!-- Search + summary -->
+          <div class="po-feature-toolbar">
+            <div class="po-search-wrap">
+              <i class="pi pi-search"></i>
+              <input type="text" [(ngModel)]="featureSearch" placeholder="Search features…">
+            </div>
+            <span class="po-feature-count">
+              <strong>{{ selectedFeaturesCount }}</strong> of {{ features.length }} enabled
+            </span>
+          </div>
+
+          <!-- No features -->
+          <div *ngIf="!features.length" class="po-empty">
+            <i class="pi pi-th-large"></i>
+            <span>No features in catalog. Contact administrator.</span>
+          </div>
+
+          <!-- Feature groups -->
+          <div class="po-feature-groups" *ngIf="featuresByModule.length">
+            <div class="po-feature-group" *ngFor="let group of featuresByModule">
+              <div class="po-feature-group__hdr">
+                <div class="po-feature-group__title">
+                  <strong>{{ group.module }}</strong>
+                  <span class="po-feature-group__count">{{ group.enabledCount }}/{{ group.features.length }}</span>
+                </div>
+                <div class="po-feature-group__actions">
+                  <button type="button" class="po-text-btn" (click)="toggleAllInModule(group.module, true)">All On</button>
+                  <button type="button" class="po-text-btn" (click)="toggleAllInModule(group.module, false)">All Off</button>
+                </div>
+              </div>
+              <div class="po-feature-list">
+                <div class="po-feature-item"
+                     *ngFor="let f of group.features; trackBy: trackById"
+                     [class.is-enabled]="isFeatureEnabled(f.id)">
+                  <div class="po-feature-item__info">
+                    <strong>{{ f.displayName || f.featureName }}</strong>
+                    <small>{{ f.featureCode }}<ng-container *ngIf="f.category"> · {{ f.category }}</ng-container></small>
+                    <p *ngIf="f.description">{{ f.description }}</p>
+                  </div>
+                  <div class="po-feature-item__right">
+                    <tc-saas-pill *ngIf="featureIncludedInPlan(f.id)" label="In Plan" tone="success"></tc-saas-pill>
+                    <tc-saas-pill *ngIf="f.premiumFeature && !featureIncludedInPlan(f.id)" label="Premium" tone="warning"></tc-saas-pill>
+                    <label class="po-toggle po-toggle--sm">
+                      <input type="checkbox"
+                             [checked]="isFeatureEnabled(f.id)"
+                             (change)="toggleFeature(f.id)">
+                      <span class="po-toggle__track"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────── STEP 6: COMMERCIALS ──────────────── -->
+        <div class="po-step-body" *ngIf="step === 6">
+          <div class="po-field po-field--full">
+            <label>Promotion <span class="po-field__optional">(Optional)</span></label>
+            <select [(ngModel)]="form.promotionId">
+              <option [ngValue]="null">— No Promotion —</option>
+              <option *ngFor="let p of promotions; trackBy: trackById" [ngValue]="p.id">
+                {{ p.promotionName }} ({{ p.promotionCode }})
               </option>
             </select>
-          </label>
+          </div>
 
-          <div *ngIf="selectedCustomer" class="wizard-summary-card">
-            <strong>{{ selectedCustomer.displayName }}</strong>
-            <p>{{ selectedCustomer.legalName }}</p>
-            <div class="wizard-summary-card__meta">
-              <tc-saas-pill *ngIf="selectedCustomer.email" [label]="selectedCustomer.email" tone="neutral" icon="pi pi-envelope"></tc-saas-pill>
-              <tc-saas-pill *ngIf="selectedCustomer.city" [label]="selectedCustomer.city + ', ' + (selectedCustomer.country || '')" tone="info" icon="pi pi-map-marker"></tc-saas-pill>
+          <div class="po-promo-card" *ngIf="selectedPromotion">
+            <div class="po-promo-card__head">
+              <i class="pi pi-tag"></i>
+              <strong>{{ selectedPromotion.promotionName }}</strong>
+              <span class="po-promo-chip">{{ selectedPromotion.promotionCode }}</span>
+            </div>
+            <p *ngIf="selectedPromotion.description">{{ selectedPromotion.description }}</p>
+            <div class="po-promo-card__meta">
+              <span><i class="pi pi-percentage"></i> {{ selectedPromotion.discountType }}</span>
+              <span *ngIf="selectedPromotion.discountValue"><i class="pi pi-minus-circle"></i> {{ selectedPromotion.discountValue }}{{ selectedPromotion.discountType === 'PERCENTAGE' ? '%' : ' ' + form.currency }} off</span>
             </div>
           </div>
 
-          <div *ngIf="!customers.length" class="saas-empty provision-organization__compact-empty">
-            <i class="pi pi-users"></i>
-            <strong>No active customers found</strong>
-            <p>Switch to New Customer to create one during provisioning.</p>
+          <div class="po-section-title">Limit Overrides <span>(Optional — leave blank to use plan defaults)</span></div>
+          <div class="po-grid po-grid--4">
+            <div class="po-field">
+              <label>Student Limit</label>
+              <input type="number" min="0" [(ngModel)]="form.studentLimitOverride" placeholder="Plan default">
+            </div>
+            <div class="po-field">
+              <label>Staff Limit</label>
+              <input type="number" min="0" [(ngModel)]="form.staffLimitOverride" placeholder="Plan default">
+            </div>
+            <div class="po-field">
+              <label>Branch Limit</label>
+              <input type="number" min="0" [(ngModel)]="form.branchLimitOverride" placeholder="Plan default">
+            </div>
+            <div class="po-field">
+              <label>Storage (GB)</label>
+              <input type="number" min="0" [(ngModel)]="form.storageLimitOverride" placeholder="Plan default">
+            </div>
           </div>
-        </ng-container>
 
-        <ng-container *ngIf="form.customerMode === 'new'">
-          <div class="wizard-row">
-            <label class="saas-field"><span>Legal name</span><input type="text" [(ngModel)]="form.customerLegalName" placeholder="Northstar Education Pvt Ltd"></label>
-            <label class="saas-field"><span>Display name</span><input type="text" [(ngModel)]="form.customerDisplayName" placeholder="Northstar Education"></label>
+          <div class="po-field po-field--full">
+            <label>Internal Remarks</label>
+            <textarea rows="4" [(ngModel)]="form.remarks"
+                      placeholder="Notes for provisioning team…"></textarea>
           </div>
-          <div class="wizard-row">
-            <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.customerEmail" placeholder="billing@customer.com"></label>
-            <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.customerMobile" placeholder="+91"></label>
-          </div>
-        </ng-container>
-      </section>
-
-      <!-- Step 2: Organization Details -->
-      <section *ngIf="step === 1" class="wizard-step">
-        <h3 class="wizard-step__title">Organization Details</h3>
-        <p class="wizard-step__lead">Core identity and regional settings for the new institution.</p>
-
-        <div class="wizard-row">
-          <label class="saas-field saas-field--wide"><span>Organization name</span><input type="text" [(ngModel)]="form.organizationName" placeholder="Northstar Institute of Technology"></label>
-          <label class="saas-field"><span>Short name</span><input type="text" [(ngModel)]="form.shortName" placeholder="NIST"></label>
-        </div>
-        <div class="wizard-row">
-          <label class="saas-field"><span>Institution type</span>
-            <select [(ngModel)]="form.institutionType">
-              <option *ngFor="let t of institutionTypes" [ngValue]="t">{{ institutionLabel(t) }}</option>
-            </select>
-          </label>
-          <label class="saas-field"><span>Board / affiliation</span><input type="text" [(ngModel)]="form.boardName" placeholder="CBSE, AICTE, etc."></label>
-        </div>
-        <div class="wizard-row wizard-row--triple">
-          <label class="saas-field"><span>Timezone</span>
-            <select [(ngModel)]="form.timeZone">
-              <option *ngFor="let tz of timeZones" [value]="tz">{{ tz }}</option>
-            </select>
-          </label>
-          <label class="saas-field"><span>Currency</span>
-            <select [(ngModel)]="form.currency">
-              <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
-            </select>
-          </label>
-          <label class="saas-field"><span>Language</span>
-            <select [(ngModel)]="form.language">
-              <option *ngFor="let l of languages" [value]="l">{{ l | uppercase }}</option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <!-- Step 3: Institution Profile -->
-      <section *ngIf="step === 2" class="wizard-step">
-        <h3 class="wizard-step__title">Institution Profile</h3>
-        <p class="wizard-step__lead">Contact details and location for the organization.</p>
-
-        <div class="wizard-row">
-          <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.orgEmail" placeholder="info@institution.edu"></label>
-          <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.orgMobile" placeholder="+91"></label>
-        </div>
-        <label class="saas-field saas-field--full"><span>Address</span><input type="text" [(ngModel)]="form.addressLine1" placeholder="Street address"></label>
-        <div class="wizard-row wizard-row--triple">
-          <label class="saas-field"><span>City</span><input type="text" [(ngModel)]="form.city" placeholder="Bengaluru"></label>
-          <label class="saas-field"><span>State</span><input type="text" [(ngModel)]="form.state" placeholder="Karnataka"></label>
-          <label class="saas-field"><span>Country</span>
-            <select [(ngModel)]="form.country">
-              <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
-            </select>
-          </label>
-        </div>
-        <label class="saas-field saas-field--full"><span>Logo URL (optional)</span><input type="url" [(ngModel)]="form.logoUrl" placeholder="https://"></label>
-      </section>
-
-      <!-- Step 4: Admin User -->
-      <section *ngIf="step === 3" class="wizard-step">
-        <h3 class="wizard-step__title">Admin User</h3>
-        <p class="wizard-step__lead">The first administrator who will receive access to the tenant workspace.</p>
-
-        <div class="wizard-row">
-          <label class="saas-field"><span>First name</span><input type="text" [(ngModel)]="form.adminFirstName" placeholder="Aarav"></label>
-          <label class="saas-field"><span>Last name</span><input type="text" [(ngModel)]="form.adminLastName" placeholder="Mehta"></label>
-        </div>
-        <div class="wizard-row">
-          <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="form.adminEmail" placeholder="admin@institution.edu"></label>
-          <label class="saas-field"><span>Mobile</span><input type="tel" [(ngModel)]="form.adminMobile" placeholder="+91"></label>
-        </div>
-      </section>
-
-      <!-- Step 5: Subscription Plan -->
-      <section *ngIf="step === 4" class="wizard-step">
-        <h3 class="wizard-step__title">Subscription Plan</h3>
-        <p class="wizard-step__lead">Choose a plan, billing cycle, and whether to start with a trial period.</p>
-
-        <div class="wizard-row">
-          <label class="saas-field"><span>Billing cycle</span>
-            <select [(ngModel)]="form.billingCycle">
-              <option *ngFor="let b of billingCycles" [ngValue]="b.id">{{ b.label }}</option>
-            </select>
-          </label>
-          <label class="saas-field saas-field--toggle">
-            <span>Trial period</span>
-            <label class="provision-organization__switch">
-              <input type="checkbox" [(ngModel)]="form.trialEnabled">
-              <span>{{ form.trialEnabled ? 'Enabled' : 'Disabled' }}</span>
-            </label>
-          </label>
         </div>
 
-        <div *ngIf="!plans.length" class="saas-empty provision-organization__compact-empty">
-          <i class="pi pi-credit-card"></i>
-          <strong>No subscription plans available</strong>
-          <p>Configure plans in Platform Management before provisioning.</p>
-        </div>
+        <!-- ─────────────────── STEP 7: REVIEW ───────────────────── -->
+        <div class="po-step-body" *ngIf="step === 7">
 
-        <div class="provision-organization__plan-grid" *ngIf="plans.length">
-          <button
-            type="button"
-            *ngFor="let plan of plans; trackBy: trackById"
-            class="plan-card"
-            [class.is-selected]="form.subscriptionPlanId === plan.id"
-            [class.is-recommended]="plan.recommended"
-            (click)="selectPlan(plan.id)">
-            <span class="plan-card__badge" *ngIf="plan.recommended">Recommended</span>
-            <header>
-              <strong>{{ plan.planName }}</strong>
-              <small>{{ plan.planCode }}</small>
-            </header>
-            <p>{{ plan.description || 'Subscription package' }}</p>
-            <div class="plan-card__price">{{ planPrice(plan) }}<small>/ {{ form.billingCycle | lowercase }}</small></div>
-            <ul *ngIf="plan.studentLimit || plan.staffLimit">
-              <li *ngIf="plan.studentLimit"><i class="pi pi-check"></i>{{ plan.studentLimit | number }} students</li>
-              <li *ngIf="plan.staffLimit"><i class="pi pi-check"></i>{{ plan.staffLimit | number }} staff</li>
-              <li *ngIf="plan.storageLimitGb"><i class="pi pi-check"></i>{{ plan.storageLimitGb }} GB storage</li>
-            </ul>
-            <span class="plan-card__check" aria-hidden="true"><i class="pi pi-check"></i></span>
-          </button>
-        </div>
-      </section>
+          <div class="po-review-grid">
 
-      <!-- Step 6: Feature Customization -->
-      <section *ngIf="step === 5" class="wizard-step">
-        <h3 class="wizard-step__title">Feature Customization</h3>
-        <p class="wizard-step__lead">Override plan defaults by enabling or disabling platform features.</p>
+            <!-- Customer -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-users"></i><span>Customer</span>
+                <button class="po-review-edit" (click)="goToStep(0)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Customer</span><strong>{{ form.customerMode === 'existing' ? (selectedCustomer?.displayName || '—') : form.customerDisplayName }}</strong></div>
+                <div class="po-rv" *ngIf="form.customerMode === 'existing'"><span>Code</span><strong class="po-mono">{{ selectedCustomer?.customerCode }}</strong></div>
+                <div class="po-rv" *ngIf="form.customerEmail"><span>Email</span><strong>{{ form.customerEmail }}</strong></div>
+              </div>
+            </div>
 
-        <div *ngIf="selectedPlan" class="wizard-summary-card wizard-summary-card--inline">
-          <span>Plan baseline: <strong>{{ selectedPlan.planName }}</strong></span>
-          <tc-saas-pill label="Overrides apply on top of plan" tone="info" icon="pi pi-sliders-h"></tc-saas-pill>
-        </div>
+            <!-- Organization -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-building"></i><span>Organization</span>
+                <button class="po-review-edit" (click)="goToStep(1)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Name</span><strong>{{ form.organizationName || '—' }}</strong></div>
+                <div class="po-rv"><span>Type</span><strong>{{ institutionLabel(form.institutionType) }}</strong></div>
+                <div class="po-rv" *ngIf="form.shortName"><span>Short Name</span><strong>{{ form.shortName }}</strong></div>
+                <div class="po-rv" *ngIf="form.boardName"><span>Board</span><strong>{{ form.boardName }}</strong></div>
+                <div class="po-rv"><span>Region</span><strong>{{ form.city }}, {{ form.state }}, {{ form.country }}</strong></div>
+                <div class="po-rv" *ngIf="subdomainPreview"><span>URL</span><strong class="po-mono">{{ subdomainPreview }}</strong></div>
+              </div>
+            </div>
 
-        <div *ngIf="!features.length" class="saas-empty provision-organization__compact-empty">
-          <i class="pi pi-th-large"></i>
-          <strong>No features in catalog</strong>
-        </div>
+            <!-- Profile -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-id-card"></i><span>Profile</span>
+                <button class="po-review-edit" (click)="goToStep(2)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Email</span><strong>{{ form.orgEmail || '—' }}</strong></div>
+                <div class="po-rv"><span>Phone</span><strong>{{ form.orgMobile || '—' }}</strong></div>
+                <div class="po-rv"><span>Address</span><strong>{{ form.addressLine1 || '—' }}, {{ form.city }}</strong></div>
+              </div>
+            </div>
 
-        <div class="provision-organization__feature-grid" *ngIf="features.length">
-          <label
-            *ngFor="let feature of features; trackBy: trackById"
-            class="feature-toggle"
-            [class.is-on]="isFeatureEnabled(feature.id)"
-            [class.is-plan-default]="featureIncludedInPlan(feature.id)">
-            <input type="checkbox" [checked]="isFeatureEnabled(feature.id)" (change)="toggleFeature(feature.id)">
+            <!-- Admin -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-user"></i><span>Admin User</span>
+                <button class="po-review-edit" (click)="goToStep(3)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Name</span><strong>{{ form.adminFirstName }} {{ form.adminLastName }}</strong></div>
+                <div class="po-rv"><span>Email</span><strong>{{ form.adminEmail || '—' }}</strong></div>
+                <div class="po-rv"><span>Mobile</span><strong>{{ form.adminMobile || '—' }}</strong></div>
+                <div class="po-rv"><span>Password</span><strong>{{ form.adminAutoPassword ? 'Auto-generated' : 'Manual' }}</strong></div>
+              </div>
+            </div>
+
+            <!-- Subscription -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-credit-card"></i><span>Subscription</span>
+                <button class="po-review-edit" (click)="goToStep(4)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Plan</span><strong>{{ selectedPlan?.planName || '—' }}</strong></div>
+                <div class="po-rv"><span>Billing</span><strong>{{ form.billingCycle }}</strong></div>
+                <div class="po-rv"><span>Trial</span><strong>{{ form.trialEnabled ? form.trialDays + ' days' : 'Disabled' }}</strong></div>
+                <div class="po-rv"><span>Amount</span><strong>{{ formatCurrency(computedFinal, form.currency) }}</strong></div>
+              </div>
+            </div>
+
+            <!-- Features -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-sliders-h"></i><span>Features</span>
+                <button class="po-review-edit" (click)="goToStep(5)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Enabled</span><strong>{{ selectedFeaturesCount }} features</strong></div>
+                <div class="po-rv"><span>Total</span><strong>{{ features.length }} in catalog</strong></div>
+                <div class="po-rv"><span>Overrides</span><strong>{{ selectedFeaturesCount }} configured</strong></div>
+              </div>
+            </div>
+
+            <!-- Commercials -->
+            <div class="po-review-card">
+              <div class="po-review-card__hdr">
+                <i class="pi pi-percentage"></i><span>Commercials</span>
+                <button class="po-review-edit" (click)="goToStep(6)"><i class="pi pi-pencil"></i> Edit</button>
+              </div>
+              <div class="po-review-card__body">
+                <div class="po-rv"><span>Promotion</span><strong>{{ selectedPromotion?.promotionName || 'None' }}</strong></div>
+                <div class="po-rv"><span>Plan Price</span><strong>{{ formatCurrency(computedPlanPrice, form.currency) }}</strong></div>
+                <div class="po-rv" *ngIf="computedDiscount > 0"><span>Discount</span><strong class="po-text-success">− {{ formatCurrency(computedDiscount, form.currency) }}</strong></div>
+                <div class="po-rv"><span>Final Amount</span><strong>{{ formatCurrency(computedFinal, form.currency) }}</strong></div>
+              </div>
+            </div>
+          </div><!-- /po-review-grid -->
+
+          <!-- Provision warning -->
+          <div class="po-provision-warning">
+            <div class="po-provision-warning__icon"><i class="pi pi-info-circle"></i></div>
             <div>
-              <strong>{{ feature.displayName || feature.featureName }}</strong>
-              <small>{{ feature.featureCode }}<span *ngIf="feature.category"> · {{ feature.category }}</span></small>
-              <p *ngIf="feature.description">{{ feature.description }}</p>
+              <strong>What will happen when you provision?</strong>
+              <ul>
+                <li><i class="pi pi-check"></i> A new tenant database schema will be created</li>
+                <li><i class="pi pi-check"></i> The subscription plan will be activated</li>
+                <li><i class="pi pi-check"></i> The admin user account will be created</li>
+                <li><i class="pi pi-check"></i> Feature modules will be configured</li>
+                <li><i class="pi pi-check"></i> A welcome email will be sent to the admin</li>
+                <li><i class="pi pi-check"></i> The tenant workspace will be ready to use</li>
+              </ul>
             </div>
-            <tc-saas-pill
-              *ngIf="featureIncludedInPlan(feature.id)"
-              label="In plan"
-              tone="success"
-              icon="pi pi-check">
-            </tc-saas-pill>
-            <tc-saas-pill
-              *ngIf="feature.premiumFeature && !featureIncludedInPlan(feature.id)"
-              label="Premium"
-              tone="warning"
-              icon="pi pi-star">
-            </tc-saas-pill>
-          </label>
-        </div>
-      </section>
-
-      <!-- Step 7: Commercials -->
-      <section *ngIf="step === 6" class="wizard-step">
-        <h3 class="wizard-step__title">Commercials</h3>
-        <p class="wizard-step__lead">Apply promotions and optional limit overrides for this tenant.</p>
-
-        <label class="saas-field saas-field--full">
-          <span>Promotion (optional)</span>
-          <select [(ngModel)]="form.promotionId">
-            <option [ngValue]="null">— No promotion —</option>
-            <option *ngFor="let promo of promotions; trackBy: trackById" [ngValue]="promo.id">
-              {{ promo.promotionName }} ({{ promo.promotionCode }})
-            </option>
-          </select>
-        </label>
-
-        <div *ngIf="selectedPromotion" class="wizard-summary-card">
-          <strong>{{ selectedPromotion.promotionName }}</strong>
-          <p>{{ selectedPromotion.description || 'Active promotional offer' }}</p>
-          <tc-saas-pill [label]="selectedPromotion.discountType" tone="primary" icon="pi pi-percentage"></tc-saas-pill>
-        </div>
-
-        <h4 class="wizard-step__subtitle">Limit overrides (optional)</h4>
-        <div class="wizard-row wizard-row--quad">
-          <label class="saas-field"><span>Student limit</span><input type="number" min="0" [(ngModel)]="form.studentLimitOverride" placeholder="Plan default"></label>
-          <label class="saas-field"><span>Staff limit</span><input type="number" min="0" [(ngModel)]="form.staffLimitOverride" placeholder="Plan default"></label>
-          <label class="saas-field"><span>Branch limit</span><input type="number" min="0" [(ngModel)]="form.branchLimitOverride" placeholder="Plan default"></label>
-          <label class="saas-field"><span>Storage (GB)</span><input type="number" min="0" [(ngModel)]="form.storageLimitOverride" placeholder="Plan default"></label>
-        </div>
-
-        <label class="saas-field saas-field--full"><span>Internal remarks</span><textarea rows="3" [(ngModel)]="form.remarks" placeholder="Notes for provisioning team"></textarea></label>
-      </section>
-
-      <!-- Step 8: Review & Confirm -->
-      <section *ngIf="step === 7" class="wizard-step wizard-review">
-        <h3 class="wizard-step__title">Review &amp; Confirm</h3>
-        <p class="wizard-step__lead">Verify all details before provisioning the organization.</p>
-
-        <dl class="wizard-review">
-          <div><dt>Customer</dt><dd>{{ form.customerMode === 'existing' ? (selectedCustomer?.displayName || '—') : form.customerDisplayName }}</dd></div>
-          <div><dt>Organization</dt><dd>{{ form.organizationName || '—' }} · {{ institutionLabel(form.institutionType) }}</dd></div>
-          <div><dt>Location</dt><dd>{{ form.city || '—' }}, {{ form.state || '—' }}, {{ form.country }}</dd></div>
-          <div><dt>Institution contact</dt><dd>{{ form.orgEmail }} · {{ form.orgMobile }}</dd></div>
-          <div><dt>Admin</dt><dd>{{ form.adminFirstName }} {{ form.adminLastName }} · {{ form.adminEmail }}</dd></div>
-          <div><dt>Subscription</dt><dd>{{ selectedPlan?.planName || '—' }} · {{ form.billingCycle }}<span *ngIf="form.trialEnabled"> · Trial</span></dd></div>
-          <div><dt>Promotion</dt><dd>{{ selectedPromotion?.promotionName || 'None' }}</dd></div>
-          <div><dt>Feature overrides</dt><dd>{{ features.length }} features configured</dd></div>
-          <div *ngIf="form.studentLimitOverride || form.staffLimitOverride || form.branchLimitOverride || form.storageLimitOverride">
-            <dt>Limit overrides</dt>
-            <dd>
-              <span *ngIf="form.studentLimitOverride">Students: {{ form.studentLimitOverride }}</span>
-              <span *ngIf="form.staffLimitOverride"> · Staff: {{ form.staffLimitOverride }}</span>
-              <span *ngIf="form.branchLimitOverride"> · Branches: {{ form.branchLimitOverride }}</span>
-              <span *ngIf="form.storageLimitOverride"> · Storage: {{ form.storageLimitOverride }} GB</span>
-            </dd>
           </div>
-        </dl>
-      </section>
 
-      <footer class="provision-organization__nav">
-        <button type="button" class="saas-btn" (click)="prev()" [disabled]="step === 0 || submitting">
-          <i class="pi pi-arrow-left"></i> Back
-        </button>
-        <div class="provision-organization__nav-end">
-          <button type="button" class="saas-btn" (click)="cancel()" [disabled]="submitting">Cancel</button>
-          <button
-            type="button"
-            *ngIf="step < wizardSteps.length - 1"
-            class="saas-btn saas-btn--primary"
-            (click)="next()"
-            [disabled]="submitting">
-            Next <i class="pi pi-arrow-right"></i>
-          </button>
-          <button
-            type="button"
-            *ngIf="step === wizardSteps.length - 1"
-            class="saas-btn saas-btn--primary"
-            (click)="provision()"
-            [disabled]="submitting">
-            <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-rocket'"></i>
-            {{ submitting ? 'Provisioning…' : 'Provision' }}
-          </button>
+        </div><!-- /step 7 review -->
+
+      </div><!-- /po-main-panel -->
+
+      <!-- ══ Side panel: Order Summary (Subscription step) ══ -->
+      <div class="po-side-panel" *ngIf="step === 4 && selectedPlan">
+        <div class="po-summary-card">
+          <div class="po-summary-card__hdr">
+            <i class="pi pi-receipt"></i>
+            <strong>Order Summary</strong>
+          </div>
+          <div class="po-summary-card__body">
+            <div class="po-summary-row">
+              <span>Plan</span>
+              <strong>{{ selectedPlan.planName }}</strong>
+            </div>
+            <div class="po-summary-row">
+              <span>Billing</span>
+              <strong>{{ form.billingCycle }}</strong>
+            </div>
+            <div class="po-summary-row">
+              <span>Plan Price</span>
+              <strong>{{ formatCurrency(computedPlanPrice, form.currency) }}</strong>
+            </div>
+            <div class="po-summary-row" *ngIf="computedDiscount > 0">
+              <span>Discount</span>
+              <strong class="po-text-success">− {{ formatCurrency(computedDiscount, form.currency) }}</strong>
+            </div>
+            <div class="po-summary-divider"></div>
+            <div class="po-summary-row po-summary-row--total">
+              <span>Final Amount</span>
+              <strong>{{ formatCurrency(computedFinal, form.currency) }}</strong>
+            </div>
+            <div class="po-summary-row" *ngIf="form.trialEnabled">
+              <span>Trial Period</span>
+              <strong>{{ form.trialDays }} Days</strong>
+            </div>
+            <div class="po-summary-row" *ngIf="form.trialEnabled">
+              <span>Renewal</span>
+              <tc-saas-pill label="Auto Renew" tone="success"></tc-saas-pill>
+            </div>
+            <div class="po-summary-limits" *ngIf="selectedPlan.studentLimit || selectedPlan.staffLimit">
+              <div class="po-summary-limits__hdr">Included Limits</div>
+              <div class="po-summary-limit-row" *ngIf="selectedPlan.studentLimit">
+                <i class="pi pi-graduation-cap"></i> Students
+                <strong>{{ selectedPlan.studentLimit | number }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="selectedPlan.staffLimit">
+                <i class="pi pi-users"></i> Staff
+                <strong>{{ selectedPlan.staffLimit | number }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="selectedPlan.branchLimit">
+                <i class="pi pi-sitemap"></i> Branches
+                <strong>{{ selectedPlan.branchLimit }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="selectedPlan.storageLimitGb">
+                <i class="pi pi-database"></i> Storage
+                <strong>{{ selectedPlan.storageLimitGb }} GB</strong>
+              </div>
+            </div>
+          </div>
         </div>
-      </footer>
-    </tc-saas-panel>
-  </ng-container>
-</div>
+      </div>
 
-<ng-template #successView>
-  <div class="saas-page provision-organization provision-organization--success">
-    <tc-saas-page-header
-      title="Organization provisioned"
-      [subtitle]="successResult?.organizationName + ' is ready'">
-    </tc-saas-page-header>
+      <!-- ══ Side panel: Pricing Summary (Commercials step) ══ -->
+      <div class="po-side-panel" *ngIf="step === 6">
+        <div class="po-summary-card">
+          <div class="po-summary-card__hdr">
+            <i class="pi pi-receipt"></i>
+            <strong>Pricing Summary</strong>
+          </div>
+          <div class="po-summary-card__body">
+            <div class="po-summary-row">
+              <span>Plan</span>
+              <strong>{{ selectedPlan?.planName || '—' }}</strong>
+            </div>
+            <div class="po-summary-row">
+              <span>Plan Price</span>
+              <strong>{{ formatCurrency(computedPlanPrice, form.currency) }}</strong>
+            </div>
+            <ng-container *ngIf="selectedPromotion">
+              <div class="po-summary-row">
+                <span>Promotion</span>
+                <strong>{{ selectedPromotion.promotionCode }}</strong>
+              </div>
+              <div class="po-summary-row">
+                <span>Discount</span>
+                <strong class="po-text-success">− {{ formatCurrency(computedDiscount, form.currency) }}</strong>
+              </div>
+            </ng-container>
+            <div class="po-summary-divider"></div>
+            <div class="po-summary-row po-summary-row--total">
+              <span>Final Amount</span>
+              <strong>{{ formatCurrency(computedFinal, form.currency) }}</strong>
+            </div>
+            <ng-container *ngIf="form.studentLimitOverride || form.staffLimitOverride || form.branchLimitOverride || form.storageLimitOverride">
+              <div class="po-summary-divider"></div>
+              <div class="po-summary-limits__hdr">Custom Limits</div>
+              <div class="po-summary-limit-row" *ngIf="form.studentLimitOverride">
+                <i class="pi pi-graduation-cap"></i> Students <strong>{{ form.studentLimitOverride }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="form.staffLimitOverride">
+                <i class="pi pi-users"></i> Staff <strong>{{ form.staffLimitOverride }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="form.branchLimitOverride">
+                <i class="pi pi-sitemap"></i> Branches <strong>{{ form.branchLimitOverride }}</strong>
+              </div>
+              <div class="po-summary-limit-row" *ngIf="form.storageLimitOverride">
+                <i class="pi pi-database"></i> Storage <strong>{{ form.storageLimitOverride }} GB</strong>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
 
-    <div class="provision-organization__success-card">
-      <i class="pi pi-check-circle"></i>
-      <h2>Provisioning complete</h2>
-      <p *ngIf="successResult?.message; else defaultSuccessMsg">{{ successResult?.message }}</p>
-      <ng-template #defaultSuccessMsg>
-        <p>The tenant has been created. Share the admin email and domain details with the institution owner.</p>
-      </ng-template>
+    </div><!-- /po-body -->
 
-      <tc-saas-stat-grid [stats]="successStats"></tc-saas-stat-grid>
-
-      <dl class="wizard-review wizard-review--compact" *ngIf="successResult">
-        <div><dt>Organization code</dt><dd>{{ successResult.organizationCode }}</dd></div>
-        <div *ngIf="successResult.jobCode"><dt>Provisioning job</dt><dd>{{ successResult.jobCode }}</dd></div>
-      </dl>
-
-      <div class="provision-organization__success-actions">
-        <button type="button" class="saas-btn saas-btn--primary" (click)="goToWorkspace()">
-          <i class="pi pi-external-link"></i> Open organization workspace
+    <!-- ══ Sticky Footer ══ -->
+    <div class="po-footer">
+      <button type="button" class="po-btn po-btn--ghost"
+              (click)="prev()" [disabled]="step === 0 || submitting">
+        <i class="pi pi-arrow-left"></i> Back
+      </button>
+      <div class="po-footer__right">
+        <button type="button" class="po-btn po-btn--outline"
+                (click)="cancel()" [disabled]="submitting">
+          Cancel
         </button>
-        <button type="button" class="saas-btn" (click)="goToList()">
-          <i class="pi pi-list"></i> Back to organizations
+        <button type="button" class="po-btn po-btn--ghost-primary" [disabled]="submitting">
+          <i class="pi pi-save"></i> Save Draft
         </button>
-        <button type="button" class="saas-btn" (click)="provisionAnother()">
-          <i class="pi pi-plus"></i> Provision another
+        <button type="button" class="po-btn po-btn--primary"
+                *ngIf="step < wizardSteps.length - 1"
+                (click)="next()" [disabled]="submitting">
+          Next <i class="pi pi-arrow-right"></i>
+        </button>
+        <button type="button" class="po-btn po-btn--primary po-btn--provision"
+                *ngIf="step === wizardSteps.length - 1"
+                (click)="provision()" [disabled]="submitting">
+          <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-rocket'"></i>
+          {{ submitting ? 'Provisioning…' : 'Provision Organization' }}
         </button>
       </div>
     </div>
-  </div>
-</ng-template>
+
+  </ng-container>
+</div>

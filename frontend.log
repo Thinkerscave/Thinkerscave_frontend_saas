@@ -1,39 +1,54 @@
-Component HMR has been enabled, see https://angular.dev/hmr for more info.
-❯ Building...
-✔ Building...
-Initial chunk files | Names                               |  Raw size
-styles.css          | styles                              | 464.86 kB | 
-main.js             | main                                | 127.56 kB | 
-polyfills.js        | polyfills                           |  89.77 kB | 
-chunk-JO5VFL3F.js   | -                                   |   8.82 kB | 
-chunk-DUQGKU2R.js   | -                                   |   1.79 kB | 
-chunk-P5ZQBWVC.js   | -                                   |   1.61 kB | 
-chunk-653SOEEV.js   | -                                   |   1.51 kB | 
-chunk-74I3RVXY.js   | -                                   | 233 bytes | 
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                           [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                          [2m | [22m[36m628.37 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m                       [2m | [22m [36m89.77 kB[39m[2m | [22m
+[32mchunk-DJUEFLTM.js[39m  [2m | [22m[2m-[22m                               [2m | [22m [36m25.79 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                            [2m | [22m [36m22.01 kB[39m[2m | [22m
+[32mchunk-SRLFHFCC.js[39m  [2m | [22m[2m-[22m                               [2m | [22m [36m16.90 kB[39m[2m | [22m
+[32mchunk-QWJMH724.js[39m  [2m | [22m[2m-[22m                               [2m | [22m [36m15.27 kB[39m[2m | [22m
+[32mchunk-4J6SLGJD.js[39m  [2m | [22m[2m-[22m                               [2m | [22m  [36m4.42 kB[39m[2m | [22m
+[32mchunk-MFPCVSNR.js[39m  [2m | [22m[2m-[22m                               [2m | [22m  [36m2.69 kB[39m[2m | [22m
+[32mchunk-FDDTMFOJ.js[39m  [2m | [22m[2m-[22m                               [2m | [22m  [36m1.93 kB[39m[2m | [22m
+[32mchunk-653SOEEV.js[39m  [2m | [22m[2m-[22m                               [2m | [22m  [36m1.51 kB[39m[2m | [22m
+[32mchunk-HC4BT2E7.js[39m  [2m | [22m[2m-[22m                               [2m | [22m  [36m1.13 kB[39m[2m | [22m
+[32mchunk-DDBS37LA.js[39m  [2m | [22m[2m-[22m                               [2m | [22m[36m679 bytes[39m[2m | [22m
+[32mchunk-A4N4U4HS.js[39m  [2m | [22m[2m-[22m                               [2m | [22m[36m413 bytes[39m[2m | [22m
 
-                    | Initial total                       | 696.15 kB
+[1m [22m                  [2m | [22m[1mInitial total[22m                   [2m | [22m[1m810.89 kB[22m
 
-Lazy chunk files    | Names                               |  Raw size
-chunk-UCNZTUHB.js   | managestudent-component             | 111.13 kB | 
-chunk-CUYWRFCE.js   | organization-registration-component |  81.36 kB | 
-chunk-27BLR2XZ.js   | public-inquiry-component            |  79.73 kB | 
-chunk-6G5OMUTD.js   | student-admission-form-component    |  66.66 kB | 
-chunk-FGUTUJ5H.js   | counsellor-dashboard-component      |  65.48 kB | 
-chunk-5XZZBL6J.js   | manage-staff-component              |  54.61 kB | 
-chunk-RK667RQV.js   | manage-inquiry-component            |  51.53 kB | 
-chunk-4ZHTAA5W.js   | academic-year-config-component      |  48.45 kB | 
-chunk-E43ORNHR.js   | inquiry-detail-component            |  47.77 kB | 
-chunk-YMROJAMA.js   | -                                   |  44.35 kB | 
-chunk-QFRWFAJV.js   | inquiry-followup-component          |  43.73 kB | 
-chunk-TDA6ZBBR.js   | lead-detail-component               |  36.98 kB | 
-chunk-7PFQJIVQ.js   | sub-menu-component                  |  35.04 kB | 
-chunk-CWSNWPK4.js   | dashboard-component                 |  34.52 kB | 
-chunk-T6TNLY6I.js   | staff-attendance-component          |  32.57 kB | 
-...and 32 more lazy chunks files. Use "--verbose" to show all the files.
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                           [2m | [22m [1mRaw size[22m
+[32mchunk-OEHI7R5J.js[39m  [2m | [22m[2mstudents-directory-component[22m    [2m | [22m[36m379.90 kB[39m[2m | [22m
+[32mchunk-RCHXOIGE.js[39m  [2m | [22m[2macademics-workspace-component[22m   [2m | [22m[36m366.47 kB[39m[2m | [22m
+[32mchunk-QFM5WVW5.js[39m  [2m | [22m[2mprovision-organization-component[22m[2m | [22m[36m289.67 kB[39m[2m | [22m
+[32mchunk-V5BIG2ZZ.js[39m  [2m | [22m[2morganization-workspace-component[22m[2m | [22m[36m214.51 kB[39m[2m | [22m
+[32mchunk-B47IMYW3.js[39m  [2m | [22m[2mstudent-profile-360-component[22m   [2m | [22m[36m214.11 kB[39m[2m | [22m
+[32mchunk-OGO22PCB.js[39m  [2m | [22m[2mstaff-profile-360-component[22m     [2m | [22m[36m182.12 kB[39m[2m | [22m
+[32mchunk-WSTWHVRO.js[39m  [2m | [22m[2mdashboard-component[22m             [2m | [22m[36m181.38 kB[39m[2m | [22m
+[32mchunk-6BADA24R.js[39m  [2m | [22m[2mlayout-component[22m                [2m | [22m[36m177.91 kB[39m[2m | [22m
+[32mchunk-CBZ6EUNY.js[39m  [2m | [22m[2mleads-list-component[22m            [2m | [22m[36m157.50 kB[39m[2m | [22m
+[32mchunk-5VHIN7SC.js[39m  [2m | [22m[2mcreate-staff-component[22m          [2m | [22m[36m152.18 kB[39m[2m | [22m
+[32mchunk-EBHN2DOV.js[39m  [2m | [22m[2mdocument-vault-component[22m        [2m | [22m[36m140.35 kB[39m[2m | [22m
+[32mchunk-6TCYHVUI.js[39m  [2m | [22m[2mstudent-movement-component[22m      [2m | [22m[36m135.95 kB[39m[2m | [22m
+[32mchunk-M4IEI6NV.js[39m  [2m | [22m[2mlanding-component[22m               [2m | [22m[36m135.43 kB[39m[2m | [22m
+[32mchunk-XHNHRX2N.js[39m  [2m | [22m[2madmissions-overview-component[22m   [2m | [22m[36m133.18 kB[39m[2m | [22m
+[32mchunk-3UU3URM4.js[39m  [2m | [22m[2mfollow-ups-center-component[22m     [2m | [22m[36m129.40 kB[39m[2m | [22m
+[2m...and 131 more lazy chunks files. Use "--verbose" to show all the files.[22m
 
-Application bundle generation complete. [4.666 seconds]
+Application bundle generation complete. [31.387 seconds]
 
 Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
-  ➜  Local:   http://localhost:4200/
-  ➜  press h + enter to show help
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [15.184 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [1.029 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [0.644 seconds]
+
