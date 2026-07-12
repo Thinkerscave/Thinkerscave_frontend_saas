@@ -28,15 +28,15 @@ export class OrgSelectComponent {
   readonly displayOrgs = computed(() => {
     const rawQuery = this.query();
     const q = (rawQuery ?? '').toString().trim().toLowerCase();
-    const pool = q
-      ? this.orgContext.devOrganizations.filter(
-          (o) =>
-            (o.name ?? '').toLowerCase().includes(q) ||
-            (o.location ?? '').toLowerCase().includes(q) ||
-            (o.tenantId ?? '').toLowerCase().includes(q)
-        )
-      : this.orgContext.getRecentOrganizations();
-
+    if (!q) {
+      return this.orgContext.devOrganizations;
+    }
+    const pool = this.orgContext.devOrganizations.filter(
+      (o) =>
+        (o.name ?? '').toLowerCase().includes(q) ||
+        (o.location ?? '').toLowerCase().includes(q) ||
+        (o.tenantId ?? '').toLowerCase().includes(q)
+    );
     return pool.length ? pool : this.orgContext.devOrganizations;
   });
 

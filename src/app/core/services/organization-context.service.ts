@@ -76,7 +76,7 @@ export class OrganizationContextService {
   getRecentOrganizations(): DevOrganization[] {
     const raw = sessionStorage.getItem(RECENT_ORGS_KEY);
     if (!raw) {
-      return this.devOrganizations.slice(0, 3);
+      return this.devOrganizations;
     }
     try {
       const ids = JSON.parse(raw) as number[];
@@ -84,7 +84,7 @@ export class OrganizationContextService {
         .map((id) => this.devOrganizations.find((o) => o.id === id))
         .filter((o): o is DevOrganization => !!o);
     } catch {
-      return this.devOrganizations.slice(0, 3);
+      return this.devOrganizations;
     }
   }
 

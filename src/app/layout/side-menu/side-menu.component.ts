@@ -6,6 +6,7 @@ import { MenuItem } from 'primeng/api';
 import { filter } from 'rxjs';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
+import { PermissionService } from '../../core/services/permission.service';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
@@ -26,6 +27,7 @@ export class SideMenuComponent implements OnInit {
   openGroups = new Set<string>();
 
   private readonly sideMenuService = inject(MenuMappingService);
+  private readonly permissionService = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -66,6 +68,11 @@ export class SideMenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Load effective permissions and sidebar in parallel on mount
+    this.permissionService.loadPermissions()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+
     this.sideMenuService.loadMenu().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (menus) => {
         this.items = this.normalizeItems(menus);

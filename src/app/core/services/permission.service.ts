@@ -1,0 +1,116 @@
+import { Injectable, inject, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, Subscription, catchError, map, of, tap } from 'rxjs';
+import { accessApi } from '../../shared/constants/api.endpoint';
+import { ApiResponse } from '../../shared/models/auth.model';
+import { LoginService } from './login.service';
+
+export interface EffectivePermission {
+  menuId: number;
+  menuCode: string;
+  menuName: string;
+  canView: boolean;
+  canManage: boolean;
+  canApprove: boolean;
+  isOverride: boolean;
+}
+
+@Injectable({ providedIn: 'root' })
+export class PermissionService implements OnDestroy {
+  private readonly http = inject(HttpClient);
+  private readonly loginService = inject(LoginService);
+
+  private permissionCache = new Map<string, EffectivePermission>();
+  private loaded = false;
+  private readonly loginSub: Subscription;
+
+  constructor() {
+    this.loginSub = this.loginService.loginStatusSubject.subscribe((loggedIn) => {
+      if (!loggedIn) {
+        this.clearPermissions();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.loginSub.unsubscribe();
+  }
+
+  /**
+   * Fetches effective permissions from the backend and caches them by menuCode.
+   * Call this once after a successful login (e.g., from the layout component).
+   */
+  loadPermissions(): Observable<void> {
+    const user = this.loginService.getUser();
+    if (!user?.id || !user?.orgId) {
+      return of(void 0);
+    }
+
+    const userId = Number(user.id);
+    const orgId = user.orgId;
+
+    return this.http
+      .get<ApiResponse<Record<string, EffectivePermission>>>(
+        accessApi.userEffectivePermissions(orgId, userId)
+      )
+      .pipe(
+        tap((response) => {
+          if (response?.success && response.data) {
+            this.permissionCache.clear();
+            Object.values(response.data).forEach((perm) => {
+              if (perm.menuCode) {
+                this.permissionCache.set(perm.menuCode, perm);
+              }
+            });
+            this.loaded = true;
+          }
+        }),
+        map(() => void 0),
+        catchError(() => of(void 0))
+      );
+  }
+
+  /**
+   * Clears the permission cache. Called automatically on logout.
+   */
+  clearPermissions(): void {
+    this.permissionCache.clear();
+    this.loaded = false;
+  }
+
+  /**
+   * Returns true if permissions have been loaded from the backend.
+   */
+  isLoaded(): boolean {
+    return this.loaded;
+  }
+
+  /**
+   * Returns true if the user has view permission for the given menuCode.
+   * SUPER_ADMIN always returns true (handled server-side, they appear in all permissions).
+   */
+  canView(menuCode: string): boolean {
+    return this.permissionCache.get(menuCode)?.canView ?? false;
+  }
+
+  /**
+   * Returns true if the user has manage (create/edit/delete) permission for the given menuCode.
+   */
+  canManage(menuCode: string): boolean {
+    return this.permissionCache.get(menuCode)?.canManage ?? false;
+  }
+
+  /**
+   * Returns true if the user has approve permission for the given menuCode.
+   */
+  canApprove(menuCode: string): boolean {
+    return this.permissionCache.get(menuCode)?.canApprove ?? false;
+  }
+
+  /**
+   * Returns the full permission entry for a given menuCode, or undefined if not found.
+   */
+  getPermission(menuCode: string): EffectivePermission | undefined {
+    return this.permissionCache.get(menuCode);
+  }
+}
