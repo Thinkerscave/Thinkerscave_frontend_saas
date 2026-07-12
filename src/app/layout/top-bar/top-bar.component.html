@@ -5,7 +5,11 @@
     </button>
 
     <button type="button" class="brand-identity brand-identity--compact" (click)="navigateHome()" aria-label="Go to dashboard">
-      <span class="brand-logo"><img src="thinkerscave2.ico" alt="" aria-hidden="true"></span>
+      <span class="brand-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </span>
       <div class="brand-copy">
         <strong>ThinkerScave</strong>
         <small>{{ getOrganizationName() }}</small>
@@ -30,8 +34,8 @@
 
     <div class="profile-menu">
       <button type="button" class="profile-btn" (click)="userPanel.toggle($event)">
-        <div class="avatar" *ngIf="photoUrl(); else avatarInitials"><img [src]="photoUrl()" [alt]="getUserName()"></div>
-        <ng-template #avatarInitials><div class="avatar is-initials">{{ getInitials(getUserName()) }}</div></ng-template>
+        <div class="tc-avatar" *ngIf="photoUrl(); else avatarInitials"><img [src]="photoUrl()" [alt]="getUserName()"></div>
+        <ng-template #avatarInitials><div class="tc-avatar tc-avatar--initials">{{ getInitials(getUserName()) }}</div></ng-template>
         <div class="user-info">
           <span class="name">{{ getUserName() }}</span>
           <span class="role">{{ getRoleName() }}</span>
@@ -41,8 +45,8 @@
 
       <p-overlayPanel #userPanel appendTo="body" styleClass="tc-dropdown-panel user-panel">
         <div class="user-dropdown-header">
-          <div class="avatar lg" *ngIf="photoUrl(); else avatarInitialsLg"><img [src]="photoUrl()" [alt]="getUserName()"></div>
-          <ng-template #avatarInitialsLg><div class="avatar lg is-initials">{{ getInitials(getUserName()) }}</div></ng-template>
+          <div class="tc-avatar tc-avatar--lg" *ngIf="photoUrl(); else avatarInitialsLg"><img [src]="photoUrl()" [alt]="getUserName()"></div>
+          <ng-template #avatarInitialsLg><div class="tc-avatar tc-avatar--lg tc-avatar--initials">{{ getInitials(getUserName()) }}</div></ng-template>
           <div>
             <strong>{{ getUserName() }}</strong>
             <small>{{ currentUser?.userName }}</small>

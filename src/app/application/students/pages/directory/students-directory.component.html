@@ -1,46 +1,46 @@
-<section class="adm-workspace" (click)="closeMoreMenu()">
+<section class="tc-page-shell" (click)="closeMoreMenu()">
 
   <!-- ═══════════════════════════════════ HEADER ════════════════════════════════════ -->
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>Student Management</h1>
       <p>Comprehensive learner management for your institution.</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn adm-btn--primary" (click)="openAddDrawer()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()">
         <i class="pi pi-plus"></i> Add Student
       </button>
-      <button type="button" class="adm-btn" (click)="openImport()">
+      <button type="button" class="tc-btn" (click)="openImport()">
         <i class="pi pi-upload"></i> Bulk Import
       </button>
-      <button type="button" class="adm-btn" (click)="exportStudents()">
+      <button type="button" class="tc-btn" (click)="exportStudents()">
         <i class="pi pi-download"></i> Export
       </button>
     </div>
   </header>
 
   <!-- ═══════════════════════════════════ KPI TILES ════════════════════════════════ -->
-  <div class="adm-kpi-grid">
+  <div class="dash-kpi-grid">
     <button type="button" *ngFor="let tile of kpiTiles"
-            class="adm-kpi"
+            class="tc-card tc-card--kpi"
             [class.is-active]="activeKpi === tile.key"
             [attr.data-tone]="tile.tone"
             (click)="toggleKpiFilter(tile)">
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span class="adm-kpi__label">{{ tile.label }}</span>
+        <span class="kpi-header">{{ tile.label }}</span>
         <i class="pi {{ tile.icon }}" style="font-size:1.1rem; opacity:0.5;"></i>
       </div>
-      <span class="adm-kpi__value">{{ kpi[tile.key] }}</span>
-      <span class="adm-kpi__hint">{{ tile.hint }}</span>
+      <span class="kpi-body strong">{{ kpi[tile.key] }}</span>
+      <span class="kpi-body span">{{ tile.hint }}</span>
     </button>
   </div>
 
   <!-- ═══════════════════════════════════ SEARCH PANEL ════════════════════════════ -->
-  <div class="adm-panel">
-    <div class="adm-panel__header">
+  <div class="tc-card tc-card--panel">
+    <div class="tc-card__header">
       <div>
         <h2 style="margin:0 0 2px;">Student Directory</h2>
-        <small class="adm-panel__hint">{{ totalElements }} total result(s)</small>
+        <small class="tc-card tc-card--panel__hint">{{ totalElements }} total result(s)</small>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
         <div class="stu-chip-bar">
@@ -62,28 +62,28 @@
     </div>
 
     <!-- Search Filters -->
-    <div class="adm-filter-bar">
-      <div class="adm-field" style="flex:2; min-width:200px;">
+    <div class="tc-filter-bar">
+      <div class="tc-form-field" style="flex:2; min-width:200px;">
         <label>Search</label>
         <input type="text" [(ngModel)]="filter.keyword"
                placeholder="Name, Admission No., Roll No., Mobile…"
                (keyup.enter)="runSearch()"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Class</label>
         <select [(ngModel)]="filter.classId" (ngModelChange)="onClassChanged()">
           <option [ngValue]="null">All Classes</option>
           <option *ngFor="let c of classOptions" [ngValue]="c.id.toString()">{{ c.label }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Section</label>
         <select [(ngModel)]="filter.sectionId" [disabled]="!filter.classId">
           <option [ngValue]="null">All Sections</option>
           <option *ngFor="let s of sectionOptions" [ngValue]="s.id.toString()">{{ s.label }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Status</label>
         <select [(ngModel)]="filter.status">
           <option [ngValue]="null">All Status</option>
@@ -91,48 +91,48 @@
           <option [ngValue]="'INACTIVE'">Inactive</option>
         </select>
       </div>
-      <div class="adm-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
-        <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
+      <div class="tc-form-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
           <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
           Search
         </button>
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Reset</button>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
       </div>
     </div>
 
     <!-- Error -->
-    <div *ngIf="errorMessage" class="adm-toast is-error">
+    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
     <!-- Loading -->
-    <div class="adm-loading" *ngIf="loading">
+    <div class="tc-loading" *ngIf="loading">
       <i class="pi pi-spin pi-spinner"></i> Loading directory…
     </div>
 
     <!-- ════════════════ GRID VIEW ════════════════ -->
-    <div class="adm-card-grid" *ngIf="!loading && students.length && view === 'grid'">
+    <div class="dash-kpi-grid" *ngIf="!loading && students.length && view === 'grid'">
       <article *ngFor="let s of students"
-               class="adm-card"
+               class="tc-card is-clickable"
                (click)="openProfile(s)">
 
         <!-- Card Header -->
-        <header class="adm-card__head">
-          <div class="stu-photo stu-photo--initials" style="width:48px;height:48px;font-size:1rem;">
+        <header class="tc-card__header">
+          <div class="tc-avatar tc-avatar--initials" style="width:48px;height:48px;font-size:1rem;">
             <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
             <span *ngIf="!s.photoUrl">{{ initials(s.fullName) }}</span>
           </div>
-          <div class="adm-card__title">
+          <div class="tc-card__title">
             <strong>{{ s.fullName }}</strong>
             <small>{{ s.admissionNumber }} · {{ s.studentCode || '' }}</small>
           </div>
-          <span class="stu-status" [attr.data-status]="statusLabel(s)">
+          <span class="tc-badge" [attr.data-status]="statusLabel(s)">
             {{ statusLabel(s) | titlecase }}
           </span>
         </header>
 
         <!-- Card Meta -->
-        <div class="adm-card__meta">
+        <div class="tc-card__body">
           <span><i class="pi pi-book"></i> {{ s.className || '—' }} – {{ s.sectionName || '—' }}</span>
           <span><i class="pi pi-hashtag"></i> Roll {{ s.rollNumber || '—' }}</span>
           <span><i class="pi pi-phone"></i> {{ s.mobile || '—' }}</span>
@@ -142,23 +142,23 @@
         </div>
 
         <!-- Card Footer -->
-        <footer class="adm-card__footer">
+        <footer class="tc-card__footer">
           <small style="color:var(--tc-text-muted);font-size:0.74rem;">
             <i class="pi pi-calendar"></i> {{ s.dateOfBirth || 'DOB N/A' }}
           </small>
-          <div class="adm-card__actions" (click)="$event.stopPropagation()">
-            <button class="adm-icon-btn" title="View Profile" (click)="openProfile(s, $event)">
+          <div class="tc-card is-clickable__actions" (click)="$event.stopPropagation()">
+            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Profile" (click)="openProfile(s, $event)">
               <i class="pi pi-eye"></i>
             </button>
-            <button class="adm-icon-btn" title="Call" (click)="callPhone(s, $event)">
+            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(s, $event)">
               <i class="pi pi-phone"></i>
             </button>
-            <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(s, $event)">
+            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(s, $event)">
               <i class="pi pi-whatsapp"></i>
             </button>
             <!-- More Menu -->
             <div class="stu-more-menu" (click)="$event.stopPropagation()">
-              <button class="adm-icon-btn" title="More"
+              <button class="tc-btn tc-btn--ghost tc-btn--icon" title="More"
                       (click)="toggleMoreMenu(s.studentId, $event)">
                 <i class="pi pi-ellipsis-v"></i>
               </button>
@@ -180,8 +180,8 @@
     </div>
 
     <!-- ════════════════ LIST VIEW ════════════════ -->
-    <div class="stu-table-wrap" *ngIf="!loading && students.length && view === 'list'">
-      <table class="stu-table">
+    <div class="tc-table-wrap" *ngIf="!loading && students.length && view === 'list'">
+      <table class="tc-table">
         <thead>
           <tr>
             <th style="width:40px;">#</th>
@@ -200,7 +200,7 @@
             <td style="color:var(--tc-text-muted);font-size:0.8rem;">{{ pageIndex * pageSize + i + 1 }}</td>
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
-                <div class="stu-photo stu-photo--initials" style="width:36px;height:36px;font-size:0.78rem;">
+                <div class="tc-avatar tc-avatar--initials" style="width:36px;height:36px;font-size:0.78rem;">
                   <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName"
                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
                   <span *ngIf="!s.photoUrl">{{ initials(s.fullName) }}</span>
@@ -218,23 +218,23 @@
             <td>{{ s.rollNumber || '—' }}</td>
             <td>{{ s.mobile || '—' }}</td>
             <td>
-              <span class="stu-status" [attr.data-status]="statusLabel(s)">
+              <span class="tc-badge" [attr.data-status]="statusLabel(s)">
                 {{ statusLabel(s) | titlecase }}
               </span>
             </td>
             <td (click)="$event.stopPropagation()">
               <div style="display:flex;gap:4px;align-items:center;">
-                <button class="adm-icon-btn" title="View Profile" (click)="openProfile(s, $event)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Profile" (click)="openProfile(s, $event)">
                   <i class="pi pi-eye"></i>
                 </button>
-                <button class="adm-icon-btn" title="Call" (click)="callPhone(s, $event)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(s, $event)">
                   <i class="pi pi-phone"></i>
                 </button>
-                <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(s, $event)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(s, $event)">
                   <i class="pi pi-whatsapp"></i>
                 </button>
                 <div class="stu-more-menu">
-                  <button class="adm-icon-btn" (click)="toggleMoreMenu(s.studentId, $event)">
+                  <button class="tc-btn tc-btn--ghost tc-btn--icon" (click)="toggleMoreMenu(s.studentId, $event)">
                     <i class="pi pi-ellipsis-v"></i>
                   </button>
                   <div class="stu-more-menu__panel" *ngIf="openMoreMenuId === s.studentId">
@@ -257,11 +257,11 @@
     </div>
 
     <!-- Empty State -->
-    <div class="adm-empty" *ngIf="!loading && !students.length">
+    <div class="tc-empty-state" *ngIf="!loading && !students.length">
       <i class="pi pi-users"></i>
       <h3>No students found</h3>
       <p>Try adjusting your filters or add new students.</p>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="openAddDrawer()" style="margin-top:8px;">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()" style="margin-top:8px;">
         <i class="pi pi-plus"></i> Add Student
       </button>
     </div>
@@ -283,22 +283,22 @@
 <!-- ══════════════════════════════════════════════════════════
      BULK IMPORT MODAL
 ══════════════════════════════════════════════════════════ -->
-<div *ngIf="showImport" class="stu-modal-overlay" (click)="closeImport()">
-  <div class="stu-modal" (click)="$event.stopPropagation()">
-    <div class="stu-modal__head">
+<div *ngIf="showImport" class="tc-overlay" (click)="closeImport()">
+  <div class="tc-dialog" (click)="$event.stopPropagation()">
+    <div class="tc-dialog__header">
       <div>
         <h2>Bulk Import Students</h2>
         <p *ngIf="importStep === 'upload'" style="margin:4px 0 0;font-size:0.82rem;color:var(--tc-text-muted);">
           Download the template, fill it, and upload to import students.
         </p>
       </div>
-      <button type="button" class="adm-icon-btn" (click)="closeImport()">
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="closeImport()">
         <i class="pi pi-times"></i>
       </button>
     </div>
 
     <!-- Upload Step -->
-    <div class="stu-modal__body" *ngIf="importStep === 'upload'">
+    <div class="tc-dialog__body" *ngIf="importStep === 'upload'">
       <!-- Download Template -->
       <div style="background:color-mix(in srgb, var(--tc-primary-500) 8%, transparent);
                   border:1px dashed color-mix(in srgb, var(--tc-primary-500) 30%, transparent);
@@ -311,13 +311,13 @@
           <strong style="display:block;color:var(--tc-text);">Student_Import_Template.csv</strong>
           <small style="color:var(--tc-text-muted);">19 columns including student & parent details</small>
         </div>
-        <button type="button" class="adm-btn" (click)="downloadTemplate()">
+        <button type="button" class="tc-btn" (click)="downloadTemplate()">
           <i class="pi pi-download"></i> Download
         </button>
       </div>
 
       <!-- File Upload -->
-      <div class="adm-field adm-field--full">
+      <div class="tc-form-field tc-form-field--full">
         <label>Select File (CSV or Excel)</label>
         <div style="position:relative;border:2px dashed var(--tc-border);border-radius:12px;
                     padding:28px;text-align:center;transition:border-color 150ms ease;"
@@ -327,7 +327,7 @@
             Drag & drop your file here or
           </p>
           <label style="display:inline-block;cursor:pointer;">
-            <span class="adm-btn adm-btn--primary" style="display:inline-flex;">
+            <span class="tc-btn tc-btn--primary" style="display:inline-flex;">
               <i class="pi pi-folder-open"></i> Choose File
             </span>
             <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileSelected($event)"
@@ -339,13 +339,13 @@
         </div>
       </div>
 
-      <div *ngIf="importError" class="adm-toast is-error">
+      <div *ngIf="importError" class="tc-empty-state tc-empty-state--inline">
         <i class="pi pi-exclamation-triangle"></i> {{ importError }}
       </div>
     </div>
 
     <!-- Result Step -->
-    <div class="stu-modal__body" *ngIf="importStep === 'result' && importResult">
+    <div class="tc-dialog__body" *ngIf="importStep === 'result' && importResult">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
         <div style="padding:18px;border-radius:14px;background:var(--tc-surface-50);border:1px solid var(--tc-border);">
           <strong style="display:block;font-size:2rem;font-weight:800;color:var(--tc-text);">{{ importResult.total }}</strong>
@@ -360,16 +360,16 @@
           <span style="font-size:0.8rem;color:var(--tc-danger);text-transform:uppercase;font-weight:700;">Failed</span>
         </div>
       </div>
-      <button *ngIf="importResult.failed > 0" type="button" class="adm-btn" (click)="downloadErrorReport()">
+      <button *ngIf="importResult.failed > 0" type="button" class="tc-btn" (click)="downloadErrorReport()">
         <i class="pi pi-download"></i> Download Error Report
       </button>
     </div>
 
-    <div class="stu-modal__foot">
-      <button type="button" class="adm-btn" (click)="closeImport()">
+    <div class="tc-dialog__footer">
+      <button type="button" class="tc-btn" (click)="closeImport()">
         {{ importStep === 'result' ? 'Close' : 'Cancel' }}
       </button>
-      <button *ngIf="importStep === 'upload'" type="button" class="adm-btn adm-btn--primary"
+      <button *ngIf="importStep === 'upload'" type="button" class="tc-btn tc-btn--primary"
               [disabled]="!importFile || importLoading" (click)="uploadImport()">
         <i class="pi" [class.pi-upload]="!importLoading" [class.pi-spin]="importLoading" [class.pi-spinner]="importLoading"></i>
         {{ importLoading ? 'Uploading…' : 'Upload & Import' }}
@@ -382,9 +382,11 @@
      ADD STUDENT DRAWER
 ══════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="showAddDrawer">
-  <div class="stu-drawer-overlay" (click)="closeAddDrawer()"></div>
+  <div class="tc-overlay" (click)="closeAddDrawer()"></div>
   <app-add-student-drawer
     (closed)="closeAddDrawer()"
     (saved)="onStudentAdded()">
   </app-add-student-drawer>
 </ng-container>
+
+

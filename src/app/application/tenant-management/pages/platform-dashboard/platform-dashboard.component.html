@@ -1,17 +1,17 @@
-<div class="saas-page platform-dashboard">
+<div class="tc-page platform-dashboard">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty platform-dashboard__error">
+  <div *ngIf="errorMessage" class="tc-empty-state platform-dashboard__error">
     <i class="pi pi-exclamation-triangle"></i>
     <strong>{{ errorMessage }}</strong>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
   </div>
 
-  <div *ngIf="loading && !dashboard" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading platform metrics...</div>
+  <div *ngIf="loading && !dashboard" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading platform metrics...</div>
 
   <ng-container *ngIf="dashboard">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
@@ -67,3 +67,6 @@
     </div>
   </ng-container>
 </div>
+
+
+

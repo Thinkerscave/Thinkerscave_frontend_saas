@@ -1,4 +1,4 @@
-<section class="adm-workspace" style="padding-top:16px;" (click)="closeMenus()">
+<section class="tc-page-shell" style="padding-top:16px;" (click)="closeMenus()">
 
   <!-- Breadcrumb -->
   <div style="display:flex;align-items:center;gap:8px;font-size:0.84rem;margin-bottom:-8px;color:var(--tc-text-muted);">
@@ -10,12 +10,12 @@
   </div>
 
   <!-- Loading -->
-  <div class="adm-loading" *ngIf="loading">
+  <div class="tc-loading" *ngIf="loading">
     <i class="pi pi-spin pi-spinner"></i> Loading profile…
   </div>
   
   <!-- Error -->
-  <div *ngIf="errorMessage" class="adm-toast is-error">
+  <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
@@ -23,7 +23,7 @@
     
     <!-- ════════════════════════ HERO HEADER ════════════════════════ -->
     <header class="stu-hero">
-      <div class="stu-photo stu-photo--lg stu-photo--initials" style="font-size:2rem;">
+      <div class="tc-avatar tc-avatar--lg tc-avatar--initials" style="font-size:2rem;">
         <img *ngIf="profile.overview.photoUrl" [src]="profile.overview.photoUrl" [alt]="profile.overview.fullName"
              style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
         <span *ngIf="!profile.overview.photoUrl">{{ initials(profile.overview.fullName) }}</span>
@@ -32,7 +32,7 @@
       <div class="stu-hero__meta">
         <h1 style="display:flex;align-items:center;gap:10px;">
           {{ profile.overview.fullName }}
-          <span class="stu-status" [attr.data-status]="profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE')">
+          <span class="tc-badge" [attr.data-status]="profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE')">
             {{ profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE') | titlecase }}
           </span>
         </h1>
@@ -46,12 +46,12 @@
       </div>
 
       <div class="stu-hero__actions">
-        <button type="button" class="adm-btn adm-btn--primary" (click)="go('PERSONAL')">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="go('PERSONAL')">
           <i class="pi pi-pencil"></i> Edit Profile
         </button>
         
         <div class="stu-more-menu">
-          <button type="button" class="adm-icon-btn" style="background:var(--tc-surface-0);" 
+          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" style="background:var(--tc-surface-0);" 
                   (click)="toggleMoreActions($event)">
             <i class="pi pi-ellipsis-v"></i>
           </button>
@@ -161,7 +161,7 @@
                 <div><span>Academic Year</span><strong>{{ profile.academics.academicYear || '—' }}</strong></div>
                 <div><span>Admission Date</span><strong>{{ profile.academics.admissionDate || '—' }}</strong></div>
                 <div><span>Enrollment Status</span>
-                  <span class="stu-status" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
+                  <span class="tc-badge" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
                     {{ profile.academics.enrollmentStatus || 'Active' | titlecase }}
                   </span>
                 </div>
@@ -189,7 +189,7 @@
 
           <!-- Right: Rings -->
           <div class="stu-aside">
-            <div class="adm-panel" style="align-items:center;text-align:center;">
+            <div class="tc-card tc-card--panel" style="align-items:center;text-align:center;">
               <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Attendance</h3>
               <div class="stu-ring">
                 <svg viewBox="0 0 100 100">
@@ -212,7 +212,7 @@
               </div>
             </div>
 
-            <div class="adm-panel">
+            <div class="tc-card tc-card--panel">
               <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Fees Overview</h3>
               <div class="stu-fee-bar" style="margin:10px 0;">
                 <span [style.width.%]="feePercent()"></span>
@@ -228,10 +228,10 @@
 
       <!-- ================= PERSONAL TAB ================= -->
       <ng-container *ngIf="activeTab === 'PERSONAL'">
-        <div class="adm-panel" *ngIf="!editingPersonal">
-          <div class="adm-panel__header">
+        <div class="tc-card tc-card--panel" *ngIf="!editingPersonal">
+          <div class="tc-card__header">
             <h2>Personal Details</h2>
-            <button class="adm-btn" (click)="startEditPersonal()">
+            <button class="tc-btn" (click)="startEditPersonal()">
               <i class="pi pi-pencil"></i> Edit
             </button>
           </div>
@@ -269,20 +269,20 @@
         </div>
 
         <!-- Inline Edit: Personal -->
-        <div class="adm-panel stu-inline-edit" *ngIf="editingPersonal">
+        <div class="tc-card tc-card--panel stu-inline-edit" *ngIf="editingPersonal">
           <div class="stu-inline-edit__header">
             <h3>Edit Personal Details</h3>
           </div>
           <div class="stu-inline-edit__form">
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>First Name</label>
               <input type="text" [(ngModel)]="personalForm.firstName"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Last Name</label>
               <input type="text" [(ngModel)]="personalForm.lastName"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Gender</label>
               <select [(ngModel)]="personalForm.gender">
                 <option value="Male">Male</option>
@@ -290,34 +290,34 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Date of Birth</label>
               <input type="date" [(ngModel)]="personalForm.dateOfBirth"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Mobile</label>
               <input type="tel" [(ngModel)]="personalForm.mobile"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Email</label>
               <input type="email" [(ngModel)]="personalForm.email"/>
             </div>
-            <div class="adm-field adm-field--full">
+            <div class="tc-form-field tc-form-field--full">
               <label>Current Address</label>
               <input type="text" [(ngModel)]="personalForm.currentAddressLine1"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>City</label>
               <input type="text" [(ngModel)]="personalForm.currentCity"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>State</label>
               <input type="text" [(ngModel)]="personalForm.currentState"/>
             </div>
           </div>
           <div class="stu-inline-edit__actions">
-            <button class="adm-btn adm-btn--ghost" (click)="cancelEditPersonal()">Cancel</button>
-            <button class="adm-btn adm-btn--primary" (click)="savePersonal()">Save Changes</button>
+            <button class="tc-btn tc-btn--ghost" (click)="cancelEditPersonal()">Cancel</button>
+            <button class="tc-btn tc-btn--primary" (click)="savePersonal()">Save Changes</button>
           </div>
         </div>
       </ng-container>
@@ -325,7 +325,7 @@
       <!-- ================= FAMILY TAB ================= -->
       <ng-container *ngIf="activeTab === 'FAMILY'">
         <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-          <button class="adm-btn adm-btn--primary"><i class="pi pi-plus"></i> Add Guardian</button>
+          <button class="tc-btn tc-btn--primary"><i class="pi pi-plus"></i> Add Guardian</button>
         </div>
         
         <div class="stu-family-grid">
@@ -334,11 +334,11 @@
                [class.stu-family-card--primary]="g.isPrimaryContact">
             
             <div class="stu-family-card__actions">
-              <button class="adm-icon-btn"><i class="pi pi-pencil"></i></button>
+              <button class="tc-btn tc-btn--ghost tc-btn--icon"><i class="pi pi-pencil"></i></button>
             </div>
 
             <div class="stu-family-card__head">
-              <div class="stu-photo stu-photo--initials">
+              <div class="tc-avatar tc-avatar--initials">
                 <img *ngIf="g.photoUrl" [src]="g.photoUrl"/>
                 <span *ngIf="!g.photoUrl">{{ initials(g.name) }}</span>
               </div>
@@ -365,8 +365,8 @@
 
       <!-- ================= ACADEMICS TAB ================= -->
       <ng-container *ngIf="activeTab === 'ACADEMICS'">
-        <div class="adm-panel">
-          <div class="adm-panel__header">
+        <div class="tc-card tc-card--panel">
+          <div class="tc-card__header">
             <h2>Current Enrollment</h2>
           </div>
           <dl class="adm-dl">
@@ -377,7 +377,7 @@
             <div><dt>Enrollment Date</dt><dd>{{ profile.academics.enrollmentDate || '—' }}</dd></div>
             <div><dt>Status</dt>
               <dd>
-                <span class="stu-status" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
+                <span class="tc-badge" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
                   {{ profile.academics.enrollmentStatus || 'Active' | titlecase }}
                 </span>
               </dd>
@@ -385,13 +385,13 @@
           </dl>
         </div>
 
-        <div class="adm-panel">
-          <div class="adm-panel__header">
+        <div class="tc-card tc-card--panel">
+          <div class="tc-card__header">
             <h2>Academic History</h2>
-            <button class="adm-btn"><i class="pi pi-print"></i> Generate Transcript</button>
+            <button class="tc-btn"><i class="pi pi-print"></i> Generate Transcript</button>
           </div>
-          <div class="stu-table-wrap">
-            <table class="stu-table">
+          <div class="tc-table-wrap">
+            <table class="tc-table">
               <thead>
                 <tr>
                   <th>Academic Year</th>
@@ -409,7 +409,7 @@
                   <td>{{ h.sectionName }}</td>
                   <td>{{ h.rollNumber || '—' }}</td>
                   <td>
-                    <span class="stu-status" [attr.data-status]="h.result === 'Promoted' ? 'ACTIVE' : 'neutral'">
+                    <span class="tc-badge" [attr.data-status]="h.result === 'Promoted' ? 'ACTIVE' : 'neutral'">
                       {{ h.result || '—' }}
                     </span>
                   </td>
@@ -427,7 +427,7 @@
       <!-- ================= DOCUMENTS TAB ================= -->
       <ng-container *ngIf="activeTab === 'DOCUMENTS'">
         <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-          <button class="adm-btn adm-btn--primary"><i class="pi pi-upload"></i> Upload Document</button>
+          <button class="tc-btn tc-btn--primary"><i class="pi pi-upload"></i> Upload Document</button>
         </div>
 
         <div class="stu-doc-grid">
@@ -439,17 +439,17 @@
               <div style="flex:1;">
                 <div class="stu-doc-card__name">{{ d.documentName }}</div>
                 <div class="stu-doc-card__meta">{{ d.uploadedDate || 'Not uploaded' }}</div>
-                <span class="stu-status" style="margin-top:6px;" [attr.data-status]="d.status">
+                <span class="tc-badge" style="margin-top:6px;" [attr.data-status]="d.status">
                   {{ d.status | titlecase }}
                 </span>
               </div>
             </div>
             
             <div class="stu-doc-card__actions">
-              <button class="adm-btn" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status !== 'MISSING'">
+              <button class="tc-btn" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status !== 'MISSING'">
                 <i class="pi pi-eye"></i> View
               </button>
-              <button class="adm-btn adm-btn--primary" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status === 'MISSING'">
+              <button class="tc-btn tc-btn--primary" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status === 'MISSING'">
                 <i class="pi pi-upload"></i> Upload
               </button>
             </div>
@@ -459,10 +459,10 @@
 
       <!-- ================= MEDICAL TAB ================= -->
       <ng-container *ngIf="activeTab === 'MEDICAL'">
-        <div class="adm-panel" *ngIf="!editingMedical">
-          <div class="adm-panel__header">
+        <div class="tc-card tc-card--panel" *ngIf="!editingMedical">
+          <div class="tc-card__header">
             <h2>Medical Information</h2>
-            <button class="adm-btn" (click)="startEditMedical()">
+            <button class="tc-btn" (click)="startEditMedical()">
               <i class="pi pi-pencil"></i> Edit
             </button>
           </div>
@@ -505,12 +505,12 @@
         </div>
 
         <!-- Inline Edit: Medical -->
-        <div class="adm-panel stu-inline-edit" *ngIf="editingMedical">
+        <div class="tc-card tc-card--panel stu-inline-edit" *ngIf="editingMedical">
           <div class="stu-inline-edit__header">
             <h3>Edit Medical Details</h3>
           </div>
           <div class="stu-inline-edit__form">
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Blood Group</label>
               <select [(ngModel)]="medicalForm.bloodGroup">
                 <option value="A+">A+</option>
@@ -523,38 +523,38 @@
                 <option value="AB-">AB-</option>
               </select>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Doctor Name</label>
               <input type="text" [(ngModel)]="medicalForm.doctorName"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>Doctor Contact</label>
               <input type="tel" [(ngModel)]="medicalForm.doctorContact"/>
             </div>
-            <div class="adm-field adm-field--full">
+            <div class="tc-form-field tc-form-field--full">
               <label>Allergies</label>
               <textarea [(ngModel)]="medicalForm.allergies"></textarea>
             </div>
-            <div class="adm-field adm-field--full">
+            <div class="tc-form-field tc-form-field--full">
               <label>Medical Conditions</label>
               <textarea [(ngModel)]="medicalForm.medicalConditions"></textarea>
             </div>
-            <div class="adm-field adm-field--full">
+            <div class="tc-form-field tc-form-field--full">
               <label>Emergency Notes</label>
               <textarea [(ngModel)]="medicalForm.emergencyNotes"></textarea>
             </div>
           </div>
           <div class="stu-inline-edit__actions">
-            <button class="adm-btn adm-btn--ghost" (click)="cancelEditMedical()">Cancel</button>
-            <button class="adm-btn adm-btn--primary" (click)="saveMedical()">Save Changes</button>
+            <button class="tc-btn tc-btn--ghost" (click)="cancelEditMedical()">Cancel</button>
+            <button class="tc-btn tc-btn--primary" (click)="saveMedical()">Save Changes</button>
           </div>
         </div>
       </ng-container>
 
       <!-- ================= TIMELINE TAB ================= -->
       <ng-container *ngIf="activeTab === 'TIMELINE'">
-        <div class="adm-panel">
-          <div class="adm-panel__header">
+        <div class="tc-card tc-card--panel">
+          <div class="tc-card__header">
             <h2>Activity Timeline</h2>
             <div class="stu-timeline-filters">
               <button [class.is-active]="timelineFilter === 'TODAY'" (click)="setTimelineFilter('TODAY')">Today</button>
@@ -577,7 +577,7 @@
             </div>
           </div>
           
-          <div class="adm-empty" *ngIf="!filteredTimeline.length" style="padding:32px 0;">
+          <div class="tc-empty-state" *ngIf="!filteredTimeline.length" style="padding:32px 0;">
             <i class="pi pi-history"></i>
             <h3>No activities found</h3>
             <p>No timeline events match the selected filter.</p>
@@ -588,3 +588,4 @@
     </div>
   </ng-container>
 </section>
+

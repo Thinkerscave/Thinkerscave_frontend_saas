@@ -1,19 +1,19 @@
-<div class="saas-page migration-center">
+<div class="tc-page migration-center">
   <p-toast position="top-right"></p-toast>
 
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty migration-center__error">
+  <div *ngIf="errorMessage" class="tc-empty-state migration-center__error">
     <i class="pi pi-exclamation-triangle"></i>
     <strong>{{ errorMessage }}</strong>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
   </div>
 
-  <div *ngIf="loading && !jobs.length && !tenants.length" class="saas-loading">
+  <div *ngIf="loading && !jobs.length && !tenants.length" class="tc-loading">
     <i class="pi pi-spin pi-spinner"></i> Loading migration center...
   </div>
 
@@ -22,13 +22,13 @@
 
     <div class="migration-center__grid">
       <tc-saas-panel title="Provisioning Jobs" subtitle="Recent tenant provisioning and onboarding runs">
-      <div *ngIf="!jobs.length && !loading" class="saas-empty">
+      <div *ngIf="!jobs.length && !loading" class="tc-empty-state">
         <i class="pi pi-cog"></i>
         <strong>No provisioning jobs</strong>
         <p>Jobs appear here when organizations are provisioned.</p>
       </div>
 
-      <div *ngIf="jobs.length" class="saas-table-wrap">
+      <div *ngIf="jobs.length" class="tc-table-wrap">
         <table class="saas-data-table migration-center__table">
           <thead>
             <tr>
@@ -58,7 +58,7 @@
                 <button
                   *ngIf="job.status === 'FAILED'"
                   type="button"
-                  class="saas-btn saas-btn--sm saas-btn--primary"
+                  class="tc-btn tc-btn--sm tc-btn--primary"
                   [disabled]="retryingId === job.id"
                   (click)="retryJob(job)">
                   <i class="pi" [ngClass]="retryingId === job.id ? 'pi-spin pi-spinner' : 'pi-replay'"></i>
@@ -73,18 +73,18 @@
 
     <tc-saas-panel title="Tenant Registry" subtitle="Schema versions, storage and migration status per tenant">
       <ng-container panel-actions>
-        <button *ngIf="outdatedTenants.length > 0" type="button" class="saas-btn saas-btn--primary" (click)="migrateAllOutdated()">
+        <button *ngIf="outdatedTenants.length > 0" type="button" class="tc-btn tc-btn--primary" (click)="migrateAllOutdated()">
           <i class="pi pi-bolt"></i> Migrate {{ outdatedTenants.length }} Out-of-Sync
         </button>
       </ng-container>
 
-      <div *ngIf="!tenants.length && !loading" class="saas-empty">
+      <div *ngIf="!tenants.length && !loading" class="tc-empty-state">
         <i class="pi pi-database"></i>
         <strong>No tenants registered</strong>
         <p>Provision an organization to create tenant registry entries.</p>
       </div>
 
-      <div *ngIf="tenants.length" class="saas-table-wrap">
+      <div *ngIf="tenants.length" class="tc-table-wrap">
         <table class="saas-data-table migration-center__table">
           <thead>
             <tr>
@@ -118,7 +118,7 @@
               <td class="cell-actions">
                 <button
                   type="button"
-                  class="saas-btn saas-btn--sm"
+                  class="tc-btn tc-btn--sm"
                   [disabled]="migratingId === tenant.id"
                   (click)="triggerMigration(tenant)">
                   <i class="pi" [ngClass]="migratingId === tenant.id ? 'pi-spin pi-spinner' : 'pi-arrow-right-arrow-left'"></i>
@@ -133,3 +133,6 @@
     </div>
   </ng-container>
 </div>
+
+
+

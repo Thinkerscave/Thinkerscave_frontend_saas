@@ -3,7 +3,7 @@
     [title]="notice?.title || 'Announcement'"
     subtitle="Delivery report and recipient breakdown"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements',route:'/app/communication/announcements'},{label:notice?.title || 'Detail'}]">
-    <a class="saas-btn" routerLink="/app/communication/announcements"><i class="pi pi-arrow-left"></i>Back</a>
+    <a class="tc-btn" routerLink="/app/communication/announcements"><i class="pi pi-arrow-left"></i>Back</a>
   </tc-saas-page-header>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading announcement...</div>
@@ -51,3 +51,5 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+

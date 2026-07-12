@@ -1,0 +1,91 @@
+/* Tables */
+.tc-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card);
+}
+
+.tc-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--tc-font-size-sm);
+
+  th {
+    background: var(--tc-table-header-bg);
+    color: var(--tc-text-muted);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--tc-border);
+    white-space: nowrap;
+    
+    &.is-sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--tc-anim-duration-fast) ease, color var(--tc-anim-duration-fast) ease;
+      
+      &:hover {
+        background: var(--tc-surface-hover);
+        color: var(--tc-heading);
+      }
+      
+      i {
+        margin-left: 0.25rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--tc-border);
+    color: var(--tc-text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr {
+    transition: background-color var(--tc-anim-duration-fast) ease;
+    
+    &:hover {
+      background: var(--tc-table-row-hover-bg);
+    }
+    
+    &.is-clickable {
+      cursor: pointer;
+    }
+  }
+}
+
+/* Common cell utilities */
+.tc-table__avatar-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .info {
+    display: flex;
+    flex-direction: column;
+    
+    strong {
+      color: var(--tc-heading);
+      font-weight: 500;
+    }
+    
+    small {
+      color: var(--tc-text-muted);
+      font-size: var(--tc-font-size-xs);
+    }
+  }
+}
+
+.tc-table__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

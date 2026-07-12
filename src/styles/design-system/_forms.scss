@@ -1,0 +1,104 @@
+/* Forms */
+.tc-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-4);
+}
+
+.tc-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tc-space-4);
+  
+  > * {
+    flex: 1 1 200px;
+  }
+}
+
+.tc-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tc-form-label {
+  font-size: var(--tc-font-size-sm);
+  font-weight: 500;
+  color: var(--tc-heading);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  .required {
+    color: var(--tc-danger);
+    margin-left: 0.25rem;
+  }
+}
+
+.tc-form-control {
+  appearance: none;
+  background: var(--tc-input-bg);
+  border: 1px solid var(--tc-input-border);
+  border-radius: var(--tc-radius-md);
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text);
+  width: 100%;
+  transition: border-color var(--tc-anim-duration-fast) ease, box-shadow var(--tc-anim-duration-fast) ease;
+  
+  &::placeholder {
+    color: var(--tc-input-placeholder);
+  }
+  
+  &:hover:not(:disabled) {
+    border-color: var(--tc-input-hover-border);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--tc-input-focus-border);
+    box-shadow: var(--tc-focus-ring);
+  }
+  
+  &:disabled {
+    background: var(--tc-surface-100);
+    color: var(--tc-text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  &.has-error {
+    border-color: var(--tc-danger);
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+    }
+  }
+}
+
+select.tc-form-control {
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+:root.tc-theme-dark select.tc-form-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.tc-form-hint {
+  font-size: var(--tc-font-size-xs);
+  color: var(--tc-text-muted);
+  margin-top: 0.125rem;
+}
+
+.tc-form-error {
+  font-size: var(--tc-font-size-xs);
+  color: var(--tc-danger);
+  margin-top: 0.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

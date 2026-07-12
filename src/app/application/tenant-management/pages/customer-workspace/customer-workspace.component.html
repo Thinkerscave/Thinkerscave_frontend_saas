@@ -1,4 +1,4 @@
-<div class="saas-page customer-workspace">
+<div class="tc-page customer-workspace">
   <p-toast position="top-right"></p-toast>
 
   <tc-saas-page-header>
@@ -12,21 +12,21 @@
         <span class="customer-workspace__code">{{ customer.customerCode }}</span>
       </div>
     </div>
-    <button type="button" class="saas-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
-    <button type="button" class="saas-btn" *ngIf="customer" (click)="edit()"><i class="pi pi-pencil"></i> Edit</button>
-    <button type="button" class="saas-btn saas-btn--primary" *ngIf="customer" (click)="addOrganization()">
+    <button type="button" class="tc-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
+    <button type="button" class="tc-btn" *ngIf="customer" (click)="edit()"><i class="pi pi-pencil"></i> Edit</button>
+    <button type="button" class="tc-btn tc-btn--primary" *ngIf="customer" (click)="addOrganization()">
       <i class="pi pi-plus"></i> Add Organization
     </button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty customer-workspace__error">
+  <div *ngIf="errorMessage" class="tc-empty-state customer-workspace__error">
     <i class="pi pi-exclamation-triangle"></i>
     <strong>{{ errorMessage }}</strong>
-    <button type="button" class="saas-btn" (click)="load(customerId)"><i class="pi pi-refresh"></i> Retry</button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="back()">Back to customers</button>
+    <button type="button" class="tc-btn" (click)="load(customerId)"><i class="pi pi-refresh"></i> Retry</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="back()">Back to customers</button>
   </div>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading customer…</div>
+  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading customer…</div>
 
   <ng-container *ngIf="!loading && customer">
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
@@ -76,8 +76,8 @@
         <div class="customer-workspace__grid customer-workspace__grid--single">
           <tc-saas-panel title="Quick Actions">
             <div class="customer-workspace__actions">
-              <button type="button" class="saas-btn" (click)="edit()"><i class="pi pi-pencil"></i> Edit Customer</button>
-              <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()"><i class="pi pi-building"></i> Add Organization</button>
+              <button type="button" class="tc-btn" (click)="edit()"><i class="pi pi-pencil"></i> Edit Customer</button>
+              <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()"><i class="pi pi-building"></i> Add Organization</button>
             </div>
           </tc-saas-panel>
         </div>
@@ -93,16 +93,16 @@
               <button type="button" [class.is-active]="orgViewMode === 'cards'" (click)="orgViewMode = 'cards'" title="Card view" aria-label="Switch organizations to card view"><i class="pi pi-th-large"></i></button>
               <button type="button" [class.is-active]="orgViewMode === 'table'" (click)="orgViewMode = 'table'" title="Table view" aria-label="Switch organizations to table view"><i class="pi pi-list"></i></button>
             </div>
-            <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">
+            <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()">
               <i class="pi pi-plus"></i> Add Organization
             </button>
           </ng-container>
 
-          <div *ngIf="!organizations.length" class="saas-empty">
+          <div *ngIf="!organizations.length" class="tc-empty-state">
             <i class="pi pi-building"></i>
             <strong>No organizations yet</strong>
             <p>Provision the first institution under this customer account.</p>
-            <button type="button" class="saas-btn saas-btn--primary" (click)="addOrganization()">Add Organization</button>
+            <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()">Add Organization</button>
           </div>
 
           <div *ngIf="organizations.length && orgViewMode === 'cards'" class="customer-workspace__contact-grid">
@@ -121,7 +121,7 @@
             </article>
           </div>
 
-          <div *ngIf="organizations.length && orgViewMode === 'table'" class="saas-table-wrap">
+          <div *ngIf="organizations.length && orgViewMode === 'table'" class="tc-table-wrap">
             <table class="saas-data-table">
               <thead>
                 <tr>
@@ -177,11 +177,11 @@
       <!-- Contacts -->
       <section *ngSwitchCase="'contacts'" class="customer-workspace__tab">
         <tc-saas-panel title="Contacts" [subtitle]="contacts.length + ' contact(s)'">
-          <div *ngIf="!contacts.length" class="saas-empty">
+          <div *ngIf="!contacts.length" class="tc-empty-state">
             <i class="pi pi-users"></i>
             <strong>No contacts on file</strong>
             <p>Edit the customer to add a primary contact.</p>
-            <button type="button" class="saas-btn saas-btn--primary" (click)="edit()">Edit Customer</button>
+            <button type="button" class="tc-btn tc-btn--primary" (click)="edit()">Edit Customer</button>
           </div>
 
           <div *ngIf="contacts.length" class="customer-workspace__contact-grid">
@@ -204,8 +204,8 @@
                 <tc-saas-pill *ngIf="c.supportContact" label="Support" tone="neutral"></tc-saas-pill>
               </div>
               <footer class="contact-card__actions">
-                <a *ngIf="c.email" [href]="'mailto:' + c.email" class="saas-btn saas-btn--ghost saas-btn--sm"><i class="pi pi-envelope"></i> Email</a>
-                <a *ngIf="c.mobileNumber" [href]="'tel:' + c.mobileNumber" class="saas-btn saas-btn--ghost saas-btn--sm"><i class="pi pi-phone"></i> Call</a>
+                <a *ngIf="c.email" [href]="'mailto:' + c.email" class="tc-btn tc-btn--ghost tc-btn--sm"><i class="pi pi-envelope"></i> Email</a>
+                <a *ngIf="c.mobileNumber" [href]="'tel:' + c.mobileNumber" class="tc-btn tc-btn--ghost tc-btn--sm"><i class="pi pi-phone"></i> Call</a>
               </footer>
             </article>
           </div>
@@ -215,11 +215,11 @@
       <!-- Documents -->
       <section *ngSwitchCase="'documents'" class="customer-workspace__tab">
         <tc-saas-panel title="Documents" subtitle="Contracts, invoices, and uploaded files">
-          <div class="saas-empty">
+          <div class="tc-empty-state">
             <i class="pi pi-folder-open"></i>
             <strong>Coming Soon</strong>
             <p>Document management for customer accounts will be available in a future release.</p>
-            <button type="button" class="saas-btn saas-btn--primary" disabled><i class="pi pi-upload"></i> Upload Document</button>
+            <button type="button" class="tc-btn tc-btn--primary" disabled><i class="pi pi-upload"></i> Upload Document</button>
           </div>
         </tc-saas-panel>
       </section>
@@ -227,9 +227,9 @@
       <!-- Activity -->
       <section *ngSwitchCase="'activity'" class="customer-workspace__tab">
         <tc-saas-panel title="Activity Timeline" subtitle="Recent actions and lifecycle events">
-          <div *ngIf="auditLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading timeline…</div>
+          <div *ngIf="auditLoading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading timeline…</div>
 
-          <div *ngIf="!auditLoading && !auditLogs.length" class="saas-empty">
+          <div *ngIf="!auditLoading && !auditLogs.length" class="tc-empty-state">
             <i class="pi pi-history"></i>
             <strong>No activity events found</strong>
             <p>No customer-scoped events were returned from the platform stream.</p>
@@ -253,3 +253,6 @@
     </ng-container>
   </ng-container>
 </div>
+
+
+

@@ -316,3 +316,4 @@ export class OrganizationWorkspaceComponent implements OnInit {
     this.messages.add({ severity, summary, detail, life: 4000 });
   }
 }
+

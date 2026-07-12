@@ -1,6 +1,6 @@
 <div class="saas-page roles-list">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> New Role</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> New Role</button>
   </tc-saas-page-header>
 
   <p-toast></p-toast>
@@ -20,8 +20,8 @@
         </label>
         <label class="saas-field"><span>Description</span><input [(ngModel)]="draft.description" placeholder="Optional description"></label>
         <div class="roles-list__form-actions">
-          <button type="button" class="saas-btn" (click)="closeCreate()">Cancel</button>
-          <button type="button" class="saas-btn saas-btn--primary" [disabled]="saving" (click)="submitCreate()">
+          <button type="button" class="tc-btn" (click)="closeCreate()">Cancel</button>
+          <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="submitCreate()">
             <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Role
           </button>
         </div>
@@ -58,3 +58,5 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+

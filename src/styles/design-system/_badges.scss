@@ -1,0 +1,65 @@
+/* Badges */
+.tc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border-radius: var(--tc-radius-pill);
+  background: var(--tc-surface-200);
+  color: var(--tc-surface-700);
+  border: 1px solid var(--tc-border);
+  line-height: 1.5;
+  white-space: nowrap;
+
+  i.pi {
+    font-size: 0.65rem;
+  }
+}
+
+.tc-badge--success {
+  background: var(--tc-success-soft);
+  color: var(--tc-success);
+  border-color: color-mix(in srgb, var(--tc-success) 30%, transparent);
+}
+
+.tc-badge--warning {
+  background: var(--tc-warning-soft);
+  color: var(--tc-warning);
+  border-color: color-mix(in srgb, var(--tc-warning) 30%, transparent);
+}
+
+.tc-badge--danger {
+  background: var(--tc-danger-soft);
+  color: var(--tc-danger);
+  border-color: color-mix(in srgb, var(--tc-danger) 30%, transparent);
+}
+
+.tc-badge--info {
+  background: var(--tc-info-soft);
+  color: var(--tc-info);
+  border-color: color-mix(in srgb, var(--tc-info) 30%, transparent);
+}
+
+.tc-badge--primary {
+  background: var(--tc-primary-50);
+  color: var(--tc-primary-600);
+  border-color: color-mix(in srgb, var(--tc-primary-600) 30%, transparent);
+}
+
+/* Status dots */
+.tc-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tc-surface-400);
+  
+  &--success { background: var(--tc-success); }
+  &--warning { background: var(--tc-warning); }
+  &--danger { background: var(--tc-danger); }
+  &--info { background: var(--tc-info); }
+  &--primary { background: var(--tc-primary-500); }
+}

@@ -1,29 +1,31 @@
 <section class="role-dashboard-workspace">
   @if (loading) {
-    <div class="dash-loading-state tc-animate-fade-in">
-      <span class="loading-spinner"><i class="pi pi-spin pi-spinner"></i></span>
+    <div class="tc-loading tc-animate-fade-in">
+      <i class="pi pi-spin pi-spinner"></i>
       <strong>Loading dashboard workspace...</strong>
     </div>
   } @else if (errorMessage) {
-    <div class="dash-error-state tc-animate-fade-in">
-      <span class="error-icon"><i class="pi pi-exclamation-triangle"></i></span>
-      <strong>{{ errorMessage }}</strong>
-      <button type="button" class="dash-command-button primary" (click)="loadWorkspace()">
-        <i class="pi pi-refresh"></i> Retry Connection
-      </button>
+    <div class="tc-empty-state tc-animate-fade-in">
+      <div class="tc-empty-state__icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <h3 class="tc-empty-state__title">{{ errorMessage }}</h3>
+      <div class="tc-empty-state__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="loadWorkspace()">
+          <i class="pi pi-refresh"></i> Retry Connection
+        </button>
+      </div>
     </div>
   } @else if (workspace) {
-    <header class="dash-hero tc-animate-slide-down">
-      <div class="dash-hero-copy">
-        <span class="dash-eyebrow">{{ workspace.context.primaryRoleName }} · {{ workspace.context.organizationName }}</span>
-        <h1>{{ greeting }} {{ workspace.context.displayName.split(' ')[0] }}</h1>
-        <p>{{ workspace.context.focusMessage }}</p>
+    <header class="tc-page-header tc-animate-slide-down">
+      <div class="tc-page-header__main">
+        <p class="tc-page-header__subtitle">{{ workspace.context.primaryRoleName }} · {{ workspace.context.organizationName }}</p>
+        <h1 class="tc-page-header__title">{{ greeting }} {{ workspace.context.displayName.split(' ')[0] }}</h1>
+        <p class="tc-page-header__subtitle">{{ workspace.context.focusMessage }}</p>
       </div>
-      <div class="dash-hero-tools">
-        <button type="button" class="dash-command-button primary tc-hover-lift" (click)="primaryActionClicked()">
+      <div class="tc-page-header__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="primaryActionClicked()">
           <i class="pi pi-plus"></i> {{ getPrimaryActionLabel() }}
         </button>
-        <button type="button" class="dash-icon-button" (click)="loadWorkspace()" title="Refresh Dashboard">
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--icon" (click)="loadWorkspace()" title="Refresh Dashboard">
           <i class="pi pi-refresh"></i>
         </button>
       </div>
@@ -34,44 +36,47 @@
       (actionSelected)="onActionSelected($event)">
     </tc-role-dashboard-renderer>
 
-    <aside class="dash-detail-drawer" [class.is-open]="!!selectedResult" aria-live="polite">
-      @if (selectedResult) {
-        <div class="dash-detail-panel">
-          <header>
-            <div>
-              <span>{{ selectedResult.entityType }}</span>
-              <h2>{{ selectedResult.title }}</h2>
-            </div>
-            <button type="button" class="dash-icon-button" (click)="closeResult()" title="Close details">
-              <i class="pi pi-times"></i>
-            </button>
-          </header>
-          <div class="dash-detail-hero" [attr.data-tone]="selectedResult.tone">
-            <span><i [class]="selectedResult.icon"></i></span>
-            <div>
-              <strong>{{ selectedResult.subtitle || selectedResult.entityId }}</strong>
-              <p>{{ selectedResult.detail }}</p>
-            </div>
-          </div>
-          
-          @if (metadataEntries(selectedResult).length) {
-            <dl class="dash-detail-grid">
-              @for (entry of metadataEntries(selectedResult); track entry.key) {
-                <div>
-                  <dt>{{ entry.key }}</dt>
-                  <dd>{{ entry.value }}</dd>
-                </div>
-              }
-            </dl>
-          }
-          
-          @if (selectedResult.route) {
-            <button type="button" class="dash-command-button primary" (click)="openRoute(selectedResult.route)">
-              <i class="pi pi-arrow-up-right"></i> Open {{ selectedResult.entityType }}
-            </button>
-          }
+    @if (selectedResult) {
+    <aside class="tc-drawer tc-drawer--open" aria-live="polite">
+      <div class="tc-drawer__header">
+        <div>
+          <span class="tc-badge">{{ selectedResult.entityType }}</span>
+          <h2>{{ selectedResult.title }}</h2>
         </div>
-      }
+        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="closeResult()" title="Close details">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      
+      <div class="tc-drawer__body">
+        <div class="dash-detail-hero" [attr.data-tone]="selectedResult.tone">
+          <div class="tc-avatar tc-avatar--lg"><i [class]="selectedResult.icon"></i></div>
+          <div>
+            <strong>{{ selectedResult.subtitle || selectedResult.entityId }}</strong>
+            <p>{{ selectedResult.detail }}</p>
+          </div>
+        </div>
+        
+        @if (metadataEntries(selectedResult!).length) {
+          <dl class="dash-detail-grid">
+            @for (entry of metadataEntries(selectedResult!); track entry.key) {
+              <div>
+                <dt>{{ entry.key }}</dt>
+                <dd>{{ entry.value }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      </div>
+      
+      <div class="tc-drawer__footer">
+        @if (selectedResult.route) {
+          <button type="button" class="tc-btn tc-btn--primary" (click)="openRoute(selectedResult.route!)">
+            <i class="pi pi-arrow-up-right"></i> Open {{ selectedResult.entityType }}
+          </button>
+        }
+      </div>
     </aside>
+    }
   }
 </section>

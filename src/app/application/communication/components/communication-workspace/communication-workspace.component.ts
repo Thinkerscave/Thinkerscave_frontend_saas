@@ -96,3 +96,4 @@ export class CommunicationWorkspaceComponent implements OnInit {
       });
   }
 }
+

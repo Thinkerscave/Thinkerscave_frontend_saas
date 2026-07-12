@@ -1,25 +1,25 @@
-<section class="adm-workspace">
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+<section class="tc-page-shell">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>{{ pageConfig.title }}</h1>
       <p>{{ pageConfig.description }}</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn" (click)="load()" [disabled]="loading()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()">
         <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
       </button>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="newLead()">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="newLead()">
         <i class="pi pi-plus"></i> New Lead
       </button>
     </div>
   </header>
 
   @if (error()) {
-    <div class="adm-empty" role="alert">
+    <div class="tc-empty-state" role="alert">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>Could not load overview</h3>
       <p>{{ error() }}</p>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
   } @else if (loading()) {
     <div class="adm-skeleton-grid" aria-busy="true" aria-label="Loading overview">
@@ -27,7 +27,7 @@
         <div class="adm-skeleton"></div>
       }
     </div>
-    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading pipeline summary…</div>
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading pipeline summary…</div>
   } @else {
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
@@ -58,7 +58,7 @@
             }
           </div>
         } @else {
-          <div class="adm-empty">
+          <div class="tc-empty-state">
             <i class="pi pi-chart-bar"></i>
             <h3>No funnel data</h3>
             <p>Funnel metrics will appear once leads enter the pipeline.</p>
@@ -78,7 +78,7 @@
             }
           </div>
         } @else {
-          <div class="adm-empty">
+          <div class="tc-empty-state">
             <i class="pi pi-chart-pie"></i>
             <h3>No source data</h3>
             <p>Source breakdown will populate as leads are captured.</p>
@@ -122,11 +122,11 @@
           </table>
         </div>
       } @else {
-        <div class="adm-empty">
+        <div class="tc-empty-state">
           <i class="pi pi-calendar"></i>
           <h3>No follow-ups today</h3>
           <p>You're all caught up for today.</p>
-          <a class="adm-btn" routerLink="/app/admissions/follow-ups">Open Follow-up Center</a>
+          <a class="tc-btn" routerLink="/app/admissions/follow-ups">Open Follow-up Center</a>
         </div>
       }
     </tc-saas-panel>
@@ -134,3 +134,4 @@
 </section>
 
 <p-toast />
+

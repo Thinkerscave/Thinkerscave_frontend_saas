@@ -1,11 +1,11 @@
-<div class="saas-page feature-catalog">
+<div class="tc-page feature-catalog">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset Filters</button>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset Filters</button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading features...</div>
+  <div *ngIf="errorMessage" class="tc-empty-state"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading features...</div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
@@ -15,7 +15,7 @@
         <label class="saas-search"><i class="pi pi-search"></i>
           <input type="search" placeholder="Search by name or code" [ngModel]="search()" (ngModelChange)="search.set($event)">
         </label>
-        <label class="saas-field"><span>Category</span>
+        <label class="tc-form-field"><span>Category</span>
           <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
             <option *ngFor="let c of categories()" [value]="c">{{ c === 'all' ? 'All categories' : c }}</option>
           </select>
@@ -31,7 +31,7 @@
           <h3 class="saas-section-title">
             <i class="pi pi-box"></i> {{ group.module }}
           </h3>
-          <div class="saas-card-grid">
+          <div class="tc-card is-clickable-grid">
             <article class="saas-org-card feature-catalog__card" *ngFor="let m of group.features">
               <div class="saas-org-card__head">
                 <div class="saas-org-card__title">
@@ -52,13 +52,13 @@
             </article>
           </div>
         </div>
-        <div *ngIf="!groupedFeatures().length" class="saas-empty">
+        <div *ngIf="!groupedFeatures().length" class="tc-empty-state">
           <i class="pi pi-search"></i>
           <strong>No features match the current filters.</strong>
         </div>
       </div>
 
-      <div *ngIf="viewMode() === 'table'" class="saas-table-wrap">
+      <div *ngIf="viewMode() === 'table'" class="tc-table-wrap">
         <table class="saas-data-table">
           <thead>
             <tr>
@@ -96,3 +96,6 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+
+

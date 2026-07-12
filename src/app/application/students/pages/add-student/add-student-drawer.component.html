@@ -53,71 +53,71 @@
           Student Details
         </h3>
 
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Admission Number</label>
           <input type="text" [(ngModel)]="form.admissionNumber" placeholder="Auto-generated if empty"/>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>First Name *</label>
             <input type="text" [(ngModel)]="form.firstName" required placeholder="Vihaan"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Middle Name</label>
             <input type="text" [(ngModel)]="form.middleName" placeholder="Kumar"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Last Name *</label>
             <input type="text" [(ngModel)]="form.lastName" required placeholder="Verma"/>
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Gender *</label>
             <select [(ngModel)]="form.gender">
               <option [ngValue]="null">Select Gender</option>
               <option *ngFor="let g of genders" [value]="g">{{ g }}</option>
             </select>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Date of Birth *</label>
             <input type="date" [(ngModel)]="form.dateOfBirth"/>
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Religion</label>
             <select [(ngModel)]="form.religion">
               <option [ngValue]="null">Select</option>
               <option *ngFor="let r of religions" [value]="r">{{ r }}</option>
             </select>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Nationality</label>
             <input type="text" [(ngModel)]="form.nationality" placeholder="Indian"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Mother Tongue</label>
             <input type="text" [(ngModel)]="form.motherTongue" placeholder="Hindi"/>
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Mobile</label>
             <input type="tel" [(ngModel)]="form.mobile" placeholder="9876543210"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Email</label>
             <input type="email" [(ngModel)]="form.email" placeholder="student@example.com"/>
           </div>
         </div>
 
         <!-- Photo Upload -->
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Student Photo</label>
           <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:72px;height:72px;border-radius:50%;border:2px dashed var(--tc-border);
@@ -126,7 +126,7 @@
               <i class="pi pi-user"></i>
             </div>
             <label style="cursor:pointer;">
-              <span class="adm-btn" style="display:inline-flex;font-size:0.82rem;">
+              <span class="tc-btn" style="display:inline-flex;font-size:0.82rem;">
                 <i class="pi pi-upload"></i> Upload Photo
               </span>
               <input type="file" accept="image/*" style="display:none;"/>
@@ -141,25 +141,25 @@
           Current Address
         </h3>
 
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Address Line 1 *</label>
           <input type="text" [(ngModel)]="form.currentAddressLine1" placeholder="45, Green Park"/>
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Address Line 2</label>
           <input type="text" [(ngModel)]="form.currentAddressLine2" placeholder="Near City Center"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>City</label>
             <input type="text" [(ngModel)]="form.currentCity" placeholder="Jaipur"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>State</label>
             <input type="text" [(ngModel)]="form.currentState" placeholder="Rajasthan"/>
           </div>
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Pincode</label>
           <input type="text" [(ngModel)]="form.currentPincode" placeholder="302001"/>
         </div>
@@ -173,21 +173,21 @@
         </label>
 
         <ng-container *ngIf="!sameAddress">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Address Line 1</label>
             <input type="text" [(ngModel)]="form.permanentAddressLine1"/>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>City</label>
               <input type="text" [(ngModel)]="form.permanentCity"/>
             </div>
-            <div class="adm-field">
+            <div class="tc-form-field">
               <label>State</label>
               <input type="text" [(ngModel)]="form.permanentState"/>
             </div>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Pincode</label>
             <input type="text" [(ngModel)]="form.permanentPincode"/>
           </div>
@@ -206,47 +206,47 @@
             <i class="pi pi-user" style="color:var(--tc-primary-600);margin-right:6px;"></i>
             {{ parentLabel(i) }}
           </h3>
-          <button *ngIf="i > 0" type="button" class="adm-icon-btn is-danger" (click)="removeParent(i)" title="Remove">
+          <button *ngIf="i > 0" type="button" class="tc-btn tc-btn--ghost tc-btn--icon is-danger" (click)="removeParent(i)" title="Remove">
             <i class="pi pi-trash"></i>
           </button>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Relationship *</label>
             <select [(ngModel)]="parent.relationship">
               <option *ngFor="let r of relationships" [value]="r">{{ r }}</option>
             </select>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>First Name *</label>
             <input type="text" [(ngModel)]="parent.firstName"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Last Name *</label>
             <input type="text" [(ngModel)]="parent.lastName"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Mobile *</label>
             <input type="tel" [(ngModel)]="parent.mobile"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Email</label>
             <input type="email" [(ngModel)]="parent.email"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Occupation</label>
             <input type="text" [(ngModel)]="parent.occupation" placeholder="Business"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Organization</label>
             <input type="text" [(ngModel)]="parent.organization" placeholder="Verma Enterprises"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Qualification</label>
             <input type="text" [(ngModel)]="parent.qualification" placeholder="Graduate"/>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Annual Income (₹)</label>
             <input type="text" [(ngModel)]="parent.annualIncome" placeholder="12,00,000"/>
           </div>
@@ -269,7 +269,7 @@
         </div>
       </div>
 
-      <button type="button" class="adm-btn" (click)="addParent()" style="align-self:flex-start;">
+      <button type="button" class="tc-btn" (click)="addParent()" style="align-self:flex-start;">
         <i class="pi pi-plus"></i> Add Another Parent
       </button>
     </div>
@@ -278,36 +278,36 @@
   <!-- ─────────────────── STEP 3: ACADEMIC INFORMATION ─────────────────── -->
   <div class="stu-drawer__body" *ngIf="currentStep === 3">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Academic Year *</label>
         <select [(ngModel)]="form.academicYear">
           <option [ngValue]="null">Select Year</option>
           <option *ngFor="let y of academicYears" [value]="y">{{ y }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Class *</label>
         <select [(ngModel)]="form.classId" (ngModelChange)="onClassSelected()">
           <option [ngValue]="null">Select Class</option>
           <option *ngFor="let c of classOptions" [ngValue]="c.id">{{ c.label }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Section *</label>
         <select [(ngModel)]="form.sectionId" [disabled]="!form.classId">
           <option [ngValue]="null">Select Section</option>
           <option *ngFor="let s of sectionOptions" [ngValue]="s.id">{{ s.label }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Roll Number</label>
         <input type="text" [(ngModel)]="form.rollNumber" placeholder="15"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Enrollment Date *</label>
         <input type="date" [(ngModel)]="form.enrollmentDate"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Status</label>
         <select [(ngModel)]="form.enrollmentStatus">
           <option *ngFor="let s of enrollmentStatuses" [value]="s">{{ s }}</option>
@@ -319,34 +319,34 @@
   <!-- ─────────────────── STEP 4: MEDICAL INFORMATION ─────────────────── -->
   <div class="stu-drawer__body" *ngIf="currentStep === 4">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Blood Group</label>
         <select [(ngModel)]="form.bloodGroup">
           <option [ngValue]="null">Select</option>
           <option *ngFor="let bg of bloodGroups" [value]="bg">{{ bg }}</option>
         </select>
       </div>
-      <div class="adm-field adm-field--full">
+      <div class="tc-form-field tc-form-field--full">
         <label>Allergies</label>
         <textarea [(ngModel)]="form.allergies" rows="2" placeholder="Dust Allergy, Peanuts…"></textarea>
       </div>
-      <div class="adm-field adm-field--full">
+      <div class="tc-form-field tc-form-field--full">
         <label>Medical Conditions</label>
         <textarea [(ngModel)]="form.medicalConditions" rows="2" placeholder="Asthma…"></textarea>
       </div>
-      <div class="adm-field adm-field--full">
+      <div class="tc-form-field tc-form-field--full">
         <label>Medications</label>
         <textarea [(ngModel)]="form.medications" rows="2" placeholder="Montair (as needed)…"></textarea>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Doctor Name</label>
         <input type="text" [(ngModel)]="form.doctorName" placeholder="Dr. Amit Sharma"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Doctor Contact</label>
         <input type="tel" [(ngModel)]="form.doctorContact" placeholder="9876543234"/>
       </div>
-      <div class="adm-field adm-field--full">
+      <div class="tc-form-field tc-form-field--full">
         <label>Emergency Notes</label>
         <textarea [(ngModel)]="form.emergencyNotes" rows="2" placeholder="Carry inhaler during sports…"></textarea>
       </div>
@@ -408,7 +408,7 @@
         </div>
       </div>
 
-      <div *ngIf="errorMessage" class="adm-toast is-error" style="margin-top:4px;">
+      <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline" style="margin-top:4px;">
         <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
     </div>
@@ -416,17 +416,17 @@
 
   <!-- ─────────────────── FOOTER ─────────────────── -->
   <div class="stu-drawer__footer">
-    <button type="button" class="adm-btn adm-btn--ghost" (click)="currentStep > 1 ? back() : closed.emit()">
+    <button type="button" class="tc-btn tc-btn--ghost" (click)="currentStep > 1 ? back() : closed.emit()">
       <i class="pi" [class.pi-arrow-left]="currentStep > 1" [class.pi-times]="currentStep === 1"></i>
       {{ currentStep > 1 ? 'Previous' : 'Cancel' }}
     </button>
 
     <div style="display:flex;gap:8px;align-items:center;">
       <span style="font-size:0.8rem;color:var(--tc-text-muted);">{{ currentStep }} / 5</span>
-      <button *ngIf="currentStep < 5" type="button" class="adm-btn adm-btn--primary" (click)="next()">
+      <button *ngIf="currentStep < 5" type="button" class="tc-btn tc-btn--primary" (click)="next()">
         Next <i class="pi pi-arrow-right"></i>
       </button>
-      <button *ngIf="currentStep === 5" type="button" class="adm-btn adm-btn--primary"
+      <button *ngIf="currentStep === 5" type="button" class="tc-btn tc-btn--primary"
               [disabled]="saving" (click)="submit()">
         <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
         {{ saving ? 'Saving…' : 'Submit' }}
@@ -434,3 +434,4 @@
     </div>
   </div>
 </div>
+

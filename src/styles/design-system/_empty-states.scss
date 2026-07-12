@@ -1,0 +1,56 @@
+/* Empty States */
+.tc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tc-space-12) var(--tc-space-6);
+  text-align: center;
+  background: var(--tc-surface-card);
+  border: 1px dashed var(--tc-border-strong);
+  border-radius: var(--tc-radius-lg);
+  min-height: 250px;
+  
+  &__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--tc-surface-100);
+    color: var(--tc-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--tc-space-4);
+    
+    i.pi {
+      font-size: 2rem;
+    }
+  }
+  
+  &__title {
+    font-size: var(--tc-font-size-lg);
+    font-weight: 600;
+    color: var(--tc-heading);
+    margin: 0 0 var(--tc-space-2) 0;
+  }
+  
+  &__description {
+    font-size: var(--tc-font-size-sm);
+    color: var(--tc-text-muted);
+    max-width: 400px;
+    margin: 0 0 var(--tc-space-6) 0;
+    line-height: 1.5;
+  }
+  
+  &__actions {
+    display: flex;
+    gap: var(--tc-space-3);
+  }
+}
+
+/* For inside tables/lists where dashed border isn't wanted */
+.tc-empty-state--inline {
+  border: none;
+  background: transparent;
+  padding: var(--tc-space-8) var(--tc-space-4);
+}

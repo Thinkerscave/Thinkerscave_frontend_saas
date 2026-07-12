@@ -1,0 +1,58 @@
+/* Action / Context Menus */
+.tc-menu {
+  background: var(--tc-surface-card-solid);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
+  box-shadow: var(--tc-shadow-md);
+  padding: var(--tc-space-2) 0;
+  min-width: 160px;
+  
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--tc-space-3);
+    padding: var(--tc-space-2) var(--tc-space-4);
+    color: var(--tc-text);
+    font-size: var(--tc-font-size-sm);
+    cursor: pointer;
+    transition: background var(--tc-anim-duration-fast) ease;
+    text-decoration: none;
+    
+    i.pi {
+      color: var(--tc-text-muted);
+      font-size: 0.875rem;
+    }
+    
+    &:hover {
+      background: var(--tc-surface-hover);
+      color: var(--tc-primary-600);
+      
+      i.pi {
+        color: var(--tc-primary-600);
+      }
+    }
+    
+    &--danger {
+      color: var(--tc-danger);
+      
+      i.pi {
+        color: var(--tc-danger);
+      }
+      
+      &:hover {
+        background: var(--tc-danger-soft);
+        color: var(--tc-danger);
+        
+        i.pi {
+          color: var(--tc-danger);
+        }
+      }
+    }
+  }
+  
+  &__divider {
+    height: 1px;
+    background: var(--tc-border);
+    margin: var(--tc-space-2) 0;
+  }
+}

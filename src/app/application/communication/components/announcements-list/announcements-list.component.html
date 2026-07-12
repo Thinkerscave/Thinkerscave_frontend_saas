@@ -3,8 +3,8 @@
     title="Announcements"
     subtitle="Broadcasts to parents, students, and staff"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements'}]">
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
-    <a class="saas-btn saas-btn--primary" routerLink="/app/communication/announcements/new"><i class="pi pi-plus"></i>Create Announcement</a>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
+    <a class="tc-btn tc-btn--primary" routerLink="/app/communication/announcements/new"><i class="pi pi-plus"></i>Create Announcement</a>
   </tc-saas-page-header>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading announcements...</div>
@@ -53,3 +53,5 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+

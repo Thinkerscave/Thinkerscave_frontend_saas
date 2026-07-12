@@ -1,8 +1,8 @@
-<div class="saas-page subscription-plans">
+<div class="tc-page subscription-plans">
   <p-toast></p-toast>
 
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
   </tc-saas-page-header>
 
   <div class="subscription-plans__billing-wrap" *ngIf="!loading && plans.length">
@@ -12,9 +12,9 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading plans...</div>
+  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading plans...</div>
 
-  <div *ngIf="!loading && !plans.length" class="saas-empty">
+  <div *ngIf="!loading && !plans.length" class="tc-empty-state">
     <i class="pi pi-tags"></i>
     <strong>No subscription plans configured</strong>
     <p>Create plans via the platform API or seed data in the backend.</p>
@@ -52,10 +52,10 @@
       </ul>
       
       <footer>
-        <button type="button" class="saas-btn saas-btn--sm" (click)="toggleActive(plan)">
+        <button type="button" class="tc-btn tc-btn--sm" (click)="toggleActive(plan)">
           <i class="pi" [ngClass]="plan.active ? 'pi-ban' : 'pi-check'"></i> {{ plan.active ? 'Deactivate' : 'Activate' }}
         </button>
-        <button type="button" class="saas-btn saas-btn--sm" (click)="editPlan(plan)">
+        <button type="button" class="tc-btn tc-btn--sm" (click)="editPlan(plan)">
           <i class="pi pi-pencil"></i> Edit
         </button>
       </footer>
@@ -63,7 +63,7 @@
   </div>
 
   <tc-saas-panel *ngIf="!loading && plans.length" title="Plan Features & Modules" subtitle="Detailed feature matrix across platform tiers">
-    <div class="saas-table-wrap">
+    <div class="tc-table-wrap">
       <table class="saas-data-table feature-matrix-table">
         <thead>
           <tr>
@@ -110,3 +110,6 @@
     </div>
   </tc-saas-panel>
 </div>
+
+
+

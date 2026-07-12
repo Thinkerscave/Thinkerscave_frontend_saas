@@ -1,20 +1,20 @@
 <p-toast />
 
-<section class="adm-workspace">
+<section class="tc-page-shell">
   <tc-saas-page-header
     title="Admissions Reports"
     subtitle="Funnel analytics, source analysis, and counselor performance."
   >
-    <button type="button" class="adm-btn" (click)="loadReports()" [disabled]="loading">
+    <button type="button" class="tc-btn" (click)="loadReports()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
   </tc-saas-page-header>
 
-  <div class="adm-toast is-error" *ngIf="errorMessage">
+  <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <div class="adm-loading" *ngIf="loading">
+  <div class="tc-loading" *ngIf="loading">
     <i class="pi pi-spin pi-spinner"></i> Loading reports…
   </div>
 
@@ -24,7 +24,7 @@
     <div class="adm-grid-2">
       <tc-saas-panel title="Admission funnel" [actions]="true">
         <div panel-actions>
-          <button type="button" class="adm-btn" (click)="exportFunnelCsv()" [disabled]="!funnelEntries.length">
+          <button type="button" class="tc-btn" (click)="exportFunnelCsv()" [disabled]="!funnelEntries.length">
             <i class="pi pi-download"></i> Export CSV
           </button>
         </div>
@@ -39,7 +39,7 @@
           </div>
         </div>
 
-        <div class="adm-empty" *ngIf="!funnelEntries.length" style="padding: 32px;">
+        <div class="tc-empty-state" *ngIf="!funnelEntries.length" style="padding: 32px;">
           <i class="pi pi-chart-bar"></i>
           <p>No funnel data available.</p>
         </div>
@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <div class="adm-empty" *ngIf="!sourceEntries.length" style="padding: 32px;">
+        <div class="tc-empty-state" *ngIf="!sourceEntries.length" style="padding: 32px;">
           <i class="pi pi-tag"></i>
           <p>No source analysis data available.</p>
         </div>
@@ -76,10 +76,12 @@
         </table>
       </div>
 
-      <div class="adm-empty" *ngIf="!counselorRows.length" style="padding: 32px;">
+      <div class="tc-empty-state" *ngIf="!counselorRows.length" style="padding: 32px;">
         <i class="pi pi-users"></i>
         <p>No counselor performance data available.</p>
       </div>
     </tc-saas-panel>
   </ng-container>
 </section>
+
+

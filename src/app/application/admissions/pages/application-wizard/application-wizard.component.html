@@ -1,20 +1,20 @@
 <p-toast />
 
-<section class="adm-workspace adm-wizard">
+<section class="tc-page-shell adm-wizard">
   <tc-saas-page-header
     [title]="applicationId ? 'Edit Application' : 'New Application'"
     subtitle="Complete all steps to submit for admission review."
   >
-    <button type="button" class="adm-btn adm-btn--ghost" (click)="cancel()">
+    <button type="button" class="tc-btn tc-btn--ghost" (click)="cancel()">
       <i class="pi pi-times"></i> Cancel
     </button>
   </tc-saas-page-header>
 
-  <div class="adm-toast is-error" *ngIf="errorMessage">
+  <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <div class="adm-loading" *ngIf="loading">
+  <div class="tc-loading" *ngIf="loading">
     <i class="pi pi-spin pi-spinner"></i> Loading application…
   </div>
 
@@ -32,15 +32,15 @@
       <form [formGroup]="form">
         <!-- Step 1: Student Info -->
         <div class="adm-wizard__body" *ngIf="activeStep === 0" formGroupName="student">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Applicant name *</label>
             <input type="text" formControlName="applicantName" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Date of birth *</label>
             <input type="date" formControlName="dateOfBirth" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Gender *</label>
             <select formControlName="gender">
               <option value="">Select</option>
@@ -49,15 +49,15 @@
               <option value="OTHER">Other</option>
             </select>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Applying for class *</label>
             <input type="text" formControlName="applyingForClass" placeholder="e.g. Grade 5" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Email</label>
             <input type="email" formControlName="email" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Contact number *</label>
             <input type="tel" formControlName="contactNumber" />
           </div>
@@ -65,15 +65,15 @@
 
         <!-- Step 2: Parents -->
         <div class="adm-wizard__body" *ngIf="activeStep === 1" formGroupName="parents">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Parent / guardian name *</label>
             <input type="text" formControlName="parentName" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Parent contact *</label>
             <input type="tel" formControlName="parentContact" />
           </div>
-          <div class="adm-field adm-field--full">
+          <div class="tc-form-field tc-form-field--full">
             <label>Parent email</label>
             <input type="email" formControlName="parentEmail" />
           </div>
@@ -81,19 +81,19 @@
 
         <!-- Step 3: Address -->
         <div class="adm-wizard__body" *ngIf="activeStep === 2" formGroupName="address">
-          <div class="adm-field adm-field--full">
+          <div class="tc-form-field tc-form-field--full">
             <label>Address line *</label>
             <input type="text" formControlName="line1" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>City *</label>
             <input type="text" formControlName="city" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>State *</label>
             <input type="text" formControlName="state" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>PIN code *</label>
             <input type="text" formControlName="pinCode" />
           </div>
@@ -101,7 +101,7 @@
 
         <!-- Step 4: Academic -->
         <div class="adm-wizard__body" *ngIf="activeStep === 3" formGroupName="academic">
-          <div class="adm-field adm-field--full">
+          <div class="tc-form-field tc-form-field--full">
             <label>Academic notes</label>
             <textarea formControlName="academicNotes" placeholder="Previous school, marks, special requirements…"></textarea>
           </div>
@@ -109,7 +109,7 @@
 
         <!-- Step 5: Documents -->
         <div class="adm-wizard__body" *ngIf="activeStep === 4">
-          <div class="adm-field adm-field--full">
+          <div class="tc-form-field tc-form-field--full">
             <label>Add document reference</label>
             <div style="display: flex; gap: 8px;">
               <input
@@ -119,7 +119,7 @@
                 placeholder="e.g. Birth certificate"
                 (keyup.enter)="addDocument()"
               />
-              <button type="button" class="adm-btn adm-btn--primary" (click)="addDocument()">
+              <button type="button" class="tc-btn tc-btn--primary" (click)="addDocument()">
                 <i class="pi pi-plus"></i> Add
               </button>
             </div>
@@ -129,7 +129,7 @@
               <i class="pi pi-file"></i> {{ doc }}
               <button
                 type="button"
-                class="adm-icon-btn"
+                class="tc-btn tc-btn--ghost tc-btn--icon"
                 style="width: 22px; height: 22px; margin-left: 4px;"
                 (click)="removeDocument(doc)"
               >
@@ -137,7 +137,7 @@
               </button>
             </span>
           </div>
-          <div class="adm-empty" *ngIf="!uploadedDocuments.length" style="padding: 24px;">
+          <div class="tc-empty-state" *ngIf="!uploadedDocuments.length" style="padding: 24px;">
             <i class="pi pi-file"></i>
             <p>No documents listed yet.</p>
           </div>
@@ -162,18 +162,18 @@
 
       <div class="adm-wizard__footer">
         <div>
-          <button type="button" class="adm-btn adm-btn--ghost" (click)="back()" [disabled]="activeStep === 0">
+          <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0">
             <i class="pi pi-arrow-left"></i> Back
           </button>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="adm-btn" (click)="saveDraft()" [disabled]="saving">
+          <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving">
             Save draft
           </button>
           <button
             *ngIf="applicationId"
             type="button"
-            class="adm-btn"
+            class="tc-btn"
             (click)="update()"
             [disabled]="saving"
           >
@@ -182,7 +182,7 @@
           <button
             *ngIf="activeStep < steps.length - 1"
             type="button"
-            class="adm-btn adm-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="next()"
           >
             Next <i class="pi pi-arrow-right"></i>
@@ -190,7 +190,7 @@
           <button
             *ngIf="activeStep === steps.length - 1"
             type="button"
-            class="adm-btn adm-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="submit()"
             [disabled]="saving"
           >
@@ -199,7 +199,7 @@
           <button
             *ngIf="activeStep === steps.length - 1 && applicationId && canApprove()"
             type="button"
-            class="adm-btn adm-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="approve()"
             [disabled]="saving"
           >
@@ -210,3 +210,5 @@
     </tc-saas-panel>
   </ng-container>
 </section>
+
+

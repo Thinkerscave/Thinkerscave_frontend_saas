@@ -3,8 +3,8 @@
     [title]="isNew ? 'Create Template' : 'Edit Template'"
     subtitle="Design reusable message templates with variables"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Templates',route:'/app/communication/templates'},{label:isNew ? 'New' : 'Edit'}]">
-    <button type="button" class="saas-btn" (click)="cancel()">Cancel</button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Template</button>
+    <button type="button" class="tc-btn" (click)="cancel()">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Template</button>
   </tc-saas-page-header>
 
   <div class="editor-grid">
@@ -34,3 +34,5 @@
     </tc-saas-panel>
   </div>
 </div>
+
+

@@ -3,8 +3,8 @@
     title="Delivery Logs"
     subtitle="Track delivery status across SMS, email, push, and in-app channels"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Delivery Logs'}]">
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
-    <button type="button" class="saas-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i>Refresh</button>
+    <button type="button" class="tc-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading delivery logs...</div>
@@ -55,3 +55,5 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+

@@ -1,7 +1,7 @@
 <div class="saas-page role-workspace">
   <tc-saas-page-header>
-    <a class="saas-btn" routerLink="/app/access-management/roles"><i class="pi pi-arrow-left"></i> Back</a>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
+    <a class="tc-btn" routerLink="/app/access-management/roles"><i class="pi pi-arrow-left"></i> Back</a>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
       <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Permissions
     </button>
   </tc-saas-page-header>
@@ -55,3 +55,5 @@
     </section>
   </ng-container>
 </div>
+
+

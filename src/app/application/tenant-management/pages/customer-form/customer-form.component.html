@@ -1,8 +1,8 @@
-<div class="saas-page customer-form">
+<div class="tc-page customer-form">
   <p-toast position="top-right"></p-toast>
 
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
+    <button type="button" class="tc-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="customer-form__banner customer-form__banner--danger" role="alert">
@@ -10,7 +10,7 @@
     <span>{{ errorMessage }}</span>
   </div>
 
-  <div *ngIf="loading" class="saas-loading">
+  <div *ngIf="loading" class="tc-loading">
     <i class="pi pi-spin pi-spinner"></i>
     {{ isEditMode ? 'Loading customer…' : 'Loading metadata…' }}
   </div>
@@ -36,20 +36,20 @@
 
         <div class="wizard-section-label">Core Details</div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Legal name</span>
+          <label class="tc-form-field"><span>Legal name</span>
             <input type="text" [(ngModel)]="form.legalName" placeholder="Northstar Education Pvt Ltd">
           </label>
-          <label class="saas-field"><span>Display name</span>
+          <label class="tc-form-field"><span>Display name</span>
             <input type="text" [(ngModel)]="form.displayName" placeholder="Northstar Education">
           </label>
         </div>
         <div class="wizard-row">
-          <label class="saas-field wizard-field--cap"><span>Customer type</span>
+          <label class="tc-form-field wizard-field--cap"><span>Customer type</span>
             <select [(ngModel)]="form.customerType">
               <option *ngFor="let t of typeOptions" [ngValue]="t.code">{{ t.label }}</option>
             </select>
           </label>
-          <label class="saas-field wizard-field--cap"><span>Status</span>
+          <label class="tc-form-field wizard-field--cap"><span>Status</span>
             <select [(ngModel)]="form.status">
               <option *ngFor="let s of statusOptions" [ngValue]="s.code">{{ s.label }}</option>
             </select>
@@ -58,32 +58,32 @@
 
         <div class="wizard-section-label">Contact</div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Business email</span>
+          <label class="tc-form-field"><span>Business email</span>
             <input type="email" [(ngModel)]="form.email" placeholder="billing@customer.com">
           </label>
-          <label class="saas-field"><span>Mobile</span>
+          <label class="tc-form-field"><span>Mobile</span>
             <input type="tel" [(ngModel)]="form.mobileNumber" placeholder="+91">
           </label>
         </div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Alternate mobile</span>
+          <label class="tc-form-field"><span>Alternate mobile</span>
             <input type="tel" [(ngModel)]="form.alternateMobileNumber" placeholder="Optional">
           </label>
-          <label class="saas-field"><span>Website</span>
+          <label class="tc-form-field"><span>Website</span>
             <input type="url" [(ngModel)]="form.website" placeholder="https://">
           </label>
         </div>
 
         <div class="wizard-section-label">Registration</div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Tax / GST number</span>
+          <label class="tc-form-field"><span>Tax / GST number</span>
             <input type="text" [(ngModel)]="form.taxNumber" placeholder="Optional">
           </label>
-          <label class="saas-field"><span>Registration number</span>
+          <label class="tc-form-field"><span>Registration number</span>
             <input type="text" [(ngModel)]="form.registrationNumber" placeholder="Optional">
           </label>
         </div>
-        <label class="saas-field saas-field--full"><span>Logo URL</span>
+        <label class="tc-form-field tc-form-field--full"><span>Logo URL</span>
           <input type="url" [(ngModel)]="form.logoUrl" placeholder="https://cdn.example.com/logo.png">
         </label>
       </section>
@@ -102,22 +102,22 @@
 
         <div class="wizard-section-label">Contact Details</div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Full name</span>
+          <label class="tc-form-field"><span>Full name</span>
             <input type="text" [(ngModel)]="form.contactFullName" placeholder="Priya Sharma">
           </label>
-          <label class="saas-field"><span>Designation</span>
+          <label class="tc-form-field"><span>Designation</span>
             <input type="text" [(ngModel)]="form.contactDesignation" placeholder="Director, Operations">
           </label>
         </div>
         <div class="wizard-row">
-          <label class="saas-field"><span>Email</span>
+          <label class="tc-form-field"><span>Email</span>
             <input type="email" [(ngModel)]="form.contactEmail" placeholder="priya@customer.com">
           </label>
-          <label class="saas-field"><span>Mobile</span>
+          <label class="tc-form-field"><span>Mobile</span>
             <input type="tel" [(ngModel)]="form.contactMobile" placeholder="+91">
           </label>
         </div>
-        <label class="saas-field saas-field--full"><span>Alternate mobile</span>
+        <label class="tc-form-field tc-form-field--full"><span>Alternate mobile</span>
           <input type="tel" [(ngModel)]="form.contactAlternateMobile" placeholder="Optional">
         </label>
 
@@ -149,26 +149,26 @@
         </div>
 
         <div class="wizard-section-label">Street Address</div>
-        <label class="saas-field saas-field--full"><span>Address line 1</span>
+        <label class="tc-form-field tc-form-field--full"><span>Address line 1</span>
           <input type="text" [(ngModel)]="form.addressLine1" placeholder="Street, building, suite">
         </label>
-        <label class="saas-field saas-field--full"><span>Address line 2</span>
+        <label class="tc-form-field tc-form-field--full"><span>Address line 2</span>
           <input type="text" [(ngModel)]="form.addressLine2" placeholder="Optional">
         </label>
 
         <div class="wizard-section-label">Locality</div>
         <div class="wizard-row wizard-row--triple">
-          <label class="saas-field"><span>City</span>
+          <label class="tc-form-field"><span>City</span>
             <input type="text" [(ngModel)]="form.city" placeholder="Mumbai">
           </label>
-          <label class="saas-field"><span>State / region</span>
+          <label class="tc-form-field"><span>State / region</span>
             <input type="text" [(ngModel)]="form.state" placeholder="Maharashtra">
           </label>
-          <label class="saas-field"><span>Postal code</span>
+          <label class="tc-form-field"><span>Postal code</span>
             <input type="text" [(ngModel)]="form.postalCode" placeholder="400001">
           </label>
         </div>
-        <label class="saas-field wizard-field--cap"><span>Country</span>
+        <label class="tc-form-field wizard-field--cap"><span>Country</span>
           <select [(ngModel)]="form.country">
             <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
           </select>
@@ -186,14 +186,14 @@
         </div>
 
         <div class="wizard-section-label">Preferences</div>
-        <label class="saas-field wizard-field--cap"><span>Preferred communication</span>
+        <label class="tc-form-field wizard-field--cap"><span>Preferred communication</span>
           <select [(ngModel)]="form.preferredCommunication">
             <option *ngFor="let c of communicationOptions" [ngValue]="c.code">{{ c.label }}</option>
           </select>
         </label>
 
         <div class="wizard-section-label">Internal Notes</div>
-        <label class="saas-field saas-field--full"><span>Remarks</span>
+        <label class="tc-form-field tc-form-field--full"><span>Remarks</span>
           <textarea rows="4" [(ngModel)]="form.remarks" placeholder="Internal notes, renewal context, or special terms"></textarea>
         </label>
       </section>
@@ -240,15 +240,15 @@
       </section>
 
       <footer class="customer-form__nav">
-        <button type="button" class="saas-btn" (click)="prev()" [disabled]="step === 0 || submitting">
+        <button type="button" class="tc-btn" (click)="prev()" [disabled]="step === 0 || submitting">
           <i class="pi pi-arrow-left"></i> Back
         </button>
         <div class="customer-form__nav-end">
-          <button type="button" class="saas-btn" (click)="cancel()" [disabled]="submitting">Cancel</button>
+          <button type="button" class="tc-btn" (click)="cancel()" [disabled]="submitting">Cancel</button>
           <button
             type="button"
             *ngIf="step < wizardSteps.length - 1"
-            class="saas-btn saas-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="next()"
             [disabled]="submitting">
             Next <i class="pi pi-arrow-right"></i>
@@ -256,7 +256,7 @@
           <button
             type="button"
             *ngIf="step === wizardSteps.length - 1"
-            class="saas-btn saas-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="submit()"
             [disabled]="submitting">
             <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-check'"></i>
@@ -267,3 +267,6 @@
     </tc-saas-panel>
   </ng-container>
 </div>
+
+
+

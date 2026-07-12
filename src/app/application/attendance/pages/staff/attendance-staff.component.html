@@ -2,7 +2,7 @@
   <tc-saas-page-header
     title="Staff Attendance"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Staff Attendance'}]">
-    <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-file"></i>Attendance Log</button>
+    <button type="button" class="tc-btn tc-btn--primary"><i class="pi pi-file"></i>Attendance Log</button>
   </tc-saas-page-header>
 
   <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
@@ -19,7 +19,7 @@
           <small>Status</small>
           <strong>{{ meStatus === 'IN' ? 'Signed In' : 'Not Signed In' }}</strong>
         </div>
-        <button type="button" class="saas-btn saas-btn--primary attendance-staff__me-action" (click)="signInOut()">
+        <button type="button" class="tc-btn tc-btn--primary attendance-staff__me-action" (click)="signInOut()">
           <i class="pi" [ngClass]="meStatus === 'IN' ? 'pi-sign-out' : 'pi-sign-in'"></i>
           {{ meStatus === 'IN' ? 'Sign Out' : 'Sign In' }}
         </button>
@@ -65,8 +65,10 @@
       <div class="impact-row__action">
         <small>Arrangement Status</small>
         <tc-saas-pill [label]="item.status" tone="warning"></tc-saas-pill>
-        <button type="button" class="saas-btn saas-btn--primary"><i class="pi pi-user-plus"></i>Open Arrangement</button>
+        <button type="button" class="tc-btn tc-btn--primary"><i class="pi pi-user-plus"></i>Open Arrangement</button>
       </div>
     </article>
   </tc-saas-panel>
 </div>
+
+

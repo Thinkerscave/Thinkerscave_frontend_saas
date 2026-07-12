@@ -1,11 +1,11 @@
-<div class="saas-page promotions">
+<div class="tc-page promotions">
   <p-toast position="top-right"></p-toast>
 
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="openCreate()">
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">
       <i class="pi pi-plus"></i> Create Promotion
     </button>
   </tc-saas-page-header>
@@ -18,37 +18,37 @@
     subtitle="Define code, discount and validity window">
     <form class="promotions__form" (ngSubmit)="submitCreate()">
       <div class="promotions__form-grid">
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Promotion Code</span>
           <input type="text" [(ngModel)]="draft.promotionCode" name="promotionCode" placeholder="e.g. LAUNCH25" required>
         </label>
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Promotion Name</span>
           <input type="text" [(ngModel)]="draft.promotionName" name="promotionName" placeholder="Launch offer" required>
         </label>
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Discount Type</span>
           <select [(ngModel)]="draft.discountType" name="discountType">
             <option *ngFor="let t of discountTypes" [ngValue]="t">{{ discountTypeLabel(t) }}</option>
           </select>
         </label>
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Discount Value</span>
           <input type="number" min="0" [(ngModel)]="draft.discountValue" name="discountValue"
             [placeholder]="draft.discountType === 'PERCENTAGE' ? 'Percent' : 'Amount'">
         </label>
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Valid From</span>
           <p-calendar [(ngModel)]="draft.validFrom" name="validFrom" dateFormat="yy-mm-dd" [showIcon]="true"></p-calendar>
         </label>
-        <label class="saas-field">
+        <label class="tc-form-field">
           <span>Valid To</span>
           <p-calendar [(ngModel)]="draft.validTo" name="validTo" dateFormat="yy-mm-dd" [showIcon]="true"></p-calendar>
         </label>
       </div>
       <div class="promotions__form-actions">
-        <button type="button" class="saas-btn" (click)="closeCreate()">Cancel</button>
-        <button type="submit" class="saas-btn saas-btn--primary" [disabled]="saving">
+        <button type="button" class="tc-btn" (click)="closeCreate()">Cancel</button>
+        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
           <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>
           Save Promotion
         </button>
@@ -64,19 +64,19 @@
       </div>
     </ng-container>
 
-    <div *ngIf="errorMessage" class="saas-empty promotions__error">
+    <div *ngIf="errorMessage" class="tc-empty-state promotions__error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
-      <button type="button" class="saas-btn saas-btn--primary" (click)="load()">Retry</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
 
-    <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading promotions...</div>
+    <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading promotions...</div>
 
-    <div *ngIf="!loading && !promotions.length && !errorMessage" class="saas-empty">
+    <div *ngIf="!loading && !promotions.length && !errorMessage" class="tc-empty-state">
       <i class="pi pi-percentage"></i>
       <strong>No promotions yet</strong>
       <p>Create your first promotional offer to discount subscriptions.</p>
-      <button type="button" class="saas-btn saas-btn--primary" (click)="openCreate()">Create Promotion</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">Create Promotion</button>
     </div>
 
     <div *ngIf="!loading && promotions.length && viewMode === 'cards'" class="promotions__cards">
@@ -97,14 +97,14 @@
           <span><i class="pi pi-shopping-cart"></i> {{ p.usedCount ?? 0 }} redemptions</span>
         </div>
         <footer class="promotions__card-footer">
-          <button type="button" class="saas-btn saas-btn--sm saas-btn--ghost" [disabled]="p.status === 'ARCHIVED' || archivingId === p.id" (click)="archive(p, $event)">
+          <button type="button" class="tc-btn tc-btn--sm tc-btn--ghost" [disabled]="p.status === 'ARCHIVED' || archivingId === p.id" (click)="archive(p, $event)">
             <i class="pi" [ngClass]="archivingId === p.id ? 'pi-spin pi-spinner' : 'pi-inbox'"></i> Archive
           </button>
         </footer>
       </article>
     </div>
 
-    <div *ngIf="!loading && promotions.length && viewMode === 'table'" class="saas-table-wrap">
+    <div *ngIf="!loading && promotions.length && viewMode === 'table'" class="tc-table-wrap">
       <table class="saas-data-table promotions__table">
         <thead>
           <tr>
@@ -132,7 +132,7 @@
             <td class="cell-actions">
               <button
                 type="button"
-                class="saas-btn saas-btn--sm"
+                class="tc-btn tc-btn--sm"
                 [disabled]="p.status === 'ARCHIVED' || archivingId === p.id"
                 (click)="archive(p, $event)">
                 <i class="pi" [ngClass]="archivingId === p.id ? 'pi-spin pi-spinner' : 'pi-inbox'"></i>
@@ -145,3 +145,6 @@
     </div>
   </tc-saas-panel>
 </div>
+
+
+

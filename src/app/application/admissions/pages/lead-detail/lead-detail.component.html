@@ -1,19 +1,19 @@
-<section class="adm-workspace adm-detail">
+<section class="tc-page-shell adm-detail">
   @if (loading()) {
-    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading lead detail…</div>
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading lead detail…</div>
   } @else if (error()) {
-    <div class="adm-empty" role="alert">
+    <div class="tc-empty-state" role="alert">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>Could not load lead</h3>
       <p>{{ error() }}</p>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
-      <button type="button" class="adm-btn" (click)="goBack()">Back to Leads</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
+      <button type="button" class="tc-btn" (click)="goBack()">Back to Leads</button>
     </div>
   } @else {
     @if (detail(); as d) {
     <div class="adm-detail__hero">
       <div class="adm-detail__hero-left">
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="goBack()" title="Back">
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="goBack()" title="Back">
           <i class="pi pi-arrow-left"></i>
         </button>
         <div class="adm-avatar">{{ (d.inquiry.name || '?').charAt(0) }}</div>
@@ -22,15 +22,15 @@
           <small>LEAD-{{ d.inquiry.inquiryId }} · {{ d.inquiry.classInterestedIn }} · {{ d.inquiry.inquirySource || 'Unknown source' }}</small>
         </div>
       </div>
-      <div class="adm-hero__actions">
+      <div class="tc-page-header__actions">
         <tc-saas-pill [label]="d.inquiry.status" [tone]="statusTone(d.inquiry.status)"></tc-saas-pill>
-        <button type="button" class="adm-btn" (click)="markInterested()">
+        <button type="button" class="tc-btn" (click)="markInterested()">
           <i class="pi pi-thumbs-up"></i> Interested
         </button>
-        <button type="button" class="adm-btn adm-btn--danger" (click)="openLostDialog()">
+        <button type="button" class="tc-btn tc-btn--danger" (click)="openLostDialog()">
           <i class="pi pi-times-circle"></i> Mark Lost
         </button>
-        <button type="button" class="adm-btn adm-btn--primary" (click)="proceedToApplication()">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()">
           <i class="pi pi-arrow-right"></i> Proceed to Application
         </button>
       </div>
@@ -41,8 +41,8 @@
     @switch (activeTab()) {
       @case ('overview') {
         <div class="adm-tab-panel">
-          <div class="adm-panel">
-            <div class="adm-panel__header"><h2>Lead overview</h2></div>
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header"><h2>Lead overview</h2></div>
             <dl class="adm-dl">
               <div><dt>Mobile</dt><dd>{{ d.inquiry.mobileNumber || '—' }}</dd></div>
               <div><dt>Email</dt><dd>{{ d.inquiry.email || '—' }}</dd></div>
@@ -57,16 +57,16 @@
             </dl>
           </div>
 
-          <div class="adm-panel">
-            <div class="adm-panel__header"><h2>Assign counselor</h2></div>
-            <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="adm-filter-bar">
-              <div class="adm-field">
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header"><h2>Assign counselor</h2></div>
+            <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="tc-filter-bar">
+              <div class="tc-form-field">
                 <label>Counselor ID</label>
                 <input type="number" formControlName="counselorId" placeholder="e.g. 12" />
               </div>
-              <div class="adm-field">
+              <div class="tc-form-field">
                 <label>&nbsp;</label>
-                <button type="submit" class="adm-btn adm-btn--primary" [disabled]="assignForm.invalid">
+                <button type="submit" class="tc-btn tc-btn--primary" [disabled]="assignForm.invalid">
                   <i class="pi pi-user-plus"></i> Assign
                 </button>
               </div>
@@ -77,23 +77,23 @@
       @case ('activities') {
         <div class="adm-tab-panel">
           <div class="adm-grid-2">
-            <div class="adm-panel">
-              <div class="adm-panel__header">
+            <div class="tc-card tc-card--panel">
+              <div class="tc-card__header">
                 <h2>Follow-up history</h2>
-                <small class="adm-panel__hint">{{ d.followUps.length }} entries</small>
+                <small class="tc-card tc-card--panel__hint">{{ d.followUps.length }} entries</small>
               </div>
               @if (!d.followUps.length) {
-                <div class="adm-empty">
+                <div class="tc-empty-state">
                   <i class="pi pi-history"></i>
                   <h3>No follow-ups yet</h3>
                   <p>Log the first interaction using the form.</p>
                 </div>
               } @else {
                 @for (f of d.followUps; track trackFollow($index, f)) {
-                  <article class="adm-card" style="cursor:default;">
-                    <header class="adm-card__head">
+                  <article class="tc-card is-clickable" style="cursor:default;">
+                    <header class="tc-card__header">
                       <div class="adm-avatar"><i class="pi pi-phone"></i></div>
-                      <div class="adm-card__title">
+                      <div class="tc-card is-clickable__title">
                         <strong>{{ f.followUpType }} · {{ f.statusAfter || '—' }}</strong>
                         <small>{{ f.followUpDate | date:'medium' }} · by {{ f.createdBy || 'system' }}</small>
                       </div>
@@ -107,10 +107,10 @@
               }
             </div>
 
-            <div class="adm-panel">
-              <div class="adm-panel__header"><h2>Add follow-up</h2></div>
+            <div class="tc-card tc-card--panel">
+              <div class="tc-card__header"><h2>Add follow-up</h2></div>
               <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-wizard__body">
-                <div class="adm-field">
+                <div class="tc-form-field">
                   <label>Type</label>
                   <select formControlName="followUpType">
                     @for (t of followUpTypes; track t) {
@@ -118,7 +118,7 @@
                     }
                   </select>
                 </div>
-                <div class="adm-field">
+                <div class="tc-form-field">
                   <label>Status after</label>
                   <select formControlName="statusAfter">
                     <option value="CONTACTED">CONTACTED</option>
@@ -130,20 +130,20 @@
                     <option value="LOST">LOST</option>
                   </select>
                 </div>
-                <div class="adm-field">
+                <div class="tc-form-field">
                   <label>Follow-up date</label>
                   <input type="date" formControlName="followUpDate" />
                 </div>
-                <div class="adm-field">
+                <div class="tc-form-field">
                   <label>Next follow-up</label>
                   <input type="date" formControlName="nextFollowUpDate" />
                 </div>
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Remarks *</label>
                   <textarea formControlName="remarks" rows="3"></textarea>
                 </div>
-                <div class="adm-field adm-field--full" style="flex-direction:row;justify-content:flex-end;">
-                  <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || followUpForm.invalid">
+                <div class="tc-form-field tc-form-field--full" style="flex-direction:row;justify-content:flex-end;">
+                  <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">
                     <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
                     Save follow-up
                   </button>
@@ -156,23 +156,23 @@
       @case ('counseling') {
         <div class="adm-tab-panel">
           <div class="adm-grid-2">
-            <div class="adm-panel">
-              <div class="adm-panel__header">
+            <div class="tc-card tc-card--panel">
+              <div class="tc-card__header">
                 <h2>Counseling notes</h2>
-                <small class="adm-panel__hint">{{ d.counselingNotes.length }} notes</small>
+                <small class="tc-card tc-card--panel__hint">{{ d.counselingNotes.length }} notes</small>
               </div>
               @if (!d.counselingNotes.length) {
-                <div class="adm-empty">
+                <div class="tc-empty-state">
                   <i class="pi pi-comments"></i>
                   <h3>No counseling notes</h3>
                   <p>Capture the first counseling conversation.</p>
                 </div>
               } @else {
                 @for (n of d.counselingNotes; track trackNote($index, n)) {
-                  <article class="adm-card" style="cursor:default;">
-                    <header class="adm-card__head">
+                  <article class="tc-card is-clickable" style="cursor:default;">
+                    <header class="tc-card__header">
                       <div class="adm-avatar"><i class="pi pi-comment"></i></div>
-                      <div class="adm-card__title">
+                      <div class="tc-card is-clickable__title">
                         <strong>{{ n.createdBy || 'Counselor' }}</strong>
                         <small>{{ n.createdOn | date:'medium' }}</small>
                       </div>
@@ -199,31 +199,31 @@
               }
             </div>
 
-            <div class="adm-panel">
-              <div class="adm-panel__header"><h2>Add counseling note</h2></div>
+            <div class="tc-card tc-card--panel">
+              <div class="tc-card__header"><h2>Add counseling note</h2></div>
               <form [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-wizard__body">
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Student requirements</label>
                   <textarea formControlName="studentRequirements" rows="2"></textarea>
                 </div>
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Parent concerns</label>
                   <textarea formControlName="parentConcerns" rows="2"></textarea>
                 </div>
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Campus visit info</label>
                   <textarea formControlName="campusVisitInfo" rows="2"></textarea>
                 </div>
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Recommendations</label>
                   <textarea formControlName="recommendations" rows="2"></textarea>
                 </div>
-                <div class="adm-field adm-field--full">
+                <div class="tc-form-field tc-form-field--full">
                   <label>Notes *</label>
                   <textarea formControlName="notes" rows="3"></textarea>
                 </div>
-                <div class="adm-field adm-field--full" style="flex-direction:row;justify-content:flex-end;">
-                  <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || counselingForm.invalid">
+                <div class="tc-form-field tc-form-field--full" style="flex-direction:row;justify-content:flex-end;">
+                  <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">
                     <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
                     Save note
                   </button>
@@ -235,13 +235,13 @@
       }
       @case ('timeline') {
         <div class="adm-tab-panel">
-          <div class="adm-panel">
-            <div class="adm-panel__header">
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header">
               <h2>Lead timeline</h2>
-              <small class="adm-panel__hint">{{ d.timeline.length }} events</small>
+              <small class="tc-card tc-card--panel__hint">{{ d.timeline.length }} events</small>
             </div>
             @if (!d.timeline.length) {
-              <div class="adm-empty">
+              <div class="tc-empty-state">
                 <i class="pi pi-clock"></i>
                 <h3>No activity yet</h3>
                 <p>Every interaction will be tracked here automatically.</p>
@@ -276,13 +276,13 @@
       <h2 id="lost-title" style="margin:0;font-size:1.1rem;">Mark Lead as Lost</h2>
       <p style="margin:0;color:var(--tc-text-muted);font-size:0.88rem;">Provide a reason for closing this opportunity.</p>
       <form [formGroup]="lostForm" (ngSubmit)="confirmMarkLost()" class="adm-wizard__body">
-        <div class="adm-field adm-field--full">
+        <div class="tc-form-field tc-form-field--full">
           <label>Reason *</label>
           <textarea formControlName="reason" rows="3" placeholder="e.g. Chose another school"></textarea>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:8px;">
-          <button type="button" class="adm-btn" (click)="closeLostDialog()">Cancel</button>
-          <button type="submit" class="adm-btn adm-btn--danger" [disabled]="lostForm.invalid">
+          <button type="button" class="tc-btn" (click)="closeLostDialog()">Cancel</button>
+          <button type="submit" class="tc-btn tc-btn--danger" [disabled]="lostForm.invalid">
             Confirm Mark Lost
           </button>
         </div>
@@ -293,3 +293,4 @@
 
 <p-toast />
 <p-confirmDialog />
+

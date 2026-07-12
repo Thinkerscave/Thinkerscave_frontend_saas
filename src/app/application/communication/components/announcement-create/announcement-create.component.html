@@ -3,7 +3,7 @@
     title="Create Announcement"
     subtitle="Broadcast a message to your school community"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements',route:'/app/communication/announcements'},{label:'New'}]">
-    <button type="button" class="saas-btn" (click)="cancel()">Cancel</button>
+    <button type="button" class="tc-btn" (click)="cancel()">Cancel</button>
   </tc-saas-page-header>
 
   <tc-saas-stepper [steps]="steps" [activeIndex]="active"></tc-saas-stepper>
@@ -43,7 +43,7 @@
         <i class="pi pi-cloud-upload"></i>
         <p>Drag & drop files here or click to browse.</p>
         <input type="text" #fileInput placeholder="Type filename and press Add">
-        <button type="button" class="saas-btn" (click)="addAttachment(fileInput.value); fileInput.value=''">Add</button>
+        <button type="button" class="tc-btn" (click)="addAttachment(fileInput.value); fileInput.value=''">Add</button>
       </div>
       <ul class="attachments" *ngIf="draft.attachments.length">
         <li *ngFor="let a of draft.attachments; let i = index">
@@ -85,9 +85,11 @@
     </section>
 
     <footer class="wizard-footer">
-      <button type="button" class="saas-btn" (click)="prev()" [disabled]="active === 0">Previous</button>
-      <button *ngIf="active < steps.length - 1" type="button" class="saas-btn saas-btn--primary" (click)="next()">Next</button>
-      <button *ngIf="active === steps.length - 1" type="button" class="saas-btn saas-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi pi-send"></i>{{ draft.scheduleNow ? 'Send Now' : 'Schedule' }}</button>
+      <button type="button" class="tc-btn" (click)="prev()" [disabled]="active === 0">Previous</button>
+      <button *ngIf="active < steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="next()">Next</button>
+      <button *ngIf="active === steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi pi-send"></i>{{ draft.scheduleNow ? 'Send Now' : 'Schedule' }}</button>
     </footer>
   </tc-saas-panel>
 </div>
+
+

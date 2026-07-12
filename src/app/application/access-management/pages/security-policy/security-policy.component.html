@@ -1,7 +1,7 @@
 <div class="saas-page security-policy">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="reset()" [disabled]="loading">Reset defaults</button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="saving || loading">
+    <button type="button" class="tc-btn" (click)="reset()" [disabled]="loading">Reset defaults</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
       <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Policy
     </button>
   </tc-saas-page-header>
@@ -37,3 +37,5 @@
     </div>
   </ng-container>
 </div>
+
+

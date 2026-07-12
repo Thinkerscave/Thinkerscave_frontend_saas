@@ -1,36 +1,36 @@
-<section class="adm-workspace">
+<section class="tc-page-shell">
   <!-- Header -->
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>Student Transfer</h1>
       <p>Manage transfer certificates and exit workflows.</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn adm-btn--primary" (click)="openNewTransfer()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openNewTransfer()">
         <i class="pi pi-plus"></i> New Transfer Request
       </button>
-      <button type="button" class="adm-btn" (click)="exportTransfers()">
+      <button type="button" class="tc-btn" (click)="exportTransfers()">
         <i class="pi pi-download"></i> Export
       </button>
     </div>
   </header>
 
   <!-- KPI Tiles -->
-  <div class="adm-kpi-grid">
+  <div class="dash-kpi-grid">
     <button type="button" *ngFor="let tile of kpiTiles"
-            class="adm-kpi"
+            class="tc-card tc-card--kpi"
             [class.is-active]="filterStatus === tile.status"
             [attr.data-tone]="tile.tone"
             (click)="setFilter(tile.status)">
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span class="adm-kpi__label">{{ tile.label }}</span>
+        <span class="kpi-header">{{ tile.label }}</span>
         <i class="pi {{ tile.icon }}" style="font-size:1.1rem; opacity:0.5;"></i>
       </div>
-      <span class="adm-kpi__value">{{ tile.count }}</span>
+      <span class="kpi-body strong">{{ tile.count }}</span>
     </button>
   </div>
 
-  <div *ngIf="errorMessage" class="adm-toast is-error">
+  <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
   <div *ngIf="successMessage" class="adm-toast">
@@ -38,13 +38,13 @@
   </div>
 
   <!-- Loading -->
-  <div class="adm-loading" *ngIf="loading">
+  <div class="tc-loading" *ngIf="loading">
     <i class="pi pi-spin pi-spinner"></i> Loading transfer requests…
   </div>
 
   <!-- Table -->
-  <div class="stu-table-wrap" *ngIf="!loading && filteredTransfers.length">
-    <table class="stu-table">
+  <div class="tc-table-wrap" *ngIf="!loading && filteredTransfers.length">
+    <table class="tc-table">
       <thead>
         <tr>
           <th>Transfer #</th>
@@ -69,29 +69,29 @@
           <td>{{ req.destinationSchool || '—' }}</td>
           <td>{{ req.requestedOn | date:'mediumDate' }}</td>
           <td>
-            <span class="stu-status" [attr.data-status]="req.status">
+            <span class="tc-badge" [attr.data-status]="req.status">
               {{ req.status | titlecase }}
             </span>
           </td>
           <td>
             <div style="display:flex;gap:4px;">
               <!-- View (placeholder for detail panel) -->
-              <button class="adm-icon-btn" title="View Details">
+              <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Details">
                 <i class="pi pi-eye"></i>
               </button>
               
               <!-- Approvals (if requested) -->
-              <button class="adm-icon-btn" style="color:var(--tc-success);" title="Approve" 
+              <button class="tc-btn tc-btn--ghost tc-btn--icon" style="color:var(--tc-success);" title="Approve" 
                       *ngIf="req.status === 'REQUESTED'" (click)="approve(req, $event)">
                 <i class="pi pi-check"></i>
               </button>
-              <button class="adm-icon-btn is-danger" title="Reject" 
+              <button class="tc-btn tc-btn--ghost tc-btn--icon is-danger" title="Reject" 
                       *ngIf="req.status === 'REQUESTED'" (click)="reject(req, $event)">
                 <i class="pi pi-times"></i>
               </button>
               
               <!-- Issue certificate (if approved) -->
-              <button class="adm-icon-btn" style="color:var(--tc-info);" title="Issue Certificate" 
+              <button class="tc-btn tc-btn--ghost tc-btn--icon" style="color:var(--tc-info);" title="Issue Certificate" 
                       *ngIf="req.status === 'APPROVED'" (click)="complete(req, $event)">
                 <i class="pi pi-flag"></i>
               </button>
@@ -102,7 +102,7 @@
     </table>
   </div>
 
-  <div class="adm-empty" *ngIf="!loading && !filteredTransfers.length">
+  <div class="tc-empty-state" *ngIf="!loading && !filteredTransfers.length">
     <i class="pi pi-arrow-right-arrow-left"></i>
     <h3>No transfers found</h3>
     <p>No transfer requests match the selected status.</p>
@@ -113,7 +113,7 @@
      NEW TRANSFER DRAWER
 ══════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="showNewTransferDrawer">
-  <div class="stu-drawer-overlay" (click)="closeNewTransfer()"></div>
+  <div class="tc-overlay" (click)="closeNewTransfer()"></div>
   <div class="stu-drawer">
     <div class="stu-drawer__header">
       <div>
@@ -127,7 +127,7 @@
 
     <div class="stu-drawer__body">
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Select Student *</label>
           <select [(ngModel)]="newRequest.studentId" (ngModelChange)="onStudentChanged()">
             <option [ngValue]="null">Select Student</option>
@@ -137,12 +137,12 @@
           </select>
         </div>
 
-        <div class="adm-field" *ngIf="newRequest.className">
+        <div class="tc-form-field" *ngIf="newRequest.className">
           <label>Current Class</label>
           <input type="text" disabled [value]="newRequest.className + ' - ' + newRequest.sectionName"/>
         </div>
 
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Reason for Transfer *</label>
           <select [(ngModel)]="newRequest.reason">
             <option [ngValue]="null">Select Reason</option>
@@ -153,17 +153,17 @@
           </select>
         </div>
 
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Destination School</label>
           <input type="text" [(ngModel)]="newRequest.destinationSchool" placeholder="Enter school name if known"/>
         </div>
 
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Requested Date *</label>
           <input type="date" [(ngModel)]="newRequest.requestedOn"/>
         </div>
 
-        <div class="adm-field adm-field--full">
+        <div class="tc-form-field tc-form-field--full">
           <label>Remarks / Notes</label>
           <textarea [(ngModel)]="newRequest.remarks" rows="3" placeholder="Additional details…"></textarea>
         </div>
@@ -171,11 +171,12 @@
     </div>
 
     <div class="stu-drawer__footer" style="justify-content:flex-end;">
-      <button type="button" class="adm-btn adm-btn--ghost" (click)="closeNewTransfer()">Cancel</button>
-      <button type="button" class="adm-btn adm-btn--primary" [disabled]="saving || !newRequest.studentId || !newRequest.reason" (click)="submitRequest()">
+      <button type="button" class="tc-btn tc-btn--ghost" (click)="closeNewTransfer()">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving || !newRequest.studentId || !newRequest.reason" (click)="submitRequest()">
         <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
         {{ saving ? 'Submitting…' : 'Submit Request' }}
       </button>
     </div>
   </div>
 </ng-container>
+

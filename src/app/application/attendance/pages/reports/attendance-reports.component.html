@@ -1,6 +1,6 @@
 <div class="saas-page attendance-reports">
   <tc-saas-page-header title="Reports" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Reports'}]">
-    <button type="button" class="saas-btn" (click)="exportPdf()"><i class="pi pi-download"></i>Export</button>
+    <button type="button" class="tc-btn" (click)="exportPdf()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
   <tc-saas-filter-row>
@@ -21,8 +21,8 @@
     <label class="saas-field"><span>Section</span>
       <select [(ngModel)]="filters.sectionName"><option value="all">All Sections</option></select>
     </label>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="refresh()"><i class="pi pi-filter"></i>Apply Filter</button>
-    <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="refresh()"><i class="pi pi-filter"></i>Apply Filter</button>
+    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
   </tc-saas-filter-row>
 
   <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
@@ -102,7 +102,7 @@
                 <td>{{ row.className }}</td>
                 <td><tc-saas-pill [label]="row.pct + '%'" tone="danger"></tc-saas-pill></td>
                 <td>{{ row.absent }}</td>
-                <td><button type="button" class="saas-btn"><i class="pi pi-eye"></i>View</button></td>
+                <td><button type="button" class="tc-btn"><i class="pi pi-eye"></i>View</button></td>
               </tr>
             </tbody>
           </table>
@@ -129,3 +129,5 @@
     </section>
   </ng-container>
 </div>
+
+

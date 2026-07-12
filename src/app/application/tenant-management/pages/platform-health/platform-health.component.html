@@ -1,11 +1,11 @@
-<div class="saas-page platform-health">
+<div class="tc-page platform-health">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <small class="platform-health__refreshed">Updated {{ refreshedAt | date:'short' }}</small>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading tenant health...</div>
+  <div *ngIf="errorMessage" class="tc-empty-state"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading tenant health...</div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
@@ -18,7 +18,7 @@
       </tc-saas-panel>
       
       <tc-saas-panel title="Tenant Registry" subtitle="Health scores derived from provision status and maintenance mode">
-      <div class="saas-table-wrap">
+      <div class="tc-table-wrap">
         <table class="saas-data-table">
           <thead>
             <tr>
@@ -63,3 +63,6 @@
     </div>
   </ng-container>
 </div>
+
+
+

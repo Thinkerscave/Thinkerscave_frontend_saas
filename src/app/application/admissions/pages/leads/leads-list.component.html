@@ -1,15 +1,15 @@
-<section class="adm-workspace">
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+<section class="tc-page-shell">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>{{ pageConfig.title }}</h1>
       <p>{{ pageConfig.description }}</p>
       <span class="adm-count"><i class="pi pi-users"></i> {{ totalElements() }} leads</span>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn" (click)="exportCsv()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn" (click)="exportCsv()">
         <i class="pi pi-download"></i> Export
       </button>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="openDrawer()">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openDrawer()">
         <i class="pi pi-plus"></i> New Lead
       </button>
     </div>
@@ -25,13 +25,13 @@
       </button>
     </div>
 
-    <div class="adm-filter-bar">
-      <div class="adm-field" style="flex:2; min-width:200px;">
+    <div class="tc-filter-bar">
+      <div class="tc-form-field" style="flex:2; min-width:200px;">
         <label>Search</label>
         <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, mobile, email…"
                (keyup.enter)="runSearch()" />
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Status</label>
         <select [(ngModel)]="filter.status">
           <option [ngValue]="null">All</option>
@@ -40,7 +40,7 @@
           }
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Source</label>
         <select [(ngModel)]="filter.inquirySource">
           <option [ngValue]="null">All</option>
@@ -49,64 +49,64 @@
           }
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Class</label>
         <input type="text" [(ngModel)]="filter.classInterested" placeholder="e.g. Grade 10" />
       </div>
-      <div class="adm-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
-        <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching()">
+      <div class="tc-form-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching()">
           <i class="pi" [class.pi-search]="!searching()" [class.pi-spin]="searching()" [class.pi-spinner]="searching()"></i>
           Search
         </button>
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Reset</button>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
       </div>
     </div>
 
     @if (error()) {
-      <div class="adm-toast is-error" role="alert">
+      <div class="tc-empty-state tc-empty-state--inline" role="alert">
         <i class="pi pi-exclamation-triangle"></i> {{ error() }}
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="loadInitial()">Retry</button>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="loadInitial()">Retry</button>
       </div>
     }
 
     @if (loading()) {
-      <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
+      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
     } @else if (!leads().length) {
-      <div class="adm-empty">
+      <div class="tc-empty-state">
         <i class="pi pi-inbox"></i>
         <h3>No leads found</h3>
         <p>Adjust filters or capture a new lead to get started.</p>
-        <button type="button" class="adm-btn adm-btn--primary" (click)="openDrawer()">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="openDrawer()">
           <i class="pi pi-plus"></i> New Lead
         </button>
       </div>
     } @else if (viewMode() === 'card') {
-      <div class="adm-card-grid">
+      <div class="tc-card is-clickable-grid">
         @for (lead of leads(); track lead.inquiryId) {
-          <article class="adm-card" (click)="openLead(lead)">
-            <header class="adm-card__head">
+          <article class="tc-card is-clickable" (click)="openLead(lead)">
+            <header class="tc-card__header">
               <div class="adm-avatar">{{ (lead.name || '?').charAt(0) }}</div>
-              <div class="adm-card__title">
+              <div class="tc-card is-clickable__title">
                 <strong>{{ lead.name }}</strong>
                 <small>LEAD-{{ lead.inquiryId }} · {{ lead.classInterestedIn }}</small>
               </div>
               <span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ lead.status }}</span>
             </header>
-            <div class="adm-card__meta">
+            <div class="tc-card is-clickable__meta">
               <span><i class="pi pi-phone"></i> {{ lead.mobileNumber || '—' }}</span>
               <span><i class="pi pi-envelope"></i> {{ lead.email || '—' }}</span>
               <span><i class="pi pi-tag"></i> {{ lead.inquirySource || '—' }}</span>
               <span><i class="pi pi-calendar"></i> {{ lead.nextFollowUpDate || '—' }}</span>
             </div>
-            <footer class="adm-card__footer">
+            <footer class="tc-card__footer">
               <small>{{ lead.createdOn | date:'mediumDate' }}</small>
-              <div class="adm-card__actions">
-                <button class="adm-icon-btn" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
-                <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
-                <button class="adm-icon-btn" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
-                <button class="adm-icon-btn" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
-                <button class="adm-icon-btn" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
-                <button class="adm-icon-btn" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
+              <div class="tc-card is-clickable__actions">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
               </div>
             </footer>
           </article>
@@ -142,12 +142,12 @@
                 <td>{{ lead.nextFollowUpDate || '—' }}</td>
                 <td (click)="$event.stopPropagation()">
                   <div style="display:flex;gap:4px;">
-                    <button class="adm-icon-btn" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
-                    <button class="adm-icon-btn" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
-                    <button class="adm-icon-btn" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
-                    <button class="adm-icon-btn" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
-                    <button class="adm-icon-btn" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
-                    <button class="adm-icon-btn" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
                   </div>
                 </td>
               </tr>
@@ -182,27 +182,27 @@
     </div>
     <div class="stu-drawer__body">
       <form [formGroup]="leadForm" class="adm-wizard__body" (ngSubmit)="saveLead()">
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Name *</label>
           <input type="text" formControlName="name" placeholder="Student / parent name" />
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Mobile *</label>
           <input type="tel" formControlName="mobileNumber" placeholder="+91…" />
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Email</label>
           <input type="email" formControlName="email" />
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Class interested *</label>
           <input type="text" formControlName="classInterestedIn" placeholder="e.g. Grade 10" />
         </div>
-        <div class="adm-field adm-field--full">
+        <div class="tc-form-field tc-form-field--full">
           <label>Address</label>
           <textarea formControlName="address" rows="2"></textarea>
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Source</label>
           <select formControlName="inquirySource">
             <option value="">Select source</option>
@@ -211,27 +211,27 @@
             }
           </select>
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Referred by</label>
           <input type="text" formControlName="referredBy" />
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Counselor ID</label>
           <input type="number" formControlName="assignedCounselorId" />
         </div>
-        <div class="adm-field">
+        <div class="tc-form-field">
           <label>Next follow-up</label>
           <input type="date" formControlName="nextFollowUpDate" />
         </div>
-        <div class="adm-field adm-field--full">
+        <div class="tc-form-field tc-form-field--full">
           <label>Comments</label>
           <textarea formControlName="comments" rows="3"></textarea>
         </div>
       </form>
     </div>
     <div class="stu-drawer__footer" style="justify-content:flex-end;">
-      <button type="button" class="adm-btn" (click)="closeDrawer()">Cancel</button>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="saveLead()" [disabled]="saving() || leadForm.invalid">
+      <button type="button" class="tc-btn" (click)="closeDrawer()">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="saveLead()" [disabled]="saving() || leadForm.invalid">
         <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
         {{ editingLead() ? 'Update Lead' : 'Create Lead' }}
       </button>
@@ -241,3 +241,4 @@
 
 <p-toast />
 <p-confirmDialog />
+

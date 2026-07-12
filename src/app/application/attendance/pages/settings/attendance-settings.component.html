@@ -1,6 +1,6 @@
 <div class="saas-page attendance-settings">
   <tc-saas-page-header title="Settings" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Settings'}]">
-    <button type="button" class="saas-btn saas-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Settings</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()"><i class="pi pi-save"></i>Save Settings</button>
   </tc-saas-page-header>
 
   <div *ngIf="saved" class="attendance-settings__toast"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
@@ -58,3 +58,5 @@
     </tc-saas-panel>
   </div>
 </div>
+
+

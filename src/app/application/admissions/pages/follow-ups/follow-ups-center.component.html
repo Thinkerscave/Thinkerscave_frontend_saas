@@ -1,28 +1,28 @@
-<section class="adm-workspace">
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+<section class="tc-page-shell">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>{{ pageConfig.title }}</h1>
       <p>{{ pageConfig.description }}</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn" (click)="load()" [disabled]="loading()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()">
         <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
       </button>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="toggleScheduleForm()">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="toggleScheduleForm()">
         <i class="pi pi-plus"></i> Schedule Follow-up
       </button>
     </div>
   </header>
 
   @if (error()) {
-    <div class="adm-empty" role="alert">
+    <div class="tc-empty-state" role="alert">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>Could not load follow-ups</h3>
       <p>{{ error() }}</p>
-      <button type="button" class="adm-btn adm-btn--primary" (click)="load()">Retry</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
   } @else if (loading()) {
-    <div class="adm-loading"><i class="pi pi-spin pi-spinner"></i> Loading follow-up queue…</div>
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading follow-up queue…</div>
   } @else {
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
@@ -31,14 +31,14 @@
     @if (showScheduleForm()) {
       <tc-saas-panel title="Schedule New Follow-up" subtitle="Enter lead ID and follow-up details">
         <form [formGroup]="scheduleForm" class="adm-wizard__body" (ngSubmit)="submitSchedule()">
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Lead ID *</label>
             <input type="number" formControlName="leadId" placeholder="e.g. 1042" />
             <small style="color:var(--tc-text-muted);font-size:0.76rem;">
               Or <a routerLink="/app/admissions/leads">browse leads</a> to find the ID.
             </small>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Type *</label>
             <select formControlName="followUpType">
               @for (t of followUpTypes; track t) {
@@ -46,15 +46,15 @@
               }
             </select>
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Follow-up date</label>
             <input type="date" formControlName="followUpDate" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Next follow-up</label>
             <input type="date" formControlName="nextFollowUpDate" />
           </div>
-          <div class="adm-field">
+          <div class="tc-form-field">
             <label>Status after</label>
             <select formControlName="statusAfter">
               <option value="CONTACTED">CONTACTED</option>
@@ -64,13 +64,13 @@
               <option value="READY_FOR_ADMISSION">READY_FOR_ADMISSION</option>
             </select>
           </div>
-          <div class="adm-field adm-field--full">
+          <div class="tc-form-field tc-form-field--full">
             <label>Remarks *</label>
             <textarea formControlName="remarks" rows="3" placeholder="What was discussed or planned"></textarea>
           </div>
-          <div class="adm-field adm-field--full" style="flex-direction:row; justify-content:flex-end; gap:8px;">
-            <button type="button" class="adm-btn" (click)="toggleScheduleForm()">Cancel</button>
-            <button type="submit" class="adm-btn adm-btn--primary" [disabled]="saving() || scheduleForm.invalid">
+          <div class="tc-form-field tc-form-field--full" style="flex-direction:row; justify-content:flex-end; gap:8px;">
+            <button type="button" class="tc-btn" (click)="toggleScheduleForm()">Cancel</button>
+            <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || scheduleForm.invalid">
               <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
               Schedule
             </button>
@@ -114,11 +114,11 @@
                   <td>
                     <div style="display:flex;gap:6px;">
                       @if (item.inquiryId) {
-                        <button type="button" class="adm-btn adm-btn--ghost" (click)="openLead(item.inquiryId)">
+                        <button type="button" class="tc-btn tc-btn--ghost" (click)="openLead(item.inquiryId)">
                           <i class="pi pi-eye"></i>
                         </button>
                       }
-                      <button type="button" class="adm-btn adm-btn--primary" (click)="complete(item)">
+                      <button type="button" class="tc-btn tc-btn--primary" (click)="complete(item)">
                         <i class="pi pi-check"></i> Complete
                       </button>
                     </div>
@@ -129,7 +129,7 @@
           </table>
         </div>
       } @else {
-        <div class="adm-empty">
+        <div class="tc-empty-state">
           <i class="pi pi-calendar"></i>
           <h3>No follow-ups in this view</h3>
           <p>Schedule a new follow-up or check another tab.</p>
@@ -140,3 +140,4 @@
 </section>
 
 <p-toast />
+

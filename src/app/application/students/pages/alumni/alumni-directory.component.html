@@ -1,62 +1,62 @@
-<section class="adm-workspace">
+<section class="tc-page-shell">
   <!-- Header -->
-  <header class="adm-hero">
-    <div class="adm-hero__title">
+  <header class="tc-page-header">
+    <div class="tc-page-header__main">
       <h1>Alumni Directory</h1>
       <p>Stay connected with your past graduates.</p>
     </div>
-    <div class="adm-hero__actions">
-      <button type="button" class="adm-btn" (click)="exportAlumni()">
+    <div class="tc-page-header__actions">
+      <button type="button" class="tc-btn" (click)="exportAlumni()">
         <i class="pi pi-download"></i> Export Directory
       </button>
     </div>
   </header>
 
   <!-- Filters -->
-  <div class="adm-panel">
-    <div class="adm-filter-bar">
-      <div class="adm-field" style="flex:2; min-width:200px;">
+  <div class="tc-card tc-card--panel">
+    <div class="tc-filter-bar">
+      <div class="tc-form-field" style="flex:2; min-width:200px;">
         <label>Search</label>
         <input type="text" [(ngModel)]="filters.keyword"
                placeholder="Name, Company, City…"
                (keyup.enter)="runSearch()"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Passout Year</label>
         <select [(ngModel)]="filters.passoutYear">
           <option [ngValue]="null">All Years</option>
           <option *ngFor="let y of passoutYears" [ngValue]="y">{{ y }}</option>
         </select>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>Course</label>
         <input type="text" [(ngModel)]="filters.course" placeholder="B.Tech, MBA…"/>
       </div>
-      <div class="adm-field">
+      <div class="tc-form-field">
         <label>City</label>
         <input type="text" [(ngModel)]="filters.city" placeholder="Mumbai, Delhi…"/>
       </div>
-      <div class="adm-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
-        <button type="button" class="adm-btn adm-btn--primary" (click)="runSearch()" [disabled]="searching">
+      <div class="tc-form-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
           <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
           Search
         </button>
-        <button type="button" class="adm-btn adm-btn--ghost" (click)="clearFilters()">Reset</button>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
       </div>
     </div>
     
-    <div *ngIf="errorMessage" class="adm-toast is-error" style="margin-top:12px;">
+    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline" style="margin-top:12px;">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
     <!-- Loading -->
-    <div class="adm-loading" *ngIf="loading">
+    <div class="tc-loading" *ngIf="loading">
       <i class="pi pi-spin pi-spinner"></i> Loading alumni directory…
     </div>
 
     <!-- Table -->
-    <div class="stu-table-wrap" *ngIf="!loading && alumni.length" style="margin-top:16px;">
-      <table class="stu-table">
+    <div class="tc-table-wrap" *ngIf="!loading && alumni.length" style="margin-top:16px;">
+      <table class="tc-table">
         <thead>
           <tr>
             <th>Alumni</th>
@@ -73,7 +73,7 @@
           <tr *ngFor="let a of alumni">
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
-                <div class="stu-photo stu-photo--initials" style="width:36px;height:36px;font-size:0.78rem;">
+                <div class="tc-avatar tc-avatar--initials" style="width:36px;height:36px;font-size:0.78rem;">
                   <!-- Mocking photo logic for now -->
                   <span>{{ initials(a.fullName) }}</span>
                 </div>
@@ -91,16 +91,16 @@
             </td>
             <td>
               <div style="display:flex;gap:4px;">
-                <button class="adm-icon-btn" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
                   <i class="pi pi-user"></i>
                 </button>
-                <button class="adm-icon-btn" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)" style="color:#0a66c2;">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)" style="color:#0a66c2;">
                   <i class="pi pi-linkedin"></i>
                 </button>
-                <button class="adm-icon-btn" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
                   <i class="pi pi-envelope"></i>
                 </button>
-                <button class="adm-icon-btn" title="Call" *ngIf="a.contact" (click)="callAlumni(a.contact)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" *ngIf="a.contact" (click)="callAlumni(a.contact)">
                   <i class="pi pi-phone"></i>
                 </button>
               </div>
@@ -110,10 +110,11 @@
       </table>
     </div>
 
-    <div class="adm-empty" *ngIf="!loading && !alumni.length" style="padding:48px 0;">
+    <div class="tc-empty-state" *ngIf="!loading && !alumni.length" style="padding:48px 0;">
       <i class="pi pi-users"></i>
       <h3>No alumni found</h3>
       <p>Adjust your search filters to find registered alumni.</p>
     </div>
   </div>
 </section>
+

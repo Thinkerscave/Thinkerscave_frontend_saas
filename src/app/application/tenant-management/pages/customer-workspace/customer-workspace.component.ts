@@ -238,3 +238,4 @@ export class CustomerWorkspaceComponent implements OnInit {
     return haystack.includes('customer') && entityId === customerId;
   }
 }
+

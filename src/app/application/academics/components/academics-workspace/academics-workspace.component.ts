@@ -168,3 +168,4 @@ export class AcademicsWorkspaceComponent implements OnInit {
     };
   }
 }
+

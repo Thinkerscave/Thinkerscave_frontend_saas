@@ -2,8 +2,8 @@
   <tc-saas-page-header
     title="Student Attendance"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Student Attendance'}]">
-    <button type="button" class="saas-btn"><i class="pi pi-calendar"></i>Attendance Calendar</button>
-    <button type="button" class="saas-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
+    <button type="button" class="tc-btn"><i class="pi pi-calendar"></i>Attendance Calendar</button>
+    <button type="button" class="tc-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
   <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
@@ -28,7 +28,7 @@
       </select>
     </label>
     <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="filters.date"></label>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="loadRoster()"><i class="pi pi-search"></i>Load</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="loadRoster()"><i class="pi pi-search"></i>Load</button>
   </tc-saas-filter-row>
 
   <div class="attendance-student__layout">
@@ -36,7 +36,7 @@
       [title]="filters.classId === 'all' ? 'Class Attendance' : 'Class Roster'"
       [subtitle]="rows.length ? rows.length + ' students loaded' : 'Choose class and date, then load.'">
       <ng-container panel-actions>
-        <button type="button" class="saas-btn" (click)="markAllPresent()" [disabled]="!rows.length"><i class="pi pi-check"></i>Mark All Present</button>
+        <button type="button" class="tc-btn" (click)="markAllPresent()" [disabled]="!rows.length"><i class="pi pi-check"></i>Mark All Present</button>
       </ng-container>
 
       <div *ngIf="rosterLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading roster...</div>
@@ -77,8 +77,8 @@
       <footer *ngIf="rows.length" class="attendance-student__footer">
         <span>Showing {{ rows.length }} students</span>
         <div>
-          <button type="button" class="saas-btn"><i class="pi pi-times"></i>Cancel</button>
-          <button type="button" class="saas-btn saas-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>Save Attendance</button>
+          <button type="button" class="tc-btn"><i class="pi pi-times"></i>Cancel</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="submit()" [disabled]="saving"><i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>Save Attendance</button>
         </div>
       </footer>
     </tc-saas-panel>
@@ -98,8 +98,10 @@
             <div class="pending-row__bar"><span [style.width.%]="pending.pct" [attr.data-tone]="pctTone(pending.pct)"></span></div>
           </div>
         </article>
-        <button type="button" class="saas-btn saas-btn--primary attendance-student__view-all"><i class="pi pi-eye"></i>View All Pending</button>
+        <button type="button" class="tc-btn tc-btn--primary attendance-student__view-all"><i class="pi pi-eye"></i>View All Pending</button>
       </tc-saas-panel>
     </aside>
   </div>
 </div>
+
+

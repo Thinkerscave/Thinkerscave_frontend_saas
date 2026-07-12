@@ -1,6 +1,7 @@
 @use "./styles/theme/tokens";
 @use "./styles/theme/animations";
 @use "./styles/theme/utilities";
+@use "./styles/design-system/index";
 @use "./styles/theme/primeng-overrides";
 @use "./styles/saas/primitives" as saasPrimitives;
 @use "./styles/academics/workspace";

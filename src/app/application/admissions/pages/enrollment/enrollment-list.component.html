@@ -1,6 +1,6 @@
 <p-toast />
 
-<section class="adm-workspace">
+<section class="tc-page-shell">
   <tc-saas-page-header
     title="Enrollment"
     subtitle="Finalize approved applications and create student records."
@@ -8,7 +8,7 @@
     <div class="adm-view-toggle">
       <button
         type="button"
-        class="adm-btn"
+        class="tc-btn"
         [class.is-active]="view === 'grid'"
         (click)="view = 'grid'"
       >
@@ -16,7 +16,7 @@
       </button>
       <button
         type="button"
-        class="adm-btn"
+        class="tc-btn"
         [class.is-active]="view === 'table'"
         (click)="view = 'table'"
       >
@@ -27,43 +27,43 @@
 
   <tc-saas-panel title="Approved applications" [actions]="true">
     <div panel-actions>
-      <small class="adm-panel__hint">{{ totalElements }} ready to enroll</small>
+      <small class="tc-card tc-card--panel__hint">{{ totalElements }} ready to enroll</small>
     </div>
 
-    <div class="adm-toast is-error" *ngIf="errorMessage">
+    <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
-    <div class="adm-loading" *ngIf="loading">
+    <div class="tc-loading" *ngIf="loading">
       <i class="pi pi-spin pi-spinner"></i> Loading approved applications…
     </div>
 
     <!-- Card view -->
-    <div class="adm-card-grid" *ngIf="!loading && view === 'grid' && applications.length">
-      <article *ngFor="let app of applications" class="adm-card">
-        <header class="adm-card__head">
+    <div class="tc-card is-clickable-grid" *ngIf="!loading && view === 'grid' && applications.length">
+      <article *ngFor="let app of applications" class="tc-card is-clickable">
+        <header class="tc-card__header">
           <div class="adm-avatar">{{ initials(app.applicantName) }}</div>
-          <div class="adm-card__title">
+          <div class="tc-card is-clickable__title">
             <strong>{{ app.applicantName }}</strong>
             <small>{{ app.applicationNumber || ('#' + app.applicationId) }} · {{ app.applyingForClass || '—' }}</small>
           </div>
           <tc-saas-pill label="Approved" tone="success" />
         </header>
 
-        <div class="adm-card__meta">
+        <div class="tc-card is-clickable__meta">
           <span><i class="pi pi-phone"></i> {{ app.contactNumber || '—' }}</span>
           <span><i class="pi pi-user"></i> {{ app.parentName || '—' }}</span>
           <span><i class="pi pi-envelope"></i> {{ app.email || '—' }}</span>
           <span><i class="pi pi-calendar"></i> {{ app.createdOn | date: 'mediumDate' }}</span>
         </div>
 
-        <footer class="adm-card__footer">
+        <footer class="tc-card__footer">
           <small style="color: var(--tc-text-muted); font-size: 0.74rem;">
             Ready for enrollment
           </small>
           <button
             type="button"
-            class="adm-btn adm-btn--primary"
+            class="tc-btn tc-btn--primary"
             (click)="openEnrollmentDrawer(app, $event)"
           >
             <i class="pi pi-check"></i> Enroll
@@ -73,8 +73,8 @@
     </div>
 
     <!-- Table view -->
-    <div class="adm-table-wrap" *ngIf="!loading && view === 'table' && applications.length">
-      <table class="adm-table">
+    <div class="tc-table-wrap" *ngIf="!loading && view === 'table' && applications.length">
+      <table class="tc-table">
         <thead>
           <tr>
             <th>Application</th>
@@ -95,7 +95,7 @@
             <td>{{ app.parentName || '—' }}</td>
             <td>{{ app.createdOn | date: 'mediumDate' }}</td>
             <td>
-              <button type="button" class="adm-btn adm-btn--primary" (click)="openEnrollmentDrawer(app)">
+              <button type="button" class="tc-btn tc-btn--primary" (click)="openEnrollmentDrawer(app)">
                 Enroll
               </button>
             </td>
@@ -114,7 +114,7 @@
       />
     </div>
 
-    <div class="adm-empty" *ngIf="!loading && !applications.length">
+    <div class="tc-empty-state" *ngIf="!loading && !applications.length">
       <i class="pi pi-check-circle"></i>
       <h3>No approved applications</h3>
       <p>Applications appear here once they are approved in the Applications workspace.</p>
@@ -132,20 +132,20 @@
           {{ selected?.applicantName }} · {{ selected?.applicationNumber || selected?.applicationId }}
         </small>
       </div>
-      <button type="button" class="adm-icon-btn" (click)="closeDrawer()">
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="closeDrawer()">
         <i class="pi pi-times"></i>
       </button>
     </div>
 
-    <div class="adm-field">
+    <div class="tc-form-field">
       <label>Academic year</label>
       <input type="text" [(ngModel)]="enrollmentForm.academicYear" placeholder="2025-2026" />
     </div>
-    <div class="adm-field">
+    <div class="tc-form-field">
       <label>Class</label>
       <input type="text" [(ngModel)]="enrollmentForm.className" />
     </div>
-    <div class="adm-field">
+    <div class="tc-form-field">
       <label>Section</label>
       <input type="text" [(ngModel)]="enrollmentForm.section" placeholder="e.g. A" />
     </div>
@@ -155,10 +155,10 @@
     </p>
 
     <div style="display: flex; gap: 8px; margin-top: auto;">
-      <button type="button" class="adm-btn adm-btn--ghost" (click)="closeDrawer()">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--ghost" (click)="closeDrawer()">Cancel</button>
       <button
         type="button"
-        class="adm-btn adm-btn--primary"
+        class="tc-btn tc-btn--primary"
         (click)="enroll()"
         [disabled]="enrolling"
       >
@@ -168,3 +168,5 @@
     </div>
   </aside>
 </div>
+
+

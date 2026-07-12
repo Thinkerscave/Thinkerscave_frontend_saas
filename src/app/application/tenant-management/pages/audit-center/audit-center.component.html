@@ -1,7 +1,7 @@
-<div class="saas-page tc-audit">
+<div class="tc-page tc-audit">
   <tc-saas-page-header>
-    <button type="button" class="saas-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="exportCsv()" [disabled]="!filtered.length"><i class="pi pi-download"></i> Export CSV</button>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="exportCsv()" [disabled]="!filtered.length"><i class="pi pi-download"></i> Export CSV</button>
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="tc-empty tc-empty--error" role="alert">
@@ -81,7 +81,7 @@
     </div>
   </div>
 
-  <div *ngIf="!loading && !errorMessage && filtered.length && viewMode === 'table'" class="saas-table-wrap">
+  <div *ngIf="!loading && !errorMessage && filtered.length && viewMode === 'table'" class="tc-table-wrap">
     <table class="saas-data-table">
       <thead>
         <tr>
@@ -115,3 +115,6 @@
     <div class="tc-empty__actions"><button type="button" class="tc-btn tc-btn--ghost" (click)="resetFilters()">Reset filters</button></div>
   </div>
 </div>
+
+
+

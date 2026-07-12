@@ -37,11 +37,8 @@
   height: auto;
   box-sizing: border-box;
   padding: 0.65rem 0.35rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--tc-sidebar-bg) 96%, var(--tc-primary-600) 4%),
-    var(--tc-sidebar-bg)
-  );
+  background: var(--tc-sidebar-bg);
+  backdrop-filter: blur(12px);
   color: var(--tc-sidebar-text);
   border-right: 1px solid var(--tc-sidebar-border);
   overflow-x: hidden;

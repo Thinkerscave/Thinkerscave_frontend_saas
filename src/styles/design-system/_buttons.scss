@@ -1,0 +1,116 @@
+/* Buttons */
+.tc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: var(--tc-font-size-sm);
+  line-height: 1.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--tc-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--tc-anim-duration-fast) var(--tc-anim-easing);
+  white-space: nowrap;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--tc-focus-ring);
+  }
+
+  &:disabled, &.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  i.pi {
+    font-size: 0.875rem;
+  }
+}
+
+.tc-btn--primary {
+  background: var(--tc-button-primary-bg);
+  color: #ffffff;
+  box-shadow: var(--tc-shadow-sm);
+
+  &:hover {
+    background: var(--tc-button-primary-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: var(--tc-shadow-md);
+  }
+}
+
+.tc-btn--ghost {
+  background: transparent;
+  color: var(--tc-text-muted);
+  border-color: transparent;
+
+  &:hover {
+    background: var(--tc-surface-hover);
+    color: var(--tc-text);
+  }
+}
+
+.tc-btn--danger {
+  background: var(--tc-danger);
+  color: #ffffff;
+  
+  &:hover {
+    background: color-mix(in srgb, var(--tc-danger) 85%, black);
+    transform: translateY(-1px);
+    box-shadow: var(--tc-shadow-sm);
+  }
+}
+
+.tc-btn--outline {
+  background: transparent;
+  border-color: var(--tc-border-strong);
+  color: var(--tc-text);
+  
+  &:hover {
+    background: var(--tc-surface-hover);
+    border-color: var(--tc-primary-500);
+    color: var(--tc-primary-600);
+  }
+}
+
+.tc-btn--accent {
+  background: var(--tc-button-accent-bg);
+  color: #ffffff;
+  
+  &:hover {
+    background: var(--tc-button-accent-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: var(--tc-shadow-accent);
+  }
+}
+
+/* Sizes */
+.tc-btn--sm {
+  padding: 0.25rem 0.75rem;
+  font-size: var(--tc-font-size-xs);
+  border-radius: var(--tc-radius-sm);
+}
+
+.tc-btn--lg {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--tc-font-size-base);
+}
+
+.tc-btn--icon {
+  padding: 0.5rem;
+  border-radius: var(--tc-radius-md);
+  
+  i.pi {
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.tc-btn--icon-sm {
+  padding: 0.35rem;
+  border-radius: var(--tc-radius-sm);
+}

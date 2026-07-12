@@ -26,7 +26,7 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule],
   template: `
-    <article class="dash-kpi-card tc-hover-lift" [attr.data-tone]="metric.tone">
+    <article class="tc-card tc-card--kpi tc-hover-lift" [attr.data-tone]="metric.tone">
       <div class="kpi-header">
         <span class="kpi-icon"><i [class]="metric.icon"></i></span>
         <div class="kpi-trend" [ngClass]="getTrendClass()">
@@ -69,15 +69,15 @@ export class KpiCardComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel">
+      <header class="tc-card__header">
         <div>
           <span>Quick Access</span>
           <h2>Common Tasks</h2>
         </div>
       </header>
       <div class="dash-quick-actions" *ngIf="items.length; else emptyState">
-        <button type="button" *ngFor="let action of items.slice(0, 4); trackBy: trackByKey" class="dash-action-card tc-stagger-2" (click)="selected.emit(action)">
+        <button type="button" *ngFor="let action of items.slice(0, 4); trackBy: trackByKey" class="tc-card is-clickable tc-action-card tc-stagger-2" (click)="selected.emit(action)">
           <div class="action-icon">
             <i [class]="action.icon"></i>
           </div>
@@ -89,7 +89,7 @@ export class KpiCardComponent {
         </button>
       </div>
       <ng-template #emptyState>
-        <div class="dash-empty-state compact"><i class="pi pi-bolt"></i><strong>No quick actions available</strong></div>
+        <div class="tc-empty-state tc-empty-state--inline"><i class="pi pi-bolt"></i><strong>No quick actions available</strong></div>
       </ng-template>
     </section>
   `
@@ -109,16 +109,16 @@ export class QuickActionPanelComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel">
+      <header class="tc-card__header">
         <div>
           <span>Timeline</span>
           <h2>Recent Activity</h2>
         </div>
-        <button type="button" class="dash-icon-button"><i class="pi pi-ellipsis-h"></i></button>
+        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon"><i class="pi pi-ellipsis-h"></i></button>
       </header>
-      <div class="dash-table-list" *ngIf="items.length; else emptyState">
-        <button type="button" class="dash-table-row tc-stagger-3" *ngFor="let item of items.slice(0, 5); trackBy: trackByKey" (click)="selected.emit(item)">
+      <div class="tc-list" *ngIf="items.length; else emptyState">
+        <button type="button" class="tc-list__item is-clickable tc-stagger-3" *ngFor="let item of items.slice(0, 5); trackBy: trackByKey" (click)="selected.emit(item)">
           <div class="row-icon"><i [class]="item.icon"></i></div>
           <div class="row-main">
             <strong>{{ item.title }}</strong>
@@ -129,7 +129,7 @@ export class QuickActionPanelComponent {
         </button>
       </div>
       <ng-template #emptyState>
-        <div class="dash-empty-state compact"><i class="pi pi-history"></i><strong>No recent activity</strong></div>
+        <div class="tc-empty-state tc-empty-state--inline"><i class="pi pi-history"></i><strong>No recent activity</strong></div>
       </ng-template>
     </section>
   `
@@ -162,8 +162,8 @@ export class ActivityFeedComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel dash-chart-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel dash-chart-panel">
+      <header class="tc-card__header">
         <div>
           <span>{{ chart?.subtitle || 'Analytics' }}</span>
           <h2>{{ chart?.title || title }}</h2>
@@ -175,7 +175,7 @@ export class ActivityFeedComponent {
         </div>
       </ng-container>
       <ng-template #emptyState>
-        <div class="dash-empty-state compact">
+        <div class="tc-empty-state tc-empty-state--inline">
           <i class="pi pi-chart-line"></i>
           <strong>{{ chart?.emptyMessage || 'No data yet' }}</strong>
         </div>
@@ -329,7 +329,7 @@ export class ChartWidgetComponent implements AfterViewInit, OnChanges, OnDestroy
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel dash-profile-card" *ngIf="profile">
+    <section class="tc-card tc-card--panel tc-card" *ngIf="profile">
       <div class="profile-hero">
         <div class="profile-avatar">{{ profile.avatarInitials }}</div>
         <div class="profile-meta">
@@ -387,8 +387,8 @@ export class ProfileCardComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel dash-financial-card" *ngIf="summary">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel dash-financial-card" *ngIf="summary">
+      <header class="tc-card__header">
         <div>
           <span>Finance</span>
           <h2>Financial Summary</h2>
@@ -429,15 +429,15 @@ export class FinancialSummaryComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel">
+      <header class="tc-card__header">
         <div>
           <span>Priorities</span>
           <h2>{{ heading }}</h2>
         </div>
       </header>
-      <div class="dash-table-list" *ngIf="items.length; else empty">
-        <button type="button" class="dash-table-row" *ngFor="let item of items" (click)="selected.emit(item)">
+      <div class="tc-list" *ngIf="items.length; else empty">
+        <button type="button" class="tc-list__item is-clickable" *ngFor="let item of items" (click)="selected.emit(item)">
           <div class="row-icon" [attr.data-tone]="item.tone"><i [class]="item.icon"></i></div>
           <div class="row-main">
             <strong>{{ item.title }}</strong>
@@ -447,7 +447,7 @@ export class FinancialSummaryComponent {
         </button>
       </div>
       <ng-template #empty>
-        <div class="dash-empty-state compact"><i class="pi pi-check-circle"></i><strong>{{ emptyMessage }}</strong></div>
+        <div class="tc-empty-state tc-empty-state--inline"><i class="pi pi-check-circle"></i><strong>{{ emptyMessage }}</strong></div>
       </ng-template>
     </section>
   `
@@ -465,15 +465,15 @@ export class PrioritiesPanelComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel">
+      <header class="tc-card__header">
         <div>
           <span>Alerts</span>
           <h2>Smart Alerts</h2>
         </div>
       </header>
-      <div class="dash-table-list" *ngIf="items.length; else empty">
-        <button type="button" class="dash-table-row" *ngFor="let item of items" (click)="selected.emit(item)">
+      <div class="tc-list" *ngIf="items.length; else empty">
+        <button type="button" class="tc-list__item is-clickable" *ngFor="let item of items" (click)="selected.emit(item)">
           <div class="row-icon" [attr.data-tone]="item.tone"><i [class]="item.icon"></i></div>
           <div class="row-main">
             <strong>{{ item.title }}</strong>
@@ -483,7 +483,7 @@ export class PrioritiesPanelComponent {
         </button>
       </div>
       <ng-template #empty>
-        <div class="dash-empty-state compact"><i class="pi pi-shield"></i><strong>All clear</strong></div>
+        <div class="tc-empty-state tc-empty-state--inline"><i class="pi pi-shield"></i><strong>All clear</strong></div>
       </ng-template>
     </section>
   `
@@ -499,15 +499,15 @@ export class AlertsPanelComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel">
+      <header class="tc-card__header">
         <div>
           <span>Approvals</span>
           <h2>Pending Approvals</h2>
         </div>
       </header>
-      <div class="dash-table-list" *ngIf="items.length; else empty">
-        <button type="button" class="dash-table-row" *ngFor="let item of items" (click)="selected.emit(item)">
+      <div class="tc-list" *ngIf="items.length; else empty">
+        <button type="button" class="tc-list__item is-clickable" *ngFor="let item of items" (click)="selected.emit(item)">
           <div class="row-icon" [attr.data-tone]="item.tone"><i class="pi pi-check-square"></i></div>
           <div class="row-main">
             <strong>{{ item.title }}</strong>
@@ -517,7 +517,7 @@ export class AlertsPanelComponent {
         </button>
       </div>
       <ng-template #empty>
-        <div class="dash-empty-state compact"><i class="pi pi-inbox"></i><strong>No approvals waiting</strong></div>
+        <div class="tc-empty-state tc-empty-state--inline"><i class="pi pi-inbox"></i><strong>No approvals waiting</strong></div>
       </ng-template>
     </section>
   `
@@ -533,15 +533,15 @@ export class ApprovalsPanelComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="dash-panel" *ngIf="items?.length">
-      <header class="dash-section-header">
+    <section class="tc-card tc-card--panel" *ngIf="items?.length">
+      <header class="tc-card__header">
         <div>
           <span>Shortcuts</span>
           <h2>{{ heading }}</h2>
         </div>
       </header>
-      <div class="dash-table-list">
-        <button type="button" class="dash-table-row" *ngFor="let item of items" (click)="selected.emit(item)">
+      <div class="tc-list">
+        <button type="button" class="tc-list__item is-clickable" *ngFor="let item of items" (click)="selected.emit(item)">
           <div class="row-icon"><i [class]="item.icon"></i></div>
           <div class="row-main"><strong>{{ item.label }}</strong><small *ngIf="item.description">{{ item.description }}</small></div>
           <span class="row-meta" *ngIf="item.count !== null && item.count !== undefined">{{ item.count }}</span>

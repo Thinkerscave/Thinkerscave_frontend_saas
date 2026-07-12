@@ -113,3 +113,4 @@ export class RoleWorkspaceComponent implements OnInit {
 
   trackByMenuId(_: number, row: PermissionMatrixRow): number { return row.menuId; }
 }
+
