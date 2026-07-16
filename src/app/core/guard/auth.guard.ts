@@ -15,8 +15,7 @@ export const authGuard: CanActivateFn = (route, state) => {
         const target = orgContext.requiresSelection
             ? ['/auth/select-organization']
             : ['/auth/login'];
-        router.navigate(target);
-        return false;
+        return router.createUrlTree(target);
     }
 
     // Check if this is a first-time login — enforce password change
@@ -26,8 +25,7 @@ export const authGuard: CanActivateFn = (route, state) => {
         if (state.url.includes('/auth/first-time-login')) {
             return true;
         }
-        router.navigate(['/auth/first-time-login']);
-        return false;
+        return router.createUrlTree(['/auth/first-time-login']);
     }
 
     return true;

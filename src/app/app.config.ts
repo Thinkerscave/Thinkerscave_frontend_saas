@@ -23,6 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
+    // Silent cookie refresh on boot — must not navigate to session-expired on failure.
     provideAppInitializer(() => {
       const loginService = inject(LoginService);
       const preferencesService = inject(UserPreferencesService);

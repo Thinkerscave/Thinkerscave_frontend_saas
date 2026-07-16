@@ -7,6 +7,7 @@ import { filter } from 'rxjs';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { PermissionService } from '../../core/services/permission.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
 
@@ -34,6 +35,7 @@ export class SideMenuComponent implements OnInit {
   private readonly breadcrumbService = inject(BreadCrumbService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly sidebarLayout = inject(SidebarLayoutService);
+  private readonly logger = inject(LoggerService);
 
   private activeLeafKey: string | null = null;
   private collapseHoverTimer: ReturnType<typeof setTimeout> | null = null;
@@ -82,7 +84,7 @@ export class SideMenuComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading menu:', err);
+        this.logger.error('Error loading menu', err);
         this.items = [];
         this.loading = false;
         this.cdr.markForCheck();

@@ -3,4 +3,6 @@ import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
 bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+  .catch(() => {
+    // Avoid dumping stack traces to the console in production; GlobalErrorHandler covers runtime errors.
+  });

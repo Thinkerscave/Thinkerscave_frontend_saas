@@ -1,16 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 /**
  * Centralised logger that replaces direct console calls.
- *
- * In production builds the minimum level can be raised to suppress
- * noisy debug/info output without code changes.
+ * Production builds default to warn/error only.
  */
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
-  private level: LogLevel = 'debug';
+  private level: LogLevel = environment.production ? 'warn' : 'debug';
 
   private readonly levels: Record<LogLevel, number> = {
     debug: 0,

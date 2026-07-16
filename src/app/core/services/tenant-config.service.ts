@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, tap, catchError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { LoggerService } from './logger.service';
 
 export interface TenantConfig {
     courseLabel: string;
@@ -16,6 +17,7 @@ export interface TenantConfig {
 export class TenantConfigService {
     private configSubject = new BehaviorSubject<TenantConfig | null>(null);
     public config$ = this.configSubject.asObservable();
+    private readonly logger = inject(LoggerService);
 
     constructor(private http: HttpClient) {
         this.initializeFromStorage();
@@ -27,7 +29,7 @@ export class TenantConfigService {
             try {
                 this.configSubject.next(JSON.parse(cached));
             } catch (e) {
-                console.error('Failed to parse cached tenant config', e);
+                this.logger.error('Failed to parse cached tenant config', e);
             }
         }
     }
@@ -44,7 +46,7 @@ export class TenantConfigService {
                 }
             }),
             catchError(err => {
-                console.error('Failed to load tenant config', err);
+                this.logger.error('Failed to load tenant config', err);
                 return of(null);
             })
         );

@@ -1,12 +1,9 @@
-import { Injectable, NgZone, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, inject } from '@angular/core';
 import { LoginService } from './login.service';
+import { LoggerService } from './logger.service';
 
 /**
  * IdleTimeoutService - Automatically logs out the user after a period of inactivity.
- *
- * Listens to user interaction events (mousemove, keydown, click, scroll, touchstart)
- * and resets a countdown timer. When the timer expires, the user is logged out.
- *
  * Default idle timeout: 30 minutes.
  */
 @Injectable({
@@ -14,25 +11,22 @@ import { LoginService } from './login.service';
 })
 export class IdleTimeoutService implements OnDestroy {
 
-    private readonly IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+    private readonly IDLE_TIMEOUT_MS = 30 * 60 * 1000;
     private timeoutHandle: ReturnType<typeof setTimeout> | null = null;
     private readonly events: string[] = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
     private boundReset = this.resetTimer.bind(this);
     private running = false;
+    private readonly logger = inject(LoggerService);
 
     constructor(
         private loginService: LoginService,
         private ngZone: NgZone
     ) { }
 
-    /**
-     * Start monitoring user activity. Call this after login.
-     */
     start(): void {
         if (this.running) return;
         this.running = true;
 
-        // Run outside Angular zone to avoid triggering change detection on every mouse move
         this.ngZone.runOutsideAngular(() => {
             this.events.forEach(event =>
                 document.addEventListener(event, this.boundReset, { passive: true })
@@ -41,9 +35,6 @@ export class IdleTimeoutService implements OnDestroy {
         });
     }
 
-    /**
-     * Stop monitoring user activity. Call this on logout.
-     */
     stop(): void {
         this.running = false;
         this.clearTimer();
@@ -55,9 +46,8 @@ export class IdleTimeoutService implements OnDestroy {
     private startTimer(): void {
         this.clearTimer();
         this.timeoutHandle = setTimeout(() => {
-            // Run inside Angular zone when navigating
             this.ngZone.run(() => {
-                console.warn('[IDLE TIMEOUT] User idle for', this.IDLE_TIMEOUT_MS / 60000, 'minutes — logging out.');
+                this.logger.warn(`User idle for ${this.IDLE_TIMEOUT_MS / 60000} minutes — logging out.`);
                 this.stop();
                 this.loginService.logOutAndRedirect();
             });

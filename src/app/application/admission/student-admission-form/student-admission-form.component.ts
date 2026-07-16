@@ -1,4 +1,4 @@
-import { Component , ChangeDetectionStrategy} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { StepsModule } from 'primeng/steps';
@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { AdmissionService } from '../../../services/admission.service';
 import { LoginService } from '../../../core/services/login.service';
 import { TenantConfigService, TenantConfig } from '../../../core/services/tenant-config.service';
+import { LoggerService } from '../../../core/services/logger.service';
 
 @Component({
   selector: 'app-student-admission-form',
@@ -47,6 +48,7 @@ export class StudentAdmissionFormComponent {
   dynamicFields: any[] = [];
   formConfig: any;
   tenantConfig: TenantConfig | null = null;
+  private readonly logger = inject(LoggerService);
 
   // For the final review step
   reviewSections: any[] = [];
@@ -130,7 +132,7 @@ export class StudentAdmissionFormComponent {
         this.applyConfig();
       },
       error: (err) => {
-        console.error('Failed to fetch form config', err);
+        this.logger.error('Failed to fetch form config', err);
       }
     });
   }

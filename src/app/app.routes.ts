@@ -32,6 +32,11 @@ export const routes: Routes = [
         pathMatch: 'full'
     },
     {
+        path: 'maintenance',
+        loadComponent: () => import('./shared/pages/maintenance/maintenance.component').then(m => m.MaintenanceComponent),
+        pathMatch: 'full'
+    },
+    {
         path: 'unauthorized',
         loadComponent: () => import('./shared/pages/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent),
         pathMatch: 'full'

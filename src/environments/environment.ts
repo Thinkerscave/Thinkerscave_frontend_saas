@@ -10,6 +10,10 @@ export const environment = {
     h2ConsoleUrl: 'http://localhost:8181/h2-console',
     /** Local dev: show org picker before login. Production resolves tenant from subdomain. */
     requireOrganizationSelection: true,
-    /** When true, refresh uses HttpOnly cookie (backend must set cookie on login). */
-    authUseHttpOnlyRefresh: false
+    /** Refresh token via HttpOnly cookie (never stored in JS-accessible storage). */
+    authUseHttpOnlyRefresh: true,
+    /** Feature flags — set false to hide incomplete modules from production UI. */
+    features: {
+        feeManagementEnabled: false
+    }
 };

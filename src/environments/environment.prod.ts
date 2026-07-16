@@ -5,8 +5,12 @@ export const environment = {
     baseUrl: 'https://api.thinkerscave.com/api/v1',
     defaultTenantId: '',
     platformTenantId: 'public',
-    defaultOrganizationId: null,
+    defaultOrganizationId: null as number | null,
     h2ConsoleUrl: '',
     requireOrganizationSelection: false,
-    authUseHttpOnlyRefresh: false
+    /** Refresh token via HttpOnly Secure cookie — never in localStorage/sessionStorage. */
+    authUseHttpOnlyRefresh: true,
+    features: {
+        feeManagementEnabled: false
+    }
 };

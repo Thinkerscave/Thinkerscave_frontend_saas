@@ -13,6 +13,7 @@ import {
   take,
   throwError
 } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { LoginService } from '../../core/services/login.service';
 
 let isRefreshing = false;
@@ -26,6 +27,8 @@ const refreshTokenSubject = new BehaviorSubject<string | null>(null);
  *   - Triggers token refresh exactly once (concurrent requests queue and retry)
  *   - On refresh failure: clears tokens and redirects to session-expired
  *
+ * Refresh uses HttpOnly cookie (withCredentials) when authUseHttpOnlyRefresh is true.
+ *
  * 403 is an authorization denial for an authenticated user. It must not
  * trigger token refresh or clear the active session.
  */
@@ -36,7 +39,6 @@ export const authInterceptor: HttpInterceptorFn = (
   const loginService = inject(LoginService);
   const token = loginService.getAccessToken();
 
-  // Attach Bearer token to all non-refresh requests
   let authReq = req;
   if (token && !req.url.includes('/auth/refresh')) {
     authReq = req.clone({
@@ -47,14 +49,13 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
 
-      // 🚫 If refresh API itself fails — clear and redirect
       if (req.url.includes('/auth/refresh')) {
+        // Let the caller decide navigation. Bootstrap restoreSession() must
+        // fail silently; mid-session refresh handlers redirect themselves.
         loginService.clearTokens();
-        loginService.redirectToSessionExpired();
         return throwError(() => error);
       }
 
-      // Public API calls and login endpoint — do not redirect to session-expired
       const isPublicApi = req.url.includes('/public/') || req.url.includes('/auth/forgot-password')
         || req.url.includes('/auth/verify-otp') || req.url.includes('/auth/reset-password');
       if (error.status === 403) {
@@ -66,19 +67,19 @@ export const authInterceptor: HttpInterceptorFn = (
           return throwError(() => error);
         }
 
-        // 🔵 First 401 triggers refresh
         if (!isRefreshing) {
           isRefreshing = true;
           refreshTokenSubject.next(null);
 
-          const refreshToken = loginService.getRefreshToken();
-          if (!refreshToken) {
+          // Cookie mode: refresh cookie is sent automatically; no JS-held refresh token.
+          if (!environment.authUseHttpOnlyRefresh && !loginService.getRefreshToken()) {
+            isRefreshing = false;
             loginService.clearTokens();
             loginService.redirectToSessionExpired();
             return throwError(() => error);
           }
 
-          return loginService.refreshAccessToken(refreshToken).pipe(
+          return loginService.refreshAccessToken().pipe(
             switchMap((newToken: string) => {
               isRefreshing = false;
               loginService.setAccessToken(newToken);
@@ -99,14 +100,13 @@ export const authInterceptor: HttpInterceptorFn = (
           );
         }
 
-        // 🟡 Other requests wait for refresh to complete then retry
         return refreshTokenSubject.pipe(
-          filter(token => token !== null),
+          filter(t => t !== null),
           take(1),
-          switchMap(token =>
+          switchMap(t =>
             next(
               req.clone({
-                setHeaders: { Authorization: `Bearer ${token!}` }
+                setHeaders: { Authorization: `Bearer ${t!}` }
               })
             )
           )

@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { LoggerService } from '../../../core/services/logger.service';
 import { FeeLifecycleService, FeeLifecycleStage, SetupSubStage } from '../services/fee-lifecycle.service';
 
 /**
@@ -20,7 +21,7 @@ export function feeLifecycleGuard(requiredStage: FeeLifecycleStage): CanActivate
         const validation = lifecycleService.validateStageAccess(requiredStage);
 
         if (!validation.isValid) {
-            console.warn(`[Lifecycle Guard] ${validation.message}`);
+            inject(LoggerService).warn(validation.message);
 
             // Redirect to appropriate stage
             const redirectRoute = getStageRoute(validation.currentStage);
@@ -49,7 +50,7 @@ export function feeSetupGuard(requiredSubStage: SetupSubStage): CanActivateFn {
         const validation = lifecycleService.validateSetupAccess(requiredSubStage);
 
         if (!validation.isValid) {
-            console.warn(`[Setup Guard] ${validation.message}`);
+            inject(LoggerService).warn(validation.message);
 
             // Redirect to the first incomplete stage
             const firstMissing = validation.missingPrerequisites[0] as SetupSubStage;

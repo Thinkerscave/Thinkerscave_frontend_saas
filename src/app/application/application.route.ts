@@ -7,6 +7,7 @@ import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-ma
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
 import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
 import { roleGuard } from '../core/guard/role.guard';
+import { featureFlagGuard } from '../core/guard/feature-flag.guard';
 
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
@@ -370,11 +371,13 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'fees',
+    canActivate: [featureFlagGuard('feeManagementEnabled')],
     children: FEE_MANAGEMENT_ROUTES
   },
   {
     path: 'reports',
     pathMatch: 'full',
+    canActivate: [featureFlagGuard('feeManagementEnabled')],
     redirectTo: 'fees/reports'
   },
   // ━━━ Master Data ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

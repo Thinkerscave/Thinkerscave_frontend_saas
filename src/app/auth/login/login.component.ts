@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, inject, viewChild, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, viewChild, signal, NgZone } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -26,6 +26,7 @@ import { ForgotPasswordModalComponent } from '../components/forgot-password-moda
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly ngZone = inject(NgZone);
   private readonly loginService = inject(LoginService);
   private readonly messageService = inject(MessageService);
   private readonly loader = inject(NgxUiLoaderService);
@@ -81,7 +82,6 @@ export class LoginComponent {
       next: (res: any) => {
         const loginData = res?.data ?? res;
         const accessToken = loginData.accessToken || loginData.token;
-        const refreshToken = loginData.refreshToken || loginData.token;
         const loginUser = loginData.user;
 
         if (!accessToken) {
@@ -97,7 +97,7 @@ export class LoginComponent {
 
         this.loginService.loginUser(
           accessToken,
-          refreshToken,
+          loginData.refreshToken ?? null,
           loginData.tenantId,
           loginUser?.orgType,
           loginUser?.organizations,
@@ -120,10 +120,9 @@ export class LoginComponent {
           this.loginService.setTenant(loginData.tenantId || this.loginTarget.tenantId);
         }
 
-        this.tenantConfigService.fetchConfigFromServer().subscribe({
-          next: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!),
-          error: () => this.redirectUser(mappedUser ?? this.loginService.getUser()!)
-        });
+        // Navigate first so a slow/failing tenant-config call cannot strand the user on /auth/login.
+        this.redirectUser(mappedUser ?? this.loginService.getUser()!);
+        this.tenantConfigService.fetchConfigFromServer().subscribe({ error: () => void 0 });
       },
       error: (e: any) => {
         this.finishSubmit();
@@ -145,11 +144,37 @@ export class LoginComponent {
 
   private redirectUser(user: UserInfo): void {
     this.finishSubmit();
-    if (user.firstTimeLogin) {
-      this.router.navigate(['/auth/first-time-login']);
+    if (user?.firstTimeLogin) {
+      void this.router.navigateByUrl('/auth/first-time-login');
       return;
     }
     this.idleTimeoutService.start();
-    this.router.navigate(['/app']);
+
+    const target = this.isPlatformLogin
+      ? '/app/tenant-management/dashboard'
+      : '/app';
+
+    if (!this.loginService.isLoggedIn()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Login Error',
+        detail: 'Access token was not established in session. Please try again.',
+        life: 6000
+      });
+      return;
+    }
+
+    this.ngZone.run(() => {
+      void this.router.navigateByUrl(target).then((ok) => {
+        if (!ok) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Navigation blocked',
+            detail: `Could not open ${target}. Check role permissions.`,
+            life: 6000
+          });
+        }
+      });
+    });
   }
 }

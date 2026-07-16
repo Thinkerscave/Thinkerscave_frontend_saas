@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
+import { isFeatureEnabled } from '../../core/config/feature-flags';
 
 interface WorkspaceTab {
   label: string;
@@ -77,7 +78,7 @@ export class WorkspaceTabsComponent implements OnInit {
         { label: 'Settings', icon: 'pi pi-cog', route: '/app/academics/settings' }
       ]
     },
-    {
+    ...(isFeatureEnabled('feeManagementEnabled') ? [{
       key: 'finance',
       label: 'Finance Workspace',
       eyebrow: 'Fees',
@@ -92,7 +93,7 @@ export class WorkspaceTabsComponent implements OnInit {
         { label: 'Reports', icon: 'pi pi-chart-bar', route: '/app/fees/reports' },
         { label: 'Audit', icon: 'pi pi-history', route: '/app/fees/audit' }
       ]
-    },
+    } satisfies WorkspaceTabConfig] : []),
     {
       key: 'tenant-management',
       label: 'Tenant Management',

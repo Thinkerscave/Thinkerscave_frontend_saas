@@ -1,0 +1,36 @@
+<section class="maintenance" aria-labelledby="maintenance-heading">
+  <div class="maintenance__panel">
+    <div class="maintenance__brand" aria-hidden="true">
+      <span class="maintenance__mark">TC</span>
+      <span class="maintenance__name">ThinkerScave</span>
+    </div>
+
+    <div class="maintenance__icon" aria-hidden="true">
+      <i class="pi pi-wrench"></i>
+    </div>
+
+    <h1 id="maintenance-heading">We'll be right back</h1>
+    <p class="maintenance__message">
+      We're performing scheduled maintenance to keep ThinkerScave reliable for your school.
+      Please try again in a few minutes.
+    </p>
+
+    <div class="maintenance__actions">
+      <button
+        pButton
+        type="button"
+        label="Retry"
+        icon="pi pi-refresh"
+        class="p-button-primary"
+        (click)="retry()"
+      ></button>
+      <a
+        pButton
+        routerLink="/auth/login"
+        label="Go to Login"
+        icon="pi pi-sign-in"
+        class="p-button-outlined"
+      ></a>
+    </div>
+  </div>
+</section>

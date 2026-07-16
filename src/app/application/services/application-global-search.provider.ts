@@ -6,6 +6,7 @@ import { dashboardApi } from '../../shared/constants/api.endpoint';
 import { GlobalSearchProvider, GlobalSearchResult } from '../../shared/components/global-search/global-search.provider';
 import { unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { MenuMappingService } from './menu-mapping.service';
+import { isFeatureEnabled } from '../../core/config/feature-flags';
 
 interface DashboardSearchResponse {
   query: string;
@@ -45,7 +46,11 @@ export class ApplicationGlobalSearchProvider extends GlobalSearchProvider {
       navigation: this.searchNavigation(query).pipe(catchError(() => of([]))),
       records: this.searchRecords(query).pipe(catchError(() => of([])))
     }).pipe(
-      map(({ navigation, records }) => [...navigation, ...records].slice(0, 40))
+      map(({ navigation, records }) =>
+        [...navigation, ...records]
+          .filter(result => !this.isDisabledFeatureResult(result))
+          .slice(0, 40)
+      )
     );
   }
 
@@ -86,6 +91,19 @@ export class ApplicationGlobalSearchProvider extends GlobalSearchProvider {
       link: result.route || undefined,
       payload: result
     };
+  }
+
+  private isDisabledFeatureResult(result: GlobalSearchResult): boolean {
+    if (isFeatureEnabled('feeManagementEnabled')) {
+      return false;
+    }
+    const link = String(result.link ?? '').toLowerCase();
+    const category = String(result.category ?? '').toLowerCase();
+    const label = String(result.label ?? '').toLowerCase();
+    return link.includes('/app/fees')
+      || link.includes('/app/reports')
+      || category.includes('fee')
+      || label.includes('fee');
   }
 
   private flattenMenu(items: MenuItem[], parents: string[] = []): Array<{

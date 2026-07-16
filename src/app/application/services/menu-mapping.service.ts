@@ -4,9 +4,11 @@ import { MenuItem } from 'primeng/api';
 import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
+import { isFeatureEnabled } from '../../core/config/feature-flags';
 import { accessApi } from '../../shared/constants/api.endpoint';
 import { unwrapApiList, unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
+import { LoggerService } from '../../core/services/logger.service';
 
 interface SidebarMenuNode {
   id?: number;
@@ -41,7 +43,8 @@ export class MenuMappingService {
 
   constructor(
     private http: HttpClient,
-    private orgContext: OrganizationContextService
+    private orgContext: OrganizationContextService,
+    private logger: LoggerService
   ) { }
 
   loadMenu(): Observable<MenuItem[]> {
@@ -102,7 +105,7 @@ export class MenuMappingService {
         // always gets the latest role-menu mapping from the backend.
       }),
       catchError(err => {
-        console.error('Failed to load side menus:', err);
+        this.logger.error('Failed to load side menus', err);
         return of([]);
       })
     );
@@ -283,6 +286,10 @@ export class MenuMappingService {
 
     let menus = this.normalizeTenantRoutes(items);
 
+    if (!isFeatureEnabled('feeManagementEnabled')) {
+      menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
+    }
+
     if (!isTenantManager) {
       menus = this.filterNavigationItems(menus, item => this.isTenantManagementItem(item));
     }
@@ -457,6 +464,18 @@ export class MenuMappingService {
   private isOrganizationProfileItem(item: MenuItem): boolean {
     const route = this.routerLinkText(item.routerLink).toLowerCase();
     return route.includes('/app/organization') || route.includes('/app/organization-profile');
+  }
+
+  private isFeeManagementItem(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    const label = (item.label ?? '').toLowerCase();
+    const id = String(item.id ?? '').toLowerCase();
+    return route.includes('/app/fees')
+      || route.includes('/app/reports')
+      || id.includes('fee')
+      || label.includes('fee')
+      || label.includes('finance')
+      || label.includes('payment collection');
   }
 
   private filterNavigationItems(items: MenuItem[], shouldRemove: (item: MenuItem) => boolean): MenuItem[] {

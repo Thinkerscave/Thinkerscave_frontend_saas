@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { LoginService } from '../../../core/services/login.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import {
     FeeRole,
     FeePermission,
@@ -40,7 +41,7 @@ export function feePermissionGuard(requiredPermission: FeePermission): CanActiva
         });
 
         if (!hasAccess) {
-            console.warn(`[Fee Guard] Access denied: User lacks permission '${requiredPermission}'`);
+            inject(LoggerService).warn(`Fee access denied: missing permission '${requiredPermission}'`);
             router.navigate(['/app'], {
                 queryParams: {
                     error: 'access_denied',
@@ -77,7 +78,7 @@ export function feeAnyPermissionGuard(requiredPermissions: FeePermission[]): Can
         });
 
         if (!hasAccess) {
-            console.warn(`[Fee Guard] Access denied: User lacks any of permissions: ${requiredPermissions.join(', ')}`);
+            inject(LoggerService).warn(`Fee access denied: missing any of permissions: ${requiredPermissions.join(', ')}`);
             router.navigate(['/app'], {
                 queryParams: {
                     error: 'access_denied',
@@ -113,7 +114,7 @@ export function feeRoleGuard(allowedRoles: FeeRole[]): CanActivateFn {
         );
 
         if (!hasRole) {
-            console.warn(`[Fee Guard] Access denied: User role not in allowed list: ${allowedRoles.join(', ')}`);
+            inject(LoggerService).warn(`Fee access denied: role not in allowed list: ${allowedRoles.join(', ')}`);
             router.navigate(['/app'], {
                 queryParams: {
                     error: 'access_denied',

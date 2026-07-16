@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { loginApi, passwordApi } from '../../shared/constants/api.endpoint';
@@ -7,10 +7,11 @@ import { Router } from '@angular/router';
 import { LoginRequest, LoginResponse, UserInfo, UserOrganization, PasswordResetPayload, ApiResponse } from '../../shared/models/auth.model';
 import { TokenSessionService } from './token-session.service';
 import { OrganizationContextService } from './organization-context.service';
+import { IdleTimeoutService } from './idle-timeout.service';
 
-/** Keys persisted across sessions (access token is memory-only via TokenSessionService). */
+/** Keys persisted across sessions (access token is memory-only; refresh token is HttpOnly cookie). */
 const STORAGE_KEYS = [
-  'refreshToken', 'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
+  'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
 ] as const;
 
 @Injectable({
@@ -20,6 +21,7 @@ export class LoginService {
 
   private readonly tokenSession = inject(TokenSessionService);
   private readonly orgContext = inject(OrganizationContextService);
+  private readonly injector = inject(Injector);
 
   public loginStatusSubject = new Subject<boolean>();
 
@@ -52,14 +54,16 @@ export class LoginService {
     }
   }
 
-  /** Attempt silent refresh on app bootstrap when a refresh token exists. */
+  /** Attempt silent refresh on app bootstrap via HttpOnly refresh cookie. */
   restoreSessionFromRefreshToken(): Observable<string | null> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken && !environment.authUseHttpOnlyRefresh) {
+    if (!environment.authUseHttpOnlyRefresh && !this.getRefreshTokenLegacy()) {
       return of(null);
     }
-    return this.refreshAccessToken(refreshToken ?? '').pipe(
-      tap(() => this.loginStatusSubject.next(true)),
+    return this.refreshAccessToken().pipe(
+      tap(() => {
+        this.loginStatusSubject.next(true);
+        this.injector.get(IdleTimeoutService).start();
+      }),
       catchError(() => {
         this.clearTokens();
         return of(null);
@@ -68,11 +72,10 @@ export class LoginService {
   }
 
   private proactiveRefresh(): void {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken && !environment.authUseHttpOnlyRefresh) {
+    if (!environment.authUseHttpOnlyRefresh && !this.getRefreshTokenLegacy()) {
       return;
     }
-    this.refreshAccessToken(refreshToken ?? '').subscribe({
+    this.refreshAccessToken().subscribe({
       error: () => {
         this.clearTokens();
         this.redirectToSessionExpired();
@@ -80,52 +83,25 @@ export class LoginService {
     });
   }
 
-  // ── Storage helpers (Issue 8: Remember Me aware) ──────────────────────
-  /**
-   * Returns the active storage backend.
-   * If the user chose "Remember Me" at login the tokens live in localStorage
-   * (persists across tabs & browser restarts); otherwise they are in
-   * sessionStorage (cleared when the tab closes).
-   */
   private get storage(): Storage {
-    // If the flag exists in localStorage the user opted for persistence.
     if (localStorage.getItem('rememberMe') === 'true') {
       return localStorage;
     }
-    // If tokens already exist in sessionStorage, keep using it.
-    if (sessionStorage.getItem('refreshToken')) {
+    if (sessionStorage.getItem('user') || sessionStorage.getItem('tenantId')) {
       return sessionStorage;
     }
-    // Default fallback
     return localStorage;
   }
 
-  /**
-   * Read a value from whichever storage contains it.
-   * Checks sessionStorage first, then localStorage.
-   */
   private readItem(key: string): string | null {
     return sessionStorage.getItem(key) ?? localStorage.getItem(key);
   }
-  //generate token
 
-
-  /**
-   * Step 1: Requests the backend to generate and send an OTP to the user's email.
-   * @param email The user's email address.
-   * @returns An Observable for the API call.
-   */
   requestPasswordOtp(email: string): Observable<ApiResponse<void>> {
     const params = new HttpParams().set('email', email);
     return this.http.post<ApiResponse<void>>(passwordApi.forgot, null, { params });
   }
 
-  /**
-   * Step 2: Sends the OTP to the backend for verification.
-   * @param email The user's email address.
-   * @param otp The 6-digit OTP entered by the user.
-   * @returns An Observable for the API call.
-   */
   verifyPasswordOtp(email: string, otp: string): Observable<ApiResponse<void>> {
     const params = new HttpParams()
       .set('email', email)
@@ -133,19 +109,16 @@ export class LoginService {
     return this.http.post<ApiResponse<void>>(passwordApi.verifyOtp, null, { params });
   }
 
-  /**
-   * Step 3: Sends the final request to reset the password.
-   * @param payload An object containing the email, OTP, and newPassword.
-   * @returns An Observable for the API call.
-   */
   resetPasswordWithOtp(payload: PasswordResetPayload): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(passwordApi.reset, payload);
   }
+
   public generateToken(loginData: LoginRequest) {
-    return this.http.post<LoginResponse>(loginApi.loginUrl, loginData);
+    return this.http.post<LoginResponse>(loginApi.loginUrl, loginData, {
+      withCredentials: environment.authUseHttpOnlyRefresh
+    });
   }
 
-  /** Maps backend AuthResponse user summary into the frontend UserInfo shape. */
   public mapAuthUser(loginUser: any, firstTimeLogin?: boolean): UserInfo | null {
     if (!loginUser) {
       return null;
@@ -183,10 +156,6 @@ export class LoginService {
     };
   }
 
-  /**
-   * Changes the authenticated user's password (first-time login flow).
-   * Calls PATCH /api/v1/users/changePassword with the stored JWT in the Authorization header.
-   */
   public changePassword(newPassword: string, confirmPassword: string): Observable<string> {
     return this.http.patch(`${environment.baseUrl}/users/changePassword`, {
       newPassword,
@@ -213,19 +182,18 @@ export class LoginService {
   }
 
   /**
-   * Store tokens after login.
-   * @param rememberMe When true tokens persist in localStorage; otherwise sessionStorage.
+   * Store session after login. Refresh token is never written to web storage when
+   * authUseHttpOnlyRefresh is enabled (cookie set by backend Set-Cookie).
    */
   public loginUser(
     accessToken: string,
-    refreshToken: string,
+    refreshToken: string | null | undefined,
     tenantId?: string,
     orgType?: string,
     organizations?: UserOrganization[],
     rememberMe: boolean = false,
     loginContext?: 'PLATFORM' | 'TENANT'
   ) {
-    // Record the storage preference first
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
     } else {
@@ -234,6 +202,8 @@ export class LoginService {
 
     const store = this.storage;
     this.tokenSession.setAccessToken(accessToken);
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
     if (!environment.authUseHttpOnlyRefresh && refreshToken) {
       store.setItem('refreshToken', refreshToken);
     }
@@ -247,16 +217,11 @@ export class LoginService {
       store.setItem('orgType', orgType);
     }
 
-    // Handle Organization Context
     if (organizations && organizations.length > 0) {
       store.setItem('organizations', JSON.stringify(organizations));
-      // Auto-select first organization by default
-      // Logic: If user has 1 org -> Select it. If multiple -> Select first.
       const defaultOrgId = organizations[0].orgId;
       store.setItem('currentOrgId', defaultOrgId.toString());
     } else {
-      // No organizations assigned? OR Single-Tenant Simple Mode?
-      // Clean up old context
       store.removeItem('organizations');
       store.removeItem('currentOrgId');
     }
@@ -292,7 +257,7 @@ export class LoginService {
 
   public setCurrentOrganization(orgId: string) {
     this.storage.setItem('currentOrgId', orgId);
-    this.currentOrgId$.next(orgId); // notify all subscribers
+    this.currentOrgId$.next(orgId);
   }
 
   public getOrganizations(): UserOrganization[] {
@@ -300,10 +265,6 @@ export class LoginService {
     return orgs ? JSON.parse(orgs) : [];
   }
 
-  /**
-   * G2 Fix: Checks token existence AND validates the JWT exp claim.
-   * A stored-but-expired token is treated as logged-out, triggering redirect to /auth/login.
-   */
   public isLoggedIn(): boolean {
     const token = this.tokenSession.getAccessToken();
     if (!token) return false;
@@ -325,7 +286,15 @@ export class LoginService {
     this.tokenSession.setAccessToken(accessToken);
   }
 
+  /** @deprecated Prefer HttpOnly cookie mode; returns null when authUseHttpOnlyRefresh is true. */
   public getRefreshToken(): string | null {
+    return this.getRefreshTokenLegacy();
+  }
+
+  private getRefreshTokenLegacy(): string | null {
+    if (environment.authUseHttpOnlyRefresh) {
+      return null;
+    }
     return this.readItem('refreshToken');
   }
 
@@ -335,28 +304,28 @@ export class LoginService {
 
   public getUser(): UserInfo | null {
     const userStr = this.readItem('user');
-    if (userStr != null) {
+    if (userStr == null) {
+      return null;
+    }
+    try {
       const parsed = JSON.parse(userStr);
-      // Defensively unwrap ApiResponse<T> wrapper ({ success, message, data: {...} })
-      // in case old sessions stored the full response object instead of just the user.
       const user = (parsed && parsed.data && parsed.firstName === undefined) ? parsed.data : parsed;
       return user;
+    } catch {
+      return null;
     }
-    this.logOut();
-    return null;
   }
 
   public getUserRole() {
-    let user = this.getUser();
+    const user = this.getUser();
     return user?.roles || [];
   }
 
   public getUserPrivileges(): string[] {
-    let user = this.getUser();
+    const user = this.getUser();
     return user?.privileges || [];
   }
 
-  // ── Shared cleanup (Issue 7: single source of truth) ──────────────────
   private clearAllStorage(): void {
     STORAGE_KEYS.forEach(key => {
       localStorage.removeItem(key);
@@ -365,14 +334,17 @@ export class LoginService {
     localStorage.removeItem('rememberMe');
     localStorage.removeItem('accessToken');
     sessionStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
     this.tokenSession.clear();
+    this.injector.get(IdleTimeoutService).stop();
     this.loginStatusSubject.next(false);
   }
 
   public logOut(clearOrgSelection = true) {
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken || environment.authUseHttpOnlyRefresh) {
-      const params = refreshToken ? new HttpParams().set('refreshToken', refreshToken) : undefined;
+    const legacyRefresh = this.getRefreshTokenLegacy();
+    if (legacyRefresh || environment.authUseHttpOnlyRefresh) {
+      const params = legacyRefresh ? new HttpParams().set('refreshToken', legacyRefresh) : undefined;
       this.http.post(loginApi.logOutUrl, null, {
         params,
         withCredentials: environment.authUseHttpOnlyRefresh
@@ -390,12 +362,14 @@ export class LoginService {
     this.router.navigate(['/']);
   }
 
-  public refreshAccessToken(refreshToken: string): Observable<string> {
+  /** Refresh access token using HttpOnly cookie (preferred) or legacy query param. */
+  public refreshAccessToken(_unusedRefreshToken?: string): Observable<string> {
     const options: { withCredentials: boolean; params?: HttpParams } = {
       withCredentials: environment.authUseHttpOnlyRefresh
     };
-    if (!environment.authUseHttpOnlyRefresh && refreshToken) {
-      options.params = new HttpParams().set('refreshToken', refreshToken);
+    const legacy = this.getRefreshTokenLegacy();
+    if (!environment.authUseHttpOnlyRefresh && legacy) {
+      options.params = new HttpParams().set('refreshToken', legacy);
     }
 
     return this.http.post<ApiResponse<{ accessToken: string; refreshToken?: string }>>(
@@ -408,13 +382,15 @@ export class LoginService {
         this.tokenSession.setAccessToken(payload.accessToken);
         if (payload.refreshToken && !environment.authUseHttpOnlyRefresh) {
           this.storage.setItem('refreshToken', payload.refreshToken);
+        } else {
+          localStorage.removeItem('refreshToken');
+          sessionStorage.removeItem('refreshToken');
         }
         return of(payload.accessToken);
       })
     );
   }
 
-  /** Issue 7: delegates to shared cleanup instead of duplicating removeItem calls. */
   public clearTokens(): void {
     this.clearAllStorage();
   }
@@ -422,7 +398,4 @@ export class LoginService {
   public redirectToSessionExpired(): void {
     this.router.navigate(['/session-expired']);
   }
-
 }
-
-

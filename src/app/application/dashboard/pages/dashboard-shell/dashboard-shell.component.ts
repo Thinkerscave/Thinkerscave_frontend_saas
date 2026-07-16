@@ -7,6 +7,7 @@ import { DashboardResponse, DashboardType, WidgetDTO } from '../../models/dashbo
 import { WidgetHostComponent } from '../../widgets/widget-host.component';
 import { WidgetCardComponent } from '../../widgets/widget-card/widget-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { isFeatureEnabled } from '../../../../core/config/feature-flags';
 
 /** Placeholder spans rendered while the workspace call is in flight — mirrors a typical widget layout so the shell never visibly "jumps". */
 const SKELETON_SPANS = [4, 4, 2, 2, 2, 2, 2, 2];
@@ -76,7 +77,7 @@ export class DashboardShellComponent implements OnInit {
       )
       .subscribe({
         next: response => {
-          this.workspace = response;
+          this.workspace = this.filterDisabledWidgets(response);
         },
         error: () => {
           this.loadError = true;
@@ -99,5 +100,15 @@ export class DashboardShellComponent implements OnInit {
 
   trackWidget(_index: number, widget: WidgetDTO<any>): string {
     return widget.widgetKey;
+  }
+
+  private filterDisabledWidgets(response: DashboardResponse): DashboardResponse {
+    if (isFeatureEnabled('feeManagementEnabled') || !response?.widgets?.length) {
+      return response;
+    }
+    return {
+      ...response,
+      widgets: response.widgets.filter(widget => widget.widgetKey !== 'FEE_SUMMARY')
+    };
   }
 }
