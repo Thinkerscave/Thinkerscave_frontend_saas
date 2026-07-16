@@ -1,0 +1,28 @@
+<section class="hero" [class.hero--skeleton]="state === 'LOADING'">
+  <ng-container *ngIf="state === 'LOADING'">
+    <div class="hero__skeleton-avatar"></div>
+    <div class="hero__skeleton-lines">
+      <div class="hero__skeleton-line" style="width: 45%"></div>
+      <div class="hero__skeleton-line" style="width: 30%"></div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="state !== 'LOADING'">
+    <div class="hero__main">
+      <span class="hero__avatar">
+        <img *ngIf="data?.avatarUrl" [src]="data?.avatarUrl" [alt]="data?.displayName" />
+        <ng-container *ngIf="!data?.avatarUrl">{{ initials() }}</ng-container>
+      </span>
+      <div class="hero__text">
+        <p class="hero__greeting">{{ data?.greeting || 'Welcome' }}, {{ data?.displayName || 'there' }}</p>
+        <p class="hero__meta">
+          <span *ngIf="data?.roleLabel">{{ data?.roleLabel }}</span>
+          <span *ngIf="data?.organizationName"> · {{ data?.organizationName }}</span>
+        </p>
+      </div>
+    </div>
+    <div class="hero__today" *ngIf="data?.todayLabel">
+      <i class="pi pi-calendar"></i>{{ data?.todayLabel }}
+    </div>
+  </ng-container>
+</section>

@@ -15,8 +15,7 @@ const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 export const APPLICATION_ROUTES: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    loadChildren: () => import('./dashboard/dashboard.route').then(m => m.DASHBOARD_ROUTES),
   },
   {
     path: 'tenant-management',

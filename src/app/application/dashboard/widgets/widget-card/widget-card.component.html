@@ -1,0 +1,44 @@
+<article class="widget-card" [class.widget-card--error]="state === 'ERROR'">
+  <header class="widget-card__header" *ngIf="title">
+    <div class="widget-card__heading">
+      <i *ngIf="icon" [class]="icon" class="widget-card__icon"></i>
+      <div>
+        <h3>{{ title }}</h3>
+        <p *ngIf="subtitle">{{ subtitle }}</p>
+      </div>
+    </div>
+    <span class="widget-card__preview" *ngIf="isSample && state === 'SUCCESS'">
+      <i class="pi pi-eye"></i>Preview
+    </span>
+    <ng-content select="[widget-actions]"></ng-content>
+  </header>
+
+  <div class="widget-card__body" [ngClass]="bodyClass">
+    <ng-container *ngIf="state === 'LOADING'">
+      <div class="widget-card__skeleton">
+        <div class="widget-card__skeleton-row" *ngFor="let row of skeletonRowsArr"></div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="state === 'EMPTY'">
+      <div class="widget-card__state">
+        <i [class]="emptyIcon"></i>
+        <p>{{ emptyMessage }}</p>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="state === 'ERROR'">
+      <div class="widget-card__state widget-card__state--error">
+        <i class="pi pi-exclamation-triangle"></i>
+        <p>{{ errorMessage || 'Unable to load this widget right now.' }}</p>
+        <button type="button" class="widget-card__retry" (click)="retry.emit()">
+          <i class="pi pi-refresh"></i>Retry
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="state === 'SUCCESS'">
+      <ng-content></ng-content>
+    </ng-container>
+  </div>
+</article>

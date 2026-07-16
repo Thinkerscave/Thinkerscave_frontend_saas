@@ -1,0 +1,456 @@
+/* ============================================================
+   Dynamic Role-Based Dashboard — shared widget body patterns.
+   Consumed by every widget component under
+   src/app/application/dashboard/widgets/*; keeps visual language
+   (spacing, tone colors, typography) consistent without each
+   widget re-implementing the same primitives.
+   ============================================================ */
+
+.w-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &[data-tone='success'] { background: var(--saas-success-soft); color: var(--saas-success); }
+  &[data-tone='warning'] { background: var(--saas-warning-soft); color: var(--saas-warning); }
+  &[data-tone='danger'] { background: var(--saas-danger-soft); color: var(--saas-danger); }
+  &[data-tone='info'] { background: var(--saas-info-soft); color: var(--saas-info); }
+  &[data-tone='primary'] { background: var(--saas-primary-soft); color: var(--saas-primary); }
+  &[data-tone='neutral'], &:not([data-tone]) { background: var(--saas-surface-muted); color: var(--saas-text-muted); }
+}
+
+/* ---------------- KPI grid ---------------- */
+.w-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.w-kpi {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--saas-surface-muted);
+  border: 1px solid var(--saas-border);
+  position: relative;
+
+  &__icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: var(--saas-primary-soft);
+    color: var(--saas-primary);
+  }
+
+  &[data-tone='success'] .w-kpi__icon { background: var(--saas-success-soft); color: var(--saas-success); }
+  &[data-tone='warning'] .w-kpi__icon { background: var(--saas-warning-soft); color: var(--saas-warning); }
+  &[data-tone='danger'] .w-kpi__icon { background: var(--saas-danger-soft); color: var(--saas-danger); }
+  &[data-tone='info'] .w-kpi__icon { background: var(--saas-info-soft); color: var(--saas-info); }
+
+  &__body {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--saas-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 3px;
+  }
+
+  &__value {
+    display: block;
+    font-size: 1.28rem;
+    font-weight: 800;
+    color: var(--saas-text);
+    line-height: 1.15;
+  }
+
+  &__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+
+    &[data-up='true'] { color: var(--saas-success); }
+    &[data-up='false'] { color: var(--saas-danger); }
+  }
+
+  &__sample {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    color: var(--saas-text-soft);
+  }
+}
+
+/* ---------------- Generic rows list ---------------- */
+.w-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.w-list__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--saas-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.w-list__icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--saas-surface-muted);
+  color: var(--saas-text-muted);
+  font-size: 0.82rem;
+}
+
+.w-list__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.w-list__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--saas-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.w-list__meta {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  color: var(--saas-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.w-list__trail {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 0.76rem;
+  color: var(--saas-text-muted);
+  white-space: nowrap;
+}
+
+/* ---------------- Quick actions ---------------- */
+.w-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.w-actions__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--saas-border);
+  background: var(--saas-surface);
+  color: var(--saas-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+
+  i {
+    font-size: 1.1rem;
+    color: var(--saas-primary);
+  }
+
+  &:hover {
+    border-color: var(--saas-primary);
+    background: var(--saas-primary-soft);
+    transform: translateY(-1px);
+  }
+}
+
+/* ---------------- Profile / welcome ---------------- */
+.w-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--saas-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.w-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.w-profile__body {
+  min-width: 0;
+
+  h4 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--saas-text); }
+  p { margin: 2px 0 0; font-size: 0.8rem; color: var(--saas-text-muted); }
+}
+
+/* ---------------- Chart canvas wrapper ---------------- */
+.w-chart {
+  flex: 1;
+  min-height: 220px;
+  position: relative;
+}
+
+/* ---------------- Simple table (recent records) ---------------- */
+.w-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--saas-border);
+  }
+
+  th {
+    color: var(--saas-text-muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  tr:last-child td { border-bottom: none; }
+}
+
+/* ---------------- Attendance summary donut-ish ring ---------------- */
+.w-attendance {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.w-attendance__ring {
+  --pct: 0;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(var(--saas-success) calc(var(--pct) * 1%), var(--saas-border) 0);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: var(--saas-surface);
+  }
+
+  span {
+    position: relative;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--saas-text);
+  }
+}
+
+.w-attendance__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+
+  .w-attendance__stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--saas-text-muted);
+
+    strong { color: var(--saas-text); }
+
+    i { font-size: 0.6rem; }
+    &[data-tone='success'] i { color: var(--saas-success); }
+    &[data-tone='danger'] i { color: var(--saas-danger); }
+    &[data-tone='warning'] i { color: var(--saas-warning); }
+  }
+}
+
+/* ---------------- Staff sign-in/out toggle ---------------- */
+.w-attendance-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.w-attendance-toggle__status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.w-attendance-toggle__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--saas-text-soft);
+  flex: 0 0 auto;
+
+  &[data-active='true'] { background: var(--saas-success); box-shadow: 0 0 0 4px var(--saas-success-soft); }
+  &[data-done='true'] { background: var(--saas-text-soft); }
+}
+
+.w-attendance-toggle__label {
+  h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--saas-text); }
+  p { margin: 2px 0 0; font-size: 0.8rem; color: var(--saas-text-muted); }
+}
+
+.w-attendance-toggle__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.w-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+  &:not(:disabled):hover { transform: translateY(-1px); }
+
+  &--primary { background: var(--saas-primary); color: #fff; }
+  &--danger { background: var(--saas-danger); color: #fff; }
+  &--ghost { background: var(--saas-surface-muted); color: var(--saas-text); border: 1px solid var(--saas-border); }
+}
+
+/* ---------------- Child profile selector ---------------- */
+.w-children {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.w-children__chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--saas-border);
+  background: var(--saas-surface);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--saas-text-muted);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+  &.is-selected {
+    border-color: var(--saas-primary);
+    background: var(--saas-primary-soft);
+    color: var(--saas-primary);
+  }
+
+  .w-avatar { width: 26px; height: 26px; font-size: 0.7rem; }
+}
+
+/* ---------------- Fee / leave / summary stat rows ---------------- */
+.w-summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.w-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--saas-text-muted);
+
+  strong { color: var(--saas-text); font-size: 0.9rem; }
+}
+
+.w-summary-highlight {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--saas-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+
+  span { font-size: 0.78rem; color: var(--saas-text-muted); }
+  strong { font-size: 1.15rem; color: var(--saas-text); }
+}
+
+/* ---------------- Responsive tweaks ---------------- */
+@media (max-width: 640px) {
+  .w-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .w-actions { grid-template-columns: repeat(2, 1fr); }
+  .w-attendance-toggle { flex-direction: column; align-items: flex-start; }
+  .w-attendance-toggle__actions { width: 100%; }
+  .w-attendance-toggle__actions .w-btn { flex: 1; justify-content: center; }
+  .w-attendance { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .w-profile { flex-wrap: wrap; }
+  .w-list__row { flex-wrap: wrap; }
+  .w-list__trail { text-align: left; }
+}
+
+@media (max-width: 400px) {
+  .w-kpi-grid { grid-template-columns: 1fr; }
+  .w-actions { grid-template-columns: 1fr; }
+}

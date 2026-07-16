@@ -109,6 +109,16 @@ export const attendanceApi = {
   delete: (id: number) => `${BASE}/attendance/${id}`,
 };
 
+// ─── Staff attendance (sign-in / sign-out) ───────────────────────────────────
+export const staffAttendanceApi = {
+  base: `${BASE}/attendance/staff`,
+  myToday: `${BASE}/attendance/staff/me/today`,
+  signIn: `${BASE}/attendance/staff/sign-in`,
+  signOut: `${BASE}/attendance/staff/sign-out`,
+  today: (date?: string) => date ? `${BASE}/attendance/staff/today?date=${date}` : `${BASE}/attendance/staff/today`,
+  history: (staffId: number) => `${BASE}/attendance/staff/history/${staffId}`,
+};
+
 export const leaveApi = {
   apply: `${BASE}/leave/apply`,
   all: `${BASE}/leave/all`,
@@ -303,7 +313,8 @@ export const admissionsApi = {
 
 export const dashboardApi = {
   base: `${BASE}/dashboard`,
-  workspace: `${BASE}/dashboard/summary`,
+  summary: `${BASE}/dashboard/summary`,
+  workspace: `${BASE}/dashboard/workspace`,
   search: `${BASE}/dashboard/search`,
 };
 

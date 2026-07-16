@@ -1,0 +1,125 @@
+:host {
+  display: block;
+}
+
+.dash-page {
+  max-width: 1680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dash-updated {
+  font-size: 0.78rem;
+  color: var(--saas-text-muted);
+  margin-right: 4px;
+}
+
+.dash-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--saas-border-strong);
+  background: var(--saas-surface);
+  color: var(--saas-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  &:not(:disabled):hover {
+    border-color: var(--saas-primary);
+    color: var(--saas-primary);
+  }
+}
+
+/* ---------------- Responsive widget grid ----------------
+   4 columns on desktop/laptop/ultra-wide (widgets use their `span` hint,
+   1-4); 2 columns on tablet (span capped at 2 via CSS min()); 1 column on
+   mobile (span always 1) — reflows without breaking widget hierarchy. */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.dash-grid__item {
+  grid-column: span var(--span, 1);
+  min-width: 0;
+}
+
+@media (max-width: 1199px) {
+  .dash-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-grid__item {
+    grid-column: span min(var(--span, 1), 2);
+  }
+}
+
+@media (max-width: 640px) {
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .dash-grid__item {
+    grid-column: span 1;
+  }
+}
+
+@media (min-width: 1920px) {
+  .dash-grid {
+    gap: 24px;
+  }
+}
+
+/* ---------------- Full page error state ---------------- */
+.dash-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--saas-text-muted);
+
+  i {
+    font-size: 2rem;
+    color: var(--saas-danger);
+  }
+
+  h3 {
+    margin: 4px 0 0;
+    color: var(--saas-text);
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+  }
+}
+
+.dash-error__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--saas-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:hover { background: var(--saas-primary-dark); }
+}

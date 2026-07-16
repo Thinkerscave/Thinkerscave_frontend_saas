@@ -9,6 +9,7 @@
 @use "./styles/school-operations/workspace" as schoolOperationsWorkspace;
 @use "./styles/administration/workspace" as administrationWorkspace;
 @use "./styles/tenant-management/workspace" as tenantManagementWorkspace;
+@use "./styles/dashboard/widgets" as dashboardWidgets;
 
 * {
     box-sizing: border-box;

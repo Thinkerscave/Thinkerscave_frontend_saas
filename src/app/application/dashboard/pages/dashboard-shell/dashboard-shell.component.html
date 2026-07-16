@@ -1,0 +1,32 @@
+<div class="saas-page dash-page">
+  <tc-saas-page-header>
+    <span class="dash-updated" *ngIf="!loading && workspace">{{ updatedAgoLabel }}</span>
+    <button type="button" class="dash-refresh" (click)="refresh()" [disabled]="loading || refreshing">
+      <i class="pi" [ngClass]="refreshing ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
+      Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <!-- Initial load: full skeleton grid so the shell never visibly "jumps" once real widgets arrive -->
+  <div class="dash-grid" *ngIf="loading && !workspace">
+    <div class="dash-grid__item" *ngFor="let span of skeletonSpans" [style.--span]="span">
+      <tc-widget-card [state]="'LOADING'"></tc-widget-card>
+    </div>
+  </div>
+
+  <!-- Full-page failure (network/auth) — backend already has its own DEFAULT fallback for role-resolution issues -->
+  <div class="dash-error" *ngIf="!loading && loadError">
+    <i class="pi pi-exclamation-triangle"></i>
+    <h3>We couldn't load your dashboard</h3>
+    <p>Please check your connection and try again.</p>
+    <button type="button" class="dash-error__retry" (click)="refresh()">
+      <i class="pi pi-refresh"></i>Try again
+    </button>
+  </div>
+
+  <div class="dash-grid" *ngIf="!loading && !loadError && workspace">
+    <div class="dash-grid__item" *ngFor="let widget of workspace.widgets; trackBy: trackWidget" [style.--span]="widget.span || 1">
+      <tc-widget-host [widget]="widget" (retry)="onWidgetRetry($event)"></tc-widget-host>
+    </div>
+  </div>
+</div>

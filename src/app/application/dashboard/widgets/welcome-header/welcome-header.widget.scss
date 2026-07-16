@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border-radius: var(--saas-radius);
+  background: linear-gradient(120deg, var(--saas-primary) 0%, var(--saas-primary-dark) 100%);
+  color: #fff;
+  box-shadow: var(--saas-shadow);
+}
+
+.hero__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.hero__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  font-weight: 700;
+  font-size: 1.15rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.hero__text {
+  min-width: 0;
+}
+
+.hero__greeting {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hero__meta {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.88;
+}
+
+.hero__today {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------------- Loading skeleton ---------------- */
+.hero--skeleton {
+  background: var(--saas-surface-muted);
+  align-items: center;
+}
+
+.hero__skeleton-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--saas-border);
+  flex: 0 0 auto;
+  animation: hero-pulse 1.4s ease infinite;
+}
+
+.hero__skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.hero__skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--saas-border);
+  animation: hero-pulse 1.4s ease infinite;
+}
+
+@keyframes hero-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 16px 18px;
+  }
+
+  .hero__today {
+    width: 100%;
+    justify-content: center;
+  }
+}
