@@ -35,7 +35,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'organizations/:orgId', data: { ...TENANT_PAGES.organizationDetails }, loadComponent: () => import('./tenant-management/pages/organization-workspace/organization-workspace.component').then(m => m.OrganizationWorkspaceComponent) },
       { path: 'subscription-plans', data: { ...TENANT_PAGES.subscriptionPlans }, loadComponent: () => import('./tenant-management/pages/subscription-plans/subscription-plans.component').then(m => m.SubscriptionPlansComponent) },
       { path: 'subscription-plans/create', pathMatch: 'full', redirectTo: 'subscription-plans' },
-      { path: 'subscription-plans/:planId', redirectTo: 'subscription-plans' },
+      { path: 'subscription-plans/:planId', pathMatch: 'full', redirectTo: 'subscription-plans' },
       { path: 'promotions', data: { ...TENANT_PAGES.promotions }, loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
       { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'tenant-health', data: { ...TENANT_PAGES.tenantHealth }, loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
@@ -51,10 +51,10 @@ export const APPLICATION_ROUTES: Routes = [
       { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'customers', pathMatch: 'full', redirectTo: '/app/tenant-management/customers' },
       { path: 'customers/new', pathMatch: 'full', redirectTo: '/app/tenant-management/customers/new' },
-      { path: 'customers/:id', redirectTo: '/app/tenant-management/customers/:id' },
+      { path: 'customers/:id', pathMatch: 'full', redirectTo: '/app/tenant-management/customers/:id' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
-      { path: 'organizations/:orgId', redirectTo: '/app/tenant-management/organizations/:orgId' },
+      { path: 'organizations/:orgId', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations/:orgId' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
       { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' }
@@ -242,7 +242,7 @@ export const APPLICATION_ROUTES: Routes = [
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'detail/:id', redirectTo: 'lead/:id' }
+          { path: 'detail/:id', pathMatch: 'full', redirectTo: 'lead/:id' }
         ]
       }
     ]
@@ -263,7 +263,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/reports' },
       { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
-      { path: 'detail/:id', redirectTo: '/app/admissions/lead/:id' }
+      { path: 'detail/:id', pathMatch: 'full', redirectTo: '/app/admissions/lead/:id' }
     ]
   },
   {
@@ -337,6 +337,7 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'lead-detail/:id',
+    pathMatch: 'full',
     redirectTo: 'admissions/lead/:id'
   },
   {
@@ -377,7 +378,6 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'reports',
     pathMatch: 'full',
-    canActivate: [featureFlagGuard('feeManagementEnabled')],
     redirectTo: 'fees/reports'
   },
   // ━━━ Master Data ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

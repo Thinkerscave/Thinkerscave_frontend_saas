@@ -250,6 +250,12 @@ export const publicInquiryApi = {
   submit: `${BASE}/public/inquiries`,
 };
 
+/** Unauthenticated org directory for workspace selection before login. */
+export const publicOrganizationsApi = {
+  list: `${BASE}/public/organizations`,
+  search: (q: string) => `${BASE}/public/organizations?search=${encodeURIComponent(q)}`,
+};
+
 // ─── Courses, Subjects, Academic Years ─────────────────────────────────────────
 export const courseApi = {
   getByOrg: (orgId: number) => `${BASE}/courses/org/${orgId}`,

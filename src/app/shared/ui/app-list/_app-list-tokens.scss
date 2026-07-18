@@ -1,0 +1,36 @@
+@mixin app-list-card-surface {
+  background: var(--tc-surface-card-solid);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  box-shadow: var(--tc-shadow-xs);
+}
+
+@mixin app-list-hover-lift {
+  transition:
+    transform var(--tc-anim-duration-normal) var(--tc-anim-easing),
+    box-shadow var(--tc-anim-duration-normal) var(--tc-anim-easing),
+    border-color var(--tc-anim-duration-normal) var(--tc-anim-easing);
+
+  &:hover {
+    transform: translateY(var(--tc-card-hover-translate));
+    box-shadow: var(--tc-card-hover-shadow);
+    border-color: color-mix(in srgb, var(--tc-primary-600) 24%, var(--tc-border));
+  }
+}
+
+@keyframes app-list-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@mixin app-list-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--tc-surface-100) 25%,
+    var(--tc-surface-50) 50%,
+    var(--tc-surface-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: app-list-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--tc-radius-sm);
+}

@@ -578,6 +578,18 @@
   color: var(--tc-text-muted);
 }
 
+/* Toasts must sit above the layout topbar (1200) and mobile side menu (1300).
+   PrimeNG defaults modal/toast z-index to 1100 and uses inline styles via ZIndexUtils. */
+.p-toast {
+  z-index: 1500 !important;
+}
+
+.layout-container .p-toast.p-toast-top-right,
+.layout-container .p-toast.p-toast-top-left,
+.layout-container .p-toast.p-toast-top-center {
+  top: calc(var(--tc-topbar-height, 60px) + 0.75rem) !important;
+}
+
 .p-toast .p-toast-message {
   border-radius: var(--tc-radius-lg);
   box-shadow: var(--tc-shadow-lg);

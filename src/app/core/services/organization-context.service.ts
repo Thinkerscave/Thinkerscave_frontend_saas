@@ -1,16 +1,24 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { publicOrganizationsApi } from '../../shared/constants/api.endpoint';
+import { ApiResponse } from '../../shared/models/auth.model';
 
-export interface DevOrganization {
+export interface LoginOrganization {
   id: number;
   name: string;
   tenantId: string;
   location: string;
   logoUrl?: string;
+  institutionType?: string;
   isPlatform?: boolean;
 }
 
-export const THINKERS_DEPARTMENT: DevOrganization = {
+/** @deprecated Use LoginOrganization */
+export type DevOrganization = LoginOrganization;
+
+export const THINKERS_DEPARTMENT: LoginOrganization = {
   id: 0,
   name: 'Thinkers Department',
   tenantId: environment.platformTenantId,
@@ -18,21 +26,75 @@ export const THINKERS_DEPARTMENT: DevOrganization = {
   isPlatform: true
 };
 
+interface PublicOrgDto {
+  id: number;
+  name: string;
+  tenantId: string;
+  location?: string;
+  logoUrl?: string;
+  institutionType?: string;
+}
+
 const PENDING_ORG_KEY = 'pendingOrg';
 const LOGIN_MODE_KEY = 'loginMode';
 const RECENT_ORGS_KEY = 'recentOrganizations';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationContextService {
-  readonly devOrganizations: DevOrganization[] = [
-    { id: 1, name: 'Javier School Bhubaneswar', tenantId: 'jsb-bhubaneswar', location: 'Patia, Bhubaneswar, Odisha' },
-    { id: 2, name: 'Javier School Cuttack', tenantId: 'jsc-cuttack', location: 'Sector 5, Cuttack, Odisha' },
-    { id: 3, name: 'ABC School Puri', tenantId: 'abc-puri', location: 'Marine Drive, Puri, Odisha' },
-    { id: 4, name: 'Kalinga College Cuttack', tenantId: 'kcc-cuttack', location: 'Badambadi, Cuttack, Odisha' }
-  ];
+  private readonly http = inject(HttpClient);
+
+  /** Live institution list loaded from the public API (never hardcoded). */
+  readonly organizations = signal<LoginOrganization[]>([]);
+  readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
 
   get requiresSelection(): boolean {
     return environment.requireOrganizationSelection;
+  }
+
+  /**
+   * Fetches active institutions for the org-select screen.
+   * No auth required — hits GET /api/v1/public/organizations.
+   */
+  loadOrganizations(search?: string): Observable<LoginOrganization[]> {
+    this.loading.set(true);
+    this.loadError.set(null);
+
+    let params = new HttpParams();
+    if (search?.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http
+      .get<ApiResponse<PublicOrgDto[]> | PublicOrgDto[]>(publicOrganizationsApi.list, {
+        params,
+        headers: { 'X-Skip-Error-Toast': '1' }
+      })
+      .pipe(
+        map((res) => {
+          const payload = Array.isArray(res) ? res : (res?.data ?? []);
+          return (payload ?? [])
+            .filter((o) => o && o.id != null && o.tenantId)
+            .map((o) => ({
+              id: Number(o.id),
+              name: o.name,
+              tenantId: o.tenantId,
+              location: o.location || 'Institution',
+              logoUrl: o.logoUrl,
+              institutionType: o.institutionType
+            } satisfies LoginOrganization));
+        }),
+        tap((orgs) => {
+          this.organizations.set(orgs);
+          this.loading.set(false);
+        }),
+        catchError(() => {
+          this.organizations.set([]);
+          this.loading.set(false);
+          this.loadError.set('Unable to load institutions. Please check your connection and try again.');
+          return of([] as LoginOrganization[]);
+        })
+      );
   }
 
   isPlatformLogin(): boolean {
@@ -43,26 +105,26 @@ export class OrganizationContextService {
     return this.isPlatformLogin() || !!this.getSelectedOrganization();
   }
 
-  getSelectedOrganization(): DevOrganization | null {
+  getSelectedOrganization(): LoginOrganization | null {
     const raw = sessionStorage.getItem(PENDING_ORG_KEY);
     if (!raw) {
       return null;
     }
     try {
-      return JSON.parse(raw) as DevOrganization;
+      return JSON.parse(raw) as LoginOrganization;
     } catch {
       return null;
     }
   }
 
-  getLoginTarget(): DevOrganization | null {
+  getLoginTarget(): LoginOrganization | null {
     if (this.isPlatformLogin()) {
       return THINKERS_DEPARTMENT;
     }
     return this.getSelectedOrganization();
   }
 
-  setSelectedOrganization(org: DevOrganization): void {
+  setSelectedOrganization(org: LoginOrganization): void {
     sessionStorage.removeItem(LOGIN_MODE_KEY);
     sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(org));
     this.trackRecentOrganization(org);
@@ -73,22 +135,24 @@ export class OrganizationContextService {
     sessionStorage.setItem(LOGIN_MODE_KEY, 'platform');
   }
 
-  getRecentOrganizations(): DevOrganization[] {
+  getRecentOrganizations(): LoginOrganization[] {
+    const catalog = this.organizations();
     const raw = sessionStorage.getItem(RECENT_ORGS_KEY);
-    if (!raw) {
-      return this.devOrganizations;
+    if (!raw || catalog.length === 0) {
+      return catalog;
     }
     try {
       const ids = JSON.parse(raw) as number[];
-      return ids
-        .map((id) => this.devOrganizations.find((o) => o.id === id))
-        .filter((o): o is DevOrganization => !!o);
+      const recent = ids
+        .map((id) => catalog.find((o) => o.id === id))
+        .filter((o): o is LoginOrganization => !!o);
+      return recent.length ? recent : catalog;
     } catch {
-      return this.devOrganizations;
+      return catalog;
     }
   }
 
-  private trackRecentOrganization(org: DevOrganization): void {
+  private trackRecentOrganization(org: LoginOrganization): void {
     const existing = this.getRecentOrganizations().filter((o) => o.id !== org.id);
     const next = [org, ...existing].slice(0, 5);
     sessionStorage.setItem(RECENT_ORGS_KEY, JSON.stringify(next.map((o) => o.id)));

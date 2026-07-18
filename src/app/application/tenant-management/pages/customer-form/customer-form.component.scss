@@ -1,212 +1,96 @@
-.customer-form {
+.customer-form-page {
+  min-height: calc(100vh - 7.5rem);
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  justify-content: center;
+  padding: 0.25rem 0 2rem;
 
-  tc-saas-stepper {
-    display: block;
-    overflow-x: auto;
-    padding-bottom: 4px;
+  &__shell {
+    width: 100%;
+    max-width: 1320px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   &__banner {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 0.88rem;
-    border: 1px solid var(--tc-border, var(--saas-border));
-
-    i { margin-top: 2px; }
-
-    &--danger {
-      background: var(--saas-danger-soft, rgba(239, 68, 68, 0.08));
-      border-color: rgba(239, 68, 68, 0.25);
-      color: var(--saas-danger, #ef4444);
-    }
-
-    &--warning {
-      background: var(--saas-warning-soft);
-      border-color: rgba(245, 158, 11, 0.25);
-      color: var(--saas-warning);
-    }
+    gap: 0.625rem;
+    padding: 0.875rem 1rem;
+    border-radius: 14px;
+    font-size: 0.875rem;
+    background: var(--tc-danger-soft, #fef2f2);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    color: var(--tc-danger, #dc2626);
   }
 
-  &__flags {
+  &__footer {
+    width: 100%;
     display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 4px;
-  }
-
-  &__flag {
-    display: inline-flex;
+    justify-content: flex-end;
     align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--tc-text-muted, var(--saas-text-soft));
-    font-size: 0.85rem;
-    padding: 8px 14px;
-    border: 1px solid var(--saas-border);
-    border-radius: 10px;
-    background: var(--saas-surface);
-    transition: border-color 140ms ease, background 140ms ease;
-
-    &:hover { border-color: var(--tc-primary-400, var(--saas-primary)); }
-
-    input {
-      accent-color: var(--tc-primary-600, var(--saas-primary));
-      width: 16px; height: 16px;
-    }
-  }
-
-  &__nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid var(--tc-border, var(--saas-border));
-    flex-wrap: wrap;
-  }
-
-  &__nav-end {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-left: auto;
+    gap: 0.75rem;
   }
 }
 
-// ── Wizard Step ────────────────────────────────
-.wizard-step {
+.customer-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 2rem;
 
-  &__header {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--saas-border);
-    margin-bottom: 2px;
+  &__section {
+    padding-bottom: 0.25rem;
+
+    & + & {
+      border-top: 1px solid var(--tc-border, #e2e8f0);
+      padding-top: 1.75rem;
+    }
   }
 
-  &__icon {
-    flex: 0 0 40px;
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--tc-primary-500, var(--saas-primary)) 12%, transparent);
-    color: var(--tc-primary-700, var(--saas-primary));
+  &__grid {
     display: grid;
-    place-items: center;
-    font-size: 16px;
-  }
-
-  &__title {
-    margin: 0 0 4px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--saas-text);
-  }
-
-  &__lead {
-    margin: 0;
-    color: var(--saas-text-soft);
-    font-size: 0.85rem;
-    line-height: 1.5;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
   }
 }
 
-// ── Section sub-label ──────────────────────────
-.wizard-section-label {
-  font-size: 0.73rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--saas-text-muted);
-  padding: 10px 0 4px;
-  border-top: 1px dashed var(--saas-border);
-  margin-top: 4px;
-}
-
-// ── Grid rows ─────────────────────────────────
-.wizard-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-
-  &--triple { grid-template-columns: repeat(3, 1fr); }
-
-  @media (max-width: 900px) {
-    &--triple { grid-template-columns: 1fr; }
+:host ::ng-deep {
+  .app-card {
+    padding: clamp(1.5rem, 2.4vw, 2.25rem);
   }
 
-  @media (max-width: 640px) {
+  .app-card__footer {
+    border-top: 1px solid var(--tc-border, #e2e8f0);
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+  }
+
+  .app-field__label {
+    font-weight: 600;
+  }
+
+  .app-field__required {
+    color: #ef4444;
+  }
+}
+
+@media (max-width: 900px) {
+  .customer-form__grid {
     grid-template-columns: 1fr;
   }
 }
 
-// ── Capped select / field width ────────────────
-.wizard-field--cap {
-  max-width: 400px;
-  select { max-width: 400px; }
-}
+@media (max-width: 640px) {
+  .customer-form-page {
+    padding-bottom: 1.25rem;
 
-.saas-field--full { grid-column: 1 / -1; }
+    &__footer {
+      flex-direction: column-reverse;
+      align-items: stretch;
 
-// ── Review step ────────────────────────────────
-.wizard-review-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.wizard-review-section {
-  background: color-mix(in srgb, var(--tc-primary-500, var(--saas-primary)) 4%, var(--saas-surface));
-  border: 1px solid var(--saas-border);
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  &__label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--tc-primary-700, var(--saas-primary));
-    display: flex;
-    align-items: center;
-    gap: 7px;
-
-    i { font-size: 13px; }
+      ::ng-deep .app-btn {
+        width: 100%;
+      }
+    }
   }
 }
-
-.wizard-review {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 6px 12px;
-  margin: 0;
-
-  > div { display: contents; }
-
-  dt {
-    color: var(--saas-text-soft);
-    font-size: 0.78rem;
-  }
-
-  dd {
-    margin: 0;
-    color: var(--saas-text);
-    font-size: 0.85rem;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-}
-

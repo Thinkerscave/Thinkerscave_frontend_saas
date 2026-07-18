@@ -1,46 +1,76 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  ViewChild,
+  inject
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MenuItem, MessageService } from 'primeng/api';
+import { Menu, MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
 import { debounceTime, Subject } from 'rxjs';
 
+import { AppButtonComponent } from '../../../../shared/ui/app-form/app-button.component';
 import {
-  SaasFilterRowComponent,
-  SaasPageHeaderComponent,
-  SaasPanelComponent,
-  SaasPillComponent,
-  SaasStat,
-  SaasStatGridComponent
-} from '../../../../shared/ui/saas';
-import { Customer, CustomerDashboard, CustomerStatus, CustomerType } from '../../models/platform.model';
+  AppAvatarComponent,
+  AppCustomerCardComponent,
+  AppCustomerCardData,
+  AppFilterToolbarComponent,
+  AppGridTableToggleComponent,
+  AppListEmptyStateComponent,
+  AppListViewMode,
+  AppSearchBarComponent,
+  AppSkeletonGroupComponent,
+  AppSkeletonLoaderComponent,
+  AppStatCardComponent,
+  AppStatusBadgeComponent
+} from '../../../../shared/ui/app-list';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import {
+  CustomerCreatedFilter,
+  CustomerDashboard,
+  CustomerListItem,
+  CustomerSortOption,
+  CustomerStatus
+} from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
-import {
-  customerInitials,
-  customerStatusLabel,
-  customerStatusTone,
-  customerTypeLabel,
-  formatCurrency,
-  formatDate
-} from '../../utils/platform-display.util';
+import { formatCurrency, formatDate } from '../../utils/platform-display.util';
 
-type ViewMode = 'cards' | 'table';
 type StatusFilter = 'all' | CustomerStatus;
-type TypeFilter = 'all' | CustomerType;
 
 const VIEW_KEY = 'tc-customer-view-mode';
+const PAGE_SIZES = [10, 25, 50, 100];
 
 @Component({
   selector: 'app-customers-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, RouterLink, PaginatorModule, ToastModule,
-    SaasPageHeaderComponent, SaasPanelComponent,
-    SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent
+    CommonModule,
+    FormsModule,
+    PaginatorModule,
+    ToastModule,
+    MenuModule,
+    SaasPageHeaderComponent,
+    AppButtonComponent,
+    AppStatCardComponent,
+    AppSearchBarComponent,
+    AppFilterToolbarComponent,
+    AppGridTableToggleComponent,
+    AppAvatarComponent,
+    AppStatusBadgeComponent,
+    AppCustomerCardComponent,
+    AppListEmptyStateComponent,
+    AppSkeletonLoaderComponent,
+    AppSkeletonGroupComponent
   ],
   providers: [MessageService],
   templateUrl: './customers-list.component.html',
@@ -52,90 +82,113 @@ export class CustomersListComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
+  private readonly breakpoint = inject(BreakpointObserver);
   private readonly search$ = new Subject<string>();
+
+  @ViewChild('rowMenu') rowMenu?: Menu;
 
   loading = true;
   errorMessage = '';
   dashboard: CustomerDashboard | null = null;
-  customers: Customer[] = [];
+  customers: CustomerListItem[] = [];
+  menuItems: MenuItem[] = [];
+  activeCustomer: CustomerListItem | null = null;
+
   search = '';
   statusFilter: StatusFilter = 'all';
-  typeFilter: TypeFilter = 'all';
-  viewMode: ViewMode = 'cards';
+  sortBy: CustomerSortOption = 'createdDesc';
+  createdFilter: CustomerCreatedFilter = 'all';
+  viewMode: AppListViewMode = 'grid';
+  isMobile = false;
+
   page = 0;
-  pageSize = 12;
+  pageSize = 25;
   totalRecords = 0;
 
-  readonly customerInitials = customerInitials;
-  readonly customerStatusLabel = customerStatusLabel;
-  readonly customerTypeLabel = customerTypeLabel;
-  readonly customerStatusTone = customerStatusTone;
   readonly formatDate = formatDate;
   readonly formatCurrency = formatCurrency;
+  readonly pageSizeOptions = PAGE_SIZES;
+  readonly viewStorageKey = VIEW_KEY;
 
-  readonly statusOptions: { id: StatusFilter; label: string }[] = [
-    { id: 'all', label: 'All Status' },
-    { id: 'ACTIVE', label: 'Active' },
-    { id: 'TRIAL', label: 'Trial' },
-    { id: 'LEAD', label: 'Lead' },
-    { id: 'SUSPENDED', label: 'Suspended' }
+  readonly sortOptions: { value: CustomerSortOption; label: string }[] = [
+    { value: 'nameAsc', label: 'Name (A–Z)' },
+    { value: 'nameDesc', label: 'Name (Z–A)' },
+    { value: 'email', label: 'Owner Email' },
+    { value: 'createdDesc', label: 'Recently Created' },
+    { value: 'orgCount', label: 'Organization Count' },
+    { value: 'lastActivity', label: 'Last Activity' }
   ];
 
-  readonly typeOptions: { id: TypeFilter; label: string }[] = [
-    { id: 'all', label: 'All Types' },
-    { id: 'EDUCATION_GROUP', label: 'Education Group' },
-    { id: 'SCHOOL', label: 'School' },
-    { id: 'COLLEGE', label: 'College' },
-    { id: 'UNIVERSITY', label: 'University' },
-    { id: 'TRUST', label: 'Trust' },
-    { id: 'COMPANY', label: 'Company' }
+  readonly statusOptions: { value: StatusFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'TRIAL', label: 'Trial' },
+    { value: 'SUSPENDED', label: 'Suspended' },
+    { value: 'ARCHIVED', label: 'Archived' }
+  ];
+
+  readonly createdOptions: { value: CustomerCreatedFilter; label: string }[] = [
+    { value: 'all', label: 'All Time' },
+    { value: 'today', label: 'Today' },
+    { value: '7d', label: 'Last 7 days' },
+    { value: '30d', label: 'Last 30 days' },
+    { value: '90d', label: 'Last 90 days' },
+    { value: 'year', label: 'This year' }
   ];
 
   ngOnInit(): void {
-    const saved = localStorage.getItem(VIEW_KEY) as ViewMode | null;
-    if (saved === 'cards' || saved === 'table') {
-      this.viewMode = saved;
-    }
+    this.breakpoint
+      .observe('(max-width: 768px)')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(state => {
+        this.isMobile = state.matches;
+        this.cdr.markForCheck();
+      });
+
     this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.page = 0;
       this.loadCustomers();
     });
+
     this.load();
   }
 
-  get stats(): SaasStat[] {
-    const d = this.dashboard;
-    return [
-      { key: 'total', label: 'Total Customers', value: d?.totalCustomers ?? 0, icon: 'pi pi-users', tone: 'primary' },
-      { key: 'active', label: 'Active Customers', value: d?.activeCustomers ?? 0, icon: 'pi pi-check-circle', tone: 'success' },
-      { key: 'orgs', label: 'Total Organizations', value: d?.totalOrganizations ?? 0, icon: 'pi pi-building', tone: 'info' },
-      { key: 'revenue', label: 'Annual Revenue', value: formatCurrency(d?.annualRevenue), icon: 'pi pi-wallet', tone: 'primary' },
-      { key: 'renewals', label: 'Renewals (30 Days)', value: d?.renewals30Days ?? 0, icon: 'pi pi-calendar', tone: 'warning' },
-      { key: 'trial', label: 'Trial Customers', value: d?.trialCustomers ?? 0, icon: 'pi pi-clock', tone: 'info' }
-    ];
+  get effectiveViewMode(): AppListViewMode {
+    return this.isMobile ? 'grid' : this.viewMode;
   }
 
-  onStatClick(key: string): void {
-    if (key === 'active') this.applyStatFilter('ACTIVE');
-    else if (key === 'trial') this.applyStatFilter('TRIAL');
-    else if (key === 'total') this.applyStatFilter('all');
+  get rangeStart(): number {
+    return this.totalRecords === 0 ? 0 : this.page * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min((this.page + 1) * this.pageSize, this.totalRecords);
   }
 
   load(): void {
     this.loading = true;
     this.errorMessage = '';
     this.api.getCustomerDashboard().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: d => { this.dashboard = d; this.loadCustomers(); },
-      error: () => { this.dashboard = null; this.loadCustomers(); }
+      next: d => {
+        this.dashboard = d;
+        this.loadCustomers();
+      },
+      error: () => {
+        this.dashboard = null;
+        this.loadCustomers();
+      }
     });
   }
 
   loadCustomers(): void {
+    this.loading = true;
+    this.errorMessage = '';
     this.api.getCustomers({
       status: this.statusFilter === 'all' ? undefined : this.statusFilter,
-      customerType: this.typeFilter === 'all' ? undefined : this.typeFilter,
       search: this.search.trim() || undefined,
-      activeOnly: true,
+      activeOnly: this.statusFilter === 'ARCHIVED' ? false : true,
+      created: this.createdFilter,
+      sort: this.sortBy,
       page: this.page,
       size: this.pageSize
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -146,53 +199,159 @@ export class CustomersListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.errorMessage = 'Could not load customers. Verify platform APIs and Super Admin access.';
+        this.errorMessage = "We couldn't load the customer list. Please try again.";
+        this.customers = [];
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
   }
 
-  onSearchChange(): void { this.search$.next(this.search); }
-  onFilterChange(): void { this.page = 0; this.loadCustomers(); }
-  resetFilters(): void {
-    this.search = '';
-    this.statusFilter = 'all';
-    this.typeFilter = 'all';
+  onSearchChange(value: string): void {
+    this.search = value;
+    this.search$.next(value);
+  }
+
+  onFilterChange(): void {
     this.page = 0;
     this.loadCustomers();
   }
 
-  setViewMode(mode: ViewMode): void {
+  onViewModeChange(mode: AppListViewMode): void {
     this.viewMode = mode;
-    localStorage.setItem(VIEW_KEY, mode);
-    this.pageSize = mode === 'table' ? 20 : 12;
-    this.page = 0;
-    this.loadCustomers();
   }
 
-  applyStatFilter(status: StatusFilter): void {
-    this.statusFilter = status;
-    this.onFilterChange();
+  addCustomer(): void {
+    void this.router.navigate(['/app/tenant-management/customers/new']);
   }
 
   onPageChange(event: { page?: number; first?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    if (event.rows) this.pageSize = event.rows;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.loadCustomers();
   }
 
-  openCustomer(customer: Customer, event?: Event): void {
+  exportCustomers(): void {
+    this.messages.add({
+      severity: 'info',
+      summary: 'Export',
+      detail: 'Customer export will be available soon.'
+    });
+  }
+
+  openCustomer(customer: CustomerListItem, event?: Event): void {
     event?.stopPropagation();
     void this.router.navigate(['/app/tenant-management/customers', customer.id]);
   }
 
-  addOrganization(customer: Customer, event: Event): void {
+  openOrganizations(customer: CustomerListItem, event: Event): void {
     event.stopPropagation();
+    void this.router.navigate(['/app/tenant-management/organizations'], {
+      queryParams: { customerId: customer.id }
+    });
+  }
+
+  editCustomer(customer: CustomerListItem): void {
+    void this.router.navigate(['/app/tenant-management/customers', customer.id, 'edit']);
+  }
+
+  createOrganization(customer: CustomerListItem): void {
     void this.router.navigate(['/app/tenant-management/organizations/create'], {
       queryParams: { customerId: customer.id }
     });
   }
 
-  trackById(_: number, item: Customer): number { return item.id; }
+  manageSubscription(_customer: CustomerListItem): void {
+    this.messages.add({
+      severity: 'info',
+      summary: 'Manage Subscription',
+      detail: 'Subscription management will be available soon.'
+    });
+  }
+
+  suspendCustomer(customer: CustomerListItem): void {
+    this.messages.add({
+      severity: 'info',
+      summary: 'Suspend Customer',
+      detail: `Suspend action for ${customer.customerName} will be available soon.`
+    });
+  }
+
+  archiveCustomer(customer: CustomerListItem): void {
+    this.api.archiveCustomer(customer.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.messages.add({
+          severity: 'success',
+          summary: 'Archived',
+          detail: `${customer.customerName} has been archived.`
+        });
+        this.load();
+      },
+      error: () => {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Archive failed',
+          detail: 'Could not archive this customer. Please try again.'
+        });
+      }
+    });
+  }
+
+  openRowMenu(customer: CustomerListItem, event: Event): void {
+    event.stopPropagation();
+    this.activeCustomer = customer;
+    this.menuItems = [
+      {
+        label: 'Edit',
+        icon: 'pi pi-pencil',
+        command: () => this.editCustomer(customer)
+      },
+      {
+        label: 'Create Organization',
+        icon: 'pi pi-building',
+        command: () => this.createOrganization(customer)
+      },
+      {
+        label: 'Manage Subscription',
+        icon: 'pi pi-credit-card',
+        command: () => this.manageSubscription(customer)
+      },
+      { separator: true },
+      {
+        label: 'Suspend',
+        icon: 'pi pi-ban',
+        command: () => this.suspendCustomer(customer)
+      },
+      {
+        label: 'Archive',
+        icon: 'pi pi-inbox',
+        command: () => this.archiveCustomer(customer)
+      }
+    ];
+    this.rowMenu?.toggle(event);
+    this.cdr.markForCheck();
+  }
+
+  toCardData(customer: CustomerListItem): AppCustomerCardData {
+    return {
+      id: customer.id,
+      customerName: customer.customerName,
+      customerCode: customer.customerCode,
+      domain: customer.domain,
+      logoUrl: customer.logoUrl,
+      status: customer.status,
+      ownerName: customer.ownerName,
+      ownerEmail: customer.ownerEmail,
+      organizationCount: customer.organizationCount,
+      createdDate: formatDate(customer.createdDate),
+      lastActivity: customer.lastActivity || formatDate(customer.lastActivityAt)
+    };
+  }
+
+  trackById(_: number, item: CustomerListItem): number {
+    return item.id;
+  }
 }

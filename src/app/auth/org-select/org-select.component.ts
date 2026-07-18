@@ -1,10 +1,19 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  DestroyRef
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import { Subject, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import {
-  DevOrganization,
+  LoginOrganization,
   OrganizationContextService,
   THINKERS_DEPARTMENT
 } from '../../core/services/organization-context.service';
@@ -12,56 +21,63 @@ import {
 @Component({
   selector: 'app-org-select',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, FormsModule, ButtonModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './org-select.component.html',
   styleUrl: './org-select.component.scss'
 })
-export class OrgSelectComponent {
+export class OrgSelectComponent implements OnInit {
   private readonly orgContext = inject(OrganizationContextService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly search$ = new Subject<string>();
 
   readonly thinkersDepartment = THINKERS_DEPARTMENT;
   readonly query = signal('');
-  readonly selected = signal<DevOrganization | null>(null);
+  readonly selected = signal<LoginOrganization | null>(null);
   readonly platformSelected = signal(false);
 
-  readonly displayOrgs = computed(() => {
-    const rawQuery = this.query();
-    const q = (rawQuery ?? '').toString().trim().toLowerCase();
-    if (!q) {
-      return this.orgContext.devOrganizations;
-    }
-    const pool = this.orgContext.devOrganizations.filter(
-      (o) =>
-        (o.name ?? '').toLowerCase().includes(q) ||
-        (o.location ?? '').toLowerCase().includes(q) ||
-        (o.tenantId ?? '').toLowerCase().includes(q)
-    );
-    return pool.length ? pool : this.orgContext.devOrganizations;
-  });
+  readonly organizations = this.orgContext.organizations;
+  readonly loading = this.orgContext.loading;
+  readonly loadError = this.orgContext.loadError;
+
+  readonly displayOrgs = computed(() => this.organizations());
+  readonly hasSelection = computed(() => this.platformSelected() || !!this.selected());
+  readonly resultCount = computed(() => this.organizations().length);
+
+  ngOnInit(): void {
+    this.orgContext.loadOrganizations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+
+    this.search$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((q) => this.orgContext.loadOrganizations(q)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
+  }
 
   onSearch(value: string): void {
     this.query.set(value);
     this.selected.set(null);
     this.platformSelected.set(false);
+    this.search$.next(value ?? '');
   }
 
   selectPlatform(): void {
     this.platformSelected.set(true);
     this.selected.set(null);
-    this.query.set('');
   }
 
-  selectOrg(org: DevOrganization): void {
+  selectOrg(org: LoginOrganization): void {
     this.platformSelected.set(false);
     this.selected.set(org);
-    this.query.set(org.name);
   }
 
   continue(): void {
     if (this.platformSelected()) {
       this.orgContext.setPlatformLogin();
-      this.router.navigate(['/auth/login']);
+      void this.router.navigate(['/auth/login']);
       return;
     }
 
@@ -70,19 +86,28 @@ export class OrgSelectComponent {
       return;
     }
     this.orgContext.setSelectedOrganization(org);
-    this.router.navigate(['/auth/login']);
+    void this.router.navigate(['/auth/login']);
+  }
+
+  retry(): void {
+    this.orgContext.loadOrganizations(this.query()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
   initials(name: string): string {
-    return name
-      .split(' ')
+    return (name ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
       .map((w) => w[0])
       .join('')
       .slice(0, 2)
       .toUpperCase();
   }
 
-  isSelected(org: DevOrganization): boolean {
+  isSelected(org: LoginOrganization): boolean {
     return this.selected()?.id === org.id;
+  }
+
+  trackByOrgId(_index: number, org: LoginOrganization): number {
+    return org.id;
   }
 }

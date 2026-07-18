@@ -4,6 +4,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
   inject
 } from '@angular/core';
@@ -12,59 +13,56 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { forkJoin, of, switchMap, finalize } from 'rxjs';
+import { finalize } from 'rxjs';
 
-import {
-  CustomerCreatePayload,
-  CustomerMetadata,
-  CustomerStatus,
-  CustomerType,
-  EnumOption,
-  PreferredCommunication
-} from '../../models/platform.model';
+import { Customer, CustomerCreatePayload } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
-  customerStatusLabel,
-  customerTypeLabel,
-  formatDate
-} from '../../utils/platform-display.util';
-import {
-  SaasPageHeaderComponent,
-  SaasPanelComponent,
-  SaasPillComponent,
-  SaasStep,
-  SaasStepperComponent
-} from '../../../../shared/ui/saas';
+  AppButtonComponent,
+  AppCardComponent,
+  AppInputComponent,
+  AppLoaderComponent,
+  AppPhoneInputComponent,
+  AppSectionHeaderComponent,
+  AppTextareaComponent
+} from '../../../../shared/ui/app-form';
 
-interface CustomerFormModel {
-  legalName: string;
-  displayName: string;
-  customerType: CustomerType;
-  status: CustomerStatus;
+interface ContactFormModel {
+  fullName: string;
   email: string;
   mobileNumber: string;
-  alternateMobileNumber: string;
-  website: string;
-  logoUrl: string;
-  taxNumber: string;
-  registrationNumber: string;
-  contactFullName: string;
-  contactDesignation: string;
-  contactEmail: string;
-  contactMobile: string;
-  contactAlternateMobile: string;
-  contactPrimary: boolean;
-  contactBilling: boolean;
-  contactTechnical: boolean;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  preferredCommunication: PreferredCommunication;
-  remarks: string;
+  designation: string;
 }
+
+interface CustomerFormModel {
+  customerName: string;
+  businessEmail: string;
+  mobileNumber: string;
+  alternateMobileNumber: string;
+  primary: ContactFormModel;
+  secondary: ContactFormModel;
+  notes: string;
+}
+
+type ErrorKey =
+  | 'customerName'
+  | 'businessEmail'
+  | 'mobileNumber'
+  | 'alternateMobileNumber'
+  | 'primary.fullName'
+  | 'primary.email'
+  | 'primary.mobileNumber'
+  | 'primary.designation'
+  | 'secondary.fullName'
+  | 'secondary.email'
+  | 'secondary.mobileNumber'
+  | 'secondary.designation'
+  | 'notes';
+
+type FormErrors = Partial<Record<ErrorKey, string>>;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NOTES_MAX = 500;
 
 @Component({
   selector: 'app-customer-form',
@@ -74,10 +72,13 @@ interface CustomerFormModel {
     CommonModule,
     FormsModule,
     ToastModule,
-    SaasPageHeaderComponent,
-    SaasPanelComponent,
-    SaasStepperComponent,
-    SaasPillComponent
+    AppCardComponent,
+    AppSectionHeaderComponent,
+    AppInputComponent,
+    AppPhoneInputComponent,
+    AppTextareaComponent,
+    AppButtonComponent,
+    AppLoaderComponent
   ],
   providers: [MessageService],
   templateUrl: './customer-form.component.html',
@@ -90,92 +91,53 @@ export class CustomerFormComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
-  loading = true;
+  loading = false;
   submitting = false;
-  step = 0;
-  stepError = '';
   errorMessage = '';
   isEditMode = false;
   customerId: number | null = null;
-  metadata: CustomerMetadata | null = null;
 
   form: CustomerFormModel = this.emptyForm();
+  errors: FormErrors = {};
 
-  readonly customerStatusLabel = customerStatusLabel;
-  readonly customerTypeLabel = customerTypeLabel;
-  readonly formatDate = formatDate;
-
-  readonly wizardSteps: SaasStep[] = [
-    { key: 'business', label: 'Business' },
-    { key: 'contact', label: 'Primary Contact' },
-    { key: 'address', label: 'Address' },
-    { key: 'commercial', label: 'Commercial' },
-    { key: 'review', label: 'Review' }
-  ];
-
-  readonly countries = [
-    'India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Singapore', 'Australia', 'Other'
-  ];
+  readonly notesMax = NOTES_MAX;
 
   ngOnInit(): void {
     this.isEditMode = this.router.url.includes('/edit');
     const idParam = this.route.snapshot.paramMap.get('id');
     if (this.isEditMode && idParam) {
       this.customerId = Number(idParam);
+      this.loadCustomer();
     }
-    this.loadInitialData();
   }
 
-  get pageTitle(): string {
-    return this.isEditMode ? 'Edit Customer' : 'New Customer';
+  get canSubmit(): boolean {
+    return this.isMinimallyValid() && !this.submitting;
   }
 
-  get statusOptions(): EnumOption[] {
-    return this.metadata?.statuses?.length
-      ? this.metadata!.statuses
-      : [
-          { code: 'LEAD', label: 'Lead' },
-          { code: 'TRIAL', label: 'Trial' },
-          { code: 'ACTIVE', label: 'Active' },
-          { code: 'SUSPENDED', label: 'Suspended' }
-        ];
+  fieldError(key: ErrorKey): string {
+    return this.errors[key] ?? '';
   }
 
-  get typeOptions(): EnumOption[] {
-    return this.metadata?.customerTypes?.length
-      ? this.metadata!.customerTypes
-      : [
-          { code: 'EDUCATION_GROUP', label: 'Education Group' },
-          { code: 'SCHOOL', label: 'School' },
-          { code: 'COLLEGE', label: 'College' },
-          { code: 'UNIVERSITY', label: 'University' },
-          { code: 'TRUST', label: 'Trust' },
-          { code: 'COMPANY', label: 'Company' }
-        ];
+  clearFieldError(key: ErrorKey): void {
+    if (!this.errors[key]) return;
+    const next = { ...this.errors };
+    delete next[key];
+    this.errors = next;
   }
 
-  get communicationOptions(): EnumOption[] {
-    return this.metadata?.preferredCommunications?.length
-      ? this.metadata!.preferredCommunications
-      : [
-          { code: 'EMAIL', label: 'Email' },
-          { code: 'PHONE', label: 'Phone' },
-          { code: 'WHATSAPP', label: 'WhatsApp' },
-          { code: 'SMS', label: 'SMS' }
-        ];
+  onFieldChange(key: ErrorKey): void {
+    this.clearFieldError(key);
+    this.cdr.markForCheck();
   }
 
-  loadInitialData(): void {
+  loadCustomer(): void {
+    if (!this.customerId) return;
     this.loading = true;
     this.errorMessage = '';
-
-    const metadata$ = this.api.getCustomerMetadata();
-    const customer$ = this.isEditMode && this.customerId
-      ? this.api.getCustomer(this.customerId)
-      : of(null);
-
-    forkJoin({ metadata: metadata$, customer: customer$ })
+    this.api.getCustomer(this.customerId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -184,63 +146,29 @@ export class CustomerFormComponent implements OnInit {
         })
       )
       .subscribe({
-        next: ({ metadata, customer }) => {
-          this.metadata = metadata;
-          if (customer?.id) {
-            this.patchFormFromCustomer(customer);
+        next: customer => {
+          if (!customer?.id) {
+            this.errorMessage = 'Customer not found.';
+            return;
           }
+          this.patchForm(customer);
         },
         error: () => {
-          this.errorMessage = this.isEditMode
-            ? 'Unable to load customer for editing. Verify platform APIs and Super Admin access.'
-            : 'Unable to load customer metadata. Verify platform APIs and Super Admin access.';
+          this.errorMessage = 'Unable to load customer for editing. Verify platform APIs and Super Admin access.';
         }
       });
   }
 
-  prev(): void {
-    if (this.step > 0) {
-      this.step -= 1;
-      this.stepError = '';
-      this.cdr.markForCheck();
-    }
-  }
-
-  next(): void {
-    if (!this.validateStep(this.step)) return;
-    if (this.step < this.wizardSteps.length - 1) {
-      this.step += 1;
-      this.stepError = '';
-      this.cdr.markForCheck();
-    }
-  }
-
   submit(): void {
-    if (!this.validateStep(this.step) || this.submitting) return;
+    if (!this.validate() || this.submitting) return;
+
     this.submitting = true;
     this.errorMessage = '';
     const payload = this.buildPayload();
 
     const request$ = this.isEditMode && this.customerId
       ? this.api.updateCustomer(this.customerId, payload)
-      : this.api.createCustomer(payload).pipe(
-          switchMap(customer => {
-            const contactName = this.form.contactFullName.trim();
-            if (contactName && customer?.id) {
-              return this.api.addCustomerContact(customer.id, {
-                fullName: contactName,
-                designation: this.form.contactDesignation.trim() || undefined,
-                email: this.form.contactEmail.trim() || undefined,
-                mobileNumber: this.form.contactMobile.trim() || undefined,
-                alternateMobileNumber: this.form.contactAlternateMobile.trim() || undefined,
-                primaryContact: this.form.contactPrimary,
-                billingContact: this.form.contactBilling,
-                technicalContact: this.form.contactTechnical
-              }).pipe(switchMap(() => of(customer)));
-            }
-            return of(customer);
-          })
-        );
+      : this.api.createCustomer(payload);
 
     request$
       .pipe(
@@ -256,7 +184,7 @@ export class CustomerFormComponent implements OnInit {
           this.messages.add({
             severity: 'success',
             summary: this.isEditMode ? 'Customer updated' : 'Customer created',
-            detail: `${customer.displayName || this.form.displayName} saved successfully.`,
+            detail: `${customer.customerName || this.form.customerName} saved successfully.`,
             life: 4000
           });
           if (id) {
@@ -277,162 +205,180 @@ export class CustomerFormComponent implements OnInit {
     void this.router.navigate(['/app/tenant-management/customers']);
   }
 
+  private emptyContact(): ContactFormModel {
+    return { fullName: '', email: '', mobileNumber: '', designation: '' };
+  }
+
   private emptyForm(): CustomerFormModel {
     return {
-      legalName: '',
-      displayName: '',
-      customerType: 'EDUCATION_GROUP',
-      status: 'LEAD',
-      email: '',
+      customerName: '',
+      businessEmail: '',
       mobileNumber: '',
       alternateMobileNumber: '',
-      website: '',
-      logoUrl: '',
-      taxNumber: '',
-      registrationNumber: '',
-      contactFullName: '',
-      contactDesignation: '',
-      contactEmail: '',
-      contactMobile: '',
-      contactAlternateMobile: '',
-      contactPrimary: true,
-      contactBilling: true,
-      contactTechnical: false,
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      country: 'India',
-      postalCode: '',
-      preferredCommunication: 'EMAIL',
-      remarks: ''
+      primary: this.emptyContact(),
+      secondary: this.emptyContact(),
+      notes: ''
     };
   }
 
-  private patchFormFromCustomer(customer: {
-    legalName: string;
-    displayName: string;
-    customerType?: CustomerType;
-    status?: CustomerStatus;
-    email?: string;
-    mobileNumber?: string;
-    alternateMobileNumber?: string;
-    website?: string;
-    logoUrl?: string;
-    taxNumber?: string;
-    registrationNumber?: string;
-    addressLine1?: string;
-    addressLine2?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-    preferredCommunication?: PreferredCommunication;
-    remarks?: string;
-    contacts?: { fullName: string; designation?: string; email?: string; mobileNumber?: string; alternateMobileNumber?: string; primaryContact?: boolean; billingContact?: boolean; technicalContact?: boolean }[];
-  }): void {
-    const primary = customer.contacts?.find(c => c.primaryContact) ?? customer.contacts?.[0];
+  private patchForm(customer: Customer): void {
+    const primary = customer.primaryContact
+      ?? customer.contacts?.find(c => c.contactType === 'PRIMARY');
+    const secondary = customer.secondaryContact
+      ?? customer.contacts?.find(c => c.contactType === 'SECONDARY');
+
     this.form = {
-      ...this.emptyForm(),
-      legalName: customer.legalName ?? '',
-      displayName: customer.displayName ?? '',
-      customerType: customer.customerType ?? 'EDUCATION_GROUP',
-      status: customer.status ?? 'LEAD',
-      email: customer.email ?? '',
+      customerName: customer.customerName ?? '',
+      businessEmail: customer.businessEmail ?? '',
       mobileNumber: customer.mobileNumber ?? '',
       alternateMobileNumber: customer.alternateMobileNumber ?? '',
-      website: customer.website ?? '',
-      logoUrl: customer.logoUrl ?? '',
-      taxNumber: customer.taxNumber ?? '',
-      registrationNumber: customer.registrationNumber ?? '',
-      contactFullName: primary?.fullName ?? '',
-      contactDesignation: primary?.designation ?? '',
-      contactEmail: primary?.email ?? '',
-      contactMobile: primary?.mobileNumber ?? '',
-      contactAlternateMobile: primary?.alternateMobileNumber ?? '',
-      contactPrimary: primary?.primaryContact ?? true,
-      contactBilling: primary?.billingContact ?? true,
-      contactTechnical: primary?.technicalContact ?? false,
-      addressLine1: customer.addressLine1 ?? '',
-      addressLine2: customer.addressLine2 ?? '',
-      city: customer.city ?? '',
-      state: customer.state ?? '',
-      country: customer.country ?? 'India',
-      postalCode: customer.postalCode ?? '',
-      preferredCommunication: customer.preferredCommunication ?? 'EMAIL',
-      remarks: customer.remarks ?? ''
+      primary: {
+        fullName: primary?.fullName ?? '',
+        email: primary?.email ?? '',
+        mobileNumber: primary?.mobileNumber ?? '',
+        designation: primary?.designation ?? ''
+      },
+      secondary: {
+        fullName: secondary?.fullName ?? '',
+        email: secondary?.email ?? '',
+        mobileNumber: secondary?.mobileNumber ?? '',
+        designation: secondary?.designation ?? ''
+      },
+      notes: customer.notes ?? ''
     };
   }
 
   private buildPayload(): CustomerCreatePayload {
     const f = this.form;
-    return {
-      legalName: f.legalName.trim(),
-      displayName: f.displayName.trim(),
-      customerType: f.customerType,
-      status: f.status,
-      email: f.email.trim(),
+    const payload: CustomerCreatePayload = {
+      customerName: f.customerName.trim(),
+      businessEmail: f.businessEmail.trim().toLowerCase(),
       mobileNumber: f.mobileNumber.trim(),
       alternateMobileNumber: f.alternateMobileNumber.trim() || undefined,
-      website: f.website.trim() || undefined,
-      taxNumber: f.taxNumber.trim() || undefined,
-      registrationNumber: f.registrationNumber.trim() || undefined,
-      addressLine1: f.addressLine1.trim() || undefined,
-      addressLine2: f.addressLine2.trim() || undefined,
-      city: f.city.trim() || undefined,
-      state: f.state.trim() || undefined,
-      country: f.country || undefined,
-      postalCode: f.postalCode.trim() || undefined,
-      logoUrl: f.logoUrl.trim() || undefined,
-      preferredCommunication: f.preferredCommunication,
-      remarks: f.remarks.trim() || undefined
+      notes: f.notes.trim() || undefined,
+      primaryContact: {
+        fullName: f.primary.fullName.trim(),
+        email: f.primary.email.trim().toLowerCase(),
+        mobileNumber: f.primary.mobileNumber.trim(),
+        designation: f.primary.designation.trim() || undefined
+      }
     };
+
+    if (this.hasSecondaryInput()) {
+      payload.secondaryContact = {
+        fullName: f.secondary.fullName.trim(),
+        email: f.secondary.email.trim().toLowerCase(),
+        mobileNumber: f.secondary.mobileNumber.trim(),
+        designation: f.secondary.designation.trim() || undefined
+      };
+    }
+
+    return payload;
   }
 
-  private validateStep(index: number): boolean {
+  private hasSecondaryInput(): boolean {
+    const s = this.form.secondary;
+    return !!(s.fullName.trim() || s.email.trim() || s.mobileNumber.trim() || s.designation.trim());
+  }
+
+  private isMinimallyValid(): boolean {
     const f = this.form;
-    switch (index) {
-      case 0:
-        if (!f.legalName.trim() || !f.displayName.trim()) {
-          this.stepError = 'Legal name and display name are required.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        if (!f.customerType) {
-          this.stepError = 'Select a customer type.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        if (!f.email.includes('@')) {
-          this.stepError = 'A valid business email is required.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        if (!f.mobileNumber.trim()) {
-          this.stepError = 'Business mobile number is required.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        break;
-      case 1:
-        if (f.contactFullName.trim() && !f.contactEmail.includes('@') && !f.contactMobile.trim()) {
-          this.stepError = 'Provide an email or mobile number for the primary contact.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        break;
-      case 2:
-        if (!f.addressLine1.trim() || !f.city.trim() || !f.country) {
-          this.stepError = 'Address line, city, and country are required.';
-          this.cdr.markForCheck();
-          return false;
-        }
-        break;
-      default:
-        break;
+    return (
+      f.customerName.trim().length >= 3 &&
+      EMAIL_PATTERN.test(f.businessEmail.trim()) &&
+      this.nationalDigits(f.mobileNumber).length >= 7 &&
+      f.primary.fullName.trim().length >= 3 &&
+      EMAIL_PATTERN.test(f.primary.email.trim()) &&
+      this.nationalDigits(f.primary.mobileNumber).length >= 7
+    );
+  }
+
+  private validate(): boolean {
+    const f = this.form;
+    const next: FormErrors = {};
+
+    const name = f.customerName.trim();
+    if (!name) next.customerName = 'Customer name is required.';
+    else if (name.length < 3) next.customerName = 'Customer name must be at least 3 characters.';
+    else if (name.length > 150) next.customerName = 'Customer name must be at most 150 characters.';
+
+    const email = f.businessEmail.trim();
+    if (!email) next.businessEmail = 'Business email is required.';
+    else if (!EMAIL_PATTERN.test(email)) next.businessEmail = 'Enter a valid business email.';
+
+    if (!f.mobileNumber.trim()) next.mobileNumber = 'Mobile number is required.';
+    else if (!this.isValidPhone(f.mobileNumber)) next.mobileNumber = 'Enter a valid mobile number.';
+
+    if (f.alternateMobileNumber.trim()) {
+      if (!this.isValidPhone(f.alternateMobileNumber)) {
+        next.alternateMobileNumber = 'Enter a valid alternate mobile number.';
+      } else if (this.normalizePhone(f.alternateMobileNumber) === this.normalizePhone(f.mobileNumber)) {
+        next.alternateMobileNumber = 'Alternate mobile cannot match business mobile.';
+      }
     }
-    this.stepError = '';
+
+    const pName = f.primary.fullName.trim();
+    if (!pName) next['primary.fullName'] = 'Full name is required.';
+    else if (pName.length < 3) next['primary.fullName'] = 'Full name must be at least 3 characters.';
+    else if (pName.length > 100) next['primary.fullName'] = 'Full name must be at most 100 characters.';
+
+    if (!f.primary.email.trim()) next['primary.email'] = 'Email address is required.';
+    else if (!EMAIL_PATTERN.test(f.primary.email.trim())) next['primary.email'] = 'Enter a valid email address.';
+
+    if (!f.primary.mobileNumber.trim()) next['primary.mobileNumber'] = 'Mobile number is required.';
+    else if (!this.isValidPhone(f.primary.mobileNumber)) next['primary.mobileNumber'] = 'Enter a valid mobile number.';
+
+    if (f.primary.designation.trim().length > 100) {
+      next['primary.designation'] = 'Designation must be at most 100 characters.';
+    }
+
+    if (this.hasSecondaryInput()) {
+      const sName = f.secondary.fullName.trim();
+      if (!sName || sName.length < 3) {
+        next['secondary.fullName'] = 'Full name is required for secondary contact.';
+      }
+      if (!f.secondary.email.trim() || !EMAIL_PATTERN.test(f.secondary.email.trim())) {
+        next['secondary.email'] = 'Valid email is required for secondary contact.';
+      }
+      if (!f.secondary.mobileNumber.trim() || !this.isValidPhone(f.secondary.mobileNumber)) {
+        next['secondary.mobileNumber'] = 'Valid mobile is required for secondary contact.';
+      }
+      if (f.secondary.designation.trim().length > 100) {
+        next['secondary.designation'] = 'Designation must be at most 100 characters.';
+      }
+    }
+
+    if (f.notes.length > NOTES_MAX) {
+      next.notes = `Notes must be at most ${NOTES_MAX} characters.`;
+    }
+
+    this.errors = next;
     this.cdr.markForCheck();
+
+    if (Object.keys(next).length > 0) {
+      this.focusFirstInvalid();
+      return false;
+    }
     return true;
+  }
+
+  private focusFirstInvalid(): void {
+    queueMicrotask(() => {
+      const invalid = this.host.nativeElement.querySelector('.is-invalid, .app-field__control.is-invalid') as HTMLElement | null;
+      invalid?.focus?.();
+    });
+  }
+
+  private isValidPhone(value: string): boolean {
+    const digits = this.nationalDigits(value);
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
+  private nationalDigits(value: string): string {
+    return (value ?? '').replace(/\D/g, '');
+  }
+
+  private normalizePhone(value: string): string {
+    return (value ?? '').replace(/\s+/g, '').trim();
   }
 }

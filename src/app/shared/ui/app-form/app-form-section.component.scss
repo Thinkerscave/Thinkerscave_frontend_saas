@@ -1,0 +1,44 @@
+.app-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--tc-font-size-sm);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tc-text-muted);
+  }
+
+  &__description {
+    margin: 0;
+    font-size: var(--tc-font-size-xs);
+    color: var(--tc-text-soft);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+
+    &--single {
+      grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.app-form-section__full {
+  grid-column: 1 / -1;
+}

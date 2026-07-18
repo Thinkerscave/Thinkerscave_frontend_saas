@@ -3,9 +3,8 @@
 
   <tc-saas-page-header>
     <div class="customer-workspace__header-meta" *ngIf="customer">
-      <span class="customer-workspace__avatar" [class.has-image]="customer.logoUrl">
-        <img *ngIf="customer.logoUrl" [src]="customer.logoUrl" alt="">
-        <span *ngIf="!customer.logoUrl">{{ customerInitials(customer.displayName) }}</span>
+      <span class="customer-workspace__avatar">
+        <span>{{ customerInitials(customer.customerName) }}</span>
       </span>
       <div class="customer-workspace__header-text">
         <tc-saas-pill [label]="customerStatusLabel(customer.status)" [tone]="statusTone()"></tc-saas-pill>
@@ -32,30 +31,25 @@
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     <ng-container [ngSwitch]="activeTab">
-      <!-- Overview -->
       <section *ngSwitchCase="'overview'" class="customer-workspace__tab">
         <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
         <div class="customer-workspace__grid">
-          <tc-saas-panel title="Business Profile" subtitle="Core identity and contact details">
+          <tc-saas-panel title="Account Profile" subtitle="Customer account owner details">
             <dl class="cust-dl">
-              <div><dt>Legal name</dt><dd>{{ customer.legalName }}</dd></div>
-              <div><dt>Display name</dt><dd>{{ customer.displayName }}</dd></div>
+              <div><dt>Customer name</dt><dd>{{ customer.customerName }}</dd></div>
               <div><dt>Customer code</dt><dd>{{ customer.customerCode }}</dd></div>
-              <div><dt>Type</dt><dd>{{ customerTypeLabel(customer.customerType) }}</dd></div>
-              <div><dt>Email</dt><dd>{{ customer.email || '—' }}</dd></div>
+              <div><dt>Business email</dt><dd>{{ customer.businessEmail || '—' }}</dd></div>
               <div><dt>Mobile</dt><dd>{{ customer.mobileNumber || '—' }}</dd></div>
-              <div><dt>Website</dt><dd>{{ customer.website || '—' }}</dd></div>
-              <div><dt>Tax number</dt><dd>{{ customer.taxNumber || '—' }}</dd></div>
+              <div><dt>Alternate mobile</dt><dd>{{ customer.alternateMobileNumber || '—' }}</dd></div>
             </dl>
           </tc-saas-panel>
 
-          <tc-saas-panel title="Address" subtitle="Registered or billing location">
+          <tc-saas-panel title="Contacts" subtitle="Primary and secondary account contacts">
             <dl class="cust-dl cust-dl--single">
-              <div><dt>Address</dt><dd>{{ customer.addressLine1 || '—' }}</dd></div>
-              <div *ngIf="customer.addressLine2"><dt>Line 2</dt><dd>{{ customer.addressLine2 }}</dd></div>
-              <div><dt>City / State</dt><dd>{{ locationLabel || '—' }}</dd></div>
-              <div><dt>Postal code</dt><dd>{{ customer.postalCode || '—' }}</dd></div>
+              <div><dt>Primary contact</dt><dd>{{ customer.primaryContact?.fullName || '—' }}</dd></div>
+              <div><dt>Primary email</dt><dd>{{ customer.primaryContact?.email || '—' }}</dd></div>
+              <div><dt>Secondary contact</dt><dd>{{ customer.secondaryContact?.fullName || '—' }}</dd></div>
             </dl>
           </tc-saas-panel>
 
@@ -65,14 +59,13 @@
             </ng-container>
             <dl class="cust-dl cust-dl--single">
               <div><dt>Active</dt><dd>{{ customer.active ? 'Yes' : 'No' }}</dd></div>
-              <div><dt>Onboarding</dt><dd>{{ customer.onboardingCompleted ? 'Completed' : 'Pending' }}</dd></div>
               <div><dt>Created</dt><dd>{{ formatDate(customer.createdOn) }}</dd></div>
               <div><dt>Updated</dt><dd>{{ formatDate(customer.updatedOn) }}</dd></div>
-              <div *ngIf="customer.remarks"><dt>Remarks</dt><dd>{{ customer.remarks }}</dd></div>
+              <div *ngIf="customer.notes"><dt>Notes</dt><dd>{{ customer.notes }}</dd></div>
             </dl>
           </tc-saas-panel>
         </div>
-        
+
         <div class="customer-workspace__grid customer-workspace__grid--single">
           <tc-saas-panel title="Quick Actions">
             <div class="customer-workspace__actions">
@@ -83,7 +76,6 @@
         </div>
       </section>
 
-      <!-- Organizations -->
       <section *ngSwitchCase="'organizations'" class="customer-workspace__tab">
         <tc-saas-panel
           title="Organizations"
@@ -156,82 +148,39 @@
         </tc-saas-panel>
       </section>
 
-      <!-- Commercial -->
-      <section *ngSwitchCase="'commercial'" class="customer-workspace__tab">
-        <tc-saas-panel title="Commercial" subtitle="Billing preferences and account notes">
-          <dl class="cust-dl">
-            <div><dt>Preferred communication</dt><dd>{{ customer.preferredCommunication || '—' }}</dd></div>
-            <div><dt>Tax / GST</dt><dd>{{ customer.taxNumber || '—' }}</dd></div>
-            <div><dt>Registration</dt><dd>{{ customer.registrationNumber || '—' }}</dd></div>
-            <div><dt>Organizations</dt><dd>{{ organizations.length || (customer.organizationCount ?? 0) }}</dd></div>
-            <div><dt>Billing Cycle</dt><dd>Monthly</dd></div>
-            <div><dt>Contract Value</dt><dd>—</dd></div>
-          </dl>
-          <div *ngIf="customer.remarks" class="customer-workspace__remarks">
-            <h4>Remarks</h4>
-            <p>{{ customer.remarks }}</p>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <!-- Contacts -->
-      <section *ngSwitchCase="'contacts'" class="customer-workspace__tab">
-        <tc-saas-panel title="Contacts" [subtitle]="contacts.length + ' contact(s)'">
-          <div *ngIf="!contacts.length" class="tc-empty-state">
-            <i class="pi pi-users"></i>
-            <strong>No contacts on file</strong>
-            <p>Edit the customer to add a primary contact.</p>
-            <button type="button" class="tc-btn tc-btn--primary" (click)="edit()">Edit Customer</button>
-          </div>
-
-          <div *ngIf="contacts.length" class="customer-workspace__contact-grid">
-            <article class="contact-card" *ngFor="let c of contacts; trackBy: trackById">
-              <header class="contact-card__head">
-                <span class="contact-card__avatar">{{ customerInitials(c.fullName) }}</span>
-                <div>
-                  <strong>{{ c.fullName }}</strong>
-                  <small>{{ c.designation || 'Contact' }}</small>
-                </div>
-              </header>
-              <div class="contact-card__meta">
-                <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
-                <span *ngIf="c.mobileNumber"><i class="pi pi-phone"></i> {{ c.mobileNumber }}</span>
-              </div>
-              <div class="contact-card__pills">
-                <tc-saas-pill *ngIf="c.primaryContact" label="Primary" tone="primary"></tc-saas-pill>
-                <tc-saas-pill *ngIf="c.billingContact" label="Billing" tone="info"></tc-saas-pill>
-                <tc-saas-pill *ngIf="c.technicalContact" label="Technical" tone="success"></tc-saas-pill>
-                <tc-saas-pill *ngIf="c.supportContact" label="Support" tone="neutral"></tc-saas-pill>
-              </div>
-              <footer class="contact-card__actions">
-                <a *ngIf="c.email" [href]="'mailto:' + c.email" class="tc-btn tc-btn--ghost tc-btn--sm"><i class="pi pi-envelope"></i> Email</a>
-                <a *ngIf="c.mobileNumber" [href]="'tel:' + c.mobileNumber" class="tc-btn tc-btn--ghost tc-btn--sm"><i class="pi pi-phone"></i> Call</a>
-              </footer>
-            </article>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <!-- Documents -->
-      <section *ngSwitchCase="'documents'" class="customer-workspace__tab">
-        <tc-saas-panel title="Documents" subtitle="Contracts, invoices, and uploaded files">
+      <section *ngSwitchCase="'users'" class="customer-workspace__tab">
+        <tc-saas-panel title="Users" subtitle="Owner and invited users for this customer account">
           <div class="tc-empty-state">
-            <i class="pi pi-folder-open"></i>
-            <strong>Coming Soon</strong>
-            <p>Document management for customer accounts will be available in a future release.</p>
-            <button type="button" class="tc-btn tc-btn--primary" disabled><i class="pi pi-upload"></i> Upload Document</button>
+            <i class="pi pi-users"></i>
+            <strong>Users coming soon</strong>
+            <p>
+              The owner user is created automatically on customer onboarding.
+              Full user management for this account will live here.
+            </p>
+            <p *ngIf="customer.ownerUserId" class="customer-workspace__hint">
+              Linked owner user ID: {{ customer.ownerUserId }}
+            </p>
           </div>
         </tc-saas-panel>
       </section>
 
-      <!-- Activity -->
-      <section *ngSwitchCase="'activity'" class="customer-workspace__tab">
-        <tc-saas-panel title="Activity Timeline" subtitle="Recent actions and lifecycle events">
+      <section *ngSwitchCase="'subscriptions'" class="customer-workspace__tab">
+        <tc-saas-panel title="Subscriptions" subtitle="Billing and plan assignments live on organizations">
+          <div class="tc-empty-state">
+            <i class="pi pi-credit-card"></i>
+            <strong>Subscriptions belong to organizations</strong>
+            <p>Open an organization under this customer to manage plans and renewals.</p>
+          </div>
+        </tc-saas-panel>
+      </section>
+
+      <section *ngSwitchCase="'audit'" class="customer-workspace__tab">
+        <tc-saas-panel title="Audit Logs" subtitle="Recent actions and lifecycle events">
           <div *ngIf="auditLoading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading timeline…</div>
 
           <div *ngIf="!auditLoading && !auditLogs.length" class="tc-empty-state">
             <i class="pi pi-history"></i>
-            <strong>No activity events found</strong>
+            <strong>No audit events found</strong>
             <p>No customer-scoped events were returned from the platform stream.</p>
           </div>
 
@@ -250,9 +199,16 @@
           </ul>
         </tc-saas-panel>
       </section>
+
+      <section *ngSwitchCase="'settings'" class="customer-workspace__tab">
+        <tc-saas-panel title="Settings" subtitle="Account-level preferences for this customer">
+          <div class="tc-empty-state">
+            <i class="pi pi-cog"></i>
+            <strong>Settings coming soon</strong>
+            <p>Archive, restore, and account preferences will be managed from this tab.</p>
+          </div>
+        </tc-saas-panel>
+      </section>
     </ng-container>
   </ng-container>
 </div>
-
-
-

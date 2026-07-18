@@ -1,8 +1,10 @@
 <section class="org-select fade-in" aria-labelledby="org-select-heading">
   <header class="org-select__header">
     <p class="org-select__eyebrow">Workspace Access</p>
-    <h1 id="org-select-heading">Welcome <span aria-hidden="true">👋</span></h1>
-    <p class="org-select__subtitle">Choose Thinkers Department for platform access, or select your institution.</p>
+    <h1 id="org-select-heading">Choose your workspace</h1>
+    <p class="org-select__subtitle">
+      Sign in to Thinkers Department for platform control, or pick your institution below.
+    </p>
   </header>
 
   <div class="org-select__platform">
@@ -12,6 +14,7 @@
       class="org-card org-card--platform"
       [class.org-card--selected]="platformSelected()"
       (click)="selectPlatform()"
+      [attr.aria-pressed]="platformSelected()"
     >
       <span class="org-card__avatar org-card__avatar--platform" aria-hidden="true">TC</span>
       <span class="org-card__meta">
@@ -22,6 +25,10 @@
     </button>
   </div>
 
+  <div class="org-select__divider" role="presentation">
+    <span>or select an institution</span>
+  </div>
+
   <div class="org-select__search">
     <label class="sr-only" for="org-search">Search institutions</label>
     <i class="pi pi-search org-select__search-icon" aria-hidden="true"></i>
@@ -30,36 +37,73 @@
       type="search"
       [ngModel]="query()"
       (ngModelChange)="onSearch($event)"
-      placeholder="Search by institution name..."
+      placeholder="Search by name, city, or tenant…"
       autocomplete="off"
+      enterkeyhint="search"
     />
   </div>
 
   <div class="org-select__list-wrap">
-    <p class="org-select__list-label">
-      {{ query() ? 'Search results' : 'Institutions' }}
-    </p>
-    <ul class="org-select__list" role="listbox" aria-label="Institutions">
-      @for (org of displayOrgs(); track org.id) {
-        <li>
-          <button
-            type="button"
-            class="org-card"
-            [class.org-card--selected]="isSelected(org)"
-            role="option"
-            [attr.aria-selected]="isSelected(org)"
-            (click)="selectOrg(org)"
-          >
-            <span class="org-card__avatar" aria-hidden="true">{{ initials(org.name) }}</span>
-            <span class="org-card__meta">
-              <strong>{{ org.name }}</strong>
-              <small>{{ org.location }}</small>
-            </span>
-            <i class="pi pi-chevron-right org-card__chevron" aria-hidden="true"></i>
-          </button>
-        </li>
+    <div class="org-select__list-head">
+      <p class="org-select__list-label">
+        {{ query() ? 'Search results' : 'Institutions' }}
+      </p>
+      @if (!loading() && !loadError()) {
+        <span class="org-select__count">{{ resultCount() }} found</span>
       }
-    </ul>
+    </div>
+
+    @if (loading()) {
+      <ul class="org-select__list org-select__list--skeleton" aria-busy="true" aria-label="Loading institutions">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <li class="org-card org-card--skeleton" aria-hidden="true">
+            <span class="org-card__avatar skeleton-block"></span>
+            <span class="org-card__meta">
+              <span class="skeleton-line skeleton-line--title"></span>
+              <span class="skeleton-line skeleton-line--sub"></span>
+            </span>
+          </li>
+        }
+      </ul>
+    } @else if (loadError()) {
+      <div class="org-select__state org-select__state--error" role="alert">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <p>{{ loadError() }}</p>
+        <button type="button" class="org-select__retry" (click)="retry()">Try again</button>
+      </div>
+    } @else if (displayOrgs().length === 0) {
+      <div class="org-select__state">
+        <i class="pi pi-building" aria-hidden="true"></i>
+        <p>No institutions match your search.</p>
+        <button type="button" class="org-select__retry" (click)="onSearch('')">Clear search</button>
+      </div>
+    } @else {
+      <ul class="org-select__list" role="listbox" aria-label="Institutions">
+        @for (org of displayOrgs(); track trackByOrgId($index, org)) {
+          <li>
+            <button
+              type="button"
+              class="org-card"
+              [class.org-card--selected]="isSelected(org)"
+              role="option"
+              [attr.aria-selected]="isSelected(org)"
+              (click)="selectOrg(org)"
+            >
+              @if (org.logoUrl) {
+                <img class="org-card__logo" [src]="org.logoUrl" [alt]="''" loading="lazy" />
+              } @else {
+                <span class="org-card__avatar" aria-hidden="true">{{ initials(org.name) }}</span>
+              }
+              <span class="org-card__meta">
+                <strong>{{ org.name }}</strong>
+                <small>{{ org.location }}</small>
+              </span>
+              <i class="pi pi-chevron-right org-card__chevron" aria-hidden="true"></i>
+            </button>
+          </li>
+        }
+      </ul>
+    }
   </div>
 
   <div class="org-select__footer">
@@ -68,10 +112,9 @@
       <a href="mailto:support@thinkerscave.com">Contact your administrator</a>
     </p>
     <button
-      pButton
       type="button"
       class="org-select__continue"
-      [disabled]="!platformSelected() && !selected()"
+      [disabled]="!hasSelection()"
       (click)="continue()"
     >
       Continue

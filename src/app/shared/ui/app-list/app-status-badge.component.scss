@@ -1,0 +1,36 @@
+.app-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: var(--tc-radius-pill);
+  white-space: nowrap;
+  border: 1px solid transparent;
+
+  &[data-status='ACTIVE'] {
+    background: var(--tc-success-soft);
+    color: var(--tc-success);
+    border-color: color-mix(in srgb, var(--tc-success) 24%, transparent);
+  }
+
+  &[data-status='TRIAL'],
+  &[data-status='LEAD'] {
+    background: var(--tc-info-soft);
+    color: var(--tc-info);
+    border-color: color-mix(in srgb, var(--tc-info) 24%, transparent);
+  }
+
+  &[data-status='SUSPENDED'] {
+    background: var(--tc-danger-soft);
+    color: var(--tc-danger);
+    border-color: color-mix(in srgb, var(--tc-danger) 24%, transparent);
+  }
+
+  &[data-status='ARCHIVED'] {
+    background: var(--tc-surface-100);
+    color: var(--tc-text-muted);
+    border-color: var(--tc-border);
+  }
+}

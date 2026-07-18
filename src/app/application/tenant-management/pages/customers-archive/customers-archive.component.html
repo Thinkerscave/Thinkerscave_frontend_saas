@@ -47,17 +47,17 @@
         *ngFor="let c of customers; trackBy: trackById"
         (click)="openCustomer(c)">
         <div class="archive-card__head">
-          <span class="archive-card__logo">{{ customerInitials(c.displayName) }}</span>
+          <span class="archive-card__logo">{{ customerInitials(c.customerName) }}</span>
           <div class="archive-card__title">
-            <strong>{{ c.displayName }}</strong>
-            <small>{{ c.customerCode }} · {{ customerTypeLabel(c.customerType) }}</small>
+            <strong>{{ c.customerName }}</strong>
+            <small>{{ c.customerCode }} · {{ c.ownerName || '—' }}</small>
           </div>
           <tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill>
         </div>
         <div class="archive-card__meta">
           <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} orgs</span>
-          <span><i class="pi pi-calendar"></i> {{ formatDate(c.createdOn) }}</span>
-          <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
+          <span><i class="pi pi-calendar"></i> {{ formatDate(c.createdDate) }}</span>
+          <span *ngIf="c.ownerEmail"><i class="pi pi-envelope"></i> {{ c.ownerEmail }}</span>
         </div>
         <div class="archive-card__actions" (click)="$event.stopPropagation()">
           <button
@@ -89,6 +89,3 @@
     </p-paginator>
   </tc-saas-panel>
 </div>
-
-
-

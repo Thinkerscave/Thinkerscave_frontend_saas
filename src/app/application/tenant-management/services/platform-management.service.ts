@@ -6,12 +6,14 @@ import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
 import {
   Customer,
   CustomerContact,
-  CustomerContactPayload,
+  CustomerContactCreatePayload,
   CustomerCreatePayload,
   CustomerDashboard,
   CustomerDetail,
+  CustomerListItem,
   CustomerMetadata,
   CustomerQuery,
+  CustomerSortOption,
   OrganizationDetail,
   OrganizationQuery,
   OrganizationSummary,
@@ -75,17 +77,19 @@ export class PlatformManagementService {
     return this.http.post<unknown>(platformApi.archiveOrganization(id), {}).pipe(map(() => undefined));
   }
 
-  getCustomers(query: CustomerQuery = {}): Observable<SpringPage<Customer>> {
+  getCustomers(query: CustomerQuery = {}): Observable<SpringPage<CustomerListItem>> {
     let params = new HttpParams();
     if (query.status) params = params.set('status', query.status);
-    if (query.customerType) params = params.set('customerType', query.customerType);
     if (query.search) params = params.set('search', query.search);
     if (query.activeOnly === false) params = params.set('activeOnly', 'false');
+    if (query.created && query.created !== 'all') params = params.set('created', query.created);
     params = params.set('page', String(query.page ?? 0));
     params = params.set('size', String(query.size ?? 20));
+    const sort = mapCustomerSort(query.sort);
+    if (sort) params = params.set('sort', sort);
 
     return this.http.get<unknown>(platformApi.customers, { params }).pipe(
-      map(r => unwrapApiResponse<SpringPage<Customer>>(r, this.emptyPage()))
+      map(r => unwrapApiResponse<SpringPage<CustomerListItem>>(r, this.emptyPage()))
     );
   }
 
@@ -100,7 +104,7 @@ export class PlatformManagementService {
 
   getCustomerMetadata(): Observable<CustomerMetadata> {
     return this.http.get<unknown>(platformApi.customerMetadata).pipe(
-      map(r => unwrapApiResponse<CustomerMetadata>(r, { statuses: [], customerTypes: [], preferredCommunications: [] }))
+      map(r => unwrapApiResponse<CustomerMetadata>(r, { statuses: [] }))
     );
   }
 
@@ -134,7 +138,7 @@ export class PlatformManagementService {
     return this.http.delete<unknown>(platformApi.customerPermanentDelete(id)).pipe(map(() => undefined));
   }
 
-  addCustomerContact(customerId: number, payload: CustomerContactPayload): Observable<CustomerContact> {
+  addCustomerContact(customerId: number, payload: CustomerContactCreatePayload): Observable<CustomerContact> {
     return this.http.post<unknown>(platformApi.customerContacts(customerId), payload).pipe(
       map(r => unwrapApiResponse<CustomerContact>(r, {} as CustomerContact))
     );
@@ -271,5 +275,17 @@ export class PlatformManagementService {
       totalSubscriptionPlans: 0,
       activePromotions: 0
     };
+  }
+}
+
+function mapCustomerSort(sort?: CustomerSortOption): string | undefined {
+  switch (sort) {
+    case 'nameAsc': return 'customerName,asc';
+    case 'nameDesc': return 'customerName,desc';
+    case 'email': return 'businessEmail,asc';
+    case 'createdDesc': return 'createdOn,desc';
+    case 'orgCount': return 'createdOn,desc';
+    case 'lastActivity': return 'updatedOn,desc';
+    default: return undefined;
   }
 }

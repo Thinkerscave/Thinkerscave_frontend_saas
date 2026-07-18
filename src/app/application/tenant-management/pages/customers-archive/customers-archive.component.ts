@@ -8,13 +8,12 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
 
-import { Customer } from '../../models/platform.model';
+import { CustomerListItem } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   customerInitials,
   customerStatusLabel,
   customerStatusTone,
-  customerTypeLabel,
   formatDate
 } from '../../utils/platform-display.util';
 import {
@@ -54,7 +53,7 @@ export class CustomersArchiveComponent implements OnInit {
   loading = true;
   actionLoadingId: number | null = null;
   errorMessage = '';
-  customers: Customer[] = [];
+  customers: CustomerListItem[] = [];
   search = '';
   archivedOnly = true;
   page = 0;
@@ -63,7 +62,6 @@ export class CustomersArchiveComponent implements OnInit {
 
   readonly customerInitials = customerInitials;
   readonly customerStatusLabel = customerStatusLabel;
-  readonly customerTypeLabel = customerTypeLabel;
   readonly customerStatusTone = customerStatusTone;
   readonly formatDate = formatDate;
 
@@ -121,19 +119,19 @@ export class CustomersArchiveComponent implements OnInit {
     this.loadCustomers();
   }
 
-  openCustomer(customer: Customer): void {
+  openCustomer(customer: CustomerListItem): void {
     void this.router.navigate(['/app/tenant-management/customers', customer.id]);
   }
 
-  restore(customer: Customer, event: Event): void {
+  restore(customer: CustomerListItem, event: Event): void {
     event.stopPropagation();
-    if (!confirm(`Restore "${customer.displayName}" to active customers?`)) return;
+    if (!confirm(`Restore "${customer.customerName}" to active customers?`)) return;
     this.runAction(customer.id, () => this.api.restoreCustomer(customer.id), 'Restored', 'Customer restored successfully.');
   }
 
-  permanentDelete(customer: Customer, event: Event): void {
+  permanentDelete(customer: CustomerListItem, event: Event): void {
     event.stopPropagation();
-    if (!confirm(`Permanently delete "${customer.displayName}"? This cannot be undone.`)) return;
+    if (!confirm(`Permanently delete "${customer.customerName}"? This cannot be undone.`)) return;
     this.runAction(
       customer.id,
       () => this.api.permanentlyDeleteCustomer(customer.id),
@@ -143,7 +141,7 @@ export class CustomersArchiveComponent implements OnInit {
     );
   }
 
-  trackById(_: number, item: Customer): number {
+  trackById(_: number, item: CustomerListItem): number {
     return item.id;
   }
 

@@ -1,272 +1,208 @@
-<div class="tc-page customer-form">
+<div class="customer-form-page">
   <p-toast position="top-right"></p-toast>
 
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="cancel()"><i class="pi pi-times"></i> Cancel</button>
-  </tc-saas-page-header>
-
-  <div *ngIf="errorMessage" class="customer-form__banner customer-form__banner--danger" role="alert">
-    <i class="pi pi-exclamation-triangle"></i>
-    <span>{{ errorMessage }}</span>
-  </div>
-
-  <div *ngIf="loading" class="tc-loading">
-    <i class="pi pi-spin pi-spinner"></i>
-    {{ isEditMode ? 'Loading customer…' : 'Loading metadata…' }}
-  </div>
-
-  <ng-container *ngIf="!loading">
-    <tc-saas-stepper [steps]="wizardSteps" [activeIndex]="step"></tc-saas-stepper>
-
-    <div *ngIf="stepError" class="customer-form__banner customer-form__banner--warning" role="alert">
-      <i class="pi pi-info-circle"></i>
-      <span>{{ stepError }}</span>
+  <div class="customer-form-page__shell">
+    <div *ngIf="errorMessage" class="customer-form-page__banner" role="alert">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <span>{{ errorMessage }}</span>
     </div>
 
-    <tc-saas-panel>
-      <!-- Step 1: Business -->
-      <section *ngIf="step === 0" class="wizard-step">
-        <div class="wizard-step__header">
-          <div class="wizard-step__icon"><i class="pi pi-building"></i></div>
-          <div>
-            <h3 class="wizard-step__title">Business Identity</h3>
-            <p class="wizard-step__lead">Legal identity and primary business contact for the customer account.</p>
+    <app-loader *ngIf="loading" label="Loading customer…"></app-loader>
+
+    <app-card *ngIf="!loading" [hasFooter]="true" [elevated]="true">
+      <form class="customer-form" novalidate (submit)="$event.preventDefault()">
+        <section class="customer-form__section">
+          <app-section-header
+            title="1. Business Information"
+            description="Basic identity details of the customer account."
+            icon="pi pi-id-card">
+          </app-section-header>
+
+          <div class="customer-form__grid">
+            <app-input
+              label="Customer Name"
+              placeholder="Enter customer name"
+              [required]="true"
+              autocomplete="organization"
+              [(ngModel)]="form.customerName"
+              name="customerName"
+              [error]="fieldError('customerName')"
+              (ngModelChange)="onFieldChange('customerName')">
+            </app-input>
+
+            <app-input
+              label="Business Email"
+              type="email"
+              placeholder="Enter business email"
+              [required]="true"
+              autocomplete="email"
+              inputMode="email"
+              [(ngModel)]="form.businessEmail"
+              name="businessEmail"
+              [error]="fieldError('businessEmail')"
+              (ngModelChange)="onFieldChange('businessEmail')">
+            </app-input>
+
+            <app-phone-input
+              label="Mobile Number"
+              placeholder="Enter mobile number"
+              [required]="true"
+              [(ngModel)]="form.mobileNumber"
+              name="mobileNumber"
+              [error]="fieldError('mobileNumber')"
+              (ngModelChange)="onFieldChange('mobileNumber')">
+            </app-phone-input>
+
+            <app-phone-input
+              label="Alternate Mobile Number"
+              placeholder="Enter alternate mobile number (optional)"
+              [(ngModel)]="form.alternateMobileNumber"
+              name="alternateMobileNumber"
+              [error]="fieldError('alternateMobileNumber')"
+              (ngModelChange)="onFieldChange('alternateMobileNumber')">
+            </app-phone-input>
           </div>
-        </div>
+        </section>
 
-        <div class="wizard-section-label">Core Details</div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Legal name</span>
-            <input type="text" [(ngModel)]="form.legalName" placeholder="Northstar Education Pvt Ltd">
-          </label>
-          <label class="tc-form-field"><span>Display name</span>
-            <input type="text" [(ngModel)]="form.displayName" placeholder="Northstar Education">
-          </label>
-        </div>
-        <div class="wizard-row">
-          <label class="tc-form-field wizard-field--cap"><span>Customer type</span>
-            <select [(ngModel)]="form.customerType">
-              <option *ngFor="let t of typeOptions" [ngValue]="t.code">{{ t.label }}</option>
-            </select>
-          </label>
-          <label class="tc-form-field wizard-field--cap"><span>Status</span>
-            <select [(ngModel)]="form.status">
-              <option *ngFor="let s of statusOptions" [ngValue]="s.code">{{ s.label }}</option>
-            </select>
-          </label>
-        </div>
+        <section class="customer-form__section">
+          <app-section-header
+            title="2. Primary Contact"
+            description="Primary point of contact for this customer."
+            icon="pi pi-user">
+          </app-section-header>
 
-        <div class="wizard-section-label">Contact</div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Business email</span>
-            <input type="email" [(ngModel)]="form.email" placeholder="billing@customer.com">
-          </label>
-          <label class="tc-form-field"><span>Mobile</span>
-            <input type="tel" [(ngModel)]="form.mobileNumber" placeholder="+91">
-          </label>
-        </div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Alternate mobile</span>
-            <input type="tel" [(ngModel)]="form.alternateMobileNumber" placeholder="Optional">
-          </label>
-          <label class="tc-form-field"><span>Website</span>
-            <input type="url" [(ngModel)]="form.website" placeholder="https://">
-          </label>
-        </div>
+          <div class="customer-form__grid">
+            <app-input
+              label="Full Name"
+              placeholder="Enter full name"
+              [required]="true"
+              autocomplete="name"
+              [(ngModel)]="form.primary.fullName"
+              name="primaryFullName"
+              [error]="fieldError('primary.fullName')"
+              (ngModelChange)="onFieldChange('primary.fullName')">
+            </app-input>
 
-        <div class="wizard-section-label">Registration</div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Tax / GST number</span>
-            <input type="text" [(ngModel)]="form.taxNumber" placeholder="Optional">
-          </label>
-          <label class="tc-form-field"><span>Registration number</span>
-            <input type="text" [(ngModel)]="form.registrationNumber" placeholder="Optional">
-          </label>
-        </div>
-        <label class="tc-form-field tc-form-field--full"><span>Logo URL</span>
-          <input type="url" [(ngModel)]="form.logoUrl" placeholder="https://cdn.example.com/logo.png">
-        </label>
-      </section>
+            <app-input
+              label="Email Address"
+              type="email"
+              placeholder="Enter email address"
+              [required]="true"
+              autocomplete="email"
+              inputMode="email"
+              [(ngModel)]="form.primary.email"
+              name="primaryEmail"
+              [error]="fieldError('primary.email')"
+              (ngModelChange)="onFieldChange('primary.email')">
+            </app-input>
 
-      <!-- Step 2: Primary Contact -->
-      <section *ngIf="step === 1" class="wizard-step">
-        <div class="wizard-step__header">
-          <div class="wizard-step__icon"><i class="pi pi-user"></i></div>
-          <div>
-            <h3 class="wizard-step__title">Primary Contact</h3>
-            <p class="wizard-step__lead">
-              {{ isEditMode ? 'Update the primary contact details shown on the customer record.' : 'Optional on create — a contact record is added when a name is provided.' }}
-            </p>
+            <app-phone-input
+              label="Mobile Number"
+              placeholder="Enter mobile number"
+              [required]="true"
+              [(ngModel)]="form.primary.mobileNumber"
+              name="primaryMobile"
+              [error]="fieldError('primary.mobileNumber')"
+              (ngModelChange)="onFieldChange('primary.mobileNumber')">
+            </app-phone-input>
+
+            <app-input
+              label="Designation"
+              placeholder="Enter designation (optional)"
+              autocomplete="organization-title"
+              [(ngModel)]="form.primary.designation"
+              name="primaryDesignation"
+              [error]="fieldError('primary.designation')"
+              (ngModelChange)="onFieldChange('primary.designation')">
+            </app-input>
           </div>
-        </div>
+        </section>
 
-        <div class="wizard-section-label">Contact Details</div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Full name</span>
-            <input type="text" [(ngModel)]="form.contactFullName" placeholder="Priya Sharma">
-          </label>
-          <label class="tc-form-field"><span>Designation</span>
-            <input type="text" [(ngModel)]="form.contactDesignation" placeholder="Director, Operations">
-          </label>
-        </div>
-        <div class="wizard-row">
-          <label class="tc-form-field"><span>Email</span>
-            <input type="email" [(ngModel)]="form.contactEmail" placeholder="priya@customer.com">
-          </label>
-          <label class="tc-form-field"><span>Mobile</span>
-            <input type="tel" [(ngModel)]="form.contactMobile" placeholder="+91">
-          </label>
-        </div>
-        <label class="tc-form-field tc-form-field--full"><span>Alternate mobile</span>
-          <input type="tel" [(ngModel)]="form.contactAlternateMobile" placeholder="Optional">
-        </label>
+        <section class="customer-form__section">
+          <app-section-header
+            title="3. Secondary Contact (Optional)"
+            description="Backup contact for this customer."
+            icon="pi pi-users">
+          </app-section-header>
 
-        <div class="wizard-section-label">Contact Roles</div>
-        <div class="customer-form__flags">
-          <label class="customer-form__flag">
-            <input type="checkbox" [(ngModel)]="form.contactPrimary">
-            <span>Primary contact</span>
-          </label>
-          <label class="customer-form__flag">
-            <input type="checkbox" [(ngModel)]="form.contactBilling">
-            <span>Billing contact</span>
-          </label>
-          <label class="customer-form__flag">
-            <input type="checkbox" [(ngModel)]="form.contactTechnical">
-            <span>Technical contact</span>
-          </label>
-        </div>
-      </section>
+          <div class="customer-form__grid">
+            <app-input
+              label="Full Name"
+              placeholder="Enter full name (optional)"
+              autocomplete="name"
+              [(ngModel)]="form.secondary.fullName"
+              name="secondaryFullName"
+              [error]="fieldError('secondary.fullName')"
+              (ngModelChange)="onFieldChange('secondary.fullName')">
+            </app-input>
 
-      <!-- Step 3: Address -->
-      <section *ngIf="step === 2" class="wizard-step">
-        <div class="wizard-step__header">
-          <div class="wizard-step__icon"><i class="pi pi-map-marker"></i></div>
-          <div>
-            <h3 class="wizard-step__title">Address</h3>
-            <p class="wizard-step__lead">Registered or billing address for invoices and correspondence.</p>
+            <app-input
+              label="Email Address"
+              type="email"
+              placeholder="Enter email address (optional)"
+              autocomplete="email"
+              inputMode="email"
+              [(ngModel)]="form.secondary.email"
+              name="secondaryEmail"
+              [error]="fieldError('secondary.email')"
+              (ngModelChange)="onFieldChange('secondary.email')">
+            </app-input>
+
+            <app-phone-input
+              label="Mobile Number"
+              placeholder="Enter mobile number (optional)"
+              [(ngModel)]="form.secondary.mobileNumber"
+              name="secondaryMobile"
+              [error]="fieldError('secondary.mobileNumber')"
+              (ngModelChange)="onFieldChange('secondary.mobileNumber')">
+            </app-phone-input>
+
+            <app-input
+              label="Designation"
+              placeholder="Enter designation (optional)"
+              autocomplete="organization-title"
+              [(ngModel)]="form.secondary.designation"
+              name="secondaryDesignation"
+              [error]="fieldError('secondary.designation')"
+              (ngModelChange)="onFieldChange('secondary.designation')">
+            </app-input>
           </div>
-        </div>
+        </section>
 
-        <div class="wizard-section-label">Street Address</div>
-        <label class="tc-form-field tc-form-field--full"><span>Address line 1</span>
-          <input type="text" [(ngModel)]="form.addressLine1" placeholder="Street, building, suite">
-        </label>
-        <label class="tc-form-field tc-form-field--full"><span>Address line 2</span>
-          <input type="text" [(ngModel)]="form.addressLine2" placeholder="Optional">
-        </label>
+        <section class="customer-form__section customer-form__section--notes">
+          <app-section-header
+            title="4. Notes (Optional)"
+            description="Add any internal notes for future reference."
+            icon="pi pi-book">
+          </app-section-header>
 
-        <div class="wizard-section-label">Locality</div>
-        <div class="wizard-row wizard-row--triple">
-          <label class="tc-form-field"><span>City</span>
-            <input type="text" [(ngModel)]="form.city" placeholder="Mumbai">
-          </label>
-          <label class="tc-form-field"><span>State / region</span>
-            <input type="text" [(ngModel)]="form.state" placeholder="Maharashtra">
-          </label>
-          <label class="tc-form-field"><span>Postal code</span>
-            <input type="text" [(ngModel)]="form.postalCode" placeholder="400001">
-          </label>
-        </div>
-        <label class="tc-form-field wizard-field--cap"><span>Country</span>
-          <select [(ngModel)]="form.country">
-            <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
-          </select>
-        </label>
-      </section>
+          <app-textarea
+            label="Notes"
+            placeholder="Enter notes, onboarding context, or special terms (optional)"
+            [rows]="3"
+            [compact]="true"
+            [maxLength]="notesMax"
+            [(ngModel)]="form.notes"
+            name="notes"
+            [error]="fieldError('notes')"
+            (ngModelChange)="onFieldChange('notes')">
+          </app-textarea>
+        </section>
+      </form>
 
-      <!-- Step 4: Commercial -->
-      <section *ngIf="step === 3" class="wizard-step">
-        <div class="wizard-step__header">
-          <div class="wizard-step__icon"><i class="pi pi-dollar"></i></div>
-          <div>
-            <h3 class="wizard-step__title">Commercial</h3>
-            <p class="wizard-step__lead">Communication preferences and internal notes for the account team.</p>
-          </div>
-        </div>
-
-        <div class="wizard-section-label">Preferences</div>
-        <label class="tc-form-field wizard-field--cap"><span>Preferred communication</span>
-          <select [(ngModel)]="form.preferredCommunication">
-            <option *ngFor="let c of communicationOptions" [ngValue]="c.code">{{ c.label }}</option>
-          </select>
-        </label>
-
-        <div class="wizard-section-label">Internal Notes</div>
-        <label class="tc-form-field tc-form-field--full"><span>Remarks</span>
-          <textarea rows="4" [(ngModel)]="form.remarks" placeholder="Internal notes, renewal context, or special terms"></textarea>
-        </label>
-      </section>
-
-      <!-- Step 5: Review -->
-      <section *ngIf="step === 4" class="wizard-step">
-        <div class="wizard-step__header">
-          <div class="wizard-step__icon"><i class="pi pi-check-circle"></i></div>
-          <div>
-            <h3 class="wizard-step__title">Review &amp; Confirm</h3>
-            <p class="wizard-step__lead">Confirm details before {{ isEditMode ? 'updating' : 'creating' }} the customer.</p>
-          </div>
-        </div>
-
-        <div class="wizard-review-grid">
-          <div class="wizard-review-section">
-            <div class="wizard-review-section__label"><i class="pi pi-building"></i> Business</div>
-            <dl class="wizard-review">
-              <div><dt>Legal name</dt><dd>{{ form.legalName || '—' }}</dd></div>
-              <div><dt>Display name</dt><dd>{{ form.displayName || '—' }}</dd></div>
-              <div><dt>Type</dt><dd>{{ customerTypeLabel(form.customerType) }}</dd></div>
-              <div><dt>Status</dt><dd><tc-saas-pill [label]="customerStatusLabel(form.status)" tone="info"></tc-saas-pill></dd></div>
-              <div><dt>Email</dt><dd>{{ form.email || '—' }}</dd></div>
-              <div><dt>Mobile</dt><dd>{{ form.mobileNumber || '—' }}</dd></div>
-            </dl>
-          </div>
-          <div class="wizard-review-section" *ngIf="form.contactFullName">
-            <div class="wizard-review-section__label"><i class="pi pi-user"></i> Primary Contact</div>
-            <dl class="wizard-review">
-              <div><dt>Name</dt><dd>{{ form.contactFullName }}</dd></div>
-              <div><dt>Email</dt><dd>{{ form.contactEmail || '—' }}</dd></div>
-              <div><dt>Mobile</dt><dd>{{ form.contactMobile || '—' }}</dd></div>
-            </dl>
-          </div>
-          <div class="wizard-review-section">
-            <div class="wizard-review-section__label"><i class="pi pi-map-marker"></i> Address</div>
-            <dl class="wizard-review">
-              <div><dt>Address</dt><dd>{{ form.addressLine1 || '—' }}</dd></div>
-              <div><dt>City</dt><dd>{{ form.city }}, {{ form.state }}</dd></div>
-              <div><dt>Country</dt><dd>{{ form.country }}</dd></div>
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      <footer class="customer-form__nav">
-        <button type="button" class="tc-btn" (click)="prev()" [disabled]="step === 0 || submitting">
-          <i class="pi pi-arrow-left"></i> Back
-        </button>
-        <div class="customer-form__nav-end">
-          <button type="button" class="tc-btn" (click)="cancel()" [disabled]="submitting">Cancel</button>
-          <button
-            type="button"
-            *ngIf="step < wizardSteps.length - 1"
-            class="tc-btn tc-btn--primary"
-            (click)="next()"
-            [disabled]="submitting">
-            Next <i class="pi pi-arrow-right"></i>
-          </button>
-          <button
-            type="button"
-            *ngIf="step === wizardSteps.length - 1"
-            class="tc-btn tc-btn--primary"
-            (click)="submit()"
-            [disabled]="submitting">
-            <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-check'"></i>
-            {{ submitting ? 'Saving…' : (isEditMode ? 'Update Customer' : 'Create Customer') }}
-          </button>
-        </div>
-      </footer>
-    </tc-saas-panel>
-  </ng-container>
+      <div card-footer class="customer-form-page__footer">
+        <app-button variant="secondary" [disabled]="submitting" (clicked)="cancel()">
+          Cancel
+        </app-button>
+        <app-button
+          variant="primary"
+          icon="pi pi-plus"
+          [loading]="submitting"
+          [disabled]="!canSubmit"
+          (clicked)="submit()">
+          {{ isEditMode ? 'Save Changes' : 'Create Customer' }}
+        </app-button>
+      </div>
+    </app-card>
+  </div>
 </div>
-
-
-

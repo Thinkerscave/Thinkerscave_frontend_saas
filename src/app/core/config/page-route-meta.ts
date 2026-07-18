@@ -17,12 +17,12 @@ export const TENANT_PAGES = {
   },
   customers: {
     breadcrumb: 'Customers',
-    pageSubtitle: 'Commercial relationships between ThinkerScave and education groups'
+    pageSubtitle: 'Manage customer accounts and their organizations.'
   },
   customersNew: {
-    breadcrumb: 'New Customer',
+    breadcrumb: 'Create Customer',
     breadcrumbLink: ['/app/tenant-management/customers/new'],
-    pageSubtitle: 'Capture business profile, contacts, and commercial details for a platform customer'
+    pageSubtitle: 'Create a customer account that can own one or more organizations.'
   },
   customersArchived: {
     breadcrumb: 'Archived Customers',
@@ -31,7 +31,7 @@ export const TENANT_PAGES = {
   },
   customersEdit: {
     breadcrumb: 'Edit Customer',
-    pageSubtitle: 'Update business profile, contacts, and commercial details'
+    pageSubtitle: 'Update account owner details for this customer.'
   },
   customerDetails: {
     breadcrumb: 'Customer Details'
@@ -41,9 +41,9 @@ export const TENANT_PAGES = {
     pageSubtitle: 'Manage customer organizations and tenant workspaces'
   },
   organizationsCreate: {
-    breadcrumb: 'Provision Organization',
+    breadcrumb: 'Add Organization',
     breadcrumbLink: ['/app/tenant-management/organizations/create'],
-    pageSubtitle: 'Guided wizard to onboard a new tenant with subscription, features, and commercials'
+    pageSubtitle: 'Create a new organization under a customer account.'
   },
   organizationDetails: {
     breadcrumb: 'Organization Details'

@@ -1,0 +1,77 @@
+@use './app-list-tokens' as tokens;
+
+.app-stat-card {
+  @include tokens.app-list-card-surface;
+  @include tokens.app-list-hover-lift;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tc-space-4);
+  padding: var(--tc-space-5);
+  cursor: default;
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--tc-radius-md);
+    display: grid;
+    place-items: center;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__value {
+    font-size: var(--tc-font-size-2xl);
+    font-weight: 700;
+    color: var(--tc-heading);
+    line-height: 1.2;
+  }
+
+  &__label {
+    font-size: var(--tc-font-size-sm);
+    font-weight: 500;
+    color: var(--tc-text-muted);
+  }
+
+  &__description {
+    font-size: var(--tc-font-size-xs);
+    color: var(--tc-text-soft);
+    margin-top: 2px;
+  }
+
+  &[data-tone='primary'] .app-stat-card__icon {
+    background: var(--tc-primary-50);
+    color: var(--tc-primary-600);
+  }
+
+  &[data-tone='success'] .app-stat-card__icon {
+    background: var(--tc-success-soft);
+    color: var(--tc-success);
+  }
+
+  &[data-tone='info'] .app-stat-card__icon {
+    background: var(--tc-info-soft);
+    color: var(--tc-info);
+  }
+
+  &[data-tone='warning'] .app-stat-card__icon {
+    background: var(--tc-warning-soft);
+    color: var(--tc-warning);
+  }
+
+  &[data-tone='danger'] .app-stat-card__icon {
+    background: var(--tc-danger-soft);
+    color: var(--tc-danger);
+  }
+
+  &[data-tone='neutral'] .app-stat-card__icon {
+    background: var(--tc-surface-100);
+    color: var(--tc-text-muted);
+  }
+}

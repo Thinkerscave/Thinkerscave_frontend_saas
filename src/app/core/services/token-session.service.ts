@@ -41,11 +41,16 @@ export class TokenSessionService {
     }
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      if (typeof payload.exp !== 'number') {
+      const raw = token.split('.')[1];
+      if (!raw) return;
+      const normalized = raw.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded));
+      const exp = Number(payload?.exp);
+      if (!Number.isFinite(exp)) {
         return;
       }
-      const expiresAt = payload.exp * 1000;
+      const expiresAt = exp * 1000;
       const delay = Math.max(expiresAt - Date.now() - REFRESH_BUFFER_MS, 5_000);
       this.refreshTimer = setTimeout(() => this.tokenRefreshed$.next('proactive-refresh'), delay);
     } catch {

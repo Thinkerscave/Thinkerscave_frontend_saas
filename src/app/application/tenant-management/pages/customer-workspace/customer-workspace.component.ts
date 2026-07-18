@@ -10,7 +10,6 @@ import {
   customerInitials,
   customerStatusLabel,
   customerStatusTone,
-  customerTypeLabel,
   formatDate,
   formatDateTime,
   institutionLabel,
@@ -65,15 +64,15 @@ export class CustomerWorkspaceComponent implements OnInit {
   readonly tabs = [
     { key: 'overview', label: 'Overview', icon: 'pi pi-id-card' },
     { key: 'organizations', label: 'Organizations', icon: 'pi pi-building' },
-    { key: 'commercial', label: 'Commercial', icon: 'pi pi-wallet' },
-    { key: 'contacts', label: 'Contacts', icon: 'pi pi-users' },
-    { key: 'activity', label: 'Activity', icon: 'pi pi-history' }
+    { key: 'users', label: 'Users', icon: 'pi pi-users' },
+    { key: 'subscriptions', label: 'Subscriptions', icon: 'pi pi-credit-card' },
+    { key: 'audit', label: 'Audit Logs', icon: 'pi pi-history' },
+    { key: 'settings', label: 'Settings', icon: 'pi pi-cog' }
   ];
 
   readonly customerInitials = customerInitials;
   readonly orgInitials = customerInitials;
   readonly customerStatusLabel = customerStatusLabel;
-  readonly customerTypeLabel = customerTypeLabel;
   readonly organizationStatusLabel = organizationStatusLabel;
   readonly institutionLabel = institutionLabel;
   readonly formatDate = formatDate;
@@ -102,7 +101,7 @@ export class CustomerWorkspaceComponent implements OnInit {
         } else {
           this.customer = customer;
           this.pageHeader.setPageHeader({
-            title: customer.displayName || 'Customer Details'
+            title: customer.customerName || 'Customer Details'
           });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
@@ -120,7 +119,7 @@ export class CustomerWorkspaceComponent implements OnInit {
 
   onTabChange(tab: string): void {
     this.activeTab = tab;
-    if (tab === 'activity' && !this.auditLogs.length && !this.auditLoading) {
+    if (tab === 'audit' && !this.auditLogs.length && !this.auditLoading) {
       this.loadAuditLogs();
     }
     this.cdr.markForCheck();
@@ -148,25 +147,11 @@ export class CustomerWorkspaceComponent implements OnInit {
 
   get subtitle(): string {
     if (!this.customer) return 'Loading…';
-    const parts = [
-      this.customer.customerCode,
-      customerTypeLabel(this.customer.customerType),
-      this.locationLabel
-    ].filter(Boolean);
-    return parts.join(' · ');
-  }
-
-  get locationLabel(): string {
-    if (!this.customer) return '';
-    return [this.customer.city, this.customer.state, this.customer.country].filter(Boolean).join(', ');
+    return [this.customer.customerCode, this.customer.primaryContact?.fullName].filter(Boolean).join(' · ');
   }
 
   get organizations(): OrganizationSummary[] {
     return this.customer?.organizations ?? [];
-  }
-
-  get contacts() {
-    return this.customer?.contacts ?? [];
   }
 
   get stats(): SaasStat[] {
@@ -238,4 +223,3 @@ export class CustomerWorkspaceComponent implements OnInit {
     return haystack.includes('customer') && entityId === customerId;
   }
 }
-

@@ -1,0 +1,29 @@
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  color: var(--tc-text-muted);
+  font-size: var(--tc-font-size-sm);
+
+  &__spinner {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    border: 2px solid var(--tc-border);
+    border-top-color: var(--tc-primary-500);
+    animation: app-loader-spin 0.7s linear infinite;
+  }
+
+  &__label {
+    animation: app-form-fade-in var(--tc-anim-duration-fast) var(--tc-anim-easing);
+  }
+}
+
+@keyframes app-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

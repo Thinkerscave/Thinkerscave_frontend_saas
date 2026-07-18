@@ -143,38 +143,41 @@ export class LoginComponent {
   }
 
   private redirectUser(user: UserInfo): void {
-    this.finishSubmit();
     if (user?.firstTimeLogin) {
+      this.finishSubmit();
       void this.router.navigateByUrl('/auth/first-time-login');
       return;
     }
+
     this.idleTimeoutService.start();
 
-    const target = this.isPlatformLogin
+    const target = this.orgContext.isPlatformLogin()
       ? '/app/tenant-management/dashboard'
       : '/app';
 
-    if (!this.loginService.isLoggedIn()) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Login Error',
-        detail: 'Access token was not established in session. Please try again.',
-        life: 6000
-      });
-      return;
-    }
+    this.finishSubmit();
 
     this.ngZone.run(() => {
-      void this.router.navigateByUrl(target).then((ok) => {
-        if (!ok) {
+      void this.router.navigateByUrl(target, { replaceUrl: true }).then(
+        (ok) => {
+          if (!ok) {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Navigation blocked',
+              detail: `Could not open ${target}. Check role permissions.`,
+              life: 6000
+            });
+          }
+        },
+        (err) => {
           this.messageService.add({
-            severity: 'warn',
-            summary: 'Navigation blocked',
-            detail: `Could not open ${target}. Check role permissions.`,
-            life: 6000
+            severity: 'error',
+            summary: 'Navigation failed',
+            detail: String(err?.message ?? err ?? 'Unknown navigation error'),
+            life: 8000
           });
         }
-      });
+      );
     });
   }
 }

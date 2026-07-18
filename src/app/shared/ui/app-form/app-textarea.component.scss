@@ -1,0 +1,27 @@
+@import './app-form-tokens';
+
+.app-textarea-wrap {
+  position: relative;
+  width: 100%;
+}
+
+textarea.app-textarea {
+  min-height: 88px;
+  resize: none;
+  line-height: 1.5;
+  padding-bottom: 1.75rem;
+
+  &--compact {
+    min-height: 72px;
+  }
+}
+
+.app-textarea__counter {
+  position: absolute;
+  right: 0.875rem;
+  bottom: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--tc-text-muted);
+  pointer-events: none;
+  user-select: none;
+}

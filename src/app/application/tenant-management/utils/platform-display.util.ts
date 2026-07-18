@@ -1,6 +1,5 @@
 import {
   CustomerStatus,
-  CustomerType,
   DiscountType,
   InstitutionType,
   OrganizationStatus,
@@ -52,26 +51,9 @@ const CUSTOMER_STATUS_LABELS: Record<CustomerStatus, string> = {
   ARCHIVED: 'Archived'
 };
 
-const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
-  SCHOOL: 'School',
-  COLLEGE: 'College',
-  UNIVERSITY: 'University',
-  COACHING: 'Coaching',
-  TRAINING_INSTITUTE: 'Training',
-  EDUCATION_GROUP: 'Education Group',
-  TRUST: 'Trust',
-  COMPANY: 'Company',
-  OTHER: 'Other'
-};
-
 export function customerStatusLabel(status?: CustomerStatus | string | null): string {
   if (!status) return '—';
   return CUSTOMER_STATUS_LABELS[status as CustomerStatus] ?? String(status).replace(/_/g, ' ');
-}
-
-export function customerTypeLabel(type?: CustomerType | string | null): string {
-  if (!type) return '—';
-  return CUSTOMER_TYPE_LABELS[type as CustomerType] ?? String(type).replace(/_/g, ' ');
 }
 
 export function customerStatusTone(status?: CustomerStatus | string | null): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {

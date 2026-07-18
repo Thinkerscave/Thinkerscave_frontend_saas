@@ -5,8 +5,6 @@ export type InstitutionType =
   | 'PRE_SCHOOL' | 'PRIMARY_SCHOOL' | 'HIGH_SCHOOL' | 'HIGHER_SECONDARY' | 'SCHOOL'
   | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'OTHER';
 export type CustomerStatus = 'LEAD' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
-export type CustomerType = 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'COACHING' | 'TRAINING_INSTITUTE' | 'EDUCATION_GROUP' | 'TRUST' | 'COMPANY' | 'OTHER';
-export type PreferredCommunication = 'EMAIL' | 'PHONE' | 'WHATSAPP' | 'SMS';
 export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'SUSPENDED';
 export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 /** Backend supports PERCENTAGE and FLAT_AMOUNT; FLAT is kept for legacy seed/display mapping. */
@@ -177,61 +175,67 @@ export interface OrganizationDetail {
   updatedOn?: string;
 }
 
+export type CustomerContactType = 'PRIMARY' | 'SECONDARY';
+
+export interface CustomerContact {
+  id: number;
+  contactCode?: string;
+  customerId?: number;
+  contactType: CustomerContactType;
+  fullName: string;
+  email?: string;
+  mobileNumber?: string;
+  designation?: string;
+  active?: boolean;
+  createdOn?: string;
+  createdBy?: string;
+}
+
+export interface CustomerContactPayload {
+  fullName: string;
+  email?: string;
+  mobileNumber?: string;
+  designation?: string;
+}
+
+export interface CustomerListItem {
+  id: number;
+  customerCode: string;
+  customerName: string;
+  logoUrl?: string;
+  domain?: string;
+  ownerName?: string;
+  ownerEmail?: string;
+  organizationCount?: number;
+  status?: CustomerStatus;
+  createdDate?: string;
+  lastActivity?: string;
+  lastActivityAt?: string;
+  active?: boolean;
+}
+
 export interface Customer {
   id: number;
   customerCode: string;
-  legalName: string;
-  displayName: string;
-  customerType?: CustomerType;
-  status?: CustomerStatus;
-  email?: string;
-  mobileNumber?: string;
+  customerName: string;
+  businessEmail: string;
+  mobileNumber: string;
   alternateMobileNumber?: string;
-  website?: string;
-  taxNumber?: string;
-  registrationNumber?: string;
-  addressLine1?: string;
-  addressLine2?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
-  logoUrl?: string;
-  preferredCommunication?: PreferredCommunication;
-  onboardingCompleted?: boolean;
+  notes?: string;
+  status?: CustomerStatus;
+  ownerUserId?: number;
   active?: boolean;
-  remarks?: string;
   organizationCount?: number;
+  primaryContact?: CustomerContact | null;
+  secondaryContact?: CustomerContact | null;
+  contacts?: CustomerContact[];
   createdOn?: string;
   createdBy?: string;
   updatedOn?: string;
   updatedBy?: string;
 }
 
-export interface CustomerContact {
-  id: number;
-  contactCode?: string;
-  customerId?: number;
-  fullName: string;
-  designation?: string;
-  contactType?: string;
-  email?: string;
-  mobileNumber?: string;
-  alternateMobileNumber?: string;
-  officePhone?: string;
-  department?: string;
-  primaryContact?: boolean;
-  billingContact?: boolean;
-  technicalContact?: boolean;
-  salesContact?: boolean;
-  supportContact?: boolean;
-  active?: boolean;
-  remarks?: string;
-  createdOn?: string;
-}
-
 export interface CustomerDetail extends Customer {
-  contacts?: CustomerContact[];
   organizations?: OrganizationSummary[];
 }
 
@@ -253,43 +257,24 @@ export interface EnumOption {
 
 export interface CustomerMetadata {
   statuses: EnumOption[];
-  customerTypes: EnumOption[];
-  preferredCommunications: EnumOption[];
 }
 
 export interface CustomerCreatePayload {
-  legalName: string;
-  displayName: string;
-  customerType: CustomerType;
-  email: string;
+  customerName: string;
+  businessEmail: string;
   mobileNumber: string;
   alternateMobileNumber?: string;
-  website?: string;
-  taxNumber?: string;
-  registrationNumber?: string;
-  addressLine1?: string;
-  addressLine2?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
-  logoUrl?: string;
-  preferredCommunication?: PreferredCommunication;
-  status?: CustomerStatus;
-  remarks?: string;
+  notes?: string;
+  primaryContact: CustomerContactPayload;
+  secondaryContact?: CustomerContactPayload;
 }
 
-export interface CustomerContactPayload {
+export interface CustomerContactCreatePayload {
   fullName: string;
+  email: string;
+  mobileNumber: string;
   designation?: string;
-  email?: string;
-  mobileNumber?: string;
-  alternateMobileNumber?: string;
-  primaryContact?: boolean;
-  billingContact?: boolean;
-  technicalContact?: boolean;
-  supportContact?: boolean;
-  remarks?: string;
+  contactType: CustomerContactType;
 }
 
 export interface SubscriptionPlanFeature {
@@ -401,6 +386,7 @@ export interface ProvisionOrganizationPayload {
   organizationName: string;
   shortName?: string;
   institutionType: InstitutionType;
+  tenantSubdomain?: string;
   boardName?: string;
   timeZone?: string;
   currency?: string;
@@ -442,13 +428,24 @@ export interface OrganizationQuery {
   sort?: string;
 }
 
+export type CustomerSortOption =
+  | 'nameAsc'
+  | 'nameDesc'
+  | 'email'
+  | 'createdDesc'
+  | 'orgCount'
+  | 'lastActivity';
+
+export type CustomerCreatedFilter = 'all' | 'today' | '7d' | '30d' | '90d' | 'year';
+
 export interface CustomerQuery {
   status?: CustomerStatus;
-  customerType?: CustomerType;
   search?: string;
   activeOnly?: boolean;
+  created?: CustomerCreatedFilter;
   page?: number;
   size?: number;
+  sort?: CustomerSortOption;
 }
 
 export interface PlatformAuditLog {

@@ -152,7 +152,17 @@
   }
 
   .auth-pane__main {
-    max-width: 100%;
+    max-width: min(440px, 100%);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .auth-shell {
+    padding: 1.25rem;
+  }
+
+  .auth-card {
+    width: min(560px, 100%);
   }
 }
 
@@ -172,9 +182,16 @@
     border: none;
     min-height: 100dvh;
     box-shadow: none;
+    width: 100%;
   }
 
   .auth-pane--form {
-    padding: 1.25rem 1.25rem 2rem;
+    padding: 1.15rem 1.15rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .auth-pane__main {
+    max-width: 100%;
+    justify-content: flex-start;
+    padding-top: 0.35rem;
   }
 }

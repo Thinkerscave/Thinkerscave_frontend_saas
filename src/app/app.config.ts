@@ -1,6 +1,6 @@
 import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { providePrimeNG } from 'primeng/config';
+import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Aura from '@primeng/themes/aura';
 import { firstValueFrom } from 'rxjs';
@@ -45,6 +45,17 @@ export const appConfig: ApplicationConfig = {
           darkModeSelector: '.tc-theme-dark'
         }
       }
+    }),
+    // providePrimeNG's setConfig does not apply zIndex; set it explicitly so
+    // toast/dialog overlays sit above the layout topbar (1200) and side menu (1300).
+    provideAppInitializer(() => {
+      const primeNg = inject(PrimeNG);
+      primeNg.zIndex = {
+        modal: 1500,
+        overlay: 1400,
+        menu: 1400,
+        tooltip: 1600
+      };
     }),
     // Core loader only. Feature flows such as login start/stop it explicitly;
     // route content uses local loading states so background HTTP activity cannot

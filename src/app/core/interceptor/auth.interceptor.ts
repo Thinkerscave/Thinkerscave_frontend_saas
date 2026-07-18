@@ -63,7 +63,12 @@ export const authInterceptor: HttpInterceptorFn = (
       }
 
       if (error.status === 401) {
-        if (isPublicApi || req.url.includes('/auth/login')) {
+        if (
+          isPublicApi
+          || req.url.includes('/auth/login')
+          || req.url.includes('/auth/logout')
+          || req.url.includes('/auth/forgot-password')
+        ) {
           return throwError(() => error);
         }
 

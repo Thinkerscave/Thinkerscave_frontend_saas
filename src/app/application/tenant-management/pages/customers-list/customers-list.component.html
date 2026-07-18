@@ -1,111 +1,212 @@
-<div class="tc-page customers-list">
+<div class="customers-list">
   <p-toast></p-toast>
+  <p-menu #rowMenu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
 
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <a class="tc-btn" routerLink="/app/tenant-management/customers/archived"><i class="pi pi-inbox"></i> Archive</a>
-    <a class="tc-btn tc-btn--primary" routerLink="/app/tenant-management/customers/new"><i class="pi pi-plus"></i> New Customer</a>
+    <app-button variant="ghost" icon="pi pi-download" (clicked)="exportCustomers()">Export</app-button>
+    <app-button variant="secondary" icon="pi pi-refresh" [loading]="loading" (clicked)="load()">Refresh</app-button>
+    <app-button variant="primary" icon="pi pi-plus" (clicked)="addCustomer()">Add Customer</app-button>
   </tc-saas-page-header>
 
-  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <!-- Summary stats -->
+  <section class="customers-list__stats" *ngIf="!loading || dashboard">
+    <ng-container *ngIf="loading && !dashboard">
+      <app-skeleton-loader variant="stat"></app-skeleton-loader>
+      <app-skeleton-loader variant="stat"></app-skeleton-loader>
+      <app-skeleton-loader variant="stat"></app-skeleton-loader>
+      <app-skeleton-loader variant="stat"></app-skeleton-loader>
+    </ng-container>
+    <ng-container *ngIf="dashboard">
+      <app-stat-card
+        icon="pi pi-users"
+        tone="primary"
+        [value]="dashboard.totalCustomers"
+        label="Total Customers">
+      </app-stat-card>
+      <app-stat-card
+        icon="pi pi-building"
+        tone="info"
+        [value]="dashboard.totalOrganizations"
+        label="Total Organizations">
+      </app-stat-card>
+      <app-stat-card
+        icon="pi pi-clock"
+        tone="success"
+        [value]="dashboard.trialCustomers"
+        label="Active Trials">
+      </app-stat-card>
+      <app-stat-card
+        icon="pi pi-wallet"
+        tone="primary"
+        [value]="formatCurrency(dashboard.annualRevenue)"
+        label="Total Revenue">
+      </app-stat-card>
+    </ng-container>
+  </section>
 
-  <tc-saas-filter-row>
-    <label class="saas-search">
-      <i class="pi pi-search"></i>
-      <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name, code, email, phone...">
+  <!-- Filters -->
+  <app-filter-toolbar>
+    <app-search-bar
+      class="customers-list__search"
+      placeholder="Search customers…"
+      [value]="search"
+      (search)="onSearchChange($event)">
+    </app-search-bar>
+
+    <label class="customers-list__filter">
+      <span class="customers-list__filter-label">Sort By</span>
+      <select [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let o of sortOptions" [ngValue]="o.value">{{ o.label }}</option>
+      </select>
     </label>
-    <label class="tc-form-field"><span>Status</span>
+
+    <label class="customers-list__filter">
+      <span class="customers-list__filter-label">Status</span>
       <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let s of statusOptions" [ngValue]="s.id">{{ s.label }}</option>
+        <option *ngFor="let o of statusOptions" [ngValue]="o.value">{{ o.label }}</option>
       </select>
     </label>
-    <label class="tc-form-field"><span>Industry</span>
-      <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let t of typeOptions" [ngValue]="t.id">{{ t.label }}</option>
+
+    <label class="customers-list__filter">
+      <span class="customers-list__filter-label">Created</span>
+      <select [(ngModel)]="createdFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let o of createdOptions" [ngValue]="o.value">{{ o.label }}</option>
       </select>
     </label>
-    <div class="customers-list__view-switch">
-      <button type="button" [class.is-active]="viewMode === 'cards'" (click)="setViewMode('cards')" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
-      <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
+
+    <button type="button" class="customers-list__more-filters" disabled title="Coming soon">
+      <i class="pi pi-sliders-h" aria-hidden="true"></i>
+      More Filters
+    </button>
+
+    <app-grid-table-toggle
+      toolbarEnd
+      [storageKey]="viewStorageKey"
+      [mode]="viewMode"
+      (modeChange)="onViewModeChange($event)">
+    </app-grid-table-toggle>
+  </app-filter-toolbar>
+
+  <!-- Content panel -->
+  <section class="customers-list__panel">
+    <!-- Error -->
+    <app-list-empty-state
+      *ngIf="errorMessage && !loading"
+      icon="pi pi-exclamation-triangle"
+      title="Something went wrong"
+      [description]="errorMessage"
+      actionLabel="Retry"
+      actionIcon="pi pi-refresh"
+      (actionClick)="load()">
+    </app-list-empty-state>
+
+    <!-- Loading skeletons -->
+    <ng-container *ngIf="loading">
+      <app-skeleton-loader *ngIf="effectiveViewMode === 'table'" variant="toolbar"></app-skeleton-loader>
+      <app-skeleton-group
+        [variant]="effectiveViewMode === 'table' ? 'row' : 'card'"
+        [layout]="effectiveViewMode === 'grid' ? 'grid' : 'stack'"
+        [count]="effectiveViewMode === 'table' ? 6 : 6">
+      </app-skeleton-group>
+    </ng-container>
+
+    <!-- Empty -->
+    <app-list-empty-state
+      *ngIf="!loading && !errorMessage && !customers.length"
+      icon="pi pi-users"
+      title="No customers yet"
+      description="Create your first customer account to start managing organizations."
+      actionLabel="Add Customer"
+      actionIcon="pi pi-plus"
+      (actionClick)="addCustomer()">
+    </app-list-empty-state>
+
+    <!-- Grid view -->
+    <div
+      *ngIf="!loading && !errorMessage && customers.length && effectiveViewMode === 'grid'"
+      class="customers-list__grid">
+      <app-customer-card
+        *ngFor="let c of customers; trackBy: trackById"
+        [customer]="toCardData(c)"
+        (cardClick)="openCustomer(c)">
+      </app-customer-card>
     </div>
-    <button type="button" class="tc-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
-  </tc-saas-filter-row>
 
-  <tc-saas-panel [title]="'All Customers'" [subtitle]="totalRecords + ' customers'">
-    <div *ngIf="errorMessage" class="tc-empty-state customers-list__error">
-      <i class="pi pi-exclamation-triangle"></i>
-      <strong>{{ errorMessage }}</strong>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
-    </div>
-
-    <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading customers...</div>
-
-    <div *ngIf="!loading && !customers.length && !errorMessage" class="tc-empty-state">
-      <i class="pi pi-users"></i>
-      <strong>No customers found</strong>
-      <p>Try adjusting filters or create your first customer account.</p>
-      <a class="tc-btn tc-btn--primary" routerLink="/app/tenant-management/customers/new">Create First Customer</a>
-    </div>
-
-    <div *ngIf="!loading && customers.length && viewMode === 'cards'" class="customers-list__cards customers-list__cards--cards">
-      <article class="customer-card" *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)">
-        <div class="customer-card__head">
-          <span class="customer-card__logo" [class.has-image]="c.logoUrl">
-            <img *ngIf="c.logoUrl" [src]="c.logoUrl" alt="">
-            <span *ngIf="!c.logoUrl">{{ customerInitials(c.displayName) }}</span>
-          </span>
-          <div class="customer-card__title">
-            <strong>{{ c.displayName }}</strong>
-            <small>{{ c.customerCode }} · {{ customerTypeLabel(c.customerType) }}</small>
-          </div>
-          <tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill>
-        </div>
-        <div class="customer-card__meta">
-          <span><i class="pi pi-building"></i> {{ c.organizationCount ?? 0 }} org{{ (c.organizationCount ?? 0) !== 1 ? 's' : '' }}</span>
-          <span *ngIf="c.email"><i class="pi pi-envelope"></i> {{ c.email }}</span>
-          <span *ngIf="c.city"><i class="pi pi-map-marker"></i> {{ c.city }}</span>
-        </div>
-        <footer class="customer-card__footer">View Details <i class="pi pi-arrow-right"></i></footer>
-      </article>
-    </div>
-
-    <div *ngIf="!loading && customers.length && viewMode === 'table'" class="tc-table-wrap">
-      <table class="saas-data-table">
+    <!-- Table view -->
+    <div
+      *ngIf="!loading && !errorMessage && customers.length && effectiveViewMode === 'table'"
+      class="customers-list__table-wrap">
+      <table class="customers-list__table">
         <thead>
           <tr>
             <th>Customer</th>
-            <th>Business Name</th>
             <th>Organizations</th>
+            <th>Owner</th>
             <th>Status</th>
-            <th>Created</th>
-            <th></th>
+            <th>Created On</th>
+            <th>Last Activity</th>
+            <th class="customers-list__actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of customers; trackBy: trackById" (click)="openCustomer(c)" class="clickable-row">
+          <tr
+            *ngFor="let c of customers; trackBy: trackById"
+            class="customers-list__row"
+            (click)="openCustomer(c)">
             <td>
-              <div class="cell-main">
-                <span class="customers-list__avatar">{{ customerInitials(c.displayName) }}</span>
-                <div><strong>{{ c.displayName }}</strong><small>{{ c.customerCode }}</small></div>
+              <div class="customers-list__customer-cell">
+                <app-avatar [name]="c.customerName" [logoUrl]="c.logoUrl ?? null" size="sm"></app-avatar>
+                <div>
+                  <strong>{{ c.customerName }}</strong>
+                  <small>{{ c.domain || c.customerCode }}</small>
+                </div>
               </div>
             </td>
-            <td>{{ c.legalName }}</td>
-            <td>{{ c.organizationCount ?? 0 }}</td>
-            <td><tc-saas-pill [label]="customerStatusLabel(c.status)" [tone]="customerStatusTone(c.status)"></tc-saas-pill></td>
-            <td>{{ formatDate(c.createdOn) }}</td>
-            <td class="cell-actions">
-              <a class="tc-btn tc-btn--ghost" [routerLink]="['/app/tenant-management/customers', c.id]">Open</a>
+            <td>
+              <button
+                type="button"
+                class="customers-list__org-link"
+                (click)="openOrganizations(c, $event)">
+                {{ c.organizationCount ?? 0 }}
+              </button>
+            </td>
+            <td>
+              <div class="customers-list__owner-cell">
+                <span>{{ c.ownerName || '—' }}</span>
+                <small *ngIf="c.ownerEmail">{{ c.ownerEmail }}</small>
+              </div>
+            </td>
+            <td>
+              <app-status-badge [status]="c.status || ''"></app-status-badge>
+            </td>
+            <td>{{ formatDate(c.createdDate) }}</td>
+            <td>{{ c.lastActivity || formatDate(c.lastActivityAt) }}</td>
+            <td class="customers-list__actions-col">
+              <button
+                type="button"
+                class="customers-list__menu-btn"
+                aria-label="Customer actions"
+                (click)="openRowMenu(c, $event)">
+                <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p-paginator *ngIf="!loading && totalRecords > pageSize"
-      [rows]="pageSize" [totalRecords]="totalRecords" [first]="page * pageSize"
-      (onPageChange)="onPageChange($event)"></p-paginator>
-  </tc-saas-panel>
+    <!-- Pagination -->
+    <div *ngIf="!loading && !errorMessage && totalRecords > 0" class="customers-list__pagination">
+      <span class="customers-list__pagination-info">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalRecords }} Customers
+      </span>
+      <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [first]="page * pageSize"
+        [rowsPerPageOptions]="pageSizeOptions"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
+    </div>
+  </section>
 </div>
-
-
-

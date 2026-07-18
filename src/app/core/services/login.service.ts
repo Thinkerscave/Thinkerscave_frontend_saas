@@ -37,11 +37,13 @@ export class LoginService {
     });
   }
 
-  /** Clears session state while preserving dev org selection for the login screen. */
+  /** Clears stale session state while preserving org selection for the login screen. */
   prepareLoginScreen(): void {
     const isPlatform = this.orgContext.isPlatformLogin();
     const pendingOrg = this.orgContext.getSelectedOrganization();
-    this.logOut(false);
+    // Clear local session only — do not POST /auth/logout here. That call races with a
+    // subsequent login and can wipe the new access token via the 401 refresh path.
+    this.clearTokens();
     if (isPlatform) {
       this.setTenant(this.orgContext.resolveTenantId());
       this.setLoginContext('PLATFORM');
@@ -268,13 +270,22 @@ export class LoginService {
   public isLoggedIn(): boolean {
     const token = this.tokenSession.getAccessToken();
     if (!token) return false;
+    const payload = this.decodeJwtPayload(token);
+    if (!payload) return false;
+    const exp = Number(payload['exp']);
+    return Number.isFinite(exp) && exp * 1000 > Date.now();
+  }
+
+  /** Decode JWT payload; pads URL-safe base64 so `atob` does not fail. */
+  private decodeJwtPayload(token: string): Record<string, unknown> | null {
     try {
       const payloadBase64 = token.split('.')[1];
-      if (!payloadBase64) return false;
-      const payload = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
-      return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
+      if (!payloadBase64) return null;
+      const normalized = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      return JSON.parse(atob(padded)) as Record<string, unknown>;
     } catch {
-      return false;
+      return null;
     }
   }
 
