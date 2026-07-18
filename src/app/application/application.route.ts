@@ -15,6 +15,10 @@ const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
 export const APPLICATION_ROUTES: Routes = [
   {
+    path: 'onboarding',
+    loadComponent: () => import('./onboarding/onboarding-checklist.component').then(m => m.OnboardingChecklistComponent)
+  },
+  {
     path: '',
     loadChildren: () => import('./dashboard/dashboard.route').then(m => m.DASHBOARD_ROUTES),
   },

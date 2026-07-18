@@ -22,6 +22,34 @@
   </div>
 
   <div class="topbar-right">
+    <button
+      *ngIf="canSwitchOrganization()"
+      type="button"
+      class="icon-btn"
+      (click)="orgPanel.toggle($event)"
+      title="Switch organization"
+      aria-label="Switch organization">
+      <i class="pi pi-building"></i>
+    </button>
+
+    <p-overlayPanel #orgPanel appendTo="body" styleClass="tc-dropdown-panel user-panel">
+      <div class="user-dropdown-header">
+        <div>
+          <strong>Organization Switcher</strong>
+          <small>{{ currentOrganizationName() }}</small>
+        </div>
+      </div>
+      <hr>
+      <button
+        class="dropdown-item"
+        *ngFor="let org of organizations()"
+        (click)="switchOrganization(org, orgPanel)"
+        [disabled]="switchingOrg() === org.organizationId">
+        <i class="pi" [ngClass]="org.current ? 'pi-check-circle' : 'pi-circle-off'"></i>
+        {{ org.organizationName }}
+      </button>
+    </p-overlayPanel>
+
     <button type="button" class="icon-btn" (click)="toggleTheme()" [title]="isDarkTheme() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
       <i class="pi" [ngClass]="isDarkTheme() ? 'pi-sun' : 'pi-moon'"></i>
     </button>

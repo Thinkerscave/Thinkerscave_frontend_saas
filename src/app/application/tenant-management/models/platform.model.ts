@@ -224,6 +224,10 @@ export interface Customer {
   notes?: string;
   status?: CustomerStatus;
   ownerUserId?: number;
+  /** Returned only on create */
+  ownerUsername?: string;
+  /** Returned only on create */
+  temporaryPassword?: string;
   active?: boolean;
   organizationCount?: number;
   primaryContact?: CustomerContact | null;
@@ -373,6 +377,9 @@ export interface ProvisioningResult {
   provisioningJobId?: number;
   jobCode?: string;
   adminEmail?: string;
+  adminUsername?: string;
+  /** Returned only at provision time */
+  temporaryPassword?: string;
   defaultDomain?: string;
   message?: string;
 }

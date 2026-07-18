@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, Injector, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { loginApi, passwordApi } from '../../shared/constants/api.endpoint';
+import { loginApi, passwordApi, profileApi } from '../../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
 import { LoginRequest, LoginResponse, UserInfo, UserOrganization, PasswordResetPayload, ApiResponse } from '../../shared/models/auth.model';
 import { TokenSessionService } from './token-session.service';
@@ -158,11 +158,12 @@ export class LoginService {
     };
   }
 
-  public changePassword(newPassword: string, confirmPassword: string): Observable<string> {
-    return this.http.patch(`${environment.baseUrl}/users/changePassword`, {
+  public changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Observable<void> {
+    return this.http.post<ApiResponse<void>>(profileApi.changePassword, {
+      currentPassword,
       newPassword,
       confirmPassword
-    }, { responseType: 'text' });
+    }).pipe(map(() => undefined));
   }
 
   public getCurrentUser(): Observable<ApiResponse<UserInfo>> {

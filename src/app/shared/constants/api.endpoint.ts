@@ -329,6 +329,15 @@ export const profileApi = {
   changePassword: `${BASE}/profile/me/change-password`,
 };
 
+export const workspaceApi = {
+  organizations: `${BASE}/workspaces/organizations`,
+  switch: `${BASE}/workspaces/switch`
+};
+
+export const onboardingApi = {
+  checklist: `${BASE}/onboarding/checklist`
+};
+
 export const communicationApi = {
   notices: `${BASE}/communication/notices`,
   noticeById: (id: number) => `${BASE}/communication/notices/${id}`,

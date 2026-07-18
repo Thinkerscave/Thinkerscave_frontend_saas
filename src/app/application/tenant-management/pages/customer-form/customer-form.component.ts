@@ -181,11 +181,14 @@ export class CustomerFormComponent implements OnInit {
       .subscribe({
         next: customer => {
           const id = customer?.id ?? this.customerId;
+          const credentialDetail = !this.isEditMode && customer?.ownerUsername && customer?.temporaryPassword
+            ? ` Owner login: ${customer.ownerUsername} / ${customer.temporaryPassword}`
+            : '';
           this.messages.add({
             severity: 'success',
             summary: this.isEditMode ? 'Customer updated' : 'Customer created',
-            detail: `${customer.customerName || this.form.customerName} saved successfully.`,
-            life: 4000
+            detail: `${customer.customerName || this.form.customerName} saved successfully.${credentialDetail}`,
+            life: 12000
           });
           if (id) {
             void this.router.navigate(['/app/tenant-management/customers', id]);

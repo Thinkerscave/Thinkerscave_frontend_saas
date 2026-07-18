@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { LoginService } from '../../core/services/login.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
+import { WorkspaceOrganization, WorkspaceSwitcherService } from '../../core/services/workspace-switcher.service';
 import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { NotificationCenterComponent } from '../notification-center/notification-center.component';
@@ -20,6 +21,7 @@ export class TopBarComponent {
   themeService = inject(ThemeService);
   router = inject(Router);
   sidebarLayout = inject(SidebarLayoutService);
+  workspaceService = inject(WorkspaceSwitcherService);
 
   isDarkTheme = this.themeService.isDarkTheme;
   currentUser = this.loginService.getUser();
@@ -32,6 +34,24 @@ export class TopBarComponent {
     return u?.studentPhoto || u?.staffPhoto || u?.parentPhoto || u?.profilePhoto || u?.adminPhoto || null;
   });
   readonly dashboardRoute = computed(() => this.resolveDashboardRoute(this.roleTokens()));
+  readonly organizations = signal<WorkspaceOrganization[]>([]);
+  readonly switchingOrg = signal<number | null>(null);
+
+  constructor() {
+    if (this.canSwitchOrganization()) {
+      this.workspaceService.listOrganizations().subscribe({
+        next: (orgs) => {
+          this.organizations.set(orgs);
+          const lastSelected = Number(localStorage.getItem('lastSelectedOrganizationId') || '0');
+          const target = orgs.find((org) => org.organizationId === lastSelected);
+          if (target && !target.current) {
+            this.switchOrganization(target);
+          }
+        },
+        error: () => this.organizations.set([])
+      });
+    }
+  }
 
   toggleTheme() { this.themeService.toggleTheme(); }
 
@@ -55,6 +75,38 @@ export class TopBarComponent {
   canSwitchTenant(): boolean {
     return ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']
       .some(role => this.roleTokens().includes(role));
+  }
+
+  canSwitchOrganization(): boolean {
+    return this.roleTokens().includes('ORGANIZATION_OWNER');
+  }
+
+  switchOrganization(org: WorkspaceOrganization, panel?: { hide: () => void }): void {
+    if (!org || this.switchingOrg() === org.organizationId) {
+      return;
+    }
+    this.switchingOrg.set(org.organizationId);
+    this.workspaceService.switchOrganization(org.organizationId).subscribe({
+      next: (selected) => {
+        this.loginService.setTenant(selected.tenantId);
+        this.loginService.setCurrentOrganization(String(selected.organizationId));
+        localStorage.setItem('lastSelectedOrganizationId', String(selected.organizationId));
+        this.organizations.set(this.organizations().map((item) => ({ ...item, current: item.organizationId === selected.organizationId })));
+        panel?.hide();
+        this.router.navigateByUrl('/app', { replaceUrl: true });
+      },
+      error: () => {
+        this.switchingOrg.set(null);
+      },
+      complete: () => {
+        this.switchingOrg.set(null);
+      }
+    });
+  }
+
+  currentOrganizationName(): string {
+    const current = this.organizations().find((o) => o.current);
+    return current?.organizationName ?? this.getOrganizationName();
   }
 
   getInitials(name: string | undefined | null): string {

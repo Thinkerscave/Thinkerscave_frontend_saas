@@ -37,6 +37,15 @@ export class FirstTimeLoginComponent implements OnInit {
   }
 
   save() {
+    if (!this.currentPassword || !this.currentPassword.trim()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Current Password Required',
+        detail: 'Enter your temporary password to continue.'
+      });
+      return;
+    }
+
     if (!this.newPassword || this.newPassword.trim().length < 6) {
       this.messageService.add({
         severity: 'error',
@@ -58,18 +67,20 @@ export class FirstTimeLoginComponent implements OnInit {
     this.isLoading = true;
 
     // Call backend PATCH /api/v1/users/changePassword
-    this.loginService.changePassword(this.newPassword, this.retypePassword).subscribe({
+    this.loginService.changePassword(this.currentPassword, this.newPassword, this.retypePassword).subscribe({
       next: () => {
         this.isLoading = false;
+        const user = this.loginService.getUser();
+        if (user) {
+          this.loginService.setUser({ ...user, firstTimeLogin: false });
+        }
         this.messageService.add({
           severity: 'success',
           summary: 'Password Updated',
-          detail: 'Password changed successfully. Please log in again.'
+          detail: 'Password changed successfully.'
         });
-        // Clear session and redirect to login (user must authenticate with new password)
         setTimeout(() => {
-          this.loginService.logOut();
-          this.router.navigate(['/auth/login']);
+          this.router.navigate(['/app/onboarding']);
         }, 2000);
       },
       error: (err: any) => {
