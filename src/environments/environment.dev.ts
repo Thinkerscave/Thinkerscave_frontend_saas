@@ -1,15 +1,14 @@
-// Production build currently targets the deployed DEV server API.
-// Swap to a dedicated production host when available.
+// DEV environment — deployed server backend
 export const environment = {
-    production: true,
+    production: false,
     name: 'dev',
     apiUrl: 'http://72.61.244.175:8080/api/v1',
     baseUrl: 'http://72.61.244.175:8080/api/v1',
-    defaultTenantId: '',
+    defaultTenantId: 'public',
     platformTenantId: 'public',
-    defaultOrganizationId: null as number | null,
+    defaultOrganizationId: 1,
     h2ConsoleUrl: '',
-    requireOrganizationSelection: false,
+    requireOrganizationSelection: true,
     authUseHttpOnlyRefresh: true,
     features: {
         feeManagementEnabled: false

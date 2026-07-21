@@ -1,8 +1,7 @@
-// Default local file — replaced at build/serve time by environment.dev.ts or environment.testing.ts.
-// Fallback = testing (local backend) when no configuration is applied.
+// TESTING environment — local backend
 export const environment = {
     production: false,
-    name: 'dev',
+    name: 'testing',
     apiUrl: 'http://localhost:8181/api/v1',
     baseUrl: 'http://localhost:8181/api/v1',
     defaultTenantId: 'public',
