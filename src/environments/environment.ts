@@ -1,5 +1,4 @@
-// Default local file — replaced at build/serve time by environment.dev.ts or environment.testing.ts.
-// Fallback = testing (local backend) when no configuration is applied.
+// Local development — localhost backend only
 export const environment = {
     production: false,
     name: 'dev',

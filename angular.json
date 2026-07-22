@@ -77,7 +77,7 @@
               "outputHashing": "all",
               "sourceMap": false
             },
-            "dev": {
+            "test": {
               "optimization": {
                 "scripts": true,
                 "styles": {
@@ -91,33 +91,16 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.dev.ts"
+                  "with": "src/environments/environment.test.ts"
                 }
               ],
               "outputHashing": "all",
               "sourceMap": false
             },
-            "testing": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.testing.ts"
-                }
-              ]
-            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.testing.ts"
-                }
-              ]
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -131,17 +114,14 @@
             "production": {
               "buildTarget": "thinkerscave_saas_frontend:build:production"
             },
-            "dev": {
-              "buildTarget": "thinkerscave_saas_frontend:build:dev"
-            },
-            "testing": {
-              "buildTarget": "thinkerscave_saas_frontend:build:testing"
+            "test": {
+              "buildTarget": "thinkerscave_saas_frontend:build:test"
             },
             "development": {
               "buildTarget": "thinkerscave_saas_frontend:build:development"
             }
           },
-          "defaultConfiguration": "testing"
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"

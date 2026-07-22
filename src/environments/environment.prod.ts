@@ -1,8 +1,7 @@
-// Production build currently targets the deployed DEV server API.
-// Swap to a dedicated production host when available.
+// Production environment (same shared server for now)
 export const environment = {
     production: true,
-    name: 'dev',
+    name: 'prod',
     apiUrl: 'http://72.61.244.175:8080/api/v1',
     baseUrl: 'http://72.61.244.175:8080/api/v1',
     defaultTenantId: '',
