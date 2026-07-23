@@ -4,7 +4,7 @@ export const environment = {
     name: 'prod',
     apiUrl: '/api/v1',
     baseUrl: '/api/v1',
-    defaultTenantId: '',
+    defaultTenantId: 'public',
     platformTenantId: 'public',
     defaultOrganizationId: null as number | null,
     h2ConsoleUrl: '',

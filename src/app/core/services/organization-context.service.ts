@@ -193,6 +193,10 @@ export class OrganizationContextService {
     if (!host || host === 'localhost' || host === '127.0.0.1') {
       return null;
     }
+    // IP addresses should not be treated as subdomains
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+      return null;
+    }
     const parts = host.split('.');
     if (parts.length >= 3) {
       const subdomain = parts[0];
