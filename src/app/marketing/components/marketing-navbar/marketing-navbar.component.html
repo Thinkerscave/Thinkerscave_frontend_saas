@@ -12,7 +12,7 @@
 
     <nav class="tc-nav__links" aria-label="Primary">
       @for (link of navLinks; track link.href) {
-        <a [href]="link.href" class="tc-nav__link" (click)="closeMobile()">{{ link.label }}</a>
+        <a [href]="link.href" class="tc-nav__link" (click)="scrollToSection($event, link.href)">{{ link.label }}</a>
       }
     </nav>
 
@@ -28,7 +28,7 @@
   @if (mobileOpen()) {
     <div class="tc-nav__mobile" role="dialog" aria-label="Mobile navigation">
       @for (link of navLinks; track link.href) {
-        <a [href]="link.href" class="tc-nav__mobile-link" (click)="closeMobile()">{{ link.label }}</a>
+        <a [href]="link.href" class="tc-nav__mobile-link" (click)="scrollToSection($event, link.href)">{{ link.label }}</a>
       }
       <a [routerLink]="loginRoute()" class="tc-btn tc-btn--ghost" (click)="closeMobile()">Login</a>
       <a href="#cta" class="tc-btn tc-btn--primary" (click)="closeMobile()">Request Demo</a>

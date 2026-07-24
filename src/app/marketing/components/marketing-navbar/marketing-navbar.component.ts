@@ -29,6 +29,17 @@ export class MarketingNavbarComponent {
     this.scrolled.set(window.scrollY > 24);
   }
 
+  scrollToSection(event: Event, href: string): void {
+    event.preventDefault();
+    this.closeMobile();
+    const id = href.startsWith('#') ? href.slice(1) : href;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', `#${id}`);
+    }
+  }
+
   loginRoute(): string[] {
     return this.orgContext.requiresSelection
       ? ['/auth/select-organization']

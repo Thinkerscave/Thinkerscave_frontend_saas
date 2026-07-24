@@ -8,7 +8,8 @@ export const environment = {
     platformTenantId: 'public',
     defaultOrganizationId: null as number | null,
     h2ConsoleUrl: '',
-    requireOrganizationSelection: false,
+    // Required so Login → Thinkers Department (PLATFORM) or an institution (TENANT)
+    requireOrganizationSelection: true,
     authUseHttpOnlyRefresh: true,
     features: {
         feeManagementEnabled: false
