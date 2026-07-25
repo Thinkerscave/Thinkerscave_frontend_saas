@@ -71,14 +71,10 @@ export class MenuMappingService {
     }
 
     const userId = Number(parsedUser?.id);
-    const orgId = Number(
-      sessionStorage.getItem('currentOrgId')
-      ?? localStorage.getItem('currentOrgId')
-      ?? this.orgContext.resolveOrganizationId()
-      ?? environment.defaultOrganizationId
-    );
+    // Number(null) === 0; org 0 returns an empty sidebar from the API, so skip falsy/invalid values.
+    const orgId = this.resolveSidebarOrganizationId(parsedUser);
 
-    if (!userId || Number.isNaN(userId)) {
+    if (!userId || Number.isNaN(userId) || !orgId) {
       return of(this.applyNavigationRules(this.consolidateWorkspaceMenu([])));
     }
 
@@ -111,6 +107,28 @@ export class MenuMappingService {
     );
   }
 
+
+  private resolveSidebarOrganizationId(parsedUser: { id?: string | number; orgId?: string | number; organizationId?: string | number }): number {
+    const candidates: Array<string | number | null | undefined> = [
+      sessionStorage.getItem('currentOrgId'),
+      localStorage.getItem('currentOrgId'),
+      this.orgContext.resolveOrganizationId(),
+      parsedUser?.organizationId,
+      parsedUser?.orgId,
+      environment.defaultOrganizationId
+    ];
+
+    for (const candidate of candidates) {
+      if (candidate == null || candidate === '') {
+        continue;
+      }
+      const orgId = Number(candidate);
+      if (Number.isFinite(orgId) && orgId > 0) {
+        return orgId;
+      }
+    }
+    return 0;
+  }
 
   clearMenuCache(): void {
     this.menuCache = [];

@@ -105,15 +105,22 @@ export class LoginComponent {
           loginData.loginContext === 'PLATFORM' ? 'PLATFORM' : 'TENANT'
         );
 
-        const mappedUser = this.loginService.mapAuthUser(loginUser, loginData.firstTimeLogin);
+        // Pass accessToken explicitly so orgId is read from JWT (user DTO has no organizationId).
+        const mappedUser = this.loginService.mapAuthUser(loginUser, loginData.firstTimeLogin, accessToken);
         if (mappedUser) {
           this.loginService.setUser(mappedUser);
         }
 
         if (this.isPlatformLogin) {
           this.loginService.setTenant(loginData.tenantId || 'public');
-          if (mappedUser?.organizationId) {
-            this.loginService.setCurrentOrganization(String(mappedUser.organizationId));
+          // JWT orgId is source of truth; never trust orgId=0 from mapped user (`??` does not skip 0).
+          const platformOrgId =
+            this.loginService.toPositiveOrgId(this.loginService.getOrgIdFromAccessToken(accessToken))
+            ?? this.loginService.toPositiveOrgId(mappedUser?.organizationId)
+            ?? this.loginService.toPositiveOrgId(mappedUser?.orgId)
+            ?? this.loginService.toPositiveOrgId(this.loginTarget?.id);
+          if (platformOrgId) {
+            this.loginService.setCurrentOrganization(String(platformOrgId));
           }
         } else if (!this.loginService.getCurrentOrganizationId() && this.loginTarget) {
           this.loginService.setCurrentOrganization(String(this.loginTarget.id));

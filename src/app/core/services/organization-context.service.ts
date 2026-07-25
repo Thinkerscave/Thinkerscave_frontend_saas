@@ -19,7 +19,8 @@ export interface LoginOrganization {
 export type DevOrganization = LoginOrganization;
 
 export const THINKERS_DEPARTMENT: LoginOrganization = {
-  id: 0,
+  // Must match the platform organization row / JWT orgId (not 0 — sidebar is empty for org 0).
+  id: environment.defaultOrganizationId ?? 1,
   name: 'Thinkers Department',
   tenantId: environment.platformTenantId,
   location: 'Platform administration & tenant management',
@@ -179,13 +180,15 @@ export class OrganizationContextService {
 
   resolveOrganizationId(): string | null {
     if (this.isPlatformLogin()) {
-      return null;
+      const platformOrgId = environment.defaultOrganizationId ?? THINKERS_DEPARTMENT.id;
+      return platformOrgId && platformOrgId > 0 ? String(platformOrgId) : null;
     }
     if (this.requiresSelection) {
       const org = this.getSelectedOrganization();
       return org ? String(org.id) : null;
     }
-    return null;
+    const fallback = environment.defaultOrganizationId;
+    return fallback && fallback > 0 ? String(fallback) : null;
   }
 
   private resolveTenantFromHostname(): string | null {

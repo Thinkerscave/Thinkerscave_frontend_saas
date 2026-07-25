@@ -121,7 +121,7 @@ export class LoginService {
     });
   }
 
-  public mapAuthUser(loginUser: any, firstTimeLogin?: boolean): UserInfo | null {
+  public mapAuthUser(loginUser: any, firstTimeLogin?: boolean, accessToken?: string | null): UserInfo | null {
     if (!loginUser) {
       return null;
     }
@@ -139,6 +139,15 @@ export class LoginService {
       ))
       : [];
 
+    // JWT orgId is authoritative after login (user DTO does not include organizationId).
+    // Treat 0 as missing — `??` does not skip 0, which previously wiped a valid JWT orgId.
+    const resolvedOrgId =
+      this.toPositiveOrgId(this.getOrgIdFromAccessToken(accessToken))
+      ?? this.toPositiveOrgId(loginUser.organizationId)
+      ?? this.toPositiveOrgId(loginUser.orgId)
+      ?? this.toPositiveOrgId(environment.defaultOrganizationId)
+      ?? null;
+
     return {
       id: loginUser.id != null ? String(loginUser.id) : undefined,
       userCode: loginUser.userCode ?? '',
@@ -150,12 +159,28 @@ export class LoginService {
       mobile: loginUser.mobileNumber ?? loginUser.mobile ?? '',
       roles,
       privileges: loginUser.privileges ?? [],
-      orgId: loginUser.organizationId ?? loginUser.orgId ?? 0,
-      organizationId: loginUser.organizationId ?? loginUser.orgId,
+      orgId: resolvedOrgId ?? 0,
+      organizationId: resolvedOrgId ?? undefined,
       orgCode: loginUser.orgCode ?? '',
       isActive: loginUser.status ? loginUser.status === 'ACTIVE' : true,
       firstTimeLogin: firstTimeLogin ?? loginUser.firstTimeLogin ?? false
     };
+  }
+
+  /** Reads orgId claim from the access token (platform users omit it in the user DTO). */
+  public getOrgIdFromAccessToken(accessToken?: string | null): number | null {
+    const token = accessToken || this.tokenSession.getAccessToken() || '';
+    const payload = this.decodeJwtPayload(token);
+    if (!payload) {
+      return null;
+    }
+    return this.toPositiveOrgId(payload['orgId'] ?? payload['organizationId']);
+  }
+
+  /** Returns a positive org id, or null when missing/invalid (including 0). */
+  public toPositiveOrgId(value: unknown): number | null {
+    const orgId = Number(value);
+    return Number.isFinite(orgId) && orgId > 0 ? orgId : null;
   }
 
   public changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Observable<void> {
