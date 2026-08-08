@@ -341,6 +341,10 @@ export class LoginService {
     return tenantId.trim().toLowerCase().replace(/-/g, '_');
   }
 
+  private tenantsEqual(a: string, b: string): boolean {
+    return this.normalizeTenant(a) === this.normalizeTenant(b);
+  }
+
   private readonly tenants = {
     equal: (a: string, b: string) => this.normalizeTenant(a) === this.normalizeTenant(b)
   };
