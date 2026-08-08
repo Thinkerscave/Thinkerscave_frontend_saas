@@ -9,13 +9,15 @@ import { SidebarLayoutService } from '../../core/services/sidebar-layout.service
 import { PermissionService } from '../../core/services/permission.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
+import { LanguageService } from '../../core/services/language.service';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
+import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TcTranslatePipe],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })
@@ -36,6 +38,7 @@ export class SideMenuComponent implements OnInit {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly sidebarLayout = inject(SidebarLayoutService);
   private readonly logger = inject(LoggerService);
+  private readonly languageService = inject(LanguageService);
 
   private activeLeafKey: string | null = null;
   private collapseHoverTimer: ReturnType<typeof setTimeout> | null = null;
@@ -118,10 +121,7 @@ export class SideMenuComponent implements OnInit {
       clearTimeout(this.collapseHoverTimer);
     }
     this.collapseHoverTimer = setTimeout(() => {
-      if (this.openGroups.size === 0) {
-        this.sidebarLayout.setHovered(false);
-        this.cdr.markForCheck();
-      }
+      this.collapseHoverExpandedSidebar();
     }, 280);
   }
 
@@ -141,12 +141,23 @@ export class SideMenuComponent implements OnInit {
       if (active && this.elementRef.nativeElement.contains(active)) {
         return;
       }
-      if (this.openGroups.size > 0) {
-        return;
-      }
-      this.sidebarLayout.setHovered(false);
-      this.cdr.markForCheck();
+      this.collapseHoverExpandedSidebar();
     }, 0);
+  }
+
+  private collapseHoverExpandedSidebar(): void {
+    if (!this.shouldAutoCollapseSidebar()) {
+      return;
+    }
+
+    // Keep hover-collapse deterministic: close transient groups before collapsing.
+    this.openGroups.clear();
+    this.sidebarLayout.setHovered(false);
+    this.cdr.markForCheck();
+  }
+
+  private shouldAutoCollapseSidebar(): boolean {
+    return !this.expanded && !this.sidebarLayout.isMobileDrawerOpen() && !this.sidebarLayout.isTabletPinned();
   }
 
   closeMobileDrawer(): void {
@@ -277,6 +288,13 @@ export class SideMenuComponent implements OnInit {
 
   hasChildren(item: MenuItem): boolean {
     return !!item.items?.length;
+  }
+
+  translateMenu(label: string | undefined): string {
+    // Touch language + catalog version so OnPush refreshes when locale/dicts change.
+    this.languageService.language();
+    this.languageService.catalogVersion();
+    return this.languageService.menuLabel(label);
   }
 
   getItemKey(item: MenuItem): string {

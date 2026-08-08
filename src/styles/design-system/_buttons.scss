@@ -114,3 +114,16 @@
   padding: 0.35rem;
   border-radius: var(--tc-radius-sm);
 }
+
+/* Standard detail-page back control — first action in header toolbars */
+.tc-btn--back {
+  border-color: var(--tc-border);
+  background: var(--tc-surface-card, #fff);
+  color: var(--tc-text);
+  order: -1;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--tc-primary, #7c3aed) 35%, var(--tc-border));
+    background: color-mix(in srgb, var(--tc-primary, #7c3aed) 6%, transparent);
+  }
+}

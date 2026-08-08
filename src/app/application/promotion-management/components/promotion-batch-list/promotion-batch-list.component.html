@@ -44,16 +44,16 @@
                         <td><app-status-badge [status]="row.status"></app-status-badge></td>
                         <td>{{ row.createdAt ? (row.createdAt | date: 'medium') : '—' }}</td>
                         <td class="tc-row-actions">
-                            <p-button *ngIf="row.status === 'DRAFT'"
+                            <p-button *ngIf="row.status === 'DRAFT' || row.status === 'IN_PROGRESS'"
                                       icon="pi pi-eye" [text]="true" size="small"
                                       pTooltip="Preview" (onClick)="preview(row)"></p-button>
-                            <p-button *ngIf="row.status === 'DRAFT'"
+                            <p-button *ngIf="row.status === 'DRAFT' || row.status === 'IN_PROGRESS'"
                                       icon="pi pi-check" [text]="true" size="small"
                                       pTooltip="Execute" (onClick)="execute(row)"></p-button>
                             <p-button *ngIf="row.status === 'COMPLETED'"
                                       icon="pi pi-undo" [text]="true" size="small"
                                       pTooltip="Roll back" (onClick)="rollback(row)"></p-button>
-                            <p-button *ngIf="row.status === 'DRAFT'"
+                            <p-button *ngIf="row.status === 'DRAFT' || row.status === 'IN_PROGRESS'"
                                       icon="pi pi-times" [text]="true" size="small"
                                       pTooltip="Cancel" (onClick)="cancel(row)"></p-button>
                         </td>

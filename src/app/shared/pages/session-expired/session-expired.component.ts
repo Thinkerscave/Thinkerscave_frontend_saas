@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { LoginService } from '../../../core/services/login.service';
 import { OrganizationContextService } from '../../../core/services/organization-context.service';
+import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-session-expired',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CardModule, ButtonModule],
+  standalone: true,
+  imports: [ButtonModule, EmptyStateComponent],
   templateUrl: './session-expired.component.html',
   styleUrl: './session-expired.component.scss'
 })

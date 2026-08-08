@@ -87,16 +87,25 @@
         <div class="tc-filter-bar">
           <div class="tc-form-field">
             <label>Student *</label>
-            <select [(ngModel)]="form.studentId">
-              <option [ngValue]="0">Select student</option>
-              <option *ngFor="let s of students" [ngValue]="s.studentId">{{ s.fullName }} ({{ s.className }} {{ s.sectionName }})</option>
-            </select>
+            <p-dropdown
+              [options]="studentOptions"
+              [(ngModel)]="form.studentId"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
             <label>Category *</label>
-            <select [(ngModel)]="form.category">
-              <option *ngFor="let c of categories.slice(1)" [ngValue]="c">{{ c }}</option>
-            </select>
+            <p-dropdown
+              [options]="categoryOptions"
+              [(ngModel)]="form.category"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
             <label>Document Type *</label>

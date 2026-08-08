@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import { forkJoin } from 'rxjs';
 import { PlatformAuditLog, PlatformSecurityAuditLog } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
@@ -29,7 +30,7 @@ interface TimelineEvent {
 @Component({
   selector: 'app-audit-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent, SaasStatGridComponent, SaasPillComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPillComponent],
   templateUrl: './audit-center.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -60,6 +61,13 @@ export class AuditCenterComponent implements OnInit {
     { id: 'auth', label: 'Authentication', icon: 'pi-sign-in' },
     { id: 'subscription', label: 'Subscription', icon: 'pi-credit-card' },
     { id: 'configuration', label: 'Configuration', icon: 'pi-cog' }
+  ];
+
+  readonly severityOptions: { label: string; value: Severity }[] = [
+    { label: 'Any', value: 'all' },
+    { label: 'Info', value: 'info' },
+    { label: 'Warning', value: 'warn' },
+    { label: 'Critical', value: 'critical' }
   ];
 
   ngOnInit(): void {
@@ -151,6 +159,13 @@ export class AuditCenterComponent implements OnInit {
   get tenantOptions(): string[] {
     const set = new Set<string>(this.events.map(e => e.tenant).filter(Boolean));
     return Array.from(set).sort();
+  }
+
+  get tenantSelectOptions(): { label: string; value: string }[] {
+    return [
+      { label: 'All tenants', value: 'all' },
+      ...this.tenantOptions.map(t => ({ label: t, value: t }))
+    ];
   }
 
   get filtered(): TimelineEvent[] {

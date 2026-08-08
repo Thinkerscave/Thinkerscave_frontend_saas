@@ -2,11 +2,9 @@
 
   <!-- ───────── BREADCRUMB ───────── -->
   <nav class="sp-breadcrumb">
-    <button type="button" (click)="back()">
-      <i class="pi pi-arrow-left"></i> Staff
+    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+      <i class="pi pi-arrow-left"></i> Back to list
     </button>
-    <span class="sp-breadcrumb__sep">/</span>
-    <span>Staff Profile</span>
   </nav>
 
   <!-- ───────── HERO ───────── -->
@@ -258,6 +256,9 @@
               <div *ngIf="s.hra"><span>HRA</span><strong>₹{{ s.hra | number }}</strong></div>
               <div *ngIf="s.da"><span>DA</span><strong>₹{{ s.da | number }}</strong></div>
               <div *ngIf="s.specialAllowance"><span>Special Allow.</span><strong>₹{{ s.specialAllowance | number }}</strong></div>
+              <div *ngIf="s.pfEmployee"><span>PF</span><strong>₹{{ s.pfEmployee | number }}</strong></div>
+              <div *ngIf="s.esiEmployee"><span>ESI</span><strong>₹{{ s.esiEmployee | number }}</strong></div>
+              <div *ngIf="s.professionalTax"><span>Prof. Tax</span><strong>₹{{ s.professionalTax | number }}</strong></div>
             </div>
             <button *ngIf="s.active" type="button" class="sd-btn sd-btn--ghost" (click)="openSalaryModal(s)">
               <i class="pi pi-pencil"></i> Edit
@@ -307,6 +308,10 @@
                 </td>
                 <td>{{ p.generatedOn | date:'d MMM yyyy' }}</td>
                 <td>
+                  <button type="button" class="sd-icon-btn" title="Download Payslip"
+                          (click)="downloadPayslip(p)">
+                    <i class="pi pi-download"></i>
+                  </button>
                   <button *ngIf="p.status !== 'PAID'" type="button" class="sd-icon-btn"
                           title="Mark Paid" (click)="markPaid(p)">
                     <i class="pi pi-check-circle"></i>
@@ -409,12 +414,15 @@
     <div class="sm-modal__body">
       <div class="sw-field">
         <label class="sw-label">Responsibility <span class="req">*</span></label>
-        <select id="select-assign-responsibility" [(ngModel)]="assignForm.responsibilityId">
-          <option [value]="0">Select Responsibility</option>
-          <option *ngFor="let r of allResponsibilities" [value]="r.responsibilityId">
-            {{ r.responsibilityName }} ({{ r.responsibilityCode }})
-          </option>
-        </select>
+        <p-dropdown
+          inputId="select-assign-responsibility"
+          [options]="responsibilityOptions"
+          [(ngModel)]="assignForm.responsibilityId"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="sw-field">
         <label class="sw-label">Scope / Notes</label>
@@ -458,9 +466,14 @@
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Salary Type</label>
-          <select [(ngModel)]="salaryForm.salaryType">
-            <option *ngFor="let o of salaryTypeOptions" [value]="o.value">{{ o.label }}</option>
-          </select>
+          <p-dropdown
+            [options]="salaryTypeOptions"
+            [(ngModel)]="salaryForm.salaryType"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </div>
         <div class="sw-field">
           <label class="sw-label">Effective From <span class="req">*</span></label>
@@ -489,6 +502,22 @@
         <div class="sw-field">
           <label class="sw-label">Other Allowance (₹)</label>
           <input type="number" [(ngModel)]="salaryForm.otherAllowance" min="0"/>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">PF — Employee (₹)</label>
+          <input type="number" [(ngModel)]="salaryForm.pfEmployee" min="0"/>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">ESI — Employee (₹)</label>
+          <input type="number" [(ngModel)]="salaryForm.esiEmployee" min="0"/>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">Professional Tax (₹)</label>
+          <input type="number" [(ngModel)]="salaryForm.professionalTax" min="0"/>
+        </div>
+        <div class="sw-field">
+          <label class="sw-label">Other Deduction (₹)</label>
+          <input type="number" [(ngModel)]="salaryForm.otherDeduction" min="0"/>
         </div>
       </div>
       <div class="sw-salary-summary">

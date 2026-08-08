@@ -12,6 +12,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs';
 
@@ -39,6 +40,7 @@ type DetailTab = 'overview' | 'activities' | 'counseling' | 'timeline';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    DropdownModule,
     ToastModule,
     ConfirmDialogModule,
     SaasTabsComponent,
@@ -74,6 +76,16 @@ export class LeadDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly followUpTypes = FOLLOW_UP_TYPES;
+  readonly followUpTypeOptions = FOLLOW_UP_TYPES.map(t => ({ label: t, value: t }));
+  readonly statusAfterOptions = [
+    { label: 'CONTACTED', value: 'CONTACTED' },
+    { label: 'INTERESTED', value: 'INTERESTED' },
+    { label: 'COUNSELING', value: 'COUNSELING' },
+    { label: 'DOCUMENTS_PENDING', value: 'DOCUMENTS_PENDING' },
+    { label: 'FOLLOW_UP_REQUIRED', value: 'FOLLOW_UP_REQUIRED' },
+    { label: 'READY_FOR_ADMISSION', value: 'READY_FOR_ADMISSION' },
+    { label: 'LOST', value: 'LOST' }
+  ];
 
   readonly loading = signal(true);
   readonly saving = signal(false);

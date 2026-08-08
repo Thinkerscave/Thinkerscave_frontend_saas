@@ -1,25 +1,13 @@
-<div class="session-container">
-    <p-card class="session-card">
-  
-      <div class="icon-box">
-        <i class="pi pi-exclamation-triangle warning-icon"></i>
-      </div>
-  
-      <h2>Session Expired</h2>
-  
-      <p class="message">
-        Your session has expired due to inactivity.
-        Please login again to continue working safely.
-      </p>
-  
-      <p-button
-        pButton
-        type="button"
-        label="Go to Login"
-        icon="pi pi-sign-in"
-        class="p-button-warning login-btn"
-        (click)="redirectLogin()"/>
-  
-    </p-card>
+<div class="tc-error-shell">
+  <div class="tc-error-shell__card">
+    <app-empty-state
+      [page]="true"
+      illustration="expired"
+      title="Session expired"
+      message="Your session has expired due to inactivity. Please sign in again to continue working safely."
+      actionLabel="Go to Login"
+      actionIcon="pi pi-sign-in"
+      (action)="redirectLogin()">
+    </app-empty-state>
   </div>
-  
+</div>

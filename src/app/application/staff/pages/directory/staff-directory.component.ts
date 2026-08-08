@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -9,6 +9,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { DropdownModule } from 'primeng/dropdown';
+import { PaginatorModule } from 'primeng/paginator';
 
 import {
   EmploymentCategory,
@@ -20,6 +22,11 @@ import {
   StaffType
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { CreateStaffComponent } from '../create-staff/create-staff.component';
 
 interface KpiTile {
   key: keyof StaffDashboard;
@@ -28,11 +35,26 @@ interface KpiTile {
   color: string;
 }
 
+interface FilterOption<T = string | null> {
+  label: string;
+  value: T;
+}
+
 @Component({
   selector: 'app-staff-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DropdownModule,
+    PaginatorModule,
+    AppGridTableToggleComponent,
+    AvatarComponent,
+    SkeletonComponent,
+    EmptyStateComponent,
+    CreateStaffComponent
+  ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-directory.component.html'
 })
@@ -44,8 +66,9 @@ export class StaffDirectoryComponent implements OnInit {
   loading = true;
   searching = false;
   errorMessage = '';
+  showAddDrawer = false;
 
-  view: 'cards' | 'table' = 'cards';
+  view: AppListViewMode = 'grid';
 
   dashboard: StaffDashboard = {
     totalStaff: 0, teachingStaff: 0, nonTeachingStaff: 0,
@@ -58,7 +81,6 @@ export class StaffDirectoryComponent implements OnInit {
 
   filters: StaffFilterParams = { page: 0, size: 12, sort: 'createdOn,desc' };
 
-  // Action menus
   openMenuId: number | null = null;
   actionLoading: number | null = null;
 
@@ -71,14 +93,14 @@ export class StaffDirectoryComponent implements OnInit {
     { key: 'activeStaff',     label: 'Active Staff',       icon: 'pi-check-circle',color: 'green' }
   ];
 
-  readonly staffTypeOptions: { value: StaffType | ''; label: string }[] = [
-    { value: '', label: 'All Types' },
+  readonly staffTypeOptions: FilterOption<StaffType | undefined>[] = [
+    { value: undefined, label: 'All Types' },
     { value: 'TEACHING', label: 'Teaching' },
     { value: 'NON_TEACHING', label: 'Non Teaching' }
   ];
 
-  readonly categoryOptions: { value: EmploymentCategory | ''; label: string }[] = [
-    { value: '', label: 'All Categories' },
+  readonly categoryOptions: FilterOption<EmploymentCategory | undefined>[] = [
+    { value: undefined, label: 'All Categories' },
     { value: 'PERMANENT', label: 'Permanent' },
     { value: 'CONTRACT', label: 'Contract' },
     { value: 'TEMPORARY', label: 'Temporary' },
@@ -86,8 +108,8 @@ export class StaffDirectoryComponent implements OnInit {
     { value: 'VISITING_FACULTY', label: 'Visiting Faculty' }
   ];
 
-  readonly statusOptions: { value: EmploymentStatus | ''; label: string }[] = [
-    { value: '', label: 'All Status' },
+  readonly statusOptions: FilterOption<EmploymentStatus | undefined>[] = [
+    { value: undefined, label: 'All Status' },
     { value: 'ACTIVE', label: 'Active' },
     { value: 'PROBATION', label: 'Probation' },
     { value: 'NOTICE_PERIOD', label: 'Notice Period' },
@@ -134,21 +156,13 @@ export class StaffDirectoryComponent implements OnInit {
     this.search();
   }
 
-  goToPage(page: number): void {
-    if (page < 0 || page >= this.staffPage.totalPages) { return; }
-    this.filters = { ...this.filters, page };
+  onPageChange(event: { page?: number; rows?: number }): void {
+    this.filters = {
+      ...this.filters,
+      page: event.page ?? 0,
+      size: event.rows ?? this.filters.size
+    };
     this.loadStaff();
-  }
-
-  get pageNumbers(): number[] {
-    const total = this.staffPage.totalPages;
-    const current = this.staffPage.number;
-    const pages: number[] = [];
-    const range = 2;
-    for (let i = Math.max(0, current - range); i <= Math.min(total - 1, current + range); i++) {
-      pages.push(i);
-    }
-    return pages;
   }
 
   openProfile(staff: StaffSummary): void {
@@ -156,7 +170,17 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   addStaff(): void {
-    this.router.navigate(['/app/staff/create']);
+    this.showAddDrawer = true;
+  }
+
+  closeAddDrawer(): void {
+    this.showAddDrawer = false;
+  }
+
+  onStaffAdded(): void {
+    this.showAddDrawer = false;
+    this.loadStaff();
+    this.loadDashboard();
   }
 
   editStaff(staff: StaffSummary, event?: Event): void {
@@ -177,50 +201,40 @@ export class StaffDirectoryComponent implements OnInit {
     event?.stopPropagation();
     this.closeMenu();
     this.actionLoading = staff.staffId;
-    const obs = staff.active
+    const req$ = staff.active
       ? this.api.deactivateStaff(staff.staffId)
       : this.api.activateStaff(staff.staffId);
-    obs.pipe(finalize(() => { this.actionLoading = null; this.cdr.markForCheck(); }))
+    req$.pipe(finalize(() => { this.actionLoading = null; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => { staff.active = !staff.active; this.loadDashboard(); },
-        error: () => {}
+        next: () => this.loadStaff(),
+        error: () => { this.errorMessage = 'Unable to update staff status.'; }
       });
   }
 
   deleteStaff(staff: StaffSummary, event?: Event): void {
     event?.stopPropagation();
     this.closeMenu();
-    if (!confirm(`Delete ${staff.fullName}? This action cannot be undone.`)) { return; }
+    if (!confirm(`Delete ${staff.fullName}? This action cannot be undone.`)) return;
     this.actionLoading = staff.staffId;
     this.api.deleteStaff(staff.staffId)
       .pipe(finalize(() => { this.actionLoading = null; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => {
-          this.staffPage.content = this.staffPage.content.filter(s => s.staffId !== staff.staffId);
-          this.loadDashboard();
-        },
-        error: () => {}
+        next: () => this.loadStaff(),
+        error: () => { this.errorMessage = 'Unable to delete staff member.'; }
       });
   }
 
+  trackByStaff(_: number, s: StaffSummary): number { return s.staffId; }
+
   initials(name: string): string {
-    if (!name) { return '?'; }
-    return name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
+    return name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('') || '?';
   }
 
-  staffTypeBadge(type: StaffSummary['staffType']): string {
-    return type === 'TEACHING' ? 'Teaching' : 'Non-Teaching';
+  staffTypeBadge(type: StaffType): string {
+    return type === 'TEACHING' ? 'Teaching' : 'Non Teaching';
   }
 
-  categoryLabel(cat: StaffSummary['employmentCategory']): string {
-    const map: Record<string, string> = {
-      PERMANENT: 'Permanent', CONTRACT: 'Contract', TEMPORARY: 'Temporary',
-      PART_TIME: 'Part Time', VISITING_FACULTY: 'Visiting'
-    };
-    return map[cat] ?? cat;
+  categoryLabel(category: EmploymentCategory): string {
+    return this.categoryOptions.find(o => o.value === category)?.label ?? category;
   }
-
-  trackByStaff(_: number, item: StaffSummary): number { return item.staffId; }
-
-  getMin(a: number, b: number): number { return Math.min(a, b); }
 }

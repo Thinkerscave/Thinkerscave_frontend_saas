@@ -45,23 +45,32 @@ export class OrgSelectComponent implements OnInit {
   readonly resultCount = computed(() => this.organizations().length);
 
   ngOnInit(): void {
+    // Initial load of all organizations
     this.orgContext.loadOrganizations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
 
+    // Search observable with debounce
     this.search$
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        switchMap((q) => this.orgContext.loadOrganizations(q)),
+        switchMap((q) => this.orgContext.loadOrganizations(q || undefined)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
   }
 
   onSearch(value: string): void {
-    this.query.set(value);
+    const trimmed = value?.trim() ?? '';
+    this.query.set(trimmed);
     this.selected.set(null);
     this.platformSelected.set(false);
-    this.search$.next(value ?? '');
+
+    // If clearing search (empty value), reload all organizations immediately
+    if (!trimmed) {
+      this.orgContext.loadOrganizations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    } else {
+      this.search$.next(trimmed);
+    }
   }
 
   selectPlatform(): void {

@@ -38,11 +38,11 @@ export class ForgotPasswordModalComponent {
   });
 
   otpForm: FormGroup = this.fb.group({
-    otp: ['', [Validators.required, Validators.minLength(4)]]
+    otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
   });
 
   passwordForm: FormGroup = this.fb.group({
-    newPassword: ['', [Validators.required, Validators.minLength(6)]],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', Validators.required]
   });
 
@@ -106,7 +106,8 @@ export class ForgotPasswordModalComponent {
     const payload = {
       email: this.emailForm.value.email,
       otp: this.otpForm.value.otp,
-      newPassword: this.passwordForm.value.newPassword
+      newPassword: this.passwordForm.value.newPassword,
+      confirmPassword: this.passwordForm.value.confirmPassword
     };
     this.loginService.resetPasswordWithOtp(payload).subscribe({
       next: () => {

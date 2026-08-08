@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
+  inject,
   Input,
   OnInit,
   Output
@@ -40,6 +42,8 @@ export type AppListViewMode = 'table' | 'grid';
   styleUrl: './app-grid-table-toggle.component.scss'
 })
 export class AppGridTableToggleComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input({ required: true }) storageKey!: string;
   @Input() mode: AppListViewMode = 'grid';
   @Input() ariaLabel = 'View mode';
@@ -50,10 +54,12 @@ export class AppGridTableToggleComponent implements OnInit {
     if (saved === 'table' || saved === 'grid') {
       this.mode = saved;
       this.modeChange.emit(this.mode);
+      this.cdr.markForCheck();
     } else if (saved === 'cards') {
       this.mode = 'grid';
       localStorage.setItem(this.storageKey, 'grid');
       this.modeChange.emit(this.mode);
+      this.cdr.markForCheck();
     }
   }
 
@@ -62,5 +68,6 @@ export class AppGridTableToggleComponent implements OnInit {
     this.mode = next;
     localStorage.setItem(this.storageKey, next);
     this.modeChange.emit(next);
+    this.cdr.markForCheck();
   }
 }

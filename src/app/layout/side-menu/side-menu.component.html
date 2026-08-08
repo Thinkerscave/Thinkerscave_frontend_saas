@@ -23,23 +23,23 @@
             <button class="nav-link" type="button"
                [class.is-active]="isLeafActive(item)"
                [attr.aria-current]="isLeafActive(item) ? 'page' : null"
-               [attr.aria-label]="item.label"
+               [attr.aria-label]="translateMenu(item.label)"
               (pointerdown)="onItemPointerDown(null, item, $event)"
               (click)="onItemClick(null, item, $event)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
-              <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
+              <span class="nav-label" [class.is-visible]="displayExpanded">{{ translateMenu(item.label) }}</span>
             </button>
           } @else {
             <button class="nav-link nav-parent" type="button"
                     [class.is-open]="isGroupOpen(item)"
                     [class.is-active-parent]="isParentActive(item)"
                     [attr.aria-current]="isParentActive(item) ? 'true' : null"
-                    [attr.aria-label]="item.label"
+                    [attr.aria-label]="translateMenu(item.label)"
                     [attr.aria-expanded]="isGroupOpen(item)"
                   (pointerdown)="onGroupPointerDown(item, $event)"
                   (click)="onGroupClick(item, $event)">
               <span class="nav-icon"><i [ngClass]="item.icon" aria-hidden="true"></i></span>
-              <span class="nav-label" [class.is-visible]="displayExpanded">{{ item.label }}</span>
+              <span class="nav-label" [class.is-visible]="displayExpanded">{{ translateMenu(item.label) }}</span>
               <span class="nav-chevron" [class.is-visible]="displayExpanded" aria-hidden="true">
                 <i class="pi pi-chevron-down"></i>
               </span>
@@ -50,18 +50,18 @@
                 @for (child of item.items; track getItemKey(child); let ci = $index) {
                   @if (hasChildren(child)) {
                     <div class="submenu-nested">
-                      <span class="submenu-nested__label">{{ child.label }}</span>
+                      <span class="submenu-nested__label">{{ translateMenu(child.label) }}</span>
                       @for (grandchild of child.items; track getItemKey(grandchild); let gi = $index) {
                         @if (resolveNavigableUrl(grandchild)) {
                           <button type="button" class="submenu-link submenu-link--nested"
                              [class.is-active]="isLeafActive(grandchild)"
                              [attr.aria-current]="isLeafActive(grandchild) ? 'page' : null"
-                             [attr.aria-label]="grandchild.label"
+                             [attr.aria-label]="translateMenu(grandchild.label)"
                              [style.animation-delay]="(ci + gi) * 30 + 'ms'"
                               (pointerdown)="onItemPointerDown(item, grandchild, $event)"
                               (click)="onItemClick(item, grandchild, $event)">
                             <span class="submenu-icon"><i [ngClass]="grandchild.icon" aria-hidden="true"></i></span>
-                            <span class="submenu-label">{{ grandchild.label }}</span>
+                            <span class="submenu-label">{{ translateMenu(grandchild.label) }}</span>
                           </button>
                         }
                       }
@@ -71,12 +71,12 @@
                       <button type="button" class="submenu-link"
                          [class.is-active]="isLeafActive(child)"
                          [attr.aria-current]="isLeafActive(child) ? 'page' : null"
-                         [attr.aria-label]="child.label"
+                         [attr.aria-label]="translateMenu(child.label)"
                          [style.animation-delay]="ci * 30 + 'ms'"
                          (pointerdown)="onItemPointerDown(item, child, $event)"
                          (click)="onItemClick(item, child, $event)">
                         <span class="submenu-icon"><i [ngClass]="child.icon" aria-hidden="true"></i></span>
-                        <span class="submenu-label">{{ child.label }}</span>
+                        <span class="submenu-label">{{ translateMenu(child.label) }}</span>
                       </button>
                     }
                   }
@@ -90,7 +90,7 @@
   } @else {
     <div class="nav-empty">
       <i class="pi pi-info-circle" aria-hidden="true"></i>
-      <span class="nav-label" [class.is-visible]="displayExpanded">No menus available</span>
+      <span class="nav-label" [class.is-visible]="displayExpanded">{{ 'nav.noMenus' | tcTranslate }}</span>
     </div>
   }
 </aside>

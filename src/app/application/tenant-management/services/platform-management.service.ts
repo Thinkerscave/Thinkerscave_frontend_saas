@@ -126,6 +126,18 @@ export class PlatformManagementService {
     );
   }
 
+  suspendCustomer(id: number): Observable<Customer> {
+    return this.http.patch<unknown>(platformApi.customerStatus(id), { status: 'SUSPENDED' }).pipe(
+      map(r => unwrapApiResponse<Customer>(r, {} as Customer))
+    );
+  }
+
+  activateCustomer(id: number): Observable<Customer> {
+    return this.http.patch<unknown>(platformApi.customerStatus(id), { status: 'ACTIVE' }).pipe(
+      map(r => unwrapApiResponse<Customer>(r, {} as Customer))
+    );
+  }
+
   archiveCustomer(id: number): Observable<void> {
     return this.http.delete<unknown>(platformApi.customerById(id)).pipe(map(() => undefined));
   }

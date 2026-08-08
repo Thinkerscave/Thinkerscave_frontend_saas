@@ -1,4 +1,4 @@
-/* Avatars */
+﻿/* Avatars */
 .tc-avatar {
   display: inline-flex;
   align-items: center;
@@ -12,7 +12,7 @@
   font-size: var(--tc-font-size-sm);
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid var(--tc-surface-card);
+  border: 2px solid color-mix(in srgb, var(--tc-accent) 16%, var(--tc-surface-card));
   
   img {
     width: 100%;
@@ -49,7 +49,7 @@
 }
 
 .tc-avatar--initials {
-  background: linear-gradient(135deg, var(--tc-primary-500), var(--tc-primary-700));
+  background: linear-gradient(135deg, var(--tc-accent), color-mix(in srgb, var(--tc-accent) 76%, black));
   color: #ffffff;
 }
 
@@ -72,3 +72,4 @@
     }
   }
 }
+

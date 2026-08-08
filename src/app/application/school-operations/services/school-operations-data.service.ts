@@ -2,9 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { attendanceApi } from '../../../shared/constants/api.endpoint';
 import {
+  AttendanceOrgSettings,
   AttendanceRecord,
   AttendanceStatus,
+  AttendanceSummaryReport,
   AttendanceTrendPoint,
   AttendanceType,
   AttendanceWorkspaceData,
@@ -16,6 +19,7 @@ import {
   PayrollRunResult,
   RosterAttendanceRow,
   SectionRecord,
+  StaffAttendanceReportRow,
   StaffCreatePayload,
   StaffRecord,
   StaffWorkspaceData,
@@ -113,6 +117,53 @@ export class SchoolOperationsDataService {
     });
 
     return requests.length ? forkJoin(requests) : of([]);
+  }
+
+  getAttendanceSettings(): Observable<AttendanceOrgSettings> {
+    return this.http.get<any>(attendanceApi.settings).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response))),
+      catchError(() => of(this.defaultAttendanceSettings()))
+    );
+  }
+
+  saveAttendanceSettings(payload: Partial<AttendanceOrgSettings>): Observable<AttendanceOrgSettings> {
+    return this.http.put<any>(attendanceApi.settings, payload).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response)))
+    );
+  }
+
+  resetAttendanceSettings(): Observable<AttendanceOrgSettings> {
+    return this.http.post<any>(attendanceApi.settingsReset, {}).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response)))
+    );
+  }
+
+  copyPreviousAttendance(classId: number, targetDate: string, sectionId?: number | null): Observable<unknown> {
+    return this.http.post<any>(attendanceApi.copyPrevious(classId, targetDate, sectionId), {}).pipe(
+      map(response => this.unwrap(response))
+    );
+  }
+
+  getAttendanceSummaryReport(payload: {
+    fromDate: string;
+    toDate: string;
+    classId?: number | null;
+    sectionId?: number | null;
+    defaulterThreshold?: number;
+  }): Observable<AttendanceSummaryReport> {
+    return this.http.post<any>(attendanceApi.reports.summary, payload).pipe(
+      map(response => this.unwrap<AttendanceSummaryReport>(response) ?? emptySummaryReport(payload.fromDate, payload.toDate))
+    );
+  }
+
+  getStaffAttendanceReport(payload: {
+    fromDate: string;
+    toDate: string;
+    defaulterThreshold?: number;
+  }): Observable<StaffAttendanceReportRow[]> {
+    return this.http.post<any>(attendanceApi.reports.staff, payload).pipe(
+      map(response => this.unwrap<StaffAttendanceReportRow[]>(response) ?? [])
+    );
   }
 
   registerStaff(payload: StaffCreatePayload): Observable<StaffRecord> {
@@ -340,4 +391,61 @@ export class SchoolOperationsDataService {
   private unwrap<T>(response: any): T {
     return (response?.data ?? response) as T;
   }
+
+  private normalizeAttendanceSettings(raw?: Partial<AttendanceOrgSettings> | null): AttendanceOrgSettings {
+    const defaults = this.defaultAttendanceSettings();
+    const src = raw ?? {};
+    return {
+      ...defaults,
+      ...src,
+      attendanceMode: (src.attendanceMode === 'PERIOD' ? 'PERIOD' : 'DAILY'),
+      lateAfterTime: this.toTimeInput(src.lateAfterTime) || defaults.lateAfterTime,
+      windowStartTime: this.toTimeInput(src.windowStartTime) || defaults.windowStartTime,
+      windowEndTime: this.toTimeInput(src.windowEndTime) || defaults.windowEndTime,
+      allowCopyPrevious: src.allowCopyPrevious !== false,
+      minStudentAttendancePercent: Number(src.minStudentAttendancePercent ?? defaults.minStudentAttendancePercent),
+      studentAlertThresholdPercent: Number(src.studentAlertThresholdPercent ?? defaults.studentAlertThresholdPercent),
+      sendSmsOnAbsent: !!src.sendSmsOnAbsent,
+      sendEmailOnAbsent: !!src.sendEmailOnAbsent,
+      freezeAfterDays: Number(src.freezeAfterDays ?? 0),
+      minStaffWorkingHours: Number(src.minStaffWorkingHours ?? defaults.minStaffWorkingHours),
+      staffLateGraceMinutes: Number(src.staffLateGraceMinutes ?? defaults.staffLateGraceMinutes)
+    };
+  }
+
+  private defaultAttendanceSettings(): AttendanceOrgSettings {
+    return {
+      attendanceMode: 'DAILY',
+      lateAfterTime: '08:15',
+      windowStartTime: '07:00',
+      windowEndTime: '09:00',
+      allowCopyPrevious: true,
+      minStudentAttendancePercent: 75,
+      studentAlertThresholdPercent: 80,
+      sendSmsOnAbsent: false,
+      sendEmailOnAbsent: false,
+      minStaffWorkingHours: 8,
+      staffLateGraceMinutes: 15,
+      freezeAfterDays: 0,
+      active: true
+    };
+  }
+
+  private toTimeInput(value?: string | null): string {
+    if (!value) return '';
+    // Backend LocalTime often serializes as HH:mm:ss — HTML time inputs want HH:mm
+    return String(value).slice(0, 5);
+  }
+}
+
+function emptySummaryReport(fromDate: string, toDate: string): AttendanceSummaryReport {
+  return {
+    fromDate,
+    toDate,
+    totalStudents: 0,
+    overallPercent: 0,
+    classWiseSummary: [],
+    monthlyTrend: [],
+    defaulters: []
+  };
 }

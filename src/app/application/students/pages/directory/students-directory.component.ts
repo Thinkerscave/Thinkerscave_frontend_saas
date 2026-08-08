@@ -2,17 +2,22 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
+import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule } from 'primeng/paginator';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
 import {
   StudentDirectoryCard,
   StudentKpi,
-  StudentSearchRequest,
-  StudentStatus
+  StudentSearchRequest
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService, PageEnvelope } from '../../services/students-workspace.service';
 import { AddStudentDrawerComponent } from '../add-student/add-student-drawer.component';
+import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
 interface KpiTile {
   key: keyof StudentKpi;
@@ -28,13 +33,27 @@ interface SelectOption {
   label: string;
 }
 
-type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
+interface FilterOption<T = string | null> {
+  label: string;
+  value: T;
+}
 
 @Component({
   selector: 'app-students-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, PaginatorModule, AddStudentDrawerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DropdownModule,
+    PaginatorModule,
+    AppGridTableToggleComponent,
+    AvatarComponent,
+    SkeletonComponent,
+    AddStudentDrawerComponent,
+    TcTranslatePipe,
+    EmptyStateComponent
+  ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './students-directory.component.html'
 })
@@ -47,7 +66,7 @@ export class StudentsDirectoryComponent implements OnInit {
   searching = false;
   errorMessage = '';
 
-  view: 'grid' | 'list' = 'grid';
+  view: AppListViewMode = 'grid';
 
   // ---- Add Student Drawer ----
   showAddDrawer = false;
@@ -85,12 +104,31 @@ export class StudentsDirectoryComponent implements OnInit {
   totalElements = 0;
   sortField = 'firstName,asc';
 
+  readonly sortOptions: FilterOption<string>[] = [
+    { label: 'Name A–Z', value: 'firstName,asc' },
+    { label: 'Name Z–A', value: 'firstName,desc' },
+    { label: 'Newest First', value: 'enrollmentDate,desc' }
+  ];
+
+  readonly statusOptions: FilterOption<'ACTIVE' | 'INACTIVE'>[] = [
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' }
+  ];
+
   readonly kpiTiles: KpiTile[] = [
     { key: 'totalStudents',         label: 'Total Students',  icon: 'pi-users',           hint: 'Across all classes',     tone: 'info' },
     { key: 'activeStudents',        label: 'Active',          icon: 'pi-check-circle',    hint: 'Currently enrolled',     tone: 'success', filter: { status: 'ACTIVE' } },
     { key: 'inactiveStudents',      label: 'Inactive',        icon: 'pi-times-circle',    hint: 'Disabled or left',       tone: 'warning', filter: { status: 'INACTIVE' } },
     { key: 'alumniCount',           label: 'Alumni',          icon: 'pi-graduation-cap',  hint: 'Past graduates',         tone: 'neutral' }
   ];
+
+  get classSelectOptions(): FilterOption<string>[] {
+    return this.classOptions.map(option => ({ label: option.label, value: String(option.id) }));
+  }
+
+  get sectionSelectOptions(): FilterOption<string>[] {
+    return this.sectionOptions.map(option => ({ label: option.label, value: String(option.id) }));
+  }
 
   ngOnInit(): void {
     this.loadAll();
@@ -373,3 +411,5 @@ export class StudentsDirectoryComponent implements OnInit {
          : 'Not marked';
   }
 }
+
+

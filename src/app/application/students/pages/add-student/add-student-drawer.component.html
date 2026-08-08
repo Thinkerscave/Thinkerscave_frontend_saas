@@ -1,24 +1,21 @@
-<div class="stu-drawer">
-  <!-- Header -->
+﻿<div class="stu-drawer">
   <div class="stu-drawer__header">
     <div>
       <h2>Add New Student</h2>
-      <p>Step {{ currentStep }} of 5 — {{ steps[currentStep - 1].label }}</p>
+      <p>Step {{ currentStep }} of 2 — {{ steps[currentStep - 1].label }}</p>
     </div>
     <button type="button" class="stu-drawer__close" (click)="closed.emit()">
       <i class="pi pi-times"></i>
     </button>
   </div>
 
-  <!-- Wizard Stepper -->
   <div class="stu-drawer__steps">
-    <div class="stu-wizard-stepper">
-      <ng-container *ngFor="let step of steps; let i = index; let last = last">
+    <div class="stu-wizard-stepper stu-wizard-stepper--compact">
+      <ng-container *ngFor="let step of steps; let last = last">
         <div class="stu-step"
              [class.is-active]="currentStep === step.num"
              [class.is-done]="isStepDone(step.num)"
-             (click)="isStepDone(step.num) ? goToStep(step.num) : null"
-             [style.cursor]="isStepDone(step.num) ? 'pointer' : 'default'">
+             (click)="goToStep(step.num)">
           <div class="stu-step__circle">
             <i *ngIf="isStepDone(step.num)" class="pi pi-check"></i>
             <span *ngIf="!isStepDone(step.num)">{{ step.num }}</span>
@@ -32,33 +29,33 @@
       </ng-container>
     </div>
 
-    <!-- Progress Bar -->
-    <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
-      <div style="flex:1;height:6px;background:var(--tc-surface-100);border-radius:999px;overflow:hidden;">
-        <span style="display:block;height:100%;background:linear-gradient(90deg,var(--tc-primary-500),var(--tc-primary-700));transition:width 300ms ease;"
-              [style.width.%]="progressPercent"></span>
+    <div class="stu-progress">
+      <div class="stu-progress__track">
+        <span class="stu-progress__fill" [style.width.%]="progressPercent"></span>
       </div>
-      <span style="font-size:0.82rem;font-weight:700;color:var(--tc-primary-600);min-width:35px;text-align:right;">
-        {{ progressPercent }}%
-      </span>
+      <span class="stu-progress__label">{{ progressPercent }}%</span>
     </div>
   </div>
 
-  <!-- ─────────────────── STEP 1: STUDENT INFORMATION ─────────────────── -->
+  <div *ngIf="lookupWarning" class="tc-empty-state tc-empty-state--inline">
+    <i class="pi pi-info-circle"></i> {{ lookupWarning }}
+  </div>
+  <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
+    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- STEP 1: BASIC DETAILS -->
   <div class="stu-drawer__body" *ngIf="currentStep === 1">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-      <!-- Left column -->
-      <div style="display:flex;flex-direction:column;gap:14px;">
-        <h3 style="margin:0;font-size:1rem;font-weight:700;color:var(--tc-text);border-bottom:1px solid var(--tc-border);padding-bottom:10px;">
-          Student Details
-        </h3>
+    <div class="stu-form-grid stu-form-grid--2">
+      <section class="stu-form-section">
+        <h3>Student Details</h3>
 
         <div class="tc-form-field">
           <label>Admission Number</label>
           <input type="text" [(ngModel)]="form.admissionNumber" placeholder="Auto-generated if empty"/>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div class="stu-form-grid stu-form-grid--3">
           <div class="tc-form-field">
             <label>First Name *</label>
             <input type="text" [(ngModel)]="form.firstName" required placeholder="Vihaan"/>
@@ -73,39 +70,24 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="stu-form-grid stu-form-grid--2">
           <div class="tc-form-field">
-            <label>Gender *</label>
-            <select [(ngModel)]="form.gender">
-              <option [ngValue]="null">Select Gender</option>
-              <option *ngFor="let g of genders" [value]="g">{{ g }}</option>
-            </select>
+            <label>Gender</label>
+            <p-dropdown [options]="genderOptions"
+                        [(ngModel)]="form.gender"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
-            <label>Date of Birth *</label>
+            <label>Date of Birth</label>
             <input type="date" [(ngModel)]="form.dateOfBirth"/>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div class="tc-form-field">
-            <label>Religion</label>
-            <select [(ngModel)]="form.religion">
-              <option [ngValue]="null">Select</option>
-              <option *ngFor="let r of religions" [value]="r">{{ r }}</option>
-            </select>
-          </div>
-          <div class="tc-form-field">
-            <label>Nationality</label>
-            <input type="text" [(ngModel)]="form.nationality" placeholder="Indian"/>
-          </div>
-          <div class="tc-form-field">
-            <label>Mother Tongue</label>
-            <input type="text" [(ngModel)]="form.motherTongue" placeholder="Hindi"/>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="stu-form-grid stu-form-grid--2">
           <div class="tc-form-field">
             <label>Mobile</label>
             <input type="tel" [(ngModel)]="form.mobile" placeholder="9876543210"/>
@@ -115,115 +97,28 @@
             <input type="email" [(ngModel)]="form.email" placeholder="student@example.com"/>
           </div>
         </div>
+      </section>
 
-        <!-- Photo Upload -->
-        <div class="tc-form-field">
-          <label>Student Photo</label>
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:72px;height:72px;border-radius:50%;border:2px dashed var(--tc-border);
-                        display:flex;align-items:center;justify-content:center;background:var(--tc-surface-50);
-                        color:var(--tc-text-muted);font-size:1.4rem;flex-shrink:0;">
-              <i class="pi pi-user"></i>
-            </div>
-            <label style="cursor:pointer;">
-              <span class="tc-btn" style="display:inline-flex;font-size:0.82rem;">
-                <i class="pi pi-upload"></i> Upload Photo
-              </span>
-              <input type="file" accept="image/*" style="display:none;"/>
-            </label>
-          </div>
-        </div>
-      </div>
+      <section class="stu-form-section">
+        <h3>Primary Parent / Guardian</h3>
 
-      <!-- Right column: Addresses -->
-      <div style="display:flex;flex-direction:column;gap:14px;">
-        <h3 style="margin:0;font-size:1rem;font-weight:700;color:var(--tc-text);border-bottom:1px solid var(--tc-border);padding-bottom:10px;">
-          Current Address
-        </h3>
-
-        <div class="tc-form-field">
-          <label>Address Line 1 *</label>
-          <input type="text" [(ngModel)]="form.currentAddressLine1" placeholder="45, Green Park"/>
-        </div>
-        <div class="tc-form-field">
-          <label>Address Line 2</label>
-          <input type="text" [(ngModel)]="form.currentAddressLine2" placeholder="Near City Center"/>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="tc-form-field">
-            <label>City</label>
-            <input type="text" [(ngModel)]="form.currentCity" placeholder="Jaipur"/>
-          </div>
-          <div class="tc-form-field">
-            <label>State</label>
-            <input type="text" [(ngModel)]="form.currentState" placeholder="Rajasthan"/>
-          </div>
-        </div>
-        <div class="tc-form-field">
-          <label>Pincode</label>
-          <input type="text" [(ngModel)]="form.currentPincode" placeholder="302001"/>
-        </div>
-
-        <h3 style="margin:8px 0 0;font-size:1rem;font-weight:700;color:var(--tc-text);border-bottom:1px solid var(--tc-border);padding-bottom:10px;">
-          Permanent Address
-        </h3>
-        <label style="display:flex;align-items:center;gap:8px;font-size:0.86rem;color:var(--tc-text-muted);cursor:pointer;">
-          <input type="checkbox" [(ngModel)]="sameAddress" (ngModelChange)="onSameAddressToggle()"/>
-          Same as Current Address
-        </label>
-
-        <ng-container *ngIf="!sameAddress">
-          <div class="tc-form-field">
-            <label>Address Line 1</label>
-            <input type="text" [(ngModel)]="form.permanentAddressLine1"/>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div class="tc-form-field">
-              <label>City</label>
-              <input type="text" [(ngModel)]="form.permanentCity"/>
-            </div>
-            <div class="tc-form-field">
-              <label>State</label>
-              <input type="text" [(ngModel)]="form.permanentState"/>
-            </div>
-          </div>
-          <div class="tc-form-field">
-            <label>Pincode</label>
-            <input type="text" [(ngModel)]="form.permanentPincode"/>
-          </div>
-        </ng-container>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─────────────────── STEP 2: PARENT INFORMATION ─────────────────── -->
-  <div class="stu-drawer__body" *ngIf="currentStep === 2">
-    <div style="display:flex;flex-direction:column;gap:18px;">
-      <div *ngFor="let parent of form.parents; let i = index"
-           style="border:1px solid var(--tc-border);border-radius:14px;padding:18px;background:var(--tc-surface-0);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--tc-text);">
-            <i class="pi pi-user" style="color:var(--tc-primary-600);margin-right:6px;"></i>
-            {{ parentLabel(i) }}
-          </h3>
-          <button *ngIf="i > 0" type="button" class="tc-btn tc-btn--ghost tc-btn--icon is-danger" (click)="removeParent(i)" title="Remove">
-            <i class="pi pi-trash"></i>
-          </button>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div class="stu-form-grid stu-form-grid--2" *ngIf="form.parents?.[0] as parent">
           <div class="tc-form-field">
             <label>Relationship *</label>
-            <select [(ngModel)]="parent.relationship">
-              <option *ngFor="let r of relationships" [value]="r">{{ r }}</option>
-            </select>
+            <p-dropdown [options]="relationshipOptions"
+                        [(ngModel)]="parent.relationship"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
             <label>First Name *</label>
             <input type="text" [(ngModel)]="parent.firstName"/>
           </div>
           <div class="tc-form-field">
-            <label>Last Name *</label>
+            <label>Last Name</label>
             <input type="text" [(ngModel)]="parent.lastName"/>
           </div>
           <div class="tc-form-field">
@@ -238,195 +133,234 @@
             <label>Occupation</label>
             <input type="text" [(ngModel)]="parent.occupation" placeholder="Business"/>
           </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="stu-form-section">
+      <h3>Academic Placement</h3>
+      <div class="stu-form-grid stu-form-grid--auto">
+        <div class="tc-form-field">
+          <label>Academic Year</label>
+          <p-dropdown [options]="academicYearOptions"
+                      [(ngModel)]="form.academicYear"
+                      optionLabel="label"
+                      optionValue="value"
+                      appendTo="body"
+                      styleClass="w-full">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-field">
+          <label>Class</label>
+          <p-dropdown [options]="classOptions"
+                      [(ngModel)]="form.classId"
+                      (ngModelChange)="onClassSelected()"
+                      optionLabel="label"
+                      optionValue="id"
+                      appendTo="body"
+                      styleClass="w-full">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-field">
+          <label>Section</label>
+          <p-dropdown [options]="sectionOptions"
+                      [(ngModel)]="form.sectionId"
+                      [disabled]="!form.classId"
+                      optionLabel="label"
+                      optionValue="id"
+                      appendTo="body"
+                      styleClass="w-full">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-field">
+          <label>Roll Number</label>
+          <input type="text" [(ngModel)]="form.rollNumber" placeholder="15"/>
+        </div>
+        <div class="tc-form-field">
+          <label>Enrollment Date</label>
+          <input type="date" [(ngModel)]="form.enrollmentDate"/>
+        </div>
+        <div class="tc-form-field">
+          <label>Status</label>
+          <p-dropdown [options]="enrollmentStatusOptions"
+                      [(ngModel)]="form.enrollmentStatus"
+                      optionLabel="label"
+                      optionValue="value"
+                      appendTo="body"
+                      styleClass="w-full">
+          </p-dropdown>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 2: ADDITIONAL DETAILS -->
+  <div class="stu-drawer__body" *ngIf="currentStep === 2">
+    <div class="stu-form-grid stu-form-grid--2">
+      <section class="stu-form-section">
+        <h3>Current Address</h3>
+        <div class="tc-form-field">
+          <label>Address Line 1</label>
+          <input type="text" [(ngModel)]="form.currentAddressLine1" placeholder="45, Green Park"/>
+        </div>
+        <div class="tc-form-field">
+          <label>Address Line 2</label>
+          <input type="text" [(ngModel)]="form.currentAddressLine2" placeholder="Near City Center"/>
+        </div>
+        <div class="stu-form-grid stu-form-grid--2">
           <div class="tc-form-field">
-            <label>Organization</label>
-            <input type="text" [(ngModel)]="parent.organization" placeholder="Verma Enterprises"/>
+            <label>City</label>
+            <input type="text" [(ngModel)]="form.currentCity" placeholder="Jaipur"/>
           </div>
           <div class="tc-form-field">
-            <label>Qualification</label>
-            <input type="text" [(ngModel)]="parent.qualification" placeholder="Graduate"/>
+            <label>State</label>
+            <input type="text" [(ngModel)]="form.currentState" placeholder="Rajasthan"/>
+          </div>
+        </div>
+        <div class="tc-form-field">
+          <label>Pincode</label>
+          <input type="text" [(ngModel)]="form.currentPincode" placeholder="302001"/>
+        </div>
+
+        <h3 class="stu-form-section__sub">Permanent Address</h3>
+        <label class="stu-check">
+          <input type="checkbox" [(ngModel)]="sameAddress" (ngModelChange)="onSameAddressToggle()"/>
+          Same as Current Address
+        </label>
+
+        <ng-container *ngIf="!sameAddress">
+          <div class="tc-form-field">
+            <label>Address Line 1</label>
+            <input type="text" [(ngModel)]="form.permanentAddressLine1"/>
+          </div>
+          <div class="stu-form-grid stu-form-grid--2">
+            <div class="tc-form-field">
+              <label>City</label>
+              <input type="text" [(ngModel)]="form.permanentCity"/>
+            </div>
+            <div class="tc-form-field">
+              <label>State</label>
+              <input type="text" [(ngModel)]="form.permanentState"/>
+            </div>
           </div>
           <div class="tc-form-field">
-            <label>Annual Income (₹)</label>
-            <input type="text" [(ngModel)]="parent.annualIncome" placeholder="12,00,000"/>
+            <label>Pincode</label>
+            <input type="text" [(ngModel)]="form.permanentPincode"/>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="stu-form-section">
+        <h3>Medical Information</h3>
+        <div class="stu-form-grid stu-form-grid--2">
+          <div class="tc-form-field">
+            <label>Blood Group</label>
+            <p-dropdown [options]="bloodGroupOptions"
+                        [(ngModel)]="form.bloodGroup"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
+          </div>
+          <div class="tc-form-field">
+            <label>Religion</label>
+            <p-dropdown [options]="religionOptions"
+                        [(ngModel)]="form.religion"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
         </div>
-
-        <!-- Toggles -->
-        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--tc-border);">
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-            <input type="checkbox" [(ngModel)]="parent.isPrimaryContact"/> Primary Contact
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-            <input type="checkbox" [(ngModel)]="parent.isPickupAuthorized"/> Pickup Authorized
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-            <input type="checkbox" [(ngModel)]="parent.receiveSms"/> Receive SMS
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-            <input type="checkbox" [(ngModel)]="parent.receiveEmail"/> Receive Email
-          </label>
+        <div class="tc-form-field">
+          <label>Allergies</label>
+          <textarea [(ngModel)]="form.allergies" rows="2" placeholder="Dust Allergy, Peanuts…"></textarea>
         </div>
+        <div class="tc-form-field">
+          <label>Medical Conditions</label>
+          <textarea [(ngModel)]="form.medicalConditions" rows="2" placeholder="Asthma…"></textarea>
+        </div>
+        <div class="stu-form-grid stu-form-grid--2">
+          <div class="tc-form-field">
+            <label>Doctor Name</label>
+            <input type="text" [(ngModel)]="form.doctorName" placeholder="Dr. Amit Sharma"/>
+          </div>
+          <div class="tc-form-field">
+            <label>Doctor Contact</label>
+            <input type="tel" [(ngModel)]="form.doctorContact" placeholder="9876543234"/>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="stu-form-section" *ngIf="form.parents?.length">
+      <div class="stu-form-section__head">
+        <h3>Additional Parents</h3>
+        <button type="button" class="tc-btn" (click)="addParent()">
+          <i class="pi pi-plus"></i> Add Parent
+        </button>
       </div>
 
-      <button type="button" class="tc-btn" (click)="addParent()" style="align-self:flex-start;">
-        <i class="pi pi-plus"></i> Add Another Parent
-      </button>
-    </div>
+      <div class="stu-parent-card" *ngFor="let parent of form.parents; let i = index">
+        <div class="stu-parent-card__head" *ngIf="i > 0">
+          <strong>{{ parentLabel(i) }}</strong>
+          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="removeParent(i)" title="Remove">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+
+        <ng-container *ngIf="i > 0">
+          <div class="stu-form-grid stu-form-grid--auto">
+            <div class="tc-form-field">
+              <label>Relationship</label>
+              <p-dropdown [options]="relationshipOptions"
+                          [(ngModel)]="parent.relationship"
+                          optionLabel="label"
+                          optionValue="value"
+                          appendTo="body"
+                          styleClass="w-full">
+              </p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>First Name</label>
+              <input type="text" [(ngModel)]="parent.firstName"/>
+            </div>
+            <div class="tc-form-field">
+              <label>Last Name</label>
+              <input type="text" [(ngModel)]="parent.lastName"/>
+            </div>
+            <div class="tc-form-field">
+              <label>Mobile</label>
+              <input type="tel" [(ngModel)]="parent.mobile"/>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+    <section class="stu-review-card">
+      <h3>Ready to submit</h3>
+      <p>
+        <strong>{{ fullName || 'New student' }}</strong>
+        will be created with the details captured above.
+      </p>
+    </section>
   </div>
 
-  <!-- ─────────────────── STEP 3: ACADEMIC INFORMATION ─────────────────── -->
-  <div class="stu-drawer__body" *ngIf="currentStep === 3">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-      <div class="tc-form-field">
-        <label>Academic Year *</label>
-        <select [(ngModel)]="form.academicYear">
-          <option [ngValue]="null">Select Year</option>
-          <option *ngFor="let y of academicYears" [value]="y">{{ y }}</option>
-        </select>
-      </div>
-      <div class="tc-form-field">
-        <label>Class *</label>
-        <select [(ngModel)]="form.classId" (ngModelChange)="onClassSelected()">
-          <option [ngValue]="null">Select Class</option>
-          <option *ngFor="let c of classOptions" [ngValue]="c.id">{{ c.label }}</option>
-        </select>
-      </div>
-      <div class="tc-form-field">
-        <label>Section *</label>
-        <select [(ngModel)]="form.sectionId" [disabled]="!form.classId">
-          <option [ngValue]="null">Select Section</option>
-          <option *ngFor="let s of sectionOptions" [ngValue]="s.id">{{ s.label }}</option>
-        </select>
-      </div>
-      <div class="tc-form-field">
-        <label>Roll Number</label>
-        <input type="text" [(ngModel)]="form.rollNumber" placeholder="15"/>
-      </div>
-      <div class="tc-form-field">
-        <label>Enrollment Date *</label>
-        <input type="date" [(ngModel)]="form.enrollmentDate"/>
-      </div>
-      <div class="tc-form-field">
-        <label>Status</label>
-        <select [(ngModel)]="form.enrollmentStatus">
-          <option *ngFor="let s of enrollmentStatuses" [value]="s">{{ s }}</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─────────────────── STEP 4: MEDICAL INFORMATION ─────────────────── -->
-  <div class="stu-drawer__body" *ngIf="currentStep === 4">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-      <div class="tc-form-field">
-        <label>Blood Group</label>
-        <select [(ngModel)]="form.bloodGroup">
-          <option [ngValue]="null">Select</option>
-          <option *ngFor="let bg of bloodGroups" [value]="bg">{{ bg }}</option>
-        </select>
-      </div>
-      <div class="tc-form-field tc-form-field--full">
-        <label>Allergies</label>
-        <textarea [(ngModel)]="form.allergies" rows="2" placeholder="Dust Allergy, Peanuts…"></textarea>
-      </div>
-      <div class="tc-form-field tc-form-field--full">
-        <label>Medical Conditions</label>
-        <textarea [(ngModel)]="form.medicalConditions" rows="2" placeholder="Asthma…"></textarea>
-      </div>
-      <div class="tc-form-field tc-form-field--full">
-        <label>Medications</label>
-        <textarea [(ngModel)]="form.medications" rows="2" placeholder="Montair (as needed)…"></textarea>
-      </div>
-      <div class="tc-form-field">
-        <label>Doctor Name</label>
-        <input type="text" [(ngModel)]="form.doctorName" placeholder="Dr. Amit Sharma"/>
-      </div>
-      <div class="tc-form-field">
-        <label>Doctor Contact</label>
-        <input type="tel" [(ngModel)]="form.doctorContact" placeholder="9876543234"/>
-      </div>
-      <div class="tc-form-field tc-form-field--full">
-        <label>Emergency Notes</label>
-        <textarea [(ngModel)]="form.emergencyNotes" rows="2" placeholder="Carry inhaler during sports…"></textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─────────────────── STEP 5: REVIEW & SUBMIT ─────────────────── -->
-  <div class="stu-drawer__body" *ngIf="currentStep === 5">
-    <div style="display:flex;flex-direction:column;gap:16px;">
-      <div style="background:color-mix(in srgb,var(--tc-primary-500) 6%,transparent);border:1px solid color-mix(in srgb,var(--tc-primary-500) 20%,transparent);
-                  border-radius:14px;padding:18px;">
-        <h3 style="margin:0 0 12px;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tc-primary-700);">
-          <i class="pi pi-user" style="margin-right:6px;"></i> Student Information
-        </h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.87rem;">
-          <span style="color:var(--tc-text-muted);">Full Name</span>
-          <strong>{{ (form.firstName || '') + ' ' + (form.middleName || '') + ' ' + (form.lastName || '') }}</strong>
-          <span style="color:var(--tc-text-muted);">Gender</span><strong>{{ form.gender || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">DOB</span><strong>{{ form.dateOfBirth || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Mobile</span><strong>{{ form.mobile || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Email</span><strong>{{ form.email || '—' }}</strong>
-        </div>
-      </div>
-
-      <div *ngFor="let parent of form.parents; let i = index"
-           style="border:1px solid var(--tc-border);border-radius:14px;padding:16px;">
-        <h3 style="margin:0 0 10px;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tc-text-muted);">
-          <i class="pi pi-users" style="margin-right:6px;"></i> {{ parentLabel(i) }}
-        </h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.87rem;">
-          <span style="color:var(--tc-text-muted);">Name</span>
-          <strong>{{ (parent.firstName || '') + ' ' + (parent.lastName || '') }}</strong>
-          <span style="color:var(--tc-text-muted);">Mobile</span><strong>{{ parent.mobile || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Occupation</span><strong>{{ parent.occupation || '—' }}</strong>
-        </div>
-      </div>
-
-      <div style="border:1px solid var(--tc-border);border-radius:14px;padding:16px;">
-        <h3 style="margin:0 0 10px;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tc-text-muted);">
-          <i class="pi pi-book" style="margin-right:6px;"></i> Academic Information
-        </h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.87rem;">
-          <span style="color:var(--tc-text-muted);">Academic Year</span><strong>{{ form.academicYear || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Roll Number</span><strong>{{ form.rollNumber || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Enrollment Date</span><strong>{{ form.enrollmentDate || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Status</span><strong>{{ form.enrollmentStatus || '—' }}</strong>
-        </div>
-      </div>
-
-      <div style="border:1px solid var(--tc-border);border-radius:14px;padding:16px;">
-        <h3 style="margin:0 0 10px;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tc-text-muted);">
-          <i class="pi pi-heart" style="margin-right:6px;"></i> Medical Information
-        </h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.87rem;">
-          <span style="color:var(--tc-text-muted);">Blood Group</span><strong>{{ form.bloodGroup || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Allergies</span><strong>{{ form.allergies || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Doctor</span><strong>{{ form.doctorName || '—' }}</strong>
-          <span style="color:var(--tc-text-muted);">Doctor Contact</span><strong>{{ form.doctorContact || '—' }}</strong>
-        </div>
-      </div>
-
-      <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline" style="margin-top:4px;">
-        <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-      </div>
-    </div>
-  </div>
-
-  <!-- ─────────────────── FOOTER ─────────────────── -->
   <div class="stu-drawer__footer">
     <button type="button" class="tc-btn tc-btn--ghost" (click)="currentStep > 1 ? back() : closed.emit()">
       <i class="pi" [class.pi-arrow-left]="currentStep > 1" [class.pi-times]="currentStep === 1"></i>
       {{ currentStep > 1 ? 'Previous' : 'Cancel' }}
     </button>
 
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span style="font-size:0.8rem;color:var(--tc-text-muted);">{{ currentStep }} / 5</span>
-      <button *ngIf="currentStep < 5" type="button" class="tc-btn tc-btn--primary" (click)="next()">
+    <div class="stu-drawer__footer-actions">
+      <span class="stu-step-count">{{ currentStep }} / 2</span>
+      <button *ngIf="currentStep < 2" type="button" class="tc-btn tc-btn--primary" (click)="next()">
         Next <i class="pi pi-arrow-right"></i>
       </button>
-      <button *ngIf="currentStep === 5" type="button" class="tc-btn tc-btn--primary"
+      <button *ngIf="currentStep === 2" type="button" class="tc-btn tc-btn--primary"
               [disabled]="saving" (click)="submit()">
         <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
         {{ saving ? 'Saving…' : 'Submit' }}
@@ -434,4 +368,3 @@
     </div>
   </div>
 </div>
-

@@ -13,8 +13,8 @@
     @if (detail(); as d) {
     <div class="adm-detail__hero">
       <div class="adm-detail__hero-left">
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="goBack()" title="Back">
-          <i class="pi pi-arrow-left"></i>
+        <button type="button" class="tc-btn tc-btn--back" (click)="goBack()" title="Back to list">
+          <i class="pi pi-arrow-left"></i> Back to list
         </button>
         <div class="adm-avatar">{{ (d.inquiry.name || '?').charAt(0) }}</div>
         <div class="adm-detail__title">
@@ -112,23 +112,25 @@
               <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-wizard__body">
                 <div class="tc-form-field">
                   <label>Type</label>
-                  <select formControlName="followUpType">
-                    @for (t of followUpTypes; track t) {
-                      <option [value]="t">{{ t }}</option>
-                    }
-                  </select>
+                  <p-dropdown
+                    [options]="followUpTypeOptions"
+                    formControlName="followUpType"
+                    optionLabel="label"
+                    optionValue="value"
+                    appendTo="body"
+                    styleClass="att-filter-dropdown">
+                  </p-dropdown>
                 </div>
                 <div class="tc-form-field">
                   <label>Status after</label>
-                  <select formControlName="statusAfter">
-                    <option value="CONTACTED">CONTACTED</option>
-                    <option value="INTERESTED">INTERESTED</option>
-                    <option value="COUNSELING">COUNSELING</option>
-                    <option value="DOCUMENTS_PENDING">DOCUMENTS_PENDING</option>
-                    <option value="FOLLOW_UP_REQUIRED">FOLLOW_UP_REQUIRED</option>
-                    <option value="READY_FOR_ADMISSION">READY_FOR_ADMISSION</option>
-                    <option value="LOST">LOST</option>
-                  </select>
+                  <p-dropdown
+                    [options]="statusAfterOptions"
+                    formControlName="statusAfter"
+                    optionLabel="label"
+                    optionValue="value"
+                    appendTo="body"
+                    styleClass="att-filter-dropdown">
+                  </p-dropdown>
                 </div>
                 <div class="tc-form-field">
                   <label>Follow-up date</label>

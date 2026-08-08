@@ -124,7 +124,7 @@ export const TESTIMONIALS: MarketingTestimonial[] = [
     institution: 'Xavier University',
     role: 'Director of Operations',
     author: 'Priya Sharma',
-    quote: 'ThinkerScave transformed how we manage admissions and finance across three campuses. Our admin team saves over 20 hours every week.'
+    quote: 'ThinkersCave transformed how we manage admissions and finance across three campuses. Our admin team saves over 20 hours every week.'
   },
   {
     institution: 'Delhi Public School',
@@ -187,7 +187,7 @@ export const FAQ_ITEMS: MarketingFaq[] = [
     answer: 'Yes. We provide structured migration tools and dedicated support to move student records, fee history, and academic data with minimal disruption.'
   },
   {
-    question: 'Is ThinkerScave secure for sensitive student data?',
+    question: 'Is ThinkersCave secure for sensitive student data?',
     answer: 'Absolutely. We use encryption at rest and in transit, role-based access control, audit logging, and regular security assessments.'
   },
   {

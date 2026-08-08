@@ -1,7 +1,18 @@
-<div class="sw-wizard-page">
+<div class="sw-wizard-page" [class.sd-drawer]="drawerMode">
 
-  <!-- Header -->
-  <div class="sw-wizard-header">
+  <!-- Drawer header -->
+  <div *ngIf="drawerMode" class="sd-drawer__header">
+    <div>
+      <h2>{{ isEditMode ? 'Edit Staff Profile' : 'Add New Staff' }}</h2>
+      <p>Step {{ activeStepIndex + 1 }} of 2 — {{ steps[activeStepIndex].label }}</p>
+    </div>
+    <button type="button" class="sd-drawer__close" (click)="cancel()" aria-label="Close">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <!-- Page header -->
+  <div *ngIf="!drawerMode" class="sw-wizard-header">
     <div class="sw-wizard-header__left">
       <button type="button" class="sw-back-btn" (click)="cancel()">
         <i class="pi pi-arrow-left"></i>
@@ -25,10 +36,10 @@
     <i class="pi pi-exclamation-circle"></i> {{ errorMessage }}
   </div>
 
-  <div class="sw-wizard-body">
+  <div class="sw-wizard-body" [class.sd-drawer__body]="drawerMode">
 
     <!-- ──── Step Sidebar ──── -->
-    <aside class="sw-step-sidebar">
+    <aside class="sw-step-sidebar" [class.sd-drawer__steps]="drawerMode">
       <button *ngFor="let step of steps; let i = index"
               type="button"
               class="sw-step-item"
@@ -51,7 +62,7 @@
 
       <!-- PERSONAL INFORMATION -->
       <div *ngIf="activeStep === 'personal'" class="sw-form-section">
-        <h2 class="sw-form-section__title">Personal Information</h2>
+        <h2 class="sw-form-section__title">Basic Details</h2>
 
         <!-- Photo -->
         <div class="sw-photo-row">
@@ -84,10 +95,14 @@
           </div>
           <div class="sw-field">
             <label class="sw-label">Gender <span class="req">*</span></label>
-            <select id="select-gender" [(ngModel)]="gender">
-              <option value="">Select gender</option>
-              <option *ngFor="let g of genderOptions" [value]="g">{{ g }}</option>
-            </select>
+            <p-dropdown inputId="select-gender"
+                        [options]="genderOptions"
+                        [(ngModel)]="gender"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Date of Birth <span class="req">*</span></label>
@@ -95,24 +110,36 @@
           </div>
           <div class="sw-field">
             <label class="sw-label">Blood Group</label>
-            <select id="select-blood-group" [(ngModel)]="bloodGroup">
-              <option value="">Select blood group</option>
-              <option *ngFor="let bg of bloodGroupOptions" [value]="bg">{{ bg }}</option>
-            </select>
+            <p-dropdown inputId="select-blood-group"
+                        [options]="bloodGroupOptions"
+                        [(ngModel)]="bloodGroup"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Religion</label>
-            <select id="select-religion" [(ngModel)]="religion">
-              <option value="">Select religion</option>
-              <option *ngFor="let r of religionOptions" [value]="r">{{ r }}</option>
-            </select>
+            <p-dropdown inputId="select-religion"
+                        [options]="religionOptions"
+                        [(ngModel)]="religion"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Nationality</label>
-            <select id="select-nationality" [(ngModel)]="nationality">
-              <option value="">Select nationality</option>
-              <option *ngFor="let n of nationalityOptions" [value]="n">{{ n }}</option>
-            </select>
+            <p-dropdown inputId="select-nationality"
+                        [options]="nationalityOptions"
+                        [(ngModel)]="nationality"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Mobile Number <span class="req">*</span></label>
@@ -137,17 +164,41 @@
                       placeholder="Additional notes..."></textarea>
           </div>
         </div>
+
+        <h3 class="sw-form-section__sub">Emergency Contact</h3>
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Contact Name</label>
+            <input id="input-emergency-name" type="text" [(ngModel)]="emergencyContactName"
+                   placeholder="Full name"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Relation</label>
+            <input id="input-emergency-relation" type="text" [(ngModel)]="emergencyContactRelation"
+                   placeholder="Spouse / Parent / Sibling"/>
+          </div>
+          <div class="sw-field">
+            <label class="sw-label">Phone Number</label>
+            <input id="input-emergency-phone" type="tel" [(ngModel)]="emergencyContactNumber"
+                   placeholder="+91 99887 76655"/>
+          </div>
+        </div>
       </div>
 
-      <!-- EMPLOYMENT INFORMATION -->
+      <!-- EMPLOYMENT & PAY -->
       <div *ngIf="activeStep === 'employment'" class="sw-form-section">
         <h2 class="sw-form-section__title">Employment Information</h2>
         <div class="sw-form-grid">
           <div class="sw-field">
             <label class="sw-label">Staff Type <span class="req">*</span></label>
-            <select id="select-staff-type" [(ngModel)]="staffType">
-              <option *ngFor="let o of staffTypeOptions" [value]="o.value">{{ o.label }}</option>
-            </select>
+            <p-dropdown inputId="select-staff-type"
+                        [options]="staffTypeOptions"
+                        [(ngModel)]="staffType"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Designation <span class="req">*</span></label>
@@ -156,15 +207,25 @@
           </div>
           <div class="sw-field">
             <label class="sw-label">Employment Category <span class="req">*</span></label>
-            <select id="select-emp-category" [(ngModel)]="employmentCategory">
-              <option *ngFor="let o of categoryOptions" [value]="o.value">{{ o.label }}</option>
-            </select>
+            <p-dropdown inputId="select-emp-category"
+                        [options]="categoryOptions"
+                        [(ngModel)]="employmentCategory"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Employment Status <span class="req">*</span></label>
-            <select id="select-emp-status" [(ngModel)]="employmentStatus">
-              <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
-            </select>
+            <p-dropdown inputId="select-emp-status"
+                        [options]="statusOptions"
+                        [(ngModel)]="employmentStatus"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Joining Date <span class="req">*</span></label>
@@ -179,17 +240,19 @@
             <input id="input-contract-end" type="date" [(ngModel)]="contractEndDate"/>
           </div>
         </div>
-      </div>
 
-      <!-- SALARY INFORMATION -->
-      <div *ngIf="activeStep === 'salary'" class="sw-form-section">
-        <h2 class="sw-form-section__title">Salary Information</h2>
+        <h3 class="sw-form-section__sub">Salary Information</h3>
         <div class="sw-form-grid">
           <div class="sw-field">
             <label class="sw-label">Salary Type <span class="req">*</span></label>
-            <select id="select-salary-type" [(ngModel)]="salaryType">
-              <option *ngFor="let o of salaryTypeOptions" [value]="o.value">{{ o.label }}</option>
-            </select>
+            <p-dropdown inputId="select-salary-type"
+                        [options]="salaryTypeOptions"
+                        [(ngModel)]="salaryType"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Effective From <span class="req">*</span></label>
@@ -221,7 +284,6 @@
           </div>
         </div>
 
-        <!-- Gross Salary Preview -->
         <div class="sw-salary-summary">
           <div class="sw-salary-summary__row">
             <span>Gross Salary</span>
@@ -248,30 +310,7 @@
             <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="SBIN0001234"/>
           </div>
         </div>
-      </div>
 
-      <!-- EMERGENCY CONTACT -->
-      <div *ngIf="activeStep === 'emergency'" class="sw-form-section">
-        <h2 class="sw-form-section__title">Emergency Contact</h2>
-        <div class="sw-form-grid">
-          <div class="sw-field">
-            <label class="sw-label">Contact Name</label>
-            <input id="input-emergency-name" type="text" [(ngModel)]="emergencyContactName"
-                   placeholder="Full name"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Relation</label>
-            <input id="input-emergency-relation" type="text" [(ngModel)]="emergencyContactRelation"
-                   placeholder="Spouse / Parent / Sibling"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Phone Number</label>
-            <input id="input-emergency-phone" type="tel" [(ngModel)]="emergencyContactNumber"
-                   placeholder="+91 99887 76655"/>
-          </div>
-        </div>
-
-        <!-- Final submit box -->
         <div class="sw-final-box">
           <i class="pi pi-check-circle"></i>
           <div>
@@ -296,6 +335,12 @@
                 *ngIf="activeStepIndex < steps.length - 1"
                 (click)="nextStep()">
           Continue <i class="pi pi-arrow-right"></i>
+        </button>
+        <button *ngIf="drawerMode && activeStepIndex === steps.length - 1"
+                type="button" class="sd-btn sd-btn--primary"
+                (click)="submit()" [disabled]="saving">
+          <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
+          {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
         </button>
       </div>
     </div>

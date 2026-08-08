@@ -16,7 +16,7 @@
       @if (isPlatformLogin) {
         Sign in to the ThinkersCave platform control tower.
       } @else {
-        Sign in to continue to your ThinkerScave workspace.
+        Sign in to continue to your ThinkersCave workspace.
       }
     </p>
   </header>
@@ -35,17 +35,26 @@
       />
     </div>
 
-    <div class="field">
+    <div class="field field--password">
       <label for="password" class="sr-only">Password</label>
       <span class="field__icon" aria-hidden="true"><i class="pi pi-lock"></i></span>
       <input
         id="password"
-        type="password"
+        [type]="showPassword() ? 'text' : 'password'"
         formControlName="password"
         placeholder="Password"
         autocomplete="current-password"
         [class.field__input--invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
       />
+      <button
+        type="button"
+        class="field__toggle"
+        (click)="togglePasswordVisibility()"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        [attr.aria-pressed]="showPassword()"
+      >
+        <i class="pi" [class.pi-eye]="!showPassword()" [class.pi-eye-slash]="showPassword()" aria-hidden="true"></i>
+      </button>
     </div>
 
     <div class="login-panel__meta">
@@ -72,6 +81,11 @@
     <i class="pi pi-shield" aria-hidden="true"></i>
     Protected by enterprise-grade security. Your data is encrypted and secure.
   </p>
+
+  <aside class="login-tip" aria-label="Tip of the day">
+    <span class="login-tip__label">Tip of the day</span>
+    <p>{{ dailyTip }}</p>
+  </aside>
 
   <app-forgot-password-modal />
 </section>

@@ -2,6 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { AdminAuditEvent, AdminControlCenter } from '../../../administration/models/admin-control.model';
 import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
@@ -15,11 +16,16 @@ import {
   SaasStat
 } from '../../../../shared/ui/saas';
 
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-activity-logs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './activity-logs.component.html',
   styleUrl: './activity-logs.component.scss'
 })
@@ -69,6 +75,20 @@ export class ActivityLogsComponent implements OnInit {
 
   get modules(): string[] { return Array.from(new Set(this.logs.map(l => l.entityType || 'system'))).sort(); }
   get users(): string[]   { return Array.from(new Set(this.logs.map(l => l.actorUsername || '').filter(Boolean))).sort(); }
+
+  get moduleOptions(): SelectOption[] {
+    return [
+      { label: 'All', value: 'all' },
+      ...this.modules.map(m => ({ label: m, value: m }))
+    ];
+  }
+
+  get userOptions(): SelectOption[] {
+    return [
+      { label: 'All', value: 'all' },
+      ...this.users.map(u => ({ label: u, value: u }))
+    ];
+  }
 
   get filtered(): AdminAuditEvent[] {
     const q = this.search.trim().toLowerCase();

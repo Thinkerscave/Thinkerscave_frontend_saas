@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { PlatformFeature } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
@@ -13,6 +14,7 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 
 @Component({
   selector: 'tc-feature-catalog',
@@ -21,11 +23,13 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    DropdownModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    SaasFilterRowComponent
+    SaasFilterRowComponent,
+    AppGridTableToggleComponent
   ],
   templateUrl: './feature-catalog.component.html',
   styleUrl: './feature-catalog.component.scss'
@@ -40,6 +44,14 @@ export class FeatureCatalogComponent implements OnInit {
   readonly search = signal('');
   readonly categoryFilter = signal('all');
   readonly viewMode = signal<'grouped' | 'table'>('grouped');
+
+  get listViewMode(): AppListViewMode {
+    return this.viewMode() === 'grouped' ? 'grid' : 'table';
+  }
+
+  onListViewModeChange(mode: AppListViewMode): void {
+    this.viewMode.set(mode === 'grid' ? 'grouped' : 'table');
+  }
   readonly modules = signal<PlatformFeature[]>([]);
 
   ngOnInit(): void { this.load(); }
@@ -66,6 +78,13 @@ export class FeatureCatalogComponent implements OnInit {
     const cats = new Set(this.modules().map(m => m.category || m.module || 'General'));
     return ['all', ...Array.from(cats).sort()];
   });
+
+  readonly categoryOptions = computed(() =>
+    this.categories().map(c => ({
+      label: c === 'all' ? 'All categories' : c,
+      value: c
+    }))
+  );
 
   readonly stats = computed<SaasStat[]>(() => {
     const list = this.modules();

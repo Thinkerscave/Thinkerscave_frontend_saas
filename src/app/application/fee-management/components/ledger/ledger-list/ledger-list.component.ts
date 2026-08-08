@@ -53,8 +53,14 @@ import { TooltipModule } from 'primeng/tooltip';
               <td>{{ ledger.className }}</td>
               <td>₹{{ ledger.totalFees | number }}</td>
               <td class="text-success">₹{{ ledger.paid | number }}</td>
-              <td class="text-danger">₹{{ ledger.outstanding | number }}</td>
-              <td><p-tag [value]="ledger.status" [severity]="getStatusSeverity(ledger.status)"></p-tag></td>
+              <td class="text-danger">
+                ₹{{ ledger.outstanding | number }}
+                <span *ngIf="ledger.status === 'OVERDUE'" class="tc-badge tc-badge--overdue">Overdue</span>
+              </td>
+              <td>
+                <span *ngIf="ledger.status === 'OVERDUE'" class="tc-badge tc-badge--overdue">{{ ledger.status }}</span>
+                <p-tag *ngIf="ledger.status !== 'OVERDUE'" [value]="ledger.status" [severity]="getStatusSeverity(ledger.status)"></p-tag>
+              </td>
               <td>
                 <button pButton icon="pi pi-eye" class="p-button-text p-button-sm" [routerLink]="['student', ledger.id]" pTooltip="View Ledger"></button>
                 <button pButton icon="pi pi-file" class="p-button-text p-button-sm" pTooltip="Statement"></button>
@@ -77,7 +83,7 @@ import { TooltipModule } from 'primeng/tooltip';
     .filters-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     code { background: var(--surface-ground); padding: 0.25rem 0.5rem; border-radius: 4px; font-family: monospace; }
     .text-success { color: #10b981; font-weight: 500; }
-    .text-danger { color: #ef4444; font-weight: 500; }
+    .text-danger { color: #ef4444; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
     .text-center { text-align: center; }
   `]
 })

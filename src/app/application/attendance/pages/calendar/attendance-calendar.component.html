@@ -5,16 +5,35 @@
 
   <tc-saas-filter-row>
     <label class="saas-field"><span>Student</span>
-      <select [(ngModel)]="filters.studentName">
-        <option value="">All Students</option>
-        <option *ngFor="let s of data.students" [value]="s.firstName + ' ' + s.lastName">{{ s.firstName }} {{ s.lastName }}</option>
-      </select>
+      <p-dropdown
+        [options]="studentSelectOptions"
+        [(ngModel)]="filters.studentName"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Class</span>
-      <select [(ngModel)]="filters.classId"><option value="all">All</option><option *ngFor="let c of data.classes" [value]="c.classId">{{ c.className }}</option></select>
+      <p-dropdown
+        [options]="classSelectOptions"
+        [(ngModel)]="filters.classId"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Section</span>
-      <select [(ngModel)]="filters.sectionName"><option value="all">All</option></select>
+      <p-dropdown
+        [options]="sectionSelectOptions"
+        [(ngModel)]="filters.sectionName"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body">
+      </p-dropdown>
     </label>
   </tc-saas-filter-row>
 

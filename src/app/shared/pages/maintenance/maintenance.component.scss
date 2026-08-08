@@ -3,33 +3,34 @@
   min-height: 100vh;
 }
 
-.maintenance {
+.tc-error-shell {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 2rem 1.25rem;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--p-primary-color, #0f766e) 18%, transparent), transparent 45%),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--tc-accent, #0f766e) 18%, transparent), transparent 45%),
     linear-gradient(180deg, #f7faf9 0%, #eef4f2 100%);
 }
 
-.maintenance__panel {
+.tc-error-shell__card {
   width: min(100%, 32rem);
   text-align: center;
   padding: 2.5rem 2rem;
   border-radius: 1.25rem;
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--p-primary-color, #0f766e) 12%, #d7e2de);
+  border: 1px solid color-mix(in srgb, var(--tc-accent, #0f766e) 12%, #d7e2de);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
 }
 
-.maintenance__brand {
+.tc-error-shell__brand {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.maintenance__mark {
+.tc-error-shell__mark {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.65rem;
@@ -38,56 +39,17 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: #fff;
-  background: var(--p-primary-color, #0f766e);
+  background: var(--tc-accent, #0f766e);
 }
 
-.maintenance__name {
+.tc-error-shell__name {
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #0f172a;
 }
 
-.maintenance__icon {
-  width: 3.5rem;
-  height: 3.5rem;
-  margin: 0 auto 1.25rem;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--p-primary-color, #0f766e) 12%, #fff);
-  color: var(--p-primary-color, #0f766e);
-  font-size: 1.35rem;
-}
-
-h1 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
-  color: #0f172a;
-}
-
-.maintenance__message {
-  margin: 0 0 1.75rem;
-  color: #475569;
-  line-height: 1.55;
-}
-
-.maintenance__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
 @media (max-width: 480px) {
-  .maintenance__panel {
+  .tc-error-shell__card {
     padding: 2rem 1.25rem;
-  }
-
-  .maintenance__actions {
-    flex-direction: column;
-  }
-
-  .maintenance__actions :is(button, a) {
-    width: 100%;
   }
 }

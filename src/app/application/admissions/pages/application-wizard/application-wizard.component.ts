@@ -15,6 +15,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -41,6 +42,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    DropdownModule,
     ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
@@ -58,6 +60,13 @@ export class ApplicationWizardComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
   private readonly login = inject(LoginService);
+
+  readonly genderOptions = [
+    { label: 'Select', value: '' },
+    { label: 'Male', value: 'MALE' },
+    { label: 'Female', value: 'FEMALE' },
+    { label: 'Other', value: 'OTHER' }
+  ];
 
   applicationId: number | null = null;
   loading = false;

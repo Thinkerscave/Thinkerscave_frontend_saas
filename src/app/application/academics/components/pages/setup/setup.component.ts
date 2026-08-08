@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output, inject, ChangeDetectionStrategy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { TreeModule } from 'primeng/tree';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { CalendarModule } from 'primeng/calendar';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { DestroyRef } from '@angular/core';
@@ -32,8 +33,8 @@ interface TreeNode {
   selector: 'app-academic-setup-page',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DialogModule, DropdownModule,
-    TableModule, TreeModule, ToastModule, ConfirmDialogModule
+    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, DropdownModule,
+    TableModule, TreeModule, ToastModule, ConfirmDialogModule, CalendarModule
   ],
   providers: [ConfirmationService, MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +46,8 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
+  yearForm!: FormGroup;
 
   @Input({ required: true }) data!: AcademicsWorkspaceData;
   @Output() dataChanged = new EventEmitter<void>();
@@ -73,6 +76,16 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.syncYearSelection();
     this.buildTree();
+    this.initializeYearForm();
+  }
+
+  private initializeYearForm() {
+    this.yearForm = this.fb.group({
+      yearCode: ['', Validators.required],
+      yearName: [''],
+      startDate: [null, Validators.required],
+      endDate: [null, Validators.required]
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -154,6 +167,9 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   openDialog(mode: string) {
     this.dialogMode = mode as any;
     this.formModel = {};
+    if (mode === 'year') {
+      this.yearForm.reset();
+    }
     this.dialogTitle = this.getDialogTitle(mode);
     this.showDialog = true;
   }
@@ -257,10 +273,14 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   }
 
   saveYear() {
-    if (!this.formModel.yearCode || !this.formModel.startDate || !this.formModel.endDate) return;
+    if (this.yearForm.invalid) {
+      this.messageService.add({ severity: 'warn', summary: 'Please fill all required fields' });
+      return;
+    }
     this.saving = true;
-    this.workspaceService.createAcademicYear(this.formModel)
-      .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
+    const yearData = this.yearForm.value;
+    this.workspaceService.createAcademicYear(yearData)
+      .pipe(finalize(() => { this.saving = false; this.showDialog = false; this.yearForm.reset(); }), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Year created' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }
 

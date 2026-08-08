@@ -24,6 +24,7 @@ import {
   SaasPillComponent,
   SaasStat
 } from '../../../../shared/ui/saas';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 
 type StatusFilter = 'all' | OrganizationStatus;
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
@@ -34,7 +35,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterLink, PaginatorModule, ToastModule,
-    Select, SaasStatGridComponent, SaasPillComponent
+    Select, SaasStatGridComponent, SaasPillComponent, AppGridTableToggleComponent
   ],
   providers: [MessageService],
   templateUrl: './organizations-list.component.html',
@@ -56,7 +57,7 @@ export class OrganizationsListComponent implements OnInit {
   statusFilter: StatusFilter = 'all';
   typeFilter: 'all' | InstitutionType = 'all';
   customerFilter = 'all';
-  viewMode: 'cards' | 'table' = 'cards';
+  viewMode: AppListViewMode = 'grid';
   openMenuFor: number | null = null;
   page = 0;
   pageSize = 24;
@@ -133,7 +134,8 @@ export class OrganizationsListComponent implements OnInit {
     this.loadOrganizations();
   }
 
-  setViewMode(mode: 'cards' | 'table'): void {
+  onViewModeChange(mode: AppListViewMode): void {
+    if (this.viewMode === mode) return;
     this.viewMode = mode;
     this.pageSize = mode === 'table' ? 20 : 24;
     this.page = 0;

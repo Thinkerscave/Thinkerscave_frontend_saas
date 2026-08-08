@@ -15,21 +15,24 @@
     <tc-saas-filter-row>
       <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search subject..."></label>
       <label class="saas-field"><span>Channel</span>
-        <select [(ngModel)]="channelFilter">
-          <option value="all">All</option>
-          <option value="EMAIL">Email</option>
-          <option value="SMS">SMS</option>
-          <option value="PUSH">Push</option>
-          <option value="IN_APP">In-app</option>
-        </select>
+        <p-dropdown
+          [options]="channelOptions"
+          [(ngModel)]="channelFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <label class="saas-field"><span>Status</span>
-        <select [(ngModel)]="statusFilter">
-          <option value="all">All</option>
-          <option value="SENT">Delivered</option>
-          <option value="PENDING">Pending</option>
-          <option value="FAILED">Failed</option>
-        </select>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
       <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>

@@ -1,36 +1,25 @@
-<section class="maintenance" aria-labelledby="maintenance-heading">
-  <div class="maintenance__panel">
-    <div class="maintenance__brand" aria-hidden="true">
-      <span class="maintenance__mark">TC</span>
-      <span class="maintenance__name">ThinkerScave</span>
+<section class="tc-error-shell" aria-labelledby="maintenance-heading">
+  <div class="tc-error-shell__card">
+    <div class="tc-error-shell__brand" aria-hidden="true">
+      <span class="tc-error-shell__mark">TC</span>
+      <span class="tc-error-shell__name">ThinkersCave</span>
     </div>
 
-    <div class="maintenance__icon" aria-hidden="true">
-      <i class="pi pi-wrench"></i>
-    </div>
-
-    <h1 id="maintenance-heading">We'll be right back</h1>
-    <p class="maintenance__message">
-      We're performing scheduled maintenance to keep ThinkerScave reliable for your school.
-      Please try again in a few minutes.
-    </p>
-
-    <div class="maintenance__actions">
-      <button
-        pButton
-        type="button"
-        label="Retry"
-        icon="pi pi-refresh"
-        class="p-button-primary"
-        (click)="retry()"
-      ></button>
+    <app-empty-state
+      [page]="true"
+      illustration="maintenance"
+      title="We'll be right back"
+      message="We're performing scheduled maintenance to keep ThinkersCave reliable for your school. Please try again in a few minutes."
+      actionLabel="Retry"
+      actionIcon="pi pi-refresh"
+      (action)="retry()">
       <a
         pButton
         routerLink="/auth/login"
         label="Go to Login"
         icon="pi pi-sign-in"
-        class="p-button-outlined"
-      ></a>
-    </div>
+        class="p-button-outlined">
+      </a>
+    </app-empty-state>
   </div>
 </section>

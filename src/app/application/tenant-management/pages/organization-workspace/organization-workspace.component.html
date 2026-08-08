@@ -24,24 +24,14 @@
     ══════════════════════════════════════════════════════════════════ -->
     <div class="ow-header">
 
-      <!-- Brand: avatar + identity -->
+      <!-- Brand: avatar + status + secondary contact (name/code live in page shell) -->
       <div class="ow-header__brand">
         <div class="ow-avatar" [attr.data-color]="orgColor(org.organizationName)">
           {{ orgInitials(org.organizationName) || 'ORG' }}
         </div>
         <div class="ow-header__identity">
           <div class="ow-header__title-row">
-            <h1 class="ow-header__name">{{ org.organizationName }}</h1>
             <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
-          </div>
-          <div class="ow-header__meta-row">
-            <span><i class="pi pi-hashtag"></i>{{ org.organizationCode }}</span>
-            <span class="ow-sep">·</span>
-            <span><i class="pi pi-building"></i>{{ institutionLabel(org.institutionType) }}</span>
-            <ng-container *ngIf="locationLabel">
-              <span class="ow-sep">·</span>
-              <span><i class="pi pi-map-marker"></i>{{ locationLabel }}</span>
-            </ng-container>
           </div>
           <div class="ow-header__meta-row ow-header__meta-row--muted">
             <span *ngIf="org.customerName"><i class="pi pi-users"></i>{{ org.customerName }}</span>
@@ -103,15 +93,15 @@
 
         <!-- Header action buttons -->
         <div class="ow-header__actions">
+          <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+            <i class="pi pi-arrow-left"></i> Back to list
+          </button>
           <div class="ow-actions-wrap">
             <button type="button" class="ow-btn ow-btn--ghost"
                     (click)="actionsMenuOpen = !actionsMenuOpen">
               Actions <i class="pi pi-chevron-down" [class.ow-rotated]="actionsMenuOpen"></i>
             </button>
             <div class="ow-actions-menu" *ngIf="actionsMenuOpen">
-              <button type="button" (click)="back(); actionsMenuOpen = false">
-                <i class="pi pi-arrow-left"></i> Back to List
-              </button>
               <button type="button" (click)="triggerBackup(); actionsMenuOpen = false" *ngIf="org.tenant">
                 <i class="pi pi-cloud-upload"></i> Trigger Backup
               </button>
@@ -156,8 +146,6 @@
 
         <!-- ════════════ OVERVIEW ════════════ -->
         <section *ngSwitchCase="'overview'" class="ow-tab-panel">
-
-          <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
           <!-- 3-column info grid -->
           <div class="ow-grid ow-grid--3">

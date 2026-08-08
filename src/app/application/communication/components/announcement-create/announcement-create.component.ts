@@ -95,12 +95,14 @@ export class AnnouncementCreateComponent {
 
   submit(): void {
     this.saving = true;
+    const audiences = this.buildAudiences();
     this.api.saveNotice({
       title: this.draft.title,
       body: this.draft.body,
       audience: this.audienceLabel,
-      status: 'DRAFT'
-    })
+      status: 'DRAFT',
+      audiences
+    } as any)
       .pipe(
         switchMap(notice => this.draft.scheduleNow ? this.api.publishNotice(notice.id) : of(notice)),
         takeUntilDestroyed(this.destroyRef),
@@ -110,6 +112,18 @@ export class AnnouncementCreateComponent {
         next: () => this.router.navigate(['/app/communication/announcements']),
         error: () => { /* toast handled globally */ }
       });
+  }
+
+  private buildAudiences(): Array<{ audienceType: string; refId?: number | null }> {
+    const out: Array<{ audienceType: string; refId?: number | null }> = [];
+    if (this.draft.audienceAll) {
+      out.push({ audienceType: 'ALL' });
+      return out;
+    }
+    if (this.draft.audienceParents) out.push({ audienceType: 'PARENTS' });
+    if (this.draft.audienceStudents) out.push({ audienceType: 'STUDENTS' });
+    if (this.draft.audienceStaff) out.push({ audienceType: 'STAFF' });
+    return out;
   }
 
   cancel(): void {

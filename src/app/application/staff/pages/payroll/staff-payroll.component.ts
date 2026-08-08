@@ -7,6 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
 import {
@@ -30,7 +31,7 @@ interface KpiTile {
   selector: 'app-staff-payroll',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-payroll.component.html'
 })
@@ -42,6 +43,7 @@ export class StaffPayrollComponent implements OnInit {
   loadingDashboard = true;
   searching = false;
   errorMessage = '';
+  generateInfoMessage = '';
 
   dashboard: PayrollDashboard = {
     totalStaff: 0, generatedPayroll: 0, pendingPayroll: 0,
@@ -63,6 +65,18 @@ export class StaffPayrollComponent implements OnInit {
     { key: 'totalAmount',      label: 'Total Amount',       icon: 'pi-money-bill',    color: 'emerald', isCurrency: true }
   ];
 
+  readonly yearOptions = [
+    { label: '2023', value: 2023 },
+    { label: '2024', value: 2024 },
+    { label: '2025', value: 2025 },
+    { label: '2026', value: 2026 }
+  ];
+
+  readonly monthOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => ({
+    label: new Date(2000, m - 1, 1).toLocaleString('default', { month: 'long' }),
+    value: m
+  }));
+
   readonly statusOptions: { value: PayrollStatus | ''; label: string }[] = [
     { value: '', label: 'All Status' },
     { value: 'GENERATED', label: 'Generated' },
@@ -74,6 +88,7 @@ export class StaffPayrollComponent implements OnInit {
   // Generate modal
   showGenerateModal = false;
   generating = false;
+  exporting = false;
   generateYear = new Date().getFullYear();
   generateMonth = new Date().getMonth() + 1; // 1-12
 
@@ -149,15 +164,23 @@ export class StaffPayrollComponent implements OnInit {
 
   generatePayroll(): void {
     this.generating = true;
+    this.generateInfoMessage = '';
     this.api.generatePayroll({ year: this.generateYear, month: this.generateMonth })
       .pipe(finalize(() => { this.generating = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => {
+        next: (result) => {
           this.closeGenerate();
           this.filters.year = this.generateYear;
           this.filters.month = this.generateMonth;
+          const skipped = result.skippedNoSalaryStructure?.length ?? 0;
+          this.generateInfoMessage = skipped > 0
+            ? `Generated ${result.generatedRecords} record(s). Skipped without salary structure: ${result.skippedNoSalaryStructure.join(', ')}`
+            : `Generated ${result.generatedRecords} payroll record(s).`;
           this.search();
           this.loadDashboard();
+        },
+        error: () => {
+          this.errorMessage = 'Unable to generate payroll.';
         }
       });
   }
@@ -200,6 +223,33 @@ export class StaffPayrollComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  downloadPayslip(payroll: Payroll): void {
+    this.api.downloadPayslip(payroll.payrollId).subscribe({
+      next: (blob) => this.saveBlob(blob, `payslip-${payroll.staffCode}-${payroll.payrollYear}-${payroll.payrollMonth}.pdf`),
+      error: () => { this.errorMessage = 'Unable to download payslip.'; this.cdr.markForCheck(); }
+    });
+  }
+
+  exportReport(): void {
+    if (!this.filters.year || !this.filters.month) { return; }
+    this.exporting = true;
+    this.api.exportPayrollReport(this.filters.year, this.filters.month)
+      .pipe(finalize(() => { this.exporting = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (blob) => this.saveBlob(blob, `payroll-report-${this.filters.year}-${this.filters.month}.xlsx`),
+        error: () => { this.errorMessage = 'Unable to export payroll report.'; }
+      });
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────

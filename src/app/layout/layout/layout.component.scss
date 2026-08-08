@@ -42,7 +42,7 @@
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0.5rem var(--tc-space-4) var(--tc-space-3);
+      padding: 0.35rem var(--tc-space-4) var(--tc-space-3);
       background: var(--tc-bg-gradient);
       transition: padding 0.26s ease-in-out;
     }
@@ -87,4 +87,37 @@
       padding: 1rem;
     }
   }
+}
+
+.settings-drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.settings-drawer-actions__ghost,
+.settings-drawer-actions__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.86rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.settings-drawer-actions__ghost {
+  background: var(--tc-surface-card-solid);
+  color: var(--tc-text);
+  border: 1px solid var(--tc-border);
+}
+
+.settings-drawer-actions__primary {
+  background: var(--tc-accent, var(--tc-button-primary-bg));
+  color: #fff;
+  border: 0;
 }

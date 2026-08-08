@@ -16,14 +16,21 @@
           <input type="search" placeholder="Search by name or code" [ngModel]="search()" (ngModelChange)="search.set($event)">
         </label>
         <label class="tc-form-field"><span>Category</span>
-          <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
-            <option *ngFor="let c of categories()" [value]="c">{{ c === 'all' ? 'All categories' : c }}</option>
-          </select>
+          <p-dropdown
+            [options]="categoryOptions()"
+            [ngModel]="categoryFilter()"
+            (ngModelChange)="categoryFilter.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </label>
-        <div class="customers-list__view-switch feature-catalog__view-switch">
-          <button type="button" [class.is-active]="viewMode() === 'grouped'" (click)="viewMode.set('grouped')" title="Grouped card view" aria-label="Switch to grouped card view"><i class="pi pi-th-large"></i></button>
-          <button type="button" [class.is-active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
-        </div>
+        <app-grid-table-toggle
+          [storageKey]="'tc.featureCatalog.viewMode'"
+          [mode]="listViewMode"
+          (modeChange)="onListViewModeChange($event)">
+        </app-grid-table-toggle>
       </tc-saas-filter-row>
 
       <div *ngIf="viewMode() === 'grouped'" class="feature-catalog__grouped">

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { DropdownModule } from 'primeng/dropdown';
 
 import {
   SaasPageHeaderComponent,
@@ -15,12 +16,13 @@ import { SchoolOperationsDataService } from '../../../school-operations/services
 import { AttendanceWorkspaceData } from '../../../school-operations/models/school-operations.model';
 
 interface DayCell { day: number; date: Date; status?: 'P' | 'A' | 'H' | 'L'; weekend?: boolean; today?: boolean; otherMonth?: boolean; }
+interface SelectOption { label: string; value: string; }
 
 @Component({
   selector: 'app-attendance-calendar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasStatGridComponent],
   templateUrl: './attendance-calendar.component.html',
   styleUrl: './attendance-calendar.component.scss'
 })
@@ -38,6 +40,27 @@ export class AttendanceCalendarComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void { this.refresh(); }
+
+  get studentSelectOptions(): SelectOption[] {
+    return [
+      { label: 'All Students', value: '' },
+      ...this.data.students.map(s => {
+        const name = `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim();
+        return { label: name || 'Unknown', value: name };
+      })
+    ];
+  }
+
+  get classSelectOptions(): SelectOption[] {
+    return [
+      { label: 'All', value: 'all' },
+      ...this.data.classes.map(c => ({ label: c.className, value: String(c.classId) }))
+    ];
+  }
+
+  get sectionSelectOptions(): SelectOption[] {
+    return [{ label: 'All', value: 'all' }];
+  }
 
   refresh(): void {
     this.loading = true;

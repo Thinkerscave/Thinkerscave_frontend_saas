@@ -11,6 +11,23 @@ export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, 
   const loginService = inject(LoginService);
   const orgContext = inject(OrganizationContextService);
 
+  // Public organization list must always be fetched from the public tenant context.
+  // Otherwise, returning via "Change Institution" can leak the previously selected tenant
+  // and produce empty/incorrect results.
+  const isPublicOrganizationsRequest =
+    req.url.includes('/public/organizations') ||
+    req.url.includes('/auth/organizations') ||
+    req.url.includes('/public/subscription-plans');
+
+  if (isPublicOrganizationsRequest) {
+    const headers = req.headers
+      .set('X-Tenant-ID', 'public')
+      .set('X-Login-Context', 'TENANT')
+      .delete('X-Organization-ID');
+
+    return next(req.clone({ headers }));
+  }
+
   const tenantId = loginService.isLoggedIn()
     ? loginService.getTenant()
     : orgContext.resolveTenantId();

@@ -1,4 +1,4 @@
-<section class="hero" [class.hero--skeleton]="state === 'LOADING'">
+<section class="hero" [class.hero--skeleton]="state === 'LOADING'" [class.hero--guided]="!!data?.showSetupGuide">
   <ng-container *ngIf="state === 'LOADING'">
     <div class="hero__skeleton-avatar"></div>
     <div class="hero__skeleton-lines">
@@ -8,21 +8,57 @@
   </ng-container>
 
   <ng-container *ngIf="state !== 'LOADING'">
-    <div class="hero__main">
-      <span class="hero__avatar">
-        <img *ngIf="data?.avatarUrl" [src]="data?.avatarUrl" [alt]="data?.displayName" />
-        <ng-container *ngIf="!data?.avatarUrl">{{ initials() }}</ng-container>
-      </span>
-      <div class="hero__text">
-        <p class="hero__greeting">{{ data?.greeting || 'Welcome' }}, {{ data?.displayName || 'there' }}</p>
-        <p class="hero__meta">
-          <span *ngIf="data?.roleLabel">{{ data?.roleLabel }}</span>
-          <span *ngIf="data?.organizationName"> · {{ data?.organizationName }}</span>
-        </p>
+    <div class="hero__top">
+      <div class="hero__main">
+        <span class="hero__avatar">
+          <img *ngIf="data?.avatarUrl" [src]="data?.avatarUrl" [alt]="data?.displayName" />
+          <ng-container *ngIf="!data?.avatarUrl">{{ initials() }}</ng-container>
+        </span>
+        <div class="hero__text">
+          <p class="hero__greeting">{{ data?.greeting || 'Welcome' }}, {{ data?.displayName || 'there' }}</p>
+          <p class="hero__meta">
+            <span *ngIf="data?.roleLabel">{{ data?.roleLabel }}</span>
+            <span *ngIf="data?.organizationName"> · {{ data?.organizationName }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="hero__today" *ngIf="data?.todayLabel">
+        <i class="pi pi-calendar"></i>{{ data?.todayLabel }}
       </div>
     </div>
-    <div class="hero__today" *ngIf="data?.todayLabel">
-      <i class="pi pi-calendar"></i>{{ data?.todayLabel }}
+
+    <div class="hero__setup" *ngIf="data?.showSetupGuide">
+      <div class="hero__setup-head">
+        <div>
+          <p class="hero__setup-title">Finish setting up your organization</p>
+          <p class="hero__setup-next" *ngIf="data?.recommendedNextLabel">
+            Next: {{ data?.recommendedNextLabel }}
+          </p>
+        </div>
+        <div class="hero__setup-progress">
+          <span class="hero__setup-percent">{{ data?.setupProgressPercent ?? 0 }}%</span>
+          <div class="hero__setup-bar" role="progressbar"
+               [attr.aria-valuenow]="data?.setupProgressPercent ?? 0"
+               aria-valuemin="0" aria-valuemax="100">
+            <span [style.width.%]="data?.setupProgressPercent ?? 0"></span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="hero__checklist" *ngIf="data?.setupChecklist?.length">
+        <li *ngFor="let item of data?.setupChecklist"
+            [class.is-done]="item.completed"
+            [class.is-required]="item.requiredForCompletion">
+          <i class="pi" [ngClass]="item.completed ? 'pi-check-circle' : 'pi-circle'"></i>
+          <span>{{ item.label }}</span>
+          <small *ngIf="item.requiredForCompletion && !item.completed">Required</small>
+        </li>
+      </ul>
+
+      <button type="button" class="hero__cta" (click)="continueSetup()">
+        Continue Setup
+        <i class="pi pi-arrow-right"></i>
+      </button>
     </div>
   </ng-container>
 </section>

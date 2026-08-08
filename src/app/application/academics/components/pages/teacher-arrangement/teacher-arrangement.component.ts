@@ -6,6 +6,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { CalendarModule } from 'primeng/calendar';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { DestroyRef } from '@angular/core';
@@ -17,7 +18,7 @@ import { LoginService } from '../../../../../core/services/login.service';
 @Component({
   selector: 'app-academic-teacher-arrangement-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule, DropdownModule, TableModule, ToastModule, ConfirmDialogModule],
+  imports: [CommonModule, FormsModule, DialogModule, DropdownModule, TableModule, ToastModule, ConfirmDialogModule, CalendarModule],
   providers: [ConfirmationService, MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './teacher-arrangement.component.html',

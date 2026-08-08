@@ -9,7 +9,7 @@
         <span class="tc-badge"><i class="pi pi-cloud"></i> Cloud-Based Education Platform</span>
         <h1 id="hero-heading">Run Your Institution.<br /><span>Smarter. Together.</span></h1>
         <p class="tc-hero__lead">
-          ThinkerScave unifies admissions, academics, finance, HR, communication, attendance,
+          ThinkersCave unifies admissions, academics, finance, HR, communication, attendance,
           examinations, transport, hostel, library, analytics, and automation into one intelligent cloud platform.
         </p>
         <div class="tc-hero__cta">
@@ -40,7 +40,7 @@
       <div class="tc-section__inner tc-trusted__grid">
         <div>
           <h2 id="trusted-heading">Trusted by Institutions Across India</h2>
-          <p>Leading schools and universities rely on ThinkerScave to run operations at scale.</p>
+          <p>Leading schools and universities rely on ThinkersCave to run operations at scale.</p>
         </div>
         <div class="tc-trusted__logos">
           @for (logo of logos; track logo) {
@@ -81,7 +81,7 @@
     <section class="tc-section tc-section--alt" id="product" aria-labelledby="why-heading">
       <div class="tc-section__inner">
         <header class="tc-section__header">
-          <h2 id="why-heading">Why ThinkerScave</h2>
+          <h2 id="why-heading">Why ThinkersCave</h2>
           <p>Outcomes that matter — not just features on a checklist.</p>
         </header>
         <div class="tc-benefit-grid">
@@ -210,7 +210,7 @@
         </div>
 
         <div class="tc-pricing-grid">
-          @for (plan of plans; track plan.id) {
+          @for (plan of plans(); track plan.id) {
             <article class="tc-price-card" [class.tc-price-card--popular]="plan.popular" [class.tc-price-card--enterprise]="plan.enterprise">
               @if (plan.popular) {
                 <span class="tc-price-card__badge"><i class="pi pi-crown"></i> Most Popular</span>
@@ -257,7 +257,7 @@
     <section class="tc-cta" id="cta" aria-labelledby="cta-heading">
       <div class="tc-cta__inner">
         <h2 id="cta-heading">Ready to Transform Your Institution?</h2>
-        <p>Join hundreds of institutions running smarter on ThinkerScave.</p>
+        <p>Join hundreds of institutions running smarter on ThinkersCave.</p>
         <div class="tc-cta__actions">
           <a href="mailto:sales@thinkerscave.com" class="tc-btn tc-btn--primary tc-btn--lg">Request Demo</a>
           <a href="mailto:sales@thinkerscave.com" class="tc-btn tc-btn--outline tc-btn--lg">Contact Sales</a>

@@ -28,9 +28,15 @@
         </label>
         <label class="tc-form-field">
           <span>Discount Type</span>
-          <select [(ngModel)]="draft.discountType" name="discountType">
-            <option *ngFor="let t of discountTypes" [ngValue]="t">{{ discountTypeLabel(t) }}</option>
-          </select>
+          <p-dropdown
+            [options]="discountTypeOptions"
+            [(ngModel)]="draft.discountType"
+            name="discountType"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </label>
         <label class="tc-form-field">
           <span>Discount Value</span>
@@ -58,10 +64,11 @@
 
   <tc-saas-panel title="All Promotions" [subtitle]="promotions.length + ' offers'">
     <ng-container panel-actions>
-      <div class="customers-list__view-switch">
-        <button type="button" [class.is-active]="viewMode === 'cards'" (click)="viewMode = 'cards'" title="Card view" aria-label="Switch to card view"><i class="pi pi-th-large"></i></button>
-        <button type="button" [class.is-active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
-      </div>
+      <app-grid-table-toggle
+        [storageKey]="'tc.promotions.viewMode'"
+        [mode]="viewMode"
+        (modeChange)="viewMode = $event">
+      </app-grid-table-toggle>
     </ng-container>
 
     <div *ngIf="errorMessage" class="tc-empty-state promotions__error">
@@ -79,7 +86,7 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">Create Promotion</button>
     </div>
 
-    <div *ngIf="!loading && promotions.length && viewMode === 'cards'" class="promotions__cards">
+    <div *ngIf="!loading && promotions.length && viewMode === 'grid'" class="promotions__cards">
       <article class="saas-org-card promotions__card" *ngFor="let p of promotions; trackBy: trackById">
         <div class="saas-org-card__head promotions__card-head">
           <tc-saas-pill [label]="p.promotionCode" tone="primary" icon="pi pi-tag"></tc-saas-pill>

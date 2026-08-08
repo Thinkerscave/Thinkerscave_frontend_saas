@@ -39,6 +39,9 @@ interface FeeHeadCollection {
         <div>
           <h2><i class="pi pi-indian-rupee"></i> Collection Report</h2>
           <p>Fee collection summary and analysis</p>
+          <p style="margin-top:0.5rem;padding:0.45rem 0.65rem;background:#fff8e6;border:1px solid #f0d48a;border-radius:8px;color:#8a5a00;font-size:0.875rem;">
+            <i class="pi pi-eye"></i> Preview only — sample data, not live fee collections.
+          </p>
         </div>
         <div class="header-actions">
           <button pButton label="Back" icon="pi pi-arrow-left" class="p-button-text" routerLink="../"></button>

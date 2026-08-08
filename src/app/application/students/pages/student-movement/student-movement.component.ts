@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
 
 import { DocumentVaultEntry, StudentDirectoryCard, TransferRequest, TransferStatus } from '../../models/students-workspace.model';
@@ -18,7 +19,7 @@ interface KpiTile {
   selector: 'app-student-movement',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-movement.component.html'
 })
@@ -41,6 +42,24 @@ export class StudentMovementComponent implements OnInit {
 
   // New transfer request form
   newRequest: TransferRequest = {};
+
+  readonly reasonOptions: { label: string; value: string | null }[] = [
+    { label: 'Select Reason', value: null },
+    { label: 'Relocation', value: 'Relocation' },
+    { label: 'Graduation', value: 'Graduation' },
+    { label: 'Financial', value: 'Financial' },
+    { label: 'Other', value: 'Other' }
+  ];
+
+  get studentOptions(): { label: string; value: number | null }[] {
+    return [
+      { label: 'Select Student', value: null },
+      ...this.students.map(s => ({
+        label: `${s.fullName} (${s.admissionNumber})`,
+        value: s.studentId ?? null
+      }))
+    ];
+  }
 
   ngOnInit(): void {
     this.loadTransfers();

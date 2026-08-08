@@ -17,6 +17,10 @@ import { FormsModule } from '@angular/forms';
         <div>
           <h2><i class="pi pi-chart-bar"></i> Fee Reports & Analytics</h2>
           <p>Comprehensive fee management reporting and insights</p>
+          <p class="preview-banner" role="status">
+            <i class="pi pi-eye"></i>
+            Preview only — sample figures, not live fee data. Live fee analytics are a Future Enhancement.
+          </p>
         </div>
         <div class="header-actions">
           <p-dropdown [options]="periodOptions" [(ngModel)]="selectedPeriod" optionLabel="label" optionValue="value" (onChange)="onPeriodChange()"></p-dropdown>
@@ -152,6 +156,18 @@ import { FormsModule } from '@angular/forms';
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
     .page-header h2 { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
     .page-header p { margin: 0.25rem 0 0; color: var(--text-color-secondary); }
+    .preview-banner {
+      margin-top: 0.75rem !important;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      background: #fff8e6;
+      color: #8a5a00 !important;
+      border: 1px solid #f0d48a;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.875rem;
+    }
 
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
     .kpi-card { display: flex; gap: 1rem; background: var(--surface-card); border-radius: 12px; padding: 1.25rem; }

@@ -1,133 +1,189 @@
 <div class="saas-page attendance-reports">
   <tc-saas-page-header title="Reports" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Reports'}]">
-    <button type="button" class="tc-btn" (click)="exportPdf()"><i class="pi pi-download"></i>Export</button>
+    <button type="button" class="tc-btn" (click)="exportPdf()" title="Opens the browser print dialog (not a generated PDF file)">
+      <i class="pi pi-print"></i>Print
+    </button>
   </tc-saas-page-header>
 
   <tc-saas-filter-row>
     <label class="saas-field"><span>Report Type</span>
-      <select [(ngModel)]="filters.reportType">
-        <option value="student">Student Attendance</option>
-        <option value="staff">Staff Attendance</option>
-      </select>
+      <p-dropdown
+        [options]="reportTypeOptions"
+        [(ngModel)]="filters.reportType"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        (onChange)="refresh()">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Date Range From</span><input type="date" [(ngModel)]="filters.fromDate"></label>
     <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="filters.toDate"></label>
     <label class="saas-field"><span>Class</span>
-      <select [(ngModel)]="filters.classId">
-        <option value="all">All Classes</option>
-        <option *ngFor="let c of data.classes" [value]="c.classId">{{ c.className }}</option>
-      </select>
+      <p-dropdown
+        [options]="classSelectOptions"
+        [(ngModel)]="filters.classId"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Section</span>
-      <select [(ngModel)]="filters.sectionName"><option value="all">All Sections</option></select>
+      <p-dropdown
+        [options]="sectionSelectOptions"
+        [(ngModel)]="filters.sectionName"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body">
+      </p-dropdown>
     </label>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="refresh()"><i class="pi pi-filter"></i>Apply Filter</button>
-    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="refresh()" [disabled]="loading">
+      <i class="pi pi-filter"></i>Apply Filter
+    </button>
+    <button type="button" class="tc-btn" (click)="reset()" [disabled]="loading">
+      <i class="pi pi-refresh"></i>Reset
+    </button>
   </tc-saas-filter-row>
 
-  <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
+  @if (errorMessage) {
+    <div class="saas-empty" style="margin-bottom: 1rem;">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>{{ errorMessage }}</strong>
+    </div>
+  }
 
-  <ng-container [ngSwitch]="activeTab">
-    <section *ngSwitchCase="'summary'" class="attendance-reports__split">
-      <tc-saas-panel title="Attendance Summary" subtitle="Distribution of present vs absent">
-        <div class="donut-wrap">
-          <div class="donut" [style.background]="donutGradient">
-            <div class="donut__hole">
-              <strong>{{ summary.presentPct }}%</strong>
-              <small>Average Attendance</small>
+  @if (loading) {
+    <div class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading report…</strong></div>
+  } @else {
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
+
+    <ng-container [ngSwitch]="activeTab">
+      <section *ngSwitchCase="'summary'" class="attendance-reports__split">
+        <tc-saas-panel title="Attendance Summary" subtitle="Server-side summary for the selected date range">
+          <div class="donut-wrap">
+            <div class="donut" [style.background]="donutGradient">
+              <div class="donut__hole">
+                <strong>{{ summary.presentPct }}%</strong>
+                <small>Average Attendance</small>
+              </div>
             </div>
+            <ul class="donut-legend">
+              <li><span class="legend-dot legend-dot--success"></span>Present/Late marks <strong>{{ summary.present }} ({{ summary.presentPct }}%)</strong></li>
+              <li><span class="legend-dot legend-dot--danger"></span>Absent marks <strong>{{ summary.absent }} ({{ summary.absentPct }}%)</strong></li>
+              <li><span class="legend-dot"></span>Students in class summary <strong>{{ summary.total }}</strong></li>
+            </ul>
           </div>
-          <ul class="donut-legend">
-            <li><span class="legend-dot legend-dot--success"></span>Present <strong>{{ summary.present }} ({{ summary.presentPct }}%)</strong></li>
-            <li><span class="legend-dot legend-dot--danger"></span>Absent <strong>{{ summary.absent }} ({{ summary.absentPct }}%)</strong></li>
-            <li><span class="legend-dot"></span>Total Students <strong>{{ summary.total }}</strong></li>
-          </ul>
-        </div>
-      </tc-saas-panel>
+        </tc-saas-panel>
 
-      <tc-saas-panel title="Monthly Trend" subtitle="Daily attendance percentage over the selected period">
-        <svg viewBox="0 0 600 200" class="trend-svg" preserveAspectRatio="none">
-          <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
-          <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
-          <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
-          <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-          <g *ngFor="let p of trendPoints; let i = index">
-            <circle [attr.cx]="20 + (560 / (trendPoints.length - 1 || 1)) * i" [attr.cy]="160 - ((p.v / 100) * 120)" r="3.5" fill="#2C5BFF"/>
-          </g>
-        </svg>
-        <div class="trend-axis">
-          <small *ngFor="let p of trendPoints">{{ p.label }}</small>
-        </div>
-      </tc-saas-panel>
-    </section>
+        <tc-saas-panel title="Monthly Trend" subtitle="Average attendance % by month">
+          @if (!trendPoints.length) {
+            <div class="saas-empty"><i class="pi pi-chart-line"></i><strong>No trend data</strong></div>
+          } @else {
+            <svg viewBox="0 0 600 200" class="trend-svg" preserveAspectRatio="none">
+              <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
+              <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
+              <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
+              <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <g *ngFor="let p of trendPoints; let i = index">
+                <circle [attr.cx]="20 + (560 / (trendPoints.length - 1 || 1)) * i" [attr.cy]="160 - ((p.v / 100) * 120)" r="3.5" fill="#2C5BFF"/>
+              </g>
+            </svg>
+            <div class="trend-axis">
+              <small *ngFor="let p of trendPoints">{{ p.label }}</small>
+            </div>
+          }
+        </tc-saas-panel>
+      </section>
 
-    <section *ngSwitchCase="'trend'">
-      <tc-saas-panel title="Monthly Trend" subtitle="Daily attendance percentage over the selected period">
-        <svg viewBox="0 0 600 220" class="trend-svg" preserveAspectRatio="none">
-          <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
-          <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
-          <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
-          <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-        </svg>
-      </tc-saas-panel>
-    </section>
+      <section *ngSwitchCase="'trend'">
+        <tc-saas-panel title="Monthly Trend" subtitle="Average attendance % by month (server)">
+          @if (!trendPoints.length) {
+            <div class="saas-empty"><i class="pi pi-chart-line"></i><strong>No trend data for this range</strong></div>
+          } @else {
+            <svg viewBox="0 0 600 220" class="trend-svg" preserveAspectRatio="none">
+              <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
+              <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
+              <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
+              <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="trend-axis">
+              <small *ngFor="let p of trendPoints">{{ p.label }} — {{ p.v }}%</small>
+            </div>
+          }
+        </tc-saas-panel>
+      </section>
 
-    <section *ngSwitchCase="'comparison'">
-      <tc-saas-panel title="Class Comparison" subtitle="Attendance percentage per class">
-        <div *ngIf="!classComparison.length" class="saas-empty"><i class="pi pi-th-large"></i><strong>No class data</strong></div>
-        <div class="cmp-row" *ngFor="let row of classComparison">
-          <strong>{{ row.className }}</strong>
-          <div class="cmp-bar"><span [style.width.%]="row.pct" [attr.data-tone]="row.tone"></span></div>
-          <span class="cmp-pct" [attr.data-tone]="row.tone">{{ row.pct }}%</span>
-        </div>
-      </tc-saas-panel>
-    </section>
+      <section *ngSwitchCase="'comparison'">
+        <tc-saas-panel title="Class Comparison" subtitle="Attendance percentage per class/section">
+          <div *ngIf="!classComparison.length" class="saas-empty"><i class="pi pi-th-large"></i><strong>No class data</strong></div>
+          <div class="cmp-row" *ngFor="let row of classComparison">
+            <strong>{{ row.className }}</strong>
+            <div class="cmp-bar"><span [style.width.%]="row.pct" [attr.data-tone]="row.tone"></span></div>
+            <span class="cmp-pct" [attr.data-tone]="row.tone">{{ row.pct }}%</span>
+          </div>
+        </tc-saas-panel>
+      </section>
 
-    <section *ngSwitchCase="'defaulter'" class="attendance-reports__split">
-      <tc-saas-panel title="Top Defaulter Students" [subtitle]="'Below ' + defaulterThreshold + '% attendance'">
-        <ng-container panel-actions>
-          <label class="saas-field" style="flex-direction:row; align-items:center; gap:8px; min-width: 0;">
-            <span style="text-transform: none;">Threshold</span>
-            <input type="number" min="0" max="100" [(ngModel)]="defaulterThreshold" style="width: 80px;">
-          </label>
-        </ng-container>
-        <div class="saas-table-wrap">
-          <table class="saas-data-table">
-            <thead><tr><th>Roll No.</th><th>Student Name</th><th>Class</th><th>Attendance %</th><th>Absent</th><th></th></tr></thead>
-            <tbody>
-              <tr *ngIf="!defaulters.length"><td colspan="6"><div class="saas-empty"><i class="pi pi-check-circle"></i><strong>No defaulters</strong></div></td></tr>
-              <tr *ngFor="let row of defaulters">
-                <td>{{ row.roll }}</td>
-                <td>{{ row.name }}</td>
-                <td>{{ row.className }}</td>
-                <td><tc-saas-pill [label]="row.pct + '%'" tone="danger"></tc-saas-pill></td>
-                <td>{{ row.absent }}</td>
-                <td><button type="button" class="tc-btn"><i class="pi pi-eye"></i>View</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </tc-saas-panel>
+      <section *ngSwitchCase="'defaulter'">
+        <tc-saas-panel title="Top Defaulter Students" [subtitle]="'Below ' + defaulterThreshold + '% attendance'">
+          <ng-container panel-actions>
+            <label class="saas-field" style="flex-direction:row; align-items:center; gap:8px; min-width: 0;">
+              <span style="text-transform: none;">Threshold</span>
+              <input type="number" min="0" max="100" [(ngModel)]="defaulterThreshold" (change)="onThresholdChange()" style="width: 80px;">
+            </label>
+          </ng-container>
+          <div class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead><tr><th>Roll / ID</th><th>Student Name</th><th>Class</th><th>Attendance %</th><th>Absent</th></tr></thead>
+              <tbody>
+                <tr *ngIf="!defaulters.length"><td colspan="5"><div class="saas-empty"><i class="pi pi-check-circle"></i><strong>No defaulters</strong></div></td></tr>
+                <tr *ngFor="let row of defaulters">
+                  <td>{{ row.roll }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.className }}</td>
+                  <td><tc-saas-pill [label]="row.pct + '%'" tone="danger"></tc-saas-pill></td>
+                  <td>{{ row.absent }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
 
-      <tc-saas-panel title="Quick Reports">
-        <a class="quick-report" *ngFor="let item of quickReports">
-          <i [class]="item.icon"></i>
-          <span>{{ item.label }}</span>
-          <i class="pi pi-arrow-right"></i>
-        </a>
-      </tc-saas-panel>
-    </section>
-
-    <section *ngSwitchCase="'staff'">
-      <tc-saas-panel title="Staff Attendance Summary">
-        <div class="saas-empty">
-          <i class="pi pi-id-card"></i>
-          <strong>Switch report type to Staff</strong>
-          <p>Use the filter above to view staff attendance reports.</p>
-        </div>
-      </tc-saas-panel>
-    </section>
-  </ng-container>
+      <section *ngSwitchCase="'staff'">
+        <tc-saas-panel title="Staff Attendance Summary" subtitle="Server-side staff report for the selected range">
+          <div class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Department</th>
+                  <th>Present</th>
+                  <th>Absent</th>
+                  <th>Late</th>
+                  <th>Leave</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="!staffRows.length">
+                  <td colspan="7"><div class="saas-empty"><i class="pi pi-id-card"></i><strong>No staff attendance in range</strong></div></td>
+                </tr>
+                <tr *ngFor="let row of staffRows">
+                  <td>{{ row.staffName }}</td>
+                  <td>{{ row.department || '—' }}</td>
+                  <td>{{ row.presentDays }}</td>
+                  <td>{{ row.absentDays }}</td>
+                  <td>{{ row.lateDays }}</td>
+                  <td>{{ row.onLeaveDays }}</td>
+                  <td>{{ row.attendancePercent | number:'1.0-1' }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </tc-saas-panel>
+      </section>
+    </ng-container>
+  }
 </div>
-
-

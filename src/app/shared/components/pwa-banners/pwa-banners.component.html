@@ -1,0 +1,42 @@
+<div class="pwa-stack" aria-live="polite">
+  <aside class="pwa-banner pwa-banner--update" *ngIf="pwa.updateReady()" role="status">
+    <div class="pwa-banner__copy">
+      <i class="pi pi-sync" aria-hidden="true"></i>
+      <div>
+        <strong>Update available</strong>
+        <p>A newer version of ThinkersCave is ready.</p>
+      </div>
+    </div>
+    <div class="pwa-banner__actions">
+      <button type="button" class="pwa-banner__btn pwa-banner__btn--ghost" (click)="dismissUpdate()">Later</button>
+      <button type="button" class="pwa-banner__btn pwa-banner__btn--primary" (click)="applyUpdate()">Refresh</button>
+    </div>
+  </aside>
+
+  <aside class="pwa-banner" *ngIf="pwa.canInstall()" role="dialog" aria-label="Install ThinkersCave">
+    <div class="pwa-banner__copy">
+      <i class="pi pi-download" aria-hidden="true"></i>
+      <div>
+        <strong>Install ThinkersCave</strong>
+        <p>Add to your home screen for faster access.</p>
+      </div>
+    </div>
+    <div class="pwa-banner__actions">
+      <button type="button" class="pwa-banner__btn pwa-banner__btn--ghost" (click)="dismissInstall()">Not now</button>
+      <button type="button" class="pwa-banner__btn pwa-banner__btn--primary" (click)="install()">Install</button>
+    </div>
+  </aside>
+
+  <aside class="pwa-banner" *ngIf="!pwa.canInstall() && pwa.showIosInstallHint()" role="note">
+    <div class="pwa-banner__copy">
+      <i class="pi pi-mobile" aria-hidden="true"></i>
+      <div>
+        <strong>Add to Home Screen</strong>
+        <p>Tap Share, then <em>Add to Home Screen</em>.</p>
+      </div>
+    </div>
+    <div class="pwa-banner__actions">
+      <button type="button" class="pwa-banner__btn pwa-banner__btn--ghost" (click)="dismissInstall()">Got it</button>
+    </div>
+  </aside>
+</div>

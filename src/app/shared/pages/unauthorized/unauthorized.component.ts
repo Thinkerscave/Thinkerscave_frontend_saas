@@ -1,63 +1,56 @@
-import { Component , ChangeDetectionStrategy} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
 /**
  * Shown when a logged-in user navigates to a route they lack permissions for.
  * roleGuard redirects here with router.navigate(['/unauthorized']).
  */
 @Component({
-    selector: 'app-unauthorized',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
-    template: `
-    <div class="unauthorized-container">
-      <div class="unauthorized-card">
-        <div class="icon">🔒</div>
-        <h1>Access Denied</h1>
-        <p>You do not have permission to view this page.</p>
-        <p class="sub">Please contact your administrator if you think this is a mistake.</p>
-        <button (click)="goBack()">← Go Back</button>
+  selector: 'app-unauthorized',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [ButtonModule, EmptyStateComponent],
+  template: `
+    <div class="tc-error-shell">
+      <div class="tc-error-shell__card">
+        <app-empty-state
+          [page]="true"
+          illustration="locked"
+          title="Access denied"
+          message="You do not have permission to view this page. Contact your administrator if you think this is a mistake."
+          actionLabel="Go to Dashboard"
+          actionIcon="pi pi-home"
+          (action)="goBack()">
+        </app-empty-state>
       </div>
     </div>
   `,
-    styles: [`
-    .unauthorized-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #f5f7fa;
-      font-family: 'Inter', sans-serif;
+  styles: [`
+    .tc-error-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1.25rem;
+      background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--tc-accent, #16a34a) 16%, transparent), transparent 42%),
+        linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
-    .unauthorized-card {
-      background: white;
-      border-radius: 16px;
-      padding: 3rem 4rem;
-      text-align: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      max-width: 420px;
+    .tc-error-shell__card {
+      width: min(100%, 28rem);
+      padding: 2.25rem 1.75rem;
+      border-radius: 1.25rem;
+      background: #fff;
+      border: 1px solid color-mix(in srgb, var(--tc-accent, #16a34a) 14%, #e2e8f0);
+      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
     }
-    .icon { font-size: 4rem; margin-bottom: 1rem; }
-    h1 { color: #1a1a2e; margin: 0 0 0.5rem; font-size: 1.8rem; }
-    p { color: #555; margin: 0 0 0.5rem; }
-    .sub { font-size: 0.85rem; color: #aaa; margin-bottom: 2rem; }
-    button {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      padding: 0.75rem 2rem;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover { background: #4338ca; }
   `]
 })
 export class UnauthorizedComponent {
-    constructor(private router: Router) { }
+  private readonly router = inject(Router);
 
-    goBack(): void {
-        this.router.navigate(['/app']);
-    }
+  goBack(): void {
+    this.router.navigate(['/app']);
+  }
 }

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+﻿import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, Injector, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -86,13 +86,25 @@ export class LoginService {
   }
 
   private get storage(): Storage {
-    if (localStorage.getItem('rememberMe') === 'true') {
-      return localStorage;
+    return localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
+  }
+
+  private preferredStore(rememberMe: boolean): Storage {
+    return rememberMe ? localStorage : sessionStorage;
+  }
+
+  /** Move session keys to the intended store and clear the other. */
+  private persistSessionKeys(target: Storage, sourceKeys: typeof STORAGE_KEYS = STORAGE_KEYS): void {
+    const other = target === localStorage ? sessionStorage : localStorage;
+    for (const key of sourceKeys) {
+      const value = target.getItem(key) ?? other.getItem(key);
+      if (value != null) {
+        target.setItem(key, value);
+      } else {
+        target.removeItem(key);
+      }
+      other.removeItem(key);
     }
-    if (sessionStorage.getItem('user') || sessionStorage.getItem('tenantId')) {
-      return sessionStorage;
-    }
-    return localStorage;
   }
 
   private readItem(key: string): string | null {
@@ -116,8 +128,19 @@ export class LoginService {
   }
 
   public generateToken(loginData: LoginRequest) {
+    const loginContext = this.readItem('loginContext');
+    const tenantId = this.readItem('tenantId');
+    
+    const headers: any = {};
+    if (loginContext === 'PLATFORM') {
+      headers['X-Login-Context'] = 'PLATFORM';
+    } else if (tenantId) {
+      headers['X-Tenant-ID'] = tenantId;
+    }
+    
     return this.http.post<LoginResponse>(loginApi.loginUrl, loginData, {
-      withCredentials: environment.authUseHttpOnlyRefresh
+      withCredentials: environment.authUseHttpOnlyRefresh,
+      headers
     });
   }
 
@@ -228,7 +251,9 @@ export class LoginService {
       localStorage.removeItem('rememberMe');
     }
 
-    const store = this.storage;
+    const store = this.preferredStore(rememberMe);
+    this.persistSessionKeys(store);
+
     this.tokenSession.setAccessToken(accessToken);
     localStorage.removeItem('refreshToken');
     sessionStorage.removeItem('refreshToken');
@@ -247,11 +272,19 @@ export class LoginService {
 
     if (organizations && organizations.length > 0) {
       store.setItem('organizations', JSON.stringify(organizations));
-      const defaultOrgId = organizations[0].orgId;
-      store.setItem('currentOrgId', defaultOrgId.toString());
+      const primaryOrg = organizations[0] as Partial<UserOrganization> & { organizationId?: number | string; id?: number | string };
+      const currentOrgId = this.toPositiveOrgId(primaryOrg?.orgId ?? primaryOrg?.organizationId ?? primaryOrg?.id);
+      if (currentOrgId != null) {
+        store.setItem('currentOrgId', String(currentOrgId));
+        this.currentOrgId$.next(String(currentOrgId));
+      } else {
+        store.removeItem('currentOrgId');
+        this.currentOrgId$.next(null);
+      }
     } else {
       store.removeItem('organizations');
       store.removeItem('currentOrgId');
+      this.currentOrgId$.next(null);
     }
 
     this.loginStatusSubject.next(true);
@@ -263,8 +296,54 @@ export class LoginService {
   }
 
   public getTenant(): string {
-    return this.readItem('tenantId') || 'public';
+    const stored = this.readItem('tenantId');
+    const jwtTenant = this.getTenantFromAccessToken();
+    if (!jwtTenant) {
+      return stored || 'public';
+    }
+    // Prefer stored tenant when it matches JWT or is an Owner switchable tenant;
+    // otherwise JWT wins (avoids TENANT_MISMATCH 403 from stale storage).
+    if (stored && this.tenantsEqual(stored, jwtTenant)) {
+      return this.normalizeTenant(stored);
+    }
+    if (stored && this.isSwitchableTenant(stored)) {
+      return this.normalizeTenant(stored);
+    }
+    return this.normalizeTenant(jwtTenant);
   }
+
+  /** Reads {@code tenant} claim from the access token. */
+  public getTenantFromAccessToken(accessToken?: string | null): string | null {
+    const token = accessToken || this.tokenSession.getAccessToken() || '';
+    const payload = this.decodeJwtPayload(token);
+    if (!payload) {
+      return null;
+    }
+    const tenant = payload['tenant'] ?? payload['tenantId'];
+    return typeof tenant === 'string' && tenant.trim() ? tenant.trim() : null;
+  }
+
+  private isSwitchableTenant(tenantId: string): boolean {
+    const token = this.tokenSession.getAccessToken();
+    if (!token) {
+      return false;
+    }
+    const payload = this.decodeJwtPayload(token);
+    const raw = payload?.['switchableTenants'];
+    if (!Array.isArray(raw)) {
+      return false;
+    }
+    const normalized = this.normalizeTenant(tenantId);
+    return raw.some(value => typeof value === 'string' && this.tenantsEqual(value, normalized));
+  }
+
+  private normalizeTenant(tenantId: string): string {
+    return tenantId.trim().toLowerCase().replace(/-/g, '_');
+  }
+
+  private readonly tenants = {
+    equal: (a: string, b: string) => this.normalizeTenant(a) === this.normalizeTenant(b)
+  };
 
   public getLoginContext(): 'PLATFORM' | 'TENANT' {
     const value = this.readItem('loginContext');
@@ -409,13 +488,27 @@ export class LoginService {
       options.params = new HttpParams().set('refreshToken', legacy);
     }
 
-    return this.http.post<ApiResponse<{ accessToken: string; refreshToken?: string }>>(
+    return this.http.post<ApiResponse<{
+      accessToken: string;
+      refreshToken?: string;
+      tenantId?: string;
+      loginContext?: string;
+      user?: unknown;
+      firstTimeLogin?: boolean;
+    }>>(
       loginApi.refreshTokenUrl,
       null,
       options
     ).pipe(
       switchMap((res) => {
-        const payload = res?.data ?? (res as unknown as { accessToken: string; refreshToken?: string });
+        const payload = res?.data ?? (res as unknown as {
+          accessToken: string;
+          refreshToken?: string;
+          tenantId?: string;
+          loginContext?: string;
+          user?: unknown;
+          firstTimeLogin?: boolean;
+        });
         this.tokenSession.setAccessToken(payload.accessToken);
         if (payload.refreshToken && !environment.authUseHttpOnlyRefresh) {
           this.storage.setItem('refreshToken', payload.refreshToken);
@@ -423,6 +516,32 @@ export class LoginService {
           localStorage.removeItem('refreshToken');
           sessionStorage.removeItem('refreshToken');
         }
+
+        const refreshedTenant = payload.tenantId || this.getTenantFromAccessToken(payload.accessToken);
+        if (refreshedTenant) {
+          const currentStored = this.readItem('tenantId');
+          // Keep an intentional Owner tenant switch; otherwise sync from refresh response.
+          if (!currentStored || !this.isSwitchableTenant(currentStored) || this.tenantsEqual(currentStored, refreshedTenant)) {
+            this.setTenant(refreshedTenant);
+          }
+        }
+
+        const orgId = this.getOrgIdFromAccessToken(payload.accessToken);
+        if (orgId) {
+          this.setCurrentOrganization(String(orgId));
+        }
+
+        if (payload.loginContext === 'PLATFORM' || payload.loginContext === 'TENANT') {
+          this.setLoginContext(payload.loginContext);
+        }
+
+        if (payload.user) {
+          const mapped = this.mapAuthUser(payload.user, payload.firstTimeLogin, payload.accessToken);
+          if (mapped) {
+            this.setUser(mapped);
+          }
+        }
+
         return of(payload.accessToken);
       })
     );
@@ -436,3 +555,4 @@ export class LoginService {
     this.router.navigate(['/session-expired']);
   }
 }
+

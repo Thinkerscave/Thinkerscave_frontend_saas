@@ -10,6 +10,7 @@ import { CardModule } from 'primeng/card';
 import { TimelineModule } from 'primeng/timeline';
 import { TabViewModule } from 'primeng/tabview';
 import { ChartModule } from 'primeng/chart';
+import { DropdownModule } from 'primeng/dropdown';
 
 interface LedgerEntry {
     id: string;
@@ -40,7 +41,7 @@ interface StudentInfo {
     standalone: true,
     imports: [
         CommonModule, FormsModule, RouterModule, ButtonModule, TableModule,
-        TagModule, DividerModule, CardModule, TimelineModule, TabViewModule, ChartModule
+        TagModule, DividerModule, CardModule, TimelineModule, TabViewModule, ChartModule, DropdownModule
     ],
     template: `
     <div class="student-ledger">
@@ -111,11 +112,14 @@ interface StudentInfo {
             <div class="section-header">
               <h4>Transaction History</h4>
               <div class="filters">
-                <select class="filter-select" [(ngModel)]="selectedYear">
-                  <option value="">All Years</option>
-                  <option value="2025-26">2025-26</option>
-                  <option value="2024-25">2024-25</option>
-                </select>
+                <p-dropdown
+                  [options]="yearOptions"
+                  [(ngModel)]="selectedYear"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo="body"
+                  styleClass="att-filter-dropdown">
+                </p-dropdown>
               </div>
             </div>
 
@@ -288,7 +292,12 @@ interface StudentInfo {
   `]
 })
 export class StudentLedgerComponent implements OnInit {
-    selectedYear = '';
+    selectedYear: string | null = null;
+    readonly yearOptions = [
+        { label: 'All Years', value: null },
+        { label: '2025-26', value: '2025-26' },
+        { label: '2024-25', value: '2024-25' }
+    ];
 
     student: StudentInfo = {
         id: '1', name: 'Rahul Sharma', admissionNo: 'ADM2024001', className: 'Class 10',

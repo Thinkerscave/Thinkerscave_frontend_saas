@@ -1,16 +1,89 @@
-<div class="empty-state" [class.empty-state--compact]="compact" role="status">
-    <div class="empty-state__art">
-        <i [class]="icon" aria-hidden="true"></i>
-    </div>
-    <h3 class="empty-state__title">{{ title }}</h3>
-    <p *ngIf="message" class="empty-state__message">{{ message }}</p>
+<div class="empty-state"
+     [class.empty-state--compact]="compact"
+     [class.empty-state--page]="page"
+     role="status">
+  <div class="empty-state__art" [class.empty-state__art--illustration]="showIllustration">
+    <ng-container [ngSwitch]="illustration">
+      <svg *ngSwitchCase="'students'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="8" y="70" width="144" height="34" rx="12" fill="var(--tc-surface-100)"/>
+        <circle cx="56" cy="46" r="22" fill="color-mix(in srgb, var(--tc-accent) 18%, white)"/>
+        <circle cx="56" cy="40" r="10" fill="var(--tc-accent)"/>
+        <path d="M38 66c4-10 12-15 18-15s14 5 18 15" fill="var(--tc-accent)"/>
+        <circle cx="104" cy="50" r="18" fill="color-mix(in srgb, var(--tc-accent) 12%, white)"/>
+        <circle cx="104" cy="45" r="8" fill="color-mix(in srgb, var(--tc-accent) 72%, black)"/>
+        <path d="M88 68c4-8 10-12 16-12s12 4 16 12" fill="color-mix(in srgb, var(--tc-accent) 72%, black)"/>
+        <rect x="28" y="82" width="48" height="8" rx="4" fill="color-mix(in srgb, var(--tc-accent) 22%, transparent)"/>
+        <rect x="86" y="82" width="40" height="8" rx="4" fill="color-mix(in srgb, var(--tc-accent) 14%, transparent)"/>
+      </svg>
 
-    <div class="empty-state__actions">
-        <p-button *ngIf="actionLabel"
-                  [label]="actionLabel"
-                  [icon]="actionIcon ?? ''"
-                  severity="primary"
-                  (onClick)="action.emit()"></p-button>
-        <ng-content></ng-content>
-    </div>
+      <svg *ngSwitchCase="'staff'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="18" y="28" width="124" height="72" rx="14" fill="var(--tc-surface-100)"/>
+        <rect x="30" y="42" width="56" height="44" rx="10" fill="color-mix(in srgb, var(--tc-accent) 12%, white)"/>
+        <circle cx="58" cy="56" r="9" fill="var(--tc-accent)"/>
+        <path d="M42 78c4-8 10-12 16-12s12 4 16 12" fill="var(--tc-accent)"/>
+        <rect x="96" y="46" width="34" height="6" rx="3" fill="color-mix(in srgb, var(--tc-accent) 35%, transparent)"/>
+        <rect x="96" y="60" width="28" height="6" rx="3" fill="color-mix(in srgb, var(--tc-accent) 20%, transparent)"/>
+        <rect x="96" y="74" width="22" height="6" rx="3" fill="color-mix(in srgb, var(--tc-accent) 14%, transparent)"/>
+        <path d="M30 22h20l6 8H130a8 8 0 0 1 8 8v6H22v-6a8 8 0 0 1 8-8Z" fill="color-mix(in srgb, var(--tc-accent) 55%, black)"/>
+      </svg>
+
+      <svg *ngSwitchCase="'data'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="24" y="22" width="112" height="76" rx="14" fill="var(--tc-surface-100)"/>
+        <rect x="40" y="70" width="16" height="16" rx="4" fill="color-mix(in srgb, var(--tc-accent) 55%, transparent)"/>
+        <rect x="64" y="54" width="16" height="32" rx="4" fill="color-mix(in srgb, var(--tc-accent) 70%, transparent)"/>
+        <rect x="88" y="40" width="16" height="46" rx="4" fill="var(--tc-accent)"/>
+        <rect x="112" y="48" width="16" height="38" rx="4" fill="color-mix(in srgb, var(--tc-accent) 40%, transparent)"/>
+        <path d="M40 36h80" stroke="color-mix(in srgb, var(--tc-accent) 25%, transparent)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+
+      <svg *ngSwitchCase="'search'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <circle cx="70" cy="52" r="28" stroke="color-mix(in srgb, var(--tc-accent) 45%, transparent)" stroke-width="8" fill="color-mix(in srgb, var(--tc-accent) 8%, white)"/>
+        <path d="M92 74l28 28" stroke="var(--tc-accent)" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="70" cy="52" r="10" fill="color-mix(in srgb, var(--tc-accent) 20%, transparent)"/>
+      </svg>
+
+      <svg *ngSwitchCase="'locked'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="44" y="52" width="72" height="48" rx="12" fill="color-mix(in srgb, var(--tc-accent) 14%, white)"/>
+        <path d="M58 52v-10a22 22 0 0 1 44 0v10" stroke="var(--tc-accent)" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <circle cx="80" cy="74" r="8" fill="var(--tc-accent)"/>
+        <rect x="76" y="78" width="8" height="12" rx="3" fill="var(--tc-accent)"/>
+        <rect x="20" y="96" width="120" height="8" rx="4" fill="color-mix(in srgb, var(--tc-accent) 12%, transparent)"/>
+      </svg>
+
+      <svg *ngSwitchCase="'notFound'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="22" y="28" width="116" height="70" rx="16" fill="var(--tc-surface-100)"/>
+        <text x="80" y="74" text-anchor="middle" font-size="36" font-weight="800" fill="var(--tc-accent)" opacity="0.85">404</text>
+        <circle cx="118" cy="40" r="14" fill="color-mix(in srgb, var(--tc-accent) 16%, white)" stroke="var(--tc-accent)" stroke-width="4"/>
+        <path d="M126 48l12 12" stroke="var(--tc-accent)" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+
+      <svg *ngSwitchCase="'expired'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <circle cx="80" cy="58" r="34" fill="color-mix(in srgb, var(--tc-accent) 10%, white)" stroke="var(--tc-accent)" stroke-width="6"/>
+        <path d="M80 38v24l16 10" stroke="var(--tc-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="48" y="96" width="64" height="8" rx="4" fill="color-mix(in srgb, var(--tc-accent) 18%, transparent)"/>
+      </svg>
+
+      <svg *ngSwitchCase="'maintenance'" class="empty-state__svg" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+        <rect x="24" y="34" width="112" height="62" rx="14" fill="var(--tc-surface-100)"/>
+        <path d="M52 78l18-28 14 18 12-12 18 22" stroke="var(--tc-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="118" cy="42" r="16" fill="color-mix(in srgb, var(--tc-accent) 16%, white)"/>
+        <path d="M112 42h12M118 36v12" stroke="var(--tc-accent)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M108 52l6-6 6 6" stroke="var(--tc-accent)" stroke-width="3" stroke-linecap="round" fill="none"/>
+      </svg>
+
+      <i *ngSwitchDefault [class]="icon" aria-hidden="true"></i>
+    </ng-container>
+  </div>
+
+  <h3 class="empty-state__title">{{ title }}</h3>
+  <p *ngIf="message" class="empty-state__message">{{ message }}</p>
+
+  <div class="empty-state__actions">
+    <p-button *ngIf="actionLabel"
+              [label]="actionLabel"
+              [icon]="actionIcon ?? ''"
+              severity="primary"
+              (onClick)="action.emit()"></p-button>
+    <ng-content></ng-content>
+  </div>
 </div>

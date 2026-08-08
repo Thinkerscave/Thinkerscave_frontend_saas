@@ -11,10 +11,24 @@
   <tc-saas-filter-row>
     <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search templates..."></label>
     <label class="saas-field"><span>Category</span>
-      <select [(ngModel)]="categoryFilter"><option value="all">All</option><option *ngFor="let c of categories" [value]="c">{{ c }}</option></select>
+      <p-dropdown
+        [options]="categoryOptions"
+        [(ngModel)]="categoryFilter"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Status</span>
-      <select [(ngModel)]="statusFilter"><option value="all">All</option><option value="active">Active</option><option value="draft">Draft</option></select>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="statusFilter"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
   </tc-saas-filter-row>
 

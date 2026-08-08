@@ -16,6 +16,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
+import { DropdownModule } from 'primeng/dropdown';
 import { debounceTime, Subject } from 'rxjs';
 
 import { AppButtonComponent } from '../../../../shared/ui/app-form/app-button.component';
@@ -56,6 +57,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
   imports: [
     CommonModule,
     FormsModule,
+    DropdownModule,
     PaginatorModule,
     ToastModule,
     MenuModule,
@@ -273,10 +275,27 @@ export class CustomersListComponent implements OnInit {
   }
 
   suspendCustomer(customer: CustomerListItem): void {
-    this.messages.add({
-      severity: 'info',
-      summary: 'Suspend Customer',
-      detail: `Suspend action for ${customer.customerName} will be available soon.`
+    const isSuspended = customer.status === 'SUSPENDED';
+    const action = isSuspended ? this.api.activateCustomer(customer.id) : this.api.suspendCustomer(customer.id);
+    const actionLabel = isSuspended ? 'Activated' : 'Suspended';
+    const actionVerb = isSuspended ? 'activate' : 'suspend';
+
+    action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.messages.add({
+          severity: 'success',
+          summary: actionLabel,
+          detail: `${customer.customerName} has been ${actionLabel.toLowerCase()}.`
+        });
+        this.load();
+      },
+      error: () => {
+        this.messages.add({
+          severity: 'error',
+          summary: `${actionLabel} failed`,
+          detail: `Could not ${actionVerb} this customer. Please try again.`
+        });
+      }
     });
   }
 
@@ -303,6 +322,7 @@ export class CustomersListComponent implements OnInit {
   openRowMenu(customer: CustomerListItem, event: Event): void {
     event.stopPropagation();
     this.activeCustomer = customer;
+    const isSuspended = customer.status === 'SUSPENDED';
     this.menuItems = [
       {
         label: 'Edit',
@@ -321,8 +341,8 @@ export class CustomersListComponent implements OnInit {
       },
       { separator: true },
       {
-        label: 'Suspend',
-        icon: 'pi pi-ban',
+        label: isSuspended ? 'Activate' : 'Suspend',
+        icon: isSuspended ? 'pi pi-check-circle' : 'pi pi-ban',
         command: () => this.suspendCustomer(customer)
       },
       {

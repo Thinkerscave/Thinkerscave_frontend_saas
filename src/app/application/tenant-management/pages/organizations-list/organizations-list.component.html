@@ -58,21 +58,12 @@
       <!-- Spacer — pushes view/reset/new-org to the right -->
       <div class="org-toolbar__spacer"></div>
 
-      <!-- View segmented control -->
-      <div class="org-view-seg" role="group" aria-label="Switch view">
-        <button type="button"
-                [class.is-active]="viewMode === 'cards'"
-                (click)="setViewMode('cards')"
-                aria-label="Grid view">
-          <i class="pi pi-th-large"></i><span>Grid</span>
-        </button>
-        <button type="button"
-                [class.is-active]="viewMode === 'table'"
-                (click)="setViewMode('table')"
-                aria-label="Table view">
-          <i class="pi pi-list"></i><span>Table</span>
-        </button>
-      </div>
+      <!-- Icon-only grid / table toggle (same pattern as Customers) -->
+      <app-grid-table-toggle
+        [storageKey]="'tc.organizations.viewMode'"
+        [mode]="viewMode"
+        (modeChange)="onViewModeChange($event)">
+      </app-grid-table-toggle>
 
       <!-- Reset -->
       <button type="button" class="org-toolbar__btn" (click)="resetFilters()">
@@ -118,7 +109,7 @@
     </div>
 
     <!-- ════════════════ GRID VIEW ════════════════ -->
-    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'cards'" class="org-grid">
+    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'grid'" class="org-grid">
 
       <article class="org-card"
                *ngFor="let org of filteredOrganizations; trackBy: trackById"

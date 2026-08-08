@@ -25,7 +25,7 @@ import {
 } from '../../utils/platform-display.util';
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-import { SaasPillComponent, SaasStatGridComponent, SaasStat } from '../../../../shared/ui/saas';
+import { SaasPillComponent } from '../../../../shared/ui/saas';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -33,7 +33,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastModule, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, ToastModule, SaasPillComponent],
   providers: [MessageService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
@@ -132,42 +132,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
 
   get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
-
-  get stats(): SaasStat[] {
-    if (!this.org) return [];
-    const sub = this.org.subscription;
-    const tenant = this.org.tenant;
-    const score = healthScore(tenant);
-    const storageMb = tenant?.storageUsedMb ?? 0;
-    const storageLimit = this.org.configuration?.storageLimitGb;
-    return [
-      {
-        key: 'status', label: 'Organization Status',
-        value: organizationStatusLabel(this.org.status),
-        helper: sub ? subscriptionStatusLabel(sub.status) + ' subscription' : 'No subscription',
-        icon: 'pi pi-building', tone: statusTone(this.org.status) as SaasStat['tone']
-      },
-      {
-        key: 'plan', label: 'Current Plan',
-        value: sub?.planName ?? '—',
-        helper: sub?.billingCycle ? this.billingCycleLabel(sub.billingCycle) : 'Not assigned',
-        icon: 'pi pi-credit-card', tone: 'primary'
-      },
-      {
-        key: 'health', label: 'Tenant Health',
-        value: score + '%',
-        helper: tenant?.provisionStatus?.replace(/_/g, ' ') ?? 'Not provisioned',
-        icon: 'pi pi-heart', tone: healthTone(score)
-      },
-      {
-        key: 'storage', label: 'Storage Used',
-        value: this.formatStorageMb(storageMb),
-        helper: storageLimit ? `of ${storageLimit} GB limit` : 'No limit configured',
-        icon: 'pi pi-database',
-        tone: storageLimit && storageMb / (storageLimit * 1024) >= 0.9 ? 'danger' : 'info'
-      }
-    ];
-  }
 
   get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
     if (!this.org) return [];

@@ -9,10 +9,15 @@ import { QuickActionsData } from '../../models/dashboard.model';
   imports: [CommonModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="w-actions">
-      <a *ngFor="let action of data.items" class="w-actions__btn" [routerLink]="action.route || null">
-        <i class="pi" [ngClass]="action.icon || 'pi-bolt'"></i>
-        {{ action.label }}
+    <div class="w-actions w-actions--bar" role="list">
+      <a
+        *ngFor="let action of data.items; let i = index"
+        class="w-actions__btn"
+        role="listitem"
+        [style.animation-delay.ms]="i * 45"
+        [routerLink]="action.route || null">
+        <span class="w-actions__icon"><i class="pi" [ngClass]="action.icon || 'pi-bolt'"></i></span>
+        <span class="w-actions__label">{{ action.label }}</span>
       </a>
     </div>
   `

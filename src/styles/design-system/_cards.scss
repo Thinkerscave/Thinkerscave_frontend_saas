@@ -1,4 +1,4 @@
-/* Cards */
+﻿/* Cards */
 .tc-card {
   background: var(--tc-surface-card);
   border: 1px solid var(--tc-border);
@@ -65,7 +65,7 @@
   }
 
   /* Tone variations based on data-tone attribute */
-  &[data-tone="primary"] &__icon { background: var(--tc-primary-50); color: var(--tc-primary-600); }
+  &[data-tone="primary"] &__icon { background: color-mix(in srgb, var(--tc-accent) 14%, transparent); color: var(--tc-accent); }
   &[data-tone="success"] &__icon { background: var(--tc-success-soft); color: var(--tc-success); }
   &[data-tone="warning"] &__icon { background: var(--tc-warning-soft); color: var(--tc-warning); }
   &[data-tone="danger"] &__icon { background: var(--tc-danger-soft); color: var(--tc-danger); }
@@ -196,7 +196,7 @@
   }
 
   /* Tone tints on the KPI icon */
-  &[data-tone="primary"] .kpi-icon { background: var(--tc-primary-50); color: var(--tc-primary-600); }
+  &[data-tone="primary"] .kpi-icon { background: color-mix(in srgb, var(--tc-accent) 14%, transparent); color: var(--tc-accent); }
   &[data-tone="success"] .kpi-icon { background: var(--tc-success-soft); color: var(--tc-success); }
   &[data-tone="warning"] .kpi-icon { background: var(--tc-warning-soft); color: var(--tc-warning); }
   &[data-tone="danger"]  .kpi-icon { background: var(--tc-danger-soft);  color: var(--tc-danger); }
@@ -227,10 +227,11 @@
   &[data-tone="warning"] { background: var(--tc-warning-soft); color: var(--tc-warning); }
   &[data-tone="danger"]  { background: var(--tc-danger-soft);  color: var(--tc-danger); }
   &[data-tone="info"]    { background: var(--tc-info-soft);    color: var(--tc-info); }
-  &[data-tone="primary"] { background: var(--tc-primary-50);   color: var(--tc-primary-600); }
+  &[data-tone="primary"] { background: color-mix(in srgb, var(--tc-accent) 14%, transparent);   color: var(--tc-accent); }
 }
 
 .status-approved { @extend .row-badge; background: var(--tc-success-soft); color: var(--tc-success); }
 .status-pending  { @extend .row-badge; }
 .status-alert    { @extend .row-badge; background: var(--tc-danger-soft); color: var(--tc-danger); }
+
 

@@ -5,13 +5,14 @@
     </button>
 
     <button type="button" class="brand-identity brand-identity--compact" (click)="navigateHome()" aria-label="Go to dashboard">
-      <span class="brand-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <span class="brand-logo" [class.brand-logo--image]="!!organizationLogoUrl()">
+        <img *ngIf="organizationLogoUrl() as logo" [src]="logo" alt="" />
+        <svg *ngIf="!organizationLogoUrl()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </span>
       <div class="brand-copy">
-        <strong>ThinkerScave</strong>
+        <strong>{{ 'brand.name' | tcTranslate }}</strong>
         <small>{{ getOrganizationName() }}</small>
       </div>
     </button>
@@ -54,7 +55,7 @@
       <i class="pi" [ngClass]="isDarkTheme() ? 'pi-sun' : 'pi-moon'"></i>
     </button>
 
-    <button type="button" class="icon-btn" (click)="openSettings()" title="Settings">
+    <button type="button" class="icon-btn" (click)="openSettings()" [title]="'nav.settings' | tcTranslate" [attr.aria-label]="'nav.settings' | tcTranslate">
       <i class="pi pi-cog"></i>
     </button>
 
@@ -62,8 +63,7 @@
 
     <div class="profile-menu">
       <button type="button" class="profile-btn" (click)="userPanel.toggle($event)">
-        <div class="tc-avatar" *ngIf="photoUrl(); else avatarInitials"><img [src]="photoUrl()" [alt]="getUserName()"></div>
-        <ng-template #avatarInitials><div class="tc-avatar tc-avatar--initials">{{ getInitials(getUserName()) }}</div></ng-template>
+        <tc-avatar [name]="getUserName()" [imageUrl]="photoUrl()" size="sm"></tc-avatar>
         <div class="user-info">
           <span class="name">{{ getUserName() }}</span>
           <span class="role">{{ getRoleName() }}</span>
@@ -73,8 +73,7 @@
 
       <p-overlayPanel #userPanel appendTo="body" styleClass="tc-dropdown-panel user-panel">
         <div class="user-dropdown-header">
-          <div class="tc-avatar tc-avatar--lg" *ngIf="photoUrl(); else avatarInitialsLg"><img [src]="photoUrl()" [alt]="getUserName()"></div>
-          <ng-template #avatarInitialsLg><div class="tc-avatar tc-avatar--lg tc-avatar--initials">{{ getInitials(getUserName()) }}</div></ng-template>
+          <tc-avatar [name]="getUserName()" [imageUrl]="photoUrl()" size="lg"></tc-avatar>
           <div>
             <strong>{{ getUserName() }}</strong>
             <small>{{ currentUser?.userName }}</small>
@@ -85,7 +84,7 @@
           <i class="pi pi-user"></i> My Profile
         </button>
         <button class="dropdown-item" (click)="openSettings(); userPanel.hide()">
-          <i class="pi pi-cog"></i> Settings
+          <i class="pi pi-cog"></i> {{ 'nav.settings' | tcTranslate }}
         </button>
         <button class="dropdown-item" *ngIf="canOpenOrganizationProfile()" (click)="openOrganizationProfile(); userPanel.hide()">
           <i class="pi pi-building"></i> Organization Profile

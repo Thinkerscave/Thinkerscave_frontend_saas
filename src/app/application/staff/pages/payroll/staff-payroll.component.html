@@ -12,6 +12,9 @@
     </div>
   </header>
 
+  <div class="sd-info-banner" *ngIf="generateInfoMessage">{{ generateInfoMessage }}</div>
+  <div class="sd-error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+
   <!-- ───────── KPI TILES ───────── -->
   <div class="sd-kpi-row" *ngIf="!loadingDashboard">
     <div *ngFor="let tile of kpiTiles" class="sd-kpi-card" [attr.data-color]="tile.color">
@@ -29,20 +32,40 @@
   <!-- ───────── FILTER BAR ───────── -->
   <div class="sd-filter-panel">
     <div class="sd-filter-panel__selects">
-      <select [(ngModel)]="filters.year" (change)="search()">
-        <option [value]="2023">2023</option>
-        <option [value]="2024">2024</option>
-        <option [value]="2025">2025</option>
-        <option [value]="2026">2026</option>
-      </select>
-      <select [(ngModel)]="filters.month" (change)="search()">
-        <option *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="m">{{ monthName(m) }}</option>
-      </select>
-      <select [(ngModel)]="filters.status" (change)="search()">
-        <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
-      </select>
+      <p-dropdown
+        [options]="yearOptions"
+        [(ngModel)]="filters.year"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        placeholder="Year"
+        (onChange)="search()">
+      </p-dropdown>
+      <p-dropdown
+        [options]="monthOptions"
+        [(ngModel)]="filters.month"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        placeholder="Month"
+        (onChange)="search()">
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="filters.status"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        placeholder="Status"
+        (onChange)="search()">
+      </p-dropdown>
     </div>
     <div class="sd-filter-panel__actions">
+      <button type="button" class="sd-btn sd-btn--ghost"
+              *ngIf="filters.year && filters.month"
+              (click)="exportReport()" [disabled]="exporting">
+        <i class="pi pi-file-excel"></i> Export
+      </button>
       <button type="button" class="sd-btn sd-btn--ghost" *ngIf="selectedIds.size > 0" (click)="selectedIds.clear()">
         Clear Selection
       </button>
@@ -103,7 +126,8 @@
               <button *ngIf="p.status !== 'PAID'" type="button" class="sd-btn sd-btn--ghost" style="padding: 4px 8px; font-size: 0.75rem;" (click)="markPaidSingle(p)">
                 Mark Paid
               </button>
-              <button type="button" class="sd-icon-btn" title="Download Payslip">
+              <button type="button" class="sd-icon-btn" title="Download Payslip"
+                      (click)="downloadPayslip(p)">
                 <i class="pi pi-download"></i>
               </button>
             </div>
@@ -153,18 +177,25 @@
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Year <span class="req">*</span></label>
-          <select [(ngModel)]="generateYear">
-            <option [value]="2023">2023</option>
-            <option [value]="2024">2024</option>
-            <option [value]="2025">2025</option>
-            <option [value]="2026">2026</option>
-          </select>
+          <p-dropdown
+            [options]="yearOptions"
+            [(ngModel)]="generateYear"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-full">
+          </p-dropdown>
         </div>
         <div class="sw-field">
           <label class="sw-label">Month <span class="req">*</span></label>
-          <select [(ngModel)]="generateMonth">
-            <option *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="m">{{ monthName(m) }}</option>
-          </select>
+          <p-dropdown
+            [options]="monthOptions"
+            [(ngModel)]="generateMonth"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-full">
+          </p-dropdown>
         </div>
       </div>
     </div>

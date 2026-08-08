@@ -1,4 +1,4 @@
-import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -17,6 +17,9 @@ import { GlobalSearchProvider } from './shared/components/global-search/global-s
 import { ApplicationGlobalSearchProvider } from './application/services/application-global-search.provider';
 import { LoginService } from './core/services/login.service';
 import { UserPreferencesService } from './application/services/user-preferences.service';
+import { LanguageService } from './core/services/language.service';
+import { PwaService } from './core/services/pwa.service';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,7 +30,11 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const loginService = inject(LoginService);
       const preferencesService = inject(UserPreferencesService);
+      const languageService = inject(LanguageService);
+      // Construct early so beforeinstallprompt is not missed before layout mounts.
+      inject(PwaService);
       preferencesService.applyStoredPreferences();
+      languageService.applyStoredLanguage();
       return firstValueFrom(loginService.restoreSessionFromRefreshToken());
     }),
     provideHttpClient(
@@ -63,6 +70,10 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(NgxUiLoaderModule),
     MessageService,
     { provide: GlobalSearchProvider, useClass: ApplicationGlobalSearchProvider },
-    { provide: ErrorHandler, useClass: GlobalErrorHandler }
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerImmediately'
+    })
   ]
 };

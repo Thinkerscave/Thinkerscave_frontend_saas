@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs';
 
@@ -23,7 +24,7 @@ import {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, ToastModule,
+    CommonModule, FormsModule, ToastModule, DropdownModule,
     SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],
@@ -48,6 +49,10 @@ export class RolesListComponent implements OnInit {
 
   readonly roleTypeLabel = roleTypeLabel;
   readonly roleTypes: RoleType[] = ['ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF', 'STUDENT', 'PARENT'];
+  readonly roleTypeOptions: { label: string; value: RoleType }[] = this.roleTypes.map(t => ({
+    label: roleTypeLabel(t),
+    value: t
+  }));
 
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('create') === 'true') {

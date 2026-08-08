@@ -10,22 +10,39 @@
 
   <tc-saas-filter-row>
     <label class="saas-field"><span>Academic Year</span>
-      <select [(ngModel)]="filters.academicYear">
-        <option value="2025-26">2025-26</option>
-        <option value="2024-25">2024-25</option>
-      </select>
+      <p-dropdown
+        [options]="academicYearOptions"
+        [(ngModel)]="filters.academicYear"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Class</span>
-      <select [(ngModel)]="filters.classId" (change)="filters.sectionName='all'">
-        <option value="all">All Classes</option>
-        <option *ngFor="let c of data.classes" [value]="c.classId">{{ c.className }}</option>
-      </select>
+      <p-dropdown
+        [options]="classSelectOptions"
+        [(ngModel)]="filters.classId"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="att-filter-dropdown"
+        (onChange)="onClassChanged()">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Section</span>
-      <select [(ngModel)]="filters.sectionName">
-        <option value="all">All Sections</option>
-        <option *ngFor="let s of sections" [value]="s">{{ s }}</option>
-      </select>
+      <p-dropdown
+        [options]="sectionSelectOptions"
+        [(ngModel)]="filters.sectionName"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
     <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="filters.date"></label>
     <button type="button" class="tc-btn tc-btn--primary" (click)="loadRoster()"><i class="pi pi-search"></i>Load</button>
@@ -37,7 +54,21 @@
       [subtitle]="rows.length ? rows.length + ' students loaded' : 'Choose class and date, then load.'">
       <ng-container panel-actions>
         <button type="button" class="tc-btn" (click)="markAllPresent()" [disabled]="!rows.length"><i class="pi pi-check"></i>Mark All Present</button>
+        <button type="button" class="tc-btn" (click)="markAllAbsent()" [disabled]="!rows.length"><i class="pi pi-times"></i>Mark All Absent</button>
+        <button
+          type="button"
+          class="tc-btn"
+          (click)="copyPrevious()"
+          [disabled]="!canCopyPrevious"
+          [title]="allowCopyPrevious ? 'Copy yesterday status into this date' : 'Disabled in attendance settings'">
+          <i class="pi" [ngClass]="copying ? 'pi-spin pi-spinner' : 'pi-copy'"></i>Copy Previous
+        </button>
       </ng-container>
+
+      <div *ngIf="copyError" class="saas-empty" style="margin-bottom: 0.75rem;">
+        <i class="pi pi-exclamation-triangle"></i>
+        <strong>{{ copyError }}</strong>
+      </div>
 
       <div *ngIf="rosterLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading roster...</div>
 
@@ -47,10 +78,23 @@
         <p>Select a class, section, and date, then click Load.</p>
       </div>
 
+      <div *ngIf="!rosterLoading && rows.length" class="attendance-student__roster-summary" aria-live="polite">
+        <span class="att-chip att-chip--present"><strong>{{ rosterSummary.present }}</strong> Present</span>
+        <span class="att-chip att-chip--absent"><strong>{{ rosterSummary.absent }}</strong> Absent</span>
+        <span class="att-chip att-chip--leave"><strong>{{ rosterSummary.leave }}</strong> Leave</span>
+        <span class="att-chip att-chip--late" *ngIf="rosterSummary.late"><strong>{{ rosterSummary.late }}</strong> Late</span>
+        <span class="att-chip att-chip--muted"><strong>{{ rosterSummary.unmarked }}</strong> Unmarked</span>
+      </div>
+
       <div *ngIf="!rosterLoading && rows.length" class="saas-table-wrap">
         <table class="saas-data-table attendance-student__table">
           <thead>
-            <tr><th style="width:60px">Roll No.</th><th style="width:60px"></th><th>Student Name</th><th style="width:200px">Status</th></tr>
+            <tr>
+              <th class="attendance-student__col-roll">Roll No.</th>
+              <th class="attendance-student__col-avatar"></th>
+              <th>Student Name</th>
+              <th class="attendance-student__col-status">Status</th>
+            </tr>
           </thead>
           <tbody>
             <tr *ngFor="let row of rows; let i = index; trackBy: trackByRow">
@@ -65,9 +109,35 @@
                 </div>
               </td>
               <td>
-                <select class="attendance-student__status" [ngModel]="row.status" (ngModelChange)="setStatus(row, $event)" [attr.data-status]="row.status">
-                  <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
-                </select>
+                <div class="att-toggle" role="group" [attr.aria-label]="'Attendance for ' + row.referenceName">
+                  <button
+                    type="button"
+                    class="att-toggle__btn att-toggle__btn--present"
+                    [class.is-active]="row.status === 'PRESENT'"
+                    (click)="setStatus(row, 'PRESENT')"
+                    title="Present">
+                    <i class="pi pi-check"></i>
+                    <span>P</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="att-toggle__btn att-toggle__btn--absent"
+                    [class.is-active]="row.status === 'ABSENT'"
+                    (click)="setStatus(row, 'ABSENT')"
+                    title="Absent">
+                    <i class="pi pi-times"></i>
+                    <span>A</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="att-toggle__btn att-toggle__btn--leave"
+                    [class.is-active]="row.status === 'EXCUSED' || row.status === 'ON_LEAVE'"
+                    (click)="setStatus(row, 'EXCUSED')"
+                    title="Leave">
+                    <i class="pi pi-calendar"></i>
+                    <span>L</span>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -84,11 +154,11 @@
     </tc-saas-panel>
 
     <aside class="attendance-student__side">
-      <tc-saas-panel title="Pending Attendance" subtitle="Classes not yet completed today">
+      <tc-saas-panel title="Class summary" subtitle="Marking progress by class / section">
         <div *ngIf="!pendingClasses.length" class="saas-empty">
           <i class="pi pi-check-circle"></i><strong>All classes marked</strong>
         </div>
-        <article class="pending-row" *ngFor="let pending of pendingClasses">
+        <article class="pending-row" *ngFor="let pending of pendingClasses" (click)="selectPending(pending)" role="button" tabindex="0">
           <div>
             <strong>{{ pending.className }} - {{ pending.sectionName }}</strong>
             <small>{{ pending.completed }}/{{ pending.total }} students</small>
@@ -103,5 +173,3 @@
     </aside>
   </div>
 </div>
-
-

@@ -49,6 +49,25 @@
   border-color: color-mix(in srgb, var(--tc-primary-600) 30%, transparent);
 }
 
+.tc-badge--overdue {
+  background: color-mix(in srgb, var(--tc-danger, #ef4444) 14%, transparent);
+  color: var(--tc-danger, #b91c1c);
+  border-color: color-mix(in srgb, var(--tc-danger, #ef4444) 35%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.tc-badge--overdue::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+
 /* Status dots */
 .tc-status-dot {
   display: inline-block;

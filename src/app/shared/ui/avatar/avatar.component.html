@@ -1,6 +1,11 @@
-<span class="tc-avatar" [class.tc-avatar--sm]="size === 'sm'" [class.tc-avatar--lg]="size === 'lg'" [class.tc-avatar--xl]="size === 'xl'">
-  @if (imageUrl) {
-    <img [src]="imageUrl" [alt]="name || 'Avatar'" />
+﻿<span
+  class="tc-avatar"
+  [class.tc-avatar--sm]="size === 'sm'"
+  [class.tc-avatar--lg]="size === 'lg'"
+  [class.tc-avatar--xl]="size === 'xl'"
+  [class.tc-avatar--initials]="!imageUrl || imageFailed">
+  @if (imageUrl && !imageFailed) {
+    <img [src]="imageUrl" [alt]="name || 'Avatar'" (error)="onImageError()" />
   } @else {
     <span>{{ initials }}</span>
   }

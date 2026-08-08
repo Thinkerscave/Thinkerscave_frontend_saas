@@ -1,37 +1,32 @@
-<div class="auth-shell">
+<div class="auth-shell" [class.auth-shell--focused]="isLogin()">
   <p-toast></p-toast>
-  <div class="auth-card">
+  <div class="auth-card" [class.auth-card--focused]="isLogin()">
     <div class="auth-pane auth-pane--form">
-      <a routerLink="/" class="auth-brand" aria-label="ThinkerScave home">
+      <a routerLink="/" class="auth-brand" aria-label="ThinkersCave home">
         <span class="auth-brand__mark" aria-hidden="true"><i class="pi pi-graduation-cap"></i></span>
-        <span class="auth-brand__name">ThinkerScave</span>
+        <span class="auth-brand__name">ThinkersCave</span>
       </a>
       <main class="auth-pane__main">
         <router-outlet></router-outlet>
       </main>
     </div>
 
-    <aside class="auth-pane auth-pane--visual" aria-hidden="true">
-      @if (isOrgSelect()) {
-        <tc-auth-illustration
-          tone="light"
-          headline="Empowering Education."
-          subline="Inspiring Futures."
-          caption="One intelligent platform connecting students, teachers, administrators, and parents."
-        />
-        <div class="auth-pane__trust">
-          <tc-auth-trust-strip />
-        </div>
-      } @else if (isLogin()) {
-        <tc-auth-illustration
-          tone="deep"
-          headline="Building Smarter Institutions."
-          subline="Creating Better Learning Experiences."
-          caption="Technology that empowers educators. Experiences that inspire students."
-        />
-      } @else {
-        <tc-auth-illustration tone="light" />
-      }
-    </aside>
+    @if (!isLogin()) {
+      <aside class="auth-pane auth-pane--visual" aria-hidden="true">
+        @if (isOrgSelect()) {
+          <tc-auth-illustration
+            tone="light"
+            headline="Empowering Education."
+            subline="Inspiring Futures."
+            caption="One intelligent platform connecting students, teachers, administrators, and parents."
+          />
+          <div class="auth-pane__trust">
+            <tc-auth-trust-strip />
+          </div>
+        } @else {
+          <tc-auth-illustration tone="light" />
+        }
+      </aside>
+    }
   </div>
 </div>

@@ -1,12 +1,10 @@
-<section class="tc-page-shell" style="padding-top:16px;" (click)="closeMenus()">
+<section class="tc-page-shell stu-profile-page" (click)="closeMenus()">
 
   <!-- Breadcrumb -->
-  <div style="display:flex;align-items:center;gap:8px;font-size:0.84rem;margin-bottom:-8px;color:var(--tc-text-muted);">
-    <a routerLink="/app/students/directory" style="color:var(--tc-text-muted);text-decoration:none;cursor:pointer;">
-      <i class="pi pi-home"></i> Students
-    </a>
-    <i class="pi pi-angle-right" style="font-size:0.75rem;"></i>
-    <span style="font-weight:600;color:var(--tc-text);">{{ profile?.overview?.fullName || 'Profile' }}</span>
+  <div class="stu-profile-crumb">
+    <button type="button" class="tc-btn tc-btn--back" routerLink="/app/students/directory">
+      <i class="pi pi-arrow-left"></i> Back to list
+    </button>
   </div>
 
   <!-- Loading -->
@@ -23,25 +21,40 @@
     
     <!-- ════════════════════════ HERO HEADER ════════════════════════ -->
     <header class="stu-hero">
-      <div class="tc-avatar tc-avatar--lg tc-avatar--initials" style="font-size:2rem;">
-        <img *ngIf="profile.overview.photoUrl" [src]="profile.overview.photoUrl" [alt]="profile.overview.fullName"
-             style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
-        <span *ngIf="!profile.overview.photoUrl">{{ initials(profile.overview.fullName) }}</span>
-      </div>
+      <tc-avatar
+        [name]="profile.overview.fullName"
+        [imageUrl]="profile.overview.photoUrl ?? null"
+        size="xl">
+      </tc-avatar>
       
       <div class="stu-hero__meta">
-        <h1 style="display:flex;align-items:center;gap:10px;">
+        <h1>
           {{ profile.overview.fullName }}
           <span class="tc-badge" [attr.data-status]="profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE')">
             {{ profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE') | titlecase }}
           </span>
         </h1>
-        <p>{{ profile.overview.className || '—' }} – {{ profile.overview.sectionName || '—' }} | Admission: {{ profile.overview.admissionNumber }}</p>
+        <p>{{ profile.overview.className || '—' }} – {{ profile.overview.sectionName || '—' }} · Admission {{ profile.overview.admissionNumber }}</p>
         
         <div class="stu-hero-chips">
-          <span class="stu-hero-chip"><i class="pi pi-hashtag"></i> Roll No: {{ profile.overview.rollNumber || '—' }}</span>
+          <span class="stu-hero-chip"><i class="pi pi-hashtag"></i> Roll {{ profile.overview.rollNumber || '—' }}</span>
           <span class="stu-hero-chip"><i class="pi pi-id-card"></i> {{ profile.overview.studentCode || 'N/A' }}</span>
-          <span class="stu-hero-chip"><i class="pi pi-calendar"></i> Age: {{ profile.overview.ageYears || '—' }} Years</span>
+          <span class="stu-hero-chip"><i class="pi pi-calendar"></i> Age {{ profile.overview.ageYears || '—' }}</span>
+        </div>
+
+        <div class="stu-hero-stats" aria-label="Quick stats">
+          <div class="stu-hero-stat" data-tone="success">
+            <strong>{{ profile.attendance.percent || 0 }}%</strong>
+            <span>Attendance</span>
+          </div>
+          <div class="stu-hero-stat" [attr.data-tone]="(profile.fees.pending || 0) > 0 ? 'warning' : 'success'">
+            <strong>{{ feeStatusLabel() }}</strong>
+            <span>Fee Status</span>
+          </div>
+          <div class="stu-hero-stat">
+            <strong>{{ classRankLabel() }}</strong>
+            <span>Rank</span>
+          </div>
         </div>
       </div>
 
@@ -51,8 +64,8 @@
         </button>
         
         <div class="stu-more-menu">
-          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" style="background:var(--tc-surface-0);" 
-                  (click)="toggleMoreActions($event)">
+          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon"
+                  (click)="toggleMoreActions($event)" title="More actions">
             <i class="pi pi-ellipsis-v"></i>
           </button>
           <div class="stu-more-menu__panel" *ngIf="moreActionsOpen">
@@ -74,11 +87,12 @@
     </header>
 
     <!-- ════════════════════════ TABS ════════════════════════ -->
-    <nav class="adm-tabs">
+    <nav class="adm-tabs" aria-label="Profile sections">
       <button *ngFor="let tab of tabs" 
+              type="button"
               [class.is-active]="activeTab === tab.key"
               (click)="go(tab.key)">
-        <i class="{{ tab.icon }}" style="margin-right:6px;"></i> {{ tab.label }}
+        <i class="{{ tab.icon }}"></i> {{ tab.label }}
       </button>
     </nav>
 
@@ -187,39 +201,28 @@
             </div>
           </div>
 
-          <!-- Right: Rings -->
+          <!-- Right: Charts -->
           <div class="stu-aside">
-            <div class="tc-card tc-card--panel" style="align-items:center;text-align:center;">
-              <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Attendance</h3>
-              <div class="stu-ring">
-                <svg viewBox="0 0 100 100">
-                  <circle class="stu-ring__track" cx="50" cy="50" r="48" fill="none" stroke-width="4"></circle>
-                  <circle class="stu-ring__fill" cx="50" cy="50" r="48" fill="none" stroke-width="4"
-                          [attr.stroke-dasharray]="ringDash().circ"
-                          [attr.stroke-dashoffset]="ringDash().offset" stroke-linecap="round"></circle>
-                </svg>
-                <div class="stu-ring__label">
-                  <strong>{{ profile.attendance.percent || 0 }}%</strong>
-                </div>
+            <div class="tc-card tc-card--panel stu-chart-panel">
+              <h3>Attendance</h3>
+              <div class="stu-chart-panel__canvas">
+                <p-chart type="doughnut" [data]="attendanceChartData" [options]="doughnutOptions" height="180px"></p-chart>
               </div>
-              <div style="display:flex;gap:12px;font-size:0.8rem;margin-top:8px;">
-                <div style="display:flex;flex-direction:column;color:var(--tc-success);">
-                  <strong>{{ profile.attendance.present || 0 }}</strong><span>Present</span>
-                </div>
-                <div style="display:flex;flex-direction:column;color:var(--tc-danger);">
-                  <strong>{{ profile.attendance.absent || 0 }}</strong><span>Absent</span>
-                </div>
+              <div class="stu-fee-legend">
+                <span><strong>{{ profile.attendance.present || 0 }}</strong> Present</span>
+                <span><strong>{{ profile.attendance.absent || 0 }}</strong> Absent</span>
+                <span><strong>{{ profile.attendance.late || 0 }}</strong> Late</span>
               </div>
             </div>
 
-            <div class="tc-card tc-card--panel">
-              <h3 style="margin:0;font-size:0.95rem;color:var(--tc-text);">Fees Overview</h3>
-              <div class="stu-fee-bar" style="margin:10px 0;">
-                <span [style.width.%]="feePercent()"></span>
+            <div class="tc-card tc-card--panel stu-chart-panel">
+              <h3>Fee collection</h3>
+              <div class="stu-chart-panel__canvas">
+                <p-chart type="doughnut" [data]="feeChartData" [options]="doughnutOptions" height="180px"></p-chart>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
-                <span style="color:var(--tc-text-muted);">Paid: <strong style="color:var(--tc-text);">₹{{ profile.fees.paid || 0 }}</strong></span>
-                <span style="color:var(--tc-text-muted);">Due: <strong style="color:var(--tc-danger);">₹{{ profile.fees.pending || 0 }}</strong></span>
+              <div class="stu-fee-legend">
+                <span><strong>₹{{ profile.fees.paid || 0 }}</strong> Paid</span>
+                <span><strong>₹{{ profile.fees.pending || 0 }}</strong> Pending</span>
               </div>
             </div>
           </div>
@@ -284,11 +287,14 @@
             </div>
             <div class="tc-form-field">
               <label>Gender</label>
-              <select [(ngModel)]="personalForm.gender">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
+              <p-dropdown
+                [options]="genderOptions"
+                [(ngModel)]="personalForm.gender"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="att-filter-dropdown">
+              </p-dropdown>
             </div>
             <div class="tc-form-field">
               <label>Date of Birth</label>
@@ -512,16 +518,14 @@
           <div class="stu-inline-edit__form">
             <div class="tc-form-field">
               <label>Blood Group</label>
-              <select [(ngModel)]="medicalForm.bloodGroup">
-                <option value="A+">A+</option>
-                <option value="B+">B+</option>
-                <option value="O+">O+</option>
-                <option value="AB+">AB+</option>
-                <option value="A-">A-</option>
-                <option value="B-">B-</option>
-                <option value="O-">O-</option>
-                <option value="AB-">AB-</option>
-              </select>
+              <p-dropdown
+                [options]="bloodGroupOptions"
+                [(ngModel)]="medicalForm.bloodGroup"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="att-filter-dropdown">
+              </p-dropdown>
             </div>
             <div class="tc-form-field">
               <label>Doctor Name</label>

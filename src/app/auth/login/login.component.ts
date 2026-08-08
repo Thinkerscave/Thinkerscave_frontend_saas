@@ -36,6 +36,17 @@ export class LoginComponent {
 
   readonly forgotModal = viewChild.required(ForgotPasswordModalComponent);
   readonly submitting = signal(false);
+  readonly showPassword = signal(false);
+
+  private readonly tips = [
+    'Use Ctrl+K anywhere to open global search across students, staff, and classes.',
+    'Pin your most-used pages from Settings to keep everyday workflows one click away.',
+    'Switch organizations from the top bar without signing out again.',
+    'Set an accent color in Settings so your workspace matches your brand.',
+    'Bulk import students with the CSV template from Student Directory.'
+  ];
+
+  readonly dailyTip = this.tips[new Date().getDate() % this.tips.length];
 
   get loginTarget() {
     return this.orgContext.getLoginTarget();
@@ -61,6 +72,10 @@ export class LoginComponent {
 
   openForgotPassword(): void {
     this.forgotModal().open();
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update((visible) => !visible);
   }
 
   login(): void {

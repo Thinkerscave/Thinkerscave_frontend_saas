@@ -13,4 +13,25 @@
   </div>
 
   <app-footer class="footer"></app-footer>
+  <app-pwa-banners></app-pwa-banners>
+
+  <tc-drawer-form
+    [open]="settingsUi.isOpen()"
+    [title]="settingsTitle()"
+    [description]="settingsDescription()"
+    size="md"
+    (closed)="settingsUi.close()">
+    <tc-global-settings #settingsPanel></tc-global-settings>
+    <div drawer-actions class="settings-drawer-actions">
+      <button type="button" class="settings-drawer-actions__ghost" (click)="settingsUi.close()">
+        {{ 'common.close' | tcTranslate }}
+      </button>
+      <button type="button" class="settings-drawer-actions__ghost" (click)="settingsPanel.reset()">
+        <i class="pi pi-refresh"></i> {{ 'common.reset' | tcTranslate }}
+      </button>
+      <button type="button" class="settings-drawer-actions__primary" (click)="settingsPanel.save()">
+        <i class="pi pi-check"></i> {{ 'common.save' | tcTranslate }}
+      </button>
+    </div>
+  </tc-drawer-form>
 </div>

@@ -12,11 +12,13 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { debounceTime, finalize, Subject } from 'rxjs';
 
 import { SaasPanelComponent } from '../../../../shared/ui/saas';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 import {
   LEAD_SOURCE_OPTIONS,
   LEAD_STATUS_OPTIONS,
@@ -30,6 +32,11 @@ import {
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 
+interface SelectOption<T = string | null> {
+  label: string;
+  value: T;
+}
+
 @Component({
   selector: 'app-leads-list',
   standalone: true,
@@ -38,28 +45,16 @@ import { AdmissionsCrmService } from '../../services/admissions-crm.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    DropdownModule,
     PaginatorModule,
     ToastModule,
     ConfirmDialogModule,
-    SaasPanelComponent
+    SaasPanelComponent,
+    AppGridTableToggleComponent
   ],
   providers: [MessageService, ConfirmationService],
   styleUrls: ['../../admissions.shared.scss', '../../../students/students.shared.scss'],
-  templateUrl: './leads-list.component.html',
-  styles: [`
-    .stu-chip-bar {
-      display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px;
-      background: var(--tc-surface-50); border: 1px solid var(--tc-border);
-    }
-    .stu-chip-bar button {
-      border: none; background: transparent; padding: 6px 12px; border-radius: 8px;
-      font-size: 0.82rem; font-weight: 600; color: var(--tc-text-muted); cursor: pointer; font-family: inherit;
-    }
-    .stu-chip-bar button.is-active {
-      background: var(--tc-surface-0); color: var(--tc-primary-600);
-      box-shadow: var(--tc-shadow-sm, 0 1px 2px rgba(0,0,0,0.06));
-    }
-  `]
+  templateUrl: './leads-list.component.html'
 })
 export class LeadsListComponent implements OnInit {
   private readonly api = inject(AdmissionsCrmService);
@@ -74,6 +69,18 @@ export class LeadsListComponent implements OnInit {
   readonly pageConfig = admissionsPageConfig('leads');
   readonly statusOptions = LEAD_STATUS_OPTIONS;
   readonly sourceOptions = LEAD_SOURCE_OPTIONS;
+  readonly statusSelectOptions: SelectOption[] = [
+    { label: 'All', value: null },
+    ...LEAD_STATUS_OPTIONS.map(s => ({ label: s, value: s }))
+  ];
+  readonly sourceSelectOptions: SelectOption[] = [
+    { label: 'All', value: null },
+    ...LEAD_SOURCE_OPTIONS.map(s => ({ label: s, value: s }))
+  ];
+  readonly inquirySourceOptions: SelectOption[] = [
+    { label: 'Select source', value: '' },
+    ...LEAD_SOURCE_OPTIONS.map(s => ({ label: s, value: s }))
+  ];
 
   readonly loading = signal(true);
   readonly searching = signal(false);
@@ -186,6 +193,14 @@ export class LeadsListComponent implements OnInit {
   clearFilters(): void {
     this.filter = {};
     this.runSearch();
+  }
+
+  get listViewMode(): AppListViewMode {
+    return this.viewMode() === 'card' ? 'grid' : 'table';
+  }
+
+  onListViewModeChange(mode: AppListViewMode): void {
+    this.viewMode.set(mode === 'grid' ? 'card' : 'table');
   }
 
   setView(mode: 'table' | 'card'): void {

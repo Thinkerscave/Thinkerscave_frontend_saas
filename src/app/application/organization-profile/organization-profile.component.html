@@ -1,10 +1,11 @@
 <div class="saas-page organization-profile">
   <tc-saas-page-header
     title="Organization Profile"
-    subtitle="Manage your institution's profile, branding, and preferences"
+    subtitle="Manage your institution's profile, contact details, and branding"
     [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organization Profile'}]">
-    <button type="button" class="saas-btn"><i class="pi pi-eye"></i>View Plan Details</button>
-    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="!dirty"><i class="pi pi-save"></i>Save Changes</button>
+    <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="!dirty || saving">
+      <i class="pi" [class.pi-save]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>{{ saving ? 'Saving...' : 'Save Changes' }}
+    </button>
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty">
@@ -18,7 +19,7 @@
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization profile...</div>
 
-  <ng-container *ngIf="!loading && organization">
+  <ng-container *ngIf="!loading && profile">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 
@@ -29,108 +30,70 @@
           <article class="org-card">
             <span class="org-card__logo">{{ initials }}</span>
             <div>
-              <strong>{{ organization.brandName || organization.orgName }}</strong>
-              <small>{{ organization.orgCode }}</small>
+              <strong>{{ profile.organizationName }}</strong>
+              <small>{{ profile.organizationCode }}</small>
             </div>
           </article>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Organization Name</span><input type="text" [(ngModel)]="profile.organizationName" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Short Name</span><input type="text" [(ngModel)]="profile.shortName" (ngModelChange)="markDirty()"></label>
+          </div>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Institution Type</span><input type="text" [value]="profile.institutionType" disabled></label>
+            <label class="saas-field"><span>Board / University</span><input type="text" [(ngModel)]="profile.boardName" (ngModelChange)="markDirty()" placeholder="e.g. CBSE, ICSE, State Board"></label>
+          </div>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Summary">
           <dl class="org-dl">
-            <div><dt>Type</dt><dd>{{ organization.orgType || '—' }}</dd></div>
-            <div><dt>Address</dt><dd>{{ [organization.city, organization.state] | json }}</dd></div>
-            <div><dt>Phone</dt><dd>—</dd></div>
-            <div><dt>Email</dt><dd>{{ organization.ownerEmail || '—' }}</dd></div>
-            <div><dt>Website</dt><dd>{{ organization.tenantId ? (organization.tenantId + '.thinkerscave.app') : '—' }}</dd></div>
-            <div><dt>Owner</dt><dd>{{ organization.ownerName || '—' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ profile.email || '—' }}</dd></div>
+            <div><dt>Mobile</dt><dd>{{ profile.mobileNumber || '—' }}</dd></div>
+            <div><dt>Website</dt><dd>{{ profile.website || '—' }}</dd></div>
+            <div><dt>City</dt><dd>{{ profile.city || '—' }}</dd></div>
+            <div><dt>State</dt><dd>{{ profile.state || '—' }}</dd></div>
+            <div><dt>Country</dt><dd>{{ profile.country || '—' }}</dd></div>
           </dl>
           <a routerLink="/app/organization/access-control" class="saas-btn" style="margin-top: 12px;"><i class="pi pi-shield"></i>Manage Access Control</a>
         </tc-saas-panel>
-
-        <tc-saas-panel title="Summary" subtitle="Live institution statistics">
-          <ul class="summary-list">
-            <li><span class="summary-list__icon" data-tone="primary"><i class="pi pi-graduation-cap"></i></span><span>Students</span><strong>{{ organization.students | number }}</strong></li>
-            <li><span class="summary-list__icon" data-tone="success"><i class="pi pi-id-card"></i></span><span>Staff</span><strong>{{ organization.staff | number }}</strong></li>
-            <li><span class="summary-list__icon" data-tone="info"><i class="pi pi-th-large"></i></span><span>Sections</span><strong>126</strong></li>
-            <li><span class="summary-list__icon" data-tone="warning"><i class="pi pi-sitemap"></i></span><span>Branches</span><strong>{{ organization.branches | number }}</strong></li>
-            <li><span class="summary-list__icon" data-tone="info"><i class="pi pi-users"></i></span><span>Active Users</span><strong>{{ organization.activeUsers | number }}</strong></li>
-          </ul>
-        </tc-saas-panel>
-
-        <tc-saas-panel title="Subscription">
-          <ng-container panel-actions><tc-saas-pill label="Active" tone="success"></tc-saas-pill></ng-container>
-          <dl class="org-dl">
-            <div><dt>Plan</dt><dd><strong>{{ organization.subscriptionType || 'Professional' }}</strong></dd></div>
-            <div><dt>Status</dt><dd>Active</dd></div>
-            <div><dt>Renewed Date</dt><dd>01 May 2026</dd></div>
-            <div><dt>Storage Used</dt><dd>{{ storageLabel }}</dd></div>
-          </dl>
-          <div class="cmp-bar" style="margin-top: 10px;"><span [style.width.%]="storagePercent" [attr.data-tone]="storagePercent >= 90 ? 'danger' : storagePercent >= 75 ? 'warning' : 'success'"></span></div>
-          <button type="button" class="saas-btn saas-btn--primary" style="margin-top: 14px; width: 100%; justify-content: center;"><i class="pi pi-credit-card"></i>View Plan Details</button>
-        </tc-saas-panel>
       </section>
 
-      <!-- Academic Settings -->
-      <section *ngSwitchCase="'academic'" class="organization-profile__split">
-        <tc-saas-panel title="Academic Year" subtitle="Define your current academic term">
+      <!-- Contact & Address -->
+      <section *ngSwitchCase="'contact'" class="organization-profile__split">
+        <tc-saas-panel title="Contact Details">
           <div class="wizard-row">
-            <label class="saas-field"><span>Academic Year</span><input type="text" [(ngModel)]="academic.academicYear" (ngModelChange)="markDirty()"></label>
-            <label class="saas-field"><span>Grading Scale</span>
-              <select [(ngModel)]="academic.gradingScale" (ngModelChange)="markDirty()">
-                <option>A+ to F</option><option>1 to 10</option><option>Percentage</option><option>CGPA</option>
-              </select>
-            </label>
+            <label class="saas-field"><span>Email</span><input type="email" [(ngModel)]="profile.email" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Website</span><input type="text" [(ngModel)]="profile.website" (ngModelChange)="markDirty()"></label>
           </div>
           <div class="wizard-row">
-            <label class="saas-field"><span>Term Start</span><input type="date" [(ngModel)]="academic.termStart" (ngModelChange)="markDirty()"></label>
-            <label class="saas-field"><span>Term End</span><input type="date" [(ngModel)]="academic.termEnd" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Mobile Number</span><input type="text" [(ngModel)]="profile.mobileNumber" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Alternate Mobile Number</span><input type="text" [(ngModel)]="profile.alternateMobileNumber" (ngModelChange)="markDirty()"></label>
           </div>
         </tc-saas-panel>
 
-        <tc-saas-panel title="Working Days" subtitle="Choose which days school is in session">
-          <div class="day-toggles">
-            <button type="button" *ngFor="let d of dayNames" class="day-toggle" [class.is-active]="academic.workingDays.includes(d)" (click)="toggleDay(d)">
-              {{ d }}
-            </button>
+        <tc-saas-panel title="Address">
+          <label class="saas-field"><span>Address Line 1</span><input type="text" [(ngModel)]="profile.addressLine1" (ngModelChange)="markDirty()"></label>
+          <label class="saas-field"><span>Address Line 2</span><input type="text" [(ngModel)]="profile.addressLine2" (ngModelChange)="markDirty()"></label>
+          <div class="wizard-row">
+            <label class="saas-field"><span>City</span><input type="text" [(ngModel)]="profile.city" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>State</span><input type="text" [(ngModel)]="profile.state" (ngModelChange)="markDirty()"></label>
+          </div>
+          <div class="wizard-row">
+            <label class="saas-field"><span>Country</span><input type="text" [(ngModel)]="profile.country" (ngModelChange)="markDirty()"></label>
+            <label class="saas-field"><span>Postal Code</span><input type="text" [(ngModel)]="profile.postalCode" (ngModelChange)="markDirty()"></label>
           </div>
         </tc-saas-panel>
       </section>
 
       <!-- Branding -->
       <section *ngSwitchCase="'branding'" class="organization-profile__split">
-        <tc-saas-panel title="Identity" subtitle="Logo, colors, and tagline">
+        <tc-saas-panel title="Identity" subtitle="Logo shown across the parent and staff portals">
           <article class="org-card">
-            <span class="org-card__logo" [style.background]="branding.primaryColor + '22'" [style.color]="branding.primaryColor">{{ initials }}</span>
-            <label class="saas-btn"><input type="file" accept="image/*" (change)="onLogo($event)" hidden><i class="pi pi-upload"></i>Upload logo</label>
+            <span class="org-card__logo">{{ initials }}</span>
           </article>
-          <small *ngIf="branding.logoName" style="display: block; margin-top: 8px; color: var(--saas-text-soft);">{{ branding.logoName }}</small>
-          <label class="saas-field"><span>Description / Tagline</span><textarea rows="3" [(ngModel)]="branding.description" (ngModelChange)="markDirty()" placeholder="One-liner shown to parents and visitors"></textarea></label>
-        </tc-saas-panel>
-
-        <tc-saas-panel title="Theme" subtitle="Brand colors used across the parent portal">
-          <div class="wizard-row">
-            <label class="saas-field"><span>Primary Color</span>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="color" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()" style="width: 56px; height: 36px; padding: 0; border-radius: 8px;">
-                <input type="text" [(ngModel)]="branding.primaryColor" (ngModelChange)="markDirty()">
-              </div>
-            </label>
-            <label class="saas-field"><span>Accent Color</span>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="color" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()" style="width: 56px; height: 36px; padding: 0; border-radius: 8px;">
-                <input type="text" [(ngModel)]="branding.accentColor" (ngModelChange)="markDirty()">
-              </div>
-            </label>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <!-- Communication -->
-      <section *ngSwitchCase="'communication'">
-        <tc-saas-panel title="Communication Preferences" subtitle="Default channels and sender identity">
-          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableSms" (ngModelChange)="markDirty()"><span>Enable SMS notifications</span></label>
-          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableEmail" (ngModelChange)="markDirty()"><span>Enable Email notifications</span></label>
-          <label class="settings-toggle"><input type="checkbox" [(ngModel)]="comm.enableWhatsapp" (ngModelChange)="markDirty()"><span>Enable WhatsApp notifications</span></label>
-          <label class="saas-field" style="margin-top: 14px;"><span>Default Sender Name</span><input type="text" [(ngModel)]="comm.defaultSender" (ngModelChange)="markDirty()"></label>
+          <label class="saas-field"><span>Logo URL</span><input type="text" [(ngModel)]="profile.logoUrl" (ngModelChange)="markDirty()" placeholder="https://..."></label>
         </tc-saas-panel>
       </section>
     </ng-container>
   </ng-container>
 </div>
+

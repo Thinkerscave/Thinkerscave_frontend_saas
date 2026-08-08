@@ -2,16 +2,22 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
 import { AlumniFilters, AlumniResponse } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 
+interface SelectOption {
+  label: string;
+  value: string | null;
+}
+
 @Component({
   selector: 'app-alumni-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './alumni-directory.component.html'
 })
@@ -28,6 +34,10 @@ export class AlumniDirectoryComponent implements OnInit {
   alumni: AlumniResponse[] = [];
 
   readonly passoutYears = ['2025', '2024', '2023', '2022', '2021', '2020', 'Before 2020'];
+  readonly passoutYearOptions: SelectOption[] = [
+    { label: 'All Years', value: null },
+    ...this.passoutYears.map(y => ({ label: y, value: y }))
+  ];
 
   ngOnInit(): void {
     this.runSearch();

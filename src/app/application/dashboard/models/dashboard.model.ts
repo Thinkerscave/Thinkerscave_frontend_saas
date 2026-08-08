@@ -78,6 +78,21 @@ export interface WelcomeHeaderData {
   greeting?: string;
   avatarUrl?: string;
   todayLabel?: string;
+  showSetupGuide?: boolean;
+  setupProgressPercent?: number;
+  recommendedNextLabel?: string;
+  recommendedNextRoute?: string;
+  setupChecklist?: SetupChecklistItem[];
+  setupComplete?: boolean;
+}
+
+export interface SetupChecklistItem {
+  key: string;
+  label: string;
+  completed: boolean;
+  requiredForCompletion?: boolean;
+  available?: boolean;
+  route?: string | null;
 }
 
 export interface KpiItem {

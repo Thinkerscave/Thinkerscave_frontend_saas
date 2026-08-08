@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-maintenance',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonModule, RouterLink],
+  imports: [ButtonModule, RouterLink, EmptyStateComponent],
   templateUrl: './maintenance.component.html',
   styleUrl: './maintenance.component.scss'
 })

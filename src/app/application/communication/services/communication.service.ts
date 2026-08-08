@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse, PageResponse } from '../../../shared/models/api-response.model';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
-import { LoginService } from '../../../core/services/login.service';
 
 export type NoticeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type NotificationChannel = 'EMAIL' | 'SMS' | 'PUSH' | 'IN_APP';
@@ -93,7 +92,6 @@ interface MessageDto {
 @Injectable({ providedIn: 'root' })
 export class CommunicationService {
   private readonly http = inject(HttpClient);
-  private readonly loginService = inject(LoginService);
   private readonly base = `${environment.apiUrl}/communication`;
 
   // ----- notices -----
@@ -152,11 +150,7 @@ export class CommunicationService {
 
   // ----- messages -----
   listThreads(): Observable<MessageThread[]> {
-    const userId = this.currentUserId();
-    if (!userId) {
-      return of([]);
-    }
-    const params = new HttpParams().set('userId', String(userId)).set('size', '50');
+    const params = new HttpParams().set('size', '50');
     return this.http
       .get<ApiResponse<PageResponse<MessageThreadDto>>>(`${this.base}/messages/threads`, { params })
       .pipe(map(r => (unwrapApiResponse(r, { content: [] })?.content ?? []).map(dto => this.mapThread(dto))));
@@ -170,17 +164,9 @@ export class CommunicationService {
   }
 
   postMessage(threadId: number, body: string): Observable<Message> {
-    const senderUserId = this.currentUserId();
-    const params = new HttpParams().set('senderUserId', String(senderUserId));
     return this.http
-      .post<ApiResponse<MessageDto>>(`${this.base}/messages/threads/${threadId}`, { body }, { params })
+      .post<ApiResponse<MessageDto>>(`${this.base}/messages/threads/${threadId}`, { body })
       .pipe(map(r => this.mapMessage(unwrapApiResponse(r, {} as MessageDto))));
-  }
-
-  private currentUserId(): number {
-    const user = this.loginService.getUser();
-    const raw = user?.id;
-    return raw != null ? Number(raw) : 0;
   }
 
   private mapNotice(dto: NoticeDto): Notice {
@@ -201,12 +187,15 @@ export class CommunicationService {
     };
   }
 
-  private toNoticeRequest(payload: Partial<Notice>) {
+  private toNoticeRequest(payload: Partial<Notice> & {
+    audiences?: Array<{ audienceType: string; refId?: number | null }>;
+  }) {
     return {
       title: payload.title,
       content: payload.body,
       category: payload.category ?? payload.audience,
-      status: payload.status ?? 'DRAFT'
+      status: payload.status ?? 'DRAFT',
+      audiences: payload.audiences ?? undefined
     };
   }
 

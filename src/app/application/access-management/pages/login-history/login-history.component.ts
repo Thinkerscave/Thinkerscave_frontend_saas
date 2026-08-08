@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { LoginHistoryEntry, LoginStatus } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
@@ -18,7 +19,7 @@ import {
   selector: 'app-login-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent],
   templateUrl: './login-history.component.html',
   styleUrl: './login-history.component.scss'
 })
@@ -32,6 +33,14 @@ export class LoginHistoryComponent implements OnInit {
   statusFilter: 'all' | LoginStatus = 'all';
   entries: LoginHistoryEntry[] = [];
   totalRecords = 0;
+
+  readonly statusOptions: { label: string; value: 'all' | LoginStatus }[] = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Success', value: 'SUCCESS' },
+    { label: 'Failed', value: 'FAILED' },
+    { label: 'Locked', value: 'LOCKED' },
+    { label: 'Logged out', value: 'LOGGED_OUT' }
+  ];
 
   readonly loginStatusLabel = loginStatusLabel;
   readonly loginStatusTone = loginStatusTone;

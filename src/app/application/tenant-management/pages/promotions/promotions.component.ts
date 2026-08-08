@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
 import { DiscountType, Promotion } from '../../models/platform.model';
@@ -23,6 +24,7 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 
 interface PromotionDraft {
   promotionCode: string;
@@ -41,11 +43,13 @@ interface PromotionDraft {
     CommonModule,
     FormsModule,
     ToastModule,
+    DropdownModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    CalendarModule
+    CalendarModule,
+    AppGridTableToggleComponent
   ],
   providers: [MessageService],
   templateUrl: './promotions.component.html',
@@ -63,10 +67,14 @@ export class PromotionsComponent implements OnInit {
   errorMessage = '';
   promotions: Promotion[] = [];
   createOpen = false;
-  viewMode: 'cards' | 'table' = 'cards';
+  viewMode: AppListViewMode = 'grid';
   draft: PromotionDraft = this.emptyDraft();
 
   readonly discountTypes: DiscountType[] = ['PERCENTAGE', 'FLAT_AMOUNT'];
+  readonly discountTypeOptions: { label: string; value: DiscountType }[] = this.discountTypes.map(t => ({
+    label: discountTypeLabel(t),
+    value: t
+  }));
 
   readonly formatDate = formatDate;
   readonly discountTypeLabel = discountTypeLabel;

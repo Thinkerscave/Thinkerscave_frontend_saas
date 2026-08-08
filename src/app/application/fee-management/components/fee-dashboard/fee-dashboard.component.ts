@@ -102,8 +102,40 @@ interface RecentPayment {
           <div class="stat-content">
             <span class="stat-label">Overdue Amount</span>
             <span class="stat-value danger">₹{{ formatAmount(stats.overdueAmount) }}</span>
-            <span class="stat-period">Past Due Date</span>
+            <span class="stat-period">
+              <span class="tc-badge tc-badge--overdue">Overdue</span>
+              Past Due Date
+            </span>
           </div>
+        </div>
+      </div>
+
+      <!-- Collection breakdown + payment timeline -->
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="section-header">
+            <h3><i class="pi pi-chart-pie"></i> Collection breakdown</h3>
+          </div>
+          <p-chart type="doughnut" [data]="collectionChartData" [options]="doughnutOptions" styleClass="fee-donut"></p-chart>
+        </div>
+        <div class="insight-card">
+          <div class="section-header">
+            <h3><i class="pi pi-history"></i> Payment timeline</h3>
+            <a routerLink="/app/fees/payments/history" class="view-all-link">View history <i class="pi pi-arrow-right"></i></a>
+          </div>
+          <ol class="fee-timeline">
+            <li *ngFor="let payment of recentPayments" class="fee-timeline__item">
+              <span class="fee-timeline__dot"></span>
+              <div class="fee-timeline__body">
+                <div class="fee-timeline__top">
+                  <strong>{{ payment.studentName }}</strong>
+                  <span class="amount-cell">₹{{ formatAmount(payment.amount) }}</span>
+                </div>
+                <small>{{ payment.className }} · {{ payment.paymentMode }} · {{ payment.date | date:'short' }}</small>
+                <code>{{ payment.receiptNumber }}</code>
+              </div>
+            </li>
+          </ol>
         </div>
       </div>
 
@@ -341,6 +373,89 @@ interface RecentPayment {
     .stat-period {
       font-size: 0.75rem;
       color: var(--text-color-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .insight-card {
+      background: var(--surface-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    :host ::ng-deep .fee-donut {
+      height: 220px;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .fee-timeline {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .fee-timeline__item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      gap: 12px;
+      padding: 0 0 16px 0;
+    }
+
+    .fee-timeline__item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 14px;
+      bottom: 0;
+      width: 2px;
+      background: color-mix(in srgb, var(--tc-accent, var(--primary-color)) 28%, var(--surface-border));
+    }
+
+    .fee-timeline__dot {
+      width: 14px;
+      height: 14px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--tc-accent, var(--primary-color));
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--tc-accent, var(--primary-color)) 18%, transparent);
+    }
+
+    .fee-timeline__body {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .fee-timeline__top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .fee-timeline__body small { color: var(--text-color-secondary); }
+    .fee-timeline__body code {
+      width: fit-content;
+      background: var(--surface-ground);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
     }
 
     /* Quick Navigation */
@@ -530,6 +645,10 @@ interface RecentPayment {
       .status-cards {
         grid-template-columns: 1fr;
       }
+
+      .insights-grid {
+        grid-template-columns: 1fr;
+      }
     }
   `]
 })
@@ -555,8 +674,26 @@ export class FeeDashboardComponent implements OnInit {
         { receiptNumber: 'RCP-2026-0138', studentName: 'Vikram Singh', className: 'Class 11-B', amount: 16500, paymentMode: 'UPI', date: new Date() }
     ];
 
+    collectionChartData: any;
+    doughnutOptions: any;
+
     ngOnInit(): void {
-        // TODO: Load real data from API
+        this.collectionChartData = {
+            labels: ['Collected', 'Outstanding', 'Overdue'],
+            datasets: [{
+                data: [this.stats.totalCollection, this.stats.outstandingAmount, this.stats.overdueAmount],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        };
+        this.doughnutOptions = {
+            cutout: '68%',
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }
+            },
+            maintainAspectRatio: false
+        };
     }
 
     formatAmount(amount: number): string {

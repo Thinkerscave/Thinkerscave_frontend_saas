@@ -1,6 +1,5 @@
 <section class="sd-workspace" (click)="closeMenu()">
 
-  <!-- ───────── HEADER ───────── -->
   <header class="sd-header">
     <div class="sd-header__left">
       <h1 class="sd-header__title">Staff</h1>
@@ -19,7 +18,6 @@
     </div>
   </header>
 
-  <!-- ───────── KPI TILES ───────── -->
   <div class="sd-kpi-row">
     <div *ngFor="let tile of kpiTiles"
          class="sd-kpi-card"
@@ -34,7 +32,6 @@
     </div>
   </div>
 
-  <!-- ───────── FILTER BAR ───────── -->
   <div class="sd-filter-panel">
     <div class="sd-filter-panel__search">
       <i class="pi pi-search sd-filter-panel__search-icon"></i>
@@ -45,15 +42,36 @@
              (keyup.enter)="search()"/>
     </div>
     <div class="sd-filter-panel__selects">
-      <select id="filter-staff-type" [(ngModel)]="filters.staffType" (change)="search()">
-        <option *ngFor="let o of staffTypeOptions" [value]="o.value">{{ o.label }}</option>
-      </select>
-      <select id="filter-emp-category" [(ngModel)]="filters.employmentCategory" (change)="search()">
-        <option *ngFor="let o of categoryOptions" [value]="o.value">{{ o.label }}</option>
-      </select>
-      <select id="filter-emp-status" [(ngModel)]="filters.employmentStatus" (change)="search()">
-        <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
-      </select>
+      <p-dropdown
+        inputId="filter-staff-type"
+        [options]="staffTypeOptions"
+        [(ngModel)]="filters.staffType"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Types"
+        [showClear]="true"
+        (onChange)="search()">
+      </p-dropdown>
+      <p-dropdown
+        inputId="filter-emp-category"
+        [options]="categoryOptions"
+        [(ngModel)]="filters.employmentCategory"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Categories"
+        [showClear]="true"
+        (onChange)="search()">
+      </p-dropdown>
+      <p-dropdown
+        inputId="filter-emp-status"
+        [options]="statusOptions"
+        [(ngModel)]="filters.employmentStatus"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Status"
+        [showClear]="true"
+        (onChange)="search()">
+      </p-dropdown>
     </div>
     <div class="sd-filter-panel__actions">
       <button id="btn-clear-filters" type="button" class="sd-btn sd-btn--ghost" (click)="clearFilters()">
@@ -64,43 +82,45 @@
         Search
       </button>
     </div>
-    <div class="sd-filter-panel__view">
-      <button id="btn-view-cards" type="button" [class.is-active]="view === 'cards'" (click)="view = 'cards'">
-        <i class="pi pi-th-large"></i> Cards
-      </button>
-      <button id="btn-view-table" type="button" [class.is-active]="view === 'table'" (click)="view = 'table'">
-        <i class="pi pi-list"></i> Table
-      </button>
+    <div class="sd-filter-panel__view tc-view-switch" role="group" aria-label="View mode">
+      <app-grid-table-toggle
+        storageKey="staff.directory.view"
+        [(mode)]="view"
+        ariaLabel="Staff directory view">
+      </app-grid-table-toggle>
     </div>
   </div>
 
-  <!-- ───────── ERROR ───────── -->
   <div *ngIf="errorMessage" class="sd-error-banner">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <!-- ───────── LOADING ───────── -->
-  <div *ngIf="loading" class="sd-loading">
-    <i class="pi pi-spin pi-spinner"></i>
-    <span>Loading staff members...</span>
+  <div *ngIf="loading" class="sd-card-grid" aria-busy="true">
+    <div class="sd-card sd-card--skeleton" *ngFor="let _ of [1,2,3,4,5,6]">
+      <app-skeleton shape="circle" size="72px"></app-skeleton>
+      <app-skeleton shape="line" height="16px" width="60%"></app-skeleton>
+      <app-skeleton shape="line" height="12px" width="40%"></app-skeleton>
+      <app-skeleton shape="line" height="12px" width="80%"></app-skeleton>
+    </div>
   </div>
 
-  <!-- ───────── EMPTY ───────── -->
-  <div *ngIf="!loading && staffPage.content.length === 0 && !errorMessage" class="sd-empty">
-    <i class="pi pi-users"></i>
-    <h3>No staff found</h3>
-    <p>Try adjusting your filters or <button type="button" (click)="addStaff()">add a new staff member</button>.</p>
-  </div>
+  <app-empty-state
+    *ngIf="!loading && staffPage.content.length === 0 && !errorMessage"
+    illustration="staff"
+    title="No staff found"
+    message="Try adjusting your filters or add a new staff member."
+    actionLabel="Add Staff"
+    actionIcon="pi pi-plus"
+    (action)="addStaff()">
+  </app-empty-state>
 
-  <!-- ═══════ CARD VIEW ═══════ -->
-  <div *ngIf="!loading && view === 'cards' && staffPage.content.length > 0" class="sd-card-grid">
+  <div *ngIf="!loading && view === 'grid' && staffPage.content.length > 0" class="sd-card-grid">
     <article *ngFor="let s of staffPage.content; trackBy: trackByStaff"
              class="sd-card"
              (click)="openProfile(s)">
 
-      <!-- Three-dot menu -->
       <button id="btn-menu-{{ s.staffId }}" class="sd-card__menu-btn" type="button"
-              (click)="toggleMenu(s.staffId, $event)">
+              (click)="toggleMenu(s.staffId, $event)" title="More actions">
         <i class="pi pi-ellipsis-v"></i>
       </button>
       <div *ngIf="openMenuId === s.staffId" class="sd-dropdown" (click)="$event.stopPropagation()">
@@ -119,27 +139,22 @@
         </button>
       </div>
 
-      <!-- Avatar -->
       <div class="sd-card__avatar">
-        <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar"/>
-        <div *ngIf="!s.photoUrl" class="sd-avatar sd-avatar--initials">{{ initials(s.fullName) }}</div>
+        <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
         <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
       </div>
 
-      <!-- Name block -->
       <div class="sd-card__info">
         <strong class="sd-card__name">{{ s.fullName }}</strong>
         <span class="sd-card__code">{{ s.staffCode }}</span>
-        <span class="sd-card__designation">{{ s.designation }}</span>
+        <span class="sd-card__designation">{{ s.designation || '—' }}</span>
       </div>
 
-      <!-- Meta row -->
       <div class="sd-card__meta">
         <span class="sd-meta-chip">{{ categoryLabel(s.employmentCategory) }}</span>
         <span class="sd-meta-chip">Joined {{ s.joiningDate | date:'d MMM yyyy' }}</span>
       </div>
 
-      <!-- Footer -->
       <div class="sd-card__footer">
         <span class="sd-status-pill" [attr.data-status]="s.employmentStatus">
           {{ s.employmentStatus | titlecase }}
@@ -156,7 +171,6 @@
     </article>
   </div>
 
-  <!-- ═══════ TABLE VIEW ═══════ -->
   <div *ngIf="!loading && view === 'table' && staffPage.content.length > 0" class="sd-table-wrap">
     <table class="sd-table">
       <thead>
@@ -175,8 +189,7 @@
         <tr *ngFor="let s of staffPage.content; trackBy: trackByStaff">
           <td>
             <div class="sd-table-staff">
-              <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar sd-avatar--sm"/>
-              <div *ngIf="!s.photoUrl" class="sd-avatar sd-avatar--sm sd-avatar--initials">{{ initials(s.fullName) }}</div>
+              <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
               <div>
                 <strong>{{ s.fullName }}</strong>
                 <small>{{ s.email }}</small>
@@ -184,7 +197,7 @@
             </div>
           </td>
           <td><code>{{ s.staffCode }}</code></td>
-          <td>{{ s.designation }}</td>
+          <td>{{ s.designation || '—' }}</td>
           <td>
             <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
           </td>
@@ -197,19 +210,21 @@
           <td>{{ s.joiningDate | date:'d MMM yyyy' }}</td>
           <td>
             <div class="sd-table-actions">
-              <button type="button" class="sd-icon-btn" title="View Profile" (click)="openProfile(s)">
-                <i class="pi pi-eye"></i>
+              <button type="button" class="sd-icon-btn" title="More actions"
+                      (click)="toggleMenu(s.staffId, $event)">
+                <i class="pi pi-ellipsis-v"></i>
               </button>
-              <button type="button" class="sd-icon-btn" title="Edit" (click)="editStaff(s, $event)">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button type="button" class="sd-icon-btn" [title]="s.active ? 'Deactivate' : 'Activate'"
-                      (click)="toggleActive(s, $event)">
-                <i class="pi" [class.pi-ban]="s.active" [class.pi-check]="!s.active"></i>
-              </button>
-              <button type="button" class="sd-icon-btn danger" title="Delete" (click)="deleteStaff(s, $event)">
-                <i class="pi pi-trash"></i>
-              </button>
+              <div *ngIf="openMenuId === s.staffId" class="sd-dropdown sd-dropdown--table" (click)="$event.stopPropagation()">
+                <button type="button" (click)="openProfile(s)"><i class="pi pi-eye"></i> View</button>
+                <button type="button" (click)="editStaff(s, $event)"><i class="pi pi-pencil"></i> Edit</button>
+                <button type="button" (click)="toggleActive(s, $event)">
+                  <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+                  {{ s.active ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button type="button" class="danger" (click)="deleteStaff(s, $event)">
+                  <i class="pi pi-trash"></i> Delete
+                </button>
+              </div>
             </div>
           </td>
         </tr>
@@ -217,25 +232,22 @@
     </table>
   </div>
 
-  <!-- ───────── PAGINATION ───────── -->
-  <div *ngIf="!loading && staffPage.totalPages > 1" class="sd-pagination">
-    <button type="button" class="sd-page-btn" [disabled]="staffPage.number === 0"
-            (click)="goToPage(staffPage.number - 1)">
-      <i class="pi pi-chevron-left"></i>
-    </button>
-    <button *ngFor="let p of pageNumbers" type="button"
-            class="sd-page-btn" [class.is-active]="p === staffPage.number"
-            (click)="goToPage(p)">{{ p + 1 }}</button>
-    <button type="button" class="sd-page-btn"
-            [disabled]="staffPage.number >= staffPage.totalPages - 1"
-            (click)="goToPage(staffPage.number + 1)">
-      <i class="pi pi-chevron-right"></i>
-    </button>
-    <span class="sd-page-info">
-      Showing {{ staffPage.number * staffPage.size + 1 }}–{{ getMin(staffPage.number * staffPage.size + staffPage.content.length, staffPage.totalElements) }}
-      of {{ staffPage.totalElements }}
-    </span>
-  </div>
+  <p-paginator
+    *ngIf="!loading && staffPage.totalElements > 0"
+    [rows]="filters.size || 12"
+    [totalRecords]="staffPage.totalElements"
+    [first]="(filters.page || 0) * (filters.size || 12)"
+    [rowsPerPageOptions]="[12, 24, 48]"
+    (onPageChange)="onPageChange($event)">
+  </p-paginator>
+
+  <ng-container *ngIf="showAddDrawer">
+    <div class="sd-drawer-overlay" (click)="closeAddDrawer()"></div>
+    <app-create-staff
+      [drawerMode]="true"
+      (closed)="closeAddDrawer()"
+      (saved)="onStaffAdded()">
+    </app-create-staff>
+  </ng-container>
 
 </section>
-

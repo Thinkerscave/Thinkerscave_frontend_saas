@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { resolveStaffPhotoUrl } from '../../../shared/utils/profile-assets';
 import {
   ApiResponse,
   BulkMarkPaidRequest,
@@ -11,6 +12,7 @@ import {
   PayrollDashboard,
   PayrollFilterParams,
   PayrollGenerateRequest,
+  PayrollGenerateResult,
   Responsibility,
   ResponsibilityAssignment,
   ResponsibilityAssignmentRequest,
@@ -53,13 +55,22 @@ export class StaffService {
     if (filters.sort)               { params = params.set('sort',               filters.sort); }
     return this.http
       .get<ApiResponse<PageResponse<StaffSummary>>>(`${this.base}/staff`, { params })
-      .pipe(map(r => r.data));
+      .pipe(map(r => ({
+        ...r.data,
+        content: (r.data?.content ?? []).map(s => ({
+          ...s,
+          photoUrl: resolveStaffPhotoUrl(s.staffId, s.photoUrl) ?? undefined
+        }))
+      })));
   }
 
   getStaffDetail(staffId: number): Observable<StaffDetail> {
     return this.http
       .get<ApiResponse<StaffDetail>>(`${this.base}/staff/${staffId}`)
-      .pipe(map(r => r.data));
+      .pipe(map(r => ({
+        ...r.data,
+        photoUrl: resolveStaffPhotoUrl(r.data.staffId, r.data.photoUrl) ?? undefined
+      })));
   }
 
   createStaff(request: StaffCreateRequest): Observable<StaffCreateResponse> {
@@ -192,9 +203,9 @@ export class StaffService {
       .pipe(map(r => r.data));
   }
 
-  generatePayroll(request: PayrollGenerateRequest): Observable<{ generatedRecords: number }> {
+  generatePayroll(request: PayrollGenerateRequest): Observable<PayrollGenerateResult> {
     return this.http
-      .post<ApiResponse<{ generatedRecords: number }>>(`${this.base}/payroll/generate`, request)
+      .post<ApiResponse<PayrollGenerateResult>>(`${this.base}/payroll/generate`, request)
       .pipe(map(r => r.data));
   }
 
@@ -229,9 +240,19 @@ export class StaffService {
       .pipe(map(() => void 0));
   }
 
-  downloadPayslip(payrollId: number): Observable<Payroll> {
-    return this.http
-      .get<ApiResponse<Payroll>>(`${this.base}/payroll/${payrollId}/payslip`)
-      .pipe(map(r => r.data));
+  downloadPayslip(payrollId: number): Observable<Blob> {
+    return this.http.get(`${this.base}/payroll/${payrollId}/payslip`, {
+      responseType: 'blob'
+    });
+  }
+
+  exportPayrollReport(year: number, month: number): Observable<Blob> {
+    const params = new HttpParams()
+      .set('year', String(year))
+      .set('month', String(month));
+    return this.http.get(`${this.base}/payroll/report/export`, {
+      params,
+      responseType: 'blob'
+    });
   }
 }

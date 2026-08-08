@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
@@ -60,7 +60,7 @@ export class MenuMappingService {
       return of([]);
     }
 
-    let parsedUser: { id?: string | number };
+    let parsedUser: any;
     try {
       parsedUser = JSON.parse(userStr);
       if (parsedUser && typeof parsedUser === 'object' && 'data' in parsedUser && !('id' in parsedUser)) {
@@ -90,10 +90,10 @@ export class MenuMappingService {
         // Guardrail: if role filtering/grouping accidentally removes everything,
         // fall back to normalized server sidebar so users still get navigation.
         if (filtered.length === 0 && normalized.length > 0) {
-          return normalized;
+          return this.ensureOwnerAdminDefaultMenus(normalized);
         }
 
-        return filtered;
+        return this.ensureOwnerAdminDefaultMenus(filtered);
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -102,19 +102,30 @@ export class MenuMappingService {
       }),
       catchError(err => {
         this.logger.error('Failed to load side menus', err);
-        return of([]);
+        // Owner/Admin always keep a core navigation set even when the API fails (403/empty).
+        return of(this.ensureOwnerAdminDefaultMenus(this.applyNavigationRules([])));
       })
     );
   }
 
 
-  private resolveSidebarOrganizationId(parsedUser: { id?: string | number; orgId?: string | number; organizationId?: string | number }): number {
+  private resolveSidebarOrganizationId(parsedUser: any): number {
     const candidates: Array<string | number | null | undefined> = [
       sessionStorage.getItem('currentOrgId'),
       localStorage.getItem('currentOrgId'),
       this.orgContext.resolveOrganizationId(),
+      parsedUser?.currentOrgId,
       parsedUser?.organizationId,
       parsedUser?.orgId,
+      parsedUser?.organizations?.[0]?.organizationId,
+      parsedUser?.organizations?.[0]?.orgId,
+      parsedUser?.organizations?.[0]?.id,
+      parsedUser?.organization?.organizationId,
+      parsedUser?.organization?.orgId,
+      parsedUser?.organization?.id,
+      parsedUser?.data?.organizationId,
+      parsedUser?.data?.orgId,
+      parsedUser?.data?.organizations?.[0]?.orgId,
       environment.defaultOrganizationId
     ];
 
@@ -132,7 +143,11 @@ export class MenuMappingService {
 
   clearMenuCache(): void {
     this.menuCache = [];
-    localStorage.removeItem('sideMenu');
+    try {
+      localStorage.removeItem('sideMenu');
+    } catch {
+      /* ignore storage failures */
+    }
   }
 
   refreshMenu(): void {
@@ -323,6 +338,86 @@ export class MenuMappingService {
     }
 
     return menus;
+  }
+
+  /**
+   * Organization Owner / Admin always receive a default navigation core.
+   * Other users only see menus assigned by the org admin (API permissions).
+   */
+  private ensureOwnerAdminDefaultMenus(items: MenuItem[]): MenuItem[] {
+    const roles = this.currentRoleTokens();
+    const isAccessManager = this.hasAnyRole(roles, [
+      'ORGANIZATION_OWNER',
+      'ORGANIZATION_ADMIN',
+      'ADMIN',
+      'COLLEGE_ADMIN',
+      'INSTITUTION_ADMIN',
+      'ROLE_OWNER',
+      'ROLE_ADMIN'
+    ]);
+    if (!isAccessManager) {
+      return items;
+    }
+
+    let menus = items?.length ? [...items] : [];
+    menus = this.ensureMenuGroup(menus, {
+      label: 'Dashboard',
+      icon: 'pi pi-home',
+      routerLink: ['/app']
+    });
+    menus = this.ensureMenuGroup(menus, this.accessManagementMenuGroup());
+    for (const group of this.defaultOwnerAdminModuleMenus()) {
+      menus = this.ensureMenuGroup(menus, group);
+    }
+    return menus;
+  }
+
+  private defaultOwnerAdminModuleMenus(): MenuItem[] {
+    return [
+      {
+        label: 'Students',
+        icon: 'pi pi-users',
+        routerLink: ['/app/students'],
+        items: [
+          { label: 'Student Directory', icon: 'pi pi-list', routerLink: ['/app/students'] },
+          { label: 'Add Student', icon: 'pi pi-user-plus', routerLink: ['/app/students/add'] }
+        ]
+      },
+      {
+        label: 'Staff',
+        icon: 'pi pi-briefcase',
+        routerLink: ['/app/staff'],
+        items: [
+          { label: 'Staff Directory', icon: 'pi pi-list', routerLink: ['/app/staff'] },
+          { label: 'Payroll', icon: 'pi pi-wallet', routerLink: ['/app/staff/payroll'] }
+        ]
+      },
+      {
+        label: 'Attendance',
+        icon: 'pi pi-calendar',
+        routerLink: ['/app/attendance'],
+        items: [
+          { label: 'Student Attendance', icon: 'pi pi-user', routerLink: ['/app/attendance/student'] },
+          { label: 'Calendar', icon: 'pi pi-calendar', routerLink: ['/app/attendance/calendar'] },
+          { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: ['/app/attendance/reports'] },
+          { label: 'Settings', icon: 'pi pi-cog', routerLink: ['/app/attendance/settings'] }
+        ]
+      },
+      {
+        label: 'Academics',
+        icon: 'pi pi-book',
+        routerLink: ['/app/academics'],
+        items: [
+          { label: 'Academic Years', icon: 'pi pi-calendar', routerLink: ['/app/academics/years'] },
+          { label: 'Classes', icon: 'pi pi-sitemap', routerLink: ['/app/academics/classes'] }
+        ]
+      },
+      {
+        label: 'Promotions',
+        icon: 'pi pi-arrow-up',
+        routerLink: ['/app/promotions']
+      }
+    ];
   }
 
   private mapSidebarNode(node: SidebarMenuNode): MenuItem {
@@ -568,3 +663,4 @@ export class MenuMappingService {
     return role.trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase();
   }
 }
+

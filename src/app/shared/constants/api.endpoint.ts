@@ -107,6 +107,17 @@ export const attendanceApi = {
   history: (referenceId: number, type: string) => `${BASE}/attendance/history/${referenceId}?type=${type}`,
   update: (id: number) => `${BASE}/attendance/${id}`,
   delete: (id: number) => `${BASE}/attendance/${id}`,
+  settings: `${BASE}/attendance/settings`,
+  settingsReset: `${BASE}/attendance/settings/reset`,
+  copyPrevious: (classId: number, targetDate: string, sectionId?: number | null) => {
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/students/copy-previous?classId=${classId}&targetDate=${targetDate}${sec}`;
+  },
+  reports: {
+    summary: `${BASE}/attendance/reports/summary`,
+    staff: `${BASE}/attendance/reports/staff`,
+    student: (studentId: number) => `${BASE}/attendance/reports/student/${studentId}`
+  }
 };
 
 // ─── Staff attendance (sign-in / sign-out) ───────────────────────────────────
@@ -254,6 +265,11 @@ export const publicInquiryApi = {
 export const publicOrganizationsApi = {
   list: `${BASE}/public/organizations`,
   search: (q: string) => `${BASE}/public/organizations?search=${encodeURIComponent(q)}`,
+};
+
+/** Public subscription catalog for the marketing landing page (DB is source of truth). */
+export const publicSubscriptionPlansApi = {
+  list: `${BASE}/public/subscription-plans`,
 };
 
 // ─── Courses, Subjects, Academic Years ─────────────────────────────────────────

@@ -2,6 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { CommunicationService, Notification } from '../../services/communication.service';
 import {
@@ -13,11 +14,16 @@ import {
   SaasStat
 } from '../../../../shared/ui/saas';
 
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-delivery-logs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './delivery-logs.component.html',
   styleUrl: './delivery-logs.component.scss'
 })
@@ -33,6 +39,21 @@ export class DeliveryLogsComponent implements OnInit {
   statusFilter = 'all';
   fromDate = this.daysAgo(7);
   toDate = this.today();
+
+  readonly channelOptions: SelectOption[] = [
+    { label: 'All', value: 'all' },
+    { label: 'Email', value: 'EMAIL' },
+    { label: 'SMS', value: 'SMS' },
+    { label: 'Push', value: 'PUSH' },
+    { label: 'In-app', value: 'IN_APP' }
+  ];
+
+  readonly statusOptions: SelectOption[] = [
+    { label: 'All', value: 'all' },
+    { label: 'Delivered', value: 'SENT' },
+    { label: 'Pending', value: 'PENDING' },
+    { label: 'Failed', value: 'FAILED' }
+  ];
 
   ngOnInit(): void { this.load(); }
 

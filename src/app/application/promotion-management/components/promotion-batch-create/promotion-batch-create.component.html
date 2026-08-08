@@ -1,0 +1,62 @@
+<app-workspace-header
+    title="New promotion batch"
+    subtitle="Academic year transition"
+    description="Create a draft batch, then preview and execute from the list."
+    icon="pi pi-arrow-up-right"
+    [breadcrumbs]="[
+      { label: 'Students' },
+      { label: 'Promotions', routerLink: '/app/promotions' },
+      { label: 'New' }
+    ]">
+</app-workspace-header>
+
+<section class="tc-card form-card">
+  @if (loadingYears) {
+    <p class="muted">Loading academic years…</p>
+  } @else if (!years.length) {
+    <p class="muted">No academic years found. Create years in Academics first.</p>
+  } @else {
+    <div class="form-grid">
+      <label class="field">
+        <span>From academic year</span>
+        <p-dropdown
+          [options]="years"
+          [(ngModel)]="fromAcademicYearId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select year"
+          styleClass="w-full"
+          [disabled]="saving">
+        </p-dropdown>
+      </label>
+
+      <label class="field">
+        <span>To academic year</span>
+        <p-dropdown
+          [options]="years"
+          [(ngModel)]="toAcademicYearId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select year"
+          styleClass="w-full"
+          [disabled]="saving">
+        </p-dropdown>
+      </label>
+
+      <label class="field full">
+        <span>Batch code (optional)</span>
+        <input pInputText [(ngModel)]="batchCode" class="w-full" placeholder="e.g. PROMO-2025-26" [disabled]="saving" />
+      </label>
+
+      <label class="field full">
+        <span>Remarks (optional)</span>
+        <textarea pInputTextarea [(ngModel)]="remarks" rows="3" class="w-full" [disabled]="saving"></textarea>
+      </label>
+    </div>
+
+    <div class="actions">
+      <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="cancel()" [disabled]="saving"></p-button>
+      <p-button label="Create draft" icon="pi pi-check" (onClick)="submit()" [loading]="saving"></p-button>
+    </div>
+  }
+</section>

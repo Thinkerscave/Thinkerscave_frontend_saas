@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
 
   /* Typography */
@@ -11,6 +11,11 @@
   --tc-font-size-xl: 1.25rem;
   --tc-font-size-2xl: 1.5rem;
   --tc-font-size-3xl: 1.875rem;
+
+  /* Configurable Accent */
+  --tc-accent: #1F3A93;
+  --tc-accent-soft: color-mix(in srgb, var(--tc-accent) 16%, transparent);
+  --tc-accent-strong: color-mix(in srgb, var(--tc-accent) 82%, black);
   
   /* Brand Primary (Electric Indigo / Premium Blue) */
   --tc-primary-50: #eff4ff;
@@ -80,7 +85,7 @@
 
   --tc-border: #e2e8f0;
   --tc-border-strong: #cbd5e1;
-  --tc-focus-ring: 0 0 0 3px rgba(59, 118, 246, 0.25);
+  --tc-focus-ring: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 28%, transparent);
 
   /* Radii */
   --tc-radius-xs: 0.375rem;
@@ -106,13 +111,13 @@
   --tc-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 12px rgba(15, 23, 42, 0.03);
   --tc-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(15, 23, 42, 0.05);
   --tc-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 24px 60px rgba(15, 23, 42, 0.08);
-  --tc-shadow-focus: 0 0 0 3px rgba(59, 118, 246, 0.25);
-  --tc-shadow-accent: 0 16px 34px rgba(252, 109, 15, 0.2);
+  --tc-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 28%, transparent);
+  --tc-shadow-accent: 0 16px 34px color-mix(in srgb, var(--tc-accent) 24%, transparent);
 
   /* Card Hover */
   --tc-card-hover-translate: -2px;
   --tc-card-hover-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
-  --tc-card-hover-border: var(--tc-primary-300);
+  --tc-card-hover-border: color-mix(in srgb, var(--tc-accent) 42%, var(--tc-border-strong));
 
   /* Animations */
   --tc-anim-duration-fast: 150ms;
@@ -120,6 +125,14 @@
   --tc-anim-duration-slow: 350ms;
   --tc-anim-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --tc-anim-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Z-index scale */
+  --tc-z-sticky: 10;
+  --tc-z-dropdown: 1000;
+  --tc-z-overlay: 1100;
+  --tc-z-modal: 1200;
+  --tc-z-toast: 1300;
+  --tc-z-tooltip: 1400;
 
   /* Specific Components */
   --tc-topbar-bg: rgba(255, 255, 255, 0.85);
@@ -132,18 +145,18 @@
   --tc-sidebar-border: #e2e8f0;
   --tc-sidebar-text: #64748b;
   --tc-sidebar-text-hover: #0f172a;
-  --tc-sidebar-active-bg: #eff4ff;
-  --tc-sidebar-active-text: #2556eb;
+  --tc-sidebar-active-bg: color-mix(in srgb, var(--tc-accent) 12%, transparent);
+  --tc-sidebar-active-text: var(--tc-accent);
 
-  --tc-button-primary-bg: linear-gradient(135deg, #3b76f6 0%, #2556eb 100%);
-  --tc-button-primary-hover-bg: linear-gradient(135deg, #2556eb 0%, #1d43c8 100%);
-  --tc-button-accent-bg: linear-gradient(135deg, #fc6d0f 0%, #ed5206 100%);
-  --tc-button-accent-hover-bg: linear-gradient(135deg, #ed5206 0%, #c43c07 100%);
+  --tc-button-primary-bg: linear-gradient(135deg, var(--tc-accent) 0%, var(--tc-accent-strong) 100%);
+  --tc-button-primary-hover-bg: linear-gradient(135deg, var(--tc-accent-strong) 0%, color-mix(in srgb, var(--tc-accent-strong) 80%, black) 100%);
+  --tc-button-accent-bg: linear-gradient(135deg, color-mix(in srgb, var(--tc-accent) 92%, white) 0%, var(--tc-accent-strong) 100%);
+  --tc-button-accent-hover-bg: linear-gradient(135deg, var(--tc-accent-strong) 0%, color-mix(in srgb, var(--tc-accent-strong) 72%, black) 100%);
 
   --tc-input-bg: #ffffff;
   --tc-input-border: #cbd5e1;
   --tc-input-hover-border: #94a3b8;
-  --tc-input-focus-border: #3b76f6;
+  --tc-input-focus-border: var(--tc-accent);
   --tc-input-placeholder: #94a3b8;
 
   --tc-table-header-bg: #f8fafc;
@@ -160,12 +173,12 @@
   --tc-kpi-emerald-bg: rgba(16, 185, 129, 0.1);
   --tc-kpi-emerald-text: #059669;
 
-  --tc-loader-foreground: #3b76f6;
-  --tc-loader-progress: #2556eb;
+  --tc-loader-foreground: var(--tc-accent);
+  --tc-loader-progress: var(--tc-accent-strong);
   --tc-loader-text: #0f172a;
 
   /* PrimeNG Compatibility */
-  --primary-color: var(--tc-primary-600);
+  --primary-color: var(--tc-accent);
   --primary-color-text: #ffffff;
   --surface-ground: var(--tc-bg);
   --surface-section: var(--tc-bg-muted);
@@ -175,13 +188,13 @@
   --surface-hover: var(--tc-surface-hover);
   --text-color: var(--tc-text);
   --text-color-secondary: var(--tc-text-muted);
-  --highlight-bg: var(--tc-primary-50);
-  --highlight-text-color: var(--tc-primary-700);
+  --highlight-bg: color-mix(in srgb, var(--tc-accent) 12%, transparent);
+  --highlight-text-color: var(--tc-accent-strong);
 
   /* PrimeNG 19 Theme overrides */
-  --p-primary-color: var(--tc-primary-600);
-  --p-primary-hover-color: var(--tc-primary-700);
-  --p-primary-active-color: var(--tc-primary-800);
+  --p-primary-color: var(--tc-accent);
+  --p-primary-hover-color: var(--tc-accent-strong);
+  --p-primary-active-color: color-mix(in srgb, var(--tc-accent-strong) 88%, black);
   --p-primary-contrast-color: #ffffff;
   --p-surface-ground: var(--tc-bg);
   --p-surface-card: var(--tc-surface-card-solid);
@@ -252,18 +265,18 @@
 
   --tc-border: rgba(148, 163, 184, 0.15);
   --tc-border-strong: rgba(148, 163, 184, 0.25);
-  --tc-focus-ring: 0 0 0 3px rgba(96, 154, 250, 0.3);
+  --tc-focus-ring: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 34%, transparent);
 
   /* Shadows (Darker for dark mode) */
   --tc-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --tc-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
   --tc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.3);
   --tc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 24px 60px rgba(0, 0, 0, 0.4);
-  --tc-shadow-focus: 0 0 0 3px rgba(96, 154, 250, 0.3);
+  --tc-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 34%, transparent);
 
   /* Card Hover */
   --tc-card-hover-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-  --tc-card-hover-border: rgba(96, 154, 250, 0.4);
+  --tc-card-hover-border: color-mix(in srgb, var(--tc-accent) 48%, rgba(148, 163, 184, 0.25));
 
   /* Specific Components */
   --tc-topbar-bg: rgba(15, 23, 42, 0.85);
@@ -275,16 +288,16 @@
   --tc-sidebar-border: rgba(255, 255, 255, 0.08);
   --tc-sidebar-text: #94a3b8;
   --tc-sidebar-text-hover: #f1f5f9;
-  --tc-sidebar-active-bg: rgba(59, 118, 246, 0.15);
-  --tc-sidebar-active-text: #93bbfd;
+  --tc-sidebar-active-bg: color-mix(in srgb, var(--tc-accent) 18%, transparent);
+  --tc-sidebar-active-text: var(--tc-accent);
 
-  --tc-button-primary-bg: linear-gradient(135deg, #3b76f6 0%, #4f46e5 100%);
-  --tc-button-primary-hover-bg: linear-gradient(135deg, #609afa 0%, #6366f1 100%);
+  --tc-button-primary-bg: linear-gradient(135deg, var(--tc-accent) 0%, color-mix(in srgb, var(--tc-accent) 78%, black) 100%);
+  --tc-button-primary-hover-bg: linear-gradient(135deg, color-mix(in srgb, var(--tc-accent) 92%, white) 0%, var(--tc-accent) 100%);
 
   --tc-input-bg: rgba(15, 23, 42, 0.6);
   --tc-input-border: rgba(148, 163, 184, 0.25);
   --tc-input-hover-border: rgba(148, 163, 184, 0.4);
-  --tc-input-focus-border: #609afa;
+  --tc-input-focus-border: color-mix(in srgb, var(--tc-accent) 74%, white);
   --tc-input-placeholder: #64748b;
 
   --tc-table-header-bg: rgba(15, 23, 42, 0.8);
@@ -301,12 +314,12 @@
   --tc-kpi-emerald-bg: rgba(52, 211, 153, 0.15);
   --tc-kpi-emerald-text: #6ee7b7;
 
-  --tc-loader-foreground: #609afa;
-  --tc-loader-progress: #3b76f6;
+  --tc-loader-foreground: var(--tc-accent);
+  --tc-loader-progress: color-mix(in srgb, var(--tc-accent) 82%, black);
   --tc-loader-text: #94a3b8;
 
   /* PrimeNG Compatibility */
-  --primary-color: var(--tc-primary-400);
+  --primary-color: var(--tc-accent);
   --primary-color-text: #0f172a;
   --surface-ground: var(--tc-bg);
   --surface-section: var(--tc-bg-muted);
@@ -316,13 +329,13 @@
   --surface-hover: var(--tc-surface-hover);
   --text-color: var(--tc-text);
   --text-color-secondary: var(--tc-text-muted);
-  --highlight-bg: rgba(59, 118, 246, 0.15);
-  --highlight-text-color: var(--tc-primary-700);
+  --highlight-bg: color-mix(in srgb, var(--tc-accent) 20%, transparent);
+  --highlight-text-color: var(--tc-accent-strong);
 
   /* PrimeNG 19 Theme overrides */
-  --p-primary-color: var(--tc-primary-400);
-  --p-primary-hover-color: var(--tc-primary-500);
-  --p-primary-active-color: var(--tc-primary-600);
+  --p-primary-color: var(--tc-accent);
+  --p-primary-hover-color: color-mix(in srgb, var(--tc-accent) 88%, white);
+  --p-primary-active-color: color-mix(in srgb, var(--tc-accent) 78%, black);
   --p-primary-contrast-color: #0f172a;
   --p-surface-ground: var(--tc-bg);
   --p-surface-card: var(--tc-surface-card-solid);
@@ -338,3 +351,5 @@
 :root.tc-theme-transition * {
   transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
+
+

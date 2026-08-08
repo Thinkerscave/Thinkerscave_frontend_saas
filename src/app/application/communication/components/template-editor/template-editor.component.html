@@ -12,7 +12,14 @@
       <div class="form-grid">
         <label class="saas-field"><span>Template Name</span><input type="text" [(ngModel)]="template.name" placeholder="e.g. Fee Reminder"></label>
         <label class="saas-field"><span>Category</span>
-          <select [(ngModel)]="template.category"><option *ngFor="let c of categories" [value]="c">{{ c }}</option></select>
+          <p-dropdown
+            [options]="categoryOptions"
+            [(ngModel)]="template.category"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </label>
         <label class="saas-field saas-field--full"><span>Subject</span><input type="text" [(ngModel)]="template.subject" placeholder="Subject line"></label>
         <label class="saas-field saas-field--full"><span>Message Body</span><textarea rows="14" [(ngModel)]="template.body" [placeholder]="bodyPlaceholder"></textarea></label>

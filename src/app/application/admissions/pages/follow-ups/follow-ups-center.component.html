@@ -40,11 +40,14 @@
           </div>
           <div class="tc-form-field">
             <label>Type *</label>
-            <select formControlName="followUpType">
-              @for (t of followUpTypes; track t) {
-                <option [value]="t">{{ t }}</option>
-              }
-            </select>
+            <p-dropdown
+              [options]="followUpTypeOptions"
+              formControlName="followUpType"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
             <label>Follow-up date</label>
@@ -56,13 +59,14 @@
           </div>
           <div class="tc-form-field">
             <label>Status after</label>
-            <select formControlName="statusAfter">
-              <option value="CONTACTED">CONTACTED</option>
-              <option value="INTERESTED">INTERESTED</option>
-              <option value="COUNSELING">COUNSELING</option>
-              <option value="FOLLOW_UP_REQUIRED">FOLLOW_UP_REQUIRED</option>
-              <option value="READY_FOR_ADMISSION">READY_FOR_ADMISSION</option>
-            </select>
+            <p-dropdown
+              [options]="statusAfterOptions"
+              formControlName="statusAfter"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
           </div>
           <div class="tc-form-field tc-form-field--full">
             <label>Remarks *</label>

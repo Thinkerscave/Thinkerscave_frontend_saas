@@ -15,7 +15,17 @@ export interface PromotionBatch {
   fromAcademicYearId: number;
   toAcademicYearId: number;
   status: PromotionBatchStatus;
+  plannedCount?: number;
+  processedCount?: number;
+  remarks?: string;
   createdAt?: string;
+}
+
+export interface PromotionBatchCreatePayload {
+  fromAcademicYearId: number;
+  toAcademicYearId: number;
+  batchCode?: string;
+  remarks?: string;
 }
 
 export interface PromotionRecord {
@@ -47,7 +57,7 @@ export class PromotionService {
     return this.http.get<ApiResponse<PageResponse<PromotionBatch>>>(this.base)
       .pipe(map(r => r.data?.content ?? []));
   }
-  createBatch(payload: Partial<PromotionBatch>): Observable<PromotionBatch> {
+  createBatch(payload: PromotionBatchCreatePayload): Observable<PromotionBatch> {
     return this.http.post<ApiResponse<PromotionBatch>>(this.base, payload).pipe(map(r => r.data));
   }
   preview(batchId: number): Observable<PromotionRecord[]> {

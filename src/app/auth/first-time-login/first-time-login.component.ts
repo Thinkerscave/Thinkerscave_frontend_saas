@@ -66,22 +66,39 @@ export class FirstTimeLoginComponent implements OnInit {
 
     this.isLoading = true;
 
-    // Call backend PATCH /api/v1/users/changePassword
     this.loginService.changePassword(this.currentPassword, this.newPassword, this.retypePassword).subscribe({
       next: () => {
-        this.isLoading = false;
-        const user = this.loginService.getUser();
-        if (user) {
-          this.loginService.setUser({ ...user, firstTimeLogin: false });
-        }
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Password Updated',
-          detail: 'Password changed successfully.'
+        // Refresh access token so JWT firstTimeLogin claim is cleared before entering the app.
+        this.loginService.refreshAccessToken().subscribe({
+          next: () => {
+            this.isLoading = false;
+            const user = this.loginService.getUser();
+            if (user) {
+              this.loginService.setUser({ ...user, firstTimeLogin: false });
+            }
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Password Updated',
+              detail: 'Password changed successfully.'
+            });
+            setTimeout(() => {
+              this.router.navigate(['/app']);
+            }, 1200);
+          },
+          error: () => {
+            this.isLoading = false;
+            const user = this.loginService.getUser();
+            if (user) {
+              this.loginService.setUser({ ...user, firstTimeLogin: false });
+            }
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Password Updated',
+              detail: 'Password changed. Please sign in again to continue.'
+            });
+            setTimeout(() => this.router.navigate(['/auth/login']), 1500);
+          }
         });
-        setTimeout(() => {
-          this.router.navigate(['/app/onboarding']);
-        }, 2000);
       },
       error: (err: any) => {
         this.isLoading = false;

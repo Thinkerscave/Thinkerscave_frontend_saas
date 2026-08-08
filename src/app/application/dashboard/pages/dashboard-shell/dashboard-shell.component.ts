@@ -8,6 +8,7 @@ import { WidgetHostComponent } from '../../widgets/widget-host.component';
 import { WidgetCardComponent } from '../../widgets/widget-card/widget-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { isFeatureEnabled } from '../../../../core/config/feature-flags';
+import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
 
 /** Placeholder spans rendered while the workspace call is in flight — mirrors a typical widget layout so the shell never visibly "jumps". */
 const SKELETON_SPANS = [4, 4, 2, 2, 2, 2, 2, 2];
@@ -25,7 +26,7 @@ const DASHBOARD_TYPE_LABEL: Record<DashboardType, string> = {
 @Component({
   selector: 'app-dashboard-shell',
   standalone: true,
-  imports: [CommonModule, WidgetHostComponent, WidgetCardComponent, SaasPageHeaderComponent],
+  imports: [CommonModule, WidgetHostComponent, WidgetCardComponent, SaasPageHeaderComponent, TcTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-shell.component.html',
   styleUrl: './dashboard-shell.component.scss'
@@ -77,7 +78,7 @@ export class DashboardShellComponent implements OnInit {
       )
       .subscribe({
         next: response => {
-          this.workspace = this.filterDisabledWidgets(response);
+          this.workspace = this.prioritizeWidgets(this.filterDisabledWidgets(response));
         },
         error: () => {
           this.loadError = true;
@@ -110,5 +111,137 @@ export class DashboardShellComponent implements OnInit {
       ...response,
       widgets: response.widgets.filter(widget => widget.widgetKey !== 'FEE_SUMMARY')
     };
+  }
+
+  /** Keep welcome → KPIs → quick actions → charts at the top, then preserve remaining API order. */
+  private prioritizeWidgets(response: DashboardResponse): DashboardResponse {
+    let widgets = [...(response.widgets ?? [])];
+    if (!widgets.length) {
+      return response;
+    }
+
+    widgets = this.ensureInsightCharts(widgets);
+
+    const priority: Array<WidgetDTO<any>['widgetType']> = ['WELCOME_HEADER', 'KPI_GRID', 'QUICK_ACTIONS', 'CHART'];
+    const selectedKeys = new Set<string>();
+    const ordered: WidgetDTO<any>[] = [];
+
+    for (const type of priority) {
+      if (type === 'CHART') {
+        for (const match of widgets.filter(widget => widget.widgetType === 'CHART' && !selectedKeys.has(widget.widgetKey))) {
+          ordered.push({ ...match, span: Math.max(match.span ?? 1, 2) });
+          selectedKeys.add(match.widgetKey);
+        }
+        continue;
+      }
+      const match = widgets.find(widget => widget.widgetType === type && !selectedKeys.has(widget.widgetKey));
+      if (match) {
+        ordered.push(
+          match.widgetType === 'QUICK_ACTIONS'
+            ? { ...match, span: Math.max(match.span ?? 1, 4) }
+            : match
+        );
+        selectedKeys.add(match.widgetKey);
+      }
+    }
+
+    for (const widget of widgets) {
+      if (!selectedKeys.has(widget.widgetKey)) {
+        ordered.push(widget);
+      }
+    }
+
+    return { ...response, widgets: ordered };
+  }
+
+  /** Ensure attendance + fee visualization charts exist even when API omits CHART widgets. */
+  private ensureInsightCharts(widgets: WidgetDTO<any>[]): WidgetDTO<any>[] {
+    const chartWidgets = widgets.filter(widget => widget.widgetType === 'CHART');
+    const hasUsableChart = chartWidgets.some(widget => this.hasChartSeries(widget));
+
+    if (hasUsableChart) {
+      return widgets;
+    }
+
+    // Replace empty API chart payloads with readable sample series when present.
+    if (chartWidgets.length) {
+      return widgets.map(widget => {
+        if (widget.widgetType !== 'CHART' || this.hasChartSeries(widget)) {
+          return widget;
+        }
+        if (/fee|collection|payment/i.test(`${widget.widgetKey} ${widget.title ?? ''}`)) {
+          return {
+            ...widget,
+            dataMode: 'SAMPLE',
+            state: 'SUCCESS',
+            data: {
+              chartType: 'donut',
+              labels: ['Collected', 'Outstanding', 'Overdue'],
+              series: [{ name: 'Amount', data: [2845000, 1250000, 320000] }],
+              unit: 'INR'
+            }
+          };
+        }
+        return {
+          ...widget,
+          dataMode: 'SAMPLE',
+          state: 'SUCCESS',
+          title: widget.title || 'Attendance trend',
+          subtitle: widget.subtitle || 'Last 7 days',
+          data: {
+            chartType: 'area',
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            series: [{ name: 'Present %', data: [92, 88, 95, 90, 93, 70, 86] }],
+            unit: '%'
+          }
+        };
+      });
+    }
+
+    const extras: WidgetDTO<any>[] = [
+      {
+        widgetKey: 'ATTENDANCE_TREND_CHART',
+        widgetType: 'CHART',
+        title: 'Attendance trend',
+        subtitle: 'Last 7 days',
+        span: 2,
+        dataMode: 'SAMPLE',
+        state: 'SUCCESS',
+        data: {
+          chartType: 'area',
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          series: [{ name: 'Present %', data: [92, 88, 95, 90, 93, 70, 86] }],
+          unit: '%'
+        }
+      },
+      {
+        widgetKey: 'FEE_COLLECTION_CHART',
+        widgetType: 'CHART',
+        title: 'Fee collection',
+        subtitle: 'Breakdown',
+        span: 2,
+        dataMode: 'SAMPLE',
+        state: 'SUCCESS',
+        data: {
+          chartType: 'donut',
+          labels: ['Collected', 'Outstanding', 'Overdue'],
+          series: [{ name: 'Amount', data: [2845000, 1250000, 320000] }],
+          unit: 'INR'
+        }
+      }
+    ];
+
+    if (!isFeatureEnabled('feeManagementEnabled')) {
+      return [...widgets, extras[0]];
+    }
+    return [...widgets, ...extras];
+  }
+
+  private hasChartSeries(widget: WidgetDTO<any>): boolean {
+    const series = widget?.data?.series;
+    if (!Array.isArray(series) || !series.length) {
+      return false;
+    }
+    return series.some((item: any) => Array.isArray(item?.data) && item.data.some((v: number) => Number(v) > 0));
   }
 }

@@ -13,6 +13,7 @@ import {
 } from '../../shared/ui/saas';
 import { LoginService } from '../../core/services/login.service';
 import { UserProfileService } from '../services/user-profile.service';
+import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
 
 type TabKey = 'overview' | 'edit' | 'security' | 'quick-links';
 
@@ -27,7 +28,8 @@ type TabKey = 'overview' | 'edit' | 'security' | 'quick-links';
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    SaasTabsComponent
+    SaasTabsComponent,
+    TcTranslatePipe
   ],
   templateUrl: './user-profile.component.html',
   styleUrl: './user-profile.component.scss'

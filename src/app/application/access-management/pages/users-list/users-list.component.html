@@ -11,13 +11,15 @@
     <tc-saas-panel title="Organization Users" [subtitle]="totalRecords + ' total'">
       <div class="users-list__toolbar">
         <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search users...">
-        <select class="saas-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-          <option value="all">All statuses</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-          <option value="LOCKED">Locked</option>
-          <option value="SUSPENDED">Suspended</option>
-        </select>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          placeholder="Status"
+          (onChange)="onFilterChange()">
+        </p-dropdown>
       </div>
       <div class="saas-table-wrap">
         <table class="saas-data-table">

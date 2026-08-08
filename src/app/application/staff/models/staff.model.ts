@@ -208,6 +208,11 @@ export interface SalaryStructure {
   specialAllowance?: number;
   transportAllowance?: number;
   otherAllowance?: number;
+  pfEmployee?: number;
+  esiEmployee?: number;
+  professionalTax?: number;
+  otherDeduction?: number;
+  totalStatutoryDeductions?: number;
   grossSalary: number;
   bankName?: string;
   accountHolderName?: string;
@@ -228,6 +233,10 @@ export interface SalaryStructureRequest {
   specialAllowance?: number;
   transportAllowance?: number;
   otherAllowance?: number;
+  pfEmployee?: number;
+  esiEmployee?: number;
+  professionalTax?: number;
+  otherDeduction?: number;
   bankName?: string;
   accountHolderName?: string;
   accountNumber?: string;
@@ -268,6 +277,10 @@ export interface Payroll {
   presentDays?: number;
   leaveWithoutPayDays?: number;
   grossSalary: number;
+  pfAmount?: number;
+  esiAmount?: number;
+  professionalTaxAmount?: number;
+  otherDeductionAmount?: number;
   totalDeductions: number;
   netSalary: number;
   status: PayrollStatus;
@@ -279,6 +292,13 @@ export interface Payroll {
 export interface PayrollGenerateRequest {
   year: number;
   month: number;
+}
+
+export interface PayrollGenerateResult {
+  generatedRecords: number;
+  skippedAlreadyExists: number;
+  skippedNoSalaryStructure: string[];
+  tenantIdentifier?: string;
 }
 
 export interface BulkMarkPaidRequest {

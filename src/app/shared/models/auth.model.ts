@@ -57,4 +57,5 @@ export interface PasswordResetPayload {
   email: string;
   otp: string;
   newPassword: string;
+  confirmPassword: string;
 }

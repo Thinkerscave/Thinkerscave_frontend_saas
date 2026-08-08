@@ -1,78 +1,78 @@
-:host {
-  display: block;
-}
-
-.tc-breadcrumb {
-  margin-bottom: 0;
-  padding: 0;
-}
-
-.tc-breadcrumb__row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.tc-breadcrumb__lead {
-  min-width: 0;
-  flex: 1;
-}
-
-.tc-breadcrumb__title {
-  margin: 0;
-  color: var(--tc-heading);
-  font-size: 1.35rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-}
-
-.tc-breadcrumb__subtitle {
-  margin: 0.2rem 0 0;
-  color: var(--tc-text-muted);
-  font-size: 0.86rem;
-  line-height: 1.35;
-  max-width: 52rem;
-}
-
-.tc-breadcrumb__trail {
-  flex-shrink: 0;
-  padding-top: 0.2rem;
-}
-
-:host ::ng-deep .p-breadcrumb {
-  background: transparent;
-  border: 0;
-  padding: 0;
-}
-
-:host ::ng-deep .p-breadcrumb-list {
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-:host ::ng-deep .p-breadcrumb-item,
-:host ::ng-deep .p-breadcrumb-separator,
-:host ::ng-deep .p-breadcrumb-home {
-  color: var(--tc-text-muted);
-  font-size: 0.8rem;
-}
-
-:host ::ng-deep .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
-  color: var(--tc-heading);
-  font-weight: 600;
-}
-
-@media (max-width: 640px) {
-  .tc-breadcrumb__row {
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .tc-breadcrumb__trail {
-    padding-top: 0;
-  }
-}
+:host {
+  display: block;
+}
+
+.tc-breadcrumb {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.tc-breadcrumb__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tc-breadcrumb__lead {
+  min-width: 0;
+  flex: 1;
+}
+
+.tc-breadcrumb__title {
+  margin: 0;
+  color: var(--tc-heading);
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.tc-breadcrumb__subtitle {
+  margin: 0.1rem 0 0;
+  color: var(--tc-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  max-width: 52rem;
+}
+
+.tc-breadcrumb__trail {
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+
+:host ::ng-deep .p-breadcrumb {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+:host ::ng-deep .p-breadcrumb-list {
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+:host ::ng-deep .p-breadcrumb-item,
+:host ::ng-deep .p-breadcrumb-separator,
+:host ::ng-deep .p-breadcrumb-home {
+  color: var(--tc-text-muted);
+  font-size: 0.8rem;
+}
+
+:host ::ng-deep .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
+  color: var(--tc-heading);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .tc-breadcrumb__row {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .tc-breadcrumb__trail {
+    padding-top: 0;
+  }
+}
 

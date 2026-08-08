@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { CommunicationService, Notice } from '../../services/communication.service';
 import {
@@ -17,11 +18,16 @@ import {
 type PriorityFilter = 'all' | 'High' | 'Medium' | 'Low';
 type StatusFilter = 'all' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-announcements-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './announcements-list.component.html',
   styleUrl: './announcements-list.component.scss'
 })
@@ -37,6 +43,20 @@ export class AnnouncementsListComponent implements OnInit {
   audienceFilter = 'all';
   priorityFilter: PriorityFilter = 'all';
   statusFilter: StatusFilter = 'all';
+
+  readonly priorityOptions: SelectOption[] = [
+    { label: 'All', value: 'all' },
+    { label: 'High', value: 'High' },
+    { label: 'Medium', value: 'Medium' },
+    { label: 'Low', value: 'Low' }
+  ];
+
+  readonly statusOptions: SelectOption[] = [
+    { label: 'All', value: 'all' },
+    { label: 'Published', value: 'PUBLISHED' },
+    { label: 'Draft', value: 'DRAFT' },
+    { label: 'Archived', value: 'ARCHIVED' }
+  ];
 
   ngOnInit(): void { this.load(); }
 
@@ -65,6 +85,13 @@ export class AnnouncementsListComponent implements OnInit {
   }
 
   get audiences(): string[] { return Array.from(new Set(this.notices.map(n => n.audience).filter(Boolean))).sort(); }
+
+  get audienceOptions(): SelectOption[] {
+    return [
+      { label: 'All', value: 'all' },
+      ...this.audiences.map(a => ({ label: a, value: a }))
+    ];
+  }
 
   get filtered(): Notice[] {
     const q = this.search.trim().toLowerCase();

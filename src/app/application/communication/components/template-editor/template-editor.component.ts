@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 
 import {
   SaasPageHeaderComponent,
@@ -14,7 +15,7 @@ interface TemplateVariable { key: string; description: string; }
   selector: 'app-template-editor',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent],
   templateUrl: './template-editor.component.html',
   styleUrl: './template-editor.component.scss'
 })
@@ -44,6 +45,7 @@ export class TemplateEditorComponent implements OnInit {
   ];
 
   categories = ['Notice', 'Billing', 'Attendance', 'Academic', 'Event', 'Onboarding', 'Engagement'];
+  readonly categoryOptions = this.categories.map(c => ({ label: c, value: c }));
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

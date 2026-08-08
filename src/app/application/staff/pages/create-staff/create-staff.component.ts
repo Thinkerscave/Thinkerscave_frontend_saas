@@ -3,11 +3,15 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
+  Input,
   OnInit,
+  Output,
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
 import {
@@ -21,7 +25,7 @@ import {
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
 
-type WizardStep = 'personal' | 'address' | 'employment' | 'salary' | 'emergency';
+type WizardStep = 'personal' | 'employment';
 
 interface StepConfig {
   id: WizardStep;
@@ -30,11 +34,16 @@ interface StepConfig {
   num: number;
 }
 
+interface SelectOption<T = string> {
+  label: string;
+  value: T;
+}
+
 @Component({
   selector: 'app-create-staff',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './create-staff.component.html'
 })
@@ -43,6 +52,11 @@ export class CreateStaffComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  /** When true, renders as a right-side drawer (directory Add Staff flow). */
+  @Input() drawerMode = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<number | void>();
 
   isEditMode = false;
   editStaffId: number | null = null;
@@ -54,10 +68,8 @@ export class CreateStaffComponent implements OnInit {
   activeStep: WizardStep = 'personal';
 
   readonly steps: StepConfig[] = [
-    { id: 'personal',   label: 'Personal Information',   icon: 'pi-user',        num: 1 },
-    { id: 'employment', label: 'Employment Information',  icon: 'pi-briefcase',   num: 2 },
-    { id: 'salary',     label: 'Salary Information',      icon: 'pi-money-bill',  num: 3 },
-    { id: 'emergency',  label: 'Emergency Contact',       icon: 'pi-heart',       num: 4 }
+    { id: 'personal',   label: 'Basic Details',       icon: 'pi-user',      num: 1 },
+    { id: 'employment', label: 'Employment & Pay',    icon: 'pi-briefcase', num: 2 }
   ];
 
   // ── Personal ──────────────────────────────────────────────────────────────
@@ -105,25 +117,58 @@ export class CreateStaffComponent implements OnInit {
   emergencyContactNumber = '';
 
   // ── Dropdown options ──────────────────────────────────────────────────────
-  readonly genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say'];
-  readonly bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-  readonly religionOptions = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other'];
-  readonly nationalityOptions = ['Indian', 'American', 'British', 'Canadian', 'Australian', 'Other'];
+  readonly genderOptions: SelectOption[] = [
+    { label: 'Select gender', value: '' },
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' },
+    { label: 'Prefer not to say', value: 'Prefer not to say' }
+  ];
+  readonly bloodGroupOptions: SelectOption[] = [
+    { label: 'Select blood group', value: '' },
+    { label: 'A+', value: 'A+' },
+    { label: 'A-', value: 'A-' },
+    { label: 'B+', value: 'B+' },
+    { label: 'B-', value: 'B-' },
+    { label: 'O+', value: 'O+' },
+    { label: 'O-', value: 'O-' },
+    { label: 'AB+', value: 'AB+' },
+    { label: 'AB-', value: 'AB-' }
+  ];
+  readonly religionOptions: SelectOption[] = [
+    { label: 'Select religion', value: '' },
+    { label: 'Hindu', value: 'Hindu' },
+    { label: 'Muslim', value: 'Muslim' },
+    { label: 'Christian', value: 'Christian' },
+    { label: 'Sikh', value: 'Sikh' },
+    { label: 'Buddhist', value: 'Buddhist' },
+    { label: 'Jain', value: 'Jain' },
+    { label: 'Other', value: 'Other' }
+  ];
+  readonly nationalityOptions: SelectOption[] = [
+    { label: 'Select nationality', value: '' },
+    { label: 'Indian', value: 'Indian' },
+    { label: 'American', value: 'American' },
+    { label: 'British', value: 'British' },
+    { label: 'Canadian', value: 'Canadian' },
+    { label: 'Australian', value: 'Australian' },
+    { label: 'Other', value: 'Other' }
+  ];
 
-  readonly staffTypeOptions: { value: StaffType; label: string }[] = [
+  readonly staffTypeOptions: SelectOption<StaffType>[] = [
     { value: 'TEACHING', label: 'Teaching Staff' },
     { value: 'NON_TEACHING', label: 'Non-Teaching Staff' }
   ];
 
-  readonly categoryOptions: { value: EmploymentCategory; label: string }[] = [
-    { value: 'PERMANENT',       label: 'Permanent' },
-    { value: 'CONTRACT',        label: 'Contract' },
-    { value: 'TEMPORARY',       label: 'Temporary' },
-    { value: 'PART_TIME',       label: 'Part Time' },
-    { value: 'VISITING_FACULTY',label: 'Visiting Faculty' }
+  readonly categoryOptions: SelectOption<EmploymentCategory>[] = [
+    { value: 'PERMANENT',        label: 'Permanent' },
+    { value: 'CONTRACT',         label: 'Contract' },
+    { value: 'TEMPORARY',        label: 'Temporary' },
+    { value: 'PART_TIME',        label: 'Part Time' },
+    { value: 'VISITING_FACULTY', label: 'Visiting Faculty' }
   ];
 
-  readonly statusOptions: { value: EmploymentStatus; label: string }[] = [
+  readonly statusOptions: SelectOption<EmploymentStatus>[] = [
     { value: 'ACTIVE',             label: 'Active' },
     { value: 'PROBATION',          label: 'Probation' },
     { value: 'NOTICE_PERIOD',      label: 'Notice Period' },
@@ -132,7 +177,7 @@ export class CreateStaffComponent implements OnInit {
     { value: 'CONTRACT_COMPLETED', label: 'Contract Completed' }
   ];
 
-  readonly salaryTypeOptions: { value: SalaryType; label: string }[] = [
+  readonly salaryTypeOptions: SelectOption<SalaryType>[] = [
     { value: 'MONTHLY',    label: 'Monthly' },
     { value: 'DAILY_WAGE', label: 'Daily Wage' }
   ];
@@ -219,6 +264,10 @@ export class CreateStaffComponent implements OnInit {
   }
 
   cancel(): void {
+    if (this.drawerMode) {
+      this.closed.emit();
+      return;
+    }
     this.router.navigate(['/app/staff/directory']);
   }
 
@@ -275,6 +324,10 @@ export class CreateStaffComponent implements OnInit {
         .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
         .subscribe({
           next: () => {
+            if (this.drawerMode) {
+              this.saved.emit(this.editStaffId!);
+              return;
+            }
             this.router.navigate(['/app/staff/profile', this.editStaffId]);
           },
           error: (err: any) => {
@@ -305,6 +358,10 @@ export class CreateStaffComponent implements OnInit {
                 effectiveFrom: this.salaryEffectiveFrom
               };
               this.api.createSalaryStructure(salReq).subscribe();
+            }
+            if (this.drawerMode) {
+              this.saved.emit(newId || undefined);
+              return;
             }
             this.router.navigate(['/app/staff/profile', newId]);
           },

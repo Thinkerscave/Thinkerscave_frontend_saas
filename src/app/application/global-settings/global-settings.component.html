@@ -1,124 +1,193 @@
-<tc-saas-page-header
-  title="Settings"
-  subtitle="Personal preferences for {{ userName() }}"
-  [breadcrumbs]="[{ label: 'Dashboard', route: '/app' }, { label: 'Settings' }]">
-  <button type="button" class="btn-ghost" (click)="goProfile()"><i class="pi pi-user"></i>My Profile</button>
-  <button type="button" class="btn-ghost" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
-  <button type="button" class="btn-primary" (click)="save()"><i class="pi pi-check"></i>Save Changes</button>
-</tc-saas-page-header>
+<div class="settings-drawer-body">
+  <p class="settings-drawer-body__intro">{{ subtitle() }}</p>
 
-<tc-saas-tabs [tabs]="tabs" [active]="active()" (changeTab)="selectTab($event)"></tc-saas-tabs>
-
-<tc-saas-panel *ngIf="active() === 'appearance'" title="Appearance" subtitle="Theme, density and accent color">
-  <div class="form-grid">
-    <div class="form-row">
-      <label>Theme</label>
-      <div class="control">
-        <button type="button" class="toggle" [class.on]="!isDark()" (click)="isDark() && toggleTheme()"><i class="pi pi-sun"></i>Light</button>
-        <button type="button" class="toggle" [class.on]="isDark()"  (click)="!isDark() && toggleTheme()"><i class="pi pi-moon"></i>Dark</button>
-      </div>
-    </div>
-    <div class="form-row">
-      <label>Density</label>
-      <div class="control">
-        <button type="button" class="toggle" [class.on]="density() === 'comfortable'" (click)="density.set('comfortable')">Comfortable</button>
-        <button type="button" class="toggle" [class.on]="density() === 'compact'" (click)="density.set('compact')">Compact</button>
-      </div>
-    </div>
-    <div class="form-row">
-      <label>Accent color</label>
-      <div class="control">
-        <input type="color" [ngModel]="accent()" (ngModelChange)="accent.set($event)">
-        <span class="muted">{{ accent() }}</span>
-      </div>
-    </div>
+  <div *ngIf="savedFlash()" class="settings-toast" role="status">
+    <i class="pi pi-check-circle"></i> {{ 'settings.saved' | tcTranslate }}
   </div>
-</tc-saas-panel>
 
-<tc-saas-panel *ngIf="active() === 'notifications'" title="Notifications" subtitle="Channels and digest preferences">
-  <div class="form-grid">
-    <div class="form-row">
-      <label>Email notifications</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="notifEmail()" (ngModelChange)="notifEmail.set($event)"><span></span></label></div>
-    </div>
-    <div class="form-row">
-      <label>Push notifications</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="notifPush()" (ngModelChange)="notifPush.set($event)"><span></span></label></div>
-    </div>
-    <div class="form-row">
-      <label>SMS notifications</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="notifSms()" (ngModelChange)="notifSms.set($event)"><span></span></label></div>
-    </div>
-    <div class="form-row">
-      <label>Digest cadence</label>
-      <div class="control">
-        <select [ngModel]="notifDigest()" (ngModelChange)="notifDigest.set($event)">
-          <option value="daily">Daily summary</option>
-          <option value="weekly">Weekly summary</option>
-          <option value="off">Off</option>
-        </select>
+  <tc-saas-tabs [tabs]="tabs()" [active]="active()" (changeTab)="selectTab($event)"></tc-saas-tabs>
+
+  <tc-saas-panel *ngIf="active() === 'appearance'"
+    [title]="'settings.appearance' | tcTranslate"
+    [subtitle]="'settings.appearanceSubtitle' | tcTranslate">
+    <div class="form-grid">
+      <div class="form-row">
+        <label>{{ 'settings.theme' | tcTranslate }}</label>
+        <div class="control">
+          <button type="button" class="toggle" [class.on]="!isDark()" (click)="isDark() && toggleTheme()">
+            <i class="pi pi-sun"></i>{{ 'settings.themeLight' | tcTranslate }}
+          </button>
+          <button type="button" class="toggle" [class.on]="isDark()" (click)="!isDark() && toggleTheme()">
+            <i class="pi pi-moon"></i>{{ 'settings.themeDark' | tcTranslate }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>{{ 'settings.accent' | tcTranslate }}</label>
+        <div class="control accent-control">
+          <div class="accent-swatches" role="list">
+            <button
+              type="button"
+              class="accent-swatch"
+              *ngFor="let color of accentPresets"
+              role="listitem"
+              [class.is-active]="isPresetAccent(color)"
+              [style.--swatch]="color"
+              [attr.aria-label]="'Accent ' + color"
+              (click)="selectAccent(color)">
+            </button>
+            <button
+              type="button"
+              class="accent-swatch accent-swatch--custom"
+              [class.is-active]="customAccent()"
+              (click)="enableCustomAccent()">
+              {{ 'settings.accentCustom' | tcTranslate }}
+            </button>
+          </div>
+          <input
+            *ngIf="customAccent()"
+            type="color"
+            [ngModel]="accent()"
+            (ngModelChange)="accent.set($event)">
+          <span class="muted">{{ accent() }}</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>{{ 'settings.reduceMotion' | tcTranslate }}</label>
+        <div class="control control--stack">
+          <label class="switch">
+            <input type="checkbox" [ngModel]="reduceMotion()" (ngModelChange)="reduceMotion.set($event)">
+            <span></span>
+          </label>
+          <small class="hint">{{ 'settings.reduceMotionHint' | tcTranslate }}</small>
+        </div>
+      </div>
+
+      <div class="form-row" *ngIf="pwa.canInstall() || pwa.showIosInstallHint() || pwa.isInstalled()">
+        <label>{{ 'settings.installApp' | tcTranslate }}</label>
+        <div class="control install-control">
+          <ng-container *ngIf="pwa.isInstalled(); else installActions">
+            <span class="muted"><i class="pi pi-check-circle"></i> {{ 'settings.installed' | tcTranslate }}</span>
+          </ng-container>
+          <ng-template #installActions>
+            <button *ngIf="pwa.canInstall()" type="button" class="btn-primary" (click)="installApp()">
+              <i class="pi pi-download"></i> {{ 'settings.addToHomeScreen' | tcTranslate }}
+            </button>
+            <span *ngIf="!pwa.canInstall() && pwa.showIosInstallHint()" class="muted">
+              {{ 'settings.iosInstallHint' | tcTranslate }}
+            </span>
+          </ng-template>
+        </div>
       </div>
     </div>
+  </tc-saas-panel>
+
+  <tc-saas-panel *ngIf="active() === 'notifications'"
+    [title]="'settings.notifications' | tcTranslate"
+    [subtitle]="'settings.notificationsSubtitle' | tcTranslate">
+    <div class="form-grid">
+      <div class="form-row">
+        <label>{{ 'settings.notifEmail' | tcTranslate }}</label>
+        <div class="control">
+          <label class="switch">
+            <input type="checkbox" [ngModel]="notifEmail()" (ngModelChange)="notifEmail.set($event)">
+            <span></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>{{ 'settings.notifPush' | tcTranslate }}</label>
+        <div class="control">
+          <label class="switch">
+            <input type="checkbox" [ngModel]="notifPush()" (ngModelChange)="notifPush.set($event)">
+            <span></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>{{ 'settings.notifSms' | tcTranslate }}</label>
+        <div class="control">
+          <label class="switch">
+            <input type="checkbox" [ngModel]="notifSms()" (ngModelChange)="notifSms.set($event)">
+            <span></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>{{ 'settings.digestCadence' | tcTranslate }}</label>
+        <div class="control">
+          <p-dropdown
+            [options]="digestOptions()"
+            [ngModel]="notifDigest()"
+            (ngModelChange)="notifDigest.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="settings-dropdown">
+          </p-dropdown>
+        </div>
+      </div>
+    </div>
+  </tc-saas-panel>
+
+  <tc-saas-panel *ngIf="active() === 'localization'"
+    [title]="'settings.localization' | tcTranslate"
+    [subtitle]="'settings.localizationSubtitle' | tcTranslate">
+    <div class="form-grid">
+      <div class="form-row">
+        <label>{{ 'settings.language' | tcTranslate }}</label>
+        <div class="control">
+          <p-dropdown
+            [options]="languageOptions"
+            [ngModel]="language()"
+            (ngModelChange)="selectLanguage($event)"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="settings-dropdown">
+          </p-dropdown>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>{{ 'settings.timezone' | tcTranslate }}</label>
+        <div class="control">
+          <p-dropdown
+            [options]="timezoneOptions"
+            [ngModel]="timezone()"
+            (ngModelChange)="timezone.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="settings-dropdown">
+          </p-dropdown>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>{{ 'settings.dateFormat' | tcTranslate }}</label>
+        <div class="control">
+          <p-dropdown
+            [options]="dateFormatOptions"
+            [ngModel]="dateFormat()"
+            (ngModelChange)="dateFormat.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="settings-dropdown">
+          </p-dropdown>
+        </div>
+      </div>
+    </div>
+  </tc-saas-panel>
+
+  <div class="settings-account">
+    <button type="button" class="settings-account__link" (click)="goChangePassword()">
+      <i class="pi pi-key"></i>
+      <span>
+        <strong>{{ 'settings.changePassword' | tcTranslate }}</strong>
+        <small>{{ 'settings.changePasswordHint' | tcTranslate }}</small>
+      </span>
+    </button>
   </div>
-</tc-saas-panel>
-
-<tc-saas-panel *ngIf="active() === 'localization'" title="Localization" subtitle="Language, timezone and date formats">
-  <div class="form-grid">
-    <div class="form-row">
-      <label>Language</label>
-      <div class="control">
-        <select [ngModel]="language()" (ngModelChange)="language.set($event)">
-          <option value="en-IN">English (India)</option>
-          <option value="en-US">English (US)</option>
-          <option value="hi-IN">हिन्दी</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <label>Timezone</label>
-      <div class="control">
-        <select [ngModel]="timezone()" (ngModelChange)="timezone.set($event)">
-          <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-          <option value="UTC">UTC</option>
-          <option value="America/New_York">America/New York</option>
-          <option value="Europe/London">Europe/London</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <label>Date format</label>
-      <div class="control">
-        <select [ngModel]="dateFormat()" (ngModelChange)="dateFormat.set($event)">
-          <option value="dd-MM-yyyy">dd-MM-yyyy</option>
-          <option value="MM/dd/yyyy">MM/dd/yyyy</option>
-          <option value="yyyy-MM-dd">yyyy-MM-dd</option>
-        </select>
-      </div>
-    </div>
-  </div>
-</tc-saas-panel>
-
-<tc-saas-panel *ngIf="active() === 'accessibility'" title="Accessibility" subtitle="Adapt the interface to your needs">
-  <div class="form-grid">
-    <div class="form-row">
-      <label>Reduce motion</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="reduceMotion()" (ngModelChange)="reduceMotion.set($event)"><span></span></label></div>
-    </div>
-    <div class="form-row">
-      <label>Large text</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="largeText()" (ngModelChange)="largeText.set($event)"><span></span></label></div>
-    </div>
-    <div class="form-row">
-      <label>High contrast</label>
-      <div class="control"><label class="switch"><input type="checkbox" [ngModel]="highContrast()" (ngModelChange)="highContrast.set($event)"><span></span></label></div>
-    </div>
-  </div>
-</tc-saas-panel>
-
-<tc-saas-panel *ngIf="active() === 'security'" title="Security" subtitle="Account security shortcuts">
-  <ul class="link-list">
-    <li><a routerLink="/app/profile"><i class="pi pi-key"></i>Change password<small>Update your sign-in password</small></a></li>
-    <li><a routerLink="/app/profile"><i class="pi pi-mobile"></i>Two-factor authentication<small>Coming soon</small></a></li>
-    <li><a routerLink="/app/organization/activity-logs"><i class="pi pi-list"></i>Active sessions &amp; activity<small>Audit your recent activity</small></a></li>
-  </ul>
-</tc-saas-panel>
+</div>

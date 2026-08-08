@@ -17,10 +17,15 @@
     </label>
     <label class="tc-form-field">
       <span>Filter</span>
-      <select [(ngModel)]="archivedOnly" (ngModelChange)="onFilterChange()">
-        <option [ngValue]="true">Archived only</option>
-        <option [ngValue]="false">All inactive</option>
-      </select>
+      <p-dropdown
+        [options]="archivedOptions"
+        [(ngModel)]="archivedOnly"
+        (ngModelChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
     <button type="button" class="tc-btn" (click)="resetFilters()"><i class="pi pi-filter-slash"></i> Reset</button>
   </tc-saas-filter-row>

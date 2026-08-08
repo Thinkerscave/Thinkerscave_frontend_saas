@@ -141,14 +141,14 @@
     color: var(--tc-sidebar-active-text);
 
     .nav-icon {
-      color: var(--tc-primary-600);
-      background: color-mix(in srgb, var(--tc-primary-600) 14%, transparent);
+      color: var(--tc-accent);
+      background: color-mix(in srgb, var(--tc-accent) 14%, transparent);
     }
   }
 
   .sidebar-wrapper.is-expanded &.is-active,
   .sidebar-wrapper.is-expanded &.is-active-parent {
-    background: color-mix(in srgb, var(--tc-primary-600) 10%, transparent);
+    background: color-mix(in srgb, var(--tc-accent) 10%, transparent);
 
     &::before {
       content: '';
@@ -157,7 +157,7 @@
       left: 0;
       width: 3px;
       border-radius: var(--tc-radius-pill);
-      background: var(--tc-primary-600);
+      background: var(--tc-accent);
     }
   }
 
@@ -166,7 +166,7 @@
     background: transparent;
 
     .nav-icon {
-      box-shadow: 0 0 0 1px color-mix(in srgb, var(--tc-primary-600) 22%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--tc-accent) 22%, transparent);
     }
   }
 }

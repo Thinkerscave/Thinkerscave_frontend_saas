@@ -16,13 +16,12 @@
   </header>
 
   <tc-saas-panel title="Lead workspace" [actions]="true">
-    <div panel-actions class="stu-chip-bar">
-      <button type="button" [class.is-active]="viewMode() === 'table'" (click)="setView('table')">
-        <i class="pi pi-list"></i> Table
-      </button>
-      <button type="button" [class.is-active]="viewMode() === 'card'" (click)="setView('card')">
-        <i class="pi pi-th-large"></i> Cards
-      </button>
+    <div panel-actions>
+      <app-grid-table-toggle
+        [storageKey]="'tc.leads.viewMode'"
+        [mode]="listViewMode"
+        (modeChange)="onListViewModeChange($event)">
+      </app-grid-table-toggle>
     </div>
 
     <div class="tc-filter-bar">
@@ -33,21 +32,25 @@
       </div>
       <div class="tc-form-field">
         <label>Status</label>
-        <select [(ngModel)]="filter.status">
-          <option [ngValue]="null">All</option>
-          @for (s of statusOptions; track s) {
-            <option [ngValue]="s">{{ s }}</option>
-          }
-        </select>
+        <p-dropdown
+          [options]="statusSelectOptions"
+          [(ngModel)]="filter.status"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-form-field">
         <label>Source</label>
-        <select [(ngModel)]="filter.inquirySource">
-          <option [ngValue]="null">All</option>
-          @for (src of sourceOptions; track src) {
-            <option [ngValue]="src">{{ src }}</option>
-          }
-        </select>
+        <p-dropdown
+          [options]="sourceSelectOptions"
+          [(ngModel)]="filter.inquirySource"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-form-field">
         <label>Class</label>
@@ -204,12 +207,14 @@
         </div>
         <div class="tc-form-field">
           <label>Source</label>
-          <select formControlName="inquirySource">
-            <option value="">Select source</option>
-            @for (src of sourceOptions; track src) {
-              <option [value]="src">{{ src }}</option>
-            }
-          </select>
+          <p-dropdown
+            [options]="inquirySourceOptions"
+            formControlName="inquirySource"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </div>
         <div class="tc-form-field">
           <label>Referred by</label>

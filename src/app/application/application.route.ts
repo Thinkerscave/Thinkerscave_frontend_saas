@@ -12,10 +12,13 @@ import { featureFlagGuard } from '../core/guard/feature-flag.guard';
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
 const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
+const ACADEMICS_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES, 'PRINCIPAL', 'Principal', 'TEACHER', 'Teacher', 'STAFF', 'Staff'];
+const ONBOARDING_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
 export const APPLICATION_ROUTES: Routes = [
   {
     path: 'onboarding',
+    canActivate: [roleGuard(ONBOARDING_ROLES)],
     loadComponent: () => import('./onboarding/onboarding-checklist.component').then(m => m.OnboardingChecklistComponent)
   },
   {
@@ -304,6 +307,7 @@ export const APPLICATION_ROUTES: Routes = [
   // ━━━ Academics module (spec: Academic Setup / Timetable / Teacher Arrangement / Academic Calendar / Syllabus Tracker / Settings) ━━━
   {
     path: 'academics',
+    canActivate: [roleGuard(ACADEMICS_ROLES)],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'academic-setup' },
       { path: 'academic-setup', data: { workspacePage: 'setup' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
@@ -413,6 +417,6 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'settings',
-    loadComponent: () => import('./global-settings/global-settings.component').then(m => m.GlobalSettingsComponent)
+    loadComponent: () => import('./global-settings/settings-opener.component').then(m => m.SettingsOpenerComponent)
   }
 ];

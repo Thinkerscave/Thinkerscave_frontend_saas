@@ -11,7 +11,7 @@
         <span class="customer-workspace__code">{{ customer.customerCode }}</span>
       </div>
     </div>
-    <button type="button" class="tc-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
+    <button type="button" class="tc-btn tc-btn--back" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
     <button type="button" class="tc-btn" *ngIf="customer" (click)="edit()"><i class="pi pi-pencil"></i> Edit</button>
     <button type="button" class="tc-btn tc-btn--primary" *ngIf="customer" (click)="addOrganization()">
       <i class="pi pi-plus"></i> Add Organization
@@ -81,10 +81,11 @@
           title="Organizations"
           [subtitle]="organizations.length + ' organization(s) under this customer'">
           <ng-container panel-actions>
-            <div class="customers-list__view-switch customer-workspace__view-switch">
-              <button type="button" [class.is-active]="orgViewMode === 'cards'" (click)="orgViewMode = 'cards'" title="Card view" aria-label="Switch organizations to card view"><i class="pi pi-th-large"></i></button>
-              <button type="button" [class.is-active]="orgViewMode === 'table'" (click)="orgViewMode = 'table'" title="Table view" aria-label="Switch organizations to table view"><i class="pi pi-list"></i></button>
-            </div>
+            <app-grid-table-toggle
+              [storageKey]="'tc.customerOrgs.viewMode'"
+              [mode]="orgViewMode"
+              (modeChange)="orgViewMode = $event">
+            </app-grid-table-toggle>
             <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()">
               <i class="pi pi-plus"></i> Add Organization
             </button>
@@ -97,7 +98,7 @@
             <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()">Add Organization</button>
           </div>
 
-          <div *ngIf="organizations.length && orgViewMode === 'cards'" class="customer-workspace__contact-grid">
+          <div *ngIf="organizations.length && orgViewMode === 'grid'" class="customer-workspace__contact-grid">
             <article class="saas-org-card" *ngFor="let org of organizations; trackBy: trackById" (click)="openOrganization(org)">
               <div class="saas-org-card__head">
                 <span class="saas-org-card__logo">{{ orgInitials(org.organizationName) || 'O' }}</span>

@@ -19,10 +19,24 @@
       <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
       <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
       <label class="saas-field"><span>Module</span>
-        <select [(ngModel)]="moduleFilter"><option value="all">All</option><option *ngFor="let m of modules" [value]="m">{{ m }}</option></select>
+        <p-dropdown
+          [options]="moduleOptions"
+          [(ngModel)]="moduleFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <label class="saas-field"><span>User</span>
-        <select [(ngModel)]="userFilter"><option value="all">All</option><option *ngFor="let u of users" [value]="u">{{ u }}</option></select>
+        <p-dropdown
+          [options]="userOptions"
+          [(ngModel)]="userFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
     </tc-saas-filter-row>

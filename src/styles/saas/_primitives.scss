@@ -12,9 +12,9 @@
   --saas-text: #1A2238;
   --saas-text-muted: #5A6479;
   --saas-text-soft: #8993A8;
-  --saas-primary: #2C5BFF;
-  --saas-primary-soft: #E8EEFF;
-  --saas-primary-dark: #1F44CC;
+  --saas-primary: var(--tc-accent);
+  --saas-primary-soft: color-mix(in srgb, var(--tc-accent) 16%, transparent);
+  --saas-primary-dark: color-mix(in srgb, var(--tc-accent) 78%, black);
   --saas-success: #16A34A;
   --saas-success-soft: #DCFCE7;
   --saas-warning: #F59E0B;
@@ -41,7 +41,7 @@
   --saas-text: #E6EBF7;
   --saas-text-muted: #A5AEC5;
   --saas-text-soft: #7B8AA5;
-  --saas-primary-soft: rgba(44, 91, 255, 0.18);
+  --saas-primary-soft: color-mix(in srgb, var(--tc-accent) 22%, transparent);
   --saas-success-soft: rgba(22, 163, 74, 0.18);
   --saas-warning-soft: rgba(245, 158, 11, 0.18);
   --saas-danger-soft: rgba(239, 68, 68, 0.18);
@@ -50,11 +50,12 @@
 }
 
 /* ---------------- Page wrapper ---------------- */
-.saas-page {
-  padding: 0 0 24px;
+.saas-page,
+.tc-page {
+  padding: 0 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
   background: var(--saas-bg);
   min-height: 100%;
 }
@@ -540,17 +541,20 @@ select.saas-select {
    Keeps the existing component contract, but standardizes spacing,
    hierarchy, responsiveness and interaction polish across the module.
    ─────────────────────────────────────────────────────────────*/
-.saas-page {
-  gap: 24px;
-  padding: 24px;
+.saas-page,
+.tc-page {
+  gap: 0.85rem;
+  padding: 0 0 1rem;
   background:
     radial-gradient(circle at top left, color-mix(in srgb, var(--saas-primary) 8%, transparent), transparent 32rem),
     var(--saas-bg);
 }
 
 .saas-page-header {
-  min-height: 40px;
-  align-items: flex-start;
+  min-height: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .saas-page-header__main h1 {
@@ -791,7 +795,8 @@ select.saas-select:hover {
 .saas-pill[data-tone="primary"] { border-color: color-mix(in srgb, var(--saas-primary) 28%, transparent); }
 
 .saas-view-switch,
-.customers-list__view-switch {
+.customers-list__view-switch,
+.tc-view-switch {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -803,7 +808,8 @@ select.saas-select:hover {
 }
 
 .saas-view-switch button,
-.customers-list__view-switch button {
+.customers-list__view-switch button,
+.tc-view-switch > button {
   width: 32px;
   height: 30px;
   display: inline-grid;
@@ -817,13 +823,15 @@ select.saas-select:hover {
 }
 
 .saas-view-switch button:hover,
-.customers-list__view-switch button:hover {
+.customers-list__view-switch button:hover,
+.tc-view-switch > button:hover {
   color: var(--saas-primary);
   background: var(--saas-primary-soft);
 }
 
 .saas-view-switch button.is-active,
-.customers-list__view-switch button.is-active {
+.customers-list__view-switch button.is-active,
+.tc-view-switch > button.is-active {
   color: #fff;
   background: var(--saas-primary);
   box-shadow: 0 8px 16px -10px color-mix(in srgb, var(--saas-primary) 70%, transparent);
@@ -868,9 +876,10 @@ select.saas-select:hover {
 }
 
 @media (max-width: 768px) {
-  .saas-page {
-    padding: 16px;
-    gap: 18px;
+  .saas-page,
+.tc-page {
+    padding: 0 0 0.85rem;
+    gap: 0.75rem;
   }
 
   .saas-page-header,
@@ -896,4 +905,5 @@ select.saas-select:hover {
     min-height: 112px;
   }
 }
+
 

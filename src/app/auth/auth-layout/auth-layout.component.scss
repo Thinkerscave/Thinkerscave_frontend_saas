@@ -7,7 +7,10 @@
   min-height: 100vh;
   min-height: 100dvh;
   padding: clamp(1rem, 3vw, 2rem);
-  background: var(--tc-bg-gradient);
+  background:
+    radial-gradient(1200px 600px at 85% -10%, color-mix(in srgb, var(--tc-accent) 22%, transparent), transparent 55%),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in srgb, var(--tc-primary-400) 28%, transparent), transparent 50%),
+    var(--tc-bg-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,13 +25,14 @@
     border-radius: 50%;
     pointer-events: none;
     filter: blur(80px);
-    opacity: 0.35;
+    opacity: 0.4;
+    animation: authOrbFloat 14s ease-in-out infinite alternate;
   }
 
   &::before {
     width: 600px;
     height: 600px;
-    background: var(--tc-primary-400);
+    background: var(--tc-accent);
     top: -200px;
     right: -100px;
   }
@@ -36,10 +40,16 @@
   &::after {
     width: 400px;
     height: 400px;
-    background: color-mix(in srgb, var(--tc-accent-500, #06b6d4) 60%, transparent);
+    background: color-mix(in srgb, var(--tc-primary-400) 70%, transparent);
     bottom: -100px;
     left: -100px;
+    animation-delay: -4s;
   }
+}
+
+@keyframes authOrbFloat {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(24px, -18px, 0) scale(1.06); }
 }
 
 /* Auth Card – the split-panel container */
@@ -49,14 +59,48 @@
   width: min(1120px, 100%);
   min-height: min(640px, calc(100dvh - 2rem));
   border-radius: 24px;
-  background: var(--tc-surface-card-solid);
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
   box-shadow:
     0 1px 3px rgba(15, 23, 42, 0.04),
     0 24px 64px rgba(15, 23, 42, 0.12),
-    0 0 0 1px var(--tc-border);
+    0 0 0 1px color-mix(in srgb, var(--tc-border) 80%, transparent);
   display: grid;
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
+}
+
+/* Login: centered glass card — no brand/illustration panel */
+.auth-shell--focused {
+  background:
+    radial-gradient(900px 520px at 70% 8%, color-mix(in srgb, var(--tc-accent) 28%, transparent), transparent 58%),
+    radial-gradient(760px 480px at 12% 92%, color-mix(in srgb, var(--tc-primary-400) 32%, transparent), transparent 52%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tc-primary-50, #eef2ff) 70%, #fff), var(--tc-bg-gradient));
+}
+
+.auth-card--focused {
+  width: min(460px, 100%);
+  min-height: auto;
+  grid-template-columns: 1fr;
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 72%, transparent);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 28px 72px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 1px color-mix(in srgb, #fff 55%, var(--tc-border));
+}
+
+.auth-card--focused .auth-pane--form {
+  background: transparent;
+  padding: clamp(1.75rem, 3.5vw, 2.5rem) clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.auth-card--focused .auth-pane__main {
+  max-width: 100%;
+  margin: 0;
 }
 
 /* Form pane */
@@ -66,7 +110,7 @@
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
-  background: var(--tc-surface-card-solid);
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 88%, transparent);
 }
 
 /* Brand mark */

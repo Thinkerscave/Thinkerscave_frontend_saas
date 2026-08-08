@@ -10,13 +10,15 @@
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <tc-saas-panel title="Recent Sign-ins" [subtitle]="totalRecords + ' total events'">
       <div class="login-history__toolbar">
-        <select class="saas-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-          <option value="all">All statuses</option>
-          <option value="SUCCESS">Success</option>
-          <option value="FAILED">Failed</option>
-          <option value="LOCKED">Locked</option>
-          <option value="LOGGED_OUT">Logged out</option>
-        </select>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          placeholder="Status"
+          (onChange)="onFilterChange()">
+        </p-dropdown>
       </div>
       <div class="saas-table-wrap">
         <table class="saas-data-table">

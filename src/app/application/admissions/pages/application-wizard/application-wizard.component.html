@@ -42,12 +42,14 @@
           </div>
           <div class="tc-form-field">
             <label>Gender *</label>
-            <select formControlName="gender">
-              <option value="">Select</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
-            </select>
+            <p-dropdown
+              [options]="genderOptions"
+              formControlName="gender"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
           </div>
           <div class="tc-form-field">
             <label>Applying for class *</label>

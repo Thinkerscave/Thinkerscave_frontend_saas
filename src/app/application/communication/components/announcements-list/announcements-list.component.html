@@ -15,13 +15,34 @@
     <tc-saas-filter-row>
       <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search announcement..."></label>
       <label class="saas-field"><span>Audience</span>
-        <select [(ngModel)]="audienceFilter"><option value="all">All</option><option *ngFor="let a of audiences" [value]="a">{{ a }}</option></select>
+        <p-dropdown
+          [options]="audienceOptions"
+          [(ngModel)]="audienceFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <label class="saas-field"><span>Priority</span>
-        <select [(ngModel)]="priorityFilter"><option value="all">All</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+        <p-dropdown
+          [options]="priorityOptions"
+          [(ngModel)]="priorityFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
       <label class="saas-field"><span>Status</span>
-        <select [(ngModel)]="statusFilter"><option value="all">All</option><option value="PUBLISHED">Published</option><option value="DRAFT">Draft</option><option value="ARCHIVED">Archived</option></select>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </label>
     </tc-saas-filter-row>
 

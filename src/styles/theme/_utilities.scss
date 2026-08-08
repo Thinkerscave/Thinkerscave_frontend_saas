@@ -1,7 +1,7 @@
-.tc-page {
+﻿.tc-page {
   display: flex;
   flex-direction: column;
-  gap: var(--tc-space-6);
+  gap: var(--tc-space-3);
 }
 
 .tc-surface,
@@ -44,7 +44,7 @@
 }
 
 .tc-accent-text {
-  color: var(--tc-accent-500);
+  color: var(--tc-accent);
 }
 
 .tc-theme-dark .bg-white,
@@ -181,3 +181,14 @@
 
 /* Workspace variable overrides removed — workspace SCSS files now
    reference --tc-* tokens directly, so they adapt automatically. */
+
+
+/* Personal preference: reduce motion (Settings → Appearance) */
+.tc-reduce-motion *,
+.tc-reduce-motion *::before,
+.tc-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

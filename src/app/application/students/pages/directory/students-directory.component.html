@@ -1,6 +1,5 @@
 <section class="tc-page-shell" (click)="closeMoreMenu()">
 
-  <!-- ═══════════════════════════════════ HEADER ════════════════════════════════════ -->
   <header class="tc-page-header">
     <div class="tc-page-header__main">
       <h1>Student Management</h1>
@@ -8,7 +7,7 @@
     </div>
     <div class="tc-page-header__actions">
       <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()">
-        <i class="pi pi-plus"></i> Add Student
+        <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
       </button>
       <button type="button" class="tc-btn" (click)="openImport()">
         <i class="pi pi-upload"></i> Bulk Import
@@ -19,51 +18,50 @@
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════ KPI TILES ════════════════════════════════ -->
   <div class="dash-kpi-grid">
     <button type="button" *ngFor="let tile of kpiTiles"
             class="tc-card tc-card--kpi"
             [class.is-active]="activeKpi === tile.key"
             [attr.data-tone]="tile.tone"
             (click)="toggleKpiFilter(tile)">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="stu-kpi-top">
         <span class="kpi-header">{{ tile.label }}</span>
-        <i class="pi {{ tile.icon }}" style="font-size:1.1rem; opacity:0.5;"></i>
+        <i class="pi {{ tile.icon }} stu-kpi-icon"></i>
       </div>
       <span class="kpi-body strong">{{ kpi[tile.key] }}</span>
       <span class="kpi-body span">{{ tile.hint }}</span>
     </button>
   </div>
 
-  <!-- ═══════════════════════════════════ SEARCH PANEL ════════════════════════════ -->
   <div class="tc-card tc-card--panel">
     <div class="tc-card__header">
       <div>
-        <h2 style="margin:0 0 2px;">Student Directory</h2>
-        <small class="tc-card tc-card--panel__hint">{{ totalElements }} total result(s)</small>
+        <h2 class="stu-panel-title">{{ 'students.directory' | tcTranslate }}</h2>
+        <small class="tc-card__hint">{{ totalElements }} total result(s)</small>
       </div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div class="stu-chip-bar">
-          <button [class.is-active]="view === 'grid'" (click)="view = 'grid'">
-            <i class="pi pi-th-large"></i> Grid
-          </button>
-          <button [class.is-active]="view === 'list'" (click)="view = 'list'">
-            <i class="pi pi-list"></i> List
-          </button>
+      <div class="stu-panel-tools">
+        <div class="tc-view-switch">
+          <app-grid-table-toggle
+            storageKey="students.directory.view"
+            [(mode)]="view"
+            ariaLabel="Student directory view">
+          </app-grid-table-toggle>
         </div>
-        <select style="padding:8px 12px; border:1px solid var(--tc-border); border-radius:10px;
-                       background:var(--tc-surface-0); color:var(--tc-text); font-size:0.84rem; font-family:inherit;"
-                [(ngModel)]="sortField" (ngModelChange)="onSortChange($event)">
-          <option value="firstName,asc">Name A–Z</option>
-          <option value="firstName,desc">Name Z–A</option>
-          <option value="enrollmentDate,desc">Newest First</option>
-        </select>
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="sortField"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="false"
+          appendTo="body"
+          styleClass="stu-filter-dropdown"
+          (onChange)="onSortChange(sortField)">
+        </p-dropdown>
       </div>
     </div>
 
-    <!-- Search Filters -->
     <div class="tc-filter-bar">
-      <div class="tc-form-field" style="flex:2; min-width:200px;">
+      <div class="tc-form-field stu-filter-grow">
         <label>Search</label>
         <input type="text" [(ngModel)]="filter.keyword"
                placeholder="Name, Admission No., Roll No., Mobile…"
@@ -71,27 +69,50 @@
       </div>
       <div class="tc-form-field">
         <label>Class</label>
-        <select [(ngModel)]="filter.classId" (ngModelChange)="onClassChanged()">
-          <option [ngValue]="null">All Classes</option>
-          <option *ngFor="let c of classOptions" [ngValue]="c.id.toString()">{{ c.label }}</option>
-        </select>
+        <p-dropdown
+          [options]="classSelectOptions"
+          [(ngModel)]="filter.classId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Classes"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="stu-filter-dropdown"
+          (onChange)="onClassChanged()">
+        </p-dropdown>
       </div>
       <div class="tc-form-field">
         <label>Section</label>
-        <select [(ngModel)]="filter.sectionId" [disabled]="!filter.classId">
-          <option [ngValue]="null">All Sections</option>
-          <option *ngFor="let s of sectionOptions" [ngValue]="s.id.toString()">{{ s.label }}</option>
-        </select>
+        <p-dropdown
+          [options]="sectionSelectOptions"
+          [(ngModel)]="filter.sectionId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Sections"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          [disabled]="!filter.classId"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-form-field">
         <label>Status</label>
-        <select [(ngModel)]="filter.status">
-          <option [ngValue]="null">All Status</option>
-          <option [ngValue]="'ACTIVE'">Active</option>
-          <option [ngValue]="'INACTIVE'">Inactive</option>
-        </select>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="filter.status"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Status"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
       </div>
-      <div class="tc-form-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+      <div class="tc-form-field stu-filter-actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
           <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
           Search
@@ -100,28 +121,21 @@
       </div>
     </div>
 
-    <!-- Error -->
     <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
-    <!-- Loading -->
-    <div class="tc-loading" *ngIf="loading">
-      <i class="pi pi-spin pi-spinner"></i> Loading directory…
+    <div class="stu-directory-skeleton" *ngIf="loading">
+      <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
     </div>
 
-    <!-- ════════════════ GRID VIEW ════════════════ -->
-    <div class="dash-kpi-grid" *ngIf="!loading && students.length && view === 'grid'">
-      <article *ngFor="let s of students"
-               class="tc-card is-clickable"
+    <div class="dash-kpi-grid stu-card-grid" *ngIf="!loading && students.length && view === 'grid'">
+      <article *ngFor="let s of students; let i = index"
+               class="tc-card is-clickable stu-student-card"
+               [style.animation-delay.ms]="i * 40"
                (click)="openProfile(s)">
-
-        <!-- Card Header -->
         <header class="tc-card__header">
-          <div class="tc-avatar tc-avatar--initials" style="width:48px;height:48px;font-size:1rem;">
-            <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
-            <span *ngIf="!s.photoUrl">{{ initials(s.fullName) }}</span>
-          </div>
+          <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
           <div class="tc-card__title">
             <strong>{{ s.fullName }}</strong>
             <small>{{ s.admissionNumber }} · {{ s.studentCode || '' }}</small>
@@ -131,7 +145,6 @@
           </span>
         </header>
 
-        <!-- Card Meta -->
         <div class="tc-card__body">
           <span><i class="pi pi-book"></i> {{ s.className || '—' }} – {{ s.sectionName || '—' }}</span>
           <span><i class="pi pi-hashtag"></i> Roll {{ s.rollNumber || '—' }}</span>
@@ -141,35 +154,33 @@
           </span>
         </div>
 
-        <!-- Card Footer -->
         <footer class="tc-card__footer">
-          <small style="color:var(--tc-text-muted);font-size:0.74rem;">
+          <small class="stu-meta-muted">
             <i class="pi pi-calendar"></i> {{ s.dateOfBirth || 'DOB N/A' }}
           </small>
-          <div class="tc-card is-clickable__actions" (click)="$event.stopPropagation()">
-            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Profile" (click)="openProfile(s, $event)">
-              <i class="pi pi-eye"></i>
-            </button>
-            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(s, $event)">
-              <i class="pi pi-phone"></i>
-            </button>
-            <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(s, $event)">
-              <i class="pi pi-whatsapp"></i>
-            </button>
-            <!-- More Menu -->
-            <div class="stu-more-menu" (click)="$event.stopPropagation()">
-              <button class="tc-btn tc-btn--ghost tc-btn--icon" title="More"
+          <div class="stu-card-actions" (click)="$event.stopPropagation()">
+            <div class="stu-more-menu">
+              <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="More actions"
                       (click)="toggleMoreMenu(s.studentId, $event)">
                 <i class="pi pi-ellipsis-v"></i>
               </button>
               <div class="stu-more-menu__panel" *ngIf="openMoreMenuId === s.studentId">
-                <button class="stu-more-menu__item" (click)="transferStudent(s, $event)">
+                <button type="button" class="stu-more-menu__item" (click)="openProfile(s, $event)">
+                  <i class="pi pi-eye"></i> View Profile
+                </button>
+                <button type="button" class="stu-more-menu__item" (click)="callPhone(s, $event)">
+                  <i class="pi pi-phone"></i> Call
+                </button>
+                <button type="button" class="stu-more-menu__item" (click)="whatsapp(s, $event)">
+                  <i class="pi pi-whatsapp"></i> WhatsApp
+                </button>
+                <button type="button" class="stu-more-menu__item" (click)="transferStudent(s, $event)">
                   <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
                 </button>
-                <button class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
+                <button type="button" class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
                   <i class="pi pi-history"></i> View Timeline
                 </button>
-                <button class="stu-more-menu__item is-danger" (click)="deactivateStudent(s, $event)">
+                <button type="button" class="stu-more-menu__item is-danger" (click)="deactivateStudent(s, $event)">
                   <i class="pi pi-ban"></i> Deactivate
                 </button>
               </div>
@@ -179,12 +190,11 @@
       </article>
     </div>
 
-    <!-- ════════════════ LIST VIEW ════════════════ -->
-    <div class="tc-table-wrap" *ngIf="!loading && students.length && view === 'list'">
+    <div class="tc-table-wrap" *ngIf="!loading && students.length && view === 'table'">
       <table class="tc-table">
         <thead>
           <tr>
-            <th style="width:40px;">#</th>
+            <th class="stu-col-index">#</th>
             <th>Student</th>
             <th>Admission No.</th>
             <th>Class / Section</th>
@@ -196,24 +206,22 @@
         </thead>
         <tbody>
           <tr *ngFor="let s of students; let i = index"
-              (click)="openProfile(s)" style="cursor:pointer;">
-            <td style="color:var(--tc-text-muted);font-size:0.8rem;">{{ pageIndex * pageSize + i + 1 }}</td>
+              class="stu-table-row"
+              (click)="openProfile(s)">
+            <td class="stu-meta-muted">{{ pageIndex * pageSize + i + 1 }}</td>
             <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="tc-avatar tc-avatar--initials" style="width:36px;height:36px;font-size:0.78rem;">
-                  <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.fullName"
-                       style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
-                  <span *ngIf="!s.photoUrl">{{ initials(s.fullName) }}</span>
-                </div>
+              <div class="stu-table-person">
+                <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
                 <div>
-                  <strong style="display:block;font-size:0.9rem;">{{ s.fullName }}</strong>
-                  <small style="color:var(--tc-text-muted);">{{ s.studentCode || '' }}</small>
+                  <strong class="stu-table-name">{{ s.fullName }}</strong>
+                  <small class="stu-meta-muted">{{ s.studentCode || '' }}</small>
                 </div>
               </div>
             </td>
             <td>{{ s.admissionNumber }}</td>
-            <td>{{ s.className || '—' }}<br/>
-              <small style="color:var(--tc-text-muted);">{{ s.sectionName || '—' }}</small>
+            <td>
+              {{ s.className || '—' }}<br/>
+              <small class="stu-meta-muted">{{ s.sectionName || '—' }}</small>
             </td>
             <td>{{ s.rollNumber || '—' }}</td>
             <td>{{ s.mobile || '—' }}</td>
@@ -223,28 +231,29 @@
               </span>
             </td>
             <td (click)="$event.stopPropagation()">
-              <div style="display:flex;gap:4px;align-items:center;">
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Profile" (click)="openProfile(s, $event)">
-                  <i class="pi pi-eye"></i>
-                </button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(s, $event)">
-                  <i class="pi pi-phone"></i>
-                </button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(s, $event)">
-                  <i class="pi pi-whatsapp"></i>
-                </button>
+              <div class="stu-card-actions">
                 <div class="stu-more-menu">
-                  <button class="tc-btn tc-btn--ghost tc-btn--icon" (click)="toggleMoreMenu(s.studentId, $event)">
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="More actions"
+                          (click)="toggleMoreMenu(s.studentId, $event)">
                     <i class="pi pi-ellipsis-v"></i>
                   </button>
                   <div class="stu-more-menu__panel" *ngIf="openMoreMenuId === s.studentId">
-                    <button class="stu-more-menu__item" (click)="transferStudent(s, $event)">
+                    <button type="button" class="stu-more-menu__item" (click)="openProfile(s, $event)">
+                      <i class="pi pi-eye"></i> View Profile
+                    </button>
+                    <button type="button" class="stu-more-menu__item" (click)="callPhone(s, $event)">
+                      <i class="pi pi-phone"></i> Call
+                    </button>
+                    <button type="button" class="stu-more-menu__item" (click)="whatsapp(s, $event)">
+                      <i class="pi pi-whatsapp"></i> WhatsApp
+                    </button>
+                    <button type="button" class="stu-more-menu__item" (click)="transferStudent(s, $event)">
                       <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
                     </button>
-                    <button class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
+                    <button type="button" class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
                       <i class="pi pi-history"></i> View Timeline
                     </button>
-                    <button class="stu-more-menu__item is-danger" (click)="deactivateStudent(s, $event)">
+                    <button type="button" class="stu-more-menu__item is-danger" (click)="deactivateStudent(s, $event)">
                       <i class="pi pi-ban"></i> Deactivate
                     </button>
                   </div>
@@ -256,18 +265,17 @@
       </table>
     </div>
 
-    <!-- Empty State -->
-    <div class="tc-empty-state" *ngIf="!loading && !students.length">
-      <i class="pi pi-users"></i>
-      <h3>No students found</h3>
-      <p>Try adjusting your filters or add new students.</p>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()" style="margin-top:8px;">
-        <i class="pi pi-plus"></i> Add Student
-      </button>
-    </div>
+    <app-empty-state
+      *ngIf="!loading && !students.length"
+      illustration="students"
+      title="No students found"
+      message="Try adjusting your filters or add new students."
+      actionLabel="Add Student"
+      actionIcon="pi pi-plus"
+      (action)="openAddDrawer()">
+    </app-empty-state>
 
-    <!-- Paginator -->
-    <div style="margin-top:8px;" *ngIf="!loading && totalElements > 0">
+    <div class="stu-paginator" *ngIf="!loading && totalElements > 0">
       <p-paginator
         [first]="pageIndex * pageSize"
         [rows]="pageSize"
@@ -280,15 +288,12 @@
 
 </section>
 
-<!-- ══════════════════════════════════════════════════════════
-     BULK IMPORT MODAL
-══════════════════════════════════════════════════════════ -->
 <div *ngIf="showImport" class="tc-overlay" (click)="closeImport()">
   <div class="tc-dialog" (click)="$event.stopPropagation()">
     <div class="tc-dialog__header">
       <div>
         <h2>Bulk Import Students</h2>
-        <p *ngIf="importStep === 'upload'" style="margin:4px 0 0;font-size:0.82rem;color:var(--tc-text-muted);">
+        <p *ngIf="importStep === 'upload'" class="stu-dialog-subtitle">
           Download the template, fill it, and upload to import students.
         </p>
       </div>
@@ -297,43 +302,32 @@
       </button>
     </div>
 
-    <!-- Upload Step -->
     <div class="tc-dialog__body" *ngIf="importStep === 'upload'">
-      <!-- Download Template -->
-      <div style="background:color-mix(in srgb, var(--tc-primary-500) 8%, transparent);
-                  border:1px dashed color-mix(in srgb, var(--tc-primary-500) 30%, transparent);
-                  border-radius:12px; padding:18px; display:flex; align-items:center; gap:14px;">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--tc-primary-600);
-                    display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0;">
+      <div class="stu-import-template">
+        <div class="stu-import-template__icon">
           <i class="pi pi-file-excel"></i>
         </div>
-        <div style="flex:1;">
-          <strong style="display:block;color:var(--tc-text);">Student_Import_Template.csv</strong>
-          <small style="color:var(--tc-text-muted);">19 columns including student & parent details</small>
+        <div class="stu-import-template__copy">
+          <strong>Student_Import_Template.csv</strong>
+          <small>19 columns including student &amp; parent details</small>
         </div>
         <button type="button" class="tc-btn" (click)="downloadTemplate()">
           <i class="pi pi-download"></i> Download
         </button>
       </div>
 
-      <!-- File Upload -->
       <div class="tc-form-field tc-form-field--full">
         <label>Select File (CSV or Excel)</label>
-        <div style="position:relative;border:2px dashed var(--tc-border);border-radius:12px;
-                    padding:28px;text-align:center;transition:border-color 150ms ease;"
-             [style.borderColor]="importFile ? 'var(--tc-primary-500)' : ''">
-          <i class="pi pi-upload" style="font-size:1.8rem;color:var(--tc-text-muted);display:block;margin-bottom:8px;"></i>
-          <p style="margin:0 0 8px;color:var(--tc-text-muted);font-size:0.9rem;">
-            Drag & drop your file here or
-          </p>
-          <label style="display:inline-block;cursor:pointer;">
-            <span class="tc-btn tc-btn--primary" style="display:inline-flex;">
+        <div class="stu-file-drop" [class.has-file]="!!importFile">
+          <i class="pi pi-upload stu-file-drop__icon"></i>
+          <p class="stu-file-drop__hint">Drag &amp; drop your file here or</p>
+          <label class="stu-file-drop__chooser">
+            <span class="tc-btn tc-btn--primary">
               <i class="pi pi-folder-open"></i> Choose File
             </span>
-            <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileSelected($event)"
-                   style="display:none;"/>
+            <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileSelected($event)" class="sr-only"/>
           </label>
-          <p *ngIf="importFile" style="margin:10px 0 0;font-size:0.86rem;color:var(--tc-success);font-weight:600;">
+          <p *ngIf="importFile" class="stu-file-drop__selected">
             <i class="pi pi-check-circle"></i> {{ importFile.name }}
           </p>
         </div>
@@ -344,20 +338,19 @@
       </div>
     </div>
 
-    <!-- Result Step -->
     <div class="tc-dialog__body" *ngIf="importStep === 'result' && importResult">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
-        <div style="padding:18px;border-radius:14px;background:var(--tc-surface-50);border:1px solid var(--tc-border);">
-          <strong style="display:block;font-size:2rem;font-weight:800;color:var(--tc-text);">{{ importResult.total }}</strong>
-          <span style="font-size:0.8rem;color:var(--tc-text-muted);text-transform:uppercase;font-weight:700;">Total Records</span>
+      <div class="stu-import-stats">
+        <div class="stu-import-stat">
+          <strong>{{ importResult.total }}</strong>
+          <span>Total Records</span>
         </div>
-        <div style="padding:18px;border-radius:14px;background:color-mix(in srgb,var(--tc-success) 10%,transparent);border:1px solid color-mix(in srgb,var(--tc-success) 30%,transparent);">
-          <strong style="display:block;font-size:2rem;font-weight:800;color:var(--tc-success);">{{ importResult.success }}</strong>
-          <span style="font-size:0.8rem;color:var(--tc-success);text-transform:uppercase;font-weight:700;">Successful</span>
+        <div class="stu-import-stat is-success">
+          <strong>{{ importResult.success }}</strong>
+          <span>Successful</span>
         </div>
-        <div style="padding:18px;border-radius:14px;background:color-mix(in srgb,var(--tc-danger) 10%,transparent);border:1px solid color-mix(in srgb,var(--tc-danger) 30%,transparent);">
-          <strong style="display:block;font-size:2rem;font-weight:800;color:var(--tc-danger);">{{ importResult.failed }}</strong>
-          <span style="font-size:0.8rem;color:var(--tc-danger);text-transform:uppercase;font-weight:700;">Failed</span>
+        <div class="stu-import-stat is-danger">
+          <strong>{{ importResult.failed }}</strong>
+          <span>Failed</span>
         </div>
       </div>
       <button *ngIf="importResult.failed > 0" type="button" class="tc-btn" (click)="downloadErrorReport()">
@@ -378,9 +371,6 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     ADD STUDENT DRAWER
-══════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="showAddDrawer">
   <div class="tc-overlay" (click)="closeAddDrawer()"></div>
   <app-add-student-drawer
@@ -388,5 +378,3 @@
     (saved)="onStudentAdded()">
   </app-add-student-drawer>
 </ng-container>
-
-

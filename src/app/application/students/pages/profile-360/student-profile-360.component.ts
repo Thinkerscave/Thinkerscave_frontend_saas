@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ChartModule } from 'primeng/chart';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -13,6 +15,7 @@ import {
   StudentTimelineEntry
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
 type ProfileTab = 'OVERVIEW' | 'PERSONAL' | 'FAMILY' | 'ACADEMICS' | 'DOCUMENTS' | 'MEDICAL' | 'TIMELINE';
 type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
@@ -21,7 +24,7 @@ type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
   selector: 'app-student-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ChartModule, DropdownModule, AvatarComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-profile-360.component.html'
 })
@@ -39,6 +42,16 @@ export class StudentProfile360Component implements OnInit {
   timeline: StudentTimelineEntry[] = [];
   academicHistory: AcademicHistoryRow[] = [];
   studentDocs: StudentDocumentEntry[] = [];
+
+  attendanceChartData: any = { labels: [], datasets: [] };
+  feeChartData: any = { labels: [], datasets: [] };
+  readonly doughnutOptions = {
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: { display: false }
+    }
+  };
 
   activeTab: ProfileTab = 'OVERVIEW';
   readonly tabs: { key: ProfileTab; label: string; icon: string }[] = [
@@ -59,6 +72,23 @@ export class StudentProfile360Component implements OnInit {
   editingMedical = false;
   personalForm: Partial<StudentPersonal> = {};
   medicalForm: Partial<MedicalSnapshot> = {};
+
+  readonly genderOptions: { label: string; value: string }[] = [
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' }
+  ];
+
+  readonly bloodGroupOptions: { label: string; value: string }[] = [
+    { label: 'A+', value: 'A+' },
+    { label: 'A-', value: 'A-' },
+    { label: 'B+', value: 'B+' },
+    { label: 'B-', value: 'B-' },
+    { label: 'AB+', value: 'AB+' },
+    { label: 'AB-', value: 'AB-' },
+    { label: 'O+', value: 'O+' },
+    { label: 'O-', value: 'O-' }
+  ];
 
   // ---- Timeline Filter ----
   timelineFilter: TimelineFilter = 'ALL';
@@ -94,6 +124,7 @@ export class StudentProfile360Component implements OnInit {
           this.timeline = timeline;
           this.academicHistory = history;
           this.studentDocs = docs;
+          this.refreshCharts();
         },
         error: () => { this.errorMessage = 'Unable to load student profile. Please retry.'; }
       });
@@ -185,13 +216,17 @@ export class StudentProfile360Component implements OnInit {
     return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
   }
 
-  /** SVG donut for attendance % */
-  ringDash(): { circ: number; offset: number } {
-    const r = 48;
-    const circ = 2 * Math.PI * r;
-    const pct = Math.min(100, Math.max(0, this.profile?.attendance?.percent ?? 0));
-    const offset = circ - (circ * pct) / 100;
-    return { circ, offset };
+  feeStatusLabel(): string {
+    const fees = this.profile?.fees;
+    if (!fees) return '—';
+    if ((fees.pending || 0) <= 0) return 'Cleared';
+    if (fees.status) return fees.status;
+    return 'Due';
+  }
+
+  classRankLabel(): string {
+    // Rank is not yet supplied by the profile API — show placeholder until available.
+    return '—';
   }
 
   feePercent(): number {
@@ -199,5 +234,39 @@ export class StudentProfile360Component implements OnInit {
     const t = this.profile.fees.totalFee;
     if (!t) return 0;
     return Math.round((this.profile.fees.paid / t) * 100);
+  }
+
+  private refreshCharts(): void {
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--tc-accent').trim() || '#16A34A';
+    const danger = getComputedStyle(document.documentElement).getPropertyValue('--tc-danger').trim() || '#ef4444';
+    const warning = getComputedStyle(document.documentElement).getPropertyValue('--tc-warning').trim() || '#f59e0b';
+    const muted = '#cbd5e1';
+
+    const attendance = this.profile?.attendance;
+    const present = attendance?.present ?? 0;
+    const absent = attendance?.absent ?? 0;
+    const late = attendance?.late ?? 0;
+    const attendanceTotal = present + absent + late;
+    this.attendanceChartData = {
+      labels: ['Present', 'Absent', 'Late'],
+      datasets: [{
+        data: attendanceTotal > 0 ? [present, absent, late] : [1],
+        backgroundColor: attendanceTotal > 0 ? [accent, danger, warning] : [muted],
+        borderWidth: 0
+      }]
+    };
+
+    const fees = this.profile?.fees;
+    const paid = fees?.paid ?? 0;
+    const pending = fees?.pending ?? 0;
+    const feeTotal = paid + pending;
+    this.feeChartData = {
+      labels: ['Paid', 'Pending'],
+      datasets: [{
+        data: feeTotal > 0 ? [paid, pending] : [1],
+        backgroundColor: feeTotal > 0 ? [accent, warning] : [muted],
+        borderWidth: 0
+      }]
+    };
   }
 }

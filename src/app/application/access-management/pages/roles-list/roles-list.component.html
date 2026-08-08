@@ -16,7 +16,14 @@
         <label class="saas-field"><span>Role Code</span><input [(ngModel)]="draft.roleCode" placeholder="ROLE_COORDINATOR"></label>
         <label class="saas-field"><span>Role Name</span><input [(ngModel)]="draft.roleName" placeholder="Academic Coordinator"></label>
         <label class="saas-field"><span>Role Type</span>
-          <select [(ngModel)]="draft.roleType"><option *ngFor="let t of roleTypes" [ngValue]="t">{{ roleTypeLabel(t) }}</option></select>
+          <p-dropdown
+            [options]="roleTypeOptions"
+            [(ngModel)]="draft.roleType"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </label>
         <label class="saas-field"><span>Description</span><input [(ngModel)]="draft.description" placeholder="Optional description"></label>
         <div class="roles-list__form-actions">

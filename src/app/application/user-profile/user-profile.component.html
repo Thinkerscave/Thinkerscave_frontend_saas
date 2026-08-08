@@ -3,7 +3,7 @@
   subtitle="Personal information, security and quick links"
   [breadcrumbs]="[{ label: 'Dashboard', route: '/app' }, { label: 'My Profile' }]">
   <button type="button" class="btn-ghost" (click)="goDashboard()"><i class="pi pi-arrow-left"></i>Back to Dashboard</button>
-  <a routerLink="/app/settings" class="btn-ghost"><i class="pi pi-cog"></i>Settings</a>
+  <a routerLink="/app/settings" class="btn-ghost"><i class="pi pi-cog"></i>{{ 'nav.settings' | tcTranslate }}</a>
 </tc-saas-page-header>
 
 <section class="profile-hero">

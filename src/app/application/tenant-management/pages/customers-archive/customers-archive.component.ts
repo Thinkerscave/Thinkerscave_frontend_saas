@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
@@ -31,6 +32,7 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
+    DropdownModule,
     PaginatorModule,
     ToastModule,
     SaasPageHeaderComponent,
@@ -59,6 +61,11 @@ export class CustomersArchiveComponent implements OnInit {
   page = 0;
   pageSize = 20;
   totalRecords = 0;
+
+  readonly archivedOptions: { label: string; value: boolean }[] = [
+    { label: 'Archived only', value: true },
+    { label: 'All inactive', value: false }
+  ];
 
   readonly customerInitials = customerInitials;
   readonly customerStatusLabel = customerStatusLabel;

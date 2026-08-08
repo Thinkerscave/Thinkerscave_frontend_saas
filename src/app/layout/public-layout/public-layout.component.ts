@@ -10,13 +10,13 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="public-layout">
       <header class="public-header">
-        <span class="logo-text">ThinkerScave</span>
+        <span class="logo-text">ThinkersCave</span>
       </header>
       <main class="public-content">
         <router-outlet></router-outlet>
       </main>
       <footer class="public-footer">
-        &copy; 2026 ThinkerScave. All rights reserved.
+        &copy; 2026 ThinkersCave. All rights reserved.
       </footer>
     </div>
   `,

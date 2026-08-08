@@ -11,18 +11,24 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { DropdownModule } from 'primeng/dropdown';
+import { catchError, finalize, of } from 'rxjs';
 
 import { ParentInfo, StudentWizardRequest } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2;
+
+interface SelectOption<T = string | null> {
+  label: string;
+  value: T;
+}
 
 @Component({
   selector: 'app-add-student-drawer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './add-student-drawer.component.html'
 })
@@ -36,25 +42,64 @@ export class AddStudentDrawerComponent implements OnInit {
   currentStep: WizardStep = 1;
   saving = false;
   errorMessage = '';
+  lookupWarning = '';
   sameAddress = false;
 
-  classOptions: Array<{ id: number; label: string }> = [];
-  sectionOptions: Array<{ id: number; label: string }> = [];
-  academicYears = ['2025-2026', '2024-2025', '2023-2024'];
-
-  readonly steps = [
-    { num: 1, label: 'Student Information', icon: 'pi pi-user' },
-    { num: 2, label: 'Parent Information',  icon: 'pi pi-users' },
-    { num: 3, label: 'Academic Information',icon: 'pi pi-book' },
-    { num: 4, label: 'Medical Information', icon: 'pi pi-heart' },
-    { num: 5, label: 'Review & Submit',     icon: 'pi pi-check-circle' }
+  classOptions: Array<{ id: number | null; label: string }> = [
+    { id: null, label: 'Select Class' }
+  ];
+  sectionOptions: Array<{ id: number | null; label: string }> = [
+    { id: null, label: 'Select Section' }
+  ];
+  academicYearOptions: SelectOption[] = [
+    { label: 'Select Year', value: null },
+    { label: '2025-2026', value: '2025-2026' },
+    { label: '2024-2025', value: '2024-2025' },
+    { label: '2023-2024', value: '2023-2024' }
   ];
 
-  readonly genders = ['Male', 'Female', 'Other'];
-  readonly religions = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Other'];
-  readonly bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  readonly relationships = ['Father', 'Mother', 'Guardian'];
-  readonly enrollmentStatuses = ['Active', 'Inactive', 'Pending'];
+  readonly steps = [
+    { num: 1 as WizardStep, label: 'Basic Details', icon: 'pi pi-user' },
+    { num: 2 as WizardStep, label: 'Additional Details', icon: 'pi pi-list' }
+  ];
+
+  readonly genderOptions: SelectOption[] = [
+    { label: 'Select Gender', value: null },
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' }
+  ];
+  readonly religionOptions: SelectOption[] = [
+    { label: 'Select', value: null },
+    { label: 'Hindu', value: 'Hindu' },
+    { label: 'Muslim', value: 'Muslim' },
+    { label: 'Christian', value: 'Christian' },
+    { label: 'Sikh', value: 'Sikh' },
+    { label: 'Jain', value: 'Jain' },
+    { label: 'Buddhist', value: 'Buddhist' },
+    { label: 'Other', value: 'Other' }
+  ];
+  readonly bloodGroupOptions: SelectOption[] = [
+    { label: 'Select', value: null },
+    { label: 'A+', value: 'A+' },
+    { label: 'A-', value: 'A-' },
+    { label: 'B+', value: 'B+' },
+    { label: 'B-', value: 'B-' },
+    { label: 'AB+', value: 'AB+' },
+    { label: 'AB-', value: 'AB-' },
+    { label: 'O+', value: 'O+' },
+    { label: 'O-', value: 'O-' }
+  ];
+  readonly relationshipOptions: SelectOption<string>[] = [
+    { label: 'Father', value: 'Father' },
+    { label: 'Mother', value: 'Mother' },
+    { label: 'Guardian', value: 'Guardian' }
+  ];
+  readonly enrollmentStatusOptions: SelectOption<string>[] = [
+    { label: 'Active', value: 'Active' },
+    { label: 'Inactive', value: 'Inactive' },
+    { label: 'Pending', value: 'Pending' }
+  ];
 
   form: StudentWizardRequest = {
     firstName: '',
@@ -65,14 +110,40 @@ export class AddStudentDrawerComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.api.listAcademicYears().subscribe(years => {
-      this.academicYears = years.map(y => y.label);
-      this.cdr.markForCheck();
-    });
-    this.api.listClasses().subscribe(classes => {
-      this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
-      this.cdr.markForCheck();
-    });
+    this.loadAcademicYears();
+    this.loadClasses();
+  }
+
+  private loadAcademicYears(): void {
+    this.api.listAcademicYears()
+      .pipe(catchError(() => {
+        this.lookupWarning = 'Academic year options could not be refreshed. Default years are still available.';
+        return of([]);
+      }))
+      .subscribe(years => {
+        if (years.length) {
+          this.academicYearOptions = [
+            { label: 'Select Year', value: null },
+            ...years.map(y => ({ label: y.label, value: y.label }))
+          ];
+        }
+        this.cdr.markForCheck();
+      });
+  }
+
+  private loadClasses(): void {
+    this.api.listClasses()
+      .pipe(catchError(() => {
+        this.lookupWarning = 'Class options could not be loaded. Please retry after checking academic setup.';
+        return of([]);
+      }))
+      .subscribe(classes => {
+        this.classOptions = [
+          { id: null, label: 'Select Class' },
+          ...classes.map(c => ({ id: c.id, label: c.label }))
+        ];
+        this.cdr.markForCheck();
+      });
   }
 
   emptyParent(relationship = 'Father'): ParentInfo {
@@ -99,12 +170,20 @@ export class AddStudentDrawerComponent implements OnInit {
 
   onClassSelected(): void {
     this.form.sectionId = null;
-    this.sectionOptions = [];
+    this.sectionOptions = [{ id: null, label: 'Select Section' }];
     if (this.form.classId) {
-      this.api.listSectionsByClass(this.form.classId).subscribe(sections => {
-        this.sectionOptions = sections.map(s => ({ id: s.id, label: s.label }));
-        this.cdr.markForCheck();
-      });
+      this.api.listSectionsByClass(this.form.classId)
+        .pipe(catchError(() => {
+          this.lookupWarning = 'Sections could not be loaded for the selected class.';
+          return of([]);
+        }))
+        .subscribe(sections => {
+          this.sectionOptions = [
+            { id: null, label: 'Select Section' },
+            ...sections.map(s => ({ id: s.id, label: s.label }))
+          ];
+          this.cdr.markForCheck();
+        });
     }
   }
 
@@ -118,26 +197,34 @@ export class AddStudentDrawerComponent implements OnInit {
   }
 
   get progressPercent(): number {
-    return Math.round(((this.currentStep - 1) / (this.steps.length - 1)) * 100);
+    return this.currentStep === 1 ? 50 : 100;
   }
 
   next(): void {
-    if (this.currentStep < 5) {
-      this.currentStep = (this.currentStep + 1) as WizardStep;
+    this.errorMessage = '';
+    if (this.currentStep === 1 && !this.canProceedStep1()) {
+      this.errorMessage = 'First name, last name, and a primary parent mobile are required.';
+      return;
+    }
+    if (this.currentStep < 2) {
+      this.currentStep = 2;
       this.cdr.markForCheck();
     }
   }
 
   back(): void {
     if (this.currentStep > 1) {
-      this.currentStep = (this.currentStep - 1) as WizardStep;
+      this.currentStep = 1;
+      this.errorMessage = '';
       this.cdr.markForCheck();
     }
   }
 
   goToStep(step: number): void {
-    this.currentStep = step as WizardStep;
-    this.cdr.markForCheck();
+    if (step === 1 || (step === 2 && this.canProceedStep1())) {
+      this.currentStep = step as WizardStep;
+      this.cdr.markForCheck();
+    }
   }
 
   isStepDone(step: number): boolean {
@@ -145,21 +232,20 @@ export class AddStudentDrawerComponent implements OnInit {
   }
 
   canProceedStep1(): boolean {
-    return !!(this.form.firstName?.trim() && this.form.lastName?.trim());
-  }
-
-  canProceedStep2(): boolean {
-    return !!(this.form.parents?.length && this.form.parents[0]?.firstName?.trim() && this.form.parents[0]?.mobile?.trim());
-  }
-
-  canProceedStep3(): boolean {
-    return !!(this.form.classId);
+    const parent = this.form.parents?.[0];
+    return !!(
+      this.form.firstName?.trim() &&
+      this.form.lastName?.trim() &&
+      parent?.firstName?.trim() &&
+      parent?.mobile?.trim()
+    );
   }
 
   submit(): void {
     this.errorMessage = '';
     if (!this.canProceedStep1()) {
-      this.errorMessage = 'First Name and Last Name are required.';
+      this.errorMessage = 'First Name, Last Name, and primary parent details are required.';
+      this.currentStep = 1;
       return;
     }
     this.saving = true;
@@ -173,5 +259,9 @@ export class AddStudentDrawerComponent implements OnInit {
 
   parentLabel(index: number): string {
     return this.form.parents?.[index]?.relationship || `Parent ${index + 1}`;
+  }
+
+  get fullName(): string {
+    return [this.form.firstName, this.form.middleName, this.form.lastName].filter(Boolean).join(' ');
   }
 }

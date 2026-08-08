@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -36,6 +37,7 @@ type FollowUpTab = 'today' | 'overdue' | 'all';
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
+    DropdownModule,
     ToastModule,
     SaasStatGridComponent,
     SaasPanelComponent,
@@ -55,6 +57,14 @@ export class FollowUpsCenterComponent implements OnInit {
 
   readonly pageConfig = admissionsPageConfig('follow-ups');
   readonly followUpTypes = FOLLOW_UP_TYPES;
+  readonly followUpTypeOptions = FOLLOW_UP_TYPES.map(t => ({ label: t, value: t }));
+  readonly statusAfterOptions = [
+    { label: 'CONTACTED', value: 'CONTACTED' },
+    { label: 'INTERESTED', value: 'INTERESTED' },
+    { label: 'COUNSELING', value: 'COUNSELING' },
+    { label: 'FOLLOW_UP_REQUIRED', value: 'FOLLOW_UP_REQUIRED' },
+    { label: 'READY_FOR_ADMISSION', value: 'READY_FOR_ADMISSION' }
+  ];
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);

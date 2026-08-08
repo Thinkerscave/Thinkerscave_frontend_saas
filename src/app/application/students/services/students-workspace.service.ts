@@ -31,6 +31,7 @@ import {
   TransferRequest,
   TransferStatus
 } from '../models/students-workspace.model';
+import { resolveStudentPhotoUrl } from '../../../shared/utils/profile-assets';
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -58,6 +59,7 @@ interface BackendStudentDto {
   sectionName?: string | null;
   parentName?: string | null;
   parentMobileNumber?: string | null;
+  photoUrl?: string | null;
 }
 
 interface BackendProfileDto {
@@ -585,7 +587,8 @@ export class StudentsWorkspaceService {
       active: dto.status === 'ACTIVE',
       attendanceStatus: 'PENDING',
       guardianName: dto.parentName,
-      guardianMobile: dto.parentMobileNumber?.toString() ?? null
+      guardianMobile: dto.parentMobileNumber?.toString() ?? null,
+      photoUrl: resolveStudentPhotoUrl(dto.studentId, dto.photoUrl)
     };
   }
 
@@ -610,7 +613,8 @@ export class StudentsWorkspaceService {
         active: s.status === 'ACTIVE',
         academicYear: en?.academicYear,
         enrollmentStatus: en?.status,
-        bloodGroup: med.bloodGroup
+        bloodGroup: med.bloodGroup,
+        photoUrl: resolveStudentPhotoUrl(s.studentId, s.photoUrl)
       },
       personal: {
         fullName: s.fullName ?? '',

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/c
 import { ChartModule } from 'primeng/chart';
 import { ChartData } from '../../models/dashboard.model';
 
-const PALETTE = ['#2C5BFF', '#16A34A', '#F59E0B', '#A855F7', '#0EA5E9', '#EF4444'];
+const PALETTE = ['#16A34A', '#0EA5E9', '#F59E0B', '#EF4444', '#0F766E', '#2556EB'];
 
 @Component({
   selector: 'tc-chart-widget',

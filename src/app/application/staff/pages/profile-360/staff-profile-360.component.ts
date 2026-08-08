@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -31,7 +32,7 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
@@ -78,6 +79,15 @@ export class StaffProfile360Component implements OnInit {
     { value: 'DAILY_WAGE', label: 'Daily Wage' }
   ];
 
+  get responsibilityOptions(): { label: string; value: number }[] {
+    return [
+      { label: 'Select Responsibility', value: 0 },
+      ...this.allResponsibilities.map(r => ({
+        label: `${r.responsibilityName} (${r.responsibilityCode})`,
+        value: r.responsibilityId ?? 0
+      }))
+    ];
+  }
   get grossSalary(): number {
     return (this.salaryForm.basicPay ?? 0) + (this.salaryForm.hra ?? 0)
          + (this.salaryForm.da ?? 0) + (this.salaryForm.specialAllowance ?? 0)
@@ -195,6 +205,10 @@ export class StaffProfile360Component implements OnInit {
         specialAllowance: existing.specialAllowance,
         transportAllowance: existing.transportAllowance,
         otherAllowance: existing.otherAllowance,
+        pfEmployee: existing.pfEmployee,
+        esiEmployee: existing.esiEmployee,
+        professionalTax: existing.professionalTax,
+        otherDeduction: existing.otherDeduction,
         bankName: existing.bankName,
         accountHolderName: existing.accountHolderName,
         accountNumber: existing.accountNumber,
@@ -248,6 +262,19 @@ export class StaffProfile360Component implements OnInit {
   markPaid(payroll: Payroll): void {
     this.api.markPaid(payroll.payrollId).subscribe({
       next: () => { payroll.status = 'PAID'; this.cdr.markForCheck(); }
+    });
+  }
+
+  downloadPayslip(payroll: Payroll): void {
+    this.api.downloadPayslip(payroll.payrollId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `payslip-${payroll.staffCode}-${payroll.payrollYear}-${payroll.payrollMonth}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
     });
   }
 

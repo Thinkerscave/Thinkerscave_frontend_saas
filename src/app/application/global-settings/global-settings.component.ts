@@ -1,18 +1,27 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import {
-  SaasPageHeaderComponent,
   SaasPanelComponent,
   SaasTab,
   SaasTabsComponent
 } from '../../shared/ui/saas';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { LoginService } from '../../core/services/login.service';
+import { LanguageService } from '../../core/services/language.service';
 import { UserPreferencesService } from '../services/user-preferences.service';
+import { SettingsUiService } from '../../core/services/settings-ui.service';
+import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
+import { PwaService } from '../../core/services/pwa.service';
 
-type TabKey = 'appearance' | 'notifications' | 'localization' | 'accessibility' | 'security';
+type TabKey = 'appearance' | 'notifications' | 'localization';
+
+interface SelectOption {
+  label: string;
+  value: string;
+}
 
 @Component({
   selector: 'tc-global-settings',
@@ -21,10 +30,10 @@ type TabKey = 'appearance' | 'notifications' | 'localization' | 'accessibility' 
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
-    SaasPageHeaderComponent,
+    DropdownModule,
     SaasPanelComponent,
-    SaasTabsComponent
+    SaasTabsComponent,
+    TcTranslatePipe
   ],
   templateUrl: './global-settings.component.html',
   styleUrl: './global-settings.component.scss'
@@ -32,99 +41,160 @@ type TabKey = 'appearance' | 'notifications' | 'localization' | 'accessibility' 
 export class GlobalSettingsComponent {
   private readonly themeService = inject(ThemeService);
   private readonly preferencesService = inject(UserPreferencesService);
+  private readonly languageService = inject(LanguageService);
   private readonly loginService = inject(LoginService);
+  private readonly settingsUi = inject(SettingsUiService);
   private readonly router = inject(Router);
+  readonly pwa = inject(PwaService);
 
-  readonly tabs: SaasTab[] = [
-    { key: 'appearance',    label: 'Appearance',    icon: 'pi pi-palette' },
-    { key: 'notifications', label: 'Notifications', icon: 'pi pi-bell' },
-    { key: 'localization',  label: 'Localization',  icon: 'pi pi-globe' },
-    { key: 'accessibility', label: 'Accessibility', icon: 'pi pi-eye' },
-    { key: 'security',      label: 'Security',      icon: 'pi pi-lock' }
-  ];
+  readonly tabs = computed<SaasTab[]>(() => {
+    this.languageService.language();
+    this.languageService.catalogVersion();
+    return [
+      { key: 'appearance', label: this.languageService.t('settings.appearance'), icon: 'pi pi-palette' },
+      { key: 'notifications', label: this.languageService.t('settings.notifications'), icon: 'pi pi-bell' },
+      { key: 'localization', label: this.languageService.t('settings.localization'), icon: 'pi pi-globe' }
+    ];
+  });
   readonly active = signal<TabKey>('appearance');
+  readonly savedFlash = signal(false);
 
-  /* Appearance */
   readonly isDark = this.themeService.isDarkTheme;
-  readonly density = signal<'comfortable' | 'compact'>(this.read('tc.density', 'comfortable') as any);
-  readonly accent = signal<string>(this.read('tc.accent', '#1F3A93'));
+  readonly accent = signal<string>(this.preferencesService.get('accent', '#1F3A93'));
+  readonly accentPresets = [
+    '#1F3A93', '#2556EB', '#0EA5E9', '#16A34A',
+    '#CA8A04', '#DC2626', '#7C3AED', '#0F766E'
+  ] as const;
+  readonly customAccent = signal(
+    !(this.accentPresets as readonly string[]).some(c => c.toLowerCase() === this.accent().toLowerCase())
+  );
+  readonly reduceMotion = signal(this.preferencesService.getBool('reduceMotion', false));
 
-  /* Notifications */
-  readonly notifEmail = signal<boolean>(this.readBool('tc.notifEmail', true));
-  readonly notifPush  = signal<boolean>(this.readBool('tc.notifPush',  true));
-  readonly notifSms   = signal<boolean>(this.readBool('tc.notifSms',   false));
-  readonly notifDigest= signal<'daily' | 'weekly' | 'off'>(this.read('tc.notifDigest', 'daily') as any);
+  readonly notifEmail = signal(this.preferencesService.getBool('notifEmail', true));
+  readonly notifPush = signal(this.preferencesService.getBool('notifPush', true));
+  readonly notifSms = signal(this.preferencesService.getBool('notifSms', false));
+  readonly notifDigest = signal<'daily' | 'weekly' | 'off'>(
+    this.preferencesService.get('notifDigest', 'daily') as 'daily' | 'weekly' | 'off'
+  );
 
-  /* Localization */
-  readonly language = signal<string>(this.read('tc.language', 'en-IN'));
-  readonly timezone = signal<string>(this.read('tc.timezone', 'Asia/Kolkata'));
-  readonly dateFormat = signal<string>(this.read('tc.dateFormat', 'dd-MM-yyyy'));
+  readonly language = signal(this.preferencesService.get('language', this.languageService.language()));
+  readonly timezone = signal(this.preferencesService.get('timezone', 'Asia/Kolkata'));
+  readonly dateFormat = signal(this.preferencesService.get('dateFormat', 'dd-MM-yyyy'));
 
-  /* Accessibility */
-  readonly reduceMotion = signal<boolean>(this.readBool('tc.reduceMotion', false));
-  readonly largeText = signal<boolean>(this.readBool('tc.largeText', false));
-  readonly highContrast = signal<boolean>(this.readBool('tc.highContrast', false));
+  readonly languageOptions: SelectOption[] = [
+    { label: 'English (India)', value: 'en-IN' },
+    { label: 'ଓଡ଼ିଆ (Odia)', value: 'or-IN' },
+    { label: 'हिन्दी', value: 'hi-IN' },
+    { label: 'English (US)', value: 'en-US' }
+  ];
+
+  readonly digestOptions = computed<SelectOption[]>(() => {
+    this.languageService.language();
+    this.languageService.catalogVersion();
+    return [
+      { label: this.languageService.t('settings.digestDaily'), value: 'daily' },
+      { label: this.languageService.t('settings.digestWeekly'), value: 'weekly' },
+      { label: this.languageService.t('settings.digestOff'), value: 'off' }
+    ];
+  });
+
+  readonly timezoneOptions: SelectOption[] = [
+    { label: 'Asia/Kolkata (IST)', value: 'Asia/Kolkata' },
+    { label: 'UTC', value: 'UTC' },
+    { label: 'America/New York', value: 'America/New_York' },
+    { label: 'Europe/London', value: 'Europe/London' }
+  ];
+
+  readonly dateFormatOptions: SelectOption[] = [
+    { label: 'dd-MM-yyyy', value: 'dd-MM-yyyy' },
+    { label: 'MM/dd/yyyy', value: 'MM/dd/yyyy' },
+    { label: 'yyyy-MM-dd', value: 'yyyy-MM-dd' }
+  ];
 
   readonly userName = computed(() => {
     const u: any = this.loginService.getUser();
     return [u?.firstName, u?.lastName].filter(Boolean).join(' ') || u?.userName || 'You';
   });
 
-  selectTab(key: string): void { this.active.set(key as TabKey); }
+  readonly subtitle = computed(() => {
+    this.languageService.language();
+    return this.languageService.t('settings.subtitle').replace('{{name}}', this.userName());
+  });
 
-  toggleTheme(): void { this.themeService.toggleTheme(); }
+  private readonly livePreview = effect(() => {
+    this.preferencesService.applyAccent(this.accent());
+    this.preferencesService.applyReduceMotion(this.reduceMotion());
+  });
+
+  selectTab(key: string): void {
+    this.active.set(key as TabKey);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  selectAccent(color: string): void {
+    this.customAccent.set(false);
+    this.accent.set(color);
+  }
+
+  enableCustomAccent(): void {
+    this.customAccent.set(true);
+  }
+
+  isPresetAccent(color: string): boolean {
+    return !this.customAccent() && this.accent().toLowerCase() === color.toLowerCase();
+  }
+
+  selectLanguage(code: string): void {
+    this.language.set(code);
+    this.languageService.setLanguage(code);
+    this.preferencesService.set('language', code);
+  }
 
   save(): void {
-    this.write('tc.density', this.density());
-    this.write('tc.accent', this.accent());
-    this.writeBool('tc.notifEmail', this.notifEmail());
-    this.writeBool('tc.notifPush', this.notifPush());
-    this.writeBool('tc.notifSms', this.notifSms());
-    this.write('tc.notifDigest', this.notifDigest());
-    this.write('tc.language', this.language());
-    this.write('tc.timezone', this.timezone());
-    this.write('tc.dateFormat', this.dateFormat());
-    this.writeBool('tc.reduceMotion', this.reduceMotion());
-    this.writeBool('tc.largeText', this.largeText());
-    this.writeBool('tc.highContrast', this.highContrast());
-    this.preferencesService.applyAccent(this.accent());
-    this.preferencesService.applyA11y(this.reduceMotion(), this.largeText(), this.highContrast());
-    document.documentElement.dataset['density'] = this.density();
+    this.preferencesService.set('accent', this.accent());
+    this.preferencesService.setBool('reduceMotion', this.reduceMotion());
+    this.preferencesService.setBool('notifEmail', this.notifEmail());
+    this.preferencesService.setBool('notifPush', this.notifPush());
+    this.preferencesService.setBool('notifSms', this.notifSms());
+    this.preferencesService.set('notifDigest', this.notifDigest());
+    this.preferencesService.set('language', this.language());
+    this.languageService.setLanguage(this.language());
+    this.preferencesService.set('timezone', this.timezone());
+    this.preferencesService.set('dateFormat', this.dateFormat());
+    this.preferencesService.applyStoredPreferences();
+    this.savedFlash.set(true);
+    setTimeout(() => this.savedFlash.set(false), 1800);
   }
 
   reset(): void {
-    this.density.set('comfortable');
     this.accent.set('#1F3A93');
+    this.customAccent.set(false);
+    this.reduceMotion.set(false);
     this.notifEmail.set(true);
     this.notifPush.set(true);
     this.notifSms.set(false);
     this.notifDigest.set('daily');
     this.language.set('en-IN');
+    this.languageService.setLanguage('en-IN');
     this.timezone.set('Asia/Kolkata');
     this.dateFormat.set('dd-MM-yyyy');
-    this.reduceMotion.set(false);
-    this.largeText.set(false);
-    this.highContrast.set(false);
+    this.themeService.setTheme('light');
+    this.save();
   }
 
-  goProfile(): void { this.router.navigate(['/app/profile']); }
-
-  private applyAccent(): void {
-    document.documentElement.style.setProperty('--saas-primary', this.accent());
-  }
-  private applyA11y(): void {
-    const html = document.documentElement;
-    html.classList.toggle('tc-reduce-motion', this.reduceMotion());
-    html.classList.toggle('tc-large-text', this.largeText());
-    html.classList.toggle('tc-high-contrast', this.highContrast());
+  close(): void {
+    this.settingsUi.close();
   }
 
-  private read(key: string, fallback: string): string {
-    try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+  goChangePassword(): void {
+    this.settingsUi.close();
+    this.router.navigate(['/app/profile']);
   }
-  private readBool(key: string, fallback: boolean): boolean {
-    try { const v = localStorage.getItem(key); return v === null ? fallback : v === 'true'; } catch { return fallback; }
+
+  installApp(): void {
+    void this.pwa.promptInstall();
   }
-  private write(key: string, value: string): void { try { localStorage.setItem(key, value); } catch { /* ignore */ } }
-  private writeBool(key: string, value: boolean): void { try { localStorage.setItem(key, value ? 'true' : 'false'); } catch { /* ignore */ } }
 }

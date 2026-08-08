@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -23,7 +24,7 @@ interface KpiTile {
   selector: 'app-document-vault',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownModule],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './document-vault.component.html'
 })
@@ -48,11 +49,25 @@ export class DocumentVaultComponent implements OnInit {
   ];
 
   readonly categories: ('ALL' | DocumentVaultCategory)[] = ['ALL', 'PERSONAL', 'ACADEMIC', 'MEDICAL', 'OTHER'];
+  readonly categoryOptions: { label: string; value: DocumentVaultCategory }[] = (
+    this.categories.filter((c): c is DocumentVaultCategory => c !== 'ALL')
+  ).map(c => ({ label: c, value: c }));
+
   activeCategory: 'ALL' | DocumentVaultCategory = 'ALL';
   showUpload = false;
   showBulk = false;
   bulkCsv = 'studentId,category,documentType,fileName,fileUrl\n1,PERSONAL,Aadhaar Card,rahul_aadhaar.pdf,uploads/dev/students/1/rahul_aadhaar.pdf\n2,ACADEMIC,Previous Marksheet,ananya_marksheet.pdf,uploads/dev/students/2/ananya_marksheet.pdf';
   form: DocumentVaultRequest = this.emptyForm();
+
+  get studentOptions(): { label: string; value: number }[] {
+    return [
+      { label: 'Select student', value: 0 },
+      ...this.students.map(s => ({
+        label: `${s.fullName} (${s.className} ${s.sectionName})`,
+        value: s.studentId ?? 0
+      }))
+    ];
+  }
 
   ngOnInit(): void { this.loadAll(); }
 

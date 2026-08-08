@@ -1,18 +1,22 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { LoginService } from '../../core/services/login.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
+import { SettingsUiService } from '../../core/services/settings-ui.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { WorkspaceOrganization, WorkspaceSwitcherService } from '../../core/services/workspace-switcher.service';
 import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
+import { AvatarComponent } from '../../shared/ui/avatar/avatar.component';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { NotificationCenterComponent } from '../notification-center/notification-center.component';
+import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
 
 @Component({
   selector: 'app-top-bar',
   standalone: true,
-  imports: [CommonModule, OverlayPanelModule, GlobalSearchComponent, NotificationCenterComponent],
+  imports: [CommonModule, OverlayPanelModule, AvatarComponent, GlobalSearchComponent, NotificationCenterComponent, TcTranslatePipe],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.scss'
 })
@@ -22,6 +26,8 @@ export class TopBarComponent {
   router = inject(Router);
   sidebarLayout = inject(SidebarLayoutService);
   workspaceService = inject(WorkspaceSwitcherService);
+  private readonly orgContext = inject(OrganizationContextService);
+  private readonly settingsUi = inject(SettingsUiService);
 
   isDarkTheme = this.themeService.isDarkTheme;
   currentUser = this.loginService.getUser();
@@ -36,12 +42,15 @@ export class TopBarComponent {
   readonly dashboardRoute = computed(() => this.resolveDashboardRoute(this.roleTokens()));
   readonly organizations = signal<WorkspaceOrganization[]>([]);
   readonly switchingOrg = signal<number | null>(null);
+  readonly organizationLogoUrl = signal<string | null>(null);
 
   constructor() {
+    this.refreshOrganizationLogo();
     if (this.canSwitchOrganization()) {
       this.workspaceService.listOrganizations().subscribe({
         next: (orgs) => {
           this.organizations.set(orgs);
+          this.refreshOrganizationLogo(orgs);
           const lastSelected = Number(localStorage.getItem('lastSelectedOrganizationId') || '0');
           const target = orgs.find((org) => org.organizationId === lastSelected);
           if (target && !target.current) {
@@ -53,19 +62,29 @@ export class TopBarComponent {
     }
   }
 
-  toggleTheme() { this.themeService.toggleTheme(); }
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
 
-  navigateHome() { this.router.navigate([this.dashboardRoute()]); }
+  navigateHome(): void {
+    this.router.navigate([this.dashboardRoute()]);
+  }
 
   toggleNavigation(): void {
     this.sidebarLayout.toggleShellNavigation();
   }
 
-  logout() { this.loginService.logOutAndRedirect(); }
+  logout(): void {
+    this.loginService.logOutAndRedirect();
+  }
 
-  openSettings() { this.router.navigate(['/app/settings']); }
+  openSettings(): void {
+    this.settingsUi.open();
+  }
 
-  openOrganizationProfile() { this.router.navigate(['/app/organization/profile']); }
+  openOrganizationProfile(): void {
+    this.router.navigate(['/app/organization/profile']);
+  }
 
   canOpenOrganizationProfile(): boolean {
     return ['ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
@@ -91,7 +110,13 @@ export class TopBarComponent {
         this.loginService.setTenant(selected.tenantId);
         this.loginService.setCurrentOrganization(String(selected.organizationId));
         localStorage.setItem('lastSelectedOrganizationId', String(selected.organizationId));
-        this.organizations.set(this.organizations().map((item) => ({ ...item, current: item.organizationId === selected.organizationId })));
+        const nextOrgs = this.organizations().map((item) => ({
+          ...item,
+          current: item.organizationId === selected.organizationId,
+          logoUrl: item.organizationId === selected.organizationId ? (selected.logoUrl ?? item.logoUrl) : item.logoUrl
+        }));
+        this.organizations.set(nextOrgs);
+        this.refreshOrganizationLogo(nextOrgs, selected.logoUrl);
         panel?.hide();
         this.router.navigateByUrl('/app', { replaceUrl: true });
       },
@@ -104,16 +129,25 @@ export class TopBarComponent {
     });
   }
 
+  private refreshOrganizationLogo(orgs?: WorkspaceOrganization[], preferredLogo?: string | null): void {
+    if (preferredLogo) {
+      this.organizationLogoUrl.set(preferredLogo);
+      return;
+    }
+    const list = orgs ?? this.organizations();
+    const current = list.find((o) => o.current)
+      ?? list.find((o) => String(o.organizationId) === this.loginService.getCurrentOrganizationId());
+    if (current?.logoUrl) {
+      this.organizationLogoUrl.set(current.logoUrl);
+      return;
+    }
+    const ctxOrg = this.orgContext.getSelectedOrganization() ?? this.orgContext.getLoginTarget();
+    this.organizationLogoUrl.set(ctxOrg?.logoUrl ?? null);
+  }
+
   currentOrganizationName(): string {
     const current = this.organizations().find((o) => o.current);
     return current?.organizationName ?? this.getOrganizationName();
-  }
-
-  getInitials(name: string | undefined | null): string {
-    if (!name) return 'U';
-    const parts = name.split(' ').filter(Boolean);
-    if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return name.substring(0, 2).toUpperCase();
   }
 
   getUserName(): string {
@@ -131,7 +165,7 @@ export class TopBarComponent {
     const user = this.currentUser as any;
     const org = user?.organizations?.[0] ?? user?.organization ?? user?.orgName;
     if (typeof org === 'string') return org;
-    return org?.orgName ?? org?.displayName ?? localStorage.getItem('tenantId') ?? 'ThinkerScave Academy';
+    return org?.orgName ?? org?.displayName ?? localStorage.getItem('tenantId') ?? 'ThinkersCave Academy';
   }
 
   private computeRoleTokens(user: any): string[] {

@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { of } from 'rxjs';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
+import { PermissionService } from '../../core/services/permission.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { SideMenuComponent } from './side-menu.component';
 
@@ -45,6 +46,12 @@ describe('SideMenuComponent', () => {
           provide: MenuMappingService,
           useValue: {
             loadMenu: () => of([subscriptionsGroup])
+          }
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            loadPermissions: () => of(void 0)
           }
         },
         BreadCrumbService
@@ -102,4 +109,15 @@ describe('SideMenuComponent', () => {
     component.onSidebarEnter();
     expect(component.isGroupOpen(subscriptionsGroup)).toBeTrue();
   });
+
+  it('should collapse on sidebar leave even when a group is open', fakeAsync(() => {
+    component.toggleGroup(subscriptionsGroup);
+    expect(component.isGroupOpen(subscriptionsGroup)).toBeTrue();
+
+    component.onSidebarLeave();
+    tick(300);
+
+    expect(component.isGroupOpen(subscriptionsGroup)).toBeFalse();
+    expect(component.displayExpanded).toBeFalse();
+  }));
 });

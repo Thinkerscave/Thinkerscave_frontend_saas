@@ -129,12 +129,15 @@
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div class="tc-form-field">
           <label>Select Student *</label>
-          <select [(ngModel)]="newRequest.studentId" (ngModelChange)="onStudentChanged()">
-            <option [ngValue]="null">Select Student</option>
-            <option *ngFor="let s of students" [ngValue]="s.studentId">
-              {{ s.fullName }} ({{ s.admissionNumber }})
-            </option>
-          </select>
+          <p-dropdown
+            [options]="studentOptions"
+            [(ngModel)]="newRequest.studentId"
+            (ngModelChange)="onStudentChanged()"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </div>
 
         <div class="tc-form-field" *ngIf="newRequest.className">
@@ -144,13 +147,14 @@
 
         <div class="tc-form-field">
           <label>Reason for Transfer *</label>
-          <select [(ngModel)]="newRequest.reason">
-            <option [ngValue]="null">Select Reason</option>
-            <option value="Relocation">Relocation</option>
-            <option value="Graduation">Graduation</option>
-            <option value="Financial">Financial</option>
-            <option value="Other">Other</option>
-          </select>
+          <p-dropdown
+            [options]="reasonOptions"
+            [(ngModel)]="newRequest.reason"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </div>
 
         <div class="tc-form-field">

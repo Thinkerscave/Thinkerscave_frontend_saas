@@ -26,27 +26,33 @@
         <input type="text" [(ngModel)]="search" placeholder="Search action, summary or actor" />
       </div>
       <div class="tc-select"><label>Tenant</label>
-        <select [(ngModel)]="tenantFilter">
-          <option value="all">All tenants</option>
-          <option *ngFor="let t of tenantOptions" [value]="t">{{ t }}</option>
-        </select>
+        <p-dropdown
+          [options]="tenantSelectOptions"
+          [(ngModel)]="tenantFilter"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-select"><label>Severity</label>
-        <select [(ngModel)]="severity">
-          <option value="all">Any</option>
-          <option value="info">Info</option>
-          <option value="warn">Warning</option>
-          <option value="critical">Critical</option>
-        </select>
+        <p-dropdown
+          [options]="severityOptions"
+          [(ngModel)]="severity"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-field tc-field--inline"><label>Actor</label><input type="text" [(ngModel)]="actorFilter" placeholder="user@org" /></div>
       <div class="tc-field tc-field--inline"><label>From</label><input type="date" [(ngModel)]="fromDate" /></div>
       <div class="tc-field tc-field--inline"><label>To</label><input type="date" [(ngModel)]="toDate" /></div>
       <button type="button" class="tc-link" (click)="resetFilters()"><i class="pi pi-times"></i>Reset</button>
       
-      <div class="customers-list__view-switch tc-audit__view-switch">
-        <button type="button" [class.is-active]="viewMode === 'timeline'" (click)="viewMode = 'timeline'" title="Timeline view" aria-label="Switch to timeline view"><i class="pi pi-list"></i></button>
-        <button type="button" [class.is-active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table view" aria-label="Switch to table view"><i class="pi pi-table"></i></button>
+      <div class="tc-view-switch" role="group" aria-label="View mode">
+        <button type="button" [class.is-active]="viewMode === 'timeline'" (click)="viewMode = 'timeline'" title="Timeline view" aria-label="Switch to timeline view"><i class="pi pi-sitemap"></i></button>
+        <button type="button" [class.is-active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table view" aria-label="Switch to table view"><i class="pi pi-list"></i></button>
       </div>
     </div>
   </div>

@@ -55,23 +55,41 @@
 
     <label class="customers-list__filter">
       <span class="customers-list__filter-label">Sort By</span>
-      <select [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let o of sortOptions" [ngValue]="o.value">{{ o.label }}</option>
-      </select>
+      <p-dropdown
+        [options]="sortOptions"
+        [(ngModel)]="sortBy"
+        (ngModelChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
 
     <label class="customers-list__filter">
       <span class="customers-list__filter-label">Status</span>
-      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let o of statusOptions" [ngValue]="o.value">{{ o.label }}</option>
-      </select>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
 
     <label class="customers-list__filter">
       <span class="customers-list__filter-label">Created</span>
-      <select [(ngModel)]="createdFilter" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let o of createdOptions" [ngValue]="o.value">{{ o.label }}</option>
-      </select>
+      <p-dropdown
+        [options]="createdOptions"
+        [(ngModel)]="createdFilter"
+        (ngModelChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
     </label>
 
     <button type="button" class="customers-list__more-filters" disabled title="Coming soon">

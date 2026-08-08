@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
@@ -23,7 +24,7 @@ import {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, ToastModule,
+    CommonModule, FormsModule, ToastModule, DropdownModule,
     SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],
@@ -46,6 +47,14 @@ export class UsersListComponent implements OnInit {
   totalRecords = 0;
   page = 0;
   pageSize = 20;
+
+  readonly statusOptions: { label: string; value: 'all' | UserStatus }[] = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+    { label: 'Locked', value: 'LOCKED' },
+    { label: 'Suspended', value: 'SUSPENDED' }
+  ];
 
   readonly userDisplayName = userDisplayName;
   readonly userInitials = userInitials;

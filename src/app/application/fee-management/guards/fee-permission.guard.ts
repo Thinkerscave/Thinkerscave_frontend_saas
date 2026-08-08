@@ -135,7 +135,7 @@ function resolveFeeRoles(roles: any[]): FeeRole[] {
         const roleCode = (role?.roleCode ?? role?.roleName ?? role ?? '').toString().trim().toUpperCase();
         const normalized = roleCode.replace(/^ROLE_/, '').replace(/\s+/g, '_');
 
-        if (normalized === 'ADMIN') {
+        if (normalized === 'ADMIN' || normalized === 'ORGANIZATION_ADMIN' || normalized === 'ORGANIZATION_OWNER' || normalized === 'COLLEGE_ADMIN' || normalized === 'INSTITUTION_ADMIN') {
             resolved.add(FeeRole.INSTITUTION_ADMIN);
         }
 

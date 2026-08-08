@@ -25,6 +25,7 @@ import {
   SaasStatGridComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -39,7 +40,8 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
     SaasPanelComponent,
     SaasTabsComponent,
     SaasPillComponent,
-    SaasStatGridComponent
+    SaasStatGridComponent,
+    AppGridTableToggleComponent
   ],
   templateUrl: './customer-workspace.component.html',
   styleUrl: './customer-workspace.component.scss'
@@ -58,7 +60,7 @@ export class CustomerWorkspaceComponent implements OnInit {
   customer: CustomerDetail | null = null;
   customerId = 0;
   activeTab = 'overview';
-  orgViewMode: 'cards' | 'table' = 'cards';
+  orgViewMode: AppListViewMode = 'grid';
   auditLogs: PlatformAuditLog[] = [];
 
   readonly tabs = [

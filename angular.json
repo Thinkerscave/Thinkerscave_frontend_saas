@@ -75,7 +75,8 @@
                 }
               ],
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "serviceWorker": "ngsw-config.json"
             },
             "test": {
               "optimization": {
@@ -95,7 +96,8 @@
                 }
               ],
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,

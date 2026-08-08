@@ -214,6 +214,77 @@ export interface AttendanceWorkspaceData {
   trends: AttendanceTrendPoint[];
 }
 
+export interface AttendanceClassSummaryRow {
+  classId: number;
+  className: string;
+  sectionId?: number | null;
+  sectionName?: string | null;
+  totalStudents: number;
+  avgAttendancePercent: number;
+}
+
+export interface AttendanceMonthlyTrendRow {
+  year: number;
+  month: number;
+  avgAttendancePercent: number;
+  statusBreakdown?: Record<string, number>;
+}
+
+export interface AttendanceDefaulterRow {
+  studentId: number;
+  studentName: string;
+  rollNumber?: string;
+  admissionNumber?: string;
+  className?: string;
+  sectionName?: string;
+  totalDays: number;
+  presentDays: number;
+  attendancePercent: number;
+}
+
+export interface AttendanceSummaryReport {
+  fromDate: string;
+  toDate: string;
+  totalStudents: number;
+  overallPercent: number;
+  classWiseSummary: AttendanceClassSummaryRow[];
+  monthlyTrend: AttendanceMonthlyTrendRow[];
+  defaulters: AttendanceDefaulterRow[];
+}
+
+export interface StaffAttendanceReportRow {
+  staffId: number;
+  staffName: string;
+  staffCode?: string | null;
+  department?: string | null;
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  onLeaveDays: number;
+  attendancePercent: number;
+  avgWorkingHours: number;
+}
+
+/** Org-scoped attendance configuration (GET/PUT /api/v1/attendance/settings). */
+export interface AttendanceOrgSettings {
+  settingId?: number | null;
+  organizationId?: number | null;
+  attendanceMode: 'DAILY' | 'PERIOD';
+  lateAfterTime: string;
+  windowStartTime: string;
+  windowEndTime: string;
+  allowCopyPrevious: boolean;
+  minStudentAttendancePercent: number;
+  studentAlertThresholdPercent?: number;
+  sendSmsOnAbsent: boolean;
+  sendEmailOnAbsent: boolean;
+  minStaffWorkingHours?: number;
+  staffLateGraceMinutes?: number;
+  freezeAfterDays: number;
+  active?: boolean;
+}
+
 export interface RosterAttendanceRow {
   selected: boolean;
   attendanceId?: number;

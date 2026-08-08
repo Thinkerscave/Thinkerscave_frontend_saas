@@ -23,10 +23,14 @@
       </div>
       <div class="tc-form-field">
         <label>Passout Year</label>
-        <select [(ngModel)]="filters.passoutYear">
-          <option [ngValue]="null">All Years</option>
-          <option *ngFor="let y of passoutYears" [ngValue]="y">{{ y }}</option>
-        </select>
+        <p-dropdown
+          [options]="passoutYearOptions"
+          [(ngModel)]="filters.passoutYear"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="att-filter-dropdown">
+        </p-dropdown>
       </div>
       <div class="tc-form-field">
         <label>Course</label>

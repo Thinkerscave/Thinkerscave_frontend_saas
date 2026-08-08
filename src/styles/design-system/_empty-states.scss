@@ -15,8 +15,8 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: var(--tc-surface-100);
-    color: var(--tc-text-muted);
+    background: color-mix(in srgb, var(--tc-accent) 12%, transparent);
+    color: var(--tc-accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,6 +25,16 @@
     i.pi {
       font-size: 2rem;
     }
+  }
+
+  &__illustration {
+    width: min(200px, 70vw);
+    height: auto;
+    margin-bottom: var(--tc-space-4);
+    border-radius: var(--tc-radius-lg);
+    background: color-mix(in srgb, var(--tc-accent) 6%, var(--tc-surface-50));
+    border: 1px solid color-mix(in srgb, var(--tc-accent) 12%, transparent);
+    padding: var(--tc-space-3);
   }
   
   &__title {
