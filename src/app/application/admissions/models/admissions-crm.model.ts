@@ -209,8 +209,8 @@ export interface AdmissionsSettings {
 }
 
 export type AdmissionsWorkspacePage =
-  | 'overview' | 'leads' | 'follow-ups' | 'applications'
-  | 'enrollment' | 'reports' | 'settings';
+  | 'leads' | 'follow-ups' | 'applications'
+  | 'reports' | 'settings';
 
 export interface AdmissionsPageConfig {
   page: AdmissionsWorkspacePage;

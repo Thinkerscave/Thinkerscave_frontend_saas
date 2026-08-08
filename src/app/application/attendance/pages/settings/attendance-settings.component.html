@@ -9,11 +9,11 @@
   </tc-saas-page-header>
 
   <div *ngIf="saved" class="attendance-settings__toast"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
-  <div *ngIf="errorMessage" class="attendance-settings__toast" style="background:#fef2f2;color:#991b1b;">
+  <div *ngIf="errorMessage" class="attendance-settings__toast attendance-settings__toast--error">
     <i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}
   </div>
 
-  <div *ngIf="loading" class="saas-empty" style="margin: 1.5rem 0;">
+  <div *ngIf="loading" class="saas-empty attendance-settings__loading-empty">
     <i class="pi pi-spin pi-spinner"></i><strong>Loading settings…</strong>
   </div>
 
@@ -51,7 +51,7 @@
         <input type="checkbox" [(ngModel)]="settings.allowCopyPrevious">
         <span>Allow Copy Previous Day on student roster</span>
       </label>
-      <label class="saas-field" style="margin-top: 14px;">
+      <label class="saas-field att-freeze-field">
         <span>Enable freeze after</span>
         <p-dropdown
           [options]="freezeAfterOptions"
@@ -62,13 +62,13 @@
           styleClass="att-filter-dropdown">
         </p-dropdown>
       </label>
-      <small style="display:block;margin-top:8px;opacity:0.7;">0 = no automatic freeze. Manual freeze periods remain available via API.</small>
+      <small class="att-note att-note--tight">0 = no automatic freeze. Manual freeze periods remain available via API.</small>
     </tc-saas-panel>
 
     <tc-saas-panel title="Notifications" subtitle="Preference flags (dispatch is platform-managed; see Communication workflow)">
       <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.sendSmsOnAbsent"><span>SMS on absent</span></label>
       <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.sendEmailOnAbsent"><span>Email on absent</span></label>
-      <small style="display:block;margin-top:10px;opacity:0.7;">WhatsApp / Push are not persisted yet — Future Enhancement.</small>
+      <small class="att-note">WhatsApp / Push are not persisted yet - Future Enhancement.</small>
     </tc-saas-panel>
   </div>
 </div>

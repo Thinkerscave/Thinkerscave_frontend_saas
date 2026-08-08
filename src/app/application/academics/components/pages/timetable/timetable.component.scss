@@ -23,6 +23,7 @@
 .tt-slot-empty i { color: var(--tc-text-muted); opacity: 0.4; }
 .tt-conflicts { background: var(--tc-surface-card); border: 1px solid var(--tc-border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
 .tt-ch { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--tc-border); font-weight: 600; font-size: 0.85rem; }
+.tt-tone-warning { color: #F59E0B; }
 .tt-clist { flex: 1; overflow: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .tt-card { padding: 0.55rem; border-radius: 6px; border: 1px solid var(--tc-border); background: var(--tc-bg); }
 .tt-card.high { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }

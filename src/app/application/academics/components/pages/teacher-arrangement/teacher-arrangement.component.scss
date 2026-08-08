@@ -16,4 +16,11 @@
 .ta-ai-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6366F1, #8B5CF6); border-radius: inherit; }
 .ta-ai-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem 1rem; color: var(--tc-text-muted); }
 .ta-ai-empty i { font-size: 1.5rem; margin-bottom: 0.4rem; opacity: 0.4; }
+.ta-tone-danger { color: #EF4444; }
+.ta-tone-warning { color: #F59E0B; }
+.ta-tone-info { color: #6366F1; }
+.ta-tone-success { color: #10B981; }
+.ta-tone-ai { color: #8B5CF6; }
+.ta-icon-approve { color: #10B981; }
+.ta-icon-reject { color: #EF4444; }
 @media (max-width: 1024px) { .ta-content { grid-template-columns: 1fr; } }

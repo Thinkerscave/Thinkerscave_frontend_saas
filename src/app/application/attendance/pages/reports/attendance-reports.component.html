@@ -47,7 +47,7 @@
   </tc-saas-filter-row>
 
   @if (errorMessage) {
-    <div class="saas-empty" style="margin-bottom: 1rem;">
+    <div class="saas-empty att-reports-inline-error">
       <i class="pi pi-exclamation-triangle"></i>
       <strong>{{ errorMessage }}</strong>
     </div>
@@ -128,9 +128,9 @@
       <section *ngSwitchCase="'defaulter'">
         <tc-saas-panel title="Top Defaulter Students" [subtitle]="'Below ' + defaulterThreshold + '% attendance'">
           <ng-container panel-actions>
-            <label class="saas-field" style="flex-direction:row; align-items:center; gap:8px; min-width: 0;">
-              <span style="text-transform: none;">Threshold</span>
-              <input type="number" min="0" max="100" [(ngModel)]="defaulterThreshold" (change)="onThresholdChange()" style="width: 80px;">
+            <label class="saas-field att-threshold-field">
+              <span class="att-threshold-label">Threshold</span>
+              <input class="att-threshold-input" type="number" min="0" max="100" [(ngModel)]="defaulterThreshold" (change)="onThresholdChange()">
             </label>
           </ng-container>
           <div class="saas-table-wrap">

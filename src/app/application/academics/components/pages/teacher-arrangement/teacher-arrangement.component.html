@@ -12,10 +12,10 @@
   </div>
 
   <div class="acad-summary">
-    <div class="acad-summary-card"><i class="pi pi-user-minus" style="color:#EF4444"></i><div><span>Absent Today</span><strong>{{ absentToday }}</strong></div></div>
-    <div class="acad-summary-card"><i class="pi pi-exclamation-triangle" style="color:#F59E0B"></i><div><span>Affected Classes</span><strong>{{ affectedClasses }}</strong></div></div>
-    <div class="acad-summary-card"><i class="pi pi-clock" style="color:#6366F1"></i><div><span>Pending</span><strong>{{ pending }}</strong></div></div>
-    <div class="acad-summary-card"><i class="pi pi-check-circle" style="color:#10B981"></i><div><span>Approved</span><strong>{{ approved }}</strong></div></div>
+    <div class="acad-summary-card"><i class="pi pi-user-minus ta-tone-danger"></i><div><span>Absent Today</span><strong>{{ absentToday }}</strong></div></div>
+    <div class="acad-summary-card"><i class="pi pi-exclamation-triangle ta-tone-warning"></i><div><span>Affected Classes</span><strong>{{ affectedClasses }}</strong></div></div>
+    <div class="acad-summary-card"><i class="pi pi-clock ta-tone-info"></i><div><span>Pending</span><strong>{{ pending }}</strong></div></div>
+    <div class="acad-summary-card"><i class="pi pi-check-circle ta-tone-success"></i><div><span>Approved</span><strong>{{ approved }}</strong></div></div>
   </div>
 
   <div class="ta-content">
@@ -40,8 +40,8 @@
             <td><span class="acad-status" [class]="a.status.toLowerCase()">{{ a.status }}</span></td>
             <td>
               <div class="setup-actions" *ngIf="a.status === 'PENDING'">
-                <button class="acad-icon-btn" style="color:#10B981" pTooltip="Approve" (click)="approve(a)"><i class="pi pi-check"></i></button>
-                <button class="acad-icon-btn" style="color:#EF4444" pTooltip="Reject" (click)="reject(a)"><i class="pi pi-times"></i></button>
+                <button class="acad-icon-btn ta-icon-approve" pTooltip="Approve" (click)="approve(a)"><i class="pi pi-check"></i></button>
+                <button class="acad-icon-btn ta-icon-reject" pTooltip="Reject" (click)="reject(a)"><i class="pi pi-times"></i></button>
                 <button class="acad-icon-btn" pTooltip="Override" (click)="openOverride(a)"><i class="pi pi-refresh"></i></button>
               </div>
               <span class="ta-muted" *ngIf="a.status !== 'PENDING'">{{ a.approvedByName || 'System' }}</span>
@@ -56,7 +56,7 @@
 
     <!-- AI Recommendation Panel -->
     <div class="ta-ai-panel" *ngIf="suggestedReplacements.length">
-      <div class="ta-ai-header"><i class="pi pi-brain" style="color:#8B5CF6"></i> AI Recommendations</div>
+      <div class="ta-ai-header"><i class="pi pi-brain ta-tone-ai"></i> AI Recommendations</div>
       <div class="ta-ai-list">
         <div class="ta-ai-item" *ngFor="let rec of suggestedReplacements">
           <div class="ta-ai-top"><strong>{{ rec.teacherName }}</strong><span class="ta-score">{{ rec.score }}%</span></div>

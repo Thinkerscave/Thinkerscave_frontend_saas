@@ -52,7 +52,6 @@ export const authInterceptor: HttpInterceptorFn = (
       if (req.url.includes('/auth/refresh')) {
         // Let the caller decide navigation. Bootstrap restoreSession() must
         // fail silently; mid-session refresh handlers redirect themselves.
-        loginService.clearTokens();
         return throwError(() => error);
       }
 

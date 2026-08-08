@@ -1,4 +1,4 @@
-<section class="tc-page-shell" (click)="closeMoreMenu()">
+<section class="tc-page-shell stu-directory-page" (click)="closeMoreMenu()">
 
   <header class="tc-page-header">
     <div class="tc-page-header__main">
@@ -18,7 +18,7 @@
     </div>
   </header>
 
-  <div class="dash-kpi-grid">
+  <div class="stu-kpi-grid">
     <button type="button" *ngFor="let tile of kpiTiles"
             class="tc-card tc-card--kpi"
             [class.is-active]="activeKpi === tile.key"
@@ -26,10 +26,12 @@
             (click)="toggleKpiFilter(tile)">
       <div class="stu-kpi-top">
         <span class="kpi-header">{{ tile.label }}</span>
-        <i class="pi {{ tile.icon }} stu-kpi-icon"></i>
+        <span class="kpi-icon stu-kpi-icon"><i class="pi {{ tile.icon }}"></i></span>
       </div>
-      <span class="kpi-body strong">{{ kpi[tile.key] }}</span>
-      <span class="kpi-body span">{{ tile.hint }}</span>
+      <div class="kpi-body">
+        <strong>{{ kpi[tile.key] }}</strong>
+        <span>{{ tile.hint }}</span>
+      </div>
     </button>
   </div>
 
@@ -129,7 +131,7 @@
       <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
     </div>
 
-    <div class="dash-kpi-grid stu-card-grid" *ngIf="!loading && students.length && view === 'grid'">
+    <div class="stu-directory-grid" *ngIf="!loading && students.length && view === 'grid'">
       <article *ngFor="let s of students; let i = index"
                class="tc-card is-clickable stu-student-card"
                [style.animation-delay.ms]="i * 40"

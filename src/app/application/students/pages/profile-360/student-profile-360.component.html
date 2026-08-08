@@ -135,9 +135,9 @@
           </div>
           
           <div class="stu-kpi-mini">
-            <div class="stu-completion" style="width:100%;flex-direction:column;align-items:flex-start;gap:4px;">
-              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:600;text-transform:uppercase;">Profile Completion</span>
-              <div style="display:flex;align-items:center;width:100%;gap:10px;">
+            <div class="stu-completion stu-completion--stack">
+              <span class="stu-kpi-label">Profile Completion</span>
+              <div class="stu-completion-row">
                 <div class="stu-completion__bar">
                   <span [style.width.%]="profile.overview.profileCompletion || 60"></span>
                 </div>
@@ -150,7 +150,7 @@
         <!-- Snapshots Layout -->
         <div class="stu-profile-layout">
           <!-- Left: Snapshots -->
-          <div class="stu-snapshot-grid" style="align-content:flex-start;">
+          <div class="stu-snapshot-grid stu-snapshot-grid--top">
             <div class="stu-snapshot">
               <div class="stu-snapshot__head">
                 <h3>Student Summary</h3>
@@ -175,7 +175,7 @@
                 <div><span>Academic Year</span><strong>{{ profile.academics.academicYear || '—' }}</strong></div>
                 <div><span>Admission Date</span><strong>{{ profile.academics.admissionDate || '—' }}</strong></div>
                 <div><span>Enrollment Status</span>
-                  <span class="tc-badge" style="margin:0;padding:2px 6px;" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
+                  <span class="tc-badge stu-badge-compact" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
                     {{ profile.academics.enrollmentStatus || 'Active' | titlecase }}
                   </span>
                 </div>
@@ -193,9 +193,9 @@
               <div class="stu-snapshot__rows">
                 <div><span>Mobile</span><strong>{{ profile.personal.mobile || '—' }}</strong></div>
                 <div><span>Email</span><strong>{{ profile.personal.email || '—' }}</strong></div>
-                <div style="flex-direction:column;gap:4px;margin-top:4px;">
+                <div class="stu-contact-address-row">
                   <span>Current Address</span>
-                  <strong style="line-height:1.4;">{{ profile.personal.currentAddressLine1 || '—' }}<br>{{ profile.personal.currentCity || '' }} {{ profile.personal.currentState || '' }}</strong>
+                  <strong class="stu-contact-address">{{ profile.personal.currentAddressLine1 || '—' }}<br>{{ profile.personal.currentCity || '' }} {{ profile.personal.currentState || '' }}</strong>
                 </div>
               </div>
             </div>
@@ -250,19 +250,19 @@
             <div><dt>Email</dt><dd>{{ profile.personal.email || '—' }}</dd></div>
           </dl>
           
-          <h3 style="margin:10px 0 0;font-size:1rem;color:var(--tc-text);padding-top:16px;border-top:1px dashed var(--tc-border);">Address Details</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <h3 class="stu-section-title">Address Details</h3>
+          <div class="stu-address-grid">
             <div>
-              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Current Address</span>
-              <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
+              <span class="stu-field-label">Current Address</span>
+              <p class="stu-address-text">
                 {{ profile.personal.currentAddressLine1 || '—' }}<br>
                 {{ profile.personal.currentCity || '' }} {{ profile.personal.currentState || '' }}<br>
                 {{ profile.personal.currentPincode || '' }}
               </p>
             </div>
             <div>
-              <span style="font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Permanent Address</span>
-              <p style="margin:6px 0 0;font-size:0.9rem;color:var(--tc-text);line-height:1.5;">
+              <span class="stu-field-label">Permanent Address</span>
+              <p class="stu-address-text">
                 {{ profile.personal.permanentAddressLine1 || '—' }}<br>
                 {{ profile.personal.permanentCity || '' }} {{ profile.personal.permanentState || '' }}<br>
                 {{ profile.personal.permanentPincode || '' }}
@@ -330,7 +330,7 @@
 
       <!-- ================= FAMILY TAB ================= -->
       <ng-container *ngIf="activeTab === 'FAMILY'">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+        <div class="stu-guardians-actions">
           <button class="tc-btn tc-btn--primary"><i class="pi pi-plus"></i> Add Guardian</button>
         </div>
         
@@ -419,10 +419,10 @@
                       {{ h.result || '—' }}
                     </span>
                   </td>
-                  <td style="color:var(--tc-text-muted);">{{ h.remarks || '—' }}</td>
+                  <td class="stu-muted-cell">{{ h.remarks || '—' }}</td>
                 </tr>
                 <tr *ngIf="!academicHistory.length">
-                  <td colspan="6" style="text-align:center;color:var(--tc-text-muted);padding:24px;">No academic history available.</td>
+                  <td colspan="6" class="stu-empty-cell">No academic history available.</td>
                 </tr>
               </tbody>
             </table>
@@ -432,30 +432,30 @@
 
       <!-- ================= DOCUMENTS TAB ================= -->
       <ng-container *ngIf="activeTab === 'DOCUMENTS'">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+        <div class="stu-doc-upload-actions">
           <button class="tc-btn tc-btn--primary"><i class="pi pi-upload"></i> Upload Document</button>
         </div>
 
         <div class="stu-doc-grid">
           <div *ngFor="let d of studentDocs" class="stu-doc-card" [attr.data-status]="d.status">
-            <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div class="stu-doc-head">
               <div class="stu-doc-card__icon">
                 <i class="pi pi-file"></i>
               </div>
-              <div style="flex:1;">
+              <div class="stu-doc-body">
                 <div class="stu-doc-card__name">{{ d.documentName }}</div>
                 <div class="stu-doc-card__meta">{{ d.uploadedDate || 'Not uploaded' }}</div>
-                <span class="tc-badge" style="margin-top:6px;" [attr.data-status]="d.status">
+                <span class="tc-badge stu-doc-badge" [attr.data-status]="d.status">
                   {{ d.status | titlecase }}
                 </span>
               </div>
             </div>
             
             <div class="stu-doc-card__actions">
-              <button class="tc-btn" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status !== 'MISSING'">
+              <button class="tc-btn stu-doc-btn" *ngIf="d.status !== 'MISSING'">
                 <i class="pi pi-eye"></i> View
               </button>
-              <button class="tc-btn tc-btn--primary" style="flex:1;padding:6px;font-size:0.8rem;" *ngIf="d.status === 'MISSING'">
+              <button class="tc-btn tc-btn--primary stu-doc-btn" *ngIf="d.status === 'MISSING'">
                 <i class="pi pi-upload"></i> Upload
               </button>
             </div>
@@ -472,38 +472,38 @@
               <i class="pi pi-pencil"></i> Edit
             </button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-            <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="stu-medical-grid">
+            <div class="stu-medical-col">
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Blood Group</span>
-                <strong style="font-size:1.1rem;color:var(--tc-danger);">{{ profile.medical.bloodGroup || '—' }}</strong>
+                <span class="stu-field-label stu-field-label--block">Blood Group</span>
+                <strong class="stu-blood-value">{{ profile.medical.bloodGroup || '—' }}</strong>
               </div>
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Allergies</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.allergies || 'None reported' }}</p>
+                <span class="stu-field-label stu-field-label--block">Allergies</span>
+                <p class="stu-medical-text">{{ profile.medical.allergies || 'None reported' }}</p>
               </div>
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Medical Conditions</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.medicalConditions || 'None reported' }}</p>
+                <span class="stu-field-label stu-field-label--block">Medical Conditions</span>
+                <p class="stu-medical-text">{{ profile.medical.medicalConditions || 'None reported' }}</p>
               </div>
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Ongoing Medications</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.medications || 'None' }}</p>
+                <span class="stu-field-label stu-field-label--block">Ongoing Medications</span>
+                <p class="stu-medical-text">{{ profile.medical.medications || 'None' }}</p>
               </div>
             </div>
             
-            <div style="display:flex;flex-direction:column;gap:16px;padding-left:24px;border-left:1px dashed var(--tc-border);">
+            <div class="stu-medical-col stu-medical-col--split">
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Family Doctor</span>
-                <p style="margin:4px 0 0;font-size:0.9rem;color:var(--tc-text);">
+                <span class="stu-field-label stu-field-label--block">Family Doctor</span>
+                <p class="stu-medical-text">
                   <strong>{{ profile.medical.doctorName || '—' }}</strong><br>
-                  <i class="pi pi-phone" style="font-size:0.8rem;color:var(--tc-primary-600);"></i> {{ profile.medical.doctorContact || '—' }}
+                  <i class="pi pi-phone stu-medical-phone-icon"></i> {{ profile.medical.doctorContact || '—' }}
                 </p>
               </div>
               <div>
-                <span style="display:block;font-size:0.76rem;color:var(--tc-text-muted);font-weight:700;text-transform:uppercase;">Emergency Notes</span>
-                <div style="margin:4px 0 0;padding:12px;background:color-mix(in srgb, var(--tc-warning) 8%, transparent);border-radius:10px;border:1px solid color-mix(in srgb, var(--tc-warning) 30%, transparent);">
-                  <p style="margin:0;font-size:0.9rem;color:var(--tc-text);">{{ profile.medical.emergencyNotes || 'No specific emergency instructions provided.' }}</p>
+                <span class="stu-field-label stu-field-label--block">Emergency Notes</span>
+                <div class="stu-medical-note">
+                  <p class="stu-medical-text stu-medical-text--reset">{{ profile.medical.emergencyNotes || 'No specific emergency instructions provided.' }}</p>
                 </div>
               </div>
             </div>
@@ -581,7 +581,7 @@
             </div>
           </div>
           
-          <div class="tc-empty-state" *ngIf="!filteredTimeline.length" style="padding:32px 0;">
+          <div class="tc-empty-state stu-timeline-empty" *ngIf="!filteredTimeline.length">
             <i class="pi pi-history"></i>
             <h3>No activities found</h3>
             <p>No timeline events match the selected filter.</p>

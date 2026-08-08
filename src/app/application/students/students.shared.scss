@@ -323,6 +323,323 @@
   }
 }
 
+/* Module-level page utilities used by Alumni / Transfers / Document Vault */
+.stu-transfer-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stu-transfer-kpi-icon {
+  color: var(--tc-accent);
+}
+
+.stu-transfer-student-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stu-transfer-student-name {
+  color: var(--tc-text);
+}
+
+.stu-transfer-muted {
+  color: var(--tc-text-muted);
+}
+
+.stu-transfer-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.stu-icon-action--success {
+  color: var(--tc-success);
+}
+
+.stu-icon-action--info {
+  color: var(--tc-info);
+}
+
+.stu-transfer-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stu-drawer__footer--end {
+  justify-content: flex-end;
+}
+
+.alumni-filter-grow {
+  flex: 2;
+  min-width: 200px;
+}
+
+.alumni-filter-actions {
+  justify-content: flex-end;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.alumni-inline-error {
+  margin-top: 12px;
+}
+
+.alumni-table-wrap {
+  margin-top: 16px;
+}
+
+.alumni-actions-col {
+  width: 120px;
+}
+
+.alumni-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alumni-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.78rem;
+}
+
+.alumni-muted {
+  color: var(--tc-text-muted);
+}
+
+.alumni-contact {
+  color: var(--tc-text-muted);
+  font-size: 0.8rem;
+}
+
+.alumni-contact i {
+  margin-right: 4px;
+}
+
+.alumni-contact__email {
+  margin-top: 2px;
+}
+
+.alumni-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.alumni-linkedin-btn {
+  color: #0a66c2;
+}
+
+.alumni-empty {
+  padding: 48px 0;
+}
+
+.stu-alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.stu-alert--danger {
+  background: color-mix(in srgb, var(--tc-danger) 12%, transparent);
+  color: var(--tc-danger);
+}
+
+.stu-alert--success {
+  background: color-mix(in srgb, var(--tc-success) 12%, transparent);
+  color: var(--tc-success);
+}
+
+.stu-doc-file-icon {
+  color: var(--tc-primary-600);
+  margin-right: 6px;
+}
+
+.stu-doc-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.stu-completion--stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.stu-kpi-label {
+  font-size: 0.76rem;
+  color: var(--tc-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stu-completion-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.stu-snapshot-grid--top {
+  align-content: flex-start;
+}
+
+.stu-badge-compact {
+  margin: 0;
+  padding: 2px 6px;
+}
+
+.stu-contact-address-row {
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.stu-contact-address {
+  line-height: 1.4;
+}
+
+.stu-section-title {
+  margin: 10px 0 0;
+  font-size: 1rem;
+  color: var(--tc-text);
+  padding-top: 16px;
+  border-top: 1px dashed var(--tc-border);
+}
+
+.stu-address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.stu-field-label {
+  font-size: 0.76rem;
+  color: var(--tc-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stu-field-label--block {
+  display: block;
+}
+
+.stu-address-text {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--tc-text);
+  line-height: 1.5;
+}
+
+.stu-guardians-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.stu-muted-cell {
+  color: var(--tc-text-muted);
+}
+
+.stu-empty-cell {
+  text-align: center;
+  color: var(--tc-text-muted);
+  padding: 24px;
+}
+
+.stu-doc-upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.stu-doc-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.stu-doc-body {
+  flex: 1;
+}
+
+.stu-doc-badge {
+  margin-top: 6px;
+}
+
+.stu-doc-btn {
+  flex: 1;
+  padding: 6px;
+  font-size: 0.8rem;
+}
+
+.stu-medical-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.stu-medical-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stu-medical-col--split {
+  padding-left: 24px;
+  border-left: 1px dashed var(--tc-border);
+}
+
+.stu-blood-value {
+  font-size: 1.1rem;
+  color: var(--tc-danger);
+}
+
+.stu-medical-text {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--tc-text);
+}
+
+.stu-medical-text--reset {
+  margin: 0;
+}
+
+.stu-medical-phone-icon {
+  font-size: 0.8rem;
+  color: var(--tc-primary-600);
+}
+
+.stu-medical-note {
+  margin: 4px 0 0;
+  padding: 12px;
+  background: color-mix(in srgb, var(--tc-warning) 8%, transparent);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--tc-warning) 30%, transparent);
+}
+
+.stu-timeline-empty {
+  padding: 32px 0;
+}
+
+@media (max-width: 960px) {
+  .stu-address-grid,
+  .stu-medical-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stu-medical-col--split {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 12px;
+    border-top: 1px dashed var(--tc-border);
+  }
+}
+
 /* ============================================================
    SNAPSHOT PANELS (Overview tab)
    ============================================================ */
@@ -903,6 +1220,110 @@
 /* ============================================================
    DIRECTORY LAYOUT HELPERS (no inline styles)
    ============================================================ */
+.stu-directory-page {
+  gap: 14px;
+  padding-bottom: 8px;
+}
+
+.stu-module-page .tc-card--panel {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.stu-module-page .tc-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid var(--tc-border);
+  border-bottom: 1px solid var(--tc-border);
+  border-radius: 0;
+  background: var(--tc-surface-0);
+  box-shadow: none;
+}
+
+.stu-module-page .tc-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stu-module-page .tc-form-field label {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--tc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stu-module-page .tc-form-field input,
+.stu-module-page .tc-form-field select,
+.stu-module-page .tc-form-field textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-surface-0);
+  color: var(--tc-text);
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.stu-module-page .tc-form-field input::placeholder,
+.stu-module-page .tc-form-field textarea::placeholder {
+  color: color-mix(in srgb, var(--tc-text-muted) 88%, transparent);
+}
+
+.stu-module-page .tc-form-field input:focus,
+.stu-module-page .tc-form-field textarea:focus,
+.stu-module-page .tc-form-field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--tc-accent) 75%, var(--tc-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 16%, transparent);
+}
+
+.stu-module-page .stu-filter-dropdown,
+.stu-module-page .stu-filter-dropdown .p-dropdown,
+.stu-module-page .stu-filter-dropdown .p-inputtext {
+  width: 100%;
+}
+
+.stu-directory-page .tc-page-header {
+  margin-bottom: 2px;
+}
+
+.stu-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.stu-kpi-grid .tc-card--kpi {
+  text-align: left;
+  border-radius: 14px;
+  border-color: color-mix(in srgb, var(--tc-border) 88%, var(--tc-accent) 12%);
+}
+
+.stu-kpi-grid .tc-card--kpi.is-active {
+  border-color: var(--tc-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-accent) 16%, transparent);
+}
+
+.stu-kpi-grid .kpi-header {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--tc-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stu-kpi-grid .kpi-body {
+  margin-top: 10px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -922,8 +1343,19 @@
 }
 
 .stu-kpi-icon {
-  font-size: 1.1rem;
-  opacity: 0.5;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--tc-accent) 12%, transparent);
+  color: var(--tc-accent);
+  opacity: 1;
+}
+
+.stu-kpi-icon i {
+  font-size: 1.05rem;
 }
 
 .stu-panel-title {
@@ -941,6 +1373,23 @@
   min-width: 200px;
 }
 
+.stu-directory-page .tc-card--panel > .tc-card__header {
+  padding: 16px 16px 12px;
+}
+
+.stu-directory-page .tc-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(150px, 1fr)) auto;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid var(--tc-border);
+  border-bottom: 1px solid var(--tc-border);
+  border-radius: 0;
+  background: var(--tc-surface-0);
+  box-shadow: none;
+}
+
 .stu-filter-actions {
   justify-content: flex-end;
   flex-direction: row;
@@ -956,8 +1405,64 @@
   padding: 8px 0 16px;
 }
 
-.stu-card-grid .stu-student-card {
+.stu-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 14px;
+}
+
+.stu-directory-grid .stu-student-card {
   animation: stu-fade-in-up 320ms ease both;
+  min-height: 210px;
+}
+
+.stu-directory-grid .stu-student-card .tc-card__header {
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--tc-border) 88%, transparent);
+}
+
+.stu-directory-grid .stu-student-card .tc-card__title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stu-directory-grid .stu-student-card .tc-card__title strong {
+  font-size: 0.97rem;
+  line-height: 1.2;
+  color: var(--tc-text);
+}
+
+.stu-directory-grid .stu-student-card .tc-card__title small {
+  font-size: 0.78rem;
+  color: var(--tc-text-muted);
+}
+
+.stu-directory-grid .stu-student-card .tc-card__body {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0 8px;
+}
+
+.stu-directory-grid .stu-student-card .tc-card__body > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tc-text-muted);
+  font-size: 0.83rem;
+}
+
+.stu-directory-grid .stu-student-card .tc-card__body i {
+  color: var(--tc-accent);
+  font-size: 0.78rem;
+}
+
+.stu-directory-grid .stu-student-card .tc-card__footer {
+  padding-top: 8px;
+  border-top: 1px dashed var(--tc-border);
 }
 
 @keyframes stu-fade-in-up {
@@ -1003,6 +1508,42 @@
 
 .stu-paginator {
   margin-top: 8px;
+}
+
+@media (max-width: 1180px) {
+  .stu-directory-page .tc-filter-bar {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .stu-filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .stu-directory-page .tc-page-header__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stu-directory-page .tc-page-header__actions .tc-btn:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .stu-directory-page .tc-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .stu-filter-actions {
+    justify-content: flex-start;
+  }
+
+  .stu-directory-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stu-dialog-subtitle {

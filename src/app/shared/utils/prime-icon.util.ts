@@ -18,8 +18,21 @@ const ICON_ALIASES: Record<string, string> = {
   credit_card: 'pi pi-credit-card',
   'credit-card': 'pi pi-credit-card',
   local_offer: 'pi pi-tag',
-  'local-offer': 'pi pi-tag'
+  'local-offer': 'pi pi-tag',
+  attendance: 'pi pi-calendar',
+  'calendar-today': 'pi pi-calendar',
+  calendar_today: 'pi pi-calendar',
+  'event-available': 'pi pi-calendar',
+  event_available: 'pi pi-calendar'
 };
+
+const ICON_COMPATIBILITY_MAP: Record<string, string> = {
+  'pi pi-calendar-check': 'pi pi-calendar'
+};
+
+function applyIconCompatibility(iconClass: string): string {
+  return ICON_COMPATIBILITY_MAP[iconClass] ?? iconClass;
+}
 
 export function normalizePrimeIcon(icon?: string | null, fallback = FALLBACK_ICON): string {
   const value = icon?.trim();
@@ -29,21 +42,21 @@ export function normalizePrimeIcon(icon?: string | null, fallback = FALLBACK_ICO
   }
 
   if (value.startsWith('pi pi-')) {
-    return value;
+    return applyIconCompatibility(value);
   }
 
   if (value.startsWith('pi-')) {
-    return `pi ${value}`;
+    return applyIconCompatibility(`pi ${value}`);
   }
 
   if (value.startsWith('pi ')) {
-    return value;
+    return applyIconCompatibility(value);
   }
 
   const alias = ICON_ALIASES[value.toLowerCase()];
   if (alias) {
-    return alias;
+    return applyIconCompatibility(alias);
   }
 
-  return `pi pi-${value}`;
+  return applyIconCompatibility(`pi pi-${value}`);
 }

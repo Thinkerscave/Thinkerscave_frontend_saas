@@ -1,4 +1,4 @@
-<section class="tc-page-shell">
+<section class="tc-page-shell stu-module-page stu-alumni-page">
   <!-- Header -->
   <header class="tc-page-header">
     <div class="tc-page-header__main">
@@ -15,7 +15,7 @@
   <!-- Filters -->
   <div class="tc-card tc-card--panel">
     <div class="tc-filter-bar">
-      <div class="tc-form-field" style="flex:2; min-width:200px;">
+      <div class="tc-form-field alumni-filter-grow">
         <label>Search</label>
         <input type="text" [(ngModel)]="filters.keyword"
                placeholder="Name, Company, City…"
@@ -40,7 +40,7 @@
         <label>City</label>
         <input type="text" [(ngModel)]="filters.city" placeholder="Mumbai, Delhi…"/>
       </div>
-      <div class="tc-form-field" style="justify-content:flex-end; flex-direction:row; align-items:flex-end; gap:8px;">
+      <div class="tc-form-field alumni-filter-actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
           <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
           Search
@@ -49,7 +49,7 @@
       </div>
     </div>
     
-    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline" style="margin-top:12px;">
+    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline alumni-inline-error">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
@@ -59,7 +59,7 @@
     </div>
 
     <!-- Table -->
-    <div class="tc-table-wrap" *ngIf="!loading && alumni.length" style="margin-top:16px;">
+    <div class="tc-table-wrap alumni-table-wrap" *ngIf="!loading && alumni.length">
       <table class="tc-table">
         <thead>
           <tr>
@@ -70,14 +70,14 @@
             <th>Company / Org</th>
             <th>Location</th>
             <th>Contact</th>
-            <th style="width:120px;">Actions</th>
+            <th class="alumni-actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let a of alumni">
             <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="tc-avatar tc-avatar--initials" style="width:36px;height:36px;font-size:0.78rem;">
+              <div class="alumni-person">
+                <div class="tc-avatar tc-avatar--initials alumni-avatar">
                   <!-- Mocking photo logic for now -->
                   <span>{{ initials(a.fullName) }}</span>
                 </div>
@@ -85,20 +85,20 @@
               </div>
             </td>
             <td><strong>{{ a.yearPassed || '—' }}</strong></td>
-            <td>{{ a.course || '—' }}<br><small style="color:var(--tc-text-muted);">{{ a.batchYear || '' }}</small></td>
+            <td>{{ a.course || '—' }}<br><small class="alumni-muted">{{ a.batchYear || '' }}</small></td>
             <td>{{ a.occupation || '—' }}</td>
             <td>{{ a.employer || '—' }}</td>
             <td>{{ a.city || '—' }}</td>
-            <td style="color:var(--tc-text-muted);font-size:0.8rem;">
-              <div *ngIf="a.contact"><i class="pi pi-phone" style="margin-right:4px;"></i> {{ a.contact }}</div>
-              <div *ngIf="a.email" style="margin-top:2px;"><i class="pi pi-envelope" style="margin-right:4px;"></i> {{ a.email }}</div>
+            <td class="alumni-contact">
+              <div *ngIf="a.contact"><i class="pi pi-phone"></i> {{ a.contact }}</div>
+              <div *ngIf="a.email" class="alumni-contact__email"><i class="pi pi-envelope"></i> {{ a.email }}</div>
             </td>
             <td>
-              <div style="display:flex;gap:4px;">
+              <div class="alumni-actions">
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
                   <i class="pi pi-user"></i>
                 </button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)" style="color:#0a66c2;">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon alumni-linkedin-btn" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)">
                   <i class="pi pi-linkedin"></i>
                 </button>
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
@@ -114,7 +114,7 @@
       </table>
     </div>
 
-    <div class="tc-empty-state" *ngIf="!loading && !alumni.length" style="padding:48px 0;">
+    <div class="tc-empty-state alumni-empty" *ngIf="!loading && !alumni.length">
       <i class="pi pi-users"></i>
       <h3>No alumni found</h3>
       <p>Adjust your search filters to find registered alumni.</p>

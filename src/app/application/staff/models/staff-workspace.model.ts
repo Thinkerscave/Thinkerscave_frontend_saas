@@ -2,9 +2,7 @@ export type StaffWorkspacePage =
   | 'directory'
   | 'responsibilities'
   | 'payroll'
-  | 'leave'
-  | 'documents'
-  | 'alumni';
+  | 'leave';
 
 export interface StaffPageConfig {
   page: StaffWorkspacePage;

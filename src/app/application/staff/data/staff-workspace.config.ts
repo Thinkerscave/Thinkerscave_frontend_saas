@@ -32,22 +32,6 @@ export const STAFF_PAGES: StaffPageConfig[] = [
     description: 'Track leave requests, approvals, and staff availability.',
     icon: 'pi pi-calendar',
     route: '/app/staff/leave-availability'
-  },
-  {
-    page: 'documents',
-    label: 'Documents',
-    title: 'Staff Documents',
-    description: 'Compliance documents and mandatory records.',
-    icon: 'pi pi-folder-open',
-    route: '/app/staff/documents'
-  },
-  {
-    page: 'alumni',
-    label: 'Alumni',
-    title: 'Alumni Staff',
-    description: 'Former staff members who resigned or retired.',
-    icon: 'pi pi-history',
-    route: '/app/staff/alumni'
   }
 ];
 

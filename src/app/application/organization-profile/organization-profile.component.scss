@@ -112,3 +112,23 @@
 
   input { accent-color: var(--saas-primary); width: 18px; height: 18px; }
 }
+
+.org-alert-icon {
+  &--warning {
+    color: var(--saas-warning);
+  }
+}
+
+.org-success-toast {
+  border-color: var(--saas-success-soft);
+  background: var(--saas-success-soft);
+}
+
+.org-success-icon,
+.org-success-text {
+  color: var(--saas-success);
+}
+
+.org-access-link {
+  margin-top: 12px;
+}

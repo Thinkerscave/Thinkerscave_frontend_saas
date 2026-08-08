@@ -681,3 +681,140 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Utility helpers for consistent page-level micro layout ---------- */
+.adm-inline-actions,
+.adm-inline-actions-sm,
+.adm-inline-actions-xs {
+  display: flex;
+  align-items: center;
+}
+
+.adm-inline-actions { gap: 8px; }
+.adm-inline-actions-sm { gap: 6px; }
+.adm-inline-actions-xs { gap: 4px; }
+
+.adm-chip-remove-btn {
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+}
+
+.adm-empty-compact {
+  padding: 24px;
+}
+
+.adm-empty-lg {
+  padding: 32px;
+}
+
+.adm-review-progress {
+  margin-top: 16px;
+}
+
+.adm-review-progress__hint {
+  display: block;
+  margin-top: 8px;
+  color: var(--tc-text-muted);
+}
+
+.adm-wizard-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adm-help-text {
+  color: var(--tc-text-muted);
+  font-size: 0.76rem;
+}
+
+.adm-form-actions {
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.adm-static-card {
+  cursor: default;
+}
+
+.adm-body-text {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.adm-small-muted {
+  color: var(--tc-text-muted);
+  font-size: 0.78rem;
+}
+
+.adm-dialog-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.adm-dialog-subtitle {
+  margin: 0;
+  color: var(--tc-text-muted);
+  font-size: 0.88rem;
+}
+
+.adm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.adm-filter-grow {
+  flex: 2;
+  min-width: 200px;
+}
+
+.adm-filter-actions-field {
+  justify-content: flex-end;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.adm-click-row {
+  cursor: pointer;
+}
+
+.adm-subtle-id {
+  display: block;
+  color: var(--tc-text-muted);
+}
+
+.adm-drawer-footer-end {
+  justify-content: flex-end;
+}
+
+.adm-enroll-note {
+  font-size: 0.82rem;
+  color: var(--tc-text-muted);
+  margin: 0;
+}
+
+.adm-drawer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.adm-info-banner {
+  background: color-mix(in srgb, var(--tc-info) 8%, var(--tc-surface-0));
+  border-color: color-mix(in srgb, var(--tc-info) 25%, var(--tc-border));
+}
+
+.adm-info-banner__text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--tc-text);
+}
+
+.adm-info-banner__icon {
+  color: var(--tc-info);
+  margin-right: 6px;
+}

@@ -215,6 +215,14 @@
   animation: hero-pulse 1.4s ease infinite;
 }
 
+.hero__skeleton-line--primary {
+  width: 45%;
+}
+
+.hero__skeleton-line--secondary {
+  width: 30%;
+}
+
 @keyframes hero-pulse {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }

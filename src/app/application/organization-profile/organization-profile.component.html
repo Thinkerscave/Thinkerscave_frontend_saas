@@ -9,12 +9,12 @@
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty">
-    <i class="pi pi-exclamation-triangle" style="color: var(--saas-warning);"></i>
+    <i class="pi pi-exclamation-triangle org-alert-icon org-alert-icon--warning"></i>
     <strong>{{ errorMessage }}</strong>
   </div>
-  <div *ngIf="successMessage" class="saas-empty" style="border-color: var(--saas-success-soft); background: var(--saas-success-soft);">
-    <i class="pi pi-check-circle" style="color: var(--saas-success);"></i>
-    <strong style="color: var(--saas-success);">{{ successMessage }}</strong>
+  <div *ngIf="successMessage" class="saas-empty org-success-toast">
+    <i class="pi pi-check-circle org-success-icon"></i>
+    <strong class="org-success-text">{{ successMessage }}</strong>
   </div>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization profile...</div>
@@ -53,7 +53,7 @@
             <div><dt>State</dt><dd>{{ profile.state || '—' }}</dd></div>
             <div><dt>Country</dt><dd>{{ profile.country || '—' }}</dd></div>
           </dl>
-          <a routerLink="/app/organization/access-control" class="saas-btn" style="margin-top: 12px;"><i class="pi pi-shield"></i>Manage Access Control</a>
+          <a routerLink="/app/organization/access-control" class="saas-btn org-access-link"><i class="pi pi-shield"></i>Manage Access Control</a>
         </tc-saas-panel>
       </section>
 

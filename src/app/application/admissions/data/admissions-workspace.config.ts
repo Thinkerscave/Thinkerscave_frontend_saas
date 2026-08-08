@@ -2,14 +2,6 @@ import { AdmissionsPageConfig, AdmissionsWorkspacePage } from '../models/admissi
 
 export const ADMISSIONS_PAGES: AdmissionsPageConfig[] = [
   {
-    page: 'overview',
-    label: 'Overview',
-    title: 'Admissions CRM',
-    description: 'Pipeline summary, funnel analytics, and today\'s follow-ups.',
-    icon: 'pi pi-chart-bar',
-    route: '/app/admissions/overview'
-  },
-  {
     page: 'leads',
     label: 'Leads',
     title: 'Leads',
@@ -32,14 +24,6 @@ export const ADMISSIONS_PAGES: AdmissionsPageConfig[] = [
     description: 'Track admission applications through review and approval.',
     icon: 'pi pi-file-edit',
     route: '/app/admissions/applications'
-  },
-  {
-    page: 'enrollment',
-    label: 'Enrollment',
-    title: 'Enrollment',
-    description: 'Finalize approved applications and create student records.',
-    icon: 'pi pi-check-circle',
-    route: '/app/admissions/enrollment'
   },
   {
     page: 'reports',

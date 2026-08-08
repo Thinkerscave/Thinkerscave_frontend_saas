@@ -102,7 +102,7 @@
             </thead>
             <tbody>
               @for (fu of todayFollowUps(); track fu.followUpId) {
-                <tr (click)="openFollowUp(fu)" style="cursor:pointer;">
+                <tr class="adm-click-row" (click)="openFollowUp(fu)">
                   <td>
                     @if (fu.inquiryId) {
                       <a [routerLink]="['/app/admissions/lead', fu.inquiryId]" (click)="$event.stopPropagation()">

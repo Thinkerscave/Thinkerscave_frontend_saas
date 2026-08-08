@@ -1,4 +1,4 @@
-<section class="tc-page-shell">
+<section class="tc-page-shell stu-module-page stu-document-page">
   <header class="tc-page-header">
     <div class="tc-page-header__main">
       <h1>Document Vault</h1>
@@ -11,11 +11,16 @@
     </div>
   </header>
 
-  <div class="dash-kpi-grid">
+  <div class="stu-kpi-grid">
     <div *ngFor="let tile of kpiTiles" class="tc-card tc-card--kpi" [attr.data-tone]="tile.tone">
-      <span class="kpi-header">{{ tile.label }}</span>
-      <span class="kpi-body strong">{{ kpi[tile.key] }}</span>
-      <span class="kpi-body span">{{ tile.hint }}</span>
+      <div class="stu-kpi-top">
+        <span class="kpi-header">{{ tile.label }}</span>
+        <span class="kpi-icon stu-kpi-icon"><i class="pi pi-file"></i></span>
+      </div>
+      <div class="kpi-body">
+        <strong>{{ kpi[tile.key] }}</strong>
+        <span>{{ tile.hint }}</span>
+      </div>
     </div>
   </div>
 
@@ -29,10 +34,10 @@
       </div>
     </div>
 
-    <div *ngIf="errorMessage" style="background: color-mix(in srgb, var(--tc-danger) 12%, transparent); color: var(--tc-danger); padding: 10px 14px; border-radius: 8px;">
+    <div *ngIf="errorMessage" class="stu-alert stu-alert--danger">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
-    <div *ngIf="successMessage" style="background: color-mix(in srgb, var(--tc-success) 12%, transparent); color: var(--tc-success); padding: 10px 14px; border-radius: 8px;">
+    <div *ngIf="successMessage" class="stu-alert stu-alert--success">
       <i class="pi pi-check-circle"></i> {{ successMessage }}
     </div>
 
@@ -47,18 +52,18 @@
           <tr *ngFor="let d of entries">
             <td>
               <strong>{{ d.studentName }}</strong><br/>
-              <small style="color:var(--tc-text-muted)">Student #{{ d.studentId }}</small>
+              <small class="stu-transfer-muted">Student #{{ d.studentId }}</small>
             </td>
             <td>{{ d.documentType }}</td>
             <td>
-              <i class="pi pi-file" style="color:var(--tc-primary-600); margin-right:6px;"></i>
+              <i class="pi pi-file stu-doc-file-icon"></i>
               {{ d.fileName }}
             </td>
             <td><span class="adm-badge" data-tone="info">{{ d.category }}</span></td>
             <td><span class="adm-badge" [attr.data-tone]="statusTone(d.status)">{{ d.status }}</span></td>
             <td>{{ d.uploadedOn || '—' }}</td>
             <td>
-              <div style="display:flex; gap:4px;">
+              <div class="stu-doc-actions">
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View" (click)="openFile(d)"><i class="pi pi-eye"></i></button>
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Download" (click)="openFile(d)"><i class="pi pi-download"></i></button>
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Verify" *ngIf="d.status !== 'VERIFIED'" (click)="verify(d)"><i class="pi pi-check"></i></button>

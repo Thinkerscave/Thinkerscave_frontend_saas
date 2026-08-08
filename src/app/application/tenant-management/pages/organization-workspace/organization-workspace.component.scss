@@ -468,6 +468,9 @@
     &--orange { background: #f97316; }
     &--purple { background: #8b5cf6; }
     &--teal   { background: #14b8a6; }
+    &--students { width: 68%; }
+    &--staff { width: 60%; }
+    &--branches { width: 40%; }
     &[data-warn="true"] { background: var(--tc-danger); }
   }
 }

@@ -113,7 +113,7 @@
         <div class="adm-wizard__body" *ngIf="activeStep === 4">
           <div class="tc-form-field tc-form-field--full">
             <label>Add document reference</label>
-            <div style="display: flex; gap: 8px;">
+            <div class="adm-inline-actions">
               <input
                 type="text"
                 [(ngModel)]="newDocumentName"
@@ -132,14 +132,14 @@
               <button
                 type="button"
                 class="tc-btn tc-btn--ghost tc-btn--icon"
-                style="width: 22px; height: 22px; margin-left: 4px;"
+                class="adm-chip-remove-btn"
                 (click)="removeDocument(doc)"
               >
                 <i class="pi pi-times"></i>
               </button>
             </span>
           </div>
-          <div class="tc-empty-state" *ngIf="!uploadedDocuments.length" style="padding: 24px;">
+          <div class="tc-empty-state adm-empty-compact" *ngIf="!uploadedDocuments.length">
             <i class="pi pi-file"></i>
             <p>No documents listed yet.</p>
           </div>
@@ -153,9 +153,9 @@
               <dd>{{ entry.value }}</dd>
             </div>
           </div>
-          <div style="margin-top: 16px;" *ngIf="progress">
+          <div class="adm-review-progress" *ngIf="progress">
             <tc-saas-pill [label]="progress.status" tone="info" />
-            <small style="display: block; margin-top: 8px; color: var(--tc-text-muted);">
+            <small class="adm-review-progress__hint">
               {{ progress.completedSteps }} of {{ progress.totalSteps }} steps complete
             </small>
           </div>
@@ -168,7 +168,7 @@
             <i class="pi pi-arrow-left"></i> Back
           </button>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div class="adm-wizard-actions">
           <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving">
             Save draft
           </button>

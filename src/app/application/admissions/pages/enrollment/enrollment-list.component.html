@@ -58,7 +58,7 @@
         </div>
 
         <footer class="tc-card__footer">
-          <small style="color: var(--tc-text-muted); font-size: 0.74rem;">
+          <small class="adm-small-muted">
             Ready for enrollment
           </small>
           <button
@@ -128,7 +128,7 @@
     <div class="adm-drawer__header">
       <div>
         <h2>Enroll student</h2>
-        <small style="color: var(--tc-text-muted);">
+        <small class="adm-small-muted">
           {{ selected?.applicantName }} · {{ selected?.applicationNumber || selected?.applicationId }}
         </small>
       </div>
@@ -150,11 +150,11 @@
       <input type="text" [(ngModel)]="enrollmentForm.section" placeholder="e.g. A" />
     </div>
 
-    <p style="font-size: 0.82rem; color: var(--tc-text-muted); margin: 0;">
+    <p class="adm-enroll-note">
       Enrollment details are recorded as remarks. Student record creation happens in the Students directory.
     </p>
 
-    <div style="display: flex; gap: 8px; margin-top: auto;">
+    <div class="adm-drawer-actions">
       <button type="button" class="tc-btn tc-btn--ghost" (click)="closeDrawer()">Cancel</button>
       <button
         type="button"

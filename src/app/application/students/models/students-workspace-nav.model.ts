@@ -1,4 +1,4 @@
-export type StudentsWorkspacePage = 'directory' | 'transfers' | 'documents' | 'alumni';
+export type StudentsWorkspacePage = 'directory' | 'alumni';
 
 export interface StudentsPageConfig {
   page: StudentsWorkspacePage;

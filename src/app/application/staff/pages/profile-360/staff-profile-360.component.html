@@ -393,7 +393,7 @@
 </div>
 
 <!-- ───────── LOADING ───────── -->
-<div *ngIf="loading" class="sd-loading" style="min-height: 300px;">
+<div *ngIf="loading" class="sd-loading sd-loading--profile">
   <i class="pi pi-spin pi-spinner"></i> Loading profile...
 </div>
 
@@ -526,7 +526,7 @@
           <strong>₹ {{ grossSalary | number }}</strong>
         </div>
       </div>
-      <h4 style="margin: 16px 0 8px; font-size: 0.9rem; color: var(--tc-text-muted);">Bank Details</h4>
+      <h4 class="sw-section-subtitle">Bank Details</h4>
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Bank Name</label>

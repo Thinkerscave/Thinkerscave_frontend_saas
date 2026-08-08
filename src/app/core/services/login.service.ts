@@ -74,6 +74,12 @@ export class LoginService {
   }
 
   private proactiveRefresh(): void {
+    // In local/dev setups the backend may not issue HttpOnly refresh cookies,
+    // causing immediate refresh failures and forced logout loops.
+    // Let the current access token continue until natural expiry.
+    if (environment.authUseHttpOnlyRefresh) {
+      return;
+    }
     if (!environment.authUseHttpOnlyRefresh && !this.getRefreshTokenLegacy()) {
       return;
     }

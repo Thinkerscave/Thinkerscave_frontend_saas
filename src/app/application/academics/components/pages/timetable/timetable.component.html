@@ -59,7 +59,7 @@
 
     <!-- Conflicts -->
     <div class="tt-conflicts">
-      <div class="tt-ch"><i class="pi pi-exclamation-triangle" style="color:#F59E0B"></i> Conflicts</div>
+      <div class="tt-ch"><i class="pi pi-exclamation-triangle tt-tone-warning"></i> Conflicts</div>
       <div class="tt-clist">
         <div class="tt-card" *ngFor="let c of data.timetableConflicts" [class.high]="c.severity === 'HIGH'">
           <div class="tt-ctype"><span class="acad-pill">{{ c.type }}</span> <small>{{ c.severity }}</small></div>

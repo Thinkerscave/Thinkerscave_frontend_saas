@@ -415,6 +415,36 @@
   &__actions { display: flex; gap: 12px; }
 }
 
+.sd-filter-panel__search--grow {
+  flex: 1;
+}
+
+.payroll-col-select {
+  width: 40px;
+  text-align: center;
+}
+
+.payroll-mark-paid-btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.payroll-generate-note {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--tc-text-muted);
+}
+
+.sd-loading--profile {
+  min-height: 300px;
+}
+
+.sw-section-subtitle {
+  margin: 16px 0 8px;
+  font-size: 0.9rem;
+  color: var(--tc-text-muted);
+}
+
 .sd-table-wrap {
   background: var(--tc-surface-0); border-radius: 12px; border: 1px solid var(--tc-border);
   overflow: hidden; overflow-x: auto;

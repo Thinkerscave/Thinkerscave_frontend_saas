@@ -89,7 +89,7 @@
     <table class="sd-table">
       <thead>
         <tr>
-          <th style="width: 40px; text-align: center;">
+          <th class="payroll-col-select">
             <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll()"/>
           </th>
           <th>Staff Member</th>
@@ -102,7 +102,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let p of payrollPage.content; trackBy: trackById">
-          <td style="text-align: center;">
+          <td class="payroll-col-select">
             <input type="checkbox" [checked]="selectedIds.has(p.payrollId)" (change)="toggleSelect(p.payrollId)"/>
           </td>
           <td>
@@ -123,7 +123,7 @@
           </td>
           <td>
             <div class="sd-table-actions">
-              <button *ngIf="p.status !== 'PAID'" type="button" class="sd-btn sd-btn--ghost" style="padding: 4px 8px; font-size: 0.75rem;" (click)="markPaidSingle(p)">
+              <button *ngIf="p.status !== 'PAID'" type="button" class="sd-btn sd-btn--ghost payroll-mark-paid-btn" (click)="markPaidSingle(p)">
                 Mark Paid
               </button>
               <button type="button" class="sd-icon-btn" title="Download Payslip"
@@ -171,7 +171,7 @@
       <button type="button" (click)="closeGenerate()"><i class="pi pi-times"></i></button>
     </div>
     <div class="sm-modal__body">
-      <p style="margin-top: 0; margin-bottom: 16px; color: var(--tc-text-muted);">
+      <p class="payroll-generate-note">
         Select the year and month to generate payroll for all active staff members.
       </p>
       <div class="sw-form-grid">

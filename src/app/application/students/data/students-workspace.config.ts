@@ -10,22 +10,6 @@ export const STUDENTS_PAGES: StudentsPageConfig[] = [
     route: '/app/students/directory'
   },
   {
-    page: 'transfers',
-    label: 'Transfers',
-    title: 'Student Transfer',
-    description: 'Manage transfer certificates and exit workflows.',
-    icon: 'pi pi-arrow-right-arrow-left',
-    route: '/app/students/transfers'
-  },
-  {
-    page: 'documents',
-    label: 'Documents',
-    title: 'Document Vault',
-    description: 'Centralized student document compliance and verification.',
-    icon: 'pi pi-folder-open',
-    route: '/app/students/documents'
-  },
-  {
     page: 'alumni',
     label: 'Alumni',
     title: 'Alumni Directory',

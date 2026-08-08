@@ -90,7 +90,7 @@
                 </div>
               } @else {
                 @for (f of d.followUps; track trackFollow($index, f)) {
-                  <article class="tc-card is-clickable" style="cursor:default;">
+                  <article class="tc-card adm-static-card">
                     <header class="tc-card__header">
                       <div class="adm-avatar"><i class="pi pi-phone"></i></div>
                       <div class="tc-card is-clickable__title">
@@ -98,9 +98,9 @@
                         <small>{{ f.followUpDate | date:'medium' }} · by {{ f.createdBy || 'system' }}</small>
                       </div>
                     </header>
-                    <p style="margin:0;font-size:0.88rem;">{{ f.remarks }}</p>
+                    <p class="adm-body-text">{{ f.remarks }}</p>
                     @if (f.nextFollowUpDate) {
-                      <small style="color:var(--tc-text-muted);font-size:0.78rem;">Next: {{ f.nextFollowUpDate }}</small>
+                      <small class="adm-small-muted">Next: {{ f.nextFollowUpDate }}</small>
                     }
                   </article>
                 }
@@ -144,7 +144,7 @@
                   <label>Remarks *</label>
                   <textarea formControlName="remarks" rows="3"></textarea>
                 </div>
-                <div class="tc-form-field tc-form-field--full" style="flex-direction:row;justify-content:flex-end;">
+                <div class="tc-form-field tc-form-field--full adm-form-actions">
                   <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">
                     <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
                     Save follow-up
@@ -171,7 +171,7 @@
                 </div>
               } @else {
                 @for (n of d.counselingNotes; track trackNote($index, n)) {
-                  <article class="tc-card is-clickable" style="cursor:default;">
+                  <article class="tc-card adm-static-card">
                     <header class="tc-card__header">
                       <div class="adm-avatar"><i class="pi pi-comment"></i></div>
                       <div class="tc-card is-clickable__title">
@@ -224,7 +224,7 @@
                   <label>Notes *</label>
                   <textarea formControlName="notes" rows="3"></textarea>
                 </div>
-                <div class="tc-form-field tc-form-field--full" style="flex-direction:row;justify-content:flex-end;">
+                <div class="tc-form-field tc-form-field--full adm-form-actions">
                   <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">
                     <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
                     Save note
@@ -275,14 +275,14 @@
 @if (showLostDialog()) {
   <div class="adm-lost-dialog" role="dialog" aria-modal="true" aria-labelledby="lost-title">
     <div class="adm-lost-dialog__panel">
-      <h2 id="lost-title" style="margin:0;font-size:1.1rem;">Mark Lead as Lost</h2>
-      <p style="margin:0;color:var(--tc-text-muted);font-size:0.88rem;">Provide a reason for closing this opportunity.</p>
+      <h2 id="lost-title" class="adm-dialog-title">Mark Lead as Lost</h2>
+      <p class="adm-dialog-subtitle">Provide a reason for closing this opportunity.</p>
       <form [formGroup]="lostForm" (ngSubmit)="confirmMarkLost()" class="adm-wizard__body">
         <div class="tc-form-field tc-form-field--full">
           <label>Reason *</label>
           <textarea formControlName="reason" rows="3" placeholder="e.g. Chose another school"></textarea>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <div class="adm-dialog-actions">
           <button type="button" class="tc-btn" (click)="closeLostDialog()">Cancel</button>
           <button type="submit" class="tc-btn tc-btn--danger" [disabled]="lostForm.invalid">
             Confirm Mark Lost

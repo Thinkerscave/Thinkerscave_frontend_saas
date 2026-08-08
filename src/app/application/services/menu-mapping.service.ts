@@ -223,6 +223,7 @@ export class MenuMappingService {
     const first = leaves[0].item;
     const childItems = leaves.map(leaf => ({
       ...leaf.item,
+      label: this.normalizedWorkspaceLeafLabel(leaf.item.label, leaf.routeText),
       items: undefined,
       title: leaf.path.slice(0, -1).join(' / ') || leaf.item.title
     }));
@@ -312,12 +313,37 @@ export class MenuMappingService {
     return 'more';
   }
 
+  private normalizedWorkspaceLeafLabel(label: string | undefined, routeText: string): string | undefined {
+    const normalizedRoute = routeText.toLowerCase();
+    const normalizedLabel = (label ?? '').trim().toLowerCase();
+
+    if (normalizedRoute === '/app/students' || normalizedRoute === '/app/students/directory') {
+      return 'Student Directory';
+    }
+
+    if (normalizedRoute === '/app/staff' || normalizedRoute === '/app/staff/directory') {
+      return 'Staff Directory';
+    }
+
+    if (normalizedRoute === '/app/attendance' || normalizedRoute === '/app/attendance/students') {
+      return 'Student Attendance';
+    }
+
+    // Keep student transfer workflow and transfer-request workflow distinct in sidebar labels.
+    if (normalizedRoute.includes('/app/transfers') && normalizedLabel === 'transfers') {
+      return 'Transfer Requests';
+    }
+
+    return label;
+  }
+
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
     const roles = this.currentRoleTokens();
     const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
     const isAccessManager = this.hasAnyRole(roles, ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN']);
 
     let menus = this.normalizeTenantRoutes(items);
+    menus = this.pruneNavigationMenus(menus);
 
     if (!isFeatureEnabled('feeManagementEnabled')) {
       menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
@@ -380,7 +406,9 @@ export class MenuMappingService {
         routerLink: ['/app/students'],
         items: [
           { label: 'Student Directory', icon: 'pi pi-list', routerLink: ['/app/students'] },
-          { label: 'Add Student', icon: 'pi pi-user-plus', routerLink: ['/app/students/add'] }
+          { label: 'Alumni', icon: 'pi pi-graduation-cap', routerLink: ['/app/students/alumni'] },
+          { label: 'Promotions', icon: 'pi pi-arrow-up', routerLink: ['/app/promotions'] },
+          { label: 'Transfer Requests', icon: 'pi pi-send', routerLink: ['/app/transfers'] }
         ]
       },
       {
@@ -397,7 +425,7 @@ export class MenuMappingService {
         icon: 'pi pi-calendar',
         routerLink: ['/app/attendance'],
         items: [
-          { label: 'Student Attendance', icon: 'pi pi-user', routerLink: ['/app/attendance/student'] },
+          { label: 'Attendance', icon: 'pi pi-user', routerLink: ['/app/attendance'] },
           { label: 'Calendar', icon: 'pi pi-calendar', routerLink: ['/app/attendance/calendar'] },
           { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: ['/app/attendance/reports'] },
           { label: 'Settings', icon: 'pi pi-cog', routerLink: ['/app/attendance/settings'] }
@@ -406,18 +434,128 @@ export class MenuMappingService {
       {
         label: 'Academics',
         icon: 'pi pi-book',
-        routerLink: ['/app/academics'],
+        routerLink: ['/app/academics/academic-setup'],
         items: [
-          { label: 'Academic Years', icon: 'pi pi-calendar', routerLink: ['/app/academics/years'] },
-          { label: 'Classes', icon: 'pi pi-sitemap', routerLink: ['/app/academics/classes'] }
+          { label: 'Academic Setup', icon: 'pi pi-cog', routerLink: ['/app/academics/academic-setup'] },
+          { label: 'Timetable', icon: 'pi pi-calendar', routerLink: ['/app/academics/timetable'] },
+          { label: 'Teacher Arrangement', icon: 'pi pi-users', routerLink: ['/app/academics/teacher-arrangement'] }
         ]
       },
       {
-        label: 'Promotions',
-        icon: 'pi pi-arrow-up',
-        routerLink: ['/app/promotions']
+        label: 'Admissions',
+        icon: 'pi pi-inbox',
+        routerLink: ['/app/admissions/leads'],
+        items: [
+          { label: 'Leads', icon: 'pi pi-users', routerLink: ['/app/admissions/leads'] },
+          { label: 'Follow-ups', icon: 'pi pi-calendar', routerLink: ['/app/admissions/follow-ups'] },
+          { label: 'Applications', icon: 'pi pi-file-edit', routerLink: ['/app/admissions/applications'] }
+        ]
       }
     ];
+  }
+
+  private pruneNavigationMenus(items: MenuItem[]): MenuItem[] {
+    const blockedRoutes = new Set<string>([
+      '/app/exams',
+      '/app/enrollments',
+      '/app/students/transfers',
+      '/app/students/documents',
+      '/app/staff/documents',
+      '/app/staff/alumni',
+      '/app/admissions/overview',
+      '/app/admissions/enrollment',
+      '/app/fees/setup',
+      '/app/fees/contracts',
+      '/app/fees/ledger',
+      '/app/fees/adjustments',
+      '/app/fees/controls',
+      '/app/fees/audit',
+      '/app/fees/dashboard',
+      '/app/responsibilities'
+    ]);
+
+    const canonicalRoute = (routeText: string): string => {
+      if (routeText === '/app/students/directory') return '/app/students';
+      if (routeText === '/app/staff/directory') return '/app/staff';
+      if (routeText === '/app/attendance/students') return '/app/attendance';
+      if (routeText === '/app/admissions/overview') return '/app/admissions';
+      return routeText;
+    };
+
+    const preserveChildRoutes = new Set<string>([
+      '/app/students',
+      '/app/students/directory',
+      '/app/staff',
+      '/app/staff/directory',
+      '/app/attendance',
+      '/app/attendance/students'
+    ]);
+
+    const walk = (menuItems: MenuItem[]): MenuItem[] => {
+      const seen = new Set<string>();
+      const next: MenuItem[] = [];
+
+      for (const item of menuItems ?? []) {
+        const routeText = this.routerLinkText(item.routerLink).toLowerCase();
+        if (routeText && blockedRoutes.has(routeText)) {
+          continue;
+        }
+        if (routeText.startsWith('/app/exams')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/setup')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/contracts')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/ledger')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/adjustments')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/controls')) {
+          continue;
+        }
+        if (routeText.startsWith('/app/fees/audit')) {
+          continue;
+        }
+
+        const normalizedRoute = canonicalRoute(routeText);
+        let children = item.items ? walk(item.items) : undefined;
+        if (children?.length && normalizedRoute) {
+          children = children.filter(child => {
+            const rawChildRoute = this.routerLinkText(child.routerLink).toLowerCase();
+            if (preserveChildRoutes.has(rawChildRoute)) {
+              return true;
+            }
+            const childRoute = canonicalRoute(rawChildRoute);
+            return !childRoute || childRoute !== normalizedRoute;
+          });
+        }
+
+        if (normalizedRoute && seen.has(normalizedRoute)) {
+          continue;
+        }
+        if (normalizedRoute) {
+          seen.add(normalizedRoute);
+        }
+
+        if (!normalizedRoute && (!children || children.length === 0)) {
+          continue;
+        }
+
+        next.push({
+          ...item,
+          items: children && children.length ? children : undefined
+        });
+      }
+
+      return next;
+    };
+
+    return walk(items);
   }
 
   private mapSidebarNode(node: SidebarMenuNode): MenuItem {

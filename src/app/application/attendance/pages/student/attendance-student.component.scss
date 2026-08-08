@@ -117,6 +117,10 @@
   &--muted   { background: var(--saas-surface-muted); }
 }
 
+.att-copy-error {
+  margin-bottom: 0.75rem;
+}
+
 /* Thumb-friendly 3-state attendance toggle */
 .att-toggle {
   display: inline-grid;
