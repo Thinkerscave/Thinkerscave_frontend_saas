@@ -11,8 +11,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs';
 
 import { Customer, CustomerCreatePayload } from '../../models/platform.model';
@@ -27,6 +25,7 @@ import {
   AppSectionHeaderComponent,
   AppTextareaComponent
 } from '../../../../shared/ui/app-form';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 interface ContactFormModel {
   fullName: string;
@@ -72,7 +71,6 @@ const NOTES_MAX = 500;
   imports: [
     CommonModule,
     FormsModule,
-    ToastModule,
     AppCardComponent,
     AppSectionHeaderComponent,
     AppInputComponent,
@@ -81,7 +79,6 @@ const NOTES_MAX = 500;
     AppButtonComponent,
     AppLoaderComponent
   ],
-  providers: [MessageService],
   templateUrl: './customer-form.component.html',
   styleUrl: './customer-form.component.scss'
 })
@@ -91,7 +88,7 @@ export class CustomerFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   loading = false;
@@ -185,12 +182,7 @@ export class CustomerFormComponent implements OnInit {
           const credentialDetail = !this.isEditMode && customer?.ownerUsername && customer?.temporaryPassword
             ? ` Owner login: ${customer.ownerUsername} / ${customer.temporaryPassword}`
             : '';
-          this.messages.add({
-            severity: 'success',
-            summary: this.isEditMode ? 'Customer updated' : 'Customer created',
-            detail: `${customer.customerName || this.form.customerName} saved successfully.${credentialDetail}`,
-            life: 12000
-          });
+          this.feedback.success(this.isEditMode ? 'Customer updated' : 'Customer created', `${customer.customerName || this.form.customerName} saved successfully.${credentialDetail}`, { life: 12000 });
           if (id) {
             void this.router.navigate(['/app/tenant-management/customers', id]);
           }
@@ -198,6 +190,7 @@ export class CustomerFormComponent implements OnInit {
         error: err => {
           const parsed = extractApiError(err, 'Could not save customer. Verify inputs and retry.');
           this.errorMessage = parsed.message;
+          this.feedback.formError(parsed.message, 'Could not save customer');
         }
       });
   }
@@ -361,6 +354,8 @@ export class CustomerFormComponent implements OnInit {
     this.cdr.markForCheck();
 
     if (Object.keys(next).length > 0) {
+      const first = Object.values(next)[0];
+      this.feedback.formError(first, 'Please fix the highlighted fields');
       this.focusFirstInvalid();
       return false;
     }

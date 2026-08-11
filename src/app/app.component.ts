@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { NgxUiLoaderModule } from 'ngx-ui-loader';
+import { ToastModule } from 'primeng/toast';
 import { ThemeService } from './shared/theme/theme.service';
 import { UserPreferencesService } from './application/services/user-preferences.service';
 import { LoginService } from './core/services/login.service';
@@ -10,7 +11,7 @@ import { LoginService } from './core/services/login.service';
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, NgxUiLoaderModule],
+  imports: [RouterOutlet, NgxUiLoaderModule, ToastModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

@@ -28,7 +28,8 @@ const PROVISION_FIELD_ALIASES: Record<string, string> = {
   institutionType: 'institutionType',
   city: 'city',
   state: 'state',
-  country: 'country'
+  country: 'country',
+  logoUrl: 'logoUrl'
 };
 
 function humanizeFieldMessage(field: string, message: string): string {
@@ -43,7 +44,14 @@ function humanizeFieldMessage(field: string, message: string): string {
   if (/must not be blank/i.test(cleaned) || /must not be null/i.test(cleaned)) {
     return 'This field is required.';
   }
+  if (field === 'logoUrl' && /size must be between/i.test(cleaned)) {
+    return 'Logo is too large after encoding. Use a PNG/JPG under ~200 KB, or remove the logo.';
+  }
   if (/size must be between/i.test(cleaned)) {
+    const match = cleaned.match(/between\s+(\d+)\s+and\s+(\d+)/i);
+    if (match) {
+      return `Must be between ${match[1]} and ${match[2]} characters.`;
+    }
     return 'Value length is out of the allowed range.';
   }
   // Drop redundant "field: message" prefixes when already bound under the field

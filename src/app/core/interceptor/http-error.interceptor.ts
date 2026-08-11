@@ -40,7 +40,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (
 
       // 401 is owned by authInterceptor — avoid double-toasting while refresh runs.
       if (err.status !== 401) {
-        messageService.add({ severity, summary, detail, life: 5000 });
+        messageService.add({ severity, summary, detail, life: severity === 'error' ? 8000 : 5000 });
       }
 
       if (err.status === 503) {

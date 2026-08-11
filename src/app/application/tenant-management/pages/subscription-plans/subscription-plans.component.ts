@@ -3,8 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, finalize } from 'rxjs';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 
 import { SubscriptionPlan, Promotion } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
@@ -16,13 +14,13 @@ import {
   SaasPillComponent,
   SaasPanelComponent
 } from '../../../../shared/ui/saas';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 @Component({
   selector: 'app-subscription-plans',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ToastModule, SaasPageHeaderComponent, SaasPillComponent, SaasPanelComponent],
-  providers: [MessageService],
+  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPillComponent, SaasPanelComponent],
   templateUrl: './subscription-plans.component.html',
   styleUrl: './subscription-plans.component.scss'
 })
@@ -30,7 +28,7 @@ export class SubscriptionPlansComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly api = inject(PlatformManagementService);
-  private readonly messageService = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
 
   loading = true;
   billing: 'monthly' | 'yearly' = 'monthly';
@@ -62,7 +60,7 @@ export class SubscriptionPlansComponent implements OnInit {
       error: () => {
         this.plans = [];
         this.promotions = [];
-        this.messageService.add({ severity: 'warn', summary: 'Load failed', detail: 'Could not load subscription data.' });
+        this.feedback.warn('Load failed', 'Could not load subscription data.');
       }
     });
   }
@@ -134,12 +132,12 @@ export class SubscriptionPlansComponent implements OnInit {
 
   toggleActive(plan: SubscriptionPlan): void {
     plan.active = !plan.active;
-    this.messageService.add({ severity: 'success', summary: 'Updated', detail: `${plan.planName} is now ${plan.active ? 'active' : 'inactive'}.` });
+    this.feedback.success('Updated', `${plan.planName} is now ${plan.active ? 'active' : 'inactive'}.`);
   }
 
   editPlan(plan: SubscriptionPlan): void {
     // Placeholder navigation
-    this.messageService.add({ severity: 'info', summary: 'Edit Plan', detail: `Opening editor for ${plan.planName}...` });
+    this.feedback.info('Edit Plan', `Opening editor for ${plan.planName}...`);
   }
 
   trackByPlan(_: number, plan: SubscriptionPlan): number { return plan.id; }

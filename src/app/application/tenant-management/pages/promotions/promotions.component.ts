@@ -2,8 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
@@ -25,6 +23,7 @@ import {
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
 import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 interface PromotionDraft {
   promotionCode: string;
@@ -42,7 +41,6 @@ interface PromotionDraft {
   imports: [
     CommonModule,
     FormsModule,
-    ToastModule,
     DropdownModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
@@ -51,7 +49,6 @@ interface PromotionDraft {
     CalendarModule,
     AppGridTableToggleComponent
   ],
-  providers: [MessageService],
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.scss'
 })
@@ -59,7 +56,7 @@ export class PromotionsComponent implements OnInit {
   private readonly api = inject(PlatformManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
 
   loading = true;
   saving = false;
@@ -130,7 +127,7 @@ export class PromotionsComponent implements OnInit {
 
   submitCreate(): void {
     if (!this.draft.promotionCode.trim() || !this.draft.promotionName.trim()) {
-      this.messages.add({ severity: 'warn', summary: 'Missing fields', detail: 'Promotion code and name are required.' });
+      this.feedback.warn('Missing fields', 'Promotion code and name are required.');
       return;
     }
 
@@ -152,11 +149,11 @@ export class PromotionsComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Promotion created', detail: 'The new promotion is now available.' });
+          this.feedback.success('Promotion created', 'The new promotion is now available.');
           this.createOpen = false;
           this.load();
         },
-        error: () => this.messages.add({ severity: 'error', summary: 'Create failed', detail: 'Could not create promotion. Check values and permissions.' })
+        error: () => this.feedback.error('Create failed', 'Could not create promotion. Check values and permissions.')
       });
   }
 
@@ -179,10 +176,10 @@ export class PromotionsComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Promotion archived', detail: `${promotion.promotionCode} has been archived.` });
+          this.feedback.success('Promotion archived', `${promotion.promotionCode} has been archived.`);
           this.load();
         },
-        error: () => this.messages.add({ severity: 'error', summary: 'Archive failed', detail: 'Could not archive this promotion.' })
+        error: () => this.feedback.error('Archive failed', 'Could not archive this promotion.')
       });
   }
 
