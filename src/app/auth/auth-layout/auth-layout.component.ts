@@ -9,7 +9,7 @@ import { AuthTrustStripComponent } from '../components/auth-trust-strip/auth-tru
 @Component({
   selector: 'app-auth-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ToastModule, RouterOutlet, RouterLink, AuthIllustrationComponent, AuthTrustStripComponent],
+  imports: [RouterOutlet, RouterLink, AuthIllustrationComponent, AuthTrustStripComponent],
   templateUrl: './auth-layout.component.html',
   styleUrl: './auth-layout.component.scss'
 })

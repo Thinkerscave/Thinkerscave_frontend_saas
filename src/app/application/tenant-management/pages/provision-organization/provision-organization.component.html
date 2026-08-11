@@ -1,17 +1,8 @@
 <div class="org-form-page">
-
-  <p-toast position="top-right"></p-toast>
-
-
-
   <div class="org-form-page__shell">
-
     <div *ngIf="errorMessage" class="org-form-page__banner" role="alert">
-
       <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-
       <span>{{ errorMessage }}</span>
-
     </div>
 
 
@@ -21,729 +12,430 @@
 
 
     <div *ngIf="!loading" class="org-form-page__layout">
-
       <app-card class="org-form-page__main" [hasFooter]="true" [elevated]="true">
-
         <form class="org-form" novalidate (submit)="$event.preventDefault()">
-
           <section class="org-form__section">
-
             <app-section-header
-
               title="1. Customer"
-
               description="Link this organization to an existing customer account."
-
               icon="pi pi-users">
-
             </app-section-header>
 
 
 
             <app-searchable-select
-
               label="Customer"
-
               placeholder="Search and select a customer"
-
               searchPlaceholder="Search by name or code…"
-
               [required]="true"
-
               [options]="customerOptions"
-
               [(ngModel)]="form.customerId"
-
               name="customerId"
-
               [error]="fieldError('customerId')"
-
               (ngModelChange)="onFieldChange('customerId')">
-
             </app-searchable-select>
 
 
 
             <p class="org-form__helper">
-
               Can't find the customer?
-
               <a routerLink="/app/tenant-management/customers/new">Create a new customer first.</a>
-
             </p>
-
           </section>
 
 
 
           <section class="org-form__section">
-
             <app-section-header
-
               title="2. Organization Details"
-
               description="Core identity and location for the new institution."
-
               icon="pi pi-building">
-
             </app-section-header>
 
 
 
             <div class="org-form__grid">
-
               <app-input
-
                 label="Organization Name"
-
                 placeholder="Northstar Institute of Technology"
-
                 [required]="true"
-
                 [(ngModel)]="form.organizationName"
-
                 name="organizationName"
-
                 [error]="fieldError('organizationName')"
-
                 (ngModelChange)="onFieldChange('organizationName')">
-
               </app-input>
 
 
 
               <app-input
-
                 label="Short Name"
-
                 placeholder="NIST"
-
                 [required]="true"
-
                 [(ngModel)]="form.shortName"
-
                 name="shortName"
-
                 [error]="fieldError('shortName')"
-
                 (ngModelChange)="onFieldChange('shortName')">
-
               </app-input>
 
 
 
               <app-select
-
                 label="Institution Type"
-
                 placeholder="Select institution type"
-
                 [required]="true"
-
                 [options]="institutionOptions"
-
                 [(ngModel)]="form.institutionType"
-
                 name="institutionType"
-
                 [error]="fieldError('institutionType')"
-
                 (ngModelChange)="onFieldChange('institutionType')">
-
               </app-select>
 
 
 
               <div class="org-form__domain-field">
-
                 <label class="app-field__label" for="org-domain">
-
                   Domain<span class="app-field__required" aria-hidden="true">*</span>
-
                 </label>
-
                 <div class="org-form__domain-input" [class.is-invalid]="!!fieldError('domain')">
-
                   <span class="org-form__domain-prefix" aria-hidden="true">
-
                     <i class="pi pi-globe"></i>
-
                   </span>
-
                   <input
-
                     id="org-domain"
-
                     class="app-field__control"
-
                     type="text"
-
                     placeholder="northstar"
-
                     [(ngModel)]="form.domain"
-
                     name="domain"
-
                     (ngModelChange)="normalizeDomain($event)" />
-
                   <span class="org-form__domain-suffix">.thinkerscave.app</span>
-
                 </div>
-
                 <p *ngIf="domainChecking && !fieldError('domain')" class="app-field__hint">Checking domain availability…</p>
-
-                <p *ngIf="domainPreview && !fieldError('domain') && !domainChecking" class="app-field__hint">Preview: {{ domainPreview }}</p>
-
-                <p *ngIf="fieldError('domain')" class="app-field__error">{{ fieldError('domain') }}</p>
-
+                <p *ngIf="domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__success" role="status">
+                  Available: {{ domainPreview }}
+                </p>
+                <p *ngIf="!domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__hint">
+                  Preview: {{ domainPreview }}
+                </p>
+                <p *ngIf="fieldError('domain')" class="app-field__error" role="alert">{{ fieldError('domain') }}</p>
               </div>
 
 
 
               <app-input
-
                 label="City"
-
                 placeholder="Bengaluru"
-
                 [required]="true"
-
                 [(ngModel)]="form.city"
-
                 name="city"
-
                 [error]="fieldError('city')"
-
                 (ngModelChange)="onFieldChange('city')">
-
               </app-input>
 
 
 
               <app-input
-
                 label="State"
-
                 placeholder="Karnataka"
-
                 [required]="true"
-
                 [(ngModel)]="form.state"
-
                 name="state"
-
                 [error]="fieldError('state')"
-
                 (ngModelChange)="onFieldChange('state')">
-
               </app-input>
 
 
 
               <app-select
-
                 label="Country"
-
                 placeholder="Select country"
-
                 [required]="true"
-
                 [options]="countryOptions"
-
                 [(ngModel)]="form.country"
-
                 name="country"
-
                 [error]="fieldError('country')"
-
                 (ngModelChange)="onFieldChange('country')">
-
               </app-select>
-
             </div>
 
 
 
-            <div class="org-form__logo">
-
+            <div class="org-form__logo" [class.is-invalid]="!!fieldError('logoUrl')">
               <label class="app-field__label">Logo <span class="org-form__optional">(optional)</span></label>
 
-
-
-              <div *ngIf="!form.logoUrl" class="org-form__logo-dropzone">
-
-                <input type="file" accept="image/*" (change)="onLogoSelected($event)" aria-label="Upload organization logo" />
-
+              <div *ngIf="!form.logoUrl" class="org-form__logo-dropzone" [class.is-invalid]="!!fieldError('logoUrl')">
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" (change)="onLogoSelected($event)" aria-label="Upload organization logo" [disabled]="logoProcessing" />
                 <i class="pi pi-cloud-upload" aria-hidden="true"></i>
-
-                <strong>Drop logo here or click to upload</strong>
-
-                <small>PNG, JPG or SVG · Max 2 MB</small>
-
+                <strong>{{ logoProcessing ? 'Processing logo…' : 'Drop logo here or click to upload' }}</strong>
+                <small>PNG, JPG or WebP · Max 2 MB source Auto-compressed for upload</small>
               </div>
-
-
 
               <div *ngIf="form.logoUrl" class="org-form__logo-preview">
-
                 <img [src]="form.logoUrl" alt="Organization logo preview" />
-
                 <app-button variant="ghost" size="sm" icon="pi pi-times" (clicked)="clearLogo()">
-
                   Remove
-
                 </app-button>
-
               </div>
 
-
-
-              <p *ngIf="fieldError('logoUrl')" class="app-field__error">{{ fieldError('logoUrl') }}</p>
-
+              <p *ngIf="fieldError('logoUrl')" class="app-field__error" role="alert">{{ fieldError('logoUrl') }}</p>
             </div>
-
           </section>
 
 
 
           <section class="org-form__section">
-
             <app-section-header
-
               title="3. Organization Admin"
-
               description="The first administrator who will access the tenant workspace."
-
               icon="pi pi-user">
-
             </app-section-header>
 
 
 
             <div class="org-form__grid">
-
               <app-input
-
                 label="Full Name"
-
                 placeholder="Rajan Mehta"
-
                 [required]="true"
-
                 autocomplete="name"
-
                 [(ngModel)]="form.adminFullName"
-
                 name="adminFullName"
-
                 [error]="fieldError('adminFullName')"
-
                 (ngModelChange)="onFieldChange('adminFullName')">
-
               </app-input>
 
 
 
               <app-input
-
                 label="Email"
-
                 type="email"
-
                 placeholder="admin@institution.edu.in"
-
                 [required]="true"
-
                 autocomplete="email"
-
                 inputMode="email"
-
                 [(ngModel)]="form.adminEmail"
-
                 name="adminEmail"
-
                 [error]="fieldError('adminEmail')"
-
                 (ngModelChange)="onFieldChange('adminEmail')">
-
               </app-input>
 
 
 
               <app-phone-input
-
                 label="Mobile"
-
                 placeholder="Enter mobile number"
-
                 [required]="true"
-
                 [(ngModel)]="form.adminMobile"
-
                 name="adminMobile"
-
                 [error]="fieldError('adminMobile')"
-
                 (ngModelChange)="onFieldChange('adminMobile')">
-
               </app-phone-input>
-
             </div>
-
           </section>
 
 
 
           <section class="org-form__section org-form__section--last">
-
             <app-section-header
-
               title="4. Subscription & Payment"
-
               description="Choose a plan and how payment should be handled."
-
               icon="pi pi-credit-card">
-
             </app-section-header>
 
 
 
             <div class="org-form__grid org-form__grid--single">
-
               <app-select
-
                 label="Subscription Plan"
-
                 placeholder="Select a plan"
-
                 [required]="true"
-
                 [options]="planOptions"
-
                 [(ngModel)]="form.subscriptionPlanId"
-
                 name="subscriptionPlanId"
-
                 [error]="fieldError('subscriptionPlanId')"
-
                 (ngModelChange)="onFieldChange('subscriptionPlanId')">
-
               </app-select>
-
             </div>
 
 
 
             <app-radio-card
-
               label="Payment Option"
-
               [required]="true"
-
               [options]="paymentOptions"
-
               [(ngModel)]="form.paymentOption"
-
               name="paymentOption"
-
               [error]="fieldError('paymentOption')"
-
               (ngModelChange)="onFieldChange('paymentOption')">
-
             </app-radio-card>
 
 
 
             <div class="org-form__coupon-row">
-
               <app-input
-
                 label="Coupon"
-
                 placeholder="Enter coupon code (optional)"
-
                 [(ngModel)]="form.couponCode"
-
                 name="couponCode"
-
                 [error]="fieldError('couponCode')"
-
                 (ngModelChange)="onFieldChange('couponCode')">
-
               </app-input>
-
               <app-button variant="secondary" size="sm" icon="pi pi-tags" (clicked)="openCouponModal()">
-
                 Browse Coupons
-
               </app-button>
-
             </div>
 
 
 
             <div *ngIf="selectedPromotion" class="org-form__coupon-chip">
-
               <i class="pi pi-tag" aria-hidden="true"></i>
-
               <span>{{ selectedPromotion.promotionName }} ({{ selectedPromotion.promotionCode }})</span>
-
               <button type="button" (click)="clearCoupon()" aria-label="Remove coupon">
-
                 <i class="pi pi-times"></i>
-
               </button>
-
             </div>
-
           </section>
-
         </form>
 
 
 
         <div card-footer class="org-form-page__footer">
-
           <app-button variant="secondary" [disabled]="submitting" (clicked)="cancel()">
-
             Cancel
-
           </app-button>
-
           <app-button
-
             variant="primary"
-
             icon="pi pi-plus"
-
             [loading]="submitting"
-
             [disabled]="!canSubmit"
-
             (clicked)="submit()">
-
             Create Organization
-
           </app-button>
-
         </div>
-
       </app-card>
 
 
 
       <aside class="org-form-page__summary">
-
         <div class="pricing-summary">
-
           <header class="pricing-summary__header">
-
             <i class="pi pi-receipt" aria-hidden="true"></i>
-
             <h2>Pricing Summary</h2>
-
           </header>
 
 
 
           <div class="pricing-summary__body">
-
             <div class="pricing-summary__row">
-
               <span>Plan</span>
-
               <strong>{{ selectedPlan?.planName || '—' }}</strong>
-
             </div>
-
             <div class="pricing-summary__row">
-
               <span>Price</span>
-
               <strong>{{ formatCurrency(planPrice) }}</strong>
-
             </div>
-
             <div class="pricing-summary__row" *ngIf="discountAmount > 0">
-
               <span>Discount</span>
-
               <strong class="pricing-summary__discount">− {{ formatCurrency(discountAmount) }}</strong>
-
             </div>
-
             <div class="pricing-summary__divider"></div>
-
             <div class="pricing-summary__row pricing-summary__row--total">
-
               <span>Final Amount</span>
-
               <strong>{{ formatCurrency(finalAmount) }}</strong>
-
             </div>
-
             <div class="pricing-summary__row pricing-summary__row--due">
-
               <span>Due Now</span>
-
               <strong>{{ formatCurrency(dueNow) }}</strong>
-
             </div>
-
             <div class="pricing-summary__row" *ngIf="form.paymentOption === 'trial' && trialDays">
-
               <span>Trial Period</span>
-
               <strong>{{ trialDays }} days</strong>
-
             </div>
 
 
 
             <div class="pricing-summary__limits" *ngIf="selectedPlan">
-
               <h3>What's included</h3>
-
               <ul>
-
                 <li *ngIf="selectedPlan.studentLimit">
-
                   <i class="pi pi-graduation-cap"></i>
-
                   {{ selectedPlan.studentLimit | number }} students
-
                 </li>
-
                 <li *ngIf="selectedPlan.staffLimit">
-
                   <i class="pi pi-users"></i>
-
                   {{ selectedPlan.staffLimit | number }} staff
-
                 </li>
-
                 <li *ngIf="selectedPlan.branchLimit">
-
                   <i class="pi pi-sitemap"></i>
-
                   {{ selectedPlan.branchLimit }} branches
-
                 </li>
-
                 <li *ngIf="selectedPlan.storageLimitGb">
-
                   <i class="pi pi-database"></i>
-
                   {{ selectedPlan.storageLimitGb }} GB storage
-
                 </li>
-
               </ul>
-
             </div>
 
 
 
             <div class="pricing-summary__info">
-
               <i class="pi pi-info-circle" aria-hidden="true"></i>
-
               <p>
-
                 The organization workspace, subscription, and admin account are created immediately.
-
                 <ng-container *ngIf="form.paymentOption === 'trial'">
-
                   Billing starts after the trial period unless cancelled.
-
                 </ng-container>
-
                 <ng-container *ngIf="form.paymentOption === 'payment_received'">
-
                   The subscription is activated with payment recorded as received.
-
                 </ng-container>
-
               </p>
-
             </div>
-
           </div>
-
         </div>
-
       </aside>
-
     </div>
-
   </div>
 
 
 
   <div *ngIf="couponModalOpen" class="org-form-page__modal-backdrop" (click)="closeCouponModal()">
-
     <div class="org-form-page__modal" role="dialog" aria-modal="true" aria-label="Browse coupons" (click)="$event.stopPropagation()">
-
       <header class="org-form-page__modal-header">
-
         <h3>Browse Coupons</h3>
-
         <button type="button" (click)="closeCouponModal()" aria-label="Close">
-
           <i class="pi pi-times"></i>
-
         </button>
-
       </header>
 
 
 
       <div class="org-form-page__modal-search">
-
         <i class="pi pi-search" aria-hidden="true"></i>
-
         <input type="text" [(ngModel)]="couponSearch" placeholder="Search promotions…" />
-
       </div>
 
 
 
       <div class="org-form-page__modal-list">
-
         <button
-
           type="button"
-
           class="org-form-page__modal-item"
-
           *ngFor="let promo of filteredPromotions"
-
           (click)="selectPromotion(promo)">
-
           <div>
-
             <strong>{{ promo.promotionName }}</strong>
-
             <small>{{ promo.promotionCode }}</small>
-
             <p *ngIf="promo.description">{{ promo.description }}</p>
-
           </div>
-
           <span class="org-form-page__modal-badge">{{ promo.discountType }}</span>
-
         </button>
 
 
 
         <p *ngIf="!filteredPromotions.length" class="org-form-page__modal-empty">No active promotions found.</p>
-
       </div>
-
     </div>
-
   </div>
-
 </div>
 
 

@@ -76,11 +76,21 @@ textarea.app-field__control {
 
 .app-field__error {
   font-size: var(--tc-font-size-xs);
-  color: var(--tc-danger);
+  font-weight: 600;
+  color: var(--tc-danger, #dc2626) !important;
   display: flex;
   align-items: center;
   gap: 0.25rem;
   animation: app-form-fade-in var(--tc-anim-duration-fast) var(--tc-anim-easing);
+}
+
+.app-field__success {
+  font-size: var(--tc-font-size-xs);
+  font-weight: 600;
+  color: var(--tc-success, #16a34a);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 @keyframes app-form-fade-in {

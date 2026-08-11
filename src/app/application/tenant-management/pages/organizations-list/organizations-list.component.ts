@@ -5,8 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PaginatorModule } from 'primeng/paginator';
 import { Select } from 'primeng/select';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
 
 import { InstitutionType, OrganizationStatus, OrganizationSummary, PlatformDashboard } from '../../models/platform.model';
@@ -25,6 +23,7 @@ import {
   SaasStat
 } from '../../../../shared/ui/saas';
 import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 type StatusFilter = 'all' | OrganizationStatus;
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
@@ -34,10 +33,9 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, RouterLink, PaginatorModule, ToastModule,
+    CommonModule, FormsModule, RouterLink, PaginatorModule,
     Select, SaasStatGridComponent, SaasPillComponent, AppGridTableToggleComponent
   ],
-  providers: [MessageService],
   templateUrl: './organizations-list.component.html',
   styleUrl: './organizations-list.component.scss'
 })
@@ -46,7 +44,7 @@ export class OrganizationsListComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(PlatformManagementService);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly search$ = new Subject<string>();
 
   loading = true;
@@ -210,15 +208,15 @@ export class OrganizationsListComponent implements OnInit {
     }
     if (action === 'suspend') {
       this.api.suspendOrganization(org.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: () => { this.messages.add({ severity: 'success', summary: 'Suspended', detail: `${org.organizationName} suspended.` }); this.load(); },
-        error: () => this.messages.add({ severity: 'error', summary: 'Failed', detail: 'Could not suspend organization.' })
+        next: () => { this.feedback.success('Suspended', `${org.organizationName} suspended.`); this.load(); },
+        error: () => this.feedback.error('Failed', 'Could not suspend organization.')
       });
       return;
     }
     if (action === 'activate') {
       this.api.activateOrganization(org.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: () => { this.messages.add({ severity: 'success', summary: 'Activated', detail: `${org.organizationName} activated.` }); this.load(); },
-        error: () => this.messages.add({ severity: 'error', summary: 'Failed', detail: 'Could not activate organization.' })
+        next: () => { this.feedback.success('Activated', `${org.organizationName} activated.`); this.load(); },
+        error: () => this.feedback.error('Failed', 'Could not activate organization.')
       });
     }
   }

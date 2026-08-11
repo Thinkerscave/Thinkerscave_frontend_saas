@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -23,6 +21,7 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 @Component({
   selector: 'app-migration-center',
@@ -30,14 +29,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasPillComponent,
     ProgressBarModule
   ],
-  providers: [MessageService],
   templateUrl: './migration-center.component.html',
   styleUrl: './migration-center.component.scss'
 })
@@ -45,7 +42,7 @@ export class MigrationCenterComponent implements OnInit {
   private readonly api = inject(PlatformManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
 
   loading = true;
   errorMessage = '';
@@ -122,10 +119,10 @@ export class MigrationCenterComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Job retried', detail: `${job.jobCode} has been re-queued.` });
+          this.feedback.success('Job retried', `${job.jobCode} has been re-queued.`);
           this.load();
         },
-        error: () => this.messages.add({ severity: 'error', summary: 'Retry failed', detail: 'Could not retry this provisioning job.' })
+        error: () => this.feedback.error('Retry failed', 'Could not retry this provisioning job.')
       });
   }
 
@@ -141,14 +138,10 @@ export class MigrationCenterComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.messages.add({
-            severity: 'success',
-            summary: 'Migration triggered',
-            detail: `Schema migration started for ${tenant.organizationName || tenant.tenantIdentifier}.`
-          });
+          this.feedback.success('Migration triggered', `Schema migration started for ${tenant.organizationName || tenant.tenantIdentifier}.`);
           this.load();
         },
-        error: () => this.messages.add({ severity: 'error', summary: 'Migration failed', detail: 'Could not trigger tenant migration.' })
+        error: () => this.feedback.error('Migration failed', 'Could not trigger tenant migration.')
       });
   }
 
@@ -160,7 +153,7 @@ export class MigrationCenterComponent implements OnInit {
     const outdated = this.outdatedTenants;
     if (!outdated.length) return;
 
-    this.messages.add({ severity: 'info', summary: 'Batch Migration', detail: `Triggering migration for ${outdated.length} tenants...` });
+    this.feedback.info('Batch Migration', `Triggering migration for ${outdated.length} tenants...`);
     // In a real app, this would call a batch API or queue them. For now, we simulate looping them.
     for (const t of outdated) {
       this.triggerMigration(t);

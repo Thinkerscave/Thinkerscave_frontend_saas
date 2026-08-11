@@ -3,10 +3,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule } from 'primeng/paginator';
-import { ToastModule } from 'primeng/toast';
 import { debounceTime, Subject } from 'rxjs';
 
 import { CustomerListItem } from '../../models/platform.model';
@@ -23,6 +21,7 @@ import {
   SaasPanelComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 @Component({
   selector: 'app-customers-archive',
@@ -34,13 +33,11 @@ import {
     RouterLink,
     DropdownModule,
     PaginatorModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasFilterRowComponent,
     SaasPillComponent
   ],
-  providers: [MessageService],
   templateUrl: './customers-archive.component.html',
   styleUrl: './customers-archive.component.scss'
 })
@@ -49,7 +46,7 @@ export class CustomersArchiveComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly search$ = new Subject<string>();
 
   loading = true;
@@ -164,7 +161,7 @@ export class CustomersArchiveComponent implements OnInit {
     fn().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.actionLoadingId = null;
-        this.messages.add({ severity: 'success', summary, detail, life: 4000 });
+        this.feedback.success(summary, detail, { life: 4000 });
         if (removeFromList) {
           this.customers = this.customers.filter(c => c.id !== id);
           this.totalRecords = Math.max(0, this.totalRecords - 1);
@@ -175,12 +172,7 @@ export class CustomersArchiveComponent implements OnInit {
       },
       error: () => {
         this.actionLoadingId = null;
-        this.messages.add({
-          severity: 'error',
-          summary: 'Failed',
-          detail: `Could not complete: ${summary.toLowerCase()}.`,
-          life: 4000
-        });
+        this.feedback.error('Failed', `Could not complete: ${summary.toLowerCase()}.`, { life: 4000 });
         this.cdr.markForCheck();
       }
     });

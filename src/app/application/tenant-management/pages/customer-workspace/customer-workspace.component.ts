@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ToastModule } from 'primeng/toast';
 
 import { CustomerDetail, OrganizationSummary, PlatformAuditLog } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
@@ -35,7 +34,6 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasTabsComponent,

@@ -5,8 +5,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
 import { Observable } from 'rxjs';
 
 import { OrganizationDetail } from '../../models/platform.model';
@@ -26,6 +24,7 @@ import {
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { SaasPillComponent } from '../../../../shared/ui/saas';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -33,8 +32,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastModule, SaasPillComponent],
-  providers: [MessageService],
+  imports: [CommonModule, SaasPillComponent],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
 })
@@ -44,7 +42,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(PlatformManagementService);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
@@ -277,7 +275,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
 
   private toast(severity: 'success' | 'error' | 'warn' | 'info', summary: string, detail: string): void {
-    this.messages.add({ severity, summary, detail, life: 4000 });
+    this.feedback[severity](summary, detail, { life: 4000 });
   }
 }
 

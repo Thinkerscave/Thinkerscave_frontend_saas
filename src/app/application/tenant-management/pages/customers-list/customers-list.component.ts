@@ -12,10 +12,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
-import { ToastModule } from 'primeng/toast';
 import { DropdownModule } from 'primeng/dropdown';
 import { debounceTime, Subject } from 'rxjs';
 
@@ -44,6 +43,7 @@ import {
 } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import { formatCurrency, formatDate } from '../../utils/platform-display.util';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 type StatusFilter = 'all' | CustomerStatus;
 
@@ -59,7 +59,6 @@ const PAGE_SIZES = [10, 25, 50, 100];
     FormsModule,
     DropdownModule,
     PaginatorModule,
-    ToastModule,
     MenuModule,
     SaasPageHeaderComponent,
     AppButtonComponent,
@@ -74,7 +73,6 @@ const PAGE_SIZES = [10, 25, 50, 100];
     AppSkeletonLoaderComponent,
     AppSkeletonGroupComponent
   ],
-  providers: [MessageService],
   templateUrl: './customers-list.component.html',
   styleUrl: './customers-list.component.scss'
 })
@@ -83,7 +81,7 @@ export class CustomersListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly messages = inject(MessageService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly breakpoint = inject(BreakpointObserver);
   private readonly search$ = new Subject<string>();
 
@@ -237,11 +235,7 @@ export class CustomersListComponent implements OnInit {
   }
 
   exportCustomers(): void {
-    this.messages.add({
-      severity: 'info',
-      summary: 'Export',
-      detail: 'Customer export will be available soon.'
-    });
+    this.feedback.info('Export', 'Customer export will be available soon.');
   }
 
   openCustomer(customer: CustomerListItem, event?: Event): void {
@@ -267,11 +261,7 @@ export class CustomersListComponent implements OnInit {
   }
 
   manageSubscription(_customer: CustomerListItem): void {
-    this.messages.add({
-      severity: 'info',
-      summary: 'Manage Subscription',
-      detail: 'Subscription management will be available soon.'
-    });
+    this.feedback.info('Manage Subscription', 'Subscription management will be available soon.');
   }
 
   suspendCustomer(customer: CustomerListItem): void {
@@ -282,19 +272,11 @@ export class CustomersListComponent implements OnInit {
 
     action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.messages.add({
-          severity: 'success',
-          summary: actionLabel,
-          detail: `${customer.customerName} has been ${actionLabel.toLowerCase()}.`
-        });
+        this.feedback.success(actionLabel, `${customer.customerName} has been ${actionLabel.toLowerCase()}.`);
         this.load();
       },
       error: () => {
-        this.messages.add({
-          severity: 'error',
-          summary: `${actionLabel} failed`,
-          detail: `Could not ${actionVerb} this customer. Please try again.`
-        });
+        this.feedback.error(`${actionLabel} failed`, `Could not ${actionVerb} this customer. Please try again.`);
       }
     });
   }
@@ -302,19 +284,11 @@ export class CustomersListComponent implements OnInit {
   archiveCustomer(customer: CustomerListItem): void {
     this.api.archiveCustomer(customer.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.messages.add({
-          severity: 'success',
-          summary: 'Archived',
-          detail: `${customer.customerName} has been archived.`
-        });
+        this.feedback.success('Archived', `${customer.customerName} has been archived.`);
         this.load();
       },
       error: () => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Archive failed',
-          detail: 'Could not archive this customer. Please try again.'
-        });
+        this.feedback.error('Archive failed', 'Could not archive this customer. Please try again.');
       }
     });
   }
