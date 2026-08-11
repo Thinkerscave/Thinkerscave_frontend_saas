@@ -419,6 +419,8 @@ export const platformApi = {
   featureOverrides: `${PLATFORM_BASE}/feature-overrides`,
   featureOverrideById: (id: number) => `${PLATFORM_BASE}/feature-overrides/${id}`,
   provision: `${PLATFORM_BASE}/provision`,
+  provisionDomainAvailability: (subdomain: string) =>
+    `${PLATFORM_BASE}/provision/domain-availability?subdomain=${encodeURIComponent(subdomain)}`,
   provisionJobs: `${PLATFORM_BASE}/provision/jobs`,
   provisionJobById: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}`,
   retryProvisionJob: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/retry`,
