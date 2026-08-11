@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { RouterLink } from '@angular/router';
 import { CommunicationService, Notification } from '../../application/communication/services/communication.service';
+import { LoginService } from '../../core/services/login.service';
 
 interface NotificationItem {
   id: number;
@@ -25,6 +26,7 @@ interface NotificationItem {
 })
 export class NotificationCenterComponent implements OnInit {
   private readonly api = inject(CommunicationService);
+  private readonly loginService = inject(LoginService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -36,6 +38,14 @@ export class NotificationCenterComponent implements OnInit {
   }
 
   load(): void {
+    // Platform SUPER_ADMIN has no tenant organization context for this API.
+    if (this.loginService.getLoginContext() === 'PLATFORM') {
+      this.notifications = [];
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.loading = true;
     this.api.listNotifications()
       .pipe(takeUntilDestroyed(this.destroyRef))

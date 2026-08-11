@@ -17,6 +17,7 @@ import { finalize } from 'rxjs';
 
 import { Customer, CustomerCreatePayload } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
+import { extractApiError } from '../../../../shared/utils/api-error.util';
 import {
   AppButtonComponent,
   AppCardComponent,
@@ -195,7 +196,8 @@ export class CustomerFormComponent implements OnInit {
           }
         },
         error: err => {
-          this.errorMessage = err?.error?.message ?? 'Could not save customer. Verify inputs and retry.';
+          const parsed = extractApiError(err, 'Could not save customer. Verify inputs and retry.');
+          this.errorMessage = parsed.message;
         }
       });
   }

@@ -41,6 +41,11 @@ export class PermissionService implements OnDestroy {
    * Call this once after a successful login (e.g., from the layout component).
    */
   loadPermissions(): Observable<void> {
+    if (this.isPlatformSuperAdmin()) {
+      this.loaded = true;
+      return of(void 0);
+    }
+
     const user = this.loginService.getUser();
     if (!user?.id || !user?.orgId) {
       return of(void 0);
@@ -50,14 +55,17 @@ export class PermissionService implements OnDestroy {
     const orgId = user.orgId;
 
     return this.http
-      .get<ApiResponse<Record<string, EffectivePermission>>>(
+      .get<ApiResponse<EffectivePermission[] | Record<string, EffectivePermission>>>(
         accessApi.userEffectivePermissions(orgId, userId)
       )
       .pipe(
         tap((response) => {
           if (response?.success && response.data) {
             this.permissionCache.clear();
-            Object.values(response.data).forEach((perm) => {
+            const values = Array.isArray(response.data)
+              ? response.data
+              : Object.values(response.data);
+            values.forEach((perm) => {
               if (perm.menuCode) {
                 this.permissionCache.set(perm.menuCode, perm);
               }
@@ -87,9 +95,12 @@ export class PermissionService implements OnDestroy {
 
   /**
    * Returns true if the user has view permission for the given menuCode.
-   * SUPER_ADMIN always returns true (handled server-side, they appear in all permissions).
+   * SUPER_ADMIN always returns true.
    */
   canView(menuCode: string): boolean {
+    if (this.isPlatformSuperAdmin()) {
+      return true;
+    }
     return this.permissionCache.get(menuCode)?.canView ?? false;
   }
 
@@ -97,6 +108,9 @@ export class PermissionService implements OnDestroy {
    * Returns true if the user has manage (create/edit/delete) permission for the given menuCode.
    */
   canManage(menuCode: string): boolean {
+    if (this.isPlatformSuperAdmin()) {
+      return true;
+    }
     return this.permissionCache.get(menuCode)?.canManage ?? false;
   }
 
@@ -104,6 +118,9 @@ export class PermissionService implements OnDestroy {
    * Returns true if the user has approve permission for the given menuCode.
    */
   canApprove(menuCode: string): boolean {
+    if (this.isPlatformSuperAdmin()) {
+      return true;
+    }
     return this.permissionCache.get(menuCode)?.canApprove ?? false;
   }
 
@@ -112,5 +129,16 @@ export class PermissionService implements OnDestroy {
    */
   getPermission(menuCode: string): EffectivePermission | undefined {
     return this.permissionCache.get(menuCode);
+  }
+
+  private isPlatformSuperAdmin(): boolean {
+    if (this.loginService.getLoginContext() === 'PLATFORM') {
+      return true;
+    }
+    const roles = this.loginService.getUserRole() ?? [];
+    return roles.some(role => {
+      const token = String(role).toUpperCase().replace(/^ROLE_/, '');
+      return token === 'SUPER_ADMIN' || token === 'PLATFORM_ADMIN';
+    });
   }
 }

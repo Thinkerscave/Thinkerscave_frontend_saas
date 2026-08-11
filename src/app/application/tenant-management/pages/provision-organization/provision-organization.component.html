@@ -190,7 +190,9 @@
 
                 </div>
 
-                <p *ngIf="domainPreview" class="app-field__hint">Preview: {{ domainPreview }}</p>
+                <p *ngIf="domainChecking && !fieldError('domain')" class="app-field__hint">Checking domain availability…</p>
+
+                <p *ngIf="domainPreview && !fieldError('domain') && !domainChecking" class="app-field__hint">Preview: {{ domainPreview }}</p>
 
                 <p *ngIf="fieldError('domain')" class="app-field__error">{{ fieldError('domain') }}</p>
 

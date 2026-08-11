@@ -233,8 +233,30 @@ export class PlatformManagementService {
   }
 
   provisionOrganization(payload: ProvisionOrganizationPayload): Observable<ProvisioningResult> {
-    return this.http.post<unknown>(platformApi.provision, payload).pipe(
+    return this.http.post<unknown>(platformApi.provision, payload, {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
       map(r => unwrapApiResponse<ProvisioningResult>(r, {} as ProvisioningResult))
+    );
+  }
+
+  checkDomainAvailability(subdomain: string): Observable<{
+    subdomain: string;
+    tenantIdentifier: string;
+    previewDomain: string;
+    available: boolean;
+    message: string;
+  }> {
+    return this.http.get<unknown>(platformApi.provisionDomainAvailability(subdomain), {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse(r, {
+        subdomain,
+        tenantIdentifier: '',
+        previewDomain: `${subdomain}.thinkerscave.app`,
+        available: false,
+        message: 'Unable to verify domain availability.'
+      }))
     );
   }
 

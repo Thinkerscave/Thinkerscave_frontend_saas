@@ -18,7 +18,7 @@ import { MessageService } from 'primeng/api';
 
 import { ToastModule } from 'primeng/toast';
 
-import { forkJoin, finalize } from 'rxjs';
+import { forkJoin, finalize, Subject, debounceTime, switchMap, of, catchError } from 'rxjs';
 
 
 
@@ -33,6 +33,8 @@ import {
 import { PlatformManagementService } from '../../services/platform-management.service';
 
 import { formatCurrency, institutionLabel } from '../../utils/platform-display.util';
+
+import { extractApiError } from '../../../../shared/utils/api-error.util';
 
 import {
 
@@ -216,6 +218,8 @@ export class ProvisionOrganizationComponent implements OnInit {
 
   errorMessage = '';
 
+  domainChecking = false;
+
   couponModalOpen = false;
 
   couponSearch = '';
@@ -239,6 +243,8 @@ export class ProvisionOrganizationComponent implements OnInit {
   private pendingCustomerId: number | null = null;
 
   private linkedCustomerId: number | null = null;
+
+  private readonly domainCheck$ = new Subject<string>();
 
 
 
@@ -319,6 +325,84 @@ export class ProvisionOrganizationComponent implements OnInit {
       }
 
     });
+
+    this.domainCheck$
+
+      .pipe(
+
+        debounceTime(400),
+
+        switchMap(domain => {
+
+          if (!domain || domain.length < 2 || !/^[a-z0-9-]+$/.test(domain)) {
+
+            this.domainChecking = false;
+
+            return of(null);
+
+          }
+
+          this.domainChecking = true;
+
+          this.cdr.markForCheck();
+
+          return this.api.checkDomainAvailability(domain).pipe(
+
+            catchError(() => of({
+
+              subdomain: domain,
+
+              tenantIdentifier: '',
+
+              previewDomain: `${domain}.thinkerscave.app`,
+
+              available: false,
+
+              message: 'Unable to verify domain availability right now.'
+
+            })),
+
+            finalize(() => {
+
+              this.domainChecking = false;
+
+              this.cdr.markForCheck();
+
+            })
+
+          );
+
+        }),
+
+        takeUntilDestroyed(this.destroyRef)
+
+      )
+
+      .subscribe(result => {
+
+        if (!result) return;
+
+        if (result.available) {
+
+          if (this.errors.domain) {
+
+            const next = { ...this.errors };
+
+            delete next.domain;
+
+            this.errors = next;
+
+          }
+
+        } else if (result.message) {
+
+          this.errors = { ...this.errors, domain: result.message };
+
+        }
+
+        this.cdr.markForCheck();
+
+      });
 
     this.loadReferenceData();
 
@@ -456,7 +540,7 @@ export class ProvisionOrganizationComponent implements OnInit {
 
   get canSubmit(): boolean {
 
-    return this.isMinimallyValid() && !this.submitting && !this.loading;
+    return this.isMinimallyValid() && !this.submitting && !this.loading && !this.domainChecking && !this.errors.domain;
 
   }
 
@@ -493,6 +577,10 @@ export class ProvisionOrganizationComponent implements OnInit {
     this.form.domain = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
 
     this.onFieldChange('domain');
+
+    this.errorMessage = '';
+
+    this.domainCheck$.next(this.form.domain.trim());
 
   }
 
@@ -663,7 +751,31 @@ export class ProvisionOrganizationComponent implements OnInit {
 
         error: err => {
 
-          this.errorMessage = err?.error?.message ?? 'Could not create organization. Verify inputs and retry.';
+          const parsed = extractApiError(err, 'Could not create organization. Verify inputs and retry.');
+
+          this.errorMessage = parsed.message;
+
+          if (Object.keys(parsed.fieldErrors).length) {
+
+            const next: FormErrors = { ...this.errors };
+
+            for (const [key, message] of Object.entries(parsed.fieldErrors)) {
+
+              if ((key as ErrorKey) && message) {
+
+                (next as Record<string, string>)[key] = message;
+
+              }
+
+            }
+
+            this.errors = next;
+
+            this.focusFirstInvalid();
+
+          }
+
+          this.cdr.markForCheck();
 
         }
 
@@ -948,6 +1060,14 @@ export class ProvisionOrganizationComponent implements OnInit {
     if (!domain) next.domain = 'Domain is required.';
 
     else if (!/^[a-z0-9-]+$/.test(domain)) next.domain = 'Use lowercase letters, numbers, and hyphens only.';
+
+    else if (domain.length < 2) next.domain = 'Domain must be at least 2 characters.';
+
+    else if (['www', 'api', 'app', 'admin', 'platform', 'public', 'tenant', 'mail', 'test', 'staging'].includes(domain)) {
+
+      next.domain = `Domain "${domain}" is reserved. Choose another.`;
+
+    }
 
 
 
