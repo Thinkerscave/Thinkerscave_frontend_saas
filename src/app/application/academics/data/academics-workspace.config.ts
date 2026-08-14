@@ -8,11 +8,22 @@ import {
 
 export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
   {
+    page: 'academic-year',
+    label: 'Academic Year',
+    title: 'Academic Year',
+    eyebrow: 'Lifecycle & history',
+    description: 'Manage current, upcoming and historical academic years with approval and activation.',
+    icon: 'pi pi-calendar',
+    route: '/app/academics/academic-year',
+    primaryAction: 'Create Academic Year',
+    actionMode: 'year'
+  },
+  {
     page: 'setup',
     label: 'Setup',
     title: 'Academic Setup',
     eyebrow: 'Configure school structure',
-    description: 'Manage academic years, classes, sections, subjects, teacher allocation, shifts and period templates.',
+    description: 'Manage classes, sections, subjects, teacher allocation, shifts and period templates.',
     icon: 'pi pi-cog',
     route: '/app/academics/academic-setup',
     primaryAction: 'Configure',
@@ -65,7 +76,7 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
 ];
 
 export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
-  { label: 'Academics', icon: 'pi pi-book', pages: ['setup', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus'] }
+  { label: 'Academics', icon: 'pi pi-book', pages: ['academic-year', 'setup', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus'] }
 ];
 
 export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [

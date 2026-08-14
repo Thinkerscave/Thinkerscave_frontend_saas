@@ -1,4 +1,5 @@
 export type AcademicsWorkspacePage =
+  | 'academic-year'
   | 'setup'
   | 'timetable'
   | 'teacher-arrangement'

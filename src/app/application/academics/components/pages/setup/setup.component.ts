@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject, ChangeDetectionStrategy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
@@ -12,7 +13,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AcademicsWorkspaceData, AcademicsActionMode } from '../../../models/academics-workspace.model';
+import { AcademicsWorkspaceData } from '../../../models/academics-workspace.model';
 import { AcademicsWorkspaceService } from '../../../services/academics-workspace.service';
 import { ACADEMICS_ACADEMIC_STAGES, ACADEMICS_SUBJECT_TYPES } from '../../../data/academics-workspace.config';
 
@@ -33,7 +34,7 @@ interface TreeNode {
   selector: 'app-academic-setup-page',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, DropdownModule,
+    CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DialogModule, DropdownModule,
     TableModule, TreeModule, ToastModule, ConfirmDialogModule, CalendarModule
   ],
   providers: [ConfirmationService, MessageService],
@@ -46,8 +47,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly fb = inject(FormBuilder);
-  yearForm!: FormGroup;
 
   @Input({ required: true }) data!: AcademicsWorkspaceData;
   @Output() dataChanged = new EventEmitter<void>();
@@ -63,7 +62,7 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   // Visibility flags
   showDialog = false;
   dialogTitle = '';
-  dialogMode: 'class' | 'subject' | 'teacher' | 'year' | 'clone' | 'section' | 'shift' | 'template' = 'class';
+  dialogMode: 'class' | 'subject' | 'teacher' | 'section' | 'shift' | 'template' = 'class';
 
   // Form models
   formModel: any = {};
@@ -76,16 +75,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.syncYearSelection();
     this.buildTree();
-    this.initializeYearForm();
-  }
-
-  private initializeYearForm() {
-    this.yearForm = this.fb.group({
-      yearCode: ['', Validators.required],
-      yearName: [''],
-      startDate: [null, Validators.required],
-      endDate: [null, Validators.required]
-    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -167,9 +156,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   openDialog(mode: string) {
     this.dialogMode = mode as any;
     this.formModel = {};
-    if (mode === 'year') {
-      this.yearForm.reset();
-    }
     this.dialogTitle = this.getDialogTitle(mode);
     this.showDialog = true;
   }
@@ -177,7 +163,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
   private getDialogTitle(mode: string): string {
     const titles: Record<string, string> = {
       class: 'Add Class', subject: 'Add Subject', teacher: 'Assign Teacher',
-      year: 'Create Academic Year', clone: 'Clone Academic Year',
       section: 'Add Section', shift: 'Create Shift', template: 'Create Period Template'
     };
     return titles[mode] || 'Form';
@@ -189,8 +174,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
       case 'class': this.saveClass(); break;
       case 'subject': this.saveSubject(); break;
       case 'teacher': this.saveAllocation(); break;
-      case 'year': this.saveYear(); break;
-      case 'clone': this.cloneYear(); break;
       case 'section': this.saveSection(); break;
       case 'shift': this.saveShift(); break;
       case 'template': this.saveTemplate(); break;
@@ -270,26 +253,6 @@ export class AcademicSetupPageComponent implements OnInit, OnChanges {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Removed' }); this.dataChanged.emit(); } });
     });
-  }
-
-  saveYear() {
-    if (this.yearForm.invalid) {
-      this.messageService.add({ severity: 'warn', summary: 'Please fill all required fields' });
-      return;
-    }
-    this.saving = true;
-    const yearData = this.yearForm.value;
-    this.workspaceService.createAcademicYear(yearData)
-      .pipe(finalize(() => { this.saving = false; this.showDialog = false; this.yearForm.reset(); }), takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Year created' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
-  }
-
-  cloneYear() {
-    if (!this.formModel.sourceYearId || !this.formModel.newYearCode) return;
-    this.saving = true;
-    this.workspaceService.cloneAcademicYear(this.formModel.sourceYearId, this.formModel.newYearCode)
-      .pipe(finalize(() => { this.saving = false; this.showDialog = false; }), takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => { this.messageService.add({ severity: 'success', summary: 'Year cloned' }); this.dataChanged.emit(); }, error: () => this.messageService.add({ severity: 'error', summary: 'Failed' }) });
   }
 
   saveShift() {

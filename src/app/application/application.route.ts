@@ -307,7 +307,8 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'academics',
     canActivate: [roleGuard(ACADEMICS_ROLES)],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'academic-setup' },
+      { path: '', pathMatch: 'full', redirectTo: 'academic-year' },
+      { path: 'academic-year', data: { workspacePage: 'academic-year' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'academic-setup', data: { workspacePage: 'setup' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'timetable', data: { workspacePage: 'timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'teacher-arrangement', data: { workspacePage: 'teacher-arrangement' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
@@ -315,8 +316,8 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'syllabus-tracker', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'settings', pathMatch: 'full', redirectTo: 'academic-setup' },
       // Legacy paths kept reachable as redirects.
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'academic-setup' },
-      { path: 'years', pathMatch: 'full', redirectTo: 'academic-setup' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'academic-year' },
+      { path: 'years', pathMatch: 'full', redirectTo: 'academic-year' },
       { path: 'classes', pathMatch: 'full', redirectTo: 'academic-setup' },
       { path: 'structure', pathMatch: 'full', redirectTo: 'academic-setup' },
       { path: 'hierarchy', pathMatch: 'full', redirectTo: 'academic-setup' },

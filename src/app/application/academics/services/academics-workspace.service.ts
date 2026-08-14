@@ -24,10 +24,12 @@ import {
 
 type BackendYear = {
   academicYearId: number;
-  yearCode: string;
+  name?: string;
+  yearCode?: string;
   yearName?: string;
   startDate: string;
   endDate: string;
+  status?: string;
   currentYear?: boolean;
   active?: boolean;
 };
@@ -156,31 +158,6 @@ export class AcademicsWorkspaceService {
 
   loadTimetable(classId: number, sectionId?: number): Observable<TimetableSlotModel[]> {
     return this.getTimetableSlots(classId, sectionId);
-  }
-
-  createAcademicYear(payload: { yearCode: string; yearName?: string; startDate: string; endDate: string }): Observable<AcademicYear> {
-    return this.http.post<unknown>(academicsApi.years, {
-      yearCode: payload.yearCode,
-      yearName: payload.yearName ?? payload.yearCode,
-      startDate: payload.startDate,
-      endDate: payload.endDate
-    }).pipe(map(r => this.mapYear(unwrapApiResponse<BackendYear>(r, {} as BackendYear))));
-  }
-
-  activateAcademicYear(yearId: number): Observable<void> {
-    return this.http.patch<void>(academicsApi.setCurrentYear(yearId), {});
-  }
-
-  cloneAcademicYear(sourceYearId: number, newYearCode: string, newYearName?: string): Observable<AcademicYear> {
-    return this.http.post<unknown>(academicsApi.cloneYear(sourceYearId), {
-      newYearCode,
-      newYearName: newYearName ?? newYearCode,
-      copyClasses: true,
-      copySections: true,
-      copySubjects: true,
-      copySchedules: true,
-      copyTemplates: true
-    }).pipe(map(r => this.mapYear(unwrapApiResponse<BackendYear>(r, {} as BackendYear))));
   }
 
   createClass(payload: { className: string; classCode?: string; academicStage?: string; displayOrder?: number; academicYearId?: number }, yearId?: number): Observable<AcademicClass> {
@@ -445,7 +422,11 @@ export class AcademicsWorkspaceService {
 
   private getAcademicYears(): Observable<AcademicYear[]> {
     return this.http.get<unknown>(academicsApi.years).pipe(
-      map(r => unwrapApiList<BackendYear>(r).map(y => this.mapYear(y))),
+      map(r => {
+        const data = unwrapApiResponse<BackendYear[] | { content?: BackendYear[] }>(r, []);
+        const list = Array.isArray(data) ? data : (data?.content ?? []);
+        return list.map(y => this.mapYear(y));
+      }),
       catchError(() => of([]))
     );
   }
@@ -611,15 +592,16 @@ export class AcademicsWorkspaceService {
   }
 
   private mapYear(y: BackendYear): AcademicYear {
+    const displayName = y.name || y.yearName || y.yearCode || `Year ${y.academicYearId}`;
     return {
       academicYearId: y.academicYearId,
       id: y.academicYearId,
-      yearCode: y.yearCode,
-      yearName: y.yearName,
+      yearCode: displayName,
+      yearName: displayName,
       startDate: y.startDate,
       endDate: y.endDate,
-      isCurrent: y.currentYear,
-      isActive: y.active
+      isCurrent: y.currentYear === true || y.status === 'CURRENT',
+      isActive: y.active !== false
     };
   }
 

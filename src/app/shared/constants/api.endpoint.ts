@@ -10,10 +10,14 @@ const ACCESS_BASE = `${PASS_BASE}/access`;
 
 export const academicsApi = {
   years: `${BASE}/academics/years`,
+  yearsDashboard: `${BASE}/academics/years/dashboard`,
   yearById: (id: number) => `${BASE}/academics/years/${id}`,
-  setCurrentYear: (id: number) => `${BASE}/academics/years/${id}/set-current`,
   deactivateYear: (id: number) => `${BASE}/academics/years/${id}/deactivate`,
-  cloneYear: (id: number) => `${BASE}/academics/years/${id}/clone`,
+  yearReady: (id: number) => `${BASE}/academics/years/${id}/ready`,
+  yearSubmit: (id: number) => `${BASE}/academics/years/${id}/submit`,
+  yearApprove: (id: number) => `${BASE}/academics/years/${id}/approve`,
+  yearReject: (id: number) => `${BASE}/academics/years/${id}/reject`,
+  yearActivate: (id: number) => `${BASE}/academics/years/${id}/activate`,
   classesByYear: (yearId: number) => `${BASE}/academics/years/${yearId}/classes`,
   structureByYear: (yearId: number) => `${BASE}/academics/years/${yearId}/structure`,
   classes: `${BASE}/academics/classes`,
@@ -281,13 +285,6 @@ export const courseApi = {
   subjectById: (id: number) => `${BASE}/subjects/${id}`,
   saveSubject: `${BASE}/subjects`,
   courseSubjects: (courseId: number) => `${BASE}/courses/${courseId}/subjects`,
-};
-
-export const academicYearApi = {
-  getByOrg: (orgId: number) => `${BASE}/academic-structure/years/${orgId}`,
-  save: `${BASE}/academic-structure/years`,
-  setCurrent: (orgId: number, yearId: number) => `${BASE}/academic-structure/years/${orgId}/current/${yearId}`,
-  getCurrent: (orgId: number) => `${BASE}/academic-structure/years/${orgId}/current`,
 };
 
 // ─── Semesters ──────────────────────────────────────────────────────────────────

@@ -138,7 +138,12 @@ export class PermissionService implements OnDestroy {
     const roles = this.loginService.getUserRole() ?? [];
     return roles.some(role => {
       const token = String(role).toUpperCase().replace(/^ROLE_/, '');
-      return token === 'SUPER_ADMIN' || token === 'PLATFORM_ADMIN';
+      // Match backend elevated bypass (e.g. AcademicsAccessGuard) for org owners/admins
+      // until menu grants are provisioned for every tenant.
+      return token === 'SUPER_ADMIN'
+        || token === 'PLATFORM_ADMIN'
+        || token === 'ORGANIZATION_OWNER'
+        || token === 'ORGANIZATION_ADMIN';
     });
   }
 }
