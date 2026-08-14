@@ -256,11 +256,11 @@ export class AcademicYearPageComponent implements OnInit {
           this.messages.add({ severity: 'success', summary: 'Marked ready for approval' });
           this.reload();
         },
-        error: () => this.router.navigate(['/app/academics/academic-setup'])
+        error: () =>           this.router.navigate(['/app/academics/classes-sections'])
       });
       return;
     }
-    this.router.navigate(['/app/academics/academic-setup']);
+    this.router.navigate(['/app/academics/classes-sections']);
   }
 
   submitForApproval(year: AcademicYearDto): void {

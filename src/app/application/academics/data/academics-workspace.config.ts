@@ -19,14 +19,14 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'year'
   },
   {
-    page: 'setup',
-    label: 'Setup',
-    title: 'Academic Setup',
-    eyebrow: 'Configure school structure',
-    description: 'Manage classes, sections, subjects, teacher allocation, shifts and period templates.',
-    icon: 'pi pi-cog',
-    route: '/app/academics/academic-setup',
-    primaryAction: 'Configure',
+    page: 'classes-sections',
+    label: 'Classes & Sections',
+    title: 'Classes & Sections',
+    eyebrow: 'Structure management',
+    description: 'Manage classes, sections, class teachers and student distribution.',
+    icon: 'pi pi-th-large',
+    route: '/app/academics/classes-sections',
+    primaryAction: 'Add Class',
     actionMode: 'class'
   },
   {
@@ -76,14 +76,16 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
 ];
 
 export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
-  { label: 'Academics', icon: 'pi pi-book', pages: ['academic-year', 'setup', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus'] }
+  {
+    label: 'Academics',
+    icon: 'pi pi-book',
+    pages: ['academic-year', 'classes-sections', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus']
+  }
 ];
 
 export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
-  { id: 'create-class', label: 'Create class', helper: 'Add a new class group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'class', pages: ['setup'] },
-  { id: 'add-section', label: 'Add section', helper: 'Create a class section', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['setup'] },
-  { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['setup'] },
-  { id: 'assign-teacher', label: 'Assign teacher', helper: 'Balance subject workload', icon: 'pi pi-users', tone: 'primary', actionMode: 'allocation', pages: ['setup'] },
+  { id: 'create-class', label: 'Create class', helper: 'Add a new class group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'class', pages: ['classes-sections'] },
+  { id: 'add-section', label: 'Add section', helper: 'Create a class section', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['classes-sections'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'record-absence', label: 'Record absence', helper: 'Log teacher absence', icon: 'pi pi-user-minus', tone: 'warning', actionMode: 'teacher-absence', pages: ['teacher-arrangement'] },
@@ -119,9 +121,9 @@ export const ACADEMICS_EVENT_COLORS: Record<string, string> = {
   OTHER: '#64748B'
 };
 
-export const ACADEMICS_SUBJECT_TYPES = ['CORE', 'ELECTIVE', 'VOCATIONAL', 'CO-CURRICULAR', 'LANGUAGE'] as const;
+export const ACADEMICS_SUBJECT_TYPES = ['CORE', 'LANGUAGE', 'ACTIVITY', 'LAB', 'PRACTICAL'] as const;
 
-export const ACADEMICS_ACADEMIC_STAGES = ['PRE_PRIMARY', 'PRIMARY', 'MIDDLE', 'HIGH', 'SENIOR_SECONDARY'] as const;
+export const ACADEMICS_ACADEMIC_STAGES = ['PRE_PRIMARY', 'PRIMARY', 'MIDDLE', 'SECONDARY', 'HIGHER_SECONDARY'] as const;
 
 export function pageConfig(page: AcademicsWorkspacePage): AcademicsPageConfig {
   return ACADEMICS_PAGES.find(item => item.page === page) ?? ACADEMICS_PAGES[0];

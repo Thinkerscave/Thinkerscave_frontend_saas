@@ -11,8 +11,8 @@ import {
   AcademicsWorkspacePage
 } from '../../models/academics-workspace.model';
 import { AcademicsWorkspaceService } from '../../services/academics-workspace.service';
-import { AcademicSetupPageComponent } from '../pages/setup/setup.component';
 import { AcademicYearPageComponent } from '../pages/academic-year/academic-year.component';
+import { ClassesSectionsPageComponent } from '../pages/classes-sections/classes-sections.component';
 import { AcademicTimetablePageComponent } from '../pages/timetable/timetable.component';
 import { AcademicTeacherArrangementPageComponent } from '../pages/teacher-arrangement/teacher-arrangement.component';
 import { AcademicCalendarPageComponent } from '../pages/calendar/calendar.component';
@@ -30,7 +30,7 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
     ToastModule,
     SaasPageHeaderComponent,
     AcademicYearPageComponent,
-    AcademicSetupPageComponent,
+    ClassesSectionsPageComponent,
     AcademicTimetablePageComponent,
     AcademicTeacherArrangementPageComponent,
     AcademicCalendarPageComponent,
@@ -39,7 +39,7 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
   template: `
     <div class="academics-workspace">
       <tc-saas-page-header
-        *ngIf="activePage !== 'academic-year'"
+        *ngIf="!isStandalonePage"
         [title]="currentPage.title"
         [subtitle]="currentPage.description">
       </tc-saas-page-header>
@@ -55,11 +55,15 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
       </nav>
 
       <main class="academics-main">
-        <ng-container *ngIf="activePage === 'academic-year'; else legacyWorkspace">
+        <ng-container *ngIf="activePage === 'academic-year'">
           <app-academic-year-page></app-academic-year-page>
         </ng-container>
 
-        <ng-template #legacyWorkspace>
+        <ng-container *ngIf="activePage === 'classes-sections'">
+          <app-classes-sections-page></app-classes-sections-page>
+        </ng-container>
+
+        <ng-container *ngIf="!isStandalonePage">
           <div class="academics-loading" *ngIf="loading">
             <div class="loading-spinner"></div>
             <span>Loading academics data...</span>
@@ -67,13 +71,6 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
           <ng-container *ngIf="!loading">
             <ng-container [ngSwitch]="activePage">
-              <app-academic-setup-page
-                *ngSwitchCase="'setup'"
-                [data]="data"
-                (dataChanged)="refresh(selectedYearId)"
-                (yearChanged)="onYearChanged($event)">
-              </app-academic-setup-page>
-
               <app-academic-timetable-page
                 *ngSwitchCase="'timetable'"
                 [data]="data"
@@ -99,7 +96,7 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
               </app-academic-syllabus-page>
             </ng-container>
           </ng-container>
-        </ng-template>
+        </ng-container>
       </main>
     </div>
   `,
@@ -134,14 +131,18 @@ export class AcademicsWorkspaceComponent implements OnInit {
     return pageConfig(this.activePage);
   }
 
+  get isStandalonePage(): boolean {
+    return this.activePage === 'academic-year' || this.activePage === 'classes-sections';
+  }
+
   ngOnInit(): void {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'academic-year';
       this.cdr.markForCheck();
-      if (this.activePage !== 'academic-year') {
-        this.refresh();
-      } else {
+      if (this.isStandalonePage) {
         this.loading = false;
+      } else {
+        this.refresh();
       }
     });
   }

@@ -163,12 +163,14 @@ export class AcademicsWorkspaceService {
   createClass(payload: { className: string; classCode?: string; academicStage?: string; displayOrder?: number; academicYearId?: number }, yearId?: number): Observable<AcademicClass> {
     const academicYearId = payload.academicYearId ?? yearId;
     if (!academicYearId) throw new Error('Academic year is required');
-    const classCode = (payload.classCode || payload.className).replace(/\s+/g, '_').toUpperCase().slice(0, 30);
+    const stage = (payload.academicStage || 'PRIMARY')
+      .replace('HIGH', 'SECONDARY')
+      .replace('SENIOR_SECONDARY', 'HIGHER_SECONDARY');
     return this.http.post<unknown>(academicsApi.classes, {
       academicYearId,
-      classCode,
-      className: payload.className,
-      academicStage: payload.academicStage || 'PRIMARY',
+      name: payload.className,
+      code: payload.classCode || undefined,
+      stage,
       displayOrder: payload.displayOrder
     }).pipe(map(r => this.mapClass(unwrapApiResponse(r, {}))));
   }
@@ -184,8 +186,7 @@ export class AcademicsWorkspaceService {
 
   createSection(payload: { classId: number; sectionName: string; capacity?: number }): Observable<AcademicSection> {
     return this.http.post<unknown>(academicsApi.sectionsByClass(payload.classId), {
-      classId: payload.classId,
-      sectionName: payload.sectionName,
+      name: payload.sectionName,
       capacity: payload.capacity
     }).pipe(map(r => this.mapSection(unwrapApiResponse(r, {}))));
   }
@@ -609,8 +610,8 @@ export class AcademicsWorkspaceService {
     const c = raw as Record<string, unknown>;
     return {
       classId: c['classId'] as number,
-      className: String(c['className'] ?? ''),
-      academicStage: c['academicStage'] as string,
+      className: String(c['name'] ?? c['className'] ?? ''),
+      academicStage: String(c['stage'] ?? c['academicStage'] ?? ''),
       displayOrder: c['displayOrder'] as number,
       isActive: c['active'] as boolean
     };
@@ -620,7 +621,7 @@ export class AcademicsWorkspaceService {
     const s = raw as Record<string, unknown>;
     return {
       sectionId: s['sectionId'] as number,
-      sectionName: String(s['sectionName'] ?? ''),
+      sectionName: String(s['name'] ?? s['sectionName'] ?? ''),
       classId: s['classId'] as number,
       capacity: s['capacity'] as number,
       isActive: s['active'] as boolean
