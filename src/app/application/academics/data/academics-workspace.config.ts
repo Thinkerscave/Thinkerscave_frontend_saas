@@ -41,6 +41,17 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'subject'
   },
   {
+    page: 'teacher-allocation',
+    label: 'Teacher Allocation',
+    title: 'Teacher Allocation',
+    eyebrow: 'Who teaches what',
+    description: 'Assign teachers to class-section subjects and monitor weekly workload.',
+    icon: 'pi pi-user-edit',
+    route: '/app/academics/teacher-allocation',
+    primaryAction: 'Assign teacher',
+    actionMode: 'allocation'
+  },
+  {
     page: 'timetable',
     label: 'Timetable',
     title: 'Timetable Management',
@@ -90,7 +101,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
   {
     label: 'Academics',
     icon: 'pi pi-book',
-    pages: ['academic-year', 'classes-sections', 'subjects-mapping', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus']
+    pages: ['academic-year', 'classes-sections', 'subjects-mapping', 'teacher-allocation', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus']
   }
 ];
 
@@ -98,6 +109,7 @@ export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
   { id: 'create-class', label: 'Create class', helper: 'Add a new class group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'class', pages: ['classes-sections'] },
   { id: 'add-section', label: 'Add section', helper: 'Create a class section', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['classes-sections'] },
   { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects-mapping'] },
+  { id: 'assign-teacher', label: 'Assign teacher', helper: 'Fill missing allocations', icon: 'pi pi-user-edit', tone: 'primary', actionMode: 'allocation', pages: ['teacher-allocation'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'record-absence', label: 'Record absence', helper: 'Log teacher absence', icon: 'pi pi-user-minus', tone: 'warning', actionMode: 'teacher-absence', pages: ['teacher-arrangement'] },

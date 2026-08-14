@@ -1,0 +1,216 @@
+:host { display: block; }
+
+.ta-page {
+  padding: 1.25rem 1.5rem 2rem;
+  color: #0f172a;
+}
+
+.ta-header {
+  margin-bottom: 1rem;
+}
+
+.ta-breadcrumb {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+.ta-breadcrumb a { color: #64748b; text-decoration: none; }
+.ta-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ta-header p {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  max-width: 42rem;
+}
+
+.ta-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  margin-bottom: 1rem;
+}
+.ta-context__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.ta-context__left label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.ta-context__meta { color: #64748b; font-size: 0.875rem; }
+.ta-readonly { color: #b45309; font-size: 0.8rem; font-weight: 600; }
+
+.ta-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.ta-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.ta-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.875rem;
+}
+.ta-table th,
+.ta-table td {
+  text-align: left;
+  padding: 0.75rem 0.65rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+.ta-table th {
+  background: #f8fafc;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+}
+.ta-table code { color: #64748b; font-size: 0.78rem; }
+
+.ta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.ta-side {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  padding: 1rem;
+}
+.ta-side h3 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+}
+
+.ta-workload {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ta-workload:last-child { border-bottom: 0; }
+.ta-workload__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+.ta-workload small { color: #64748b; }
+
+.ta-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+}
+.ta-badge--success { background: #dcfce7; color: #166534; }
+.ta-badge--warn { background: #ffedd5; color: #c2410c; }
+.ta-badge--danger { background: #fee2e2; color: #b91c1c; }
+
+.ta-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.45rem 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+.ta-btn--primary { background: #2563eb; color: #fff; }
+.ta-btn--ghost { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; }
+.ta-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ta-link {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.ta-muted { color: #64748b; font-size: 0.85rem; }
+.ta-danger { color: #b91c1c; }
+
+.ta-empty,
+.ta-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+.ta-rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0.75rem 0 1rem;
+  max-height: 320px;
+  overflow: auto;
+}
+.ta-rec {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+.ta-rec--selected {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.ta-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  .ta-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .ta-context {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

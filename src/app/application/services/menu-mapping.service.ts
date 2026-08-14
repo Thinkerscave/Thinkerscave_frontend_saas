@@ -437,7 +437,10 @@ export class MenuMappingService {
         icon: 'pi pi-book',
         routerLink: ['/app/academics/academic-setup'],
         items: [
-          { label: 'Academic Setup', icon: 'pi pi-cog', routerLink: ['/app/academics/academic-setup'] },
+          { label: 'Academic Year', icon: 'pi pi-calendar', routerLink: ['/app/academics/academic-year'] },
+          { label: 'Classes & Sections', icon: 'pi pi-th-large', routerLink: ['/app/academics/classes-sections'] },
+          { label: 'Subjects & Mapping', icon: 'pi pi-book', routerLink: ['/app/academics/subjects-mapping'] },
+          { label: 'Teacher Allocation', icon: 'pi pi-user-edit', routerLink: ['/app/academics/teacher-allocation'] },
           { label: 'Timetable', icon: 'pi pi-calendar', routerLink: ['/app/academics/timetable'] },
           { label: 'Teacher Arrangement', icon: 'pi pi-users', routerLink: ['/app/academics/teacher-arrangement'] }
         ]

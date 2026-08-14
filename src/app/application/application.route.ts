@@ -311,6 +311,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'academic-year', data: { workspacePage: 'academic-year' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'classes-sections', data: { workspacePage: 'classes-sections' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'subjects-mapping', data: { workspacePage: 'subjects-mapping' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'teacher-allocation', data: { workspacePage: 'teacher-allocation' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'academic-setup', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'timetable', data: { workspacePage: 'timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'teacher-arrangement', data: { workspacePage: 'teacher-arrangement' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
@@ -329,8 +330,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'syllabus', pathMatch: 'full', redirectTo: 'syllabus-tracker' },
       { path: 'syllabus/history/:id', data: { workspacePage: 'syllabus' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'tracker', pathMatch: 'full', redirectTo: 'syllabus-tracker' },
-      { path: 'teacher-allocation', pathMatch: 'full', redirectTo: 'teacher-arrangement' },
-      { path: 'class-teacher-allocation', pathMatch: 'full', redirectTo: 'teacher-arrangement' },
+      { path: 'class-teacher-allocation', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'calendar', pathMatch: 'full', redirectTo: 'academic-calendar' }
     ]
   },

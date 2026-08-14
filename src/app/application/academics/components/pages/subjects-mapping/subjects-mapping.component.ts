@@ -390,7 +390,7 @@ export class SubjectsMappingPageComponent implements OnInit {
   }
 
   goAssignTeacher(row: ClassSubjectMappingDto): void {
-    this.router.navigate(['/app/academics/teacher-arrangement'], {
+    this.router.navigate(['/app/academics/teacher-allocation'], {
       queryParams: {
         academicYearId: this.selectedYearId,
         classId: this.selectedClassId,

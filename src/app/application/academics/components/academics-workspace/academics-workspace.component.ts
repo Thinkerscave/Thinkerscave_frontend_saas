@@ -14,7 +14,8 @@ import { AcademicsWorkspaceService } from '../../services/academics-workspace.se
 import { AcademicYearPageComponent } from '../pages/academic-year/academic-year.component';
 import { ClassesSectionsPageComponent } from '../pages/classes-sections/classes-sections.component';
 import { SubjectsMappingPageComponent } from '../pages/subjects-mapping/subjects-mapping.component';
-import { AcademicTimetablePageComponent } from '../pages/timetable/timetable.component';
+import { TeacherAllocationPageComponent } from '../pages/teacher-allocation/teacher-allocation.component';
+import { TimetablePageComponent } from '../pages/timetable/timetable.component';
 import { AcademicTeacherArrangementPageComponent } from '../pages/teacher-arrangement/teacher-arrangement.component';
 import { AcademicCalendarPageComponent } from '../pages/calendar/calendar.component';
 import { AcademicSyllabusPageComponent } from '../pages/syllabus/syllabus.component';
@@ -33,7 +34,8 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
     AcademicYearPageComponent,
     ClassesSectionsPageComponent,
     SubjectsMappingPageComponent,
-    AcademicTimetablePageComponent,
+    TeacherAllocationPageComponent,
+    TimetablePageComponent,
     AcademicTeacherArrangementPageComponent,
     AcademicCalendarPageComponent,
     AcademicSyllabusPageComponent
@@ -69,6 +71,14 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
           <app-subjects-mapping-page></app-subjects-mapping-page>
         </ng-container>
 
+        <ng-container *ngIf="activePage === 'teacher-allocation'">
+          <app-teacher-allocation-page></app-teacher-allocation-page>
+        </ng-container>
+
+        <ng-container *ngIf="activePage === 'timetable'">
+          <app-timetable-page></app-timetable-page>
+        </ng-container>
+
         <ng-container *ngIf="!isStandalonePage">
           <div class="academics-loading" *ngIf="loading">
             <div class="loading-spinner"></div>
@@ -77,12 +87,6 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
           <ng-container *ngIf="!loading">
             <ng-container [ngSwitch]="activePage">
-              <app-academic-timetable-page
-                *ngSwitchCase="'timetable'"
-                [data]="data"
-                (dataChanged)="refresh(selectedYearId)">
-              </app-academic-timetable-page>
-
               <app-academic-teacher-arrangement-page
                 *ngSwitchCase="'teacher-arrangement'"
                 [data]="data"
@@ -140,7 +144,9 @@ export class AcademicsWorkspaceComponent implements OnInit {
   get isStandalonePage(): boolean {
     return this.activePage === 'academic-year'
       || this.activePage === 'classes-sections'
-      || this.activePage === 'subjects-mapping';
+      || this.activePage === 'subjects-mapping'
+      || this.activePage === 'teacher-allocation'
+      || this.activePage === 'timetable';
   }
 
   ngOnInit(): void {
