@@ -13,6 +13,7 @@ import {
 import { AcademicsWorkspaceService } from '../../services/academics-workspace.service';
 import { AcademicYearPageComponent } from '../pages/academic-year/academic-year.component';
 import { ClassesSectionsPageComponent } from '../pages/classes-sections/classes-sections.component';
+import { SubjectsMappingPageComponent } from '../pages/subjects-mapping/subjects-mapping.component';
 import { AcademicTimetablePageComponent } from '../pages/timetable/timetable.component';
 import { AcademicTeacherArrangementPageComponent } from '../pages/teacher-arrangement/teacher-arrangement.component';
 import { AcademicCalendarPageComponent } from '../pages/calendar/calendar.component';
@@ -31,6 +32,7 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
     SaasPageHeaderComponent,
     AcademicYearPageComponent,
     ClassesSectionsPageComponent,
+    SubjectsMappingPageComponent,
     AcademicTimetablePageComponent,
     AcademicTeacherArrangementPageComponent,
     AcademicCalendarPageComponent,
@@ -61,6 +63,10 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
         <ng-container *ngIf="activePage === 'classes-sections'">
           <app-classes-sections-page></app-classes-sections-page>
+        </ng-container>
+
+        <ng-container *ngIf="activePage === 'subjects-mapping'">
+          <app-subjects-mapping-page></app-subjects-mapping-page>
         </ng-container>
 
         <ng-container *ngIf="!isStandalonePage">
@@ -132,7 +138,9 @@ export class AcademicsWorkspaceComponent implements OnInit {
   }
 
   get isStandalonePage(): boolean {
-    return this.activePage === 'academic-year' || this.activePage === 'classes-sections';
+    return this.activePage === 'academic-year'
+      || this.activePage === 'classes-sections'
+      || this.activePage === 'subjects-mapping';
   }
 
   ngOnInit(): void {

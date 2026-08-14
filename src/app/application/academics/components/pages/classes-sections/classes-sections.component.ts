@@ -331,11 +331,7 @@ export class ClassesSectionsPageComponent implements OnInit {
     items.push({
       label: 'View Subject Mapping',
       icon: 'pi pi-book',
-      command: () => this.messages.add({
-        severity: 'info',
-        summary: 'Coming soon',
-        detail: 'Subjects & Mapping is the next Academics slice'
-      })
+      command: () => this.router.navigate(['/app/academics/subjects-mapping'])
     });
     items.push({
       label: 'View Timetable',

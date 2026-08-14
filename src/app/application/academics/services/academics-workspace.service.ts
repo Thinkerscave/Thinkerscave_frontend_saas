@@ -200,21 +200,27 @@ export class AcademicsWorkspaceService {
     return this.http.patch<void>(academicsApi.deactivateSection(sectionId), {});
   }
 
-  createSubject(payload: Partial<SubjectModel>): Observable<SubjectModel> {
+  createSubject(payload: Partial<SubjectModel> & { academicYearId?: number }): Observable<SubjectModel> {
+    if (!payload.academicYearId) throw new Error('Academic year is required');
     return this.http.post<unknown>(academicsApi.subjects, {
-      subjectCode: payload.subjectCode,
-      subjectName: payload.subjectName,
-      subjectType: payload.subjectType || 'CORE',
-      active: payload.isActive ?? true
+      academicYearId: payload.academicYearId,
+      name: payload.subjectName,
+      code: payload.subjectCode,
+      category: payload.subjectType || 'CORE',
+      defaultWeeklyPeriods: 5,
+      timetablePreference: 'ANY'
     }).pipe(map(r => this.mapSubject(unwrapApiResponse(r, {}))));
   }
 
-  updateSubject(subjectId: number, payload: Partial<SubjectModel>): Observable<SubjectModel> {
+  updateSubject(subjectId: number, payload: Partial<SubjectModel> & { academicYearId?: number }): Observable<SubjectModel> {
+    if (!payload.academicYearId) throw new Error('Academic year is required');
     return this.http.put<unknown>(academicsApi.subjectById(subjectId), {
-      subjectCode: payload.subjectCode,
-      subjectName: payload.subjectName,
-      subjectType: payload.subjectType,
-      active: payload.isActive
+      academicYearId: payload.academicYearId,
+      name: payload.subjectName,
+      code: payload.subjectCode,
+      category: payload.subjectType || 'CORE',
+      defaultWeeklyPeriods: 5,
+      timetablePreference: 'ANY'
     }).pipe(map(r => this.mapSubject(unwrapApiResponse(r, {}))));
   }
 
@@ -632,9 +638,9 @@ export class AcademicsWorkspaceService {
     const s = raw as Record<string, unknown>;
     return {
       subjectId: s['subjectId'] as number,
-      subjectCode: String(s['subjectCode'] ?? ''),
-      subjectName: String(s['subjectName'] ?? ''),
-      subjectType: s['subjectType'] as string,
+      subjectCode: String(s['code'] ?? s['subjectCode'] ?? ''),
+      subjectName: String(s['name'] ?? s['subjectName'] ?? ''),
+      subjectType: String(s['category'] ?? s['subjectType'] ?? ''),
       isActive: s['active'] as boolean
     };
   }

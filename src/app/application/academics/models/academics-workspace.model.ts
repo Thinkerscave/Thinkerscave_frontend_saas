@@ -1,6 +1,7 @@
 export type AcademicsWorkspacePage =
   | 'academic-year'
   | 'classes-sections'
+  | 'subjects-mapping'
   | 'timetable'
   | 'teacher-arrangement'
   | 'calendar'
