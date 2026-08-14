@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Elem
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { filter } from 'rxjs';
+import { distinctUntilChanged, filter, skip } from 'rxjs';
 import { BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { PermissionService } from '../../core/services/permission.service';
+import { LoginService } from '../../core/services/login.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { LanguageService } from '../../core/services/language.service';
@@ -31,6 +32,7 @@ export class SideMenuComponent implements OnInit {
 
   private readonly sideMenuService = inject(MenuMappingService);
   private readonly permissionService = inject(PermissionService);
+  private readonly loginService = inject(LoginService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -73,7 +75,34 @@ export class SideMenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load effective permissions and sidebar in parallel on mount
+    this.reloadSidebar();
+
+    this.sideMenuService.menuRefresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reloadSidebar());
+
+    this.loginService.currentOrgId$
+      .pipe(distinctUntilChanged(), skip(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.sideMenuService.clearMenuCache();
+        this.permissionService.clearPermissions();
+        this.reloadSidebar();
+      });
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.syncActiveState();
+      this.openActiveGroups();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private reloadSidebar(): void {
+    this.loading = true;
+    this.cdr.markForCheck();
+
     this.permissionService.loadPermissions()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
@@ -92,15 +121,6 @@ export class SideMenuComponent implements OnInit {
         this.loading = false;
         this.cdr.markForCheck();
       }
-    });
-
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.syncActiveState();
-      this.openActiveGroups();
-      this.cdr.markForCheck();
     });
   }
 

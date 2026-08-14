@@ -145,6 +145,7 @@ export class MenuMappingService {
     this.menuCache = [];
     try {
       localStorage.removeItem('sideMenu');
+      sessionStorage.removeItem('sideMenu');
     } catch {
       /* ignore storage failures */
     }

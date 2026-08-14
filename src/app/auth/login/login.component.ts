@@ -8,6 +8,8 @@ import { LoginService } from '../../core/services/login.service';
 import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
 import { TenantConfigService } from '../../core/services/tenant-config.service';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
+import { MenuMappingService } from '../../application/services/menu-mapping.service';
+import { PermissionService } from '../../core/services/permission.service';
 import { UserInfo } from '../../shared/models/auth.model';
 import { ForgotPasswordModalComponent } from '../components/forgot-password-modal/forgot-password-modal.component';
 
@@ -33,6 +35,8 @@ export class LoginComponent {
   private readonly idleTimeoutService = inject(IdleTimeoutService);
   private readonly tenantConfigService = inject(TenantConfigService);
   private readonly orgContext = inject(OrganizationContextService);
+  private readonly menuMapping = inject(MenuMappingService);
+  private readonly permissionService = inject(PermissionService);
 
   readonly forgotModal = viewChild.required(ForgotPasswordModalComponent);
   readonly submitting = signal(false);
@@ -141,6 +145,10 @@ export class LoginComponent {
           this.loginService.setCurrentOrganization(String(this.loginTarget.id));
           this.loginService.setTenant(loginData.tenantId || this.loginTarget.tenantId);
         }
+
+        // Drop any previous user's in-memory sidebar/permissions before entering /app.
+        this.menuMapping.clearMenuCache();
+        this.permissionService.clearPermissions();
 
         // Navigate first so a slow/failing tenant-config call cannot strand the user on /auth/login.
         this.redirectUser(mappedUser ?? this.loginService.getUser()!);

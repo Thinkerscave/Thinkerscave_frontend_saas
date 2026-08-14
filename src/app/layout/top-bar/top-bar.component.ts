@@ -7,6 +7,8 @@ import { OrganizationContextService } from '../../core/services/organization-con
 import { SettingsUiService } from '../../core/services/settings-ui.service';
 import { SidebarLayoutService } from '../../core/services/sidebar-layout.service';
 import { WorkspaceOrganization, WorkspaceSwitcherService } from '../../core/services/workspace-switcher.service';
+import { PermissionService } from '../../core/services/permission.service';
+import { TenantConfigService } from '../../core/services/tenant-config.service';
 import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 import { AvatarComponent } from '../../shared/ui/avatar/avatar.component';
 import { ThemeService } from '../../shared/theme/theme.service';
@@ -28,6 +30,8 @@ export class TopBarComponent {
   workspaceService = inject(WorkspaceSwitcherService);
   private readonly orgContext = inject(OrganizationContextService);
   private readonly settingsUi = inject(SettingsUiService);
+  private readonly permissionService = inject(PermissionService);
+  private readonly tenantConfig = inject(TenantConfigService);
 
   isDarkTheme = this.themeService.isDarkTheme;
   currentUser = this.loginService.getUser();
@@ -117,6 +121,8 @@ export class TopBarComponent {
         }));
         this.organizations.set(nextOrgs);
         this.refreshOrganizationLogo(nextOrgs, selected.logoUrl);
+        this.permissionService.clearPermissions();
+        this.tenantConfig.fetchConfigFromServer().subscribe({ error: () => void 0 });
         panel?.hide();
         this.router.navigateByUrl('/app', { replaceUrl: true });
       },
