@@ -12,7 +12,8 @@ import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenuModule } from 'primeng/menu';
-import { ToastModule } from 'primeng/toast';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { DrawerFormComponent } from '../../../../../shared/ui/drawer-form/drawer-form.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
@@ -41,15 +42,15 @@ import { map } from 'rxjs/operators';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
+    SaasPageHeaderComponent,
+    DrawerFormComponent,
     DialogModule,
     DropdownModule,
     MenuModule,
-    ToastModule,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './classes-sections.component.html',
   styleUrls: ['./classes-sections.component.scss']
 })
@@ -284,7 +285,7 @@ export class ClassesSectionsPageComponent implements OnInit {
           severity: 'success',
           summary: this.editingSectionId ? 'Section updated' : 'Section created'
         });
-        this.openDetails(this.detailsClass!.classId);
+        this.openDetails(this.detailsClass!.classId, false, 'sections');
         this.reload();
       },
       error: (err) => this.messages.add({
@@ -295,11 +296,11 @@ export class ClassesSectionsPageComponent implements OnInit {
     });
   }
 
-  openDetails(classId: number, offerSections = false): void {
+  openDetails(classId: number, offerSections = false, tab?: 'overview' | 'sections'): void {
     this.api.getClass(classId).subscribe({
       next: (cls) => {
         this.detailsClass = cls;
-        this.detailsTab = 'overview';
+        this.detailsTab = tab ?? 'overview';
         this.showDetails = true;
         this.promptAddSectionsAfterCreate = offerSections;
         this.cdr.markForCheck();
@@ -319,8 +320,7 @@ export class ClassesSectionsPageComponent implements OnInit {
     if (this.canManage) {
       items.push({ label: 'Edit Class', icon: 'pi pi-pencil', command: () => this.openEditClass(cls) });
       items.push({ label: 'Manage Sections', icon: 'pi pi-th-large', command: () => {
-        this.openDetails(cls.classId);
-        this.detailsTab = 'sections';
+        this.openDetails(cls.classId, false, 'sections');
       }});
     }
     items.push({

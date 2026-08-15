@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToastModule } from 'primeng/toast';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
@@ -15,8 +15,7 @@ import { ACADEMICS_MY_TIMETABLE_RESOURCE, MyTimetable } from '../../../models/ac
   selector: 'app-my-timetable-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, ToastModule],
-  providers: [MessageService],
+  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent],
   templateUrl: './my-timetable.component.html',
   styleUrls: ['./my-timetable.component.scss']
 })

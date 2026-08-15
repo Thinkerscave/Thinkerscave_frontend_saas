@@ -1,15 +1,7 @@
-<p-toast></p-toast>
 <div class="ma-page" *ngIf="!loading; else loadingTpl">
-  <header class="ma-header">
-    <nav class="ma-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>My Academics</strong></nav>
-    <div class="ma-header__row">
-      <div>
-        <h1>My Academics</h1>
-        <p>View your academic information, subjects, teachers and academic history.</p>
-      </div>
-      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+  </tc-saas-page-header>
 
   <ng-container *ngIf="data as d">
     <section class="ma-top">

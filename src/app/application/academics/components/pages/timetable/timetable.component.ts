@@ -15,7 +15,7 @@ import { Subject, finalize, switchMap, timer, takeWhile, tap } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { ToastModule } from 'primeng/toast';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
@@ -52,15 +52,14 @@ type TimetableTab = 'readiness' | 'configuration' | 'timetable' | 'conflicts';
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
+    SaasPageHeaderComponent,
     DialogModule,
     DropdownModule,
     ProgressBarModule,
-    ToastModule,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './timetable.component.html',
   styleUrls: ['./timetable.component.scss']
 })

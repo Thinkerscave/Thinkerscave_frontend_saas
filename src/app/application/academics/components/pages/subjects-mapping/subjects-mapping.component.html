@@ -1,19 +1,7 @@
-<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="sm-page" *ngIf="!loading; else loadingTpl">
-  <header class="sm-header">
-    <div>
-      <nav class="sm-breadcrumb">
-        <a routerLink="/app">Home</a>
-        <span>/</span>
-        <a routerLink="/app/academics">Academics</a>
-        <span>/</span>
-        <strong>Subjects &amp; Mapping</strong>
-      </nav>
-      <h1>Subjects &amp; Mapping</h1>
-      <p>Configure subjects and define which subjects are taught for each class.</p>
-    </div>
+  <tc-saas-page-header>
     <button
       type="button"
       class="sm-btn sm-btn--primary"
@@ -23,7 +11,7 @@
       <i class="pi pi-plus"></i>
       Add Subject
     </button>
-  </header>
+  </tc-saas-page-header>
 
   <div class="sm-context" *ngIf="dashboard as dash">
     <div class="sm-context__left">

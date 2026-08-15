@@ -14,7 +14,7 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TableModule } from 'primeng/table';
-import { ToastModule } from 'primeng/toast';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
@@ -47,11 +47,11 @@ import {
     DropdownModule,
     ProgressBarModule,
     TableModule,
-    ToastModule,
+    SaasPageHeaderComponent,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './academic-year.component.html',
   styleUrls: ['./academic-year.component.scss']
 })

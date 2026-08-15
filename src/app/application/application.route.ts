@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ACCESS_MGMT_ROOT, ACCESS_PAGES, TENANT_MGMT_ROOT, TENANT_PAGES } from '../core/config/page-route-meta';
+import { ACADEMICS_PAGES, ACADEMICS_ROOT, ACCESS_MGMT_ROOT, ACCESS_PAGES, TENANT_MGMT_ROOT, TENANT_PAGES } from '../core/config/page-route-meta';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
@@ -302,23 +302,25 @@ export const APPLICATION_ROUTES: Routes = [
       }
     ]
   },
-  // ━━━ Academics module (spec: Academic Setup / Timetable / Teacher Arrangement / Academic Calendar / Syllabus Tracker / Settings) ━━━
+  // ━━━ Academics module (Overview / Academic Year / Classes & Sections / Subjects & Mapping / Teacher Allocation / Timetable + role pages) ━━━
   {
     path: 'academics',
     canActivate: [roleGuard(ACADEMICS_ROLES)],
+    data: { ...ACADEMICS_ROOT },
+    loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'overview', data: { workspacePage: 'overview' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'academic-year', data: { workspacePage: 'academic-year' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'classes-sections', data: { workspacePage: 'classes-sections' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'subjects-mapping', data: { workspacePage: 'subjects-mapping' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'teacher-allocation', data: { workspacePage: 'teacher-allocation' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
+      { path: 'overview', data: { workspacePage: 'overview', ...ACADEMICS_PAGES.overview }, loadComponent: () => import('./academics/components/pages/overview/overview.component').then(m => m.AcademicsOverviewPageComponent) },
+      { path: 'academic-year', data: { workspacePage: 'academic-year', ...ACADEMICS_PAGES.academicYear }, loadComponent: () => import('./academics/components/pages/academic-year/academic-year.component').then(m => m.AcademicYearPageComponent) },
+      { path: 'classes-sections', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classesSections }, loadComponent: () => import('./academics/components/pages/classes-sections/classes-sections.component').then(m => m.ClassesSectionsPageComponent) },
+      { path: 'subjects-mapping', data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectsMapping }, loadComponent: () => import('./academics/components/pages/subjects-mapping/subjects-mapping.component').then(m => m.SubjectsMappingPageComponent) },
+      { path: 'teacher-allocation', data: { workspacePage: 'teacher-allocation', ...ACADEMICS_PAGES.teacherAllocation }, loadComponent: () => import('./academics/components/pages/teacher-allocation/teacher-allocation.component').then(m => m.TeacherAllocationPageComponent) },
+      { path: 'timetable', data: { workspacePage: 'timetable', ...ACADEMICS_PAGES.timetable }, loadComponent: () => import('./academics/components/pages/timetable/timetable.component').then(m => m.TimetablePageComponent) },
+      { path: 'my-classes', data: { workspacePage: 'my-classes', ...ACADEMICS_PAGES.myClasses }, loadComponent: () => import('./academics/components/pages/my-classes/my-classes.component').then(m => m.MyClassesPageComponent) },
+      { path: 'my-timetable', data: { workspacePage: 'my-timetable', ...ACADEMICS_PAGES.myTimetable }, loadComponent: () => import('./academics/components/pages/my-timetable/my-timetable.component').then(m => m.MyTimetablePageComponent) },
+      { path: 'academic-structure', data: { workspacePage: 'academic-structure', ...ACADEMICS_PAGES.academicStructure }, loadComponent: () => import('./academics/components/pages/academic-structure/academic-structure.component').then(m => m.AcademicStructurePageComponent) },
+      { path: 'my-academics', data: { workspacePage: 'my-academics', ...ACADEMICS_PAGES.myAcademics }, loadComponent: () => import('./academics/components/pages/my-academics/my-academics.component').then(m => m.MyAcademicsPageComponent) },
       { path: 'academic-setup', pathMatch: 'full', redirectTo: 'classes-sections' },
-      { path: 'timetable', data: { workspacePage: 'timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'my-classes', data: { workspacePage: 'my-classes' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'my-timetable', data: { workspacePage: 'my-timetable' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'academic-structure', data: { workspacePage: 'academic-structure' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
-      { path: 'my-academics', data: { workspacePage: 'my-academics' }, loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent) },
       { path: 'settings', pathMatch: 'full', redirectTo: 'classes-sections' },
       // Legacy redirects (Arrangement / Calendar / Syllabus dropped from frozen Academics V1)
       { path: 'teacher-arrangement', pathMatch: 'full', redirectTo: 'overview' },

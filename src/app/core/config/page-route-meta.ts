@@ -10,6 +10,54 @@ export const ACCESS_MGMT_ROOT = {
   breadcrumbLink: ['/app/access-management/dashboard']
 } as const;
 
+export const ACADEMICS_ROOT = {
+  breadcrumb: 'Academics',
+  breadcrumbLink: ['/app/academics/overview']
+} as const;
+
+export const ACADEMICS_PAGES = {
+  overview: {
+    breadcrumb: 'Overview',
+    pageSubtitle: 'Real-time summary of your academic structure, setup and operational status.'
+  },
+  academicYear: {
+    breadcrumb: 'Academic Year',
+    pageSubtitle: 'Manage academic sessions, year transitions and historical academic records.'
+  },
+  classesSections: {
+    breadcrumb: 'Classes & Sections',
+    pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.'
+  },
+  subjectsMapping: {
+    breadcrumb: 'Subjects & Mapping',
+    pageSubtitle: 'Define subjects and map them to the classes that teach them.'
+  },
+  teacherAllocation: {
+    breadcrumb: 'Teacher Allocation',
+    pageSubtitle: 'Assign teachers to every class, section and subject combination.'
+  },
+  timetable: {
+    breadcrumb: 'Timetable',
+    pageSubtitle: 'Configure periods, generate the weekly timetable and resolve conflicts.'
+  },
+  myClasses: {
+    breadcrumb: 'My Classes',
+    pageSubtitle: 'Classes and sections assigned to you.'
+  },
+  myTimetable: {
+    breadcrumb: 'My Timetable',
+    pageSubtitle: 'Your weekly teaching schedule.'
+  },
+  academicStructure: {
+    breadcrumb: 'Academic Structure',
+    pageSubtitle: 'Stages, classes, sections and subject relationships across the school.'
+  },
+  myAcademics: {
+    breadcrumb: 'My Academics',
+    pageSubtitle: 'Your class, section, subjects and timetable for the current academic year.'
+  }
+} as const;
+
 export const TENANT_PAGES = {
   dashboard: {
     breadcrumb: 'Dashboard',

@@ -1,15 +1,7 @@
-<p-toast></p-toast>
 <div class="as-page" *ngIf="!loading; else loadingTpl">
-  <header class="as-header">
-    <nav class="as-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>Academic Structure</strong></nav>
-    <div class="as-header__row">
-      <div>
-        <h1>Academic Structure</h1>
-        <p>Explore classes, sections and subjects related to your teaching assignments.</p>
-      </div>
-      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+  </tc-saas-page-header>
 
   <div class="as-summary" *ngIf="data as d">
     <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>

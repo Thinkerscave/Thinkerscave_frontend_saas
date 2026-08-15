@@ -1,15 +1,7 @@
-<p-toast></p-toast>
 <div class="mc-page" *ngIf="!loading; else loadingTpl">
-  <header class="mc-header">
-    <nav class="mc-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>My Classes</strong></nav>
-    <div class="mc-header__row">
-      <div>
-        <h1>My Classes</h1>
-        <p>View and manage all classes assigned to you for the current academic year.</p>
-      </div>
-      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+  </tc-saas-page-header>
 
   <div class="mc-summary" *ngIf="data as d">
     <div><strong>{{ d.summary.classCount }}</strong><span>Total Classes</span></div>

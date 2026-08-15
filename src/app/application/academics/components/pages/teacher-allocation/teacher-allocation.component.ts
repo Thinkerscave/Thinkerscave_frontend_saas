@@ -12,7 +12,7 @@ import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { ToastModule } from 'primeng/toast';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
@@ -41,11 +41,11 @@ import {
     DialogModule,
     DropdownModule,
     ProgressBarModule,
-    ToastModule,
+    SaasPageHeaderComponent,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './teacher-allocation.component.html',
   styleUrls: ['./teacher-allocation.component.scss']
 })

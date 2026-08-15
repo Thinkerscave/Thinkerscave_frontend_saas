@@ -1,36 +1,22 @@
-<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="ta-page" *ngIf="!loading; else loadingTpl">
-  <header class="ta-header">
-    <div>
-      <nav class="ta-breadcrumb">
-        <a routerLink="/app">Home</a>
-        <span>/</span>
-        <a routerLink="/app/academics">Academics</a>
-        <span>/</span>
-        <strong>Teacher Allocation</strong>
-      </nav>
-      <h1>Teacher Allocation</h1>
-      <p>Who teaches which subject, for which class and section?</p>
-    </div>
-  </header>
+
+  <tc-saas-page-header>
+    <p-dropdown
+      [options]="years"
+      [(ngModel)]="selectedYearId"
+      (onChange)="onYearChange()"
+      optionLabel="name"
+      optionValue="academicYearId">
+    </p-dropdown>
+    <span class="ta-badge" *ngIf="dashboard as dash" [class.ta-badge--success]="dash.academicYearStatus === 'CURRENT'">
+      {{ dash.academicYearStatus }}
+    </span>
+    <span class="ta-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
+  </tc-saas-page-header>
 
   <div class="ta-context" *ngIf="dashboard as dash">
-    <div class="ta-context__left">
-      <label>Academic Year</label>
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId">
-      </p-dropdown>
-      <span class="ta-badge" [class.ta-badge--success]="dash.academicYearStatus === 'CURRENT'">
-        {{ dash.academicYearStatus }}
-      </span>
-      <span class="ta-readonly" *ngIf="dash.yearReadOnly">Historical · Read Only</span>
-    </div>
     <div class="ta-context__meta">
       {{ dash.assignedSlots }}/{{ dash.totalSlots }} assigned
       · {{ dash.missingSlots }} pending

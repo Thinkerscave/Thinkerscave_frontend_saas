@@ -1,15 +1,7 @@
-<p-toast></p-toast>
 <div class="mt-page" *ngIf="!loading; else loadingTpl">
-  <header class="mt-header">
-    <nav class="mt-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>My Timetable</strong></nav>
-    <div class="mt-header__row">
-      <div>
-        <h1>My Timetable</h1>
-        <p>Your published weekly schedule.</p>
-      </div>
-      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+  </tc-saas-page-header>
 
   <div class="mt-summary" *ngIf="data">
     <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>

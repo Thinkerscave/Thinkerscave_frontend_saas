@@ -1,36 +1,20 @@
-<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="tt-page" *ngIf="!loading; else loadingTpl">
-  <header class="tt-header">
-    <nav class="tt-breadcrumb">
-      <a routerLink="/app">Home</a>
-      <span>/</span>
-      <a routerLink="/app/academics">Academics</a>
-      <span>/</span>
-      <strong>Timetable</strong>
-    </nav>
-    <h1>Timetable</h1>
-    <p>Configure timetable structure, generate schedules, resolve conflicts and publish.</p>
-  </header>
 
-  <!-- Context bar -->
-  <div class="tt-context" *ngIf="dashboard as dash">
-    <div class="tt-context__left">
-      <label>Academic Year</label>
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId">
-      </p-dropdown>
-      <span class="tt-badge" [class.tt-badge--success]="dash.academicYearStatus === 'CURRENT'">
-        {{ dash.academicYearStatus }}
-      </span>
-      <span class="tt-readonly" *ngIf="dash.yearReadOnly">Historical · Read Only</span>
-    </div>
-  </div>
+  <tc-saas-page-header>
+    <p-dropdown
+      [options]="years"
+      [(ngModel)]="selectedYearId"
+      (onChange)="onYearChange()"
+      optionLabel="name"
+      optionValue="academicYearId">
+    </p-dropdown>
+    <span class="tt-badge" *ngIf="dashboard as dash" [class.tt-badge--success]="dash.academicYearStatus === 'CURRENT'">
+      {{ dash.academicYearStatus }}
+    </span>
+    <span class="tt-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
+  </tc-saas-page-header>
 
   <!-- Tabs -->
   <div class="tt-tabs">

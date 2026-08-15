@@ -1,19 +1,7 @@
-<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="ay-page" *ngIf="!loading; else loadingTpl">
-  <header class="ay-header">
-    <div>
-      <nav class="ay-breadcrumb">
-        <a routerLink="/app">Home</a>
-        <span>/</span>
-        <a routerLink="/app/academics">Academics</a>
-        <span>/</span>
-        <strong>Academic Year</strong>
-      </nav>
-      <h1>Academic Year</h1>
-      <p>Manage the current, upcoming and historical academic sessions for your institution.</p>
-    </div>
+  <tc-saas-page-header>
     <button
       type="button"
       class="ay-btn ay-btn--primary"
@@ -22,7 +10,7 @@
       <i class="pi pi-plus"></i>
       Create Academic Year
     </button>
-  </header>
+  </tc-saas-page-header>
 
   <div class="ay-layout">
     <div class="ay-main">

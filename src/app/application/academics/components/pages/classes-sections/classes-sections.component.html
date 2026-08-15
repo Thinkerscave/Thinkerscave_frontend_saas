@@ -1,20 +1,8 @@
-<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 <p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="cs-page" *ngIf="!loading; else loadingTpl">
-  <header class="cs-header">
-    <div>
-      <nav class="cs-breadcrumb">
-        <a routerLink="/app">Home</a>
-        <span>/</span>
-        <a routerLink="/app/academics">Academics</a>
-        <span>/</span>
-        <strong>Classes &amp; Sections</strong>
-      </nav>
-      <h1>Classes &amp; Sections</h1>
-      <p>Manage your academic classes, sections, class teachers and student distribution.</p>
-    </div>
+  <tc-saas-page-header>
     <button
       type="button"
       class="cs-btn cs-btn--primary"
@@ -24,7 +12,7 @@
       <i class="pi pi-plus"></i>
       Add Class
     </button>
-  </header>
+  </tc-saas-page-header>
 
   <div class="cs-context" *ngIf="dashboard as dash">
     <div class="cs-context__left">
@@ -143,14 +131,12 @@
 </ng-template>
 
 <!-- Class details drawer -->
-<p-dialog
-  [(visible)]="showDetails"
-  [modal]="true"
-  [style]="{ width: '560px' }"
-  [draggable]="false"
-  position="right"
-  styleClass="cs-drawer"
-  [header]="detailsClass?.name || 'Class details'">
+<tc-drawer-form
+  [open]="showDetails"
+  size="md"
+  [title]="detailsClass?.name || 'Class details'"
+  [description]="detailsClass?.academicYearName || null"
+  (closed)="showDetails = false">
   <ng-container *ngIf="detailsClass as cls">
     <div class="cs-drawer-head">
       <code>{{ cls.code }}</code>
@@ -221,7 +207,7 @@
       <button type="button" class="cs-btn cs-btn--ghost" (click)="promptAddSectionsAfterCreate = false; showDetails = false; reload()">Do Later</button>
     </div>
   </ng-container>
-</p-dialog>
+</tc-drawer-form>
 
 <!-- Create / edit class -->
 <p-dialog
