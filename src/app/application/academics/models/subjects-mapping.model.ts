@@ -103,6 +103,6 @@ export const SUBJECT_CATEGORY_OPTIONS: { label: string; value: SubjectCategory }
 
 export const TIMETABLE_PREFERENCE_OPTIONS: { label: string; value: SubjectTimetablePreference }[] = [
   { label: 'No Preference', value: 'ANY' },
-  { label: 'Morning', value: 'FIRST_HALF' },
-  { label: 'Afternoon', value: 'SECOND_HALF' }
+  { label: 'First half', value: 'FIRST_HALF' },
+  { label: 'Second half', value: 'SECOND_HALF' }
 ];

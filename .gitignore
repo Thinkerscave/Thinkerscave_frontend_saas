@@ -56,3 +56,20 @@ testem.log
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local agent / one-off scratch (E2E harness, DB probes, screenshots, Playwright installs)
+# Keep product code in src/; do not commit temporary investigation files.
+/scripts/
+/_scratch/
+/.agent-tmp/
+/tmp-agent/
+fe-run.log
+*-run.log
+playwright-report/
+test-results/
+**/ui-shots/
+*.pyc
+__pycache__/
+.Python
+.venv/
+venv/

@@ -1,0 +1,26 @@
+---
+description: Delete temporary agent scripts/logs after tasks; never commit scratch artifacts
+alwaysApply: true
+---
+
+# Cleanup temporary artifacts
+
+When the task is done (or abandoned), remove one-off files created only for investigation, DB probing, E2E harnesses, screenshots, Playwright installs, or local run logs.
+
+## Do delete after the task
+- Ad-hoc `scripts/` helpers (Python/JS/PS1), `_scratch/`, `.agent-tmp/`, `tmp-agent/`
+- `*-run.log`, `fe-run.log`, `be-run.log`, `be-test-run.log`
+- Local `ui-shots/`, `node_modules` under scratch folders, PNG captures from probes
+- Password-reset / credential probe scripts
+
+## Do keep (commit when the user asks)
+- Real product code under `src/`
+- Intentional migrations/seeds under `src/main/resources/db/migration/`
+- Intentional tracked scripts already in the repo (e.g. backend `scripts/postgres/`, `scripts/load_test_tenant.sh`)
+- `.gitignore` and Cursor rules that prevent reintroducing junk
+
+## Practice
+1. Prefer putting throwaway work under ignored paths (`/scripts/`, `/_scratch/`) when a temporary file is unavoidable.
+2. Before saying a task is complete, delete those throwaways so `git status` shows only meaningful source changes.
+3. Never leave hundreds of generated files (e.g. Playwright `node_modules`) for the user to triage before push.
+4. Do not commit secrets, connection passwords, or reset-password utilities.

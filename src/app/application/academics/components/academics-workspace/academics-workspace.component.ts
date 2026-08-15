@@ -85,17 +85,30 @@ export class AcademicsWorkspaceComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.pages = ACADEMICS_PAGES.filter((p) =>
-      this.permissions.canView(ACADEMICS_PAGE_RESOURCE[p.page])
-    );
-    // If permission cache is empty (still loading), show all pages to avoid blank nav.
-    if (!this.pages.length) {
-      this.pages = [...ACADEMICS_PAGES];
-    }
+    this.refreshPages();
+    this.permissions.loadPermissions().subscribe({
+      next: () => this.refreshPages(),
+      error: () => this.refreshPages()
+    });
 
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'overview';
       this.cdr.markForCheck();
     });
+  }
+
+  private refreshPages(): void {
+    const allowed = ACADEMICS_PAGES.filter((p) =>
+      this.permissions.canView(ACADEMICS_PAGE_RESOURCE[p.page])
+    );
+    // Never dump every role page into the nav. If permissions are still empty,
+    // show the admin core set only (matches Figma operator shell).
+    this.pages = allowed.length
+      ? allowed
+      : ACADEMICS_PAGES.filter((p) =>
+          ['overview', 'academic-year', 'classes-sections', 'subjects-mapping', 'teacher-allocation', 'timetable']
+            .includes(p.page)
+        );
+    this.cdr.markForCheck();
   }
 }
