@@ -200,6 +200,11 @@
   font-weight: 600;
   cursor: pointer;
 }
+.ay-link--danger {
+  color: #b91c1c;
+  display: block;
+  margin-top: 0.25rem;
+}
 .ay-note {
   margin: 0.85rem 0 0;
   color: #64748b;
@@ -267,6 +272,33 @@
   display: grid;
   place-items: center;
   color: #64748b;
+}
+
+.ay-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1rem;
+  margin: 0.75rem 0;
+}
+.ay-checkboxes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+.ay-transition-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e2e8f0;
+}
+.ay-transition-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 :host ::ng-deep {

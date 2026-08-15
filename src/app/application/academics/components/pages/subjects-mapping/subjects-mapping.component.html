@@ -52,8 +52,9 @@
     <button type="button" [class.active]="activeTab === 'mapping'" (click)="switchTab('mapping')">Class Mapping</button>
   </div>
 
-  <!-- Subjects tab -->
-  <ng-container *ngIf="activeTab === 'subjects'">
+  <div class="sm-workspace">
+  <!-- Subjects pane -->
+  <section class="sm-pane" [class.sm-pane--hidden-mobile]="activeTab === 'mapping'">
     <div class="sm-toolbar">
       <input
         type="search"
@@ -118,10 +119,10 @@
       <button type="button" class="sm-btn sm-btn--primary" (click)="goToMapping()">Map to Classes</button>
       <button type="button" class="sm-btn sm-btn--ghost" (click)="promptMapAfterCreate = false">Done</button>
     </div>
-  </ng-container>
+  </section>
 
-  <!-- Mapping tab -->
-  <ng-container *ngIf="activeTab === 'mapping'">
+  <!-- Mapping pane -->
+  <section class="sm-pane sm-pane--mapping" [class.sm-pane--hidden-mobile]="activeTab === 'subjects'">
     <div class="sm-mapping-toolbar">
       <label>Select Class</label>
       <p-dropdown
@@ -144,9 +145,17 @@
         </p>
       </div>
       <div class="sm-mapping-summary">
-        {{ board.includedCount }} included
+        {{ board.includedCount }} / {{ board.mappings?.length || 0 }} mapped
         <span *ngIf="board.missingTeacherCount" class="sm-warn"> · {{ board.missingTeacherCount }} missing teachers</span>
       </div>
+    </div>
+
+    <div class="sm-progress" *ngIf="mappingBoard as board">
+      <div class="sm-progress__top">
+        <span>Mapping Progress</span>
+        <strong>{{ mappingProgressPercent }}%</strong>
+      </div>
+      <div class="sm-progress__bar"><span [style.width.%]="mappingProgressPercent"></span></div>
     </div>
 
     <table class="sm-table" *ngIf="mappingBoard?.mappings?.length; else emptyMapping">
@@ -224,7 +233,30 @@
         <p>Create classes and subjects first if the lists are empty.</p>
       </div>
     </ng-template>
-  </ng-container>
+
+    <div class="sm-assign-banner" *ngIf="mappingBoard?.missingTeacherCount">
+      <span>{{ mappingBoard?.missingTeacherCount }} subject(s) not assigned to any teacher</span>
+      <a class="sm-btn sm-btn--primary" routerLink="/app/academics/teacher-allocation"
+         [queryParams]="{ academicYearId: selectedYearId, classId: selectedClassId }">Assign Teacher</a>
+    </div>
+  </section>
+
+  <aside class="sm-side" *ngIf="dashboard as dash">
+    <div class="sm-side-card">
+      <h4>Subject Summary</h4>
+      <div class="sm-side-stat"><span>Total Subjects</span><strong>{{ dash.subjectCount }}</strong></div>
+      <div class="sm-side-stat"><span>Unmapped</span><strong>{{ dash.unmappedSubjectCount || 0 }}</strong></div>
+      <div class="sm-side-stat"><span>Classes</span><strong>{{ dash.classCount }}</strong></div>
+      <div class="sm-side-stat"><span>Sections</span><strong>{{ dash.sectionCount }}</strong></div>
+    </div>
+    <div class="sm-side-card">
+      <h4>Quick Links</h4>
+      <a routerLink="/app/academics/teacher-allocation">View Teacher Allocation →</a>
+      <a routerLink="/app/academics/timetable">View Timetable →</a>
+      <a routerLink="/app/academics/classes-sections">View Classes →</a>
+    </div>
+  </aside>
+  </div>
 </div>
 
 <ng-template #loadingTpl>

@@ -1,0 +1,251 @@
+<p-toast></p-toast>
+
+<div class="ov-page" *ngIf="!loading; else loadingTpl">
+  <header class="ov-header">
+    <nav class="ov-breadcrumb">
+      <a routerLink="/app">Home</a><span>/</span>
+      <a routerLink="/app/academics">Academics</a><span>/</span>
+      <strong>Overview</strong>
+    </nav>
+    <div class="ov-header__row">
+      <div>
+        <h1>Academics Overview</h1>
+        <p>Real-time summary of your academic structure, setup and operational status.</p>
+      </div>
+      <div class="ov-header__actions">
+        <p-dropdown
+          [options]="years"
+          [(ngModel)]="selectedYearId"
+          (onChange)="reload()"
+          optionLabel="name"
+          optionValue="academicYearId">
+        </p-dropdown>
+        <span class="ov-pill" *ngIf="overview?.yearHeader?.status === 'CURRENT'">Active</span>
+        <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year">View Academic Year Details</a>
+      </div>
+    </div>
+  </header>
+
+  <ng-container *ngIf="overview as ov">
+    <section class="ov-banner">
+      <div class="ov-banner__left">
+        <div class="ov-eyebrow">{{ ov.yearHeader.status }} ACADEMIC YEAR</div>
+        <h2>{{ ov.yearHeader.name }}</h2>
+        <p>{{ formatDate(ov.yearHeader.startDate) }} – {{ formatDate(ov.yearHeader.endDate) }}</p>
+      </div>
+      <div class="ov-banner__progress">
+        <div class="ov-banner__progress-top">
+          <span>Academic Year Progress</span>
+          <strong>{{ ov.yearHeader.progressPercent }}%</strong>
+        </div>
+        <p-progressBar [value]="ov.yearHeader.progressPercent" [showValue]="false"></p-progressBar>
+        <div class="ov-banner__progress-meta">
+          <span>{{ daysCompleted(ov) }} days completed</span>
+          <span>{{ daysRemaining(ov) }} days remaining</span>
+        </div>
+      </div>
+      <div class="ov-banner__metrics">
+        <div>
+          <span>Days Elapsed</span>
+          <strong>{{ daysCompleted(ov) }} / {{ totalDays(ov) }}</strong>
+        </div>
+        <div>
+          <span>Days Remaining</span>
+          <strong>{{ daysRemaining(ov) }}</strong>
+        </div>
+        <div>
+          <span>Year Ends In</span>
+          <strong>{{ formatDate(ov.yearHeader.endDate) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="ov-cards">
+      <a class="ov-card" routerLink="/app/academics/classes-sections">
+        <strong>{{ ov.structureCounts.classesTotal }}</strong>
+        <span>Classes</span>
+        <small>{{ ov.structureCounts.classesActive }} Active</small>
+      </a>
+      <a class="ov-card" routerLink="/app/academics/classes-sections">
+        <strong>{{ ov.structureCounts.sectionsTotal }}</strong>
+        <span>Sections</span>
+        <small>{{ ov.structureCounts.sectionsActive }} Active · {{ ov.structureCounts.sectionsTotal - ov.structureCounts.sectionsActive }} Inactive</small>
+      </a>
+      <a class="ov-card" routerLink="/app/students/directory">
+        <strong>{{ ov.structureCounts.studentsActive }}</strong>
+        <span>Students</span>
+        <small>All Active</small>
+      </a>
+      <a class="ov-card" routerLink="/app/academics/subjects-mapping">
+        <strong>{{ ov.structureCounts.subjectsTotal }}</strong>
+        <span>Subjects</span>
+        <small>{{ ov.structureCounts.subjectsActive }} Active · {{ ov.structureCounts.subjectsTotal - ov.structureCounts.subjectsActive }} Inactive</small>
+      </a>
+      <a class="ov-card" routerLink="/app/academics/subjects-mapping">
+        <strong>{{ ov.mapping.subjectsMapped }}/{{ ov.mapping.subjectsTotal }}</strong>
+        <span>Subject Mapping</span>
+        <small *ngIf="ov.mapping.pendingMappings">{{ ov.mapping.pendingMappings }} Pending</small>
+      </a>
+      <a class="ov-card" routerLink="/app/academics/teacher-allocation">
+        <strong>{{ ov.allocation.assignedSlots }}/{{ ov.allocation.totalSlots }}</strong>
+        <span>Teacher Allocation</span>
+        <small *ngIf="ov.allocation.missingSlots">{{ ov.allocation.missingSlots }} Pending</small>
+      </a>
+      <a class="ov-card" routerLink="/app/academics/timetable">
+        <strong>{{ timetableHeadline(ov) }}</strong>
+        <span>Timetable Status</span>
+        <small *ngIf="ov.timetable.publishedVersion">Published v{{ ov.timetable.publishedVersion }}</small>
+        <small *ngIf="ov.timetable.openBlockingConflicts">{{ ov.timetable.openBlockingConflicts }} Conflicts</small>
+      </a>
+    </section>
+
+    <section class="ov-mid">
+      <article class="ov-panel">
+        <div class="ov-panel__head">
+          <h3>Academic Structure Snapshot</h3>
+          <a routerLink="/app/academics/classes-sections">View All →</a>
+        </div>
+        <div class="ov-tabs">
+          <button type="button" [class.active]="snapshotTab === 'classes'" (click)="snapshotTab = 'classes'">Classes</button>
+          <button type="button" [class.active]="snapshotTab === 'subjects'" (click)="snapshotTab = 'subjects'">Subjects</button>
+        </div>
+        <table class="ov-table" *ngIf="snapshotTab === 'classes'">
+          <thead>
+            <tr><th>Class</th><th>Sections</th><th>Students</th><th>Class Teacher</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of ov.topClasses">
+              <td><strong>{{ c.className }}</strong></td>
+              <td>{{ c.sectionCount }}</td>
+              <td>{{ c.studentCount ?? '—' }}</td>
+              <td>{{ c.classTeacherName || '—' }}</td>
+            </tr>
+            <tr *ngIf="!ov.topClasses?.length"><td colspan="4" class="ov-muted">No classes yet</td></tr>
+          </tbody>
+        </table>
+        <table class="ov-table" *ngIf="snapshotTab === 'subjects'">
+          <thead>
+            <tr><th>Subject</th><th>Category</th><th>Classes</th><th>Periods</th><th>Teacher</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of ov.topSubjects">
+              <td><strong>{{ s.subjectName }}</strong> <code *ngIf="s.code">{{ s.code }}</code></td>
+              <td>{{ s.category || '—' }}</td>
+              <td>{{ s.mappedClassCount ?? '—' }}</td>
+              <td>{{ s.defaultWeeklyPeriods ?? '—' }}</td>
+              <td>{{ s.teacherStatus || '—' }}</td>
+            </tr>
+            <tr *ngIf="!ov.topSubjects?.length"><td colspan="5" class="ov-muted">No subjects yet</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="ov-panel">
+        <div class="ov-panel__head">
+          <h3>Students by Class</h3>
+          <a routerLink="/app/students/directory">View Report →</a>
+        </div>
+        <div class="ov-donut-wrap" *ngIf="ov.studentsByClass?.length; else noStudents">
+          <div class="ov-donut" [ngStyle]="donutStyle(ov)">
+            <div class="ov-donut__center">
+              <strong>{{ ov.structureCounts.studentsActive }}</strong>
+              <span>Total</span>
+            </div>
+          </div>
+          <ul class="ov-legend">
+            <li *ngFor="let r of ov.studentsByClass">
+              <span>{{ r.className }}</span>
+              <strong>{{ r.studentCount }}</strong>
+              <small>{{ r.percent }}%</small>
+            </li>
+          </ul>
+        </div>
+        <ng-template #noStudents><p class="ov-muted">Student distribution will appear after enrollments.</p></ng-template>
+      </article>
+
+      <article class="ov-panel ov-panel--tt">
+        <div class="ov-panel__head">
+          <h3>Timetable Status</h3>
+          <a routerLink="/app/academics/timetable">View Timetable →</a>
+        </div>
+        <div class="ov-tt-status">
+          <i class="pi" [class.pi-check-circle]="!ov.timetable.openBlockingConflicts && ov.timetable.publishedVersion"
+             [class.pi-exclamation-triangle]="ov.timetable.openBlockingConflicts"
+             [class.pi-clock]="!ov.timetable.publishedVersion && !ov.timetable.openBlockingConflicts"></i>
+          <div>
+            <strong>{{ timetableHeadline(ov) }}</strong>
+            <p *ngIf="ov.timetable.publishedVersion">Published version {{ ov.timetable.publishedVersion }}</p>
+            <p *ngIf="!ov.timetable.publishedVersion">The timetable has not been finalized for all classes.</p>
+          </div>
+        </div>
+        <div class="ov-tt-metrics">
+          <div><strong>{{ ov.timetable.latestVersion || 0 }}</strong><span>Latest Version</span></div>
+          <div><strong>{{ ov.timetable.openBlockingConflicts || 0 }}</strong><span>Conflicts Open</span></div>
+          <div><strong>{{ ov.timetable.status || '—' }}</strong><span>Status</span></div>
+        </div>
+        <a class="ov-link" routerLink="/app/academics/timetable">Timetable Readiness Details →</a>
+      </article>
+    </section>
+
+    <section class="ov-bottom">
+      <article class="ov-panel">
+        <h3>Setup Progress</h3>
+        <div class="ov-gauge">
+          <div class="ov-gauge__ring" [style.--p]="setupPercent(ov) + '%'">
+            <strong>{{ setupPercent(ov) }}%</strong>
+            <span>Complete</span>
+          </div>
+        </div>
+        <ul class="ov-checklist">
+          <li *ngFor="let step of ov.readinessSteps">
+            <i [class]="stepIcon(step.state)" [class.ok]="step.state === 'COMPLETE'"></i>
+            <span>{{ step.label }}</span>
+            <em>{{ step.state === 'COMPLETE' ? 'Complete' : (step.state === 'IN_PROGRESS' ? 'In Progress' : 'Pending') }}</em>
+          </li>
+        </ul>
+        <a class="ov-link" routerLink="/app/academics/academic-year">Continue Setup →</a>
+      </article>
+
+      <article class="ov-panel">
+        <div class="ov-panel__head">
+          <h3>Alerts &amp; Notifications</h3>
+        </div>
+        <a class="ov-alert" *ngFor="let a of ov.alerts" [routerLink]="a.route || '/app/academics'">
+          <span class="ov-badge"
+                [class.ov-badge--danger]="a.severity === 'ERROR' || a.severity === 'BLOCKING'"
+                [class.ov-badge--warn]="a.severity === 'WARNING' || a.severity === 'WARN'">{{ a.severity }}</span>
+          {{ a.message }}
+        </a>
+        <p class="ov-muted" *ngIf="!ov.alerts?.length">No open alerts. Academic setup looks healthy.</p>
+      </article>
+
+      <article class="ov-panel">
+        <div class="ov-panel__head">
+          <h3>Important Dates</h3>
+        </div>
+        <ul class="ov-dates">
+          <li *ngFor="let d of ov.importantDates">
+            <span>{{ d.label }}</span>
+            <strong>{{ formatDate(d.date) }}</strong>
+          </li>
+          <li *ngIf="!ov.importantDates?.length" class="ov-muted">No dates configured for this year.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="ov-actions">
+      <a routerLink="/app/academics/academic-year"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
+      <a routerLink="/app/academics/classes-sections"><i class="pi pi-th-large"></i> Add Class</a>
+      <a routerLink="/app/academics/classes-sections"><i class="pi pi-sitemap"></i> Add Section</a>
+      <a routerLink="/app/academics/subjects-mapping"><i class="pi pi-book"></i> Add Subject</a>
+      <a routerLink="/app/academics/subjects-mapping"><i class="pi pi-link"></i> Map Subjects</a>
+      <a routerLink="/app/academics/teacher-allocation"><i class="pi pi-user-edit"></i> Assign Teachers</a>
+      <a routerLink="/app/academics/timetable"><i class="pi pi-cog"></i> Configure Timetable</a>
+      <a routerLink="/app/academics/timetable"><i class="pi pi-sparkles"></i> Generate Timetable</a>
+    </section>
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="ov-loading">Loading academics overview…</div>
+</ng-template>

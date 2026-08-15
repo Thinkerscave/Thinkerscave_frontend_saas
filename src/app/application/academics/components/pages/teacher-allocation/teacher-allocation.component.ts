@@ -86,6 +86,7 @@ export class TeacherAllocationPageComponent implements OnInit {
   assignTarget: TeacherAllocationRow | null = null;
   recommendations: TeacherRecommendation[] = [];
   selectedStaffId: number | null = null;
+  activeTab: 'allocation' | 'workload' = 'allocation';
 
   get readOnly(): boolean {
     return !!this.dashboard?.yearReadOnly;
@@ -93,6 +94,12 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   get canManage(): boolean {
     return this.permissions.canManage(this.resource) && !this.readOnly;
+  }
+
+  get assignedPercent(): number {
+    const d = this.dashboard;
+    if (!d?.totalSlots) return 0;
+    return Math.round((d.assignedSlots / d.totalSlots) * 100);
   }
 
   ngOnInit(): void {

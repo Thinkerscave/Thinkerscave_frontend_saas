@@ -20,6 +20,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { AcademicYearTransitionApiService } from '../../../services/academic-year-transition-api.service';
 import {
   ACADEMIC_YEAR_RESOURCE,
   AcademicYearDashboard,
@@ -28,6 +29,10 @@ import {
   AcademicYearStatus,
   ReadinessStep
 } from '../../../models/academic-year.model';
+import {
+  ACADEMICS_TRANSITION_RESOURCE,
+  AcademicYearTransitionDto
+} from '../../../models/academic-year-transition.model';
 
 @Component({
   selector: 'app-academic-year-page',
@@ -59,7 +64,9 @@ export class AcademicYearPageComponent implements OnInit {
   private readonly messages = inject(MessageService);
   readonly permissions = inject(PermissionService);
 
+  private readonly transitionApi = inject(AcademicYearTransitionApiService);
   readonly resource = ACADEMIC_YEAR_RESOURCE;
+  readonly transitionResource = ACADEMICS_TRANSITION_RESOURCE;
 
   loading = true;
   saving = false;
@@ -72,6 +79,17 @@ export class AcademicYearPageComponent implements OnInit {
   showReject = false;
   rejectTargetId: number | null = null;
   rejectReason = '';
+
+  showTransition = false;
+  transitionSaving = false;
+  transitions: AcademicYearTransitionDto[] = [];
+  transitionYears: AcademicYearDto[] = [];
+  transitionTargetYearId: number | null = null;
+  transitionCopyClasses = true;
+  transitionCopySections = true;
+  transitionCopySubjects = true;
+  transitionCopyMappings = true;
+  transitionCopyAllocations = false;
 
   readonly statusOptions = [
     { label: 'All Status', value: null },
@@ -356,5 +374,104 @@ export class AcademicYearPageComponent implements OnInit {
         });
       }
     });
+  }
+
+  openTransition(): void {
+    const current = this.dashboard?.currentYear;
+    if (!current?.academicYearId) {
+      this.messages.add({ severity: 'warn', summary: 'No current year', detail: 'Activate a current year before starting a transition.' });
+      return;
+    }
+    this.transitionYears = (this.dashboard?.history ?? []).filter(
+      (y) => y.academicYearId !== current.academicYearId && !['COMPLETED', 'ARCHIVED', 'CURRENT'].includes(y.status)
+    );
+    this.transitionTargetYearId = this.transitionYears[0]?.academicYearId ?? null;
+    this.transitionCopyClasses = true;
+    this.transitionCopySections = true;
+    this.transitionCopySubjects = true;
+    this.transitionCopyMappings = true;
+    this.transitionCopyAllocations = false;
+    this.showTransition = true;
+    this.loadTransitions(current.academicYearId);
+  }
+
+  loadTransitions(yearId: number): void {
+    this.transitionApi.list(yearId).subscribe({
+      next: (list) => {
+        this.transitions = list;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.transitions = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  createTransition(): void {
+    const sourceId = this.dashboard?.currentYear?.academicYearId;
+    if (!sourceId || !this.transitionTargetYearId) {
+      this.messages.add({ severity: 'warn', summary: 'Select a target academic year' });
+      return;
+    }
+    this.transitionSaving = true;
+    this.transitionApi
+      .create(sourceId, {
+        targetAcademicYearId: this.transitionTargetYearId,
+        copyClasses: this.transitionCopyClasses,
+        copySections: this.transitionCopySections,
+        copySubjects: this.transitionCopySubjects,
+        copyMappings: this.transitionCopyMappings,
+        copyAllocations: this.transitionCopyAllocations
+      })
+      .pipe(finalize(() => {
+        this.transitionSaving = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.messages.add({ severity: 'success', summary: 'Transition created' });
+          this.loadTransitions(sourceId);
+        },
+        error: (err) => this.messages.add({
+          severity: 'error',
+          summary: 'Create transition failed',
+          detail: err?.error?.message || 'Unable to create transition'
+        })
+      });
+  }
+
+  startTransition(row: AcademicYearTransitionDto): void {
+    this.transitionApi.start(row.academicYearTransitionId).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Transition started — structure copy running' });
+        const sourceId = this.dashboard?.currentYear?.academicYearId;
+        if (sourceId) this.loadTransitions(sourceId);
+      },
+      error: (err) => this.messages.add({
+        severity: 'error',
+        summary: 'Start failed',
+        detail: err?.error?.message || 'Unable to start transition'
+      })
+    });
+  }
+
+  approveTransition(row: AcademicYearTransitionDto): void {
+    this.transitionApi.approve(row.academicYearTransitionId).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Transition approved' });
+        const sourceId = this.dashboard?.currentYear?.academicYearId;
+        if (sourceId) this.loadTransitions(sourceId);
+      },
+      error: (err) => this.messages.add({
+        severity: 'error',
+        summary: 'Approve failed',
+        detail: err?.error?.message || 'Unable to approve transition'
+      })
+    });
+  }
+
+  transitionStatusLabel(status: string): string {
+    return status.replace(/_/g, ' ');
   }
 }

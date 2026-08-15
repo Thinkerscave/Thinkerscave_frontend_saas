@@ -6,7 +6,32 @@ import {
   AcademicsWorkspacePage
 } from '../models/academics-workspace.model';
 
+/** Menu resource key used by PermissionService.canView for each page. */
+export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
+  overview: 'ACADEMICS_OVERVIEW',
+  'academic-year': 'ACADEMICS_ACADEMIC_YEAR',
+  'classes-sections': 'ACADEMICS_CLASSES',
+  'subjects-mapping': 'ACADEMICS_SUBJECTS',
+  'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
+  timetable: 'ACADEMICS_TIMETABLE',
+  'my-classes': 'ACADEMICS_MY_CLASSES',
+  'my-timetable': 'ACADEMICS_MY_TIMETABLE',
+  'academic-structure': 'ACADEMICS_ACADEMIC_STRUCTURE',
+  'my-academics': 'ACADEMICS_MY_ACADEMICS'
+};
+
 export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
+  {
+    page: 'overview',
+    label: 'Overview',
+    title: 'Academics Overview',
+    eyebrow: 'Command center',
+    description: 'Real-time summary of academic structure, setup and operational status.',
+    icon: 'pi pi-home',
+    route: '/app/academics/overview',
+    primaryAction: 'View details',
+    actionMode: 'year'
+  },
   {
     page: 'academic-year',
     label: 'Academic Year',
@@ -56,44 +81,55 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     label: 'Timetable',
     title: 'Timetable Management',
     eyebrow: 'Weekly scheduler',
-    description: 'Build weekly schedules with auto-generation, conflict detection and publishing capabilities.',
+    description: 'Configure, generate, review and publish the school timetable.',
     icon: 'pi pi-table',
     route: '/app/academics/timetable',
-    primaryAction: 'Add period',
+    primaryAction: 'Generate',
     actionMode: 'timetable'
   },
   {
-    page: 'teacher-arrangement',
-    label: 'Teacher Arrangement',
-    title: 'Teacher Arrangement',
-    eyebrow: 'Leave & substitution management',
-    description: 'Handle teacher absences, auto-suggest replacements, approve or override arrangements.',
+    page: 'my-classes',
+    label: 'My Classes',
+    title: 'My Classes',
+    eyebrow: 'Teacher workspace',
+    description: 'View your assigned classes, subjects and teaching load.',
     icon: 'pi pi-users',
-    route: '/app/academics/teacher-arrangement',
-    primaryAction: 'Record absence',
-    actionMode: 'teacher-absence'
+    route: '/app/academics/my-classes',
+    primaryAction: 'Open timetable',
+    actionMode: 'allocation'
   },
   {
-    page: 'calendar',
-    label: 'Calendar',
-    title: 'Academic Calendar',
-    eyebrow: 'Planning calendar',
-    description: 'Coordinate exams, holidays, PTMs, activities and school events through month, week and agenda views.',
-    icon: 'pi pi-calendar',
-    route: '/app/academics/academic-calendar',
-    primaryAction: 'Add event',
-    actionMode: 'calendar-event'
+    page: 'my-timetable',
+    label: 'My Timetable',
+    title: 'My Timetable',
+    eyebrow: 'Published schedule',
+    description: 'Your published weekly teaching or class schedule.',
+    icon: 'pi pi-clock',
+    route: '/app/academics/my-timetable',
+    primaryAction: 'Refresh',
+    actionMode: 'timetable'
   },
   {
-    page: 'syllabus',
-    label: 'Syllabus',
-    title: 'Syllabus & Progress Tracking',
-    eyebrow: 'Teaching progress',
-    description: 'Track syllabus structure, units, chapters, topics and monitor completion progress.',
-    icon: 'pi pi-list-check',
-    route: '/app/academics/syllabus-tracker',
-    primaryAction: 'Update progress',
-    actionMode: 'syllabus-progress'
+    page: 'academic-structure',
+    label: 'Academic Structure',
+    title: 'Academic Structure',
+    eyebrow: 'Teacher read-only',
+    description: 'Read-only structure related to your teaching assignments.',
+    icon: 'pi pi-sitemap',
+    route: '/app/academics/academic-structure',
+    primaryAction: 'View',
+    actionMode: 'class'
+  },
+  {
+    page: 'my-academics',
+    label: 'My Academics',
+    title: 'My Academics',
+    eyebrow: 'Student / Parent',
+    description: 'Your class, subjects and academic year summary.',
+    icon: 'pi pi-id-card',
+    route: '/app/academics/my-academics',
+    primaryAction: 'View timetable',
+    actionMode: 'subject'
   }
 ];
 
@@ -101,7 +137,18 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
   {
     label: 'Academics',
     icon: 'pi pi-book',
-    pages: ['academic-year', 'classes-sections', 'subjects-mapping', 'teacher-allocation', 'timetable', 'teacher-arrangement', 'calendar', 'syllabus']
+    pages: [
+      'overview',
+      'academic-year',
+      'classes-sections',
+      'subjects-mapping',
+      'teacher-allocation',
+      'timetable',
+      'my-classes',
+      'my-timetable',
+      'academic-structure',
+      'my-academics'
+    ]
   }
 ];
 
@@ -111,10 +158,7 @@ export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
   { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects-mapping'] },
   { id: 'assign-teacher', label: 'Assign teacher', helper: 'Fill missing allocations', icon: 'pi pi-user-edit', tone: 'primary', actionMode: 'allocation', pages: ['teacher-allocation'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
-  { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },
-  { id: 'record-absence', label: 'Record absence', helper: 'Log teacher absence', icon: 'pi pi-user-minus', tone: 'warning', actionMode: 'teacher-absence', pages: ['teacher-arrangement'] },
-  { id: 'add-event', label: 'Add event', helper: 'Schedule exam or activity', icon: 'pi pi-calendar-plus', tone: 'success', actionMode: 'calendar-event', pages: ['calendar'] },
-  { id: 'update-progress', label: 'Update progress', helper: 'Track syllabus completion', icon: 'pi pi-check-circle', tone: 'primary', actionMode: 'syllabus-progress', pages: ['syllabus'] }
+  { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] }
 ];
 
 export const ACADEMICS_DAY_OPTIONS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as const;

@@ -1,0 +1,57 @@
+<p-toast></p-toast>
+<div class="mc-page" *ngIf="!loading; else loadingTpl">
+  <header class="mc-header">
+    <nav class="mc-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>My Classes</strong></nav>
+    <div class="mc-header__row">
+      <div>
+        <h1>My Classes</h1>
+        <p>View and manage all classes assigned to you for the current academic year.</p>
+      </div>
+      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+    </div>
+  </header>
+
+  <div class="mc-summary" *ngIf="data as d">
+    <div><strong>{{ d.summary.classCount }}</strong><span>Total Classes</span></div>
+    <div><strong>{{ d.summary.sectionCount }}</strong><span>Total Sections</span></div>
+    <div><strong>{{ d.summary.studentCount ?? '—' }}</strong><span>Total Students</span></div>
+    <div><strong>{{ d.summary.subjectCount }}</strong><span>Total Subjects</span></div>
+    <div><strong>{{ d.summary.weeklyPeriods }}</strong><span>Periods / Week</span></div>
+  </div>
+
+  <div class="mc-toolbar">
+    <input class="mc-search" type="search" placeholder="Search by class, section or subject…" [(ngModel)]="q" />
+    <div class="mc-view">
+      <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'"><i class="pi pi-list"></i></button>
+      <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'"><i class="pi pi-th-large"></i></button>
+    </div>
+    <a routerLink="/app/academics/my-timetable" class="mc-link">Open My Timetable →</a>
+  </div>
+
+  <div class="mc-list" [class.mc-list--grid]="viewMode === 'grid'">
+    <article class="mc-card" *ngFor="let c of filteredClasses">
+      <div class="mc-badge">{{ shortCode(c) }}</div>
+      <div class="mc-card__body">
+        <div class="mc-card__top">
+          <strong>{{ c.className }} - Section {{ c.sectionName }}</strong>
+          <span class="mc-chip" *ngIf="c.classTeacher">Class Teacher</span>
+        </div>
+        <div class="mc-meta">
+          <span *ngIf="c.studentCount != null">{{ c.studentCount }} students</span>
+          <span *ngIf="c.roomName">Room {{ c.roomName }}</span>
+          <span *ngIf="c.classCode">{{ c.classCode }}</span>
+        </div>
+        <div class="mc-subjects">
+          <span *ngFor="let s of c.subjects">{{ s.subjectName }} ({{ s.weeklyPeriods }})</span>
+        </div>
+        <div class="mc-periods">{{ periodSum(c) }} Periods / Week</div>
+      </div>
+      <div class="mc-card__actions">
+        <a routerLink="/app/academics/my-timetable">Timetable</a>
+        <a routerLink="/app/academics/academic-structure">Structure</a>
+      </div>
+    </article>
+    <div class="mc-empty" *ngIf="!filteredClasses.length">No assigned classes for this year.</div>
+  </div>
+</div>
+<ng-template #loadingTpl><div class="mc-empty">Loading your classes…</div></ng-template>

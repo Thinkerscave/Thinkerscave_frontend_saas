@@ -1,25 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
-import { finalize } from 'rxjs';
-import { ACADEMICS_PAGES, pageConfig } from '../../data/academics-workspace.config';
-import {
-  AcademicsWorkspaceData,
-  AcademicsWorkspacePage
-} from '../../models/academics-workspace.model';
-import { AcademicsWorkspaceService } from '../../services/academics-workspace.service';
+import { ACADEMICS_PAGES, ACADEMICS_PAGE_RESOURCE, pageConfig } from '../../data/academics-workspace.config';
+import { AcademicsPageConfig, AcademicsWorkspacePage } from '../../models/academics-workspace.model';
+import { AcademicsOverviewPageComponent } from '../pages/overview/overview.component';
 import { AcademicYearPageComponent } from '../pages/academic-year/academic-year.component';
 import { ClassesSectionsPageComponent } from '../pages/classes-sections/classes-sections.component';
 import { SubjectsMappingPageComponent } from '../pages/subjects-mapping/subjects-mapping.component';
 import { TeacherAllocationPageComponent } from '../pages/teacher-allocation/teacher-allocation.component';
 import { TimetablePageComponent } from '../pages/timetable/timetable.component';
-import { AcademicTeacherArrangementPageComponent } from '../pages/teacher-arrangement/teacher-arrangement.component';
-import { AcademicCalendarPageComponent } from '../pages/calendar/calendar.component';
-import { AcademicSyllabusPageComponent } from '../pages/syllabus/syllabus.component';
-import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { MyClassesPageComponent } from '../pages/my-classes/my-classes.component';
+import { MyTimetablePageComponent } from '../pages/my-timetable/my-timetable.component';
+import { AcademicStructurePageComponent } from '../pages/academic-structure/academic-structure.component';
+import { MyAcademicsPageComponent } from '../pages/my-academics/my-academics.component';
+import { PermissionService } from '../../../../core/services/permission.service';
 
 @Component({
   selector: 'app-academics-workspace',
@@ -29,26 +24,20 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
     CommonModule,
     RouterLink,
     RouterLinkActive,
-    ToastModule,
-    SaasPageHeaderComponent,
+    AcademicsOverviewPageComponent,
     AcademicYearPageComponent,
     ClassesSectionsPageComponent,
     SubjectsMappingPageComponent,
     TeacherAllocationPageComponent,
     TimetablePageComponent,
-    AcademicTeacherArrangementPageComponent,
-    AcademicCalendarPageComponent,
-    AcademicSyllabusPageComponent
+    MyClassesPageComponent,
+    MyTimetablePageComponent,
+    AcademicStructurePageComponent,
+    MyAcademicsPageComponent
   ],
   template: `
     <div class="academics-workspace">
-      <tc-saas-page-header
-        *ngIf="!isStandalonePage"
-        [title]="currentPage.title"
-        [subtitle]="currentPage.description">
-      </tc-saas-page-header>
-
-      <nav class="academics-nav">
+      <nav class="academics-nav" *ngIf="pages.length > 1">
         <a *ngFor="let item of pages"
            [routerLink]="item.route"
            routerLinkActive="is-active"
@@ -59,54 +48,16 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
       </nav>
 
       <main class="academics-main">
-        <ng-container *ngIf="activePage === 'academic-year'">
-          <app-academic-year-page></app-academic-year-page>
-        </ng-container>
-
-        <ng-container *ngIf="activePage === 'classes-sections'">
-          <app-classes-sections-page></app-classes-sections-page>
-        </ng-container>
-
-        <ng-container *ngIf="activePage === 'subjects-mapping'">
-          <app-subjects-mapping-page></app-subjects-mapping-page>
-        </ng-container>
-
-        <ng-container *ngIf="activePage === 'teacher-allocation'">
-          <app-teacher-allocation-page></app-teacher-allocation-page>
-        </ng-container>
-
-        <ng-container *ngIf="activePage === 'timetable'">
-          <app-timetable-page></app-timetable-page>
-        </ng-container>
-
-        <ng-container *ngIf="!isStandalonePage">
-          <div class="academics-loading" *ngIf="loading">
-            <div class="loading-spinner"></div>
-            <span>Loading academics data...</span>
-          </div>
-
-          <ng-container *ngIf="!loading">
-            <ng-container [ngSwitch]="activePage">
-              <app-academic-teacher-arrangement-page
-                *ngSwitchCase="'teacher-arrangement'"
-                [data]="data"
-                (dataChanged)="refresh(selectedYearId)">
-              </app-academic-teacher-arrangement-page>
-
-              <app-academic-calendar-page
-                *ngSwitchCase="'calendar'"
-                [data]="data"
-                (dataChanged)="refresh(selectedYearId)">
-              </app-academic-calendar-page>
-
-              <app-academic-syllabus-page
-                *ngSwitchCase="'syllabus'"
-                [data]="data"
-                (dataChanged)="refresh(selectedYearId)">
-              </app-academic-syllabus-page>
-            </ng-container>
-          </ng-container>
-        </ng-container>
+        <ng-container *ngIf="activePage === 'overview'"><app-academics-overview-page></app-academics-overview-page></ng-container>
+        <ng-container *ngIf="activePage === 'academic-year'"><app-academic-year-page></app-academic-year-page></ng-container>
+        <ng-container *ngIf="activePage === 'classes-sections'"><app-classes-sections-page></app-classes-sections-page></ng-container>
+        <ng-container *ngIf="activePage === 'subjects-mapping'"><app-subjects-mapping-page></app-subjects-mapping-page></ng-container>
+        <ng-container *ngIf="activePage === 'teacher-allocation'"><app-teacher-allocation-page></app-teacher-allocation-page></ng-container>
+        <ng-container *ngIf="activePage === 'timetable'"><app-timetable-page></app-timetable-page></ng-container>
+        <ng-container *ngIf="activePage === 'my-classes'"><app-my-classes-page></app-my-classes-page></ng-container>
+        <ng-container *ngIf="activePage === 'my-timetable'"><app-my-timetable-page></app-my-timetable-page></ng-container>
+        <ng-container *ngIf="activePage === 'academic-structure'"><app-academic-structure-page></app-academic-structure-page></ng-container>
+        <ng-container *ngIf="activePage === 'my-academics'"><app-my-academics-page></app-my-academics-page></ng-container>
       </main>
     </div>
   `,
@@ -118,82 +69,33 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
     .academics-nav__link:hover { background: var(--tc-bg-muted); color: var(--tc-text); }
     .academics-nav__link.is-active { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
     .academics-main { flex: 1; }
-    .academics-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 0.75rem; color: var(--tc-text-muted); font-size: 0.9rem; }
-    .loading-spinner { width: 32px; height: 32px; border: 3px solid var(--tc-border); border-top-color: var(--tc-primary-600); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
 export class AcademicsWorkspaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly workspaceService = inject(AcademicsWorkspaceService);
-  private readonly messageService = inject(MessageService);
+  private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly pages = ACADEMICS_PAGES;
-
-  data: AcademicsWorkspaceData = this.emptyData();
-  activePage: AcademicsWorkspacePage = 'academic-year';
-  selectedYearId?: number;
-  loading = true;
+  pages: AcademicsPageConfig[] = [];
+  activePage: AcademicsWorkspacePage = 'overview';
 
   get currentPage() {
     return pageConfig(this.activePage);
   }
 
-  get isStandalonePage(): boolean {
-    return this.activePage === 'academic-year'
-      || this.activePage === 'classes-sections'
-      || this.activePage === 'subjects-mapping'
-      || this.activePage === 'teacher-allocation'
-      || this.activePage === 'timetable';
-  }
-
   ngOnInit(): void {
+    this.pages = ACADEMICS_PAGES.filter((p) =>
+      this.permissions.canView(ACADEMICS_PAGE_RESOURCE[p.page])
+    );
+    // If permission cache is empty (still loading), show all pages to avoid blank nav.
+    if (!this.pages.length) {
+      this.pages = [...ACADEMICS_PAGES];
+    }
+
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
-      this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'academic-year';
+      this.activePage = (data['workspacePage'] as AcademicsWorkspacePage | undefined) ?? 'overview';
       this.cdr.markForCheck();
-      if (this.isStandalonePage) {
-        this.loading = false;
-      } else {
-        this.refresh();
-      }
     });
   }
-
-  onYearChanged(yearId: number): void {
-    this.selectedYearId = yearId;
-    this.refresh(yearId);
-  }
-
-  refresh(yearId?: number): void {
-    this.loading = true;
-    this.workspaceService.loadWorkspaceData(yearId ?? this.selectedYearId)
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.cdr.markForCheck();
-      }), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: data => {
-          this.data = data;
-          if (!this.selectedYearId && data.currentYear) {
-            this.selectedYearId = data.currentYear.academicYearId ?? data.currentYear.id;
-          }
-        },
-        error: () => {
-          this.data = this.emptyData();
-          this.messageService.add({ severity: 'error', summary: 'Academics unavailable', detail: 'Unable to load academic workspace data.' });
-        }
-      });
-  }
-
-  private emptyData(): AcademicsWorkspaceData {
-    return {
-      academicYears: [], currentYear: null, classes: [], sections: [], subjects: [],
-      staff: [], teacherAllocations: [], classTeacherAssignments: [], timetableSlots: [],
-      calendarEvents: [], academicSettings: [], syllabi: [], shifts: [], periodTemplates: [],
-      teacherAbsences: [], timetableConflicts: [], syllabusProgress: null
-    };
-  }
 }
-

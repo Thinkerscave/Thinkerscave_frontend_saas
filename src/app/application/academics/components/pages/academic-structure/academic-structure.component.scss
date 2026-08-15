@@ -1,0 +1,30 @@
+:host { display: block; }
+.as-page { padding: 1.25rem 1.5rem 2rem; color: #0f172a; }
+.as-breadcrumb { display: flex; gap: .4rem; font-size: .8rem; color: #64748b; margin-bottom: .35rem; }
+.as-breadcrumb a { color: #64748b; text-decoration: none; }
+.as-header__row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.as-header h1 { margin: 0; font-size: 1.75rem; }
+.as-header p { margin: .35rem 0 0; color: #64748b; }
+.as-summary { margin-top: 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+.as-summary > div { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: .85rem; }
+.as-summary strong { display: block; font-size: 1.25rem; }
+.as-summary span { color: #64748b; font-size: .8rem; }
+.as-layout { margin-top: 1rem; display: grid; grid-template-columns: 1fr 1.1fr; gap: .85rem; }
+.as-list, .as-detail { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: .85rem; }
+.as-class { padding: .7rem; border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
+.as-class:hover, .as-class.active { background: #eff6ff; border-color: #bfdbfe; }
+.as-class__top { display: flex; gap: .45rem; align-items: center; }
+.as-class h3 { margin: 0; font-size: 1rem; }
+.as-class p { margin: .25rem 0 0; color: #64748b; font-size: .8rem; }
+.as-star { color: #d97706; font-weight: 700; }
+.as-detail__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
+.as-detail__head h2 { margin: 0; font-size: 1.2rem; }
+.as-section { padding: .65rem 0; border-bottom: 1px solid #f1f5f9; }
+.as-subjects { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+.as-subjects span { background: #f1f5f9; border-radius: 999px; padding: .2rem .55rem; font-size: .78rem; }
+.as-actions { display: flex; gap: .75rem; margin-top: .85rem; }
+.as-actions a { color: #2563eb; font-weight: 600; text-decoration: none; }
+.as-empty { color: #64748b; text-align: center; padding: 2rem 0; }
+@media (max-width: 900px) {
+  .as-layout, .as-summary { grid-template-columns: 1fr; }
+}

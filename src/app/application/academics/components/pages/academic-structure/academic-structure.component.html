@@ -1,0 +1,51 @@
+<p-toast></p-toast>
+<div class="as-page" *ngIf="!loading; else loadingTpl">
+  <header class="as-header">
+    <nav class="as-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>Academic Structure</strong></nav>
+    <div class="as-header__row">
+      <div>
+        <h1>Academic Structure</h1>
+        <p>Explore classes, sections and subjects related to your teaching assignments.</p>
+      </div>
+      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+    </div>
+  </header>
+
+  <div class="as-summary" *ngIf="data as d">
+    <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>
+    <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
+    <div><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
+  </div>
+
+  <div class="as-layout" *ngIf="data as d">
+    <div class="as-list">
+      <article class="as-class" *ngFor="let c of d.classes" [class.active]="selectedClassId === c.classId" (click)="selectedClassId = c.classId">
+        <div class="as-class__top">
+          <h3>{{ c.className }}</h3>
+          <code *ngIf="c.classCode">{{ c.classCode }}</code>
+          <span class="as-star" title="You teach here">★</span>
+        </div>
+        <p>{{ c.sections.length }} sections · {{ subjectCountFor(c) }} subjects</p>
+      </article>
+      <div class="as-empty" *ngIf="!d.classes?.length">No structure linked to your allocations.</div>
+    </div>
+
+    <aside class="as-detail" *ngIf="selectedClass as cls">
+      <div class="as-detail__head">
+        <h2>{{ cls.className }}</h2>
+        <span class="as-star">★ You teach here</span>
+      </div>
+      <div class="as-section" *ngFor="let s of cls.sections">
+        <strong>Section {{ s.sectionName }}</strong>
+        <div class="as-subjects">
+          <span *ngFor="let sub of s.subjects">{{ sub.subjectName }} · {{ sub.weeklyPeriods }}/wk</span>
+        </div>
+      </div>
+      <div class="as-actions">
+        <a routerLink="/app/academics/my-classes">My Classes</a>
+        <a routerLink="/app/academics/my-timetable">My Timetable</a>
+      </div>
+    </aside>
+  </div>
+</div>
+<ng-template #loadingTpl><div class="as-empty">Loading structure…</div></ng-template>

@@ -113,6 +113,13 @@ export class SubjectsMappingPageComponent implements OnInit {
     return this.permissions.canManage(this.resource) && !this.readOnly;
   }
 
+  get mappingProgressPercent(): number {
+    const board = this.mappingBoard;
+    const total = board?.mappings?.length || 0;
+    if (!total) return 0;
+    return Math.round(((board?.includedCount || 0) * 100) / total);
+  }
+
   ngOnInit(): void {
     this.yearApi.search().subscribe({
       next: (years) => {

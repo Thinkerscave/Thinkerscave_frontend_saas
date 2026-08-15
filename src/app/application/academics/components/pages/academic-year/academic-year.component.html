@@ -212,6 +212,13 @@
               </td>
               <td>
                 <button type="button" class="ay-link" (click)="onHistoryAction(year)">{{ primaryHistoryAction(year) }}</button>
+                <button
+                  type="button"
+                  class="ay-link ay-link--danger"
+                  *tcHasPerm="resource; action: 'manage'"
+                  (click)="deactivate(year)">
+                  Deactivate
+                </button>
               </td>
             </tr>
           </ng-template>
@@ -235,9 +242,9 @@
         <a class="ay-side-link" routerLink="/app/academics/classes-sections">
           <i class="pi pi-sitemap"></i> View Academic Structure
         </a>
-        <a class="ay-side-link" routerLink="/app/academics/classes-sections">
+        <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openTransition()">
           <i class="pi pi-refresh"></i> Academic Year Transition
-        </a>
+        </button>
       </div>
       <div class="ay-side-card ay-side-card--help">
         <h4>Need Help?</h4>
@@ -299,5 +306,72 @@
   <div class="ay-form__actions">
     <button type="button" class="ay-btn ay-btn--ghost" (click)="showReject = false">Cancel</button>
     <button type="button" class="ay-btn ay-btn--danger" (click)="confirmReject()" [disabled]="!rejectReason.trim()">Reject</button>
+  </div>
+</p-dialog>
+
+<!-- Transition dialog -->
+<p-dialog
+  header="Academic Year Transition"
+  [(visible)]="showTransition"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [draggable]="false">
+  <div class="ay-form">
+    <p class="ay-muted">
+      Copy structure from <strong>{{ dashboard?.currentYear?.name }}</strong> into a preparing year.
+    </p>
+    <label>
+      Target academic year *
+      <p-dropdown
+        [options]="transitionYears"
+        [(ngModel)]="transitionTargetYearId"
+        optionLabel="name"
+        optionValue="academicYearId"
+        placeholder="Select target year"
+        [style]="{ width: '100%' }">
+      </p-dropdown>
+    </label>
+    <div class="ay-checkboxes">
+      <label><input type="checkbox" [(ngModel)]="transitionCopyClasses" /> Classes</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopySections" /> Sections</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopySubjects" /> Subjects</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopyMappings" /> Subject mappings</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopyAllocations" /> Teacher allocations</label>
+    </div>
+    <div class="ay-form__actions">
+      <button type="button" class="ay-btn ay-btn--ghost" (click)="showTransition = false">Close</button>
+      <button
+        type="button"
+        class="ay-btn ay-btn--primary"
+        [disabled]="transitionSaving || !transitionTargetYearId"
+        (click)="createTransition()">
+        {{ transitionSaving ? 'Creating…' : 'Create Transition' }}
+      </button>
+    </div>
+
+    <h4 *ngIf="transitions.length">Existing transitions</h4>
+    <div class="ay-transition-row" *ngFor="let t of transitions">
+      <div>
+        <strong>{{ t.sourceAcademicYearName || t.sourceAcademicYearId }} → {{ t.targetAcademicYearName || t.targetAcademicYearId }}</strong>
+        <div class="ay-muted">{{ transitionStatusLabel(t.status) }}</div>
+        <small class="ay-muted" *ngIf="t.failureReason">{{ t.failureReason }}</small>
+      </div>
+      <div class="ay-transition-actions">
+        <button
+          type="button"
+          class="ay-btn ay-btn--ghost"
+          *ngIf="t.status === 'NOT_STARTED'"
+          (click)="startTransition(t)">
+          Start
+        </button>
+        <button
+          type="button"
+          class="ay-btn ay-btn--primary"
+          *ngIf="t.status === 'READY' || t.status === 'PENDING_APPROVAL'"
+          (click)="approveTransition(t)">
+          Approve
+        </button>
+      </div>
+    </div>
   </div>
 </p-dialog>

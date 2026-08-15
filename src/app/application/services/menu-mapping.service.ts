@@ -435,14 +435,18 @@ export class MenuMappingService {
       {
         label: 'Academics',
         icon: 'pi pi-book',
-        routerLink: ['/app/academics/academic-setup'],
+        routerLink: ['/app/academics/overview'],
         items: [
+          { label: 'Overview', icon: 'pi pi-chart-bar', routerLink: ['/app/academics/overview'] },
           { label: 'Academic Year', icon: 'pi pi-calendar', routerLink: ['/app/academics/academic-year'] },
           { label: 'Classes & Sections', icon: 'pi pi-th-large', routerLink: ['/app/academics/classes-sections'] },
           { label: 'Subjects & Mapping', icon: 'pi pi-book', routerLink: ['/app/academics/subjects-mapping'] },
           { label: 'Teacher Allocation', icon: 'pi pi-user-edit', routerLink: ['/app/academics/teacher-allocation'] },
-          { label: 'Timetable', icon: 'pi pi-calendar', routerLink: ['/app/academics/timetable'] },
-          { label: 'Teacher Arrangement', icon: 'pi pi-users', routerLink: ['/app/academics/teacher-arrangement'] }
+          { label: 'Timetable', icon: 'pi pi-table', routerLink: ['/app/academics/timetable'] },
+          { label: 'My Classes', icon: 'pi pi-id-card', routerLink: ['/app/academics/my-classes'] },
+          { label: 'My Timetable', icon: 'pi pi-clock', routerLink: ['/app/academics/my-timetable'] },
+          { label: 'Academic Structure', icon: 'pi pi-sitemap', routerLink: ['/app/academics/academic-structure'] },
+          { label: 'My Academics', icon: 'pi pi-graduation-cap', routerLink: ['/app/academics/my-academics'] }
         ]
       },
       {

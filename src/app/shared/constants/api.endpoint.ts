@@ -85,6 +85,14 @@ export const academicsApi = {
   syllabusProgress: (id: number) => `${BASE}/academics/syllabus/${id}/progress`,
   topicProgress: (topicId: number) => `${BASE}/academics/syllabus/topics/${topicId}/progress`,
   staffAll: `${BASE}/staff`,
+  yearOverview: (yearId: number) => `${BASE}/academics/years/${yearId}/overview`,
+  meClasses: `${BASE}/academics/me/classes`,
+  meTimetable: `${BASE}/academics/me/timetable`,
+  meStructure: `${BASE}/academics/me/structure`,
+  meAcademics: `${BASE}/academics/me/academics`,
+  yearTransitions: (yearId: number) => `${BASE}/academics/years/${yearId}/transitions`,
+  transitionStart: (id: number) => `${BASE}/academics/transitions/${id}/start`,
+  transitionApprove: (id: number) => `${BASE}/academics/transitions/${id}/approve`,
 };
 
 export const accessApi = {

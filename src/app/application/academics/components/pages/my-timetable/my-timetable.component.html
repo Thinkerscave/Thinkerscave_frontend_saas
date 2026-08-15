@@ -1,0 +1,97 @@
+<p-toast></p-toast>
+<div class="mt-page" *ngIf="!loading; else loadingTpl">
+  <header class="mt-header">
+    <nav class="mt-breadcrumb"><a routerLink="/app">Home</a><span>/</span><a routerLink="/app/academics">Academics</a><span>/</span><strong>My Timetable</strong></nav>
+    <div class="mt-header__row">
+      <div>
+        <h1>My Timetable</h1>
+        <p>Your published weekly schedule.</p>
+      </div>
+      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+    </div>
+  </header>
+
+  <div class="mt-summary" *ngIf="data">
+    <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>
+    <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
+    <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
+    <div class="orange"><strong>{{ summary.classes }}</strong><span>Classes / Sections</span></div>
+    <div class="pink"><strong>{{ summary.subjects }}</strong><span>Subjects</span></div>
+  </div>
+
+  <div class="mt-controls">
+    <div class="mt-toggle">
+      <button type="button" [class.active]="viewMode === 'week'" (click)="viewMode = 'week'">Week</button>
+      <button type="button" [class.active]="viewMode === 'day'" (click)="viewMode = 'day'">Day</button>
+    </div>
+    <select [(ngModel)]="classFilter">
+      <option value="">All My Classes</option>
+      <option *ngFor="let c of classOptions" [value]="c">{{ c }}</option>
+    </select>
+    <select [(ngModel)]="subjectFilter">
+      <option value="">All Subjects</option>
+      <option *ngFor="let s of subjectOptions" [value]="s">{{ s }}</option>
+    </select>
+  </div>
+
+  <div class="mt-layout" *ngIf="data as d">
+    <div class="mt-main">
+      <p class="mt-message" *ngIf="d.message">{{ d.message }}</p>
+      <table class="mt-grid" *ngIf="d.grid?.periods?.length; else emptyTpl">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
+              {{ day | titlecase }}
+              <small *ngIf="isToday(day)">TODAY</small>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of d.grid!.periods" [class.break]="p.slotKind === 'BREAK'">
+            <td>
+              <strong>{{ p.name || ('P' + p.periodNumber) }}</strong>
+              <div class="mt-muted" *ngIf="p.startTime">{{ p.startTime }}–{{ p.endTime }}</div>
+            </td>
+            <td *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
+              <ng-container *ngIf="p.slotKind === 'BREAK'; else cellTpl">Break</ng-container>
+              <ng-template #cellTpl>
+                <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
+                  <strong>{{ c.subjectName || '—' }}</strong>
+                  <span *ngIf="d.role === 'TEACHER' || d.role === 'STAFF'">
+                    {{ c.className }}{{ c.sectionName ? '-' + c.sectionName : '' }}
+                  </span>
+                  <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
+                  <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
+                </div>
+                <ng-template #free><span class="mt-free">Free</span></ng-template>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyTpl><div class="mt-empty">No published timetable available.</div></ng-template>
+    </div>
+    <aside class="mt-side">
+      <h3>Today's Schedule</h3>
+      <article *ngFor="let t of d.todaySchedule" class="mt-today" [class.current]="isCurrent(t.startTime, t.endTime)">
+        <div class="mt-today__time">{{ t.startTime }}–{{ t.endTime }}</div>
+        <div>
+          <strong>{{ t.subjectName || t.periodLabel || ('Period ' + t.periodNumber) }}</strong>
+          <div>{{ t.className }}{{ t.sectionName ? '-' + t.sectionName : '' }}</div>
+          <small>{{ t.roomName || '—' }}</small>
+        </div>
+        <span class="mt-now" *ngIf="isCurrent(t.startTime, t.endTime)">CURRENT</span>
+      </article>
+      <p class="mt-muted" *ngIf="!d.todaySchedule?.length">No classes scheduled today.</p>
+
+      <div class="mt-actions">
+        <a routerLink="/app/academics/my-classes">My Classes</a>
+        <a routerLink="/app/academics/academic-structure">Academic Structure</a>
+        <a routerLink="/app/academics/my-academics">My Academics</a>
+      </div>
+      <p class="mt-tip">Tip: Use Week/Day and filters to focus on your schedule quickly.</p>
+    </aside>
+  </div>
+</div>
+<ng-template #loadingTpl><div class="mt-empty">Loading timetable…</div></ng-template>
