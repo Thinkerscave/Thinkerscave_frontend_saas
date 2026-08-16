@@ -1,7 +1,10 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="sm-page" *ngIf="!loading; else loadingTpl">
+<div class="sm-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
     <button
       type="button"
       class="sm-btn sm-btn--primary"
@@ -43,26 +46,31 @@
   <div class="sm-workspace">
   <!-- Subjects pane -->
   <section class="sm-pane" [class.sm-pane--hidden-mobile]="activeTab === 'mapping'">
-    <div class="sm-toolbar">
+    <div class="acad-toolbar">
       <input
+        class="acad-toolbar__search"
         type="search"
-        placeholder="Search subjects..."
+        placeholder="Search…"
         [(ngModel)]="searchTerm"
         (ngModelChange)="reload()" />
-      <p-dropdown
-        [options]="categoryOptions"
-        [(ngModel)]="categoryFilter"
-        (onChange)="reload()"
-        optionLabel="label"
-        optionValue="value">
-      </p-dropdown>
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="activeFilter"
-        (onChange)="reload()"
-        optionLabel="label"
-        optionValue="value">
-      </p-dropdown>
+      <div class="acad-toolbar__filters">
+        <p-dropdown
+          [options]="categoryOptions"
+          [(ngModel)]="categoryFilter"
+          (onChange)="reload()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Category">
+        </p-dropdown>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="activeFilter"
+          (onChange)="reload()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Status">
+        </p-dropdown>
+      </div>
     </div>
 
     <div class="sm-list" *ngIf="dashboard?.subjects?.length; else emptySubjects">

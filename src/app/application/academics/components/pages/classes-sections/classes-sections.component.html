@@ -1,11 +1,14 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="cs-page" *ngIf="!loading; else loadingTpl">
+<div class="cs-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
     <button
       type="button"
-      class="cs-btn cs-btn--primary"
+      class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="readOnly"
       (click)="openCreateClass()">
@@ -29,43 +32,61 @@
       <span class="cs-badge" [class.cs-badge--success]="dash.academicYearStatus === 'CURRENT'">
         {{ dash.academicYearStatus }}
       </span>
-      <span class="cs-readonly" *ngIf="dash.yearReadOnly">Viewing Historical Academic Year · Read Only</span>
+      <span class="cs-readonly" *ngIf="dash.yearReadOnly">Historical · Read Only</span>
     </div>
     <div class="cs-context__meta">
       {{ dash.classCount }} Classes · {{ dash.sectionCount }} Sections · {{ dash.studentCount }} Students
     </div>
   </div>
 
-  <div class="cs-toolbar">
+  <div class="acad-toolbar">
     <input
+      class="acad-toolbar__search"
       type="search"
-      placeholder="Search classes..."
+      placeholder="Search…"
       [(ngModel)]="searchTerm"
       (ngModelChange)="reload()" />
-    <p-dropdown
-      [options]="stageOptions"
-      [(ngModel)]="stageFilter"
-      (onChange)="reload()"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="All Stages">
-    </p-dropdown>
-    <p-dropdown
-      [options]="statusOptions"
-      [(ngModel)]="activeFilter"
-      (onChange)="reload()"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="All Status">
-    </p-dropdown>
-    <div class="cs-view-toggle">
-      <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'"><i class="pi pi-th-large"></i></button>
-      <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'"><i class="pi pi-list"></i></button>
+    <div class="acad-toolbar__filters">
+      <p-dropdown
+        [options]="stageOptions"
+        [(ngModel)]="stageFilter"
+        (onChange)="reload()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Stage"
+        styleClass="cs-filter-dd">
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="activeFilter"
+        (onChange)="reload()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        styleClass="cs-filter-dd">
+      </p-dropdown>
+    </div>
+    <div class="acad-toolbar__end">
+      <div class="cs-view-toggle">
+        <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" aria-label="Grid view">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" aria-label="List view">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="cs-grid" *ngIf="viewMode === 'grid' && dashboard?.classes?.length; else listOrEmpty">
-    <article class="cs-card" *ngFor="let cls of dashboard?.classes" [class.cs-card--inactive]="!cls.active">
+  <div class="cs-grid acad-stagger" *ngIf="viewMode === 'grid' && dashboard?.classes?.length; else listOrEmpty">
+    <article
+      class="cs-card acad-card-clickable"
+      *ngFor="let cls of dashboard?.classes"
+      [class.cs-card--inactive]="!cls.active"
+      (click)="openDetails(cls.classId)"
+      (keydown.enter)="openDetails(cls.classId)"
+      tabindex="0"
+      role="button">
       <div class="cs-card__top">
         <div>
           <h2>{{ cls.name }}</h2>
@@ -87,12 +108,13 @@
         <span>Class Teacher</span>
         <strong>{{ cls.classTeacherName || 'Not assigned' }}</strong>
       </div>
-      <div class="cs-card__actions">
-        <button type="button" class="cs-link" (click)="openDetails(cls.classId)">View Details →</button>
+      <div class="cs-card__actions" (click)="$event.stopPropagation()">
+        <span class="cs-hint">Open class</span>
         <button
           type="button"
           class="cs-icon-btn"
-          (click)="buildMenu(cls); classMenu.toggle($event)">
+          (click)="buildMenu(cls); classMenu.toggle($event)"
+          aria-label="More actions">
           <i class="pi pi-ellipsis-v"></i>
         </button>
       </div>
@@ -100,8 +122,14 @@
   </div>
 
   <ng-template #listOrEmpty>
-    <div class="cs-list" *ngIf="viewMode === 'list' && dashboard?.classes?.length; else emptyTpl">
-      <div class="cs-list-row" *ngFor="let cls of dashboard?.classes">
+    <div class="cs-list acad-stagger" *ngIf="viewMode === 'list' && dashboard?.classes?.length; else emptyTpl">
+      <div
+        class="cs-list-row acad-card-clickable"
+        *ngFor="let cls of dashboard?.classes"
+        (click)="openDetails(cls.classId)"
+        (keydown.enter)="openDetails(cls.classId)"
+        tabindex="0"
+        role="button">
         <div>
           <strong>{{ cls.name }}</strong>
           <code>{{ cls.code }}</code>
@@ -110,7 +138,9 @@
         <span>{{ cls.sectionCount || 0 }} sections</span>
         <span>{{ cls.studentCount || 0 }} students</span>
         <span class="cs-badge" [class.cs-badge--success]="cls.active">{{ cls.active ? 'Active' : 'Inactive' }}</span>
-        <button type="button" class="cs-link" (click)="openDetails(cls.classId)">View</button>
+        <button type="button" class="cs-icon-btn" (click)="$event.stopPropagation(); buildMenu(cls); classMenu.toggle($event)">
+          <i class="pi pi-ellipsis-v"></i>
+        </button>
       </div>
     </div>
   </ng-template>
@@ -119,7 +149,7 @@
     <div class="cs-empty">
       <h3>No classes yet</h3>
       <p>Create your first class for this academic year.</p>
-      <button type="button" class="cs-btn cs-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="readOnly" (click)="openCreateClass()">
+      <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="readOnly" (click)="openCreateClass()">
         Add Class
       </button>
     </div>
@@ -127,94 +157,14 @@
 </div>
 
 <ng-template #loadingTpl>
-  <div class="cs-loading">Loading classes…</div>
+  <div class="cs-loading acad-page">Loading classes…</div>
 </ng-template>
 
-<!-- Class details drawer -->
-<tc-drawer-form
-  [open]="showDetails"
-  size="md"
-  [title]="detailsClass?.name || 'Class details'"
-  [description]="detailsClass?.academicYearName || null"
-  (closed)="showDetails = false">
-  <ng-container *ngIf="detailsClass as cls">
-    <div class="cs-drawer-head">
-      <code>{{ cls.code }}</code>
-      <span class="cs-badge" [class.cs-badge--success]="cls.active">{{ cls.active ? 'Active' : 'Inactive' }}</span>
-      <button type="button" class="cs-btn cs-btn--ghost" *ngIf="canManage" (click)="openEditClass(cls)">Edit</button>
-    </div>
-
-    <div class="cs-tabs">
-      <button type="button" [class.active]="detailsTab === 'overview'" (click)="detailsTab = 'overview'">Overview</button>
-      <button type="button" [class.active]="detailsTab === 'sections'" (click)="detailsTab = 'sections'">Sections</button>
-    </div>
-
-    <div *ngIf="detailsTab === 'overview'" class="cs-overview">
-      <div><span>Academic Year</span><strong>{{ cls.academicYearName }}</strong></div>
-      <div><span>Stage</span><strong>{{ stageLabel(cls.stage) }}</strong></div>
-      <div><span>Class Code</span><strong>{{ cls.code }}</strong></div>
-      <div><span>Status</span><strong>{{ cls.active ? 'Active' : 'Inactive' }}</strong></div>
-      <div><span>Sections</span><strong>{{ cls.sectionCount || 0 }}</strong></div>
-      <div><span>Students</span><strong>{{ cls.studentCount || 0 }}</strong></div>
-      <div><span>Class Teacher</span><strong>{{ cls.classTeacherName || 'Not assigned' }}</strong></div>
-      <button type="button" class="cs-link" (click)="viewStudents(cls)">View Students →</button>
-    </div>
-
-    <div *ngIf="detailsTab === 'sections'">
-      <div class="cs-section-actions" *ngIf="canManage">
-        <button type="button" class="cs-btn cs-btn--primary" (click)="openAddSection(cls)">
-          <i class="pi pi-plus"></i> Add Section
-        </button>
-      </div>
-      <table class="cs-table" *ngIf="cls.sections?.length; else noSections">
-        <thead>
-          <tr>
-            <th>Section</th>
-            <th>Students</th>
-            <th>Class Teacher</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let section of cls.sections">
-            <td><strong>{{ section.name }}</strong><div><code>{{ section.code }}</code></div></td>
-            <td>{{ section.studentCount || 0 }}</td>
-            <td>{{ section.classTeacherName || '—' }}</td>
-            <td>{{ section.active ? 'Active' : 'Inactive' }}</td>
-            <td class="cs-row-actions">
-              <button type="button" class="cs-link" (click)="viewStudents(cls, section)">Students</button>
-              <button type="button" class="cs-link" *ngIf="canManage" (click)="openEditSection(section)">Edit</button>
-              <button
-                type="button"
-                class="cs-link"
-                *ngIf="canManage"
-                (click)="toggleSectionActive(section, !section.active)">
-                {{ section.active ? 'Deactivate' : 'Activate' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <ng-template #noSections>
-        <p class="cs-muted">No sections yet.</p>
-      </ng-template>
-    </div>
-
-    <div class="cs-prompt" *ngIf="promptAddSectionsAfterCreate && canManage">
-      <p>Would you like to add sections now?</p>
-      <button type="button" class="cs-btn cs-btn--primary" (click)="detailsTab = 'sections'; openAddSection(cls)">Add Sections</button>
-      <button type="button" class="cs-btn cs-btn--ghost" (click)="promptAddSectionsAfterCreate = false; showDetails = false; reload()">Do Later</button>
-    </div>
-  </ng-container>
-</tc-drawer-form>
-
-<!-- Create / edit class -->
 <p-dialog
   [header]="editingClassId ? 'Edit Class' : 'Add Class'"
   [(visible)]="showClassDialog"
   [modal]="true"
-  [style]="{ width: '480px' }"
+  [style]="{ width: 'min(480px, 94vw)' }"
   [draggable]="false">
   <form class="cs-form" [formGroup]="classForm" (ngSubmit)="saveClass()">
     <label>
@@ -235,47 +185,8 @@
       </p-dropdown>
     </label>
     <div class="cs-form__actions">
-      <button type="button" class="cs-btn cs-btn--ghost" (click)="showClassDialog = false">Cancel</button>
-      <button type="submit" class="cs-btn cs-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-    </div>
-  </form>
-</p-dialog>
-
-<!-- Create / edit section -->
-<p-dialog
-  [header]="editingSectionId ? 'Edit Section' : 'Add Section'"
-  [(visible)]="showSectionDialog"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  [draggable]="false">
-  <p class="cs-muted" *ngIf="detailsClass">{{ detailsClass.name }} · {{ detailsClass.academicYearName }}</p>
-  <form class="cs-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
-    <label>
-      Section Name *
-      <input type="text" formControlName="name" placeholder="A" (blur)="suggestSectionCode()" />
-    </label>
-    <label>
-      Section Code
-      <input type="text" formControlName="code" placeholder="VIII-A" />
-    </label>
-    <label>
-      Capacity
-      <input type="number" formControlName="capacity" min="1" />
-    </label>
-    <label>
-      Class Teacher
-      <p-dropdown
-        [options]="staffOptions"
-        formControlName="classTeacherStaffId"
-        optionLabel="label"
-        optionValue="value"
-        [showClear]="true"
-        placeholder="Select teacher">
-      </p-dropdown>
-    </label>
-    <div class="cs-form__actions">
-      <button type="button" class="cs-btn cs-btn--ghost" (click)="showSectionDialog = false">Cancel</button>
-      <button type="submit" class="cs-btn cs-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+      <button type="button" class="tc-btn" (click)="showClassDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
     </div>
   </form>
 </p-dialog>

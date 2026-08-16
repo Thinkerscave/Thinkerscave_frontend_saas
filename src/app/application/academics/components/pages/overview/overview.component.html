@@ -1,4 +1,4 @@
-<div class="ov-page" *ngIf="!loading; else loadingTpl">
+<div class="ov-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
     <p-dropdown
       [options]="years"
@@ -8,7 +8,7 @@
       optionValue="academicYearId">
     </p-dropdown>
     <span class="ov-pill" *ngIf="overview?.yearHeader?.status === 'CURRENT'">Active</span>
-    <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year">View Academic Year Details</a>
+    <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }">Academic Year</a>
   </tc-saas-page-header>
 
   <ng-container *ngIf="overview as ov">
@@ -45,50 +45,44 @@
       </div>
     </section>
 
-    <section class="ov-cards">
-      <a class="ov-card" routerLink="/app/academics/classes-sections">
+    <section class="ov-cards acad-stagger">
+      <a class="ov-card" routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-th-large ov-card__icon"></i>
         <strong>{{ ov.structureCounts.classesTotal }}</strong>
         <span>Classes</span>
         <small>{{ ov.structureCounts.classesActive }} Active</small>
-        <em>View Classes →</em>
       </a>
-      <a class="ov-card" routerLink="/app/academics/classes-sections">
+      <a class="ov-card" routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-sitemap ov-card__icon"></i>
         <strong>{{ ov.structureCounts.sectionsTotal }}</strong>
         <span>Sections</span>
         <small>{{ ov.structureCounts.sectionsActive }} Active · {{ ov.structureCounts.sectionsTotal - ov.structureCounts.sectionsActive }} Inactive</small>
-        <em>View Sections →</em>
       </a>
-      <a class="ov-card" routerLink="/app/students/directory">
+      <a class="ov-card" routerLink="/app/students/directory" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-users ov-card__icon"></i>
         <strong>{{ ov.structureCounts.studentsActive }}</strong>
         <span>Students</span>
         <small>All Active</small>
-        <em>View Students →</em>
       </a>
-      <a class="ov-card" routerLink="/app/academics/subjects-mapping">
+      <a class="ov-card" routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-book ov-card__icon"></i>
         <strong>{{ ov.structureCounts.subjectsTotal }}</strong>
         <span>Subjects</span>
         <small>{{ ov.structureCounts.subjectsActive }} Active · {{ ov.structureCounts.subjectsTotal - ov.structureCounts.subjectsActive }} Inactive</small>
-        <em>View Subjects →</em>
       </a>
-      <a class="ov-card" routerLink="/app/academics/subjects-mapping">
+      <a class="ov-card" routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-link ov-card__icon"></i>
         <strong>{{ ov.mapping.subjectsMapped }}/{{ ov.mapping.subjectsTotal }}</strong>
         <span>Subject Mapping</span>
         <small>{{ ov.mapping.pendingMappings || 0 }} Pending</small>
-        <em>Review Mapping →</em>
       </a>
-      <a class="ov-card" routerLink="/app/academics/teacher-allocation">
+      <a class="ov-card" routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-user-edit ov-card__icon"></i>
         <strong>{{ ov.allocation.assignedSlots }}/{{ ov.allocation.totalSlots }}</strong>
         <span>Teacher Allocation</span>
         <small>{{ ov.allocation.missingSlots || 0 }} Pending</small>
-        <em>Review Allocation →</em>
       </a>
-      <a class="ov-card ov-card--status" routerLink="/app/academics/timetable">
+      <a class="ov-card ov-card--status" routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-calendar ov-card__icon"></i>
         <strong class="ov-card__status">{{ timetableHeadline(ov) }}</strong>
         <span>Timetable Status</span>
@@ -96,7 +90,6 @@
         <ng-template #timetableConflictsTpl>
           <small>{{ ov.timetable.openBlockingConflicts || 0 }} Blocking Conflicts</small>
         </ng-template>
-        <em>View Timetable →</em>
       </a>
     </section>
 
@@ -104,7 +97,7 @@
       <article class="ov-panel">
         <div class="ov-panel__head">
           <h3>Academic Structure Snapshot</h3>
-          <a routerLink="/app/academics/classes-sections">View All →</a>
+          <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">View All →</a>
         </div>
         <div class="ov-tabs">
           <button type="button" [class.active]="snapshotTab === 'classes'" (click)="snapshotTab = 'classes'">Classes</button>
@@ -235,14 +228,14 @@
     </section>
 
     <section class="ov-actions">
-      <a routerLink="/app/academics/academic-year"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
-      <a routerLink="/app/academics/classes-sections"><i class="pi pi-th-large"></i> Add Class</a>
-      <a routerLink="/app/academics/classes-sections"><i class="pi pi-sitemap"></i> Add Section</a>
-      <a routerLink="/app/academics/subjects-mapping"><i class="pi pi-book"></i> Add Subject</a>
-      <a routerLink="/app/academics/subjects-mapping"><i class="pi pi-link"></i> Map Subjects</a>
-      <a routerLink="/app/academics/teacher-allocation"><i class="pi pi-user-edit"></i> Assign Teachers</a>
-      <a routerLink="/app/academics/timetable"><i class="pi pi-cog"></i> Configure Timetable</a>
-      <a routerLink="/app/academics/timetable"><i class="pi pi-sparkles"></i> Generate Timetable</a>
+      <a routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
+      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-th-large"></i> Add Class</a>
+      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-sitemap"></i> Add Section</a>
+      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-book"></i> Add Subject</a>
+      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-link"></i> Map Subjects</a>
+      <a routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'overview' }"><i class="pi pi-user-edit"></i> Assign Teachers</a>
+      <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-cog"></i> Configure Timetable</a>
+      <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-sparkles"></i> Generate Timetable</a>
     </section>
   </ng-container>
 </div>

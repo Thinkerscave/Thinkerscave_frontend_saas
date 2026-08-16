@@ -1,7 +1,10 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="ay-page" *ngIf="!loading; else loadingTpl">
+<div class="ay-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
     <button
       type="button"
       class="ay-btn ay-btn--primary"

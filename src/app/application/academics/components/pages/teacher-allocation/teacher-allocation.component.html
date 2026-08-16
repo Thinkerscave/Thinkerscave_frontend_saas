@@ -1,8 +1,11 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="ta-page" *ngIf="!loading; else loadingTpl">
+<div class="ta-page acad-page" *ngIf="!loading; else loadingTpl">
 
   <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
     <p-dropdown
       [options]="years"
       [(ngModel)]="selectedYearId"

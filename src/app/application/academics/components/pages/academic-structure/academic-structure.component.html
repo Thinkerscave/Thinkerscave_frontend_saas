@@ -1,4 +1,4 @@
-<div class="as-page" *ngIf="!loading; else loadingTpl">
+<div class="as-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
     <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
   </tc-saas-page-header>

@@ -7,7 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -20,6 +20,7 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
+import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicClassDto } from '../../../models/classes-sections.model';
 import {
@@ -61,6 +62,8 @@ export class SubjectsMappingPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   readonly permissions = inject(PermissionService);
@@ -80,6 +83,7 @@ export class SubjectsMappingPageComponent implements OnInit {
 
   loading = true;
   saving = false;
+  showBack = false;
   activeTab: 'subjects' | 'mapping' = 'subjects';
   years: AcademicYearDto[] = [];
   classes: AcademicClassDto[] = [];
@@ -121,6 +125,7 @@ export class SubjectsMappingPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.showBack = !!this.route.snapshot.queryParamMap.get('from');
     this.yearApi.search().subscribe({
       next: (years) => {
         this.years = years;
@@ -139,6 +144,10 @@ export class SubjectsMappingPageComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  goBack(): void {
+    this.nav.back(this.route);
   }
 
   reload(): void {

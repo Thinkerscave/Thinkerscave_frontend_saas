@@ -28,6 +28,11 @@ export const ACADEMICS_PAGES = {
     breadcrumb: 'Classes & Sections',
     pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.'
   },
+  classDetail: {
+    breadcrumb: 'Class',
+    breadcrumbLink: ['/app/academics/classes-sections'],
+    pageSubtitle: 'Sections, teachers and related academic setup for this class.'
+  },
   subjectsMapping: {
     breadcrumb: 'Subjects & Mapping',
     pageSubtitle: 'Define subjects and map them to the classes that teach them.'

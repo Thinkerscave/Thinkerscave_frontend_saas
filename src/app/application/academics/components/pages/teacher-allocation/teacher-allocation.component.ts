@@ -20,6 +20,7 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
+import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicClassDto } from '../../../models/classes-sections.model';
 import {
@@ -55,6 +56,7 @@ export class TeacherAllocationPageComponent implements OnInit {
   private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly nav = inject(AcademicsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
@@ -70,6 +72,7 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   loading = true;
   saving = false;
+  showBack = false;
   years: AcademicYearDto[] = [];
   classes: AcademicClassDto[] = [];
   classOptions: { label: string; value: number | null }[] = [{ label: 'All Classes', value: null }];
@@ -104,6 +107,7 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
+    this.showBack = !!qp.get('from');
     const qpClass = qp.get('classId');
     const qpSubject = qp.get('subjectId');
     const qpYear = qp.get('academicYearId');
@@ -131,6 +135,10 @@ export class TeacherAllocationPageComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  goBack(): void {
+    this.nav.back(this.route);
   }
 
   reload(): void {
