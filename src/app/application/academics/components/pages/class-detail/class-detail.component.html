@@ -1,15 +1,8 @@
 <p-confirmDialog></p-confirmDialog>
+<p-menu #sectionMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="cd-page acad-page" *ngIf="!loading && cls as c; else loadingTpl">
+<div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
   <tc-saas-page-header>
-    <div class="cd-header-meta">
-      <code>{{ c.code }}</code>
-      <tc-saas-pill
-        [label]="c.active ? 'Active' : 'Inactive'"
-        [tone]="c.active ? 'success' : 'neutral'">
-      </tc-saas-pill>
-      <tc-saas-pill [label]="stageLabel(c.stage)" tone="info"></tc-saas-pill>
-    </div>
     <button type="button" class="tc-btn tc-btn--back" (click)="back()">
       <i class="pi pi-arrow-left"></i> Back
     </button>
@@ -26,58 +19,106 @@
       class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage"
-      (click)="activeTab = 'sections'; openAddSection()">
+      (click)="openAddSection()">
       <i class="pi pi-plus"></i> Add Section
     </button>
   </tc-saas-page-header>
 
-  <div class="cd-tabs" role="tablist">
-    <button type="button" role="tab" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">Overview</button>
-    <button type="button" role="tab" [class.active]="activeTab === 'sections'" (click)="activeTab = 'sections'">
-      Sections ({{ c.sections?.length || 0 }})
-    </button>
-    <button type="button" role="tab" [class.active]="activeTab === 'links'" (click)="activeTab = 'links'">Related</button>
-  </div>
+  <header class="cd-identity">
+    <div class="cd-identity__title">
+      <p class="cd-identity__year">{{ c.academicYearName || 'Academic year' }}</p>
+      <p class="cd-identity__meta">
+        <code>{{ c.code }}</code>
+        <span aria-hidden="true">·</span>
+        <span>{{ stageLabel(c.stage) }}</span>
+        <span aria-hidden="true">·</span>
+        <span class="cd-status" [class.cd-status--active]="c.active" [class.cd-status--inactive]="!c.active">
+          {{ c.active ? 'Active' : 'Inactive' }}
+        </span>
+        <span class="cd-readonly" *ngIf="c.yearReadOnly">· Historical · Read only</span>
+      </p>
+    </div>
+    <p class="cd-summary">
+      {{ sectionCount }} {{ sectionCount === 1 ? 'Section' : 'Sections' }}
+      <span aria-hidden="true">·</span>
+      {{ studentCount }} {{ studentCount === 1 ? 'Student' : 'Students' }}
+    </p>
+  </header>
 
   <div class="cd-prompt" *ngIf="offerSections && canManage">
-    <p>Class created. Add sections now?</p>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="openAddSection()">Add Sections</button>
-    <button type="button" class="tc-btn" (click)="offerSections = false">Later</button>
+    <p>Class created. Add a section to organize students and assign a class teacher.</p>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openAddSection()">Add Section</button>
+    <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
   </div>
 
-  <ng-container *ngIf="activeTab === 'overview'">
-    <div class="cd-stats acad-stagger">
-      <div class="cd-stat">
-        <span>Sections</span>
-        <strong>{{ c.sectionCount || c.sections?.length || 0 }}</strong>
-      </div>
-      <div class="cd-stat">
-        <span>Students</span>
-        <strong>{{ c.studentCount || 0 }}</strong>
-      </div>
-      <div class="cd-stat">
-        <span>Class Teacher</span>
-        <strong>{{ c.classTeacherName || 'Not assigned' }}</strong>
-      </div>
-      <div class="cd-stat">
-        <span>Academic Year</span>
-        <strong>{{ c.academicYearName || '—' }}</strong>
+  <section class="cd-sections" aria-labelledby="cd-sections-heading">
+    <div class="cd-sections__head">
+      <div>
+        <h2 id="cd-sections-heading">Sections</h2>
+        <p>Manage sections and class teachers.</p>
       </div>
     </div>
 
-    <tc-saas-panel title="Class profile" subtitle="Structure and status for this class">
-      <dl class="cd-dl">
-        <div><dt>Name</dt><dd>{{ c.name }}</dd></div>
-        <div><dt>Code</dt><dd>{{ c.code }}</dd></div>
-        <div><dt>Stage</dt><dd>{{ stageLabel(c.stage) }}</dd></div>
-        <div><dt>Status</dt><dd>{{ c.active ? 'Active' : 'Inactive' }}</dd></div>
-      </dl>
-    </tc-saas-panel>
-  </ng-container>
+    <div class="cd-section-grid acad-stagger" *ngIf="c.sections?.length; else noSections">
+      <article
+        class="cd-section-card"
+        *ngFor="let section of c.sections"
+        [class.cd-section-card--inactive]="!section.active">
+        <header>
+          <div class="cd-section-card__identity">
+            <h3>{{ sectionDisplayName(section) }}</h3>
+            <code>{{ section.code }}</code>
+          </div>
+          <span
+            class="cd-badge"
+            [class.cd-badge--success]="section.active"
+            [class.cd-badge--neutral]="!section.active">
+            {{ section.active ? 'Active' : 'Inactive' }}
+          </span>
+        </header>
 
-  <ng-container *ngIf="activeTab === 'sections'">
-    <tc-saas-panel title="Sections" subtitle="Sections, capacity and class teachers" [actions]="true">
-      <ng-container panel-actions>
+        <p class="cd-section-card__students">
+          <strong>{{ section.studentCount || 0 }}</strong>
+          {{ (section.studentCount || 0) === 1 ? 'Student' : 'Students' }}
+        </p>
+
+        <div class="cd-section-card__teacher">
+          <span>Class Teacher</span>
+          <strong *ngIf="section.classTeacherName">{{ section.classTeacherName }}</strong>
+          <button
+            *ngIf="!section.classTeacherName"
+            type="button"
+            class="cd-assign"
+            [disabled]="!canManage"
+            (click)="openAssignTeacher(section)">
+            {{ canManage ? 'Assign Teacher' : 'Not assigned' }}
+          </button>
+        </div>
+
+        <footer>
+          <button type="button" class="cd-details" (click)="viewStudents(section)">
+            View Students <span aria-hidden="true">→</span>
+          </button>
+          <button
+            type="button"
+            class="cd-icon-btn"
+            *ngIf="canManage"
+            (click)="buildMenu(section); sectionMenu.toggle($event)"
+            aria-label="Section actions">
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+        </footer>
+      </article>
+    </div>
+
+    <ng-template #noSections>
+      <div class="cd-empty-sections">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <h3>No sections yet</h3>
+        <p>
+          No sections have been created for this class yet.
+          Create a section to start organizing students and assigning a class teacher.
+        </p>
         <button
           type="button"
           class="tc-btn tc-btn--primary"
@@ -86,84 +127,69 @@
           (click)="openAddSection()">
           <i class="pi pi-plus"></i> Add Section
         </button>
-      </ng-container>
-
-      <div class="cd-section-grid acad-stagger" *ngIf="c.sections?.length; else noSections">
-        <article class="cd-section-card" *ngFor="let section of c.sections">
-          <header>
-            <div>
-              <h3>{{ section.name }}</h3>
-              <code>{{ section.code }}</code>
-            </div>
-            <tc-saas-pill
-              [label]="section.active ? 'Active' : 'Inactive'"
-              [tone]="section.active ? 'success' : 'neutral'">
-            </tc-saas-pill>
-          </header>
-          <div class="cd-section-meta">
-            <div><span>Students</span><strong>{{ section.studentCount || 0 }}</strong></div>
-            <div><span>Capacity</span><strong>{{ section.capacity || '—' }}</strong></div>
-            <div><span>Class Teacher</span><strong>{{ section.classTeacherName || '—' }}</strong></div>
-          </div>
-          <footer>
-            <button type="button" class="tc-btn tc-btn--ghost" (click)="viewStudents(section)">Students</button>
-            <button type="button" class="tc-btn tc-btn--ghost" *ngIf="canManage" (click)="openEditSection(section)">Edit</button>
-            <button
-              type="button"
-              class="tc-btn tc-btn--ghost"
-              *ngIf="canManage"
-              (click)="toggleSectionActive(section, !section.active)">
-              {{ section.active ? 'Deactivate' : 'Activate' }}
-            </button>
-          </footer>
-        </article>
       </div>
-      <ng-template #noSections>
-        <div class="cd-empty">
-          <i class="pi pi-inbox"></i>
-          <p>No sections yet.</p>
-          <button type="button" class="tc-btn tc-btn--primary" *ngIf="canManage" (click)="openAddSection()">Add Section</button>
-        </div>
-      </ng-template>
-    </tc-saas-panel>
-  </ng-container>
+    </ng-template>
+  </section>
 
-  <ng-container *ngIf="activeTab === 'links'">
-    <div class="cd-links acad-stagger">
-      <a class="cd-link-card" (click)="viewStudents()" tabindex="0">
-        <i class="pi pi-users"></i>
-        <div>
-          <strong>Students</strong>
-          <span>Open student directory for this class</span>
-        </div>
+  <section class="cd-manage" aria-labelledby="cd-manage-heading">
+    <h2 id="cd-manage-heading">Class Management</h2>
+    <div class="cd-manage-grid">
+      <button type="button" class="cd-manage-card" (click)="viewStudents()">
+        <strong>Students</strong>
+        <span>{{ studentCount }} enrolled</span>
+        <em>View Students →</em>
+      </button>
+      <a
+        class="cd-manage-card"
+        routerLink="/app/academics/subjects-mapping"
+        [queryParams]="{ from: 'classes', classId: c.classId }">
+        <strong>Subjects &amp; Mapping</strong>
+        <span>Manage subject mappings for this class</span>
+        <em>Manage Mapping →</em>
       </a>
-      <a class="cd-link-card" routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'classes', classId: c.classId }">
-        <i class="pi pi-book"></i>
-        <div>
-          <strong>Subjects & Mapping</strong>
-          <span>Subjects taught in this class</span>
-        </div>
+      <a
+        class="cd-manage-card"
+        routerLink="/app/academics/teacher-allocation"
+        [queryParams]="{ from: 'classes', classId: c.classId }">
+        <strong>Teacher Allocation</strong>
+        <span>Manage teacher assignments</span>
+        <em>Manage Teachers →</em>
       </a>
-      <a class="cd-link-card" routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'classes' }">
-        <i class="pi pi-user-edit"></i>
-        <div>
-          <strong>Teacher Allocation</strong>
-          <span>Teachers assigned to class subjects</span>
-        </div>
-      </a>
-      <a class="cd-link-card" routerLink="/app/academics/timetable" [queryParams]="{ from: 'classes' }">
-        <i class="pi pi-calendar"></i>
-        <div>
-          <strong>Timetable</strong>
-          <span>Weekly schedule for this class</span>
-        </div>
+      <a
+        class="cd-manage-card"
+        routerLink="/app/academics/timetable"
+        [queryParams]="{ from: 'classes', classId: c.classId }">
+        <strong>Timetable</strong>
+        <span>View weekly schedule</span>
+        <em>View Timetable →</em>
       </a>
     </div>
-  </ng-container>
+  </section>
 </div>
 
-<ng-template #loadingTpl>
-  <div class="cd-loading acad-page"><i class="pi pi-spin pi-spinner"></i> Loading class…</div>
+<ng-template #bootTpl>
+  <div class="cd-page acad-page" *ngIf="loadError; else loadingTpl">
+    <div class="cd-error">
+      <h2>Unable to load class</h2>
+      <p>We couldn't load this class information right now.</p>
+      <div class="cd-error__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
+        <button type="button" class="tc-btn" (click)="back()">Back to Classes</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="cd-loading acad-page" aria-busy="true">
+      <div class="cd-skel cd-skel--header"></div>
+      <div class="cd-skel cd-skel--summary"></div>
+      <div class="cd-skel-grid">
+        <div class="cd-skel cd-skel--card" *ngFor="let _ of [1,2,3]"></div>
+      </div>
+      <div class="cd-skel-grid cd-skel-grid--manage">
+        <div class="cd-skel cd-skel--manage" *ngFor="let _ of [1,2,3,4]"></div>
+      </div>
+    </div>
+  </ng-template>
 </ng-template>
 
 <p-dialog
@@ -177,7 +203,13 @@
     <label>Class Code<input type="text" formControlName="code" /></label>
     <label>
       Stage *
-      <p-dropdown [options]="classStageOptions" formControlName="stage" optionLabel="label" optionValue="value"></p-dropdown>
+      <p-dropdown
+        [options]="classStageOptions"
+        formControlName="stage"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body">
+      </p-dropdown>
     </label>
     <div class="cd-form__actions">
       <button type="button" class="tc-btn" (click)="showClassDialog = false">Cancel</button>
@@ -193,9 +225,8 @@
   [style]="{ width: 'min(480px, 94vw)' }"
   [draggable]="false">
   <form class="cd-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
-    <label>Section Name *<input type="text" formControlName="name" (blur)="suggestSectionCode()" /></label>
-    <label>Section Code<input type="text" formControlName="code" /></label>
-    <label>Capacity<input type="number" formControlName="capacity" min="1" /></label>
+    <label>Section Name *<input type="text" formControlName="name" (blur)="suggestSectionCode()" placeholder="A" /></label>
+    <label>Section Code<input type="text" formControlName="code" placeholder="C1-A" /></label>
     <label>
       Class Teacher
       <p-dropdown
@@ -204,7 +235,8 @@
         optionLabel="label"
         optionValue="value"
         [showClear]="true"
-        placeholder="Select teacher">
+        placeholder="Select teacher (optional)"
+        appendTo="body">
       </p-dropdown>
     </label>
     <div class="cd-form__actions">

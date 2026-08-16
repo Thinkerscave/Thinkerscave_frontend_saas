@@ -17,57 +17,70 @@
     </button>
   </tc-saas-page-header>
 
-  <div class="cs-context" *ngIf="dashboard as dash">
-    <div class="cs-context__left">
-      <label>Academic Year</label>
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId"
-        placeholder="Select year"
-        styleClass="cs-year-dd">
-      </p-dropdown>
-      <span class="cs-badge" [class.cs-badge--success]="dash.academicYearStatus === 'CURRENT'">
-        {{ dash.academicYearStatus }}
-      </span>
-      <span class="cs-readonly" *ngIf="dash.yearReadOnly">Historical · Read Only</span>
+  <section class="cs-context" *ngIf="dashboard as dash" aria-label="Academic year context">
+    <div class="cs-context__primary">
+      <div class="cs-context__label">Academic Year</div>
+      <div class="cs-context__controls">
+        <p-dropdown
+          [options]="years"
+          [(ngModel)]="selectedYearId"
+          (onChange)="onYearChange()"
+          optionLabel="name"
+          optionValue="academicYearId"
+          placeholder="Select year"
+          styleClass="cs-year-dd"
+          appendTo="body">
+        </p-dropdown>
+        <span
+          class="cs-badge"
+          [class.cs-badge--success]="dash.academicYearStatus === 'CURRENT'"
+          [class.cs-badge--neutral]="dash.academicYearStatus !== 'CURRENT'">
+          {{ dash.academicYearStatus }}
+        </span>
+        <span class="cs-readonly" *ngIf="dash.yearReadOnly">Historical · Read only</span>
+      </div>
     </div>
-    <div class="cs-context__meta">
-      {{ dash.classCount }} Classes · {{ dash.sectionCount }} Sections · {{ dash.studentCount }} Students
+    <div class="cs-context__summary">
+      <span>{{ dash.classCount }} Classes</span>
+      <span class="cs-dot" aria-hidden="true">·</span>
+      <span>{{ dash.sectionCount }} Sections</span>
+      <span class="cs-dot" aria-hidden="true">·</span>
+      <span>{{ dash.studentCount }} Students</span>
     </div>
-  </div>
+  </section>
 
-  <div class="acad-toolbar">
+  <div class="acad-toolbar cs-toolbar">
     <input
       class="acad-toolbar__search"
       type="search"
-      placeholder="Search…"
+      placeholder="Search classes by name or code"
       [(ngModel)]="searchTerm"
-      (ngModelChange)="reload()" />
+      (ngModelChange)="onSearchChange($event)"
+      aria-label="Search classes by name or code" />
     <div class="acad-toolbar__filters">
       <p-dropdown
         [options]="stageOptions"
         [(ngModel)]="stageFilter"
-        (onChange)="reload()"
+        (onChange)="onFilterChange()"
         optionLabel="label"
         optionValue="value"
         placeholder="Stage"
-        styleClass="cs-filter-dd">
+        styleClass="cs-filter-dd"
+        appendTo="body">
       </p-dropdown>
       <p-dropdown
         [options]="statusOptions"
         [(ngModel)]="activeFilter"
-        (onChange)="reload()"
+        (onChange)="onFilterChange()"
         optionLabel="label"
         optionValue="value"
         placeholder="Status"
-        styleClass="cs-filter-dd">
+        styleClass="cs-filter-dd"
+        appendTo="body">
       </p-dropdown>
     </div>
     <div class="acad-toolbar__end">
-      <div class="cs-view-toggle">
+      <div class="cs-view-toggle" role="group" aria-label="View mode">
         <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" aria-label="Grid view">
           <i class="pi pi-th-large"></i>
         </button>
@@ -78,86 +91,182 @@
     </div>
   </div>
 
-  <div class="cs-grid acad-stagger" *ngIf="viewMode === 'grid' && dashboard?.classes?.length; else listOrEmpty">
-    <article
-      class="cs-card acad-card-clickable"
-      *ngFor="let cls of dashboard?.classes"
-      [class.cs-card--inactive]="!cls.active"
-      (click)="openDetails(cls.classId)"
-      (keydown.enter)="openDetails(cls.classId)"
-      tabindex="0"
-      role="button">
-      <div class="cs-card__top">
-        <div>
-          <h2>{{ cls.name }}</h2>
-          <code>{{ cls.code }}</code>
-        </div>
-        <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
-          {{ cls.active ? 'Active' : 'Inactive' }}
-        </span>
-      </div>
-      <div class="cs-card__stage">
-        <span>Stage</span>
-        <strong>{{ stageLabel(cls.stage) }}</strong>
-      </div>
-      <div class="cs-card__stats">
-        <div><strong>{{ cls.sectionCount || 0 }}</strong><span>Sections</span></div>
-        <div><strong>{{ cls.studentCount || 0 }}</strong><span>Students</span></div>
-      </div>
-      <div class="cs-card__teacher">
-        <span>Class Teacher</span>
-        <strong>{{ cls.classTeacherName || 'Not assigned' }}</strong>
-      </div>
-      <div class="cs-card__actions" (click)="$event.stopPropagation()">
-        <span class="cs-hint">Open class</span>
-        <button
-          type="button"
-          class="cs-icon-btn"
-          (click)="buildMenu(cls); classMenu.toggle($event)"
-          aria-label="More actions">
-          <i class="pi pi-ellipsis-v"></i>
-        </button>
-      </div>
-    </article>
+  <div class="cs-filter-bar" *ngIf="hasVisibleFilters || showDeactivatedHint">
+    <div class="cs-chips" *ngIf="hasVisibleFilters">
+      <button type="button" class="cs-chip" *ngIf="searchTerm.trim()" (click)="clearSearch()">
+        “{{ searchTerm.trim() }}” <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-chip" *ngIf="stageFilter" (click)="clearStage()">
+        {{ stageLabel(stageFilter) }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-chip" *ngIf="activeFilter !== null" (click)="clearStatus()">
+        {{ activeFilter ? 'Active' : 'Inactive' }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-clear" (click)="clearFilters()">Clear filters</button>
+    </div>
+    <p class="cs-hint-line" *ngIf="showDeactivatedHint">
+      Deactivated classes are hidden. Use Status → Inactive to view them.
+    </p>
   </div>
 
-  <ng-template #listOrEmpty>
-    <div class="cs-list acad-stagger" *ngIf="viewMode === 'list' && dashboard?.classes?.length; else emptyTpl">
-      <div
-        class="cs-list-row acad-card-clickable"
-        *ngFor="let cls of dashboard?.classes"
-        (click)="openDetails(cls.classId)"
-        (keydown.enter)="openDetails(cls.classId)"
-        tabindex="0"
-        role="button">
-        <div>
-          <strong>{{ cls.name }}</strong>
-          <code>{{ cls.code }}</code>
+  <ng-container *ngIf="totalClasses; else emptyTpl">
+    <div class="cs-results" [class.cs-results--refreshing]="refreshing">
+      <div class="cs-grid acad-stagger" *ngIf="viewMode === 'grid'; else listTpl">
+        <article
+          class="cs-card acad-card-clickable"
+          *ngFor="let cls of pagedClasses"
+          [class.cs-card--inactive]="!cls.active"
+          (click)="openDetails(cls.classId)"
+          (keydown.enter)="openDetails(cls.classId)"
+          tabindex="0"
+          role="link"
+          [attr.aria-label]="'View details for ' + cls.name">
+          <div class="cs-card__top">
+            <div class="cs-card__identity">
+              <h2>{{ cls.name }}</h2>
+              <code>{{ cls.code }}</code>
+            </div>
+            <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
+              {{ cls.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <div class="cs-card__tags">
+            <span class="cs-tag">{{ stageLabel(cls.stage) }}</span>
+          </div>
+
+          <div class="cs-card__stats">
+            <div>
+              <strong>{{ cls.sectionCount || 0 }}</strong>
+              <span>Sections</span>
+            </div>
+            <div>
+              <strong>{{ cls.studentCount || 0 }}</strong>
+              <span>Students</span>
+            </div>
+          </div>
+
+          <div class="cs-card__actions" (click)="$event.stopPropagation()">
+            <button type="button" class="cs-details" (click)="openDetails(cls.classId)">
+              View Details <span aria-hidden="true">→</span>
+            </button>
+            <button
+              type="button"
+              class="cs-icon-btn"
+              (click)="buildMenu(cls); classMenu.toggle($event)"
+              aria-label="More actions">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #listTpl>
+        <div class="cs-table-wrap">
+          <table class="cs-table">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Code</th>
+                <th>Stage</th>
+                <th>Sections</th>
+                <th>Students</th>
+                <th>Status</th>
+                <th class="cs-table__actions" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let cls of pagedClasses"
+                class="acad-card-clickable"
+                (click)="openDetails(cls.classId)"
+                (keydown.enter)="openDetails(cls.classId)"
+                tabindex="0"
+                role="link">
+                <td><strong>{{ cls.name }}</strong></td>
+                <td><code>{{ cls.code }}</code></td>
+                <td>{{ stageLabel(cls.stage) }}</td>
+                <td>{{ cls.sectionCount || 0 }}</td>
+                <td>{{ cls.studentCount || 0 }}</td>
+                <td>
+                  <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
+                    {{ cls.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="cs-table__actions" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="cs-icon-btn"
+                    (click)="buildMenu(cls); classMenu.toggle($event)"
+                    aria-label="More actions">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <span>{{ stageLabel(cls.stage) }}</span>
-        <span>{{ cls.sectionCount || 0 }} sections</span>
-        <span>{{ cls.studentCount || 0 }} students</span>
-        <span class="cs-badge" [class.cs-badge--success]="cls.active">{{ cls.active ? 'Active' : 'Inactive' }}</span>
-        <button type="button" class="cs-icon-btn" (click)="$event.stopPropagation(); buildMenu(cls); classMenu.toggle($event)">
-          <i class="pi pi-ellipsis-v"></i>
+      </ng-template>
+    </div>
+
+    <div class="cs-pager" *ngIf="totalClasses > pageSize">
+      <span class="cs-pager__meta">
+        Showing {{ pageStart }}–{{ pageEnd }} of {{ totalClasses }} classes
+      </span>
+      <div class="cs-pager__controls">
+        <button type="button" class="cs-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page">
+          <i class="pi pi-angle-left"></i>
         </button>
+        <span class="cs-pager__page">{{ page }} / {{ totalPages }}</span>
+        <button type="button" class="cs-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <select class="cs-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Classes per page">
+          <option [ngValue]="12">12 / page</option>
+          <option [ngValue]="24">24 / page</option>
+          <option [ngValue]="48">48 / page</option>
+        </select>
       </div>
     </div>
-  </ng-template>
+  </ng-container>
 
   <ng-template #emptyTpl>
-    <div class="cs-empty">
-      <h3>No classes yet</h3>
-      <p>Create your first class for this academic year.</p>
-      <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="readOnly" (click)="openCreateClass()">
-        Add Class
-      </button>
+    <div class="cs-empty" *ngIf="isFilterEmptyState; else noClassesTpl">
+      <i class="pi pi-filter-slash" aria-hidden="true"></i>
+      <h3>No classes match your filters</h3>
+      <p>Try changing the search or filters.</p>
+      <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
     </div>
+    <ng-template #noClassesTpl>
+      <div class="cs-empty">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <h3>No classes found</h3>
+        <p>
+          There are no classes configured for
+          {{ dashboard?.academicYearName || 'this academic year' }}.
+        </p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly"
+          (click)="openCreateClass()">
+          <i class="pi pi-plus"></i>
+          Add Class
+        </button>
+      </div>
+    </ng-template>
   </ng-template>
 </div>
 
 <ng-template #loadingTpl>
-  <div class="cs-loading acad-page">Loading classes…</div>
+  <div class="cs-loading acad-page" aria-busy="true">
+    <div class="cs-skeleton cs-skeleton--context"></div>
+    <div class="cs-skeleton cs-skeleton--toolbar"></div>
+    <div class="cs-skeleton-grid">
+      <div class="cs-skeleton cs-skeleton--card" *ngFor="let _ of [1,2,3,4]"></div>
+    </div>
+  </div>
 </ng-template>
 
 <p-dialog
@@ -181,7 +290,8 @@
         [options]="classStageOptions"
         formControlName="stage"
         optionLabel="label"
-        optionValue="value">
+        optionValue="value"
+        appendTo="body">
       </p-dropdown>
     </label>
     <div class="cs-form__actions">

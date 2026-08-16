@@ -105,16 +105,15 @@
         </div>
         <table class="ov-table" *ngIf="snapshotTab === 'classes'">
           <thead>
-            <tr><th>Class</th><th>Sections</th><th>Students</th><th>Class Teacher</th></tr>
+            <tr><th>Class</th><th>Sections</th><th>Students</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let c of ov.topClasses">
               <td><strong>{{ c.className }}</strong></td>
               <td>{{ c.sectionCount }}</td>
               <td>{{ c.studentCount ?? '—' }}</td>
-              <td>{{ c.classTeacherName || '—' }}</td>
             </tr>
-            <tr *ngIf="!ov.topClasses?.length"><td colspan="4" class="ov-muted">No classes yet</td></tr>
+            <tr *ngIf="!ov.topClasses?.length"><td colspan="3" class="ov-muted">No classes yet</td></tr>
           </tbody>
         </table>
         <table class="ov-table" *ngIf="snapshotTab === 'subjects'">

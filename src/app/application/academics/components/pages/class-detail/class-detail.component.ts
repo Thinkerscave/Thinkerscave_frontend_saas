@@ -13,9 +13,10 @@ import { HttpClient } from '@angular/common/http';
 import { finalize, map } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
@@ -41,10 +42,9 @@ import { BreadCrumbService } from '../../../../../core/services/bread-crumb.serv
     ReactiveFormsModule,
     RouterLink,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
-    SaasPillComponent,
     DialogModule,
     DropdownModule,
+    MenuModule,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
@@ -69,14 +69,16 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   readonly classStageOptions = ACADEMIC_STAGE_OPTIONS;
 
   loading = true;
+  loadError = false;
   saving = false;
   cls: AcademicClassDto | null = null;
-  activeTab: 'overview' | 'sections' | 'links' = 'overview';
+  private classId: number | null = null;
   offerSections = false;
   showClassDialog = false;
   showSectionDialog = false;
   editingSectionId: number | null = null;
   staffOptions: { label: string; value: number }[] = [];
+  menuItems: MenuItem[] = [];
 
   classForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -87,7 +89,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   sectionForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(50)]],
     code: ['', Validators.maxLength(50)],
-    capacity: [40 as number | null],
     classTeacherStaffId: [null as number | null]
   });
 
@@ -95,14 +96,24 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     return this.permissions.canManage(this.resource) && !this.cls?.yearReadOnly;
   }
 
+  get sectionCount(): number {
+    return this.cls?.sectionCount ?? this.cls?.sections?.length ?? 0;
+  }
+
+  get studentCount(): number {
+    return this.cls?.studentCount ?? 0;
+  }
+
   ngOnInit(): void {
     this.loadStaff();
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('classId'));
-      if (id) this.load(id);
+      if (id) {
+        this.classId = id;
+        this.load(id);
+      }
     });
     this.route.queryParamMap.subscribe((q) => {
-      if (q.get('tab') === 'sections') this.activeTab = 'sections';
       this.offerSections = q.get('offerSections') === '1';
       this.cdr.markForCheck();
     });
@@ -116,26 +127,45 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.nav.back(this.route, ['/app/academics/classes-sections']);
   }
 
+  retry(): void {
+    if (this.classId) this.load(this.classId);
+  }
+
+  dismissOffer(): void {
+    this.offerSections = false;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { offerSections: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
+
   load(classId: number): void {
     this.loading = true;
+    this.loadError = false;
     this.api.getClass(classId).pipe(finalize(() => {
       this.loading = false;
       this.cdr.markForCheck();
     })).subscribe({
       next: (cls) => {
         this.cls = cls;
-        this.pageHeader.setPageHeader({ title: cls.name, subtitle: cls.academicYearName || 'Class details' });
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Unable to load class',
-          detail: err?.error?.message || 'Please try again'
+        this.pageHeader.setPageHeader({
+          title: cls.name,
+          subtitle: cls.academicYearName || 'Class details'
         });
-        this.back();
+      },
+      error: () => {
+        this.cls = null;
+        this.loadError = true;
       }
     });
+  }
+
+  sectionDisplayName(section: ClassSectionDto): string {
+    const name = (section.name || '').trim();
+    if (!name) return 'Section';
+    return /^section\b/i.test(name) ? name : `Section ${name}`;
   }
 
   openEditClass(): void {
@@ -175,7 +205,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
 
   openAddSection(): void {
     this.editingSectionId = null;
-    this.sectionForm.reset({ name: '', code: '', capacity: 40, classTeacherStaffId: null });
+    this.sectionForm.reset({ name: '', code: '', classTeacherStaffId: null });
     this.showSectionDialog = true;
     this.offerSections = false;
   }
@@ -185,10 +215,14 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.sectionForm.reset({
       name: section.name,
       code: section.code,
-      capacity: section.capacity ?? null,
       classTeacherStaffId: section.classTeacherStaffId ?? null
     });
     this.showSectionDialog = true;
+  }
+
+  openAssignTeacher(section: ClassSectionDto): void {
+    if (!this.canManage) return;
+    this.openEditSection(section);
   }
 
   suggestSectionCode(): void {
@@ -208,7 +242,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     const body = {
       name: value.name!.trim(),
       code: value.code?.trim() || undefined,
-      capacity: value.capacity,
       classTeacherStaffId: value.classTeacherStaffId
     };
     this.saving = true;
@@ -226,7 +259,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
           severity: 'success',
           summary: this.editingSectionId ? 'Section updated' : 'Section created'
         });
-        this.activeTab = 'sections';
         this.load(this.cls!.classId);
       },
       error: (err) => this.messages.add({
@@ -234,6 +266,49 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
         summary: 'Save failed',
         detail: err?.error?.message || 'Unable to save section'
       })
+    });
+  }
+
+  buildMenu(section: ClassSectionDto): void {
+    const items: MenuItem[] = [
+      {
+        label: 'View Students',
+        icon: 'pi pi-users',
+        command: () => this.viewStudents(section)
+      }
+    ];
+
+    if (this.canManage) {
+      items.push({
+        label: 'Edit Section',
+        icon: 'pi pi-pencil',
+        command: () => this.openEditSection(section)
+      });
+      items.push({
+        label: section.classTeacherStaffId ? 'Change Class Teacher' : 'Assign Class Teacher',
+        icon: 'pi pi-user-edit',
+        command: () => this.openAssignTeacher(section)
+      });
+      items.push({
+        label: section.active ? 'Deactivate Section' : 'Reactivate Section',
+        icon: section.active ? 'pi pi-ban' : 'pi pi-check',
+        command: () => this.confirmToggleSection(section, !section.active)
+      });
+    }
+
+    this.menuItems = items;
+  }
+
+  confirmToggleSection(section: ClassSectionDto, activate: boolean): void {
+    if (!this.canManage || !this.cls) return;
+    this.confirm.confirm({
+      header: activate ? `Reactivate ${this.sectionDisplayName(section)}?` : `Deactivate ${this.sectionDisplayName(section)}?`,
+      message: activate
+        ? 'This section will become active again.'
+        : 'This section will be marked inactive. Historical data is preserved.',
+      acceptLabel: activate ? 'Reactivate' : 'Deactivate',
+      acceptButtonStyleClass: activate ? undefined : 'p-button-danger',
+      accept: () => this.toggleSectionActive(section, activate)
     });
   }
 
@@ -246,7 +321,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
       next: () => {
         this.messages.add({
           severity: 'success',
-          summary: activate ? 'Section activated' : 'Section deactivated'
+          summary: activate ? 'Section reactivated' : 'Section deactivated'
         });
         this.load(this.cls!.classId);
       },

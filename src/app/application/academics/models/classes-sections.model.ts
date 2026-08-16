@@ -46,7 +46,9 @@ export interface AcademicClassDto {
   sectionCount?: number;
   sectionsActive?: number;
   studentCount?: number;
+  /** @deprecated Class Teacher is section-scoped; class payloads no longer populate this. */
   classTeacherName?: string | null;
+  /** @deprecated See classTeacherName. */
   classTeacherStaffId?: number | null;
   sections?: ClassSectionDto[];
 }
@@ -75,6 +77,7 @@ export interface AcademicClassCreateRequest {
 export interface AcademicSectionCreateRequest {
   name: string;
   code?: string;
+  /** Retained for API compatibility; Class Detail UX does not collect capacity. */
   capacity?: number | null;
   displayOrder?: number;
   defaultResourceId?: number | null;
