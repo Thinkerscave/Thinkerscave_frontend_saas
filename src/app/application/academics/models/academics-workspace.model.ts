@@ -5,6 +5,7 @@ export type AcademicsWorkspacePage =
   | 'subjects-mapping'
   | 'teacher-allocation'
   | 'timetable'
+  | 'academic-calendar'
   | 'my-classes'
   | 'my-timetable'
   | 'academic-structure'

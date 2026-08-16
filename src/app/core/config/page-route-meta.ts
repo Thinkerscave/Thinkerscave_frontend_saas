@@ -34,8 +34,18 @@ export const ACADEMICS_PAGES = {
     pageSubtitle: 'Sections, teachers and related academic setup for this class.'
   },
   subjectsMapping: {
-    breadcrumb: 'Subjects & Mapping',
-    pageSubtitle: 'Define subjects and map them to the classes that teach them.'
+    breadcrumb: 'Subjects',
+    pageSubtitle: 'Create and manage subjects and map them to classes.'
+  },
+  subjectDetail: {
+    breadcrumb: 'Subject',
+    breadcrumbLink: ['/app/academics/subjects-mapping'],
+    pageSubtitle: 'Subject information and class mappings.'
+  },
+  classSubjects: {
+    breadcrumb: 'Subject Mapping',
+    breadcrumbLink: ['/app/academics/classes-sections'],
+    pageSubtitle: 'Subjects taught in this class and how they are mapped.'
   },
   teacherAllocation: {
     breadcrumb: 'Teacher Allocation',
@@ -44,6 +54,15 @@ export const ACADEMICS_PAGES = {
   timetable: {
     breadcrumb: 'Timetable',
     pageSubtitle: 'Configure periods, generate the weekly timetable and resolve conflicts.'
+  },
+  academicCalendar: {
+    breadcrumb: 'Academic Calendar',
+    pageSubtitle: 'Plan, manage and publish important dates, holidays and events for the academic year.'
+  },
+  calendarEventDetail: {
+    breadcrumb: 'Event',
+    breadcrumbLink: ['/app/academics/academic-calendar'],
+    pageSubtitle: 'Event information and visibility.'
   },
   myClasses: {
     breadcrumb: 'My Classes',

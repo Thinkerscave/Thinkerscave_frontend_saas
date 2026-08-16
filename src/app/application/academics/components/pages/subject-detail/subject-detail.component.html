@@ -1,0 +1,285 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #mapMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="sd-page acad-page" *ngIf="!loading && !loadError && subject as s; else bootTpl">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+    <button
+      type="button"
+      class="tc-btn"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage"
+      (click)="openEditSubject()">
+      <i class="pi pi-pencil"></i> Edit Subject
+    </button>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage || !availableClasses.length"
+      (click)="openMapDialog()">
+      <i class="pi pi-plus"></i> Map to Class
+    </button>
+  </tc-saas-page-header>
+
+  <header class="sd-identity">
+    <div class="sd-identity__title">
+      <p class="sd-identity__year">{{ s.academicYearName || 'Academic year' }}</p>
+      <p class="sd-identity__meta">
+        <code>{{ s.code }}</code>
+        <span aria-hidden="true">·</span>
+        <span>{{ categoryLabel(s.category) }}</span>
+        <span aria-hidden="true">·</span>
+        <span class="sd-status" [class.sd-status--active]="s.active" [class.sd-status--inactive]="!s.active">
+          {{ s.active ? 'Active' : 'Inactive' }}
+        </span>
+        <span class="sd-readonly" *ngIf="s.yearReadOnly">· Historical · Read only</span>
+      </p>
+    </div>
+    <p class="sd-summary">
+      {{ mappedClasses.length }} {{ mappedClasses.length === 1 ? 'Class' : 'Classes' }} mapped
+      <span aria-hidden="true">·</span>
+      {{ s.defaultWeeklyPeriods }} weekly periods
+    </p>
+  </header>
+
+  <div class="sd-prompt" *ngIf="offerMap && canManage">
+    <p>Subject created. Map it to a class so it can be taught and scheduled.</p>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!availableClasses.length" (click)="openMapDialog()">
+      Map to Class
+    </button>
+    <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
+  </div>
+
+  <section class="sd-sections" aria-labelledby="sd-info-heading">
+    <div class="sd-sections__head">
+      <div>
+        <h2 id="sd-info-heading">Subject Information</h2>
+        <p>Core details used across classes and timetable setup.</p>
+      </div>
+      <button
+        type="button"
+        class="tc-btn"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="openEditSubject()">
+        Edit
+      </button>
+    </div>
+
+    <div class="sd-info-grid">
+      <div>
+        <span>Code</span>
+        <strong>{{ s.code || '—' }}</strong>
+      </div>
+      <div>
+        <span>Category</span>
+        <strong>{{ categoryLabel(s.category) }}</strong>
+      </div>
+      <div>
+        <span>Default Weekly Periods</span>
+        <strong>{{ s.defaultWeeklyPeriods }}</strong>
+      </div>
+      <div>
+        <span>Timetable Preference</span>
+        <strong>{{ preferenceLabel(s.timetablePreference) }}</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong>{{ s.active ? 'Active' : 'Inactive' }}</strong>
+      </div>
+      <div class="sd-info-grid__wide" *ngIf="s.description">
+        <span>Description</span>
+        <strong>{{ s.description }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="sd-sections" aria-labelledby="sd-mapped-heading">
+    <div class="sd-sections__head">
+      <div>
+        <h2 id="sd-mapped-heading">Mapped Classes</h2>
+        <p>Classes where this subject is taught.</p>
+      </div>
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage || !availableClasses.length"
+        (click)="openMapDialog()">
+        <i class="pi pi-plus"></i> Map to Class
+      </button>
+    </div>
+
+    <div class="sd-table-wrap" *ngIf="mappedClasses.length; else noMapped">
+      <table class="sd-table">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Stage</th>
+            <th>Sections</th>
+            <th>Weekly Periods</th>
+            <th>Status</th>
+            <th class="sd-table__actions" aria-label="Actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of mappedClasses">
+            <td>
+              <strong>{{ row.className || 'Class' }}</strong>
+              <code *ngIf="row.classCode">{{ row.classCode }}</code>
+            </td>
+            <td>{{ row.classStage || '—' }}</td>
+            <td>{{ row.sectionCount ?? '—' }}</td>
+            <td>{{ row.weeklyPeriods }}</td>
+            <td>
+              <span class="sd-badge sd-badge--success">Mapped</span>
+            </td>
+            <td class="sd-table__actions">
+              <button
+                type="button"
+                class="sd-icon-btn"
+                (click)="buildMenu(row); mapMenu.toggle($event)"
+                aria-label="Mapping actions">
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noMapped>
+      <div class="sd-empty-sections">
+        <i class="pi pi-link" aria-hidden="true"></i>
+        <h3>No classes mapped yet</h3>
+        <p>Map this subject to one or more classes to include it in teaching and timetable planning.</p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="!canManage || !availableClasses.length"
+          (click)="openMapDialog()">
+          <i class="pi pi-plus"></i> Map to Class
+        </button>
+      </div>
+    </ng-template>
+  </section>
+</div>
+
+<ng-template #bootTpl>
+  <div class="sd-page acad-page" *ngIf="loadError; else loadingTpl">
+    <div class="sd-error">
+      <h2>Unable to load subject</h2>
+      <p>We couldn't load this subject information right now.</p>
+      <div class="sd-error__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
+        <button type="button" class="tc-btn" (click)="back()">Back to Subjects</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="sd-page acad-page" aria-busy="true">
+      <div class="sd-skel sd-skel--identity"></div>
+      <div class="sd-skel sd-skel--section"></div>
+      <div class="sd-skel sd-skel--section"></div>
+    </div>
+  </ng-template>
+</ng-template>
+
+<p-dialog
+  header="Edit Subject"
+  [(visible)]="showSubjectDialog"
+  [modal]="true"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  [draggable]="false">
+  <form class="sd-form" [formGroup]="subjectForm" (ngSubmit)="saveSubject()">
+    <label>
+      Subject Name *
+      <input type="text" formControlName="name" (blur)="suggestCode()" />
+    </label>
+    <label>
+      Subject Code
+      <input type="text" formControlName="code" />
+    </label>
+    <label>
+      Category *
+      <p-dropdown
+        [options]="subjectCategoryOptions"
+        formControlName="category"
+        (onChange)="onCategoryChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+    <label>
+      Default Weekly Periods *
+      <input type="number" formControlName="defaultWeeklyPeriods" min="1" />
+    </label>
+    <label>
+      Timetable Preference *
+      <p-dropdown
+        [options]="preferenceOptions"
+        formControlName="timetablePreference"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+    <label>
+      Description
+      <input type="text" formControlName="description" />
+    </label>
+    <div class="sd-form__actions">
+      <button type="button" class="tc-btn" (click)="showSubjectDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Map Subject to Class"
+  [(visible)]="showMapDialog"
+  [modal]="true"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  [draggable]="false">
+  <div class="sd-form" *ngIf="subject as mapSubject">
+    <label>
+      Subject
+      <input type="text" [value]="mapSubject.name + ' (' + mapSubject.code + ')'" readonly />
+    </label>
+    <label>
+      Academic Year
+      <input type="text" [value]="mapSubject.academicYearName || '—'" readonly />
+    </label>
+    <label>
+      Select Class *
+      <p-dropdown
+        [options]="classOptions"
+        [(ngModel)]="mapClassId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Choose a class"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="sd-map-dd">
+      </p-dropdown>
+    </label>
+    <div class="sd-form__actions">
+      <button type="button" class="tc-btn" (click)="showMapDialog = false">Cancel</button>
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        [disabled]="mapping || !mapClassId"
+        (click)="mapToClass()">
+        {{ mapping ? 'Mapping…' : 'Map Subject' }}
+      </button>
+    </div>
+  </div>
+</p-dialog>

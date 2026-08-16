@@ -3,30 +3,28 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { CheckboxModule } from 'primeng/checkbox';
+import { MenuModule } from 'primeng/menu';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
-import { AcademicClassDto } from '../../../models/classes-sections.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
-  ClassMappingBoard,
-  ClassSubjectMappingDto,
   SUBJECT_CATEGORY_OPTIONS,
   SubjectCategory,
   SubjectDto,
@@ -43,11 +41,10 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
+    SaasPageHeaderComponent,
     DialogModule,
     DropdownModule,
-    CheckboxModule,
-    SaasPageHeaderComponent,
+    MenuModule,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
@@ -58,7 +55,6 @@ import {
 export class SubjectsMappingPageComponent implements OnInit {
   private readonly api = inject(SubjectsMappingApiService);
   private readonly yearApi = inject(AcademicYearApiService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -66,6 +62,7 @@ export class SubjectsMappingPageComponent implements OnInit {
   private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly permissions = inject(PermissionService);
 
   readonly resource = ACADEMICS_SUBJECTS_RESOURCE;
@@ -81,24 +78,26 @@ export class SubjectsMappingPageComponent implements OnInit {
   readonly subjectCategoryOptions = SUBJECT_CATEGORY_OPTIONS;
   readonly preferenceOptions = TIMETABLE_PREFERENCE_OPTIONS;
 
+  private readonly search$ = new Subject<string>();
+
   loading = true;
+  refreshing = false;
   saving = false;
   showBack = false;
-  activeTab: 'subjects' | 'mapping' = 'subjects';
   years: AcademicYearDto[] = [];
-  classes: AcademicClassDto[] = [];
   selectedYearId: number | null = null;
-  selectedClassId: number | null = null;
   dashboard: SubjectsMappingDashboard | null = null;
-  mappingBoard: ClassMappingBoard | null = null;
   searchTerm = '';
   categoryFilter: SubjectCategory | null = null;
-  activeFilter: boolean | null = null;
+  /** Default Active so deactivated subjects stay out of the main working list. */
+  activeFilter: boolean | null = true;
+  viewMode: 'grid' | 'list' = 'grid';
+  page = 1;
+  pageSize = 12;
 
   showSubjectDialog = false;
   editingSubjectId: number | null = null;
-  promptMapAfterCreate = false;
-  createdSubjectId: number | null = null;
+  menuItems: MenuItem[] = [];
 
   subjectForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(150)]],
@@ -117,15 +116,66 @@ export class SubjectsMappingPageComponent implements OnInit {
     return this.permissions.canManage(this.resource) && !this.readOnly;
   }
 
-  get mappingProgressPercent(): number {
-    const board = this.mappingBoard;
-    const total = board?.mappings?.length || 0;
-    if (!total) return 0;
-    return Math.round(((board?.includedCount || 0) * 100) / total);
+  get totalSubjects(): number {
+    return this.dashboard?.subjects?.length ?? 0;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalSubjects / this.pageSize));
+  }
+
+  get pageStart(): number {
+    if (!this.totalSubjects) return 0;
+    return (this.page - 1) * this.pageSize + 1;
+  }
+
+  get pageEnd(): number {
+    return Math.min(this.page * this.pageSize, this.totalSubjects);
+  }
+
+  get pagedSubjects(): SubjectDto[] {
+    const all = this.dashboard?.subjects ?? [];
+    const start = (this.page - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.searchTerm.trim() || this.categoryFilter != null || this.activeFilter !== null;
+  }
+
+  get hasVisibleFilters(): boolean {
+    return this.hasActiveFilters;
+  }
+
+  get isFilterEmptyState(): boolean {
+    return !!this.searchTerm.trim() || this.categoryFilter != null || this.activeFilter !== true;
+  }
+
+  get showDeactivatedHint(): boolean {
+    return this.activeFilter === true && !this.searchTerm.trim() && this.categoryFilter == null;
   }
 
   ngOnInit(): void {
-    this.showBack = !!this.route.snapshot.queryParamMap.get('from');
+    const from = this.route.snapshot.queryParamMap.get('from');
+    this.showBack = from === 'overview';
+
+    // Legacy deep-link from Class Detail: send users to the class-scoped mapping page.
+    const classId = Number(this.route.snapshot.queryParamMap.get('classId'));
+    if (classId) {
+      void this.router.navigate(
+        ['/app/academics/classes-sections', classId, 'subjects'],
+        { queryParams: { from: from || 'classes' }, replaceUrl: true }
+      );
+      return;
+    }
+
+    this.search$
+      .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.page = 1;
+        this.reload();
+      });
+
     this.yearApi.search().subscribe({
       next: (years) => {
         this.years = years;
@@ -150,23 +200,82 @@ export class SubjectsMappingPageComponent implements OnInit {
     this.nav.back(this.route);
   }
 
+  onSearchChange(value: string): void {
+    this.search$.next(value ?? '');
+  }
+
+  onFilterChange(): void {
+    this.page = 1;
+    this.reload();
+  }
+
+  onYearChange(): void {
+    this.page = 1;
+    this.reload();
+  }
+
+  setPage(next: number): void {
+    this.page = Math.min(Math.max(1, next), this.totalPages);
+    this.cdr.markForCheck();
+  }
+
+  setPageSize(size: number): void {
+    this.pageSize = Number(size) || 12;
+    this.page = 1;
+    this.cdr.markForCheck();
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.page = 1;
+    this.reload();
+  }
+
+  clearCategory(): void {
+    this.categoryFilter = null;
+    this.page = 1;
+    this.reload();
+  }
+
+  clearStatus(): void {
+    this.activeFilter = null;
+    this.page = 1;
+    this.reload();
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.categoryFilter = null;
+    this.activeFilter = true;
+    this.page = 1;
+    this.reload();
+  }
+
   reload(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
+    const initial = !this.dashboard;
+    if (initial) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
     this.api
       .getDashboard(this.selectedYearId, {
-        q: this.searchTerm || undefined,
+        q: this.searchTerm.trim() || undefined,
         category: this.categoryFilter,
         active: this.activeFilter
       })
       .pipe(finalize(() => {
         this.loading = false;
+        this.refreshing = false;
         this.cdr.markForCheck();
       }))
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
-          this.loadClasses();
+          if (this.page > this.totalPages) {
+            this.page = this.totalPages;
+          }
         },
         error: (err) => this.messages.add({
           severity: 'error',
@@ -174,19 +283,6 @@ export class SubjectsMappingPageComponent implements OnInit {
           detail: err?.error?.message || 'Please try again'
         })
       });
-  }
-
-  onYearChange(): void {
-    this.selectedClassId = null;
-    this.mappingBoard = null;
-    this.reload();
-  }
-
-  switchTab(tab: 'subjects' | 'mapping'): void {
-    this.activeTab = tab;
-    if (tab === 'mapping' && this.selectedClassId) {
-      this.loadMappingBoard();
-    }
   }
 
   openCreateSubject(): void {
@@ -268,10 +364,13 @@ export class SubjectsMappingPageComponent implements OnInit {
           summary: this.editingSubjectId ? 'Subject updated' : 'Subject created'
         });
         if (!this.editingSubjectId) {
-          this.promptMapAfterCreate = true;
-          this.createdSubjectId = created.subjectId;
+          void this.router.navigate(
+            ['/app/academics/subjects-mapping', created.subjectId],
+            { queryParams: { offerMap: '1', from: 'subjects' } }
+          );
+        } else {
+          this.reload();
         }
-        this.reload();
       },
       error: (err) => this.messages.add({
         severity: 'error',
@@ -279,6 +378,57 @@ export class SubjectsMappingPageComponent implements OnInit {
         detail: err?.error?.message || 'Unable to save subject'
       })
     });
+  }
+
+  openDetails(subjectId: number, offerMap = false): void {
+    void this.router.navigate(
+      ['/app/academics/subjects-mapping', subjectId],
+      {
+        queryParams: {
+          from: 'subjects',
+          ...(offerMap ? { offerMap: '1' } : {})
+        }
+      }
+    );
+  }
+
+  buildMenu(subject: SubjectDto): void {
+    const items: MenuItem[] = [
+      {
+        label: 'View Details',
+        icon: 'pi pi-eye',
+        command: () => this.openDetails(subject.subjectId)
+      }
+    ];
+
+    if (this.canManage) {
+      items.push({
+        label: 'Edit Subject',
+        icon: 'pi pi-pencil',
+        command: () => this.openEditSubject(subject)
+      });
+
+      if (subject.active) {
+        items.push({
+          label: 'Map to Class',
+          icon: 'pi pi-link',
+          command: () => this.openDetails(subject.subjectId, true)
+        });
+        items.push({
+          label: 'Deactivate Subject',
+          icon: 'pi pi-ban',
+          command: () => this.toggleSubjectActive(subject, false)
+        });
+      } else {
+        items.push({
+          label: 'Reactivate Subject',
+          icon: 'pi pi-check',
+          command: () => this.toggleSubjectActive(subject, true)
+        });
+      }
+    }
+
+    this.menuItems = items;
   }
 
   toggleSubjectActive(subject: SubjectDto, activate: boolean): void {
@@ -312,139 +462,18 @@ export class SubjectsMappingPageComponent implements OnInit {
     });
   }
 
-  goToMapping(subject?: SubjectDto): void {
-    this.promptMapAfterCreate = false;
-    this.activeTab = 'mapping';
-    if (!this.selectedClassId && this.classes.length) {
-      this.selectedClassId = this.classes[0].classId;
-    }
-    if (this.selectedClassId) {
-      this.loadMappingBoard();
-    }
-    if (subject) {
-      this.messages.add({
-        severity: 'info',
-        summary: subject.name,
-        detail: 'Select a class and include this subject in the mapping table'
-      });
-    }
-  }
-
-  loadMappingBoard(): void {
-    if (!this.selectedClassId) return;
-    this.api.getClassMappingBoard(this.selectedClassId).subscribe({
-      next: (board) => {
-        this.mappingBoard = board;
-        this.cdr.markForCheck();
-      },
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Unable to load class mapping',
-        detail: err?.error?.message || 'Please try again'
-      })
-    });
-  }
-
-  onClassChange(): void {
-    this.loadMappingBoard();
-  }
-
-  toggleIncluded(row: ClassSubjectMappingDto, included: boolean): void {
-    if (!this.canManage || !this.selectedClassId) return;
-    this.api.upsertMapping(this.selectedClassId, {
-      subjectId: row.subjectId,
-      included,
-      weeklyPeriods: row.weeklyPeriods,
-      timetablePreference: row.timetablePreference
-    }).subscribe({
-      next: () => {
-        this.loadMappingBoard();
-        this.reload();
-      },
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Mapping update failed',
-        detail: err?.error?.message || 'Unable to update mapping'
-      })
-    });
-  }
-
-  updatePeriods(row: ClassSubjectMappingDto, value: string): void {
-    if (!this.canManage || !this.selectedClassId || !row.included) return;
-    const periods = Number(value);
-    if (!periods || periods < 1) return;
-    this.api.upsertMapping(this.selectedClassId, {
-      subjectId: row.subjectId,
-      included: true,
-      weeklyPeriods: periods,
-      timetablePreference: row.timetablePreference
-    }).subscribe({
-      next: () => this.loadMappingBoard(),
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Update failed',
-        detail: err?.error?.message || 'Unable to update periods'
-      })
-    });
-  }
-
-  updatePreference(row: ClassSubjectMappingDto, preference: SubjectTimetablePreference): void {
-    if (!this.canManage || !this.selectedClassId || !row.included) return;
-    this.api.upsertMapping(this.selectedClassId, {
-      subjectId: row.subjectId,
-      included: true,
-      weeklyPeriods: row.weeklyPeriods,
-      timetablePreference: preference
-    }).subscribe({
-      next: () => this.loadMappingBoard(),
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Update failed',
-        detail: err?.error?.message || 'Unable to update preference'
-      })
-    });
-  }
-
-  goAssignTeacher(row: ClassSubjectMappingDto): void {
-    this.router.navigate(['/app/academics/teacher-allocation'], {
-      queryParams: {
-        academicYearId: this.selectedYearId,
-        classId: this.selectedClassId,
-        subjectId: row.subjectId
-      }
-    });
-  }
-
   categoryLabel(category: SubjectCategory): string {
     return SUBJECT_CATEGORY_OPTIONS.find((c) => c.value === category)?.label || category;
   }
 
-  preferenceLabel(pref: SubjectTimetablePreference): string {
-    return TIMETABLE_PREFERENCE_OPTIONS.find((p) => p.value === pref)?.label || pref;
-  }
-
-  teacherStatusLabel(status: string): string {
-    if (status === 'ASSIGNED') return 'Assigned';
-    if (status === 'MISSING') return 'Missing';
-    return '—';
-  }
-
-  private loadClasses(): void {
-    if (!this.selectedYearId) return;
-    this.classesApi.getDashboard(this.selectedYearId, { active: true }).subscribe({
-      next: (dash) => {
-        this.classes = dash.classes || [];
-        if (!this.selectedClassId && this.classes.length) {
-          this.selectedClassId = this.classes[0].classId;
-        }
-        if (this.activeTab === 'mapping' && this.selectedClassId) {
-          this.loadMappingBoard();
-        }
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.classes = [];
-      }
-    });
+  categoryTone(category: SubjectCategory): string {
+    switch (category) {
+      case 'LANGUAGE': return 'language';
+      case 'CORE': return 'core';
+      case 'PRACTICAL':
+      case 'LAB': return 'practical';
+      case 'ACTIVITY': return 'activity';
+      default: return 'default';
+    }
   }
 }

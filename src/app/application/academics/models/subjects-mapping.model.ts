@@ -18,6 +18,8 @@ export interface ClassSubjectMappingDto {
   classId: number;
   className?: string;
   classCode?: string;
+  classStage?: string;
+  sectionCount?: number;
   subjectId: number;
   subjectName: string;
   subjectCode: string;
@@ -30,6 +32,17 @@ export interface ClassSubjectMappingDto {
   active?: boolean | null;
   teacherStatus: 'ASSIGNED' | 'MISSING' | 'NONE';
   teacherAllocationCount?: number;
+}
+
+export interface ClassMappingBoard {
+  classId: number;
+  className: string;
+  classCode: string;
+  stage: string;
+  sectionNames: string[];
+  mappings: ClassSubjectMappingDto[];
+  includedCount: number;
+  missingTeacherCount: number;
 }
 
 export interface SubjectDto {
@@ -61,17 +74,6 @@ export interface SubjectsMappingDashboard {
   subjectsActive: number;
   unmappedSubjectCount: number;
   subjects: SubjectDto[];
-}
-
-export interface ClassMappingBoard {
-  classId: number;
-  className: string;
-  classCode: string;
-  stage: string;
-  sectionNames: string[];
-  mappings: ClassSubjectMappingDto[];
-  includedCount: number;
-  missingTeacherCount: number;
 }
 
 export interface SubjectCreateRequest {

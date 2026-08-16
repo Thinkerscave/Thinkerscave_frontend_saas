@@ -141,8 +141,8 @@
       </button>
       <a
         class="cd-manage-card"
-        routerLink="/app/academics/subjects-mapping"
-        [queryParams]="{ from: 'classes', classId: c.classId }">
+        [routerLink]="['/app/academics/classes-sections', c.classId, 'subjects']"
+        [queryParams]="{ from: 'classes' }">
         <strong>Subjects &amp; Mapping</strong>
         <span>Manage subject mappings for this class</span>
         <em>Manage Mapping →</em>

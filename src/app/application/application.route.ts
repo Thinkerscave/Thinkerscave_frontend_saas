@@ -302,7 +302,7 @@ export const APPLICATION_ROUTES: Routes = [
       }
     ]
   },
-  // ━━━ Academics module (Overview / Academic Year / Classes & Sections / Subjects & Mapping / Teacher Allocation / Timetable + role pages) ━━━
+  // ━━━ Academics module (Overview / Academic Year / Classes & Sections / Subjects / Teacher Allocation / Timetable + role pages) ━━━
   {
     path: 'academics',
     canActivate: [roleGuard(ACADEMICS_ROLES)],
@@ -313,19 +313,21 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'overview', data: { workspacePage: 'overview', ...ACADEMICS_PAGES.overview }, loadComponent: () => import('./academics/components/pages/overview/overview.component').then(m => m.AcademicsOverviewPageComponent) },
       { path: 'academic-year', data: { workspacePage: 'academic-year', ...ACADEMICS_PAGES.academicYear }, loadComponent: () => import('./academics/components/pages/academic-year/academic-year.component').then(m => m.AcademicYearPageComponent) },
       { path: 'classes-sections', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classesSections }, loadComponent: () => import('./academics/components/pages/classes-sections/classes-sections.component').then(m => m.ClassesSectionsPageComponent) },
+      { path: 'classes-sections/:classId/subjects', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classSubjects }, loadComponent: () => import('./academics/components/pages/class-subjects/class-subjects.component').then(m => m.ClassSubjectsPageComponent) },
       { path: 'classes-sections/:classId', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classDetail }, loadComponent: () => import('./academics/components/pages/class-detail/class-detail.component').then(m => m.ClassDetailPageComponent) },
       { path: 'subjects-mapping', data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectsMapping }, loadComponent: () => import('./academics/components/pages/subjects-mapping/subjects-mapping.component').then(m => m.SubjectsMappingPageComponent) },
+      { path: 'subjects-mapping/:subjectId', data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectDetail }, loadComponent: () => import('./academics/components/pages/subject-detail/subject-detail.component').then(m => m.SubjectDetailPageComponent) },
       { path: 'teacher-allocation', data: { workspacePage: 'teacher-allocation', ...ACADEMICS_PAGES.teacherAllocation }, loadComponent: () => import('./academics/components/pages/teacher-allocation/teacher-allocation.component').then(m => m.TeacherAllocationPageComponent) },
       { path: 'timetable', data: { workspacePage: 'timetable', ...ACADEMICS_PAGES.timetable }, loadComponent: () => import('./academics/components/pages/timetable/timetable.component').then(m => m.TimetablePageComponent) },
+      { path: 'academic-calendar', data: { workspacePage: 'academic-calendar', ...ACADEMICS_PAGES.academicCalendar }, loadComponent: () => import('./academics/components/pages/academic-calendar/academic-calendar.component').then(m => m.AcademicCalendarPageComponent) },
+      { path: 'academic-calendar/:eventId', data: { workspacePage: 'academic-calendar', ...ACADEMICS_PAGES.calendarEventDetail }, loadComponent: () => import('./academics/components/pages/calendar-event-detail/calendar-event-detail.component').then(m => m.CalendarEventDetailPageComponent) },
       { path: 'my-classes', data: { workspacePage: 'my-classes', ...ACADEMICS_PAGES.myClasses }, loadComponent: () => import('./academics/components/pages/my-classes/my-classes.component').then(m => m.MyClassesPageComponent) },
       { path: 'my-timetable', data: { workspacePage: 'my-timetable', ...ACADEMICS_PAGES.myTimetable }, loadComponent: () => import('./academics/components/pages/my-timetable/my-timetable.component').then(m => m.MyTimetablePageComponent) },
       { path: 'academic-structure', data: { workspacePage: 'academic-structure', ...ACADEMICS_PAGES.academicStructure }, loadComponent: () => import('./academics/components/pages/academic-structure/academic-structure.component').then(m => m.AcademicStructurePageComponent) },
       { path: 'my-academics', data: { workspacePage: 'my-academics', ...ACADEMICS_PAGES.myAcademics }, loadComponent: () => import('./academics/components/pages/my-academics/my-academics.component').then(m => m.MyAcademicsPageComponent) },
       { path: 'academic-setup', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'settings', pathMatch: 'full', redirectTo: 'classes-sections' },
-      // Legacy redirects (Arrangement / Calendar / Syllabus dropped from frozen Academics V1)
       { path: 'teacher-arrangement', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'academic-calendar', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'syllabus-tracker', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'years', pathMatch: 'full', redirectTo: 'academic-year' },
@@ -339,7 +341,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'syllabus/history/:id', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'tracker', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'class-teacher-allocation', pathMatch: 'full', redirectTo: 'classes-sections' },
-      { path: 'calendar', pathMatch: 'full', redirectTo: 'overview' }
+      { path: 'calendar', pathMatch: 'full', redirectTo: 'academic-calendar' }
     ]
   },
   {

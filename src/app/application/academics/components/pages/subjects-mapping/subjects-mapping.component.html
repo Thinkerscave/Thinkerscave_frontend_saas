@@ -1,4 +1,5 @@
 <p-confirmDialog></p-confirmDialog>
+<p-menu #subjectMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="sm-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
@@ -7,7 +8,7 @@
     </button>
     <button
       type="button"
-      class="sm-btn sm-btn--primary"
+      class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="readOnly"
       (click)="openCreateSubject()">
@@ -16,295 +17,313 @@
     </button>
   </tc-saas-page-header>
 
-  <div class="sm-context" *ngIf="dashboard as dash">
-    <div class="sm-context__left">
-      <label>Academic Year</label>
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId"
-        styleClass="sm-year-dd">
-      </p-dropdown>
-      <span class="sm-badge" [class.sm-badge--success]="dash.academicYearStatus === 'CURRENT'">
-        {{ dash.academicYearStatus }}
-      </span>
-      <span class="sm-readonly" *ngIf="dash.yearReadOnly">Historical · Read Only</span>
-    </div>
-    <div class="sm-context__meta">
-      {{ dash.classCount }} Classes · {{ dash.sectionCount }} Sections · {{ dash.subjectCount }} Subjects
-      <span *ngIf="dash.unmappedSubjectCount"> · {{ dash.unmappedSubjectCount }} unmapped</span>
-    </div>
-  </div>
-
-  <div class="sm-tabs">
-    <button type="button" [class.active]="activeTab === 'subjects'" (click)="switchTab('subjects')">Subjects</button>
-    <button type="button" [class.active]="activeTab === 'mapping'" (click)="switchTab('mapping')">Class Mapping</button>
-  </div>
-
-  <div class="sm-workspace">
-  <!-- Subjects pane -->
-  <section class="sm-pane" [class.sm-pane--hidden-mobile]="activeTab === 'mapping'">
-    <div class="acad-toolbar">
-      <input
-        class="acad-toolbar__search"
-        type="search"
-        placeholder="Search…"
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="reload()" />
-      <div class="acad-toolbar__filters">
+  <section class="sm-context" *ngIf="dashboard as dash" aria-label="Academic year context">
+    <div class="sm-context__primary">
+      <div class="sm-context__label">Academic Year</div>
+      <div class="sm-context__controls">
         <p-dropdown
-          [options]="categoryOptions"
-          [(ngModel)]="categoryFilter"
-          (onChange)="reload()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Category">
+          [options]="years"
+          [(ngModel)]="selectedYearId"
+          (onChange)="onYearChange()"
+          optionLabel="name"
+          optionValue="academicYearId"
+          placeholder="Select year"
+          styleClass="sm-year-dd"
+          appendTo="body">
         </p-dropdown>
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="activeFilter"
-          (onChange)="reload()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Status">
-        </p-dropdown>
+        <span
+          class="sm-badge"
+          [class.sm-badge--success]="dash.academicYearStatus === 'CURRENT'"
+          [class.sm-badge--neutral]="dash.academicYearStatus !== 'CURRENT'">
+          {{ dash.academicYearStatus }}
+        </span>
+        <span class="sm-readonly" *ngIf="dash.yearReadOnly">Historical · Read only</span>
       </div>
     </div>
-
-    <div class="sm-list" *ngIf="dashboard?.subjects?.length; else emptySubjects">
-      <article class="sm-row" *ngFor="let subject of dashboard?.subjects" [class.sm-row--inactive]="!subject.active">
-        <div class="sm-row__main">
-          <strong>{{ subject.name }}</strong>
-          <code>{{ subject.code }}</code>
-          <span class="sm-chip">{{ categoryLabel(subject.category) }}</span>
-          <span class="sm-badge" [class.sm-badge--success]="subject.active">{{ subject.active ? 'Active' : 'Inactive' }}</span>
-        </div>
-        <div class="sm-row__meta">
-          <span>Default weekly periods: <strong>{{ subject.defaultWeeklyPeriods }}</strong></span>
-          <span>Timetable: <strong>{{ preferenceLabel(subject.timetablePreference) }}</strong></span>
-          <span>Used by: <strong>{{ subject.mappedClassCount || 0 }}</strong> classes</span>
-          <span>Teachers: <strong>{{ subject.teacherAllocationCount || 0 }}</strong></span>
-        </div>
-        <div class="sm-row__actions">
-          <button type="button" class="sm-link" (click)="goToMapping(subject)">View Mapping →</button>
-          <button type="button" class="sm-link" *ngIf="canManage" (click)="openEditSubject(subject)">Edit</button>
-          <button
-            type="button"
-            class="sm-link"
-            *ngIf="canManage"
-            (click)="toggleSubjectActive(subject, !subject.active)">
-            {{ subject.active ? 'Deactivate' : 'Activate' }}
-          </button>
-        </div>
-      </article>
+    <div class="sm-context__summary">
+      <span>{{ dash.subjectCount }} Subjects</span>
+      <span class="sm-dot" aria-hidden="true">·</span>
+      <span>{{ dash.classCount }} Classes</span>
+      <span class="sm-dot" aria-hidden="true">·</span>
+      <span>{{ dash.sectionCount }} Sections</span>
     </div>
-    <ng-template #emptySubjects>
+  </section>
+
+  <div class="acad-toolbar sm-toolbar">
+    <input
+      class="acad-toolbar__search"
+      type="search"
+      placeholder="Search subjects by name or code..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange($event)"
+      aria-label="Search subjects by name or code" />
+    <div class="acad-toolbar__filters">
+      <p-dropdown
+        [options]="categoryOptions"
+        [(ngModel)]="categoryFilter"
+        (onChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Category"
+        styleClass="sm-filter-dd"
+        appendTo="body">
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="activeFilter"
+        (onChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        styleClass="sm-filter-dd"
+        appendTo="body">
+      </p-dropdown>
+    </div>
+    <div class="acad-toolbar__end">
+      <div class="sm-view-toggle" role="group" aria-label="View mode">
+        <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" aria-label="Grid view">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" aria-label="List view">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm-filter-bar" *ngIf="hasVisibleFilters || showDeactivatedHint">
+    <div class="sm-chips" *ngIf="hasVisibleFilters">
+      <button type="button" class="sm-chip" *ngIf="searchTerm.trim()" (click)="clearSearch()">
+        “{{ searchTerm.trim() }}” <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="sm-chip" *ngIf="categoryFilter" (click)="clearCategory()">
+        {{ categoryLabel(categoryFilter) }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="sm-chip" *ngIf="activeFilter !== null" (click)="clearStatus()">
+        {{ activeFilter ? 'Active' : 'Inactive' }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="sm-clear" (click)="clearFilters()">Clear filters</button>
+    </div>
+    <p class="sm-hint-line" *ngIf="showDeactivatedHint">
+      Deactivated subjects are hidden. Use Status → Inactive to view them.
+    </p>
+  </div>
+
+  <ng-container *ngIf="totalSubjects; else emptyTpl">
+    <div class="sm-results" [class.sm-results--refreshing]="refreshing">
+      <div class="sm-grid acad-stagger" *ngIf="viewMode === 'grid'; else listTpl">
+        <article
+          class="sm-card acad-card-clickable"
+          *ngFor="let subject of pagedSubjects"
+          [class.sm-card--inactive]="!subject.active"
+          (click)="openDetails(subject.subjectId)"
+          (keydown.enter)="openDetails(subject.subjectId)"
+          tabindex="0"
+          role="link"
+          [attr.aria-label]="'View details for ' + subject.name">
+          <div class="sm-card__top">
+            <div class="sm-card__identity">
+              <h2>{{ subject.name }}</h2>
+              <code>{{ subject.code }}</code>
+            </div>
+            <span class="sm-badge" [class.sm-badge--success]="subject.active" [class.sm-badge--neutral]="!subject.active">
+              {{ subject.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <div class="sm-card__tags">
+            <span class="sm-tag" [attr.data-tone]="categoryTone(subject.category)">
+              {{ categoryLabel(subject.category) }}
+            </span>
+          </div>
+
+          <div class="sm-card__stats">
+            <div>
+              <strong>{{ subject.mappedClassCount || 0 }}</strong>
+              <span>Classes</span>
+            </div>
+            <div>
+              <strong>{{ subject.defaultWeeklyPeriods || 0 }}</strong>
+              <span>Weekly periods</span>
+            </div>
+          </div>
+
+          <div class="sm-card__actions" (click)="$event.stopPropagation()">
+            <button type="button" class="sm-details" (click)="openDetails(subject.subjectId)">
+              View Details <span aria-hidden="true">→</span>
+            </button>
+            <button
+              type="button"
+              class="sm-icon-btn"
+              (click)="buildMenu(subject); subjectMenu.toggle($event)"
+              aria-label="More actions">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #listTpl>
+        <div class="sm-table-wrap">
+          <table class="sm-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Code</th>
+                <th>Category</th>
+                <th>Classes</th>
+                <th>Default Weekly Periods</th>
+                <th>Status</th>
+                <th class="sm-table__actions" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let subject of pagedSubjects"
+                class="acad-card-clickable"
+                (click)="openDetails(subject.subjectId)"
+                (keydown.enter)="openDetails(subject.subjectId)"
+                tabindex="0"
+                role="link">
+                <td><strong>{{ subject.name }}</strong></td>
+                <td><code>{{ subject.code }}</code></td>
+                <td>
+                  <span class="sm-tag" [attr.data-tone]="categoryTone(subject.category)">
+                    {{ categoryLabel(subject.category) }}
+                  </span>
+                </td>
+                <td>{{ subject.mappedClassCount || 0 }}</td>
+                <td>{{ subject.defaultWeeklyPeriods || 0 }}</td>
+                <td>
+                  <span class="sm-badge" [class.sm-badge--success]="subject.active" [class.sm-badge--neutral]="!subject.active">
+                    {{ subject.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="sm-table__actions" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="sm-icon-btn"
+                    (click)="buildMenu(subject); subjectMenu.toggle($event)"
+                    aria-label="More actions">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="sm-pager" *ngIf="totalSubjects > pageSize">
+      <span class="sm-pager__meta">
+        Showing {{ pageStart }}–{{ pageEnd }} of {{ totalSubjects }} subjects
+      </span>
+      <div class="sm-pager__controls">
+        <button type="button" class="sm-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page">
+          <i class="pi pi-angle-left"></i>
+        </button>
+        <span class="sm-pager__page">{{ page }} / {{ totalPages }}</span>
+        <button type="button" class="sm-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <select class="sm-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Subjects per page">
+          <option [ngValue]="12">12 / page</option>
+          <option [ngValue]="24">24 / page</option>
+          <option [ngValue]="48">48 / page</option>
+        </select>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #emptyTpl>
+    <div class="sm-empty" *ngIf="isFilterEmptyState; else noSubjectsTpl">
+      <i class="pi pi-filter-slash" aria-hidden="true"></i>
+      <h3>No subjects match your filters</h3>
+      <p>Try changing the search or filters.</p>
+      <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
+    </div>
+    <ng-template #noSubjectsTpl>
       <div class="sm-empty">
-        <h3>No subjects yet</h3>
-        <p>Create subjects, then map them to classes.</p>
-        <button type="button" class="sm-btn sm-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="readOnly" (click)="openCreateSubject()">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <h3>No subjects found</h3>
+        <p>
+          There are no subjects configured for
+          {{ dashboard?.academicYearName || 'this academic year' }}.
+        </p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly"
+          (click)="openCreateSubject()">
+          <i class="pi pi-plus"></i>
           Add Subject
         </button>
       </div>
     </ng-template>
-
-    <div class="sm-prompt" *ngIf="promptMapAfterCreate && canManage">
-      <p>Would you like to map it to classes now?</p>
-      <button type="button" class="sm-btn sm-btn--primary" (click)="goToMapping()">Map to Classes</button>
-      <button type="button" class="sm-btn sm-btn--ghost" (click)="promptMapAfterCreate = false">Done</button>
-    </div>
-  </section>
-
-  <!-- Mapping pane -->
-  <section class="sm-pane sm-pane--mapping" [class.sm-pane--hidden-mobile]="activeTab === 'subjects'">
-    <div class="sm-mapping-toolbar">
-      <label>Select Class</label>
-      <p-dropdown
-        [options]="classes"
-        [(ngModel)]="selectedClassId"
-        (onChange)="onClassChange()"
-        optionLabel="name"
-        optionValue="classId"
-        placeholder="Choose class"
-        styleClass="sm-class-dd">
-      </p-dropdown>
-    </div>
-
-    <div class="sm-mapping-head" *ngIf="mappingBoard as board">
-      <div>
-        <h2>{{ board.className }}</h2>
-        <p>
-          Stage: {{ board.stage }} ·
-          Sections: {{ board.sectionNames.length ? board.sectionNames.join(' · ') : 'None' }}
-        </p>
-      </div>
-      <div class="sm-mapping-summary">
-        {{ board.includedCount }} / {{ board.mappings?.length || 0 }} mapped
-        <span *ngIf="board.missingTeacherCount" class="sm-warn"> · {{ board.missingTeacherCount }} missing teachers</span>
-      </div>
-    </div>
-
-    <div class="sm-progress" *ngIf="mappingBoard as board">
-      <div class="sm-progress__top">
-        <span>Mapping Progress</span>
-        <strong>{{ mappingProgressPercent }}%</strong>
-      </div>
-      <div class="sm-progress__bar"><span [style.width.%]="mappingProgressPercent"></span></div>
-    </div>
-
-    <table class="sm-table" *ngIf="mappingBoard?.mappings?.length; else emptyMapping">
-      <thead>
-        <tr>
-          <th>Included</th>
-          <th>Subject</th>
-          <th>Category</th>
-          <th>Weekly Periods</th>
-          <th>Preferred Time</th>
-          <th>Teacher Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of mappingBoard?.mappings">
-          <td>
-            <p-checkbox
-              [binary]="true"
-              [ngModel]="row.included"
-              [disabled]="!canManage"
-              (onChange)="toggleIncluded(row, $event.checked)">
-            </p-checkbox>
-          </td>
-          <td>
-            <strong>{{ row.subjectName }}</strong>
-            <div><code>{{ row.subjectCode }}</code></div>
-          </td>
-          <td>{{ categoryLabel(row.category) }}</td>
-          <td>
-            <input
-              type="number"
-              min="1"
-              class="sm-periods"
-              [ngModel]="row.weeklyPeriods"
-              [disabled]="!canManage || !row.included"
-              (change)="updatePeriods(row, $any($event.target).value)" />
-            <small [class.sm-overridden]="row.periodsOverridden">
-              {{ row.periodsOverridden ? 'Overridden' : 'Default' }}
-            </small>
-          </td>
-          <td>
-            <p-dropdown
-              [options]="preferenceOptions"
-              [ngModel]="row.timetablePreference"
-              [disabled]="!canManage || !row.included"
-              optionLabel="label"
-              optionValue="value"
-              (onChange)="updatePreference(row, $event.value)">
-            </p-dropdown>
-          </td>
-          <td>
-            <span
-              class="sm-badge"
-              [class.sm-badge--success]="row.teacherStatus === 'ASSIGNED'"
-              [class.sm-badge--warn]="row.teacherStatus === 'MISSING'">
-              {{ teacherStatusLabel(row.teacherStatus) }}
-            </span>
-          </td>
-          <td>
-            <button
-              type="button"
-              class="sm-link"
-              *ngIf="row.included && row.teacherStatus === 'MISSING'"
-              (click)="goAssignTeacher(row)">
-              Assign Teacher →
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <ng-template #emptyMapping>
-      <div class="sm-empty">
-        <h3>Select a class to map subjects</h3>
-        <p>Create classes and subjects first if the lists are empty.</p>
-      </div>
-    </ng-template>
-
-    <div class="sm-assign-banner" *ngIf="mappingBoard?.missingTeacherCount">
-      <span>{{ mappingBoard?.missingTeacherCount }} subject(s) not assigned to any teacher</span>
-      <a class="sm-btn sm-btn--primary" routerLink="/app/academics/teacher-allocation"
-         [queryParams]="{ academicYearId: selectedYearId, classId: selectedClassId }">Assign Teacher</a>
-    </div>
-  </section>
-
-  <aside class="sm-side" *ngIf="dashboard as dash">
-    <div class="sm-side-card">
-      <h4>Subject Summary</h4>
-      <div class="sm-side-stat"><span>Total Subjects</span><strong>{{ dash.subjectCount }}</strong></div>
-      <div class="sm-side-stat"><span>Unmapped</span><strong>{{ dash.unmappedSubjectCount || 0 }}</strong></div>
-      <div class="sm-side-stat"><span>Classes</span><strong>{{ dash.classCount }}</strong></div>
-      <div class="sm-side-stat"><span>Sections</span><strong>{{ dash.sectionCount }}</strong></div>
-    </div>
-    <div class="sm-side-card">
-      <h4>Quick Links</h4>
-      <a routerLink="/app/academics/teacher-allocation">View Teacher Allocation →</a>
-      <a routerLink="/app/academics/timetable">View Timetable →</a>
-      <a routerLink="/app/academics/classes-sections">View Classes →</a>
-    </div>
-  </aside>
-  </div>
+  </ng-template>
 </div>
 
 <ng-template #loadingTpl>
-  <div class="sm-loading">Loading subjects…</div>
+  <div class="sm-loading acad-page" aria-busy="true">
+    <div class="sm-skeleton sm-skeleton--context"></div>
+    <div class="sm-skeleton sm-skeleton--toolbar"></div>
+    <div class="sm-skeleton-grid">
+      <div class="sm-skeleton sm-skeleton--card" *ngFor="let _ of [1,2,3,4]"></div>
+    </div>
+  </div>
 </ng-template>
 
 <p-dialog
   [header]="editingSubjectId ? 'Edit Subject' : 'Add Subject'"
   [(visible)]="showSubjectDialog"
   [modal]="true"
-  [style]="{ width: '520px' }"
+  [style]="{ width: 'min(520px, 94vw)' }"
   [draggable]="false">
   <form class="sm-form" [formGroup]="subjectForm" (ngSubmit)="saveSubject()">
     <label>
       Subject Name *
-      <input type="text" formControlName="name" placeholder="Mathematics" (blur)="suggestCode()" />
+      <input type="text" formControlName="name" placeholder="English" (blur)="suggestCode()" />
     </label>
     <label>
       Subject Code
-      <input type="text" formControlName="code" placeholder="MAT" />
+      <input type="text" formControlName="code" placeholder="ENG" />
     </label>
     <label>
       Category *
       <p-dropdown
         [options]="subjectCategoryOptions"
         formControlName="category"
+        (onChange)="onCategoryChange()"
         optionLabel="label"
         optionValue="value"
-        (onChange)="onCategoryChange()">
+        appendTo="body">
       </p-dropdown>
     </label>
     <label>
       Default Weekly Periods *
-      <input type="number" min="1" formControlName="defaultWeeklyPeriods" />
-      <small>Can be overridden for individual classes.</small>
+      <input type="number" formControlName="defaultWeeklyPeriods" min="1" />
     </label>
     <label>
-      Preferred Timetable Period *
+      Timetable Preference *
       <p-dropdown
         [options]="preferenceOptions"
         formControlName="timetablePreference"
         optionLabel="label"
-        optionValue="value">
+        optionValue="value"
+        appendTo="body">
       </p-dropdown>
     </label>
     <label>
       Description
-      <textarea rows="3" formControlName="description" placeholder="Optional"></textarea>
+      <input type="text" formControlName="description" placeholder="Optional description" />
     </label>
     <div class="sm-form__actions">
-      <button type="button" class="sm-btn sm-btn--ghost" (click)="showSubjectDialog = false">Cancel</button>
-      <button type="submit" class="sm-btn sm-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save Subject' }}</button>
+      <button type="button" class="tc-btn" (click)="showSubjectDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
     </div>
   </form>
 </p-dialog>

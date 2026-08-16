@@ -14,8 +14,16 @@ export class AcademicsNavService {
       void this.router.navigate(['/app/academics/overview']);
       return;
     }
+    if (from === 'subjects') {
+      void this.router.navigate(['/app/academics/subjects-mapping']);
+      return;
+    }
     if (from === 'classes') {
       void this.router.navigate(['/app/academics/classes-sections']);
+      return;
+    }
+    if (from === 'calendar') {
+      void this.router.navigate(['/app/academics/academic-calendar']);
       return;
     }
     if (typeof window !== 'undefined' && window.history.length > 1) {

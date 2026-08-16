@@ -14,6 +14,7 @@ export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   'subjects-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
+  'academic-calendar': 'ACADEMICS_CALENDAR',
   'my-classes': 'ACADEMICS_MY_CLASSES',
   'my-timetable': 'ACADEMICS_MY_TIMETABLE',
   'academic-structure': 'ACADEMICS_ACADEMIC_STRUCTURE',
@@ -56,10 +57,10 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
   },
   {
     page: 'subjects-mapping',
-    label: 'Subjects & Mapping',
-    title: 'Subjects & Mapping',
+    label: 'Subjects',
+    title: 'Subjects',
     eyebrow: 'Curriculum configuration',
-    description: 'Configure subjects and define which subjects are taught for each class.',
+    description: 'Create subjects and map them to classes from the subject or class view.',
     icon: 'pi pi-book',
     route: '/app/academics/subjects-mapping',
     primaryAction: 'Add Subject',
@@ -86,6 +87,17 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     route: '/app/academics/timetable',
     primaryAction: 'Generate',
     actionMode: 'timetable'
+  },
+  {
+    page: 'academic-calendar',
+    label: 'Academic Calendar',
+    title: 'Academic Calendar',
+    eyebrow: 'Important dates',
+    description: 'Plan, manage and publish important dates, holidays and events for the academic year.',
+    icon: 'pi pi-calendar',
+    route: '/app/academics/academic-calendar',
+    primaryAction: 'Add Event',
+    actionMode: 'calendar-event'
   },
   {
     page: 'my-classes',
@@ -144,6 +156,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'subjects-mapping',
       'teacher-allocation',
       'timetable',
+      'academic-calendar',
       'my-classes',
       'my-timetable',
       'academic-structure',
@@ -158,7 +171,8 @@ export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
   { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects-mapping'] },
   { id: 'assign-teacher', label: 'Assign teacher', helper: 'Fill missing allocations', icon: 'pi pi-user-edit', tone: 'primary', actionMode: 'allocation', pages: ['teacher-allocation'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
-  { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] }
+  { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },
+  { id: 'add-calendar-event', label: 'Add event', helper: 'Add a holiday or school event', icon: 'pi pi-calendar-plus', tone: 'primary', actionMode: 'calendar-event', pages: ['academic-calendar'] }
 ];
 
 export const ACADEMICS_DAY_OPTIONS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as const;
