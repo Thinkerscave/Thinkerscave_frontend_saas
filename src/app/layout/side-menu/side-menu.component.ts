@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, HostBinding, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, Input, OnInit, computed, effect, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -20,7 +20,13 @@ import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule, TcTranslatePipe],
   templateUrl: './side-menu.component.html',
-  styleUrl: './side-menu.component.scss'
+  styleUrl: './side-menu.component.scss',
+  host: {
+    '[class.is-pinned]': 'isPinned()',
+    '[class.is-hover-flyout]': 'isHoverFlyout()',
+    '[class.is-mobile-drawer]': 'isMobileDrawer()',
+    '[class.is-labels-visible]': 'labelsVisible()'
+  }
 })
 export class SideMenuComponent implements OnInit {
   /** When true, sidebar stays expanded (tablet pin / legacy). */
@@ -46,32 +52,28 @@ export class SideMenuComponent implements OnInit {
   private collapseHoverTimer: ReturnType<typeof setTimeout> | null = null;
   private suppressPointerClickUntil = 0;
 
+  readonly isPinned = computed(() => this.expanded || this.sidebarLayout.isPinned());
+  readonly isHoverFlyout = computed(() => !this.expanded && this.sidebarLayout.isHoverFlyout());
+  readonly isMobileDrawer = computed(() => this.sidebarLayout.isMobileDrawerOpen());
+  readonly labelsVisible = computed(() => this.expanded || this.sidebarLayout.displayExpanded());
+
   get displayExpanded(): boolean {
-    return this.expanded || this.sidebarLayout.displayExpanded();
+    return this.labelsVisible();
   }
 
-  @HostBinding('class.is-expanded')
-  get hostExpanded(): boolean {
-    return this.expanded || this.sidebarLayout.isTabletPinned() || this.sidebarLayout.isMobileDrawerOpen();
-  }
-
-  @HostBinding('class.is-hover-expanded')
-  get isHoverExpanded(): boolean {
-    return this.sidebarLayout.displayExpanded() && !this.expanded && !this.sidebarLayout.isMobileDrawerOpen();
-  }
-
-  @HostBinding('class.is-mobile-drawer')
-  get isMobileDrawer(): boolean {
-    return this.sidebarLayout.isMobileDrawerOpen();
-  }
-
-  @HostBinding('class.is-tablet-pinned')
-  get isTabletPinned(): boolean {
-    return this.sidebarLayout.isTabletPinned();
-  }
-
+  /** Backdrop only for mobile/tablet drawer — never for desktop pin. */
   get showOverlayBackdrop(): boolean {
-    return this.isMobileDrawer || this.isTabletPinned;
+    return this.isMobileDrawer();
+  }
+
+  constructor() {
+    // When the mobile drawer opens, ensure labels/groups refresh under OnPush.
+    effect(() => {
+      if (this.isMobileDrawer()) {
+        this.openActiveGroups();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -95,6 +97,8 @@ export class SideMenuComponent implements OnInit {
     ).subscribe(() => {
       this.syncActiveState();
       this.openActiveGroups();
+      // Close mobile/tablet drawer only — desktop pin must survive navigation.
+      this.sidebarLayout.onNavigated();
       this.cdr.markForCheck();
     });
   }
@@ -177,7 +181,7 @@ export class SideMenuComponent implements OnInit {
   }
 
   private shouldAutoCollapseSidebar(): boolean {
-    return !this.expanded && !this.sidebarLayout.isMobileDrawerOpen() && !this.sidebarLayout.isTabletPinned();
+    return !this.expanded && !this.sidebarLayout.isMobileDrawerOpen() && !this.sidebarLayout.isPinned();
   }
 
   closeMobileDrawer(): void {
@@ -414,15 +418,15 @@ export class SideMenuComponent implements OnInit {
       this.openGroups.add(this.getItemKey(parent));
     }
 
-    this.sidebarLayout.setHovered(true);
-    const closeDrawer = this.sidebarLayout.isMobileDrawerOpen() || this.sidebarLayout.isTabletPinned();
+    // Keep hover open until pointer leaves; never clear desktop pin on navigate.
+    if (!this.sidebarLayout.isPinned()) {
+      this.sidebarLayout.setHovered(true);
+    }
 
     void this.router.navigateByUrl(targetUrl).then(() => {
       this.syncActiveState();
       this.openActiveGroups();
-      if (closeDrawer) {
-        this.closeMobileDrawer();
-      }
+      this.sidebarLayout.onNavigated();
       this.cdr.markForCheck();
     });
   }

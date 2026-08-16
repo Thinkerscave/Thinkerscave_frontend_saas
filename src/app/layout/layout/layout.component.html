@@ -1,18 +1,24 @@
-<div class="layout-container">
+<div
+  class="layout-container"
+  [attr.data-sidebar]="sidebarLayout.layoutWidthMode()"
+  [class.is-drawer-open]="sidebarLayout.isMobileDrawerOpen()">
   <app-top-bar class="topbar"></app-top-bar>
 
-  <div class="main-content" [class.sidebar-is-expanded]="sidebarLayout.isMobileDrawerOpen() || sidebarLayout.isTabletPinned()">
+  <div class="shell-body">
     <app-side-menu class="sidemenu"></app-side-menu>
 
-    <div class="page-content">
-      <tc-page-shell>
-        <app-breadcrumb tcPageHeader></app-breadcrumb>
-        <router-outlet></router-outlet>
-      </tc-page-shell>
+    <div class="content-column">
+      <div class="page-content">
+        <tc-page-shell>
+          <app-breadcrumb tcPageHeader></app-breadcrumb>
+          <router-outlet></router-outlet>
+        </tc-page-shell>
+      </div>
+
+      <app-footer class="footer"></app-footer>
     </div>
   </div>
 
-  <app-footer class="footer"></app-footer>
   <app-pwa-banners></app-pwa-banners>
 
   <tc-drawer-form
