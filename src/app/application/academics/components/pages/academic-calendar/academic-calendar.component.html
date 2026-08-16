@@ -1,0 +1,494 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="ac-page acad-page" *ngIf="!loading; else loadingTpl">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+  </tc-saas-page-header>
+
+  <!-- Top controls: year + Calendar/List + Add Event -->
+  <section class="ac-topbar" aria-label="Calendar controls">
+    <div class="ac-topbar__left">
+      <p-dropdown
+        [options]="years"
+        [(ngModel)]="selectedYearId"
+        (onChange)="onYearChange()"
+        optionLabel="name"
+        optionValue="academicYearId"
+        placeholder="Select year"
+        styleClass="ac-year-dd"
+        appendTo="body">
+      </p-dropdown>
+      <span
+        class="ac-badge"
+        *ngIf="dashboard as dash"
+        [class.ac-badge--success]="dash.status === 'CURRENT'"
+        [class.ac-badge--neutral]="dash.status !== 'CURRENT'">
+        {{ dash.status === 'CURRENT' ? 'Current' : dash.status }}
+      </span>
+      <span class="ac-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
+
+      <div class="ac-view-toggle" role="group" aria-label="View mode">
+        <button
+          type="button"
+          [class.active]="viewMode === 'calendar'"
+          (click)="setViewMode('calendar')">
+          Calendar
+        </button>
+        <button
+          type="button"
+          [class.active]="viewMode === 'list'"
+          (click)="setViewMode('list')">
+          List
+        </button>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="readOnly"
+      (click)="openCreateEvent()">
+      <i class="pi pi-plus"></i>
+      Add Event
+    </button>
+  </section>
+
+  <!-- ========== CALENDAR VIEW ========== -->
+  <div class="ac-cal-layout" *ngIf="viewMode === 'calendar'" [class.ac-results--refreshing]="refreshing">
+    <section class="ac-month" aria-label="Monthly calendar">
+      <header class="ac-month__head">
+        <h2>{{ monthLabel }}</h2>
+        <div class="ac-month__nav">
+          <button type="button" class="ac-nav-btn" (click)="shiftMonth(-1)" aria-label="Previous month">
+            <i class="pi pi-chevron-left"></i>
+          </button>
+          <button type="button" class="ac-today-btn" (click)="goToToday()">Today</button>
+          <button type="button" class="ac-nav-btn" (click)="shiftMonth(1)" aria-label="Next month">
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="ac-month__weekdays" aria-hidden="true">
+        <span *ngFor="let d of weekDays" [class.ac-weekday--sun]="d === 'Sun'">{{ d }}</span>
+      </div>
+
+      <div
+        class="ac-month__grid"
+        role="grid"
+        [attr.aria-label]="monthLabel"
+        [attr.data-weeks]="calendarWeekCount">
+        <div
+          class="ac-day"
+          *ngFor="let cell of calendarDays; trackBy: trackByDateKey"
+          role="gridcell"
+          [class.ac-day--muted]="!cell.inMonth"
+          [class.ac-day--today]="cell.isToday"
+          [class.ac-day--sunday]="cell.isSunday && cell.inMonth"
+          [attr.tabindex]="cell.inMonth ? 0 : -1"
+          [attr.aria-disabled]="!cell.inMonth"
+          (click)="cell.inMonth && onDayClick(cell, $event)"
+          (keydown.enter)="cell.inMonth && onDayClick(cell, $event)">
+          <span class="ac-day__num" [class.ac-day__num--today]="cell.isToday">{{ cell.day }}</span>
+          <span class="ac-day__events" *ngIf="cell.inMonth && cell.events.length">
+            <button
+              type="button"
+              class="ac-chip-event"
+              *ngFor="let ev of visibleChips(cell)"
+              [attr.data-tone]="typeTone(ev.eventType)"
+              [title]="ev.title"
+              (click)="onEventChipClick(ev.eventId, $event)">
+              {{ ev.title }}
+            </button>
+            <button
+              type="button"
+              class="ac-chip-more"
+              *ngIf="hiddenChipCount(cell) as more"
+              (click)="onDayClick(cell, $event)">
+              +{{ more }} more
+            </button>
+          </span>
+        </div>
+      </div>
+
+      <footer class="ac-legend" aria-label="Event type legend">
+        <span class="ac-legend__item" *ngFor="let item of legendItems">
+          <i class="ac-legend__dot" [attr.data-tone]="item.tone" aria-hidden="true"></i>
+          {{ item.label }}
+        </span>
+      </footer>
+    </section>
+
+    <aside class="ac-side" aria-label="Sidebar">
+      <section class="ac-side-card">
+        <h3>Upcoming Events</h3>
+        <div class="ac-upcoming-list" *ngIf="upcomingPreview.length; else noUpcoming">
+          <button
+            type="button"
+            class="ac-up-item"
+            *ngFor="let event of upcomingPreview"
+            (click)="openDetails(event.eventId)">
+            <span class="ac-up-date">
+              <strong>{{ upcomingDay(event) }}</strong>
+              <em>{{ upcomingMonth(event) }}</em>
+            </span>
+            <span class="ac-up-body">
+              <strong>{{ event.title }}</strong>
+              <span class="ac-up-meta">
+                <span class="ac-tag" [attr.data-tone]="typeTone(event.eventType)">{{ typeLabel(event.eventType) }}</span>
+                <span *ngIf="event.location" class="ac-up-loc">{{ event.location }}</span>
+              </span>
+            </span>
+          </button>
+        </div>
+        <ng-template #noUpcoming>
+          <p class="ac-side-empty">No upcoming events in this year.</p>
+        </ng-template>
+      </section>
+
+      <section class="ac-side-card">
+        <h3>Quick Actions</h3>
+        <div class="ac-quick">
+          <button type="button" class="ac-quick__btn" (click)="exportEvents()">
+            <i class="pi pi-download" aria-hidden="true"></i>
+            Export Calendar
+          </button>
+          <button type="button" class="ac-quick__btn" (click)="printCalendar()">
+            <i class="pi pi-print" aria-hidden="true"></i>
+            Print Calendar
+          </button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ========== LIST / TABLE VIEW ========== -->
+  <ng-container *ngIf="viewMode === 'list'">
+    <div class="acad-toolbar ac-toolbar">
+      <input
+        class="acad-toolbar__search"
+        type="search"
+        placeholder="Search events..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search events" />
+      <div class="acad-toolbar__filters">
+        <p-dropdown
+          [options]="typeOptions"
+          [(ngModel)]="typeFilter"
+          (onChange)="onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Types"
+          styleClass="ac-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          (onChange)="onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Status"
+          styleClass="ac-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+        <p-dropdown
+          [options]="audienceFilterOptions"
+          [(ngModel)]="audienceFilter"
+          (onChange)="onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Audience"
+          styleClass="ac-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+        <input
+          class="ac-date-input"
+          type="date"
+          [(ngModel)]="fromDate"
+          (ngModelChange)="onFilterChange()"
+          aria-label="From date"
+          title="From date" />
+        <input
+          class="ac-date-input"
+          type="date"
+          [(ngModel)]="toDate"
+          (ngModelChange)="onFilterChange()"
+          aria-label="To date"
+          title="To date" />
+      </div>
+    </div>
+
+    <div class="ac-filter-bar" *ngIf="hasVisibleFilters">
+      <div class="ac-chips">
+        <button type="button" class="ac-chip" *ngIf="searchTerm.trim()" (click)="clearSearch()">
+          “{{ searchTerm.trim() }}” <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-chip" *ngIf="typeFilter" (click)="clearType()">
+          {{ typeLabel(typeFilter) }} <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-chip" *ngIf="statusFilter" (click)="clearStatus()">
+          {{ statusLabel(statusFilter) }} <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-chip" *ngIf="audienceFilter" (click)="clearAudience()">
+          {{ audienceFilterLabel(audienceFilter) }}
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-chip" *ngIf="fromDate" (click)="clearFrom()">
+          From {{ fromDate }} <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-chip" *ngIf="toDate" (click)="clearTo()">
+          To {{ toDate }} <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="ac-clear" (click)="clearFilters()">Clear filters</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="totalEvents; else emptyTpl">
+      <div class="ac-results" [class.ac-results--refreshing]="refreshing">
+        <div class="ac-table-wrap">
+          <table class="ac-table">
+            <thead>
+              <tr>
+                <th>Date / Period</th>
+                <th>Event</th>
+                <th>Type</th>
+                <th>Applies To</th>
+                <th>Status</th>
+                <th class="ac-table__actions" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let event of pagedEvents"
+                class="acad-card-clickable"
+                (click)="openDetails(event.eventId)"
+                (keydown.enter)="openDetails(event.eventId)"
+                tabindex="0"
+                role="link">
+                <td>
+                  <strong>{{ formatDateRange(event) }}</strong>
+                  <div class="ac-muted">{{ formatTimeDisplay(event) }}</div>
+                </td>
+                <td><strong>{{ event.title }}</strong></td>
+                <td>
+                  <span class="ac-tag" [attr.data-tone]="typeTone(event.eventType)">
+                    {{ typeLabel(event.eventType) }}
+                  </span>
+                </td>
+                <td>{{ audienceLabel(event) }}</td>
+                <td>
+                  <span
+                    class="ac-badge"
+                    [class.ac-badge--success]="event.status === 'PUBLISHED'"
+                    [class.ac-badge--warn]="event.status === 'DRAFT'"
+                    [class.ac-badge--neutral]="event.status === 'INACTIVE'">
+                    {{ statusLabel(event.status) }}
+                  </span>
+                </td>
+                <td class="ac-table__actions" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="ac-icon-btn"
+                    (click)="buildMenu(event); eventMenu.toggle($event)"
+                    aria-label="More actions">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="ac-pager" *ngIf="totalEvents > 0">
+        <span class="ac-pager__meta">
+          Showing {{ pageStart }}–{{ pageEnd }} of {{ totalEvents }} events
+        </span>
+        <div class="ac-pager__controls">
+          <button type="button" class="ac-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page">
+            <i class="pi pi-angle-left"></i>
+          </button>
+          <span class="ac-pager__page">{{ page }} / {{ totalPages }}</span>
+          <button type="button" class="ac-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page">
+            <i class="pi pi-angle-right"></i>
+          </button>
+          <select class="ac-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Events per page">
+            <option [ngValue]="12">12 / page</option>
+            <option [ngValue]="24">24 / page</option>
+            <option [ngValue]="48">48 / page</option>
+          </select>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #emptyTpl>
+    <div class="ac-empty" *ngIf="isFilterEmptyState; else noEventsTpl">
+      <i class="pi pi-filter-slash" aria-hidden="true"></i>
+      <h3>No events match your filters</h3>
+      <p>Try changing the search or filters.</p>
+      <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
+    </div>
+    <ng-template #noEventsTpl>
+      <div class="ac-empty">
+        <i class="pi pi-calendar" aria-hidden="true"></i>
+        <h3>No events found</h3>
+        <p>
+          There are no calendar events for
+          {{ dashboard?.name || 'this academic year' }}.
+        </p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly"
+          (click)="openCreateEvent()">
+          <i class="pi pi-plus"></i>
+          Add Event
+        </button>
+      </div>
+    </ng-template>
+  </ng-template>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="ac-loading acad-page" aria-busy="true">
+    <div class="ac-skeleton ac-skeleton--context"></div>
+    <div class="ac-skeleton ac-skeleton--cal"></div>
+  </div>
+</ng-template>
+
+<p-dialog
+  [header]="editingEventId ? 'Edit Event' : 'Add Event'"
+  [(visible)]="showEventDialog"
+  [modal]="true"
+  [style]="{ width: 'min(560px, 94vw)' }"
+  [draggable]="false">
+  <form class="ac-form" [formGroup]="eventForm">
+    <div class="ac-form__banner" *ngIf="isEditingPublished">
+      This event is published. Saving updates the live calendar entry.
+    </div>
+
+    <fieldset class="ac-form__section">
+      <legend>Basic</legend>
+      <label>
+        Title *
+        <input type="text" formControlName="title" placeholder="Annual Day" />
+      </label>
+      <label>
+        Type *
+        <p-dropdown
+          [options]="eventTypeOptions"
+          formControlName="eventType"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="ac-form-dd">
+        </p-dropdown>
+      </label>
+      <label>
+        Description
+        <textarea formControlName="description" rows="3" placeholder="Optional details"></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset class="ac-form__section">
+      <legend>Date &amp; Time</legend>
+      <div class="ac-form__row">
+        <label>
+          Start Date *
+          <input type="date" formControlName="startDate" />
+        </label>
+        <label>
+          End Date *
+          <input type="date" formControlName="endDate" />
+        </label>
+      </div>
+      <label class="ac-form__check">
+        <p-checkbox formControlName="allDay" [binary]="true" inputId="ac-all-day"></p-checkbox>
+        <span>All day</span>
+      </label>
+      <div class="ac-form__row" *ngIf="!eventForm.value.allDay">
+        <label>
+          Start Time *
+          <input type="time" formControlName="startTime" />
+        </label>
+        <label>
+          End Time *
+          <input type="time" formControlName="endTime" />
+        </label>
+      </div>
+    </fieldset>
+
+    <label>
+      Location
+      <input type="text" formControlName="location" placeholder="Optional location" />
+    </label>
+
+    <fieldset class="ac-form__section">
+      <legend>Visibility</legend>
+      <label>
+        Applies To *
+        <p-dropdown
+          [options]="audienceOptions"
+          formControlName="audienceType"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="ac-form-dd">
+        </p-dropdown>
+      </label>
+      <label *ngIf="eventForm.value.audienceType === 'CLASS'">
+        Classes *
+        <p-multiSelect
+          [options]="classOptions"
+          formControlName="classIds"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select classes"
+          [filter]="true"
+          appendTo="body"
+          styleClass="ac-form-dd"
+          display="chip">
+        </p-multiSelect>
+      </label>
+      <label *ngIf="eventForm.value.audienceType === 'SECTION'">
+        Sections *
+        <p-multiSelect
+          [options]="sectionOptions"
+          formControlName="sectionIds"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select sections"
+          [filter]="true"
+          appendTo="body"
+          styleClass="ac-form-dd"
+          display="chip">
+        </p-multiSelect>
+      </label>
+    </fieldset>
+
+    <div class="ac-form__actions">
+      <button type="button" class="tc-btn" (click)="showEventDialog = false">Cancel</button>
+      <ng-container *ngIf="!editingEventId; else editActions">
+        <button type="button" class="tc-btn" [disabled]="saving" (click)="saveDraft()">
+          {{ saving ? 'Saving…' : 'Save Draft' }}
+        </button>
+        <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="publishFromForm()">
+          Publish
+        </button>
+      </ng-container>
+      <ng-template #editActions>
+        <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="saveEvent()">
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+      </ng-template>
+    </div>
+  </form>
+</p-dialog>

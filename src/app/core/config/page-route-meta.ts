@@ -10,6 +10,78 @@ export const ACCESS_MGMT_ROOT = {
   breadcrumbLink: ['/app/access-management/dashboard']
 } as const;
 
+export const ACADEMICS_ROOT = {
+  breadcrumb: 'Academics',
+  breadcrumbLink: ['/app/academics/overview']
+} as const;
+
+export const ACADEMICS_PAGES = {
+  overview: {
+    breadcrumb: 'Overview',
+    pageSubtitle: 'Real-time summary of your academic structure, setup and operational status.'
+  },
+  academicYear: {
+    breadcrumb: 'Academic Year',
+    pageSubtitle: 'Manage academic sessions, year transitions and historical academic records.'
+  },
+  classesSections: {
+    breadcrumb: 'Classes & Sections',
+    pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.'
+  },
+  classDetail: {
+    breadcrumb: 'Class',
+    breadcrumbLink: ['/app/academics/classes-sections'],
+    pageSubtitle: 'Sections, teachers and related academic setup for this class.'
+  },
+  subjectsMapping: {
+    breadcrumb: 'Subjects',
+    pageSubtitle: 'Create and manage subjects and map them to classes.'
+  },
+  subjectDetail: {
+    breadcrumb: 'Subject',
+    breadcrumbLink: ['/app/academics/subjects-mapping'],
+    pageSubtitle: 'Subject information and class mappings.'
+  },
+  classSubjects: {
+    breadcrumb: 'Subject Mapping',
+    breadcrumbLink: ['/app/academics/classes-sections'],
+    pageSubtitle: 'Subjects taught in this class and how they are mapped.'
+  },
+  teacherAllocation: {
+    breadcrumb: 'Teacher Allocation',
+    pageSubtitle: 'Assign teachers to every class, section and subject combination.'
+  },
+  timetable: {
+    breadcrumb: 'Timetable',
+    pageSubtitle: 'Configure periods, generate the weekly timetable and resolve conflicts.'
+  },
+  academicCalendar: {
+    breadcrumb: 'Academic Calendar',
+    pageSubtitle: 'Plan, manage and publish important dates, holidays and events for the academic year.'
+  },
+  calendarEventDetail: {
+    breadcrumb: 'Event',
+    breadcrumbLink: ['/app/academics/academic-calendar'],
+    pageSubtitle: 'Event information and visibility.'
+  },
+  myClasses: {
+    breadcrumb: 'My Classes',
+    pageSubtitle: 'Classes and sections assigned to you.'
+  },
+  myTimetable: {
+    breadcrumb: 'My Timetable',
+    pageSubtitle: 'Your weekly teaching schedule.'
+  },
+  academicStructure: {
+    breadcrumb: 'Academic Structure',
+    pageSubtitle: 'Stages, classes, sections and subject relationships across the school.'
+  },
+  myAcademics: {
+    breadcrumb: 'My Academics',
+    pageSubtitle: 'Your class, section, subjects and timetable for the current academic year.'
+  }
+} as const;
+
 export const TENANT_PAGES = {
   dashboard: {
     breadcrumb: 'Dashboard',

@@ -1,0 +1,368 @@
+<p-confirmDialog></p-confirmDialog>
+
+<div class="ay-page acad-page" *ngIf="!loading; else loadingTpl">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+    <button
+      type="button"
+      class="ay-btn ay-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      (click)="openCreate()">
+      <i class="pi pi-plus"></i>
+      Create Academic Year
+    </button>
+  </tc-saas-page-header>
+
+  <div class="ay-layout">
+    <div class="ay-main">
+      <section class="ay-hero-grid">
+        <!-- Current year -->
+        <article class="ay-card ay-card--current" *ngIf="dashboard?.currentYear as current; else noCurrent">
+          <div class="ay-card__top">
+            <div class="ay-card__eyebrow">
+              <i class="pi pi-calendar"></i>
+              CURRENT ACADEMIC YEAR
+            </div>
+            <span class="ay-badge ay-badge--success">{{ statusLabel(current.status) }}</span>
+          </div>
+          <h2>{{ current.name }}</h2>
+          <p class="ay-muted">{{ formatRange(current) }}</p>
+
+          <div class="ay-progress">
+            <div class="ay-progress__meta">
+              <span>Academic Year Progress</span>
+              <strong>{{ current.progressPercent || 0 }}%</strong>
+            </div>
+            <p-progressBar [value]="current.progressPercent || 0" [showValue]="false"></p-progressBar>
+            <div class="ay-progress__meta ay-progress__meta--sub">
+              <span>{{ current.daysCompleted || 0 }} days completed</span>
+              <span>{{ current.daysRemaining || 0 }} days remaining</span>
+            </div>
+          </div>
+
+          <div class="ay-stats" *ngIf="current.structureStats as stats">
+            <div>
+              <strong>{{ stats.classesTotal }}</strong>
+              <span>Classes</span>
+              <small>{{ stats.classesActive }} Active</small>
+            </div>
+            <div>
+              <strong>{{ stats.sectionsTotal }}</strong>
+              <span>Sections</span>
+              <small>{{ stats.sectionsActive }} Active</small>
+            </div>
+            <div>
+              <strong>{{ stats.studentsActive }}</strong>
+              <span>Students</span>
+              <small>All Active</small>
+            </div>
+            <div>
+              <strong>{{ stats.subjectsTotal }}</strong>
+              <span>Subjects</span>
+              <small>{{ stats.subjectsActive }} Active</small>
+            </div>
+          </div>
+
+          <div class="ay-card__actions">
+            <a class="ay-btn ay-btn--ghost" routerLink="/app/academics/classes-sections">View Academic Structure →</a>
+            <a class="ay-btn ay-btn--primary" routerLink="/app/academics">View Academics Overview →</a>
+          </div>
+        </article>
+        <ng-template #noCurrent>
+          <article class="ay-card ay-card--empty">
+            <h2>No Current Academic Year</h2>
+            <p>Create and activate an academic year to begin operations.</p>
+            <button type="button" class="ay-btn ay-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+              Create Academic Year
+            </button>
+          </article>
+        </ng-template>
+
+        <!-- Upcoming year -->
+        <article class="ay-card ay-card--upcoming" *ngIf="dashboard?.upcomingYear as upcoming; else noUpcoming">
+          <div class="ay-card__top">
+            <div class="ay-card__eyebrow ay-card__eyebrow--warn">
+              <i class="pi pi-calendar-plus"></i>
+              UPCOMING ACADEMIC YEAR
+            </div>
+            <span class="ay-badge ay-badge--warning">{{ statusLabel(upcoming.status) }}</span>
+          </div>
+          <h2>{{ upcoming.name }}</h2>
+          <p class="ay-muted">{{ formatRange(upcoming) }}</p>
+
+          <div class="ay-progress">
+            <div class="ay-progress__meta">
+              <span>Setup Completion</span>
+              <strong>{{ upcoming.readinessPercent || 0 }}%</strong>
+            </div>
+            <p-progressBar [value]="upcoming.readinessPercent || 0" [showValue]="false" styleClass="ay-bar-warn"></p-progressBar>
+            <div class="ay-progress__meta ay-progress__meta--sub">
+              <span>{{ upcoming.readinessCompletedSteps || 0 }} of {{ upcoming.readinessTotalSteps || 0 }} steps completed</span>
+            </div>
+          </div>
+
+          <ul class="ay-steps">
+            <li *ngFor="let step of upcoming.readinessSteps" [attr.data-state]="step.state">
+              <i [class]="stepIcon(step.state)"></i>
+              <div>
+                <strong>{{ step.label }}</strong>
+                <small *ngIf="step.detail">{{ step.detail }}</small>
+              </div>
+            </li>
+          </ul>
+
+          <div class="ay-card__actions">
+            <button type="button" class="ay-btn ay-btn--ghost" *tcHasPerm="resource; action: 'manage'" (click)="continueSetup(upcoming)">
+              Continue Setup →
+            </button>
+            <button
+              type="button"
+              class="ay-btn ay-btn--primary"
+              *tcHasPerm="resource; action: 'manage'"
+              (click)="submitForApproval(upcoming)"
+              [disabled]="upcoming.status === 'PENDING_APPROVAL' || upcoming.status === 'APPROVED' || upcoming.status === 'CURRENT'">
+              Review & Submit for Approval →
+            </button>
+          </div>
+
+          <div class="ay-approval" *ngIf="upcoming.status === 'PENDING_APPROVAL'">
+            <ng-container *tcHasPerm="resource; action: 'approve'">
+              <button type="button" class="ay-btn ay-btn--primary" (click)="approve(upcoming)">Approve</button>
+              <button type="button" class="ay-btn ay-btn--danger" (click)="openReject(upcoming)">Reject</button>
+            </ng-container>
+          </div>
+
+          <div class="ay-approval" *ngIf="upcoming.status === 'APPROVED'">
+            <button
+              type="button"
+              class="ay-btn ay-btn--primary"
+              *tcHasPerm="resource; action: 'approve'"
+              (click)="confirmActivate(upcoming)">
+              Activate Academic Year
+            </button>
+          </div>
+        </article>
+        <ng-template #noUpcoming>
+          <article class="ay-card ay-card--empty">
+            <h2>No Upcoming Academic Year</h2>
+            <p>Prepare the next academic year when you are ready.</p>
+            <button type="button" class="ay-btn ay-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+              Create Academic Year
+            </button>
+          </article>
+        </ng-template>
+      </section>
+
+      <!-- History -->
+      <section class="ay-history">
+        <div class="ay-history__toolbar">
+          <h3>Academic Year History</h3>
+          <div class="ay-filters">
+            <input
+              type="search"
+              placeholder="Search academic year..."
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="applyLocalFilter()" />
+            <p-dropdown
+              [options]="statusOptions"
+              [(ngModel)]="statusFilter"
+              (onChange)="applyLocalFilter()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="All Status">
+            </p-dropdown>
+          </div>
+        </div>
+
+        <p-table [value]="history" [paginator]="true" [rows]="8" styleClass="ay-table">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Academic Year</th>
+              <th>Period</th>
+              <th>Status</th>
+              <th>Classes</th>
+              <th>Students</th>
+              <th>Setup</th>
+              <th>Last Updated</th>
+              <th>Action</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-year>
+            <tr>
+              <td><strong>{{ year.name }}</strong></td>
+              <td>{{ formatRange(year) }}</td>
+              <td><span class="ay-badge" [class]="'ay-badge--' + statusTone(year.status)">{{ statusLabel(year.status) }}</span></td>
+              <td>{{ year.structureStats?.classesTotal ?? '—' }}</td>
+              <td>{{ year.structureStats?.studentsActive ?? '—' }}</td>
+              <td>{{ year.readinessPercent != null ? (year.readinessPercent + '%') : '—' }}</td>
+              <td>
+                <div>{{ formatDate(year.updatedOn || year.createdOn) }}</div>
+                <small class="ay-muted">{{ year.updatedBy || year.createdBy || 'system' }}</small>
+              </td>
+              <td>
+                <button type="button" class="ay-link" (click)="onHistoryAction(year)">{{ primaryHistoryAction(year) }}</button>
+                <button
+                  type="button"
+                  class="ay-link ay-link--danger"
+                  *tcHasPerm="resource; action: 'manage'"
+                  (click)="deactivate(year)">
+                  Deactivate
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="8">No academic years found.</td></tr>
+          </ng-template>
+        </p-table>
+
+        <p class="ay-note">
+          Only one academic year can be current at a time. Historical years are read-only and cannot be modified.
+        </p>
+      </section>
+    </div>
+
+    <aside class="ay-side">
+      <div class="ay-side-card">
+        <h4>Quick Actions</h4>
+        <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+          <i class="pi pi-plus-circle"></i> Prepare Next Academic Year
+        </button>
+        <a class="ay-side-link" routerLink="/app/academics/classes-sections">
+          <i class="pi pi-sitemap"></i> View Academic Structure
+        </a>
+        <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openTransition()">
+          <i class="pi pi-refresh"></i> Academic Year Transition
+        </button>
+      </div>
+      <div class="ay-side-card ay-side-card--help">
+        <h4>Need Help?</h4>
+        <p>Learn how academic year lifecycle, approval and activation work.</p>
+        <a href="javascript:void(0)">View Help Guide</a>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="ay-loading">Loading academic years…</div>
+</ng-template>
+
+<!-- Create drawer -->
+<p-dialog
+  header="Create Academic Year"
+  [(visible)]="showCreate"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+  [draggable]="false">
+  <form class="ay-form" [formGroup]="createForm" (ngSubmit)="saveCreate()">
+    <label>
+      Academic Year Name *
+      <input type="text" formControlName="name" placeholder="2027–28" />
+    </label>
+    <label>
+      Start Date *
+      <input type="date" formControlName="startDate" (change)="suggestNameFromDates()" />
+    </label>
+    <label>
+      End Date *
+      <input type="date" formControlName="endDate" (change)="suggestNameFromDates()" />
+    </label>
+    <label>
+      Academic Pattern *
+      <p-dropdown
+        [options]="patternOptions"
+        formControlName="pattern"
+        optionLabel="label"
+        optionValue="value">
+      </p-dropdown>
+    </label>
+    <div class="ay-form__actions">
+      <button type="button" class="ay-btn ay-btn--ghost" (click)="showCreate = false">Cancel</button>
+      <button type="submit" class="ay-btn ay-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Create' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- Reject dialog -->
+<p-dialog header="Reject Academic Year" [(visible)]="showReject" [modal]="true" [style]="{ width: '420px' }">
+  <label class="ay-form-label">
+    Rejection reason *
+    <textarea rows="4" [(ngModel)]="rejectReason" placeholder="Explain what must be fixed"></textarea>
+  </label>
+  <div class="ay-form__actions">
+    <button type="button" class="ay-btn ay-btn--ghost" (click)="showReject = false">Cancel</button>
+    <button type="button" class="ay-btn ay-btn--danger" (click)="confirmReject()" [disabled]="!rejectReason.trim()">Reject</button>
+  </div>
+</p-dialog>
+
+<!-- Transition dialog -->
+<p-dialog
+  header="Academic Year Transition"
+  [(visible)]="showTransition"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [draggable]="false">
+  <div class="ay-form">
+    <p class="ay-muted">
+      Copy structure from <strong>{{ dashboard?.currentYear?.name }}</strong> into a preparing year.
+    </p>
+    <label>
+      Target academic year *
+      <p-dropdown
+        [options]="transitionYears"
+        [(ngModel)]="transitionTargetYearId"
+        optionLabel="name"
+        optionValue="academicYearId"
+        placeholder="Select target year"
+        [style]="{ width: '100%' }">
+      </p-dropdown>
+    </label>
+    <div class="ay-checkboxes">
+      <label><input type="checkbox" [(ngModel)]="transitionCopyClasses" /> Classes</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopySections" /> Sections</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopySubjects" /> Subjects</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopyMappings" /> Subject mappings</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopyAllocations" /> Teacher allocations</label>
+    </div>
+    <div class="ay-form__actions">
+      <button type="button" class="ay-btn ay-btn--ghost" (click)="showTransition = false">Close</button>
+      <button
+        type="button"
+        class="ay-btn ay-btn--primary"
+        [disabled]="transitionSaving || !transitionTargetYearId"
+        (click)="createTransition()">
+        {{ transitionSaving ? 'Creating…' : 'Create Transition' }}
+      </button>
+    </div>
+
+    <h4 *ngIf="transitions.length">Existing transitions</h4>
+    <div class="ay-transition-row" *ngFor="let t of transitions">
+      <div>
+        <strong>{{ t.sourceAcademicYearName || t.sourceAcademicYearId }} → {{ t.targetAcademicYearName || t.targetAcademicYearId }}</strong>
+        <div class="ay-muted">{{ transitionStatusLabel(t.status) }}</div>
+        <small class="ay-muted" *ngIf="t.failureReason">{{ t.failureReason }}</small>
+      </div>
+      <div class="ay-transition-actions">
+        <button
+          type="button"
+          class="ay-btn ay-btn--ghost"
+          *ngIf="t.status === 'NOT_STARTED'"
+          (click)="startTransition(t)">
+          Start
+        </button>
+        <button
+          type="button"
+          class="ay-btn ay-btn--primary"
+          *ngIf="t.status === 'READY' || t.status === 'PENDING_APPROVAL'"
+          (click)="approveTransition(t)">
+          Approve
+        </button>
+      </div>
+    </div>
+  </div>
+</p-dialog>

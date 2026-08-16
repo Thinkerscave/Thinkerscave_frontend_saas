@@ -1,6 +1,11 @@
 <header class="topbar-container">
   <div class="topbar-left">
-    <button type="button" class="icon-btn nav-toggle" (click)="toggleNavigation()" aria-label="Toggle navigation">
+    <button
+      type="button"
+      class="icon-btn nav-toggle"
+      (click)="toggleNavigation()"
+      [attr.aria-expanded]="sidebarLayout.isPinned() || sidebarLayout.isMobileDrawerOpen()"
+      [attr.aria-label]="sidebarLayout.isPinned() || sidebarLayout.isMobileDrawerOpen() ? 'Collapse navigation' : 'Expand navigation'">
       <i class="pi pi-bars"></i>
     </button>
 

@@ -1,5 +1,81 @@
-/* ─── Shared Academics UI Components ─── */
-.acad-page { display: flex; flex-direction: column; gap: 0.75rem; }
+/* ─── Shared Academics UI utilities (imported by page components) ─── */
+
+/* Shell spacing for .acad-page lives in styles/academics/_workspace.scss (global). */
+
+/* Dense toolbar — search does not dominate; filters get equal weight */
+.acad-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.acad-toolbar__search {
+  flex: 0 1 220px;
+  min-width: 140px;
+  max-width: 280px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--tc-bg, #fff);
+  color: var(--tc-text);
+  font-size: 0.82rem;
+}
+
+.acad-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.acad-toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+/* Clickable cards */
+.acad-card-clickable {
+  cursor: pointer;
+  transition: transform var(--tc-anim-duration-fast, 150ms) ease,
+    box-shadow var(--tc-anim-duration-fast, 150ms) ease,
+    border-color var(--tc-anim-duration-fast, 150ms) ease;
+}
+.acad-card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: color-mix(in srgb, var(--tc-primary-600, #2563eb) 35%, var(--tc-border, #e2e8f0));
+}
+.acad-card-clickable:focus-visible {
+  outline: 2px solid var(--tc-primary-600, #2563eb);
+  outline-offset: 2px;
+}
+
+/* Stagger enter for grids */
+.acad-stagger > *:nth-child(1) { animation-delay: 20ms; }
+.acad-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.acad-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.acad-stagger > *:nth-child(4) { animation-delay: 80ms; }
+.acad-stagger > *:nth-child(5) { animation-delay: 100ms; }
+.acad-stagger > *:nth-child(6) { animation-delay: 120ms; }
+.acad-stagger > *:nth-child(7) { animation-delay: 140ms; }
+.acad-stagger > *:nth-child(8) { animation-delay: 160ms; }
+.acad-stagger > * {
+  animation: acad-stagger-in 280ms var(--tc-anim-easing, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes acad-stagger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* Buttons */
 .acad-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; white-space: nowrap; }
@@ -57,3 +133,15 @@
 .acad-view-tabs { display: flex; background: var(--tc-bg-muted); border-radius: 6px; padding: 0.15rem; }
 .acad-view-tab { padding: 0.3rem 0.7rem; border: none; background: transparent; color: var(--tc-text-muted); font-size: 0.8rem; cursor: pointer; border-radius: 5px; transition: all 0.15s; }
 .acad-view-tab.active { background: var(--tc-surface-card); color: var(--tc-heading); font-weight: 600; }
+
+@media (max-width: 760px) {
+  .acad-toolbar__search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .acad-toolbar__end {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

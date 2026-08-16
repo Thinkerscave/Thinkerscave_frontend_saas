@@ -1,0 +1,309 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="ced-page acad-page" *ngIf="!loading && !loadError && event as e; else bootTpl">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+    <button
+      type="button"
+      class="tc-btn"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage"
+      (click)="openEditEvent()">
+      <i class="pi pi-pencil"></i> Edit Event
+    </button>
+    <button
+      type="button"
+      class="tc-btn ced-icon-menu"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage"
+      (click)="buildHeaderMenu(); eventMenu.toggle($event)"
+      aria-label="More actions">
+      <i class="pi pi-ellipsis-v"></i>
+    </button>
+  </tc-saas-page-header>
+
+  <header class="ced-identity">
+    <div class="ced-identity__title">
+      <p class="ced-identity__year">{{ e.academicYearName || 'Academic year' }}</p>
+      <p class="ced-identity__meta">
+        <span>{{ typeLabel(e.eventType) }}</span>
+        <span aria-hidden="true">·</span>
+        <span
+          class="ced-status"
+          [class.ced-status--active]="e.status === 'PUBLISHED'"
+          [class.ced-status--inactive]="e.status !== 'PUBLISHED'">
+          {{ statusLabel(e.status) }}
+        </span>
+        <span class="ced-readonly" *ngIf="e.yearReadOnly">· Historical · Read only</span>
+      </p>
+    </div>
+    <p class="ced-summary">{{ formatDateRange(e) }}</p>
+  </header>
+
+  <section class="ced-sections" aria-labelledby="ced-info-heading">
+    <div class="ced-sections__head">
+      <div>
+        <h2 id="ced-info-heading">Event Information</h2>
+        <p>Schedule, audience, and visibility details.</p>
+      </div>
+      <button
+        type="button"
+        class="tc-btn"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="openEditEvent()">
+        Edit
+      </button>
+    </div>
+
+    <div class="ced-info-grid">
+      <div>
+        <span>Date</span>
+        <strong>{{ formatDateRange(e) }}</strong>
+      </div>
+      <div>
+        <span>Time</span>
+        <strong>{{ formatTimeDisplay(e) }}</strong>
+      </div>
+      <div>
+        <span>Location</span>
+        <strong>{{ e.location || '—' }}</strong>
+      </div>
+      <div>
+        <span>Applies To</span>
+        <strong>{{ appliesToLabel(e) }}</strong>
+      </div>
+      <div>
+        <span>Type</span>
+        <strong>{{ typeLabel(e.eventType) }}</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong>{{ statusLabel(e.status) }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="ced-sections" *ngIf="e.description" aria-labelledby="ced-desc-heading">
+    <div class="ced-sections__head">
+      <div>
+        <h2 id="ced-desc-heading">Description</h2>
+      </div>
+    </div>
+    <p class="ced-description">{{ e.description }}</p>
+  </section>
+
+  <section
+    class="ced-sections"
+    *ngIf="e.audienceType === 'CLASS' && e.classes?.length"
+    aria-labelledby="ced-classes-heading">
+    <div class="ced-sections__head">
+      <div>
+        <h2 id="ced-classes-heading">Applicable Classes</h2>
+        <p>Classes included in this event.</p>
+      </div>
+    </div>
+    <ul class="ced-list">
+      <li *ngFor="let cls of e.classes">
+        <strong>{{ cls.name }}</strong>
+        <code *ngIf="cls.code">{{ cls.code }}</code>
+      </li>
+    </ul>
+  </section>
+
+  <section
+    class="ced-sections"
+    *ngIf="e.audienceType === 'SECTION' && e.sections?.length"
+    aria-labelledby="ced-sections-list-heading">
+    <div class="ced-sections__head">
+      <div>
+        <h2 id="ced-sections-list-heading">Applicable Sections</h2>
+        <p>Sections included in this event.</p>
+      </div>
+    </div>
+    <ul class="ced-list">
+      <li *ngFor="let section of e.sections">
+        <strong>{{ section.className ? (section.className + ' - ' + section.name) : section.name }}</strong>
+        <code *ngIf="section.code">{{ section.code }}</code>
+      </li>
+    </ul>
+  </section>
+
+  <section
+    class="ced-sections"
+    *ngIf="e.createdOn || e.publishedOn || e.updatedOn"
+    aria-labelledby="ced-audit-heading">
+    <div class="ced-sections__head">
+      <div>
+        <h2 id="ced-audit-heading">Audit</h2>
+      </div>
+    </div>
+    <div class="ced-audit">
+      <div *ngIf="e.createdOn">
+        <span>Created</span>
+        <strong>{{ formatDateTime(e.createdOn) }}<ng-container *ngIf="e.createdBy"> · {{ e.createdBy }}</ng-container></strong>
+      </div>
+      <div *ngIf="e.publishedOn">
+        <span>Published</span>
+        <strong>{{ formatDateTime(e.publishedOn) }}<ng-container *ngIf="e.publishedBy"> · {{ e.publishedBy }}</ng-container></strong>
+      </div>
+      <div *ngIf="e.updatedOn">
+        <span>Last Updated</span>
+        <strong>{{ formatDateTime(e.updatedOn) }}<ng-container *ngIf="e.updatedBy"> · {{ e.updatedBy }}</ng-container></strong>
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="ced-danger"
+    *ngIf="canManage && e.status !== 'INACTIVE'"
+    aria-labelledby="ced-danger-heading">
+    <h2 id="ced-danger-heading">Danger zone</h2>
+    <p>Deactivating hides this event from the active calendar.</p>
+    <button type="button" class="tc-btn tc-btn--danger" (click)="deactivateEvent()">
+      Deactivate Event
+    </button>
+  </section>
+</div>
+
+<ng-template #bootTpl>
+  <div class="ced-page acad-page" *ngIf="loadError; else loadingTpl">
+    <div class="ced-error">
+      <h2>Unable to load event</h2>
+      <p>We couldn't load this calendar event right now.</p>
+      <div class="ced-error__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
+        <button type="button" class="tc-btn" (click)="back()">Back to Calendar</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="ced-page acad-page" aria-busy="true">
+      <div class="ced-skel ced-skel--identity"></div>
+      <div class="ced-skel ced-skel--section"></div>
+      <div class="ced-skel ced-skel--section"></div>
+    </div>
+  </ng-template>
+</ng-template>
+
+<p-dialog
+  header="Edit Event"
+  [(visible)]="showEventDialog"
+  [modal]="true"
+  [style]="{ width: 'min(560px, 94vw)' }"
+  [draggable]="false">
+  <form class="ced-form" [formGroup]="eventForm">
+    <div class="ced-form__banner" *ngIf="isEditingPublished">
+      This event is published. Saving updates the live calendar entry.
+    </div>
+
+    <fieldset class="ced-form__section">
+      <legend>Basic</legend>
+      <label>
+        Title *
+        <input type="text" formControlName="title" />
+      </label>
+      <label>
+        Type *
+        <p-dropdown
+          [options]="eventTypeOptions"
+          formControlName="eventType"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="ced-form-dd">
+        </p-dropdown>
+      </label>
+      <label>
+        Description
+        <textarea formControlName="description" rows="3"></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset class="ced-form__section">
+      <legend>Date &amp; Time</legend>
+      <div class="ced-form__row">
+        <label>
+          Start Date *
+          <input type="date" formControlName="startDate" />
+        </label>
+        <label>
+          End Date *
+          <input type="date" formControlName="endDate" />
+        </label>
+      </div>
+      <label class="ced-form__check">
+        <p-checkbox formControlName="allDay" [binary]="true" inputId="ced-all-day"></p-checkbox>
+        <span>All day</span>
+      </label>
+      <div class="ced-form__row" *ngIf="!eventForm.value.allDay">
+        <label>
+          Start Time *
+          <input type="time" formControlName="startTime" />
+        </label>
+        <label>
+          End Time *
+          <input type="time" formControlName="endTime" />
+        </label>
+      </div>
+    </fieldset>
+
+    <label>
+      Location
+      <input type="text" formControlName="location" />
+    </label>
+
+    <fieldset class="ced-form__section">
+      <legend>Visibility</legend>
+      <label>
+        Applies To *
+        <p-dropdown
+          [options]="audienceOptions"
+          formControlName="audienceType"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="ced-form-dd">
+        </p-dropdown>
+      </label>
+      <label *ngIf="eventForm.value.audienceType === 'CLASS'">
+        Classes *
+        <p-multiSelect
+          [options]="classOptions"
+          formControlName="classIds"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select classes"
+          [filter]="true"
+          appendTo="body"
+          styleClass="ced-form-dd"
+          display="chip">
+        </p-multiSelect>
+      </label>
+      <label *ngIf="eventForm.value.audienceType === 'SECTION'">
+        Sections *
+        <p-multiSelect
+          [options]="sectionOptions"
+          formControlName="sectionIds"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select sections"
+          [filter]="true"
+          appendTo="body"
+          styleClass="ced-form-dd"
+          display="chip">
+        </p-multiSelect>
+      </label>
+    </fieldset>
+
+    <div class="ced-form__actions">
+      <button type="button" class="tc-btn" (click)="showEventDialog = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="saveEvent()">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

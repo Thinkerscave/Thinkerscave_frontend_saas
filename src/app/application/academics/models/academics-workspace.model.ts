@@ -1,9 +1,15 @@
 export type AcademicsWorkspacePage =
-  | 'setup'
+  | 'overview'
+  | 'academic-year'
+  | 'classes-sections'
+  | 'subjects-mapping'
+  | 'teacher-allocation'
   | 'timetable'
-  | 'teacher-arrangement'
-  | 'calendar'
-  | 'syllabus';
+  | 'academic-calendar'
+  | 'my-classes'
+  | 'my-timetable'
+  | 'academic-structure'
+  | 'my-academics';
 
 export interface AcademicsPageConfig {
   page: AcademicsWorkspacePage;

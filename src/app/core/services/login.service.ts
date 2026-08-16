@@ -8,10 +8,13 @@ import { LoginRequest, LoginResponse, UserInfo, UserOrganization, PasswordResetP
 import { TokenSessionService } from './token-session.service';
 import { OrganizationContextService } from './organization-context.service';
 import { IdleTimeoutService } from './idle-timeout.service';
+import { TenantConfigService } from './tenant-config.service';
+import { MenuMappingService } from '../../application/services/menu-mapping.service';
 
 /** Keys persisted across sessions (access token is memory-only; refresh token is HttpOnly cookie). */
 const STORAGE_KEYS = [
-  'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb', 'organizations', 'currentOrgId', 'tenantConfig'
+  'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb',
+  'organizations', 'currentOrgId', 'tenantConfig', 'lastSelectedOrganizationId'
 ] as const;
 
 @Injectable({
@@ -464,7 +467,14 @@ export class LoginService {
     sessionStorage.removeItem('refreshToken');
     this.tokenSession.clear();
     this.injector.get(IdleTimeoutService).stop();
+    this.clearInMemorySessionCaches();
     this.loginStatusSubject.next(false);
+  }
+
+  /** Root singletons survive SPA logout; storage wipe alone does not reset them. */
+  private clearInMemorySessionCaches(): void {
+    this.injector.get(MenuMappingService).clearMenuCache();
+    this.injector.get(TenantConfigService).clearConfig();
   }
 
   public logOut(clearOrgSelection = true) {

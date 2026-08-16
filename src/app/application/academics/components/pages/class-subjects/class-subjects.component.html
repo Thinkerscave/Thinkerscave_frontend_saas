@@ -1,0 +1,202 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #rowMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="csub-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage || !unmappedSubjects.length"
+      (click)="openAddDialog()">
+      <i class="pi pi-plus"></i> Add Subject
+    </button>
+  </tc-saas-page-header>
+
+  <header class="csub-identity">
+    <div class="csub-identity__title">
+      <p class="csub-identity__year">{{ c.academicYearName || 'Academic year' }}</p>
+      <p class="csub-identity__meta">
+        <code>{{ c.code }}</code>
+        <span aria-hidden="true">·</span>
+        <span>{{ stageLabel() || board?.stage || '—' }}</span>
+        <span aria-hidden="true">·</span>
+        <span>{{ c.sectionCount || board?.sectionNames?.length || 0 }} Sections</span>
+        <span class="csub-readonly" *ngIf="c.yearReadOnly">· Historical · Read only</span>
+      </p>
+    </div>
+    <p class="csub-summary">
+      {{ mappedSubjects.length }} {{ mappedSubjects.length === 1 ? 'Subject' : 'Subjects' }} taught
+    </p>
+  </header>
+
+  <section class="csub-sections" aria-labelledby="csub-mapped-heading">
+    <div class="csub-sections__head">
+      <div>
+        <h2 id="csub-mapped-heading">Subjects Taught in This Class</h2>
+        <p>Manage which subjects are included for {{ c.name }}.</p>
+      </div>
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage || !unmappedSubjects.length"
+        (click)="openAddDialog()">
+        <i class="pi pi-plus"></i> Add Subject
+      </button>
+    </div>
+
+    <div class="csub-table-wrap" *ngIf="mappedSubjects.length; else noMapped">
+      <table class="csub-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Category</th>
+            <th>Weekly Periods</th>
+            <th>Status</th>
+            <th class="csub-table__actions" aria-label="Actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of mappedSubjects">
+            <td>
+              <button type="button" class="csub-link" (click)="openSubjectDetail(row.subjectId)">
+                <strong>{{ row.subjectName }}</strong>
+              </button>
+            </td>
+            <td><code>{{ row.subjectCode }}</code></td>
+            <td>
+              <span class="csub-tag" [attr.data-tone]="categoryTone(row.category)">
+                {{ categoryLabel(row.category) }}
+              </span>
+            </td>
+            <td>{{ row.weeklyPeriods }}</td>
+            <td><span class="csub-badge csub-badge--success">Mapped</span></td>
+            <td class="csub-table__actions">
+              <button
+                type="button"
+                class="csub-icon-btn"
+                (click)="buildMenu(row); rowMenu.toggle($event)"
+                aria-label="Subject actions">
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noMapped>
+      <div class="csub-empty-sections">
+        <i class="pi pi-book" aria-hidden="true"></i>
+        <h3>No subjects mapped yet</h3>
+        <p>Add subjects to define what is taught in this class.</p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="!canManage || !unmappedSubjects.length"
+          (click)="openAddDialog()">
+          <i class="pi pi-plus"></i> Add Subject
+        </button>
+      </div>
+    </ng-template>
+  </section>
+</div>
+
+<ng-template #bootTpl>
+  <div class="csub-page acad-page" *ngIf="loadError; else loadingTpl">
+    <div class="csub-error">
+      <h2>Unable to load subject mapping</h2>
+      <p>We couldn't load subjects for this class right now.</p>
+      <div class="csub-error__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
+        <button type="button" class="tc-btn" (click)="back()">Back</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="csub-page acad-page" aria-busy="true">
+      <div class="csub-skel csub-skel--identity"></div>
+      <div class="csub-skel csub-skel--section"></div>
+    </div>
+  </ng-template>
+</ng-template>
+
+<p-dialog
+  [header]="'Add Subjects to ' + (cls?.name || 'Class')"
+  [(visible)]="showAddDialog"
+  [modal]="true"
+  [style]="{ width: 'min(720px, 96vw)' }"
+  [draggable]="false">
+  <div class="csub-add">
+    <input
+      class="csub-add__search"
+      type="search"
+      placeholder="Search subjects by name or code..."
+      [(ngModel)]="addSearch"
+      aria-label="Search subjects" />
+
+    <div class="csub-table-wrap csub-add__table" *ngIf="availableSubjects.length; else noAvailable">
+      <table class="csub-table">
+        <thead>
+          <tr>
+            <th class="csub-table__check"></th>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Category</th>
+            <th>Default Periods</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of availableSubjects">
+            <td class="csub-table__check">
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="isSelected(row.subjectId)"
+                (ngModelChange)="toggleSelect(row.subjectId, $event)"
+                [inputId]="'add-sub-' + row.subjectId">
+              </p-checkbox>
+            </td>
+            <td><strong>{{ row.subjectName }}</strong></td>
+            <td><code>{{ row.subjectCode }}</code></td>
+            <td>
+              <span class="csub-tag" [attr.data-tone]="categoryTone(row.category)">
+                {{ categoryLabel(row.category) }}
+              </span>
+            </td>
+            <td>{{ row.defaultWeeklyPeriods || row.weeklyPeriods }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noAvailable>
+      <div class="csub-empty-sections csub-empty-sections--compact">
+        <h3>No more subjects to add</h3>
+        <p *ngIf="addSearch.trim(); else allMapped">No subjects match your search.</p>
+        <ng-template #allMapped>
+          <p>All available subjects are already mapped to this class.</p>
+        </ng-template>
+      </div>
+    </ng-template>
+
+    <div class="csub-add__footer">
+      <span>{{ selectedCount }} selected</span>
+      <div>
+        <button type="button" class="tc-btn" (click)="showAddDialog = false">Cancel</button>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          [disabled]="saving || !selectedCount"
+          (click)="addSelectedSubjects()">
+          {{ saving ? 'Adding…' : 'Add Subjects' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</p-dialog>

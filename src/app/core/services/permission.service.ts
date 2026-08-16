@@ -138,6 +138,8 @@ export class PermissionService implements OnDestroy {
     const roles = this.loginService.getUserRole() ?? [];
     return roles.some(role => {
       const token = String(role).toUpperCase().replace(/^ROLE_/, '');
+      // Only true platform elevation bypasses menu checks. Org owner/admin must
+      // use provisioned role_permissions so Academics nav stays role-accurate.
       return token === 'SUPER_ADMIN' || token === 'PLATFORM_ADMIN';
     });
   }

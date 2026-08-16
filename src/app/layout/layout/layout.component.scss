@@ -1,17 +1,27 @@
 .layout-container {
   --tc-topbar-height: 60px;
-  --tc-footer-height: 40px;
+  --tc-footer-height: 44px;
   --tc-sidebar-compact-width: 60px;
   --tc-sidebar-expanded-width: 272px;
-  --tc-sidebar-current-width: var(--tc-sidebar-compact-width);
+  --tc-sidebar-rail-width: var(--tc-sidebar-compact-width);
+  --tc-shell-transition: 240ms cubic-bezier(0.22, 1, 0.36, 1);
 
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
   max-width: 100vw;
   overflow: hidden;
   background: var(--tc-bg-gradient);
   color: var(--tc-text);
+
+  &[data-sidebar='expanded'] {
+    --tc-sidebar-rail-width: var(--tc-sidebar-expanded-width);
+  }
+
+  &[data-sidebar='hidden'] {
+    --tc-sidebar-rail-width: 0px;
+  }
 
   .topbar {
     height: var(--tc-topbar-height);
@@ -19,72 +29,91 @@
     z-index: 1200;
   }
 
-  .main-content {
+  .shell-body {
     display: flex;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     min-width: 0;
+    /* Visible so desktop hover flyout can overlay content without clipping. */
+    overflow: visible;
+  }
+
+  .sidemenu {
+    flex: 0 0 var(--tc-sidebar-rail-width);
+    width: var(--tc-sidebar-rail-width);
+    max-width: var(--tc-sidebar-rail-width);
+    min-width: 0;
+    height: 100%;
+    position: relative;
+    z-index: 30;
+    transition: flex-basis var(--tc-shell-transition), width var(--tc-shell-transition), max-width var(--tc-shell-transition);
+  }
+
+  .content-column {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    --tc-sidebar-current-width: var(--tc-sidebar-compact-width);
+    position: relative;
+    z-index: 1;
+  }
 
-    &.sidebar-is-expanded {
-      --tc-sidebar-current-width: var(--tc-sidebar-expanded-width);
-    }
-
-    .sidemenu {
-      flex-shrink: 0;
-      height: 100%;
-      background: transparent;
-    }
-
-    .page-content {
-      flex: 1;
-      min-width: 0;
-      height: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 0.35rem var(--tc-space-4) var(--tc-space-3);
-      background: var(--tc-bg-gradient);
-      transition: padding 0.26s ease-in-out;
-    }
+  .page-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.5rem var(--tc-space-4) var(--tc-space-3);
+    background: var(--tc-bg-gradient);
   }
 
   .footer {
-    height: var(--tc-footer-height);
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-height: var(--tc-footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--tc-surface-card-solid);
-    text-align: center;
-    line-height: 40px;
-    font-size: 0.9rem;
-    color: var(--tc-text-muted);
     border-top: 1px solid var(--tc-border);
+    z-index: 5;
   }
 }
 
 @media (max-width: 1023px) {
   .layout-container {
-    .main-content {
-      .sidemenu {
-        width: 0;
-        min-width: 0;
-        border: none;
-      }
+    /*
+     * Keep the rail out of document flow on small screens, but never clip the
+     * fixed mobile drawer (width/max-width: 0 + overflow was swallowing menu content).
+     */
+    .sidemenu {
+      flex: 0 0 0;
+      width: 0;
+      max-width: none;
+      min-width: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
 
-      &.sidebar-is-expanded .page-content {
-        /* mobile drawer overlays; content stays full width */
-      }
+    &.is-drawer-open .sidemenu {
+      pointer-events: auto;
+    }
+
+    .page-content {
+      padding: 0.75rem 1rem 1rem;
     }
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .layout-container {
     --tc-topbar-height: 58px;
-    --tc-footer-height: 0px;
-    --tc-sidebar-compact-width: 0px;
-    --tc-sidebar-expanded-width: min(272px, calc(100vw - 1rem));
+    --tc-footer-height: 48px;
 
-    .main-content .page-content {
-      padding: 1rem;
+    .page-content {
+      padding: 0.75rem;
     }
   }
 }

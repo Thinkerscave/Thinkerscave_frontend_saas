@@ -1,40 +1,63 @@
 :host {
+  --tc-sidebar-compact-width: 60px;
+  --tc-sidebar-expanded-width: 272px;
+  --tc-shell-transition: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+
   display: block;
-  height: 100%;
-  width: var(--tc-sidebar-compact-width, 60px);
-  flex-shrink: 0;
   position: relative;
-  z-index: 1100;
-  transition: width 0.26s ease-in-out;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  z-index: 20;
+  transition: none;
+}
 
-  &.is-expanded {
-    width: var(--tc-sidebar-expanded-width, 272px);
-  }
+/* Desktop hover flyout: raise above content while labels overlay */
+:host.is-hover-flyout {
+  z-index: 40;
+}
 
-  &.is-hover-expanded {
-    z-index: 1300;
-  }
+/* Mobile / tablet drawer overlay — !important beats layout rail width: 0 */
+:host.is-mobile-drawer {
+  position: fixed !important;
+  top: var(--tc-topbar-height, 60px);
+  right: auto;
+  bottom: 0;
+  left: 0;
+  width: min(var(--tc-sidebar-expanded-width), calc(100vw - 2.5rem)) !important;
+  max-width: 88vw !important;
+  min-width: min(16rem, 88vw) !important;
+  height: auto !important;
+  overflow: hidden;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 1300;
+  box-shadow: 18px 0 46px rgba(15, 23, 42, 0.22);
+}
 
-  &.is-mobile-drawer,
-  &.is-tablet-pinned {
-    position: fixed;
-    top: var(--tc-topbar-height, 60px);
-    bottom: var(--tc-footer-height, 40px);
-    left: 0;
-    width: min(var(--tc-sidebar-expanded-width, 272px), calc(100vw - 1rem)) !important;
-    z-index: 1300;
-    box-shadow: 18px 0 46px rgba(15, 23, 42, 0.22);
-  }
+.sidebar-backdrop {
+  position: fixed;
+  top: var(--tc-topbar-height, 60px);
+  bottom: 0;
+  left: min(var(--tc-sidebar-expanded-width), calc(100vw - 2.5rem), 88vw);
+  right: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1;
+  cursor: pointer;
+  animation: tc-fade-in 0.2s ease;
+  pointer-events: auto;
 }
 
 .sidebar-wrapper {
-  position: fixed;
-  top: var(--tc-topbar-height, 60px);
-  bottom: var(--tc-footer-height, 40px);
+  position: absolute;
+  top: 0;
   left: 0;
-  width: var(--tc-sidebar-compact-width, 60px);
-  z-index: 10;
+  bottom: 0;
+  width: 100%;
   height: auto;
+  z-index: 2;
   box-sizing: border-box;
   padding: 0.65rem 0.35rem;
   background: var(--tc-sidebar-bg);
@@ -45,13 +68,10 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  transition: width 0.26s ease-in-out, padding 0.26s ease-in-out;
-
-  &.is-expanded {
-    width: var(--tc-sidebar-expanded-width, 272px);
-    padding: 0.75rem 0.7rem;
-    box-shadow: 12px 0 32px rgba(15, 23, 42, 0.12);
-  }
+  transition:
+    width var(--tc-shell-transition),
+    padding var(--tc-shell-transition),
+    box-shadow var(--tc-shell-transition);
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -63,18 +83,57 @@
   }
 }
 
-.sidebar-backdrop {
-  position: fixed;
-  top: var(--tc-topbar-height, 60px);
-  bottom: var(--tc-footer-height, 40px);
-  left: min(var(--tc-sidebar-expanded-width, 272px), calc(100vw - 1rem));
+/*
+ * Hover flyout: panel expands over content while host rail stays compact.
+ * Single panel instance — width animates on this element only.
+ */
+:host.is-hover-flyout .sidebar-wrapper {
+  width: var(--tc-sidebar-expanded-width);
+  padding: 0.75rem 0.7rem;
+  box-shadow: 12px 0 32px rgba(15, 23, 42, 0.14);
+}
+
+/* Pinned / permanently expanded — panel fills the layout column */
+:host.is-pinned .sidebar-wrapper {
+  width: 100%;
+  padding: 0.75rem 0.7rem;
+  box-shadow: none;
+}
+
+:host.is-mobile-drawer .sidebar-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
   right: 0;
-  border: 0;
-  background: rgba(15, 23, 42, 0.45);
-  z-index: 1200;
-  cursor: pointer;
-  animation: tc-fade-in 0.2s ease;
+  bottom: 0;
+  width: 100% !important;
+  min-width: 100%;
+  height: 100%;
+  padding: 0.75rem 0.7rem;
+  box-shadow: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  visibility: visible;
   pointer-events: auto;
+}
+
+/* Always show labels inside the mobile drawer (do not depend on hover). */
+:host.is-mobile-drawer {
+  .nav-label,
+  .nav-chevron {
+    opacity: 1;
+    max-width: 200px;
+    width: auto;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .nav-link {
+    justify-content: flex-start;
+    gap: 0.6rem;
+    padding: 0.38rem 0.55rem;
+    min-height: 42px;
+  }
 }
 
 .nav-list {
@@ -87,7 +146,6 @@
 
 .nav-item-wrapper {
   opacity: 1;
-  animation: none;
 }
 
 .nav-link {
@@ -112,10 +170,10 @@
   transition:
     background 0.2s ease-in-out,
     color 0.2s ease-in-out,
-    padding 0.26s ease-in-out,
-    gap 0.26s ease-in-out;
+    padding var(--tc-shell-transition),
+    gap var(--tc-shell-transition);
 
-  .sidebar-wrapper.is-expanded & {
+  :host.is-labels-visible & {
     justify-content: flex-start;
     gap: 0.6rem;
     padding: 0.38rem 0.55rem;
@@ -146,8 +204,8 @@
     }
   }
 
-  .sidebar-wrapper.is-expanded &.is-active,
-  .sidebar-wrapper.is-expanded &.is-active-parent {
+  :host.is-labels-visible &.is-active,
+  :host.is-labels-visible &.is-active-parent {
     background: color-mix(in srgb, var(--tc-accent) 10%, transparent);
 
     &::before {
@@ -161,8 +219,8 @@
     }
   }
 
-  .sidebar-wrapper:not(.is-expanded) &.is-active,
-  .sidebar-wrapper:not(.is-expanded) &.is-active-parent {
+  :host:not(.is-labels-visible) &.is-active,
+  :host:not(.is-labels-visible) &.is-active-parent {
     background: transparent;
 
     .nav-icon {
@@ -198,9 +256,9 @@
   pointer-events: none;
   transform: translateX(-6px);
   transition:
-    opacity 0.22s ease-in-out,
-    max-width 0.26s ease-in-out,
-    transform 0.26s ease-in-out;
+    opacity 0.2s ease-in-out,
+    max-width var(--tc-shell-transition),
+    transform var(--tc-shell-transition);
 
   &.is-visible {
     opacity: 1;
@@ -218,7 +276,7 @@
   width: 0;
   overflow: hidden;
   flex-shrink: 0;
-  transition: opacity 0.22s ease-in-out, width 0.26s ease-in-out;
+  transition: opacity 0.2s ease-in-out, width var(--tc-shell-transition);
 
   &.is-visible {
     opacity: 1;
@@ -339,20 +397,20 @@
   padding: 0.3rem;
   color: var(--tc-text-muted);
 
-  .sidebar-wrapper.is-expanded & {
+  :host.is-labels-visible & {
     justify-content: flex-start;
     padding-inline: 0.55rem;
   }
 }
 
 @media (max-width: 1023px) {
-  :host {
-    display: none;
-
-    &.is-mobile-drawer,
-    &.is-tablet-pinned {
-      display: block;
-    }
+  :host:not(.is-mobile-drawer) {
+    visibility: hidden;
+    pointer-events: none;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden;
   }
 }
 
