@@ -25,6 +25,15 @@
   line-height: 1.2;
 }
 
+.sd-identity__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tc-text-muted, #64748b);
+}
+
 .sd-identity__year {
   margin: 0;
   font-size: 0.9rem;
@@ -534,9 +543,25 @@
   color: var(--tc-text-muted, #64748b);
 }
 
+.sd-class-link {
+  color: var(--tc-primary-600, #2563eb);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.sd-class-link:hover {
+  text-decoration: underline;
+}
+
 .sd-table__actions {
-  width: 2.5rem;
+  min-width: 8.5rem;
   text-align: right;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 .sd-skel--identity { height: 72px; }

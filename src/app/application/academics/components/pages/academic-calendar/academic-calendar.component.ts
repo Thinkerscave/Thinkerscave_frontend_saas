@@ -116,7 +116,7 @@ export class AcademicCalendarPageComponent implements OnInit {
   toDate = '';
   viewMode: 'calendar' | 'list' = 'calendar';
   page = 1;
-  pageSize = 12;
+  pageSize = 10;
   /** Visible month for calendar grid (1st of month, local). */
   visibleMonth = this.startOfMonth(new Date());
   readonly weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -239,7 +239,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.cdr.markForCheck());
 
-    this.yearApi.search().subscribe({
+    this.yearApi.search(undefined, undefined, { skipErrorToast: true }).subscribe({
       next: (years) => {
         this.years = years;
         const current = years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
@@ -287,7 +287,7 @@ export class AcademicCalendarPageComponent implements OnInit {
   }
 
   setPageSize(size: number): void {
-    this.pageSize = Number(size) || 12;
+    this.pageSize = Number(size) || 10;
     this.page = 1;
     this.cdr.markForCheck();
   }

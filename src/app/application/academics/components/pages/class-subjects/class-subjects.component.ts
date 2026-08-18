@@ -145,8 +145,8 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
         this.cls = cls;
         this.board = board;
         this.pageHeader.setPageHeader({
-          title: cls.name,
-          subtitle: 'Subject mapping'
+          title: 'Class Subjects',
+          subtitle: cls.name
         });
       },
       error: () => {

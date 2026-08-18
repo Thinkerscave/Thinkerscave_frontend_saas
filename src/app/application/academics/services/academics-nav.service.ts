@@ -8,14 +8,18 @@ export class AcademicsNavService {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
 
-  back(route: ActivatedRoute, fallback: string | any[] = ['/app/academics/overview']): void {
+  back(route: ActivatedRoute, fallback: string | any[] = ['/app/academics/academic-calendar']): void {
     const from = route.snapshot.queryParamMap.get('from');
     if (from === 'overview') {
-      void this.router.navigate(['/app/academics/overview']);
+      void this.router.navigate(['/app/academics/academic-calendar']);
       return;
     }
     if (from === 'subjects') {
-      void this.router.navigate(['/app/academics/subjects-mapping']);
+      const tab = route.snapshot.queryParamMap.get('tab');
+      void this.router.navigate(
+        ['/app/academics/subjects-mapping'],
+        { queryParams: tab === 'classes' ? { tab: 'classes' } : undefined }
+      );
       return;
     }
     if (from === 'classes') {

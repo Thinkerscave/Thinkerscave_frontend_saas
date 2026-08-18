@@ -138,8 +138,8 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
       next: (event) => {
         this.event = event;
         this.pageHeader.setPageHeader({
-          title: event.title,
-          subtitle: this.formatDateRange(event)
+          title: 'Event Detail',
+          subtitle: event.title
         });
         this.loadClassOptions(event.academicYearId);
       },

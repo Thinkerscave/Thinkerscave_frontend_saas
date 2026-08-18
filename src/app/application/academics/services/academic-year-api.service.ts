@@ -20,12 +20,13 @@ export class AcademicYearApiService {
       .pipe(map((res) => res.data));
   }
 
-  search(q?: string, status?: AcademicYearStatus | null): Observable<AcademicYearDto[]> {
+  search(q?: string, status?: AcademicYearStatus | null, options?: { skipErrorToast?: boolean }): Observable<AcademicYearDto[]> {
     let params = new HttpParams();
     if (q) params = params.set('q', q);
     if (status) params = params.set('status', status);
+    const headers = options?.skipErrorToast ? { 'X-Skip-Error-Toast': '1' } : undefined;
     return this.http
-      .get<ApiResponse<{ content: AcademicYearDto[] } | AcademicYearDto[]>>(academicsApi.years, { params })
+      .get<ApiResponse<{ content: AcademicYearDto[] } | AcademicYearDto[]>>(academicsApi.years, { params, headers })
       .pipe(map((res) => {
         const data = res.data as any;
         return Array.isArray(data) ? data : (data?.content ?? []);

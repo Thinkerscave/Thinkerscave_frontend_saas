@@ -19,6 +19,7 @@
       class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage || !availableClasses.length"
+      [attr.title]="!availableClasses.length ? 'Already mapped to every class this year' : 'Map this subject to a class'"
       (click)="openMapDialog()">
       <i class="pi pi-plus"></i> Map to Class
     </button>
@@ -26,6 +27,8 @@
 
   <header class="sd-identity">
     <div class="sd-identity__title">
+      <p class="sd-identity__eyebrow">Subject Detail</p>
+      <h1>{{ s.name }}</h1>
       <p class="sd-identity__year">{{ s.academicYearName || 'Academic year' }}</p>
       <p class="sd-identity__meta">
         <code>{{ s.code }}</code>
@@ -45,28 +48,12 @@
     </p>
   </header>
 
-  <div class="sd-prompt" *ngIf="offerMap && canManage">
-    <p>Subject created. Map it to a class so it can be taught and scheduled.</p>
-    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!availableClasses.length" (click)="openMapDialog()">
-      Map to Class
-    </button>
-    <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
-  </div>
-
   <section class="sd-sections" aria-labelledby="sd-info-heading">
     <div class="sd-sections__head">
       <div>
         <h2 id="sd-info-heading">Subject Information</h2>
         <p>Core details used across classes and timetable setup.</p>
       </div>
-      <button
-        type="button"
-        class="tc-btn"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage"
-        (click)="openEditSubject()">
-        Edit
-      </button>
     </div>
 
     <div class="sd-info-grid">
@@ -101,16 +88,8 @@
     <div class="sd-sections__head">
       <div>
         <h2 id="sd-mapped-heading">Mapped Classes</h2>
-        <p>Classes where this subject is taught.</p>
+        <p>Classes where this subject is taught. Use Map to Class above to add another.</p>
       </div>
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage || !availableClasses.length"
-        (click)="openMapDialog()">
-        <i class="pi pi-plus"></i> Map to Class
-      </button>
     </div>
 
     <div class="sd-table-wrap" *ngIf="mappedClasses.length; else noMapped">
@@ -128,7 +107,12 @@
         <tbody>
           <tr *ngFor="let row of mappedClasses">
             <td>
-              <strong>{{ row.className || 'Class' }}</strong>
+              <a
+                class="sd-class-link"
+                [routerLink]="['/app/academics/classes-sections', row.classId, 'subjects']"
+                [queryParams]="{ from: 'subjects' }">
+                <strong>{{ row.className || 'Class' }}</strong>
+              </a>
               <code *ngIf="row.classCode">{{ row.classCode }}</code>
             </td>
             <td>{{ row.classStage || '—' }}</td>
@@ -138,6 +122,12 @@
               <span class="sd-badge sd-badge--success">Mapped</span>
             </td>
             <td class="sd-table__actions">
+              <a
+                class="sd-class-link"
+                [routerLink]="['/app/academics/classes-sections', row.classId, 'subjects']"
+                [queryParams]="{ from: 'subjects' }">
+                Manage mapping
+              </a>
               <button
                 type="button"
                 class="sd-icon-btn"
@@ -155,15 +145,7 @@
       <div class="sd-empty-sections">
         <i class="pi pi-link" aria-hidden="true"></i>
         <h3>No classes mapped yet</h3>
-        <p>Map this subject to one or more classes to include it in teaching and timetable planning.</p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage || !availableClasses.length"
-          (click)="openMapDialog()">
-          <i class="pi pi-plus"></i> Map to Class
-        </button>
+        <p>Use Map to Class in the header to include this subject in teaching and timetable planning.</p>
       </div>
     </ng-template>
   </section>

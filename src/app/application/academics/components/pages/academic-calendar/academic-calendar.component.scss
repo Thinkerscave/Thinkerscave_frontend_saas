@@ -32,6 +32,13 @@
   gap: 0.55rem 0.65rem;
 }
 
+.ac-topbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .ac-readonly {
   color: #b45309;
   font-size: 0.75rem;
@@ -49,26 +56,31 @@
 /* ── View toggle: Calendar | List ── */
 .ac-view-toggle {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
   border: 1px solid var(--tc-border, #e2e8f0);
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--tc-surface-card, #fff);
+  border-radius: 999px;
+  background: var(--tc-surface-50, #f8fafc);
 }
 
 .ac-view-toggle button {
   border: 0;
   background: transparent;
-  padding: 0.42rem 0.9rem;
+  width: 34px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 999px;
   cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
   color: var(--tc-text-muted, #64748b);
 }
 
 .ac-view-toggle button.active {
-  background: var(--tc-primary-600, #2563eb);
-  color: #fff;
+  background: var(--tc-surface-card, #fff);
+  color: var(--tc-primary-600, #2563eb);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 /* ── Calendar + sidebar layout ── */

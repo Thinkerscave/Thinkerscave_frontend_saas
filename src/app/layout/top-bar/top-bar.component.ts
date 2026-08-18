@@ -187,9 +187,9 @@ export class TopBarComponent {
     if (tokens.some(t => ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'].includes(t))) return '/app/tenant-management/organizations';
     if (tokens.some(t => ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'INSTITUTION_ADMIN', 'COLLEGE_ADMIN', 'ADMIN'].includes(t))) return '/app/organization/profile';
     if (tokens.some(t => ['PRINCIPAL', 'ACADEMIC_COORDINATOR', 'HR_MANAGER'].includes(t))) return '/app';
-    if (tokens.some(t => ['TEACHER', 'STAFF'].includes(t))) return '/app';
-    if (tokens.some(t => ['PARENT'].includes(t))) return '/app';
-    if (tokens.some(t => ['STUDENT'].includes(t))) return '/app';
+    if (tokens.some(t => ['TEACHER', 'STAFF'].includes(t))) return '/app/academics/my-classes';
+    if (tokens.some(t => ['PARENT'].includes(t))) return '/app/academics/my-academics';
+    if (tokens.some(t => ['STUDENT'].includes(t))) return '/app/academics/my-academics';
     return '/app';
   }
 }

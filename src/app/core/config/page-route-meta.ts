@@ -12,7 +12,7 @@ export const ACCESS_MGMT_ROOT = {
 
 export const ACADEMICS_ROOT = {
   breadcrumb: 'Academics',
-  breadcrumbLink: ['/app/academics/overview']
+  breadcrumbLink: ['/app/academics']
 } as const;
 
 export const ACADEMICS_PAGES = {
@@ -29,21 +29,21 @@ export const ACADEMICS_PAGES = {
     pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.'
   },
   classDetail: {
-    breadcrumb: 'Class',
+    breadcrumb: 'Class Detail',
     breadcrumbLink: ['/app/academics/classes-sections'],
     pageSubtitle: 'Sections, teachers and related academic setup for this class.'
   },
   subjectsMapping: {
     breadcrumb: 'Subjects',
-    pageSubtitle: 'Create and manage subjects and map them to classes.'
+    pageSubtitle: 'Subject catalogue and class-by-class mapping.'
   },
   subjectDetail: {
-    breadcrumb: 'Subject',
+    breadcrumb: 'Subject Detail',
     breadcrumbLink: ['/app/academics/subjects-mapping'],
     pageSubtitle: 'Subject information and class mappings.'
   },
   classSubjects: {
-    breadcrumb: 'Subject Mapping',
+    breadcrumb: 'Class Subjects',
     breadcrumbLink: ['/app/academics/classes-sections'],
     pageSubtitle: 'Subjects taught in this class and how they are mapped.'
   },
@@ -60,7 +60,7 @@ export const ACADEMICS_PAGES = {
     pageSubtitle: 'Plan, manage and publish important dates, holidays and events for the academic year.'
   },
   calendarEventDetail: {
-    breadcrumb: 'Event',
+    breadcrumb: 'Event Detail',
     breadcrumbLink: ['/app/academics/academic-calendar'],
     pageSubtitle: 'Event information and visibility.'
   },

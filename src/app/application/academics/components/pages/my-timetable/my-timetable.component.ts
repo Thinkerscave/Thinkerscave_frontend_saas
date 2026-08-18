@@ -1,21 +1,24 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { AppListEmptyStateComponent } from '../../../../../shared/ui/app-list/app-empty-state.component';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { ACADEMICS_MY_TIMETABLE_RESOURCE, MyTimetable } from '../../../models/academics-me.model';
+import { LoginService } from '../../../../../core/services/login.service';
+import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-my-timetable-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent, AppListEmptyStateComponent],
   templateUrl: './my-timetable.component.html',
   styleUrls: ['./my-timetable.component.scss']
 })
@@ -24,6 +27,8 @@ export class MyTimetablePageComponent implements OnInit {
   private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
+  private readonly router = inject(Router);
+  private readonly login = inject(LoginService);
 
   readonly resource = ACADEMICS_MY_TIMETABLE_RESOURCE;
   loading = true;
@@ -37,13 +42,17 @@ export class MyTimetablePageComponent implements OnInit {
   private readonly palette = ['#dbeafe', '#dcfce7', '#fce7f3', '#ffedd5', '#ede9fe', '#e0f2fe', '#fef3c7'];
 
   ngOnInit(): void {
-    this.yearApi.search().subscribe({
+    this.yearApi.search(undefined, undefined, { skipErrorToast: true }).subscribe({
       next: (years) => {
         this.years = years;
         this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
         this.reload();
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
+      error: () => {
+        this.years = [];
+        this.selectedYearId = null;
+        this.reload();
+      }
     });
   }
 
@@ -55,6 +64,31 @@ export class MyTimetablePageComponent implements OnInit {
         next: (d) => this.data = d,
         error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load timetable', detail: err?.error?.message })
       });
+  }
+
+  get hasGrid(): boolean {
+    return (this.data?.grid?.periods?.length ?? 0) > 0;
+  }
+
+  get isStudentViewer(): boolean {
+    return this.data?.role === 'STUDENT' || roleTokensFromUser(this.login.getUser()).includes('STUDENT');
+  }
+
+  get emptyDescription(): string {
+    if (this.data?.message) {
+      return this.data.message;
+    }
+    if (this.isStudentViewer) {
+      return 'A published timetable is not available for your class yet. Check Academic Calendar for holidays and events, or try again after the school publishes the timetable.';
+    }
+    return 'There is no published timetable for your allocations this year. If you have no assigned classes, ask the academic coordinator to allocate you first.';
+  }
+
+  openFallback(): void {
+    const target = this.isStudentViewer
+      ? '/app/academics/my-academics'
+      : '/app/academics/my-classes';
+    void this.router.navigateByUrl(target);
   }
 
   get todayName(): string {

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule } from 'primeng/paginator';
@@ -60,6 +60,7 @@ interface FilterOption<T = string | null> {
 export class StudentsDirectoryComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
@@ -131,12 +132,16 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const classId = qp.get('classId');
+    const sectionId = qp.get('sectionId');
+    if (classId) this.filter.classId = classId;
+    if (sectionId) this.filter.sectionId = sectionId;
     this.loadAll();
   }
 
   loadAll(): void {
     this.pageIndex = 0;
-    this.runSearch();
     this.api.kpi().subscribe(kpi => {
       this.kpi = kpi;
       this.cdr.markForCheck();
@@ -145,6 +150,19 @@ export class StudentsDirectoryComponent implements OnInit {
       this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
       this.cdr.markForCheck();
     });
+    if (this.filter.classId) {
+      this.api.listSectionsByClass(Number(this.filter.classId)).subscribe(sections => {
+        this.sectionOptions = sections.map(s => ({ id: s.id, label: s.label }));
+        const incoming = this.filter.sectionId;
+        if (incoming && !this.sectionOptions.some(s => String(s.id) === String(incoming))) {
+          this.filter.sectionId = null;
+        }
+        this.runSearch();
+        this.cdr.markForCheck();
+      });
+      return;
+    }
+    this.runSearch();
   }
 
   runSearch(): void {
@@ -208,6 +226,8 @@ export class StudentsDirectoryComponent implements OnInit {
         this.cdr.markForCheck();
       });
     }
+    this.pageIndex = 0;
+    this.runSearch();
   }
 
   // ---- Profile navigation ----

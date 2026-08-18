@@ -25,6 +25,15 @@
   line-height: 1.2;
 }
 
+.cd-identity__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tc-text-muted, #64748b);
+}
+
 .cd-identity__year {
   margin: 0;
   font-size: 0.9rem;

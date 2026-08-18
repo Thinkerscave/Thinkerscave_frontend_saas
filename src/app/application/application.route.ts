@@ -10,7 +10,9 @@ import { featureFlagGuard } from '../core/guard/feature-flag.guard';
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
 const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
-const ACADEMICS_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES, 'PRINCIPAL', 'Principal', 'TEACHER', 'Teacher', 'STAFF', 'Staff', 'PARENT', 'Parent'];
+const ACADEMICS_SETUP_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES, 'PRINCIPAL', 'Principal'];
+const ACADEMICS_STAFF_ROLES = [...ACADEMICS_SETUP_ROLES, 'TEACHER', 'Teacher', 'STAFF', 'Staff'];
+const ACADEMICS_ROLES = [...ACADEMICS_STAFF_ROLES, 'STUDENT', 'Student', 'PARENT', 'Parent'];
 const ONBOARDING_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
 export const APPLICATION_ROUTES: Routes = [
@@ -309,37 +311,37 @@ export const APPLICATION_ROUTES: Routes = [
     data: { ...ACADEMICS_ROOT },
     loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'overview', data: { workspacePage: 'overview', ...ACADEMICS_PAGES.overview }, loadComponent: () => import('./academics/components/pages/overview/overview.component').then(m => m.AcademicsOverviewPageComponent) },
-      { path: 'academic-year', data: { workspacePage: 'academic-year', ...ACADEMICS_PAGES.academicYear }, loadComponent: () => import('./academics/components/pages/academic-year/academic-year.component').then(m => m.AcademicYearPageComponent) },
-      { path: 'classes-sections', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classesSections }, loadComponent: () => import('./academics/components/pages/classes-sections/classes-sections.component').then(m => m.ClassesSectionsPageComponent) },
-      { path: 'classes-sections/:classId/subjects', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classSubjects }, loadComponent: () => import('./academics/components/pages/class-subjects/class-subjects.component').then(m => m.ClassSubjectsPageComponent) },
-      { path: 'classes-sections/:classId', data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classDetail }, loadComponent: () => import('./academics/components/pages/class-detail/class-detail.component').then(m => m.ClassDetailPageComponent) },
-      { path: 'subjects-mapping', data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectsMapping }, loadComponent: () => import('./academics/components/pages/subjects-mapping/subjects-mapping.component').then(m => m.SubjectsMappingPageComponent) },
-      { path: 'subjects-mapping/:subjectId', data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectDetail }, loadComponent: () => import('./academics/components/pages/subject-detail/subject-detail.component').then(m => m.SubjectDetailPageComponent) },
-      { path: 'teacher-allocation', data: { workspacePage: 'teacher-allocation', ...ACADEMICS_PAGES.teacherAllocation }, loadComponent: () => import('./academics/components/pages/teacher-allocation/teacher-allocation.component').then(m => m.TeacherAllocationPageComponent) },
-      { path: 'timetable', data: { workspacePage: 'timetable', ...ACADEMICS_PAGES.timetable }, loadComponent: () => import('./academics/components/pages/timetable/timetable.component').then(m => m.TimetablePageComponent) },
+      { path: '', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'overview', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'overview', ...ACADEMICS_PAGES.overview }, loadComponent: () => import('./academics/components/pages/overview/overview.component').then(m => m.AcademicsOverviewPageComponent) },
+      { path: 'academic-year', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'academic-year', ...ACADEMICS_PAGES.academicYear }, loadComponent: () => import('./academics/components/pages/academic-year/academic-year.component').then(m => m.AcademicYearPageComponent) },
+      { path: 'classes-sections', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classesSections }, loadComponent: () => import('./academics/components/pages/classes-sections/classes-sections.component').then(m => m.ClassesSectionsPageComponent) },
+      { path: 'classes-sections/:classId/subjects', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classSubjects }, loadComponent: () => import('./academics/components/pages/class-subjects/class-subjects.component').then(m => m.ClassSubjectsPageComponent) },
+      { path: 'classes-sections/:classId', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'classes-sections', ...ACADEMICS_PAGES.classDetail }, loadComponent: () => import('./academics/components/pages/class-detail/class-detail.component').then(m => m.ClassDetailPageComponent) },
+      { path: 'subjects-mapping', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectsMapping }, loadComponent: () => import('./academics/components/pages/subjects-mapping/subjects-mapping.component').then(m => m.SubjectsMappingPageComponent) },
+      { path: 'subjects-mapping/:subjectId', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'subjects-mapping', ...ACADEMICS_PAGES.subjectDetail }, loadComponent: () => import('./academics/components/pages/subject-detail/subject-detail.component').then(m => m.SubjectDetailPageComponent) },
+      { path: 'teacher-allocation', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'teacher-allocation', ...ACADEMICS_PAGES.teacherAllocation }, loadComponent: () => import('./academics/components/pages/teacher-allocation/teacher-allocation.component').then(m => m.TeacherAllocationPageComponent) },
+      { path: 'timetable', canActivate: [roleGuard(ACADEMICS_SETUP_ROLES)], data: { workspacePage: 'timetable', ...ACADEMICS_PAGES.timetable }, loadComponent: () => import('./academics/components/pages/timetable/timetable.component').then(m => m.TimetablePageComponent) },
       { path: 'academic-calendar', data: { workspacePage: 'academic-calendar', ...ACADEMICS_PAGES.academicCalendar }, loadComponent: () => import('./academics/components/pages/academic-calendar/academic-calendar.component').then(m => m.AcademicCalendarPageComponent) },
       { path: 'academic-calendar/:eventId', data: { workspacePage: 'academic-calendar', ...ACADEMICS_PAGES.calendarEventDetail }, loadComponent: () => import('./academics/components/pages/calendar-event-detail/calendar-event-detail.component').then(m => m.CalendarEventDetailPageComponent) },
-      { path: 'my-classes', data: { workspacePage: 'my-classes', ...ACADEMICS_PAGES.myClasses }, loadComponent: () => import('./academics/components/pages/my-classes/my-classes.component').then(m => m.MyClassesPageComponent) },
+      { path: 'my-classes', canActivate: [roleGuard(ACADEMICS_STAFF_ROLES)], data: { workspacePage: 'my-classes', ...ACADEMICS_PAGES.myClasses }, loadComponent: () => import('./academics/components/pages/my-classes/my-classes.component').then(m => m.MyClassesPageComponent) },
       { path: 'my-timetable', data: { workspacePage: 'my-timetable', ...ACADEMICS_PAGES.myTimetable }, loadComponent: () => import('./academics/components/pages/my-timetable/my-timetable.component').then(m => m.MyTimetablePageComponent) },
-      { path: 'academic-structure', data: { workspacePage: 'academic-structure', ...ACADEMICS_PAGES.academicStructure }, loadComponent: () => import('./academics/components/pages/academic-structure/academic-structure.component').then(m => m.AcademicStructurePageComponent) },
+      { path: 'academic-structure', canActivate: [roleGuard(ACADEMICS_STAFF_ROLES)], data: { workspacePage: 'academic-structure', ...ACADEMICS_PAGES.academicStructure }, loadComponent: () => import('./academics/components/pages/academic-structure/academic-structure.component').then(m => m.AcademicStructurePageComponent) },
       { path: 'my-academics', data: { workspacePage: 'my-academics', ...ACADEMICS_PAGES.myAcademics }, loadComponent: () => import('./academics/components/pages/my-academics/my-academics.component').then(m => m.MyAcademicsPageComponent) },
       { path: 'academic-setup', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'settings', pathMatch: 'full', redirectTo: 'classes-sections' },
-      { path: 'teacher-arrangement', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'syllabus-tracker', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'overview' },
+      { path: 'teacher-arrangement', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'syllabus-tracker', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'dashboard', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
       { path: 'years', pathMatch: 'full', redirectTo: 'academic-year' },
       { path: 'classes', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'structure', pathMatch: 'full', redirectTo: 'academic-structure' },
       { path: 'hierarchy', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'courses', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'subjects', pathMatch: 'full', redirectTo: 'subjects-mapping' },
-      { path: 'curriculum', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'syllabus', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'syllabus/history/:id', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'tracker', pathMatch: 'full', redirectTo: 'overview' },
+      { path: 'curriculum', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'syllabus', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'syllabus/history/:id', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
+      { path: 'tracker', pathMatch: 'full', loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsIndexRedirectComponent) },
       { path: 'class-teacher-allocation', pathMatch: 'full', redirectTo: 'classes-sections' },
       { path: 'calendar', pathMatch: 'full', redirectTo: 'academic-calendar' }
     ]

@@ -1,9 +1,21 @@
 <div class="ma-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
-    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+    <label class="ma-year" *ngIf="years.length">
+      <span>Year</span>
+      <p-dropdown
+        inputId="ma-year"
+        [options]="years"
+        [(ngModel)]="selectedYearId"
+        (onChange)="reload()"
+        optionLabel="name"
+        optionValue="academicYearId"
+        placeholder="Academic year"
+        appendTo="body">
+      </p-dropdown>
+    </label>
   </tc-saas-page-header>
 
-  <ng-container *ngIf="data as d">
+  <ng-container *ngIf="data as d; else emptyTpl">
     <section class="ma-top">
       <article class="ma-profile">
         <div class="ma-avatar">{{ initials(d.studentName) }}</div>
@@ -22,24 +34,33 @@
           </div>
         </div>
       </article>
-      <article class="ma-quickinfo">
-        <h3>Quick Info</h3>
-        <div><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
-        <div><span>Class-Section</span><strong>{{ d.className }}{{ d.sectionName ? '-' + d.sectionName : '' }}</strong></div>
-        <div><span>Subjects</span><strong>{{ d.subjects?.length || 0 }}</strong></div>
-        <div><span>Timetable</span><strong>{{ d.publishedTimetableExists ? 'Published' : 'Not published' }}</strong></div>
-      </article>
     </section>
 
     <section class="ma-shortcuts">
-      <a routerLink="/app/academics/my-academics"><strong>{{ d.subjects?.length || 0 }}</strong><span>Subjects</span><em>View Subjects →</em></a>
-      <a routerLink="/app/academics/my-timetable"><strong>{{ d.publishedTimetableExists ? 'Ready' : '—' }}</strong><span>Timetable</span><em>View Timetable →</em></a>
-      <div><strong>{{ d.classTeacher?.staffName || '—' }}</strong><span>Class Teacher</span><em>Primary contact</em></div>
-      <div><strong>{{ d.className || '—' }}</strong><span>My Class</span><em>{{ d.sectionName ? 'Section ' + d.sectionName : '—' }}</em></div>
+      <a href="#ma-subjects" (click)="scrollToSubjects($event)">
+        <strong>{{ d.subjects?.length || 0 }}</strong>
+        <span>Subjects</span>
+        <em>Jump to subjects →</em>
+      </a>
+      <a routerLink="/app/academics/my-timetable">
+        <strong>{{ d.publishedTimetableExists ? 'Ready' : 'Pending' }}</strong>
+        <span>Timetable</span>
+        <em>View Timetable →</em>
+      </a>
+      <a routerLink="/app/academics/academic-calendar">
+        <strong>Year</strong>
+        <span>Calendar</span>
+        <em>Holidays &amp; events →</em>
+      </a>
+      <div>
+        <strong>{{ d.classTeacher?.staffName || '—' }}</strong>
+        <span>Class Teacher</span>
+        <em>Primary contact</em>
+      </div>
     </section>
 
     <section class="ma-mid">
-      <article class="ma-panel">
+      <article class="ma-panel" id="ma-subjects">
         <div class="ma-panel__head"><h3>My Subjects</h3></div>
         <div class="ma-row" *ngFor="let s of d.subjects">
           <div>
@@ -48,24 +69,15 @@
           </div>
           <span>{{ s.weeklyPeriods }} periods/week</span>
         </div>
-        <div class="ma-empty" *ngIf="!d.subjects?.length">No subjects mapped for your class.</div>
+        <div class="ma-empty" *ngIf="!d.subjects?.length">No subjects mapped for your class yet.</div>
       </article>
 
       <article class="ma-panel">
-        <h3>Academic Status</h3>
-        <div class="ma-kv"><span>Enrollment Status</span><strong class="ok">Active</strong></div>
-        <div class="ma-kv"><span>Current Class</span><strong>{{ d.className }}{{ d.sectionName ? ' - ' + d.sectionName : '' }}</strong></div>
-        <div class="ma-kv"><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
-        <div class="ma-kv"><span>Promotion Status</span><strong>Not Applicable</strong></div>
-      </article>
-
-      <article class="ma-panel">
-        <h3>Class Information</h3>
-        <div class="ma-kv"><span>Class</span><strong>{{ d.className || '—' }}</strong></div>
-        <div class="ma-kv"><span>Section</span><strong>{{ d.sectionName || '—' }}</strong></div>
-        <div class="ma-kv"><span>Class Teacher</span><strong>{{ d.classTeacher?.staffName || '—' }}</strong></div>
-        <div class="ma-kv"><span>Roll Number</span><strong>{{ d.rollNumber || '—' }}</strong></div>
-        <a class="ma-link" routerLink="/app/academics/my-timetable" *ngIf="d.publishedTimetableExists">View My Timetable →</a>
+        <h3>Class snapshot</h3>
+        <div class="ma-kv"><span>Enrollment</span><strong class="ok">Active</strong></div>
+        <div class="ma-kv"><span>Class-Section</span><strong>{{ d.className || '—' }}{{ d.sectionName ? ' - ' + d.sectionName : '' }}</strong></div>
+        <div class="ma-kv"><span>Timetable</span><strong>{{ d.publishedTimetableExists ? 'Published' : 'Not published' }}</strong></div>
+        <a class="ma-link" routerLink="/app/academics/my-timetable">View My Timetable →</a>
       </article>
     </section>
 
@@ -73,10 +85,14 @@
       <h3>Important Information</h3>
       <div class="ma-info__grid">
         <article><strong>Regular Classes</strong><p>Attend classes regularly and keep track of your timetable.</p></article>
-        <article><strong>Assignments</strong><p>Check homework and assignments shared by your teachers.</p></article>
+        <article><strong>Calendar</strong><p>Check holidays, exams and school events from Academic Calendar.</p></article>
         <article><strong>Performance</strong><p>Stay consistent — your academic year progress depends on daily effort.</p></article>
       </div>
     </section>
   </ng-container>
+
+  <ng-template #emptyTpl>
+    <div class="ma-empty">We could not load your class details for this year. Try another academic year or contact the school office.</div>
+  </ng-template>
 </div>
 <ng-template #loadingTpl><div class="ma-empty">Loading your academics…</div></ng-template>

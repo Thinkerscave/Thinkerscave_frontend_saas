@@ -13,6 +13,9 @@ import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 
 import { AppPageHeader, BreadCrumbService } from '../../core/services/bread-crumb.service';
+import { LoginService } from '../../core/services/login.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
+import { resolveWorkspaceHome, roleTokensFromUser } from '../../core/utils/workspace-home';
 
 
 
@@ -50,8 +53,6 @@ export class BreadcrumbComponent implements OnInit {
 
   subtitle: string | null = null;
 
-
-
   private readonly router = inject(Router);
 
   private readonly destroyRef = inject(DestroyRef);
@@ -59,6 +60,10 @@ export class BreadcrumbComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly pageHeaderService = inject(BreadCrumbService);
+
+  private readonly loginService = inject(LoginService);
+
+  private readonly orgContext = inject(OrganizationContextService);
 
 
 
@@ -71,6 +76,14 @@ export class BreadcrumbComponent implements OnInit {
 
 
   ngOnInit(): void {
+
+    this.home = {
+
+      icon: 'pi pi-home',
+
+      routerLink: [resolveWorkspaceHome(roleTokensFromUser(this.loginService.getUser()), this.orgContext.isPlatformLogin())]
+
+    };
 
     this.pageHeaderService.pageHeader$
 
@@ -166,13 +179,15 @@ export class BreadcrumbComponent implements OnInit {
 
       const isLast = index === this.resolvedCrumbs.length - 1;
 
+      const label = isLast && this.pageOverride?.title ? this.pageOverride.title : crumb.label;
+
       if (isLast || !crumb.link) {
 
-        return { label: crumb.label };
+        return { label };
 
       }
 
-      return { label: crumb.label, routerLink: crumb.link };
+      return { label, routerLink: crumb.link };
 
     });
 

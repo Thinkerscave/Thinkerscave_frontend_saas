@@ -18,6 +18,8 @@
 
   <header class="csub-identity">
     <div class="csub-identity__title">
+      <p class="csub-identity__eyebrow">Class Subjects</p>
+      <h1>{{ c.name }}</h1>
       <p class="csub-identity__year">{{ c.academicYearName || 'Academic year' }}</p>
       <p class="csub-identity__meta">
         <code>{{ c.code }}</code>
@@ -37,16 +39,8 @@
     <div class="csub-sections__head">
       <div>
         <h2 id="csub-mapped-heading">Subjects Taught in This Class</h2>
-        <p>Manage which subjects are included for {{ c.name }}.</p>
+        <p>Manage which subjects are included for {{ c.name }}. Use Add Subject in the header to include more.</p>
       </div>
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage || !unmappedSubjects.length"
-        (click)="openAddDialog()">
-        <i class="pi pi-plus"></i> Add Subject
-      </button>
     </div>
 
     <div class="csub-table-wrap" *ngIf="mappedSubjects.length; else noMapped">
@@ -94,15 +88,7 @@
       <div class="csub-empty-sections">
         <i class="pi pi-book" aria-hidden="true"></i>
         <h3>No subjects mapped yet</h3>
-        <p>Add subjects to define what is taught in this class.</p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage || !unmappedSubjects.length"
-          (click)="openAddDialog()">
-          <i class="pi pi-plus"></i> Add Subject
-        </button>
+        <p>Use Add Subject in the header to define what is taught in this class.</p>
       </div>
     </ng-template>
   </section>

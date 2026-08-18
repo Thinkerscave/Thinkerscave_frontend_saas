@@ -446,8 +446,19 @@ export class LoginService {
   }
 
   public getUserRole() {
-    const user = this.getUser();
-    return user?.roles || [];
+    const user = this.getUser() as {
+      roles?: unknown[];
+      role?: unknown;
+      roleCode?: unknown;
+      roleName?: unknown;
+    } | null;
+    const roles = Array.isArray(user?.roles) ? [...user.roles] : [];
+    for (const extra of [user?.role, user?.roleCode, user?.roleName]) {
+      if (extra) {
+        roles.push(extra);
+      }
+    }
+    return roles;
   }
 
   public getUserPrivileges(): string[] {

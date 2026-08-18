@@ -147,9 +147,18 @@
           </div>
 
           <div class="cs-card__actions" (click)="$event.stopPropagation()">
-            <button type="button" class="cs-details" (click)="openDetails(cls.classId)">
-              View Details <span aria-hidden="true">→</span>
-            </button>
+            <div class="cs-card__links">
+              <button type="button" class="cs-details" (click)="openDetails(cls.classId)">
+                View Details <span aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                class="cs-details"
+                *ngIf="canManage && cls.active"
+                (click)="openSubjectMapping(cls.classId)">
+                Map Subjects
+              </button>
+            </div>
             <button
               type="button"
               class="cs-icon-btn"
@@ -222,9 +231,9 @@
           <i class="pi pi-angle-right"></i>
         </button>
         <select class="cs-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Classes per page">
-          <option [ngValue]="12">12 / page</option>
-          <option [ngValue]="24">24 / page</option>
-          <option [ngValue]="48">48 / page</option>
+          <option [ngValue]="10">10 / page</option>
+          <option [ngValue]="20">20 / page</option>
+          <option [ngValue]="50">50 / page</option>
         </select>
       </div>
     </div>
@@ -244,16 +253,8 @@
         <p>
           There are no classes configured for
           {{ dashboard?.academicYearName || 'this academic year' }}.
+          Use Add Class in the header to create the first one.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="readOnly"
-          (click)="openCreateClass()">
-          <i class="pi pi-plus"></i>
-          Add Class
-        </button>
       </div>
     </ng-template>
   </ng-template>

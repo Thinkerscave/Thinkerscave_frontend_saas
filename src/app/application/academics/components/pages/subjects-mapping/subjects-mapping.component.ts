@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -21,8 +21,14 @@ import { HasPermissionDirective } from '../../../../../shared/directives/has-per
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
+import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
+import {
+  ACADEMIC_STAGE_OPTIONS,
+  AcademicClassDto,
+  AcademicStage
+} from '../../../models/classes-sections.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
   SUBJECT_CATEGORY_OPTIONS,
@@ -41,6 +47,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterLink,
     SaasPageHeaderComponent,
     DialogModule,
     DropdownModule,
@@ -54,6 +61,7 @@ import {
 })
 export class SubjectsMappingPageComponent implements OnInit {
   private readonly api = inject(SubjectsMappingApiService);
+  private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly yearApi = inject(AcademicYearApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -92,8 +100,11 @@ export class SubjectsMappingPageComponent implements OnInit {
   /** Default Active so deactivated subjects stay out of the main working list. */
   activeFilter: boolean | null = true;
   viewMode: 'grid' | 'list' = 'grid';
+  workspaceTab: 'catalogue' | 'classes' = 'catalogue';
+  classSearch = '';
+  classRows: AcademicClassDto[] = [];
   page = 1;
-  pageSize = 12;
+  pageSize = 10;
 
   showSubjectDialog = false;
   editingSubjectId: number | null = null;
@@ -114,6 +125,17 @@ export class SubjectsMappingPageComponent implements OnInit {
 
   get canManage(): boolean {
     return this.permissions.canManage(this.resource) && !this.readOnly;
+  }
+
+  isFullyMapped(subject: SubjectDto): boolean {
+    const total = this.dashboard?.classCount ?? 0;
+    return total > 0 && (subject.mappedClassCount || 0) >= total;
+  }
+
+  mapDisabledReason(subject: SubjectDto): string {
+    return this.isFullyMapped(subject)
+      ? 'Already mapped to every class this year'
+      : 'Map this subject to a class';
   }
 
   get totalSubjects(): number {
@@ -139,6 +161,29 @@ export class SubjectsMappingPageComponent implements OnInit {
     return all.slice(start, start + this.pageSize);
   }
 
+  get filteredClassRows(): AcademicClassDto[] {
+    const q = this.classSearch.trim().toLowerCase();
+    if (!q) return this.classRows;
+    return this.classRows.filter((cls) => {
+      const name = (cls.name || '').toLowerCase();
+      const code = (cls.code || '').toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+  }
+
+  get pagedClassRows(): AcademicClassDto[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredClassRows.slice(start, start + this.pageSize);
+  }
+
+  get classTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredClassRows.length / this.pageSize));
+  }
+
+  get classPageEnd(): number {
+    return Math.min(this.page * this.pageSize, this.filteredClassRows.length);
+  }
+
   get hasActiveFilters(): boolean {
     return !!this.searchTerm.trim() || this.categoryFilter != null || this.activeFilter !== null;
   }
@@ -158,6 +203,9 @@ export class SubjectsMappingPageComponent implements OnInit {
   ngOnInit(): void {
     const from = this.route.snapshot.queryParamMap.get('from');
     this.showBack = from === 'overview';
+    if (this.route.snapshot.queryParamMap.get('tab') === 'classes') {
+      this.workspaceTab = 'classes';
+    }
 
     // Legacy deep-link from Class Detail: send users to the class-scoped mapping page.
     const classId = Number(this.route.snapshot.queryParamMap.get('classId'));
@@ -220,7 +268,7 @@ export class SubjectsMappingPageComponent implements OnInit {
   }
 
   setPageSize(size: number): void {
-    this.pageSize = Number(size) || 12;
+    this.pageSize = Number(size) || 10;
     this.page = 1;
     this.cdr.markForCheck();
   }
@@ -276,13 +324,55 @@ export class SubjectsMappingPageComponent implements OnInit {
           if (this.page > this.totalPages) {
             this.page = this.totalPages;
           }
+          this.loadClasses();
         },
-        error: (err) => this.messages.add({
-          severity: 'error',
-          summary: 'Unable to load subjects',
-          detail: err?.error?.message || 'Please try again'
-        })
+        error: (err) => {
+          this.messages.add({
+            severity: 'error',
+            summary: 'Unable to load subjects',
+            detail: err?.error?.message || 'Please try again'
+          });
+          this.loadClasses();
+        }
       });
+  }
+
+  setWorkspaceTab(tab: 'catalogue' | 'classes'): void {
+    this.workspaceTab = tab;
+    this.page = 1;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'classes' ? 'classes' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.cdr.markForCheck();
+  }
+
+  onClassSearchChange(value: string): void {
+    this.classSearch = value ?? '';
+    this.cdr.markForCheck();
+  }
+
+  stageLabel(stage: AcademicStage): string {
+    return ACADEMIC_STAGE_OPTIONS.find((s) => s.value === stage)?.label || stage;
+  }
+
+  private loadClasses(): void {
+    if (!this.selectedYearId) {
+      this.classRows = [];
+      return;
+    }
+    this.classesApi.getDashboard(this.selectedYearId, { active: true }).subscribe({
+      next: (dash) => {
+        this.classRows = dash.classes || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.classRows = [];
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   openCreateSubject(): void {

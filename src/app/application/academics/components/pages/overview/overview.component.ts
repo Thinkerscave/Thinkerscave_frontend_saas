@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
@@ -16,7 +15,7 @@ import { AcademicsOverview, ACADEMICS_OVERVIEW_RESOURCE } from '../../../models/
   selector: 'app-academics-overview-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, ProgressBarModule, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, ProgressBarModule],
   templateUrl: './overview.component.html',
   styleUrls: ['./overview.component.scss']
 })

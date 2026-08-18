@@ -33,13 +33,17 @@ export class AcademicStructurePageComponent implements OnInit {
   data: TeacherAcademicStructure | null = null;
 
   ngOnInit(): void {
-    this.yearApi.search().subscribe({
+    this.yearApi.search(undefined, undefined, { skipErrorToast: true }).subscribe({
       next: (years) => {
         this.years = years;
         this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
         this.reload();
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
+      error: () => {
+        this.years = [];
+        this.selectedYearId = null;
+        this.reload();
+      }
     });
   }
 

@@ -26,6 +26,8 @@
 
   <header class="cd-identity">
     <div class="cd-identity__title">
+      <p class="cd-identity__eyebrow">Class Detail</p>
+      <h1>{{ c.name }}</h1>
       <p class="cd-identity__year">{{ c.academicYearName || 'Academic year' }}</p>
       <p class="cd-identity__meta">
         <code>{{ c.code }}</code>
@@ -44,12 +46,6 @@
       {{ studentCount }} {{ studentCount === 1 ? 'Student' : 'Students' }}
     </p>
   </header>
-
-  <div class="cd-prompt" *ngIf="offerSections && canManage">
-    <p>Class created. Add a section to organize students and assign a class teacher.</p>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="openAddSection()">Add Section</button>
-    <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
-  </div>
 
   <section class="cd-sections" aria-labelledby="cd-sections-heading">
     <div class="cd-sections__head">
@@ -117,16 +113,8 @@
         <h3>No sections yet</h3>
         <p>
           No sections have been created for this class yet.
-          Create a section to start organizing students and assigning a class teacher.
+          Use Add Section in the header to organize students and assign a class teacher.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage"
-          (click)="openAddSection()">
-          <i class="pi pi-plus"></i> Add Section
-        </button>
       </div>
     </ng-template>
   </section>

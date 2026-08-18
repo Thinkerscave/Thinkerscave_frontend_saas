@@ -18,7 +18,7 @@ export class AcademicsMeApiService {
     let params = new HttpParams();
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
-      .get<ApiResponse<TeacherMyClasses>>(academicsApi.meClasses, { params })
+      .get<ApiResponse<TeacherMyClasses>>(academicsApi.meClasses, { params, headers: { 'X-Skip-Error-Toast': '1' } })
       .pipe(map((r) => r.data));
   }
 
@@ -26,7 +26,7 @@ export class AcademicsMeApiService {
     let params = new HttpParams();
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
-      .get<ApiResponse<MyTimetable>>(academicsApi.meTimetable, { params })
+      .get<ApiResponse<MyTimetable>>(academicsApi.meTimetable, { params, headers: { 'X-Skip-Error-Toast': '1' } })
       .pipe(map((r) => r.data));
   }
 
@@ -34,7 +34,7 @@ export class AcademicsMeApiService {
     let params = new HttpParams();
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
-      .get<ApiResponse<TeacherAcademicStructure>>(academicsApi.meStructure, { params })
+      .get<ApiResponse<TeacherAcademicStructure>>(academicsApi.meStructure, { params, headers: { 'X-Skip-Error-Toast': '1' } })
       .pipe(map((r) => r.data));
   }
 
@@ -42,7 +42,7 @@ export class AcademicsMeApiService {
     let params = new HttpParams();
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
-      .get<ApiResponse<StudentMyAcademics>>(academicsApi.meAcademics, { params })
+      .get<ApiResponse<StudentMyAcademics>>(academicsApi.meAcademics, { params, headers: { 'X-Skip-Error-Toast': '1' } })
       .pipe(map((r) => r.data));
   }
 }

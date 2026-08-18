@@ -27,6 +27,8 @@
 
   <header class="ced-identity">
     <div class="ced-identity__title">
+      <p class="ced-identity__eyebrow">Event Detail</p>
+      <h1>{{ e.title }}</h1>
       <p class="ced-identity__year">{{ e.academicYearName || 'Academic year' }}</p>
       <p class="ced-identity__meta">
         <span>{{ typeLabel(e.eventType) }}</span>
@@ -49,14 +51,6 @@
         <h2 id="ced-info-heading">Event Information</h2>
         <p>Schedule, audience, and visibility details.</p>
       </div>
-      <button
-        type="button"
-        class="tc-btn"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage"
-        (click)="openEditEvent()">
-        Edit
-      </button>
     </div>
 
     <div class="ced-info-grid">

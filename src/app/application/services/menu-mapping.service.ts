@@ -435,15 +435,15 @@ export class MenuMappingService {
       {
         label: 'Academics',
         icon: 'pi pi-book',
-        routerLink: ['/app/academics/overview'],
+        routerLink: ['/app/academics'],
         items: [
-          { label: 'Overview', icon: 'pi pi-chart-bar', routerLink: ['/app/academics/overview'] },
+          { label: 'Academic Calendar', icon: 'pi pi-calendar-plus', routerLink: ['/app/academics/academic-calendar'] },
+          { label: 'Overview', icon: 'pi pi-th-large', routerLink: ['/app/academics/overview'] },
           { label: 'Academic Year', icon: 'pi pi-calendar', routerLink: ['/app/academics/academic-year'] },
           { label: 'Classes & Sections', icon: 'pi pi-th-large', routerLink: ['/app/academics/classes-sections'] },
           { label: 'Subjects', icon: 'pi pi-book', routerLink: ['/app/academics/subjects-mapping'] },
           { label: 'Teacher Allocation', icon: 'pi pi-user-edit', routerLink: ['/app/academics/teacher-allocation'] },
           { label: 'Timetable', icon: 'pi pi-table', routerLink: ['/app/academics/timetable'] },
-          { label: 'Academic Calendar', icon: 'pi pi-calendar-plus', routerLink: ['/app/academics/academic-calendar'] },
           { label: 'My Classes', icon: 'pi pi-id-card', routerLink: ['/app/academics/my-classes'] },
           { label: 'My Timetable', icon: 'pi pi-clock', routerLink: ['/app/academics/my-timetable'] },
           { label: 'Academic Structure', icon: 'pi pi-sitemap', routerLink: ['/app/academics/academic-structure'] },
@@ -464,6 +464,20 @@ export class MenuMappingService {
   }
 
   private pruneNavigationMenus(items: MenuItem[]): MenuItem[] {
+    const roles = this.currentRoleTokens();
+    const isSetupRole = this.hasAnyRole(roles, [
+      'SUPER_ADMIN',
+      'PLATFORM_ADMIN',
+      'ORGANIZATION_ADMIN',
+      'ORGANIZATION_OWNER',
+      'INSTITUTION_ADMIN',
+      'COLLEGE_ADMIN',
+      'ADMIN',
+      'PRINCIPAL'
+    ]);
+    const isStudent = this.hasAnyRole(roles, ['STUDENT', 'PARENT']);
+    const isTeachingStaff = this.hasAnyRole(roles, ['TEACHER', 'STAFF']) && !isSetupRole;
+
     const blockedRoutes = new Set<string>([
       '/app/exams',
       '/app/enrollments',
@@ -482,6 +496,17 @@ export class MenuMappingService {
       '/app/fees/dashboard',
       '/app/responsibilities'
     ]);
+
+    if (!isSetupRole) {
+      [
+        '/app/academics/overview',
+        '/app/academics/academic-year',
+        '/app/academics/classes-sections',
+        '/app/academics/subjects-mapping',
+        '/app/academics/teacher-allocation',
+        '/app/academics/timetable'
+      ].forEach((route) => blockedRoutes.add(route));
+    }
 
     const canonicalRoute = (routeText: string): string => {
       if (routeText === '/app/students/directory') return '/app/students';
@@ -557,6 +582,10 @@ export class MenuMappingService {
 
         next.push({
           ...item,
+          routerLink: this.rewriteAcademicsHomeLink(
+            this.rewriteHomeRouterLink(item.routerLink, isStudent, isTeachingStaff),
+            !!(children && children.length)
+          ),
           items: children && children.length ? children : undefined
         });
       }
@@ -565,6 +594,32 @@ export class MenuMappingService {
     };
 
     return walk(items);
+  }
+
+  private rewriteHomeRouterLink(
+    routerLink: MenuItem['routerLink'],
+    isStudent: boolean,
+    isTeachingStaff: boolean
+  ): MenuItem['routerLink'] {
+    if (!isStudent && !isTeachingStaff) {
+      return routerLink;
+    }
+    const routeText = this.routerLinkText(routerLink).replace(/\/+$/, '').toLowerCase();
+    if (routeText !== '/app') {
+      return routerLink;
+    }
+    return isStudent ? ['/app/academics/my-academics'] : ['/app/academics/my-classes'];
+  }
+
+  private rewriteAcademicsHomeLink(
+    routerLink: MenuItem['routerLink'],
+    hasChildren: boolean
+  ): MenuItem['routerLink'] {
+    const routeText = this.routerLinkText(routerLink).replace(/\/+$/, '').toLowerCase();
+    if (hasChildren && routeText === '/app/academics/overview') {
+      return ['/app/academics'];
+    }
+    return routerLink;
   }
 
   private mapSidebarNode(node: SidebarMenuNode): MenuItem {

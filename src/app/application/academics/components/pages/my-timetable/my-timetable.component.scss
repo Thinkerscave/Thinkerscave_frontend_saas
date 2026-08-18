@@ -5,6 +5,8 @@
 .mt-header__row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .mt-header h1 { margin: 0; font-size: 1.75rem; }
 .mt-header p { margin: .35rem 0 0; color: #64748b; }
+.mt-year { display: inline-flex; align-items: center; gap: .45rem; }
+.mt-year span { font-size: .78rem; font-weight: 600; color: #64748b; }
 .mt-summary {
   margin-top: 1rem; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem;
 }

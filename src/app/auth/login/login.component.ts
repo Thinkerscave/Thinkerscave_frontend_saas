@@ -11,6 +11,7 @@ import { OrganizationContextService } from '../../core/services/organization-con
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { UserInfo } from '../../shared/models/auth.model';
+import { resolveWorkspaceHome, roleTokensFromUser } from '../../core/utils/workspace-home';
 import { ForgotPasswordModalComponent } from '../components/forgot-password-modal/forgot-password-modal.component';
 
 @Component({
@@ -181,9 +182,7 @@ export class LoginComponent {
 
     this.idleTimeoutService.start();
 
-    const target = this.orgContext.isPlatformLogin()
-      ? '/app/tenant-management/dashboard'
-      : '/app';
+    const target = resolveWorkspaceHome(roleTokensFromUser(user), this.orgContext.isPlatformLogin());
 
     this.finishSubmit();
 

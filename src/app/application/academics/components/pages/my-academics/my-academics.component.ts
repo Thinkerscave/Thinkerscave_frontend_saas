@@ -32,13 +32,17 @@ export class MyAcademicsPageComponent implements OnInit {
   data: StudentMyAcademics | null = null;
 
   ngOnInit(): void {
-    this.yearApi.search().subscribe({
+    this.yearApi.search(undefined, undefined, { skipErrorToast: true }).subscribe({
       next: (years) => {
         this.years = years;
         this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
         this.reload();
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
+      error: () => {
+        this.years = [];
+        this.selectedYearId = null;
+        this.reload();
+      }
     });
   }
 
@@ -55,5 +59,10 @@ export class MyAcademicsPageComponent implements OnInit {
   initials(name?: string | null): string {
     if (!name) return '?';
     return name.split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() || '').join('') || '?';
+  }
+
+  scrollToSubjects(event: Event): void {
+    event.preventDefault();
+    document.getElementById('ma-subjects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }

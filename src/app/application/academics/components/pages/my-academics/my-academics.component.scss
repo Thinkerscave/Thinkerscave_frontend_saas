@@ -5,6 +5,8 @@
 .ma-header__row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .ma-header h1 { margin: 0; font-size: 1.75rem; }
 .ma-header p { margin: .35rem 0 0; color: #64748b; }
+.ma-year { display: inline-flex; align-items: center; gap: .45rem; }
+.ma-year span { font-size: .78rem; font-weight: 600; color: #64748b; }
 .ma-top { margin-top: 1rem; display: grid; grid-template-columns: 1.6fr 1fr; gap: .85rem; }
 .ma-profile, .ma-quickinfo, .ma-panel {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem;
@@ -28,7 +30,7 @@
   display: grid; gap: .15rem;
 }
 .ma-shortcuts em { font-style: normal; color: #2563eb; font-size: .78rem; font-weight: 600; }
-.ma-mid { margin-top: .85rem; display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: .85rem; }
+.ma-mid { margin-top: .85rem; display: grid; grid-template-columns: 1.4fr 1fr; gap: .85rem; }
 .ma-row {
   display: flex; justify-content: space-between; gap: .75rem; padding: .55rem 0; border-bottom: 1px solid #f1f5f9;
 }

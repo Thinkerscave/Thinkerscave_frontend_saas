@@ -1,11 +1,17 @@
 <section class="tc-page-shell stu-directory-page" (click)="closeMoreMenu()">
 
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>Student Management</h1>
-      <p>Comprehensive learner management for your institution.</p>
+  <header class="stu-directory-toolbar">
+    <div class="stu-kpi-strip" role="group" aria-label="Student counts">
+      <button type="button" *ngFor="let tile of kpiTiles"
+              class="stu-kpi-chip"
+              [class.is-active]="activeKpi === tile.key"
+              [attr.data-tone]="tile.tone"
+              (click)="toggleKpiFilter(tile)">
+        <strong>{{ kpi[tile.key] }}</strong>
+        <span>{{ tile.label }}</span>
+      </button>
     </div>
-    <div class="tc-page-header__actions">
+    <div class="stu-directory-toolbar__actions">
       <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()">
         <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
       </button>
@@ -17,23 +23,6 @@
       </button>
     </div>
   </header>
-
-  <div class="stu-kpi-grid">
-    <button type="button" *ngFor="let tile of kpiTiles"
-            class="tc-card tc-card--kpi"
-            [class.is-active]="activeKpi === tile.key"
-            [attr.data-tone]="tile.tone"
-            (click)="toggleKpiFilter(tile)">
-      <div class="stu-kpi-top">
-        <span class="kpi-header">{{ tile.label }}</span>
-        <span class="kpi-icon stu-kpi-icon"><i class="pi {{ tile.icon }}"></i></span>
-      </div>
-      <div class="kpi-body">
-        <strong>{{ kpi[tile.key] }}</strong>
-        <span>{{ tile.hint }}</span>
-      </div>
-    </button>
-  </div>
 
   <div class="tc-card tc-card--panel">
     <div class="tc-card__header">
