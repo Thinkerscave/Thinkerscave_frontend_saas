@@ -88,13 +88,17 @@
           </div>
         </div>
         <div class="cat-card__actions" (click)="$event.stopPropagation()">
-          <button type="button" class="cat-action" (click)="openEdit(item.feature)">Edit</button>
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
+            <i class="pi pi-pencil"></i>
+          </button>
           <button
             type="button"
-            class="cat-action cat-action--danger"
+            class="cat-icon-btn cat-icon-btn--danger"
             *ngIf="item.feature.active !== false"
+            title="Delete"
+            aria-label="Delete"
             (click)="confirmArchive(item.feature)">
-            Delete
+            <i class="pi pi-trash"></i>
           </button>
         </div>
         <div class="cat-card__expand" *ngIf="selectedFeatureId === item.feature.id" (click)="$event.stopPropagation()">
@@ -150,8 +154,18 @@
           <div><dt>Screens</dt><dd>{{ selected.pageCount }}</dd></div>
         </dl>
         <div class="cat-detail__actions">
-          <button type="button" class="cat-action" (click)="openEdit(selected.feature)">Edit</button>
-          <button type="button" class="cat-action cat-action--danger" *ngIf="selected.feature.active !== false" (click)="confirmArchive(selected.feature)">Delete</button>
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(selected.feature)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="cat-icon-btn cat-icon-btn--danger"
+            *ngIf="selected.feature.active !== false"
+            title="Delete"
+            aria-label="Delete"
+            (click)="confirmArchive(selected.feature)">
+            <i class="pi pi-trash"></i>
+          </button>
         </div>
         <h4>What this feature includes</h4>
         <div class="cat-page-list" *ngIf="selected.menus.length">
@@ -162,7 +176,9 @@
                 <strong>{{ menu.menuName }}</strong>
                 <small>{{ menuSummary(menu) }}</small>
               </div>
-              <button type="button" class="cat-link" (click)="unmapMenu(selected.feature, menu)">Unmap</button>
+              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Unmap" aria-label="Unmap" (click)="unmapMenu(selected.feature, menu)">
+                <i class="pi pi-times"></i>
+              </button>
             </div>
             <div class="cat-page-row is-child" *ngFor="let page of pagesOf(menu); trackBy: trackByMenu">
               <span class="cat-page-row__order">{{ page.displayOrder || '—' }}</span>
@@ -205,8 +221,18 @@
               </span>
             </td>
             <td>
-              <button type="button" class="cat-action" (click)="openEdit(item.feature)">Edit</button>
-              <button type="button" class="cat-action cat-action--danger" *ngIf="item.feature.active !== false" (click)="confirmArchive(item.feature)">Delete</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                type="button"
+                class="cat-icon-btn cat-icon-btn--danger"
+                *ngIf="item.feature.active !== false"
+                title="Delete"
+                aria-label="Delete"
+                (click)="confirmArchive(item.feature)">
+                <i class="pi pi-trash"></i>
+              </button>
             </td>
           </tr>
           <tr *ngIf="!showcases().length"><td colspan="5">No features match your filters.</td></tr>

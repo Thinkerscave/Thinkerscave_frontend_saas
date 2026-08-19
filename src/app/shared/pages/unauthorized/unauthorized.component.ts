@@ -2,6 +2,8 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
+import { LoginService } from '../../../core/services/login.service';
+import { workspaceHomeForUser } from '../../../core/utils/workspace-home';
 
 /**
  * Shown when a logged-in user navigates to a route they lack permissions for.
@@ -49,8 +51,9 @@ import { EmptyStateComponent } from '../../components/empty-state/empty-state.co
 })
 export class UnauthorizedComponent {
   private readonly router = inject(Router);
+  private readonly loginService = inject(LoginService);
 
   goBack(): void {
-    this.router.navigate(['/app']);
+    this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
   }
 }

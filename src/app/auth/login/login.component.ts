@@ -12,6 +12,7 @@ import { MenuMappingService } from '../../application/services/menu-mapping.serv
 import { PermissionService } from '../../core/services/permission.service';
 import { UserInfo } from '../../shared/models/auth.model';
 import { ForgotPasswordModalComponent } from '../components/forgot-password-modal/forgot-password-modal.component';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-login',
@@ -181,9 +182,7 @@ export class LoginComponent {
 
     this.idleTimeoutService.start();
 
-    const target = this.orgContext.isPlatformLogin()
-      ? '/app/tenant-management/dashboard'
-      : '/app';
+    const target = workspaceHomeForUser(user, this.orgContext.isPlatformLogin());
 
     this.finishSubmit();
 

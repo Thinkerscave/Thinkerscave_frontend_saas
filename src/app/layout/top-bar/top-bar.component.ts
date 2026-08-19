@@ -14,6 +14,7 @@ import { AvatarComponent } from '../../shared/ui/avatar/avatar.component';
 import { ThemeService } from '../../shared/theme/theme.service';
 import { NotificationCenterComponent } from '../notification-center/notification-center.component';
 import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
+import { roleTokensFromUser, resolveWorkspaceHome } from '../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-top-bar',
@@ -38,12 +39,14 @@ export class TopBarComponent {
 
   /** Reactive role token list so dashboard/permissions computations stay synced. */
   private readonly user = signal<any>(this.currentUser);
-  readonly roleTokens = computed(() => this.computeRoleTokens(this.user()));
+  readonly roleTokens = computed(() => roleTokensFromUser(this.user()));
   readonly photoUrl = computed<string | null>(() => {
     const u: any = this.user();
     return u?.studentPhoto || u?.staffPhoto || u?.parentPhoto || u?.profilePhoto || u?.adminPhoto || null;
   });
-  readonly dashboardRoute = computed(() => this.resolveDashboardRoute(this.roleTokens()));
+  readonly dashboardRoute = computed(() =>
+    resolveWorkspaceHome(this.roleTokens(), this.loginService.getLoginContext() === 'PLATFORM')
+  );
   readonly organizations = signal<WorkspaceOrganization[]>([]);
   readonly switchingOrg = signal<number | null>(null);
   readonly organizationLogoUrl = signal<string | null>(null);
@@ -172,24 +175,5 @@ export class TopBarComponent {
     const org = user?.organizations?.[0] ?? user?.organization ?? user?.orgName;
     if (typeof org === 'string') return org;
     return org?.orgName ?? org?.displayName ?? localStorage.getItem('tenantId') ?? 'ThinkersCave Academy';
-  }
-
-  private computeRoleTokens(user: any): string[] {
-    const roles = [user?.role, user?.roleCode, user?.roleName, ...(Array.isArray(user?.roles) ? user.roles : [])];
-    return roles
-      .flatMap((role: any) => [role?.roleCode, role?.roleName, role?.name, role])
-      .filter(Boolean)
-      .map((role: any) => String(role).trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase());
-  }
-
-  /** Logo click goes to role-appropriate dashboard root. */
-  private resolveDashboardRoute(tokens: string[]): string {
-    if (tokens.some(t => ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'].includes(t))) return '/app/tenant-management/organizations';
-    if (tokens.some(t => ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'INSTITUTION_ADMIN', 'COLLEGE_ADMIN', 'ADMIN'].includes(t))) return '/app/organization/profile';
-    if (tokens.some(t => ['PRINCIPAL', 'ACADEMIC_COORDINATOR', 'HR_MANAGER'].includes(t))) return '/app';
-    if (tokens.some(t => ['TEACHER', 'STAFF'].includes(t))) return '/app';
-    if (tokens.some(t => ['PARENT'].includes(t))) return '/app';
-    if (tokens.some(t => ['STUDENT'].includes(t))) return '/app';
-    return '/app';
   }
 }

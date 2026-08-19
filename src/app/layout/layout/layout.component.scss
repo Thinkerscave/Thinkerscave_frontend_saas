@@ -27,6 +27,7 @@
     height: var(--tc-topbar-height);
     flex-shrink: 0;
     z-index: 1200;
+    overflow: visible;
   }
 
   .shell-body {

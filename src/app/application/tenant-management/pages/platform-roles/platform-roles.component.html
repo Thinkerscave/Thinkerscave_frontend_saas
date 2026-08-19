@@ -68,7 +68,9 @@
               </div>
             </div>
             <div class="cat-card__actions" (click)="$event.stopPropagation()">
-              <button type="button" class="cat-action" (click)="openEdit(r)">Edit</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(r)">
+                <i class="pi pi-pencil"></i>
+              </button>
             </div>
             <div class="cat-card__expand" *ngIf="selectedRole?.id === r.id" (click)="$event.stopPropagation()">
               <ng-container *ngTemplateOutlet="roleDetail"></ng-container>
@@ -121,8 +123,12 @@
           <div><dt>Users</dt><dd>{{ role.activeUserCount ?? roleUsers.length }}</dd></div>
         </dl>
         <div class="cat-detail__actions">
-          <button type="button" class="cat-action" (click)="openEdit(role)">Edit</button>
-          <a class="cat-action" routerLink="/app/access-management/users">Open users</a>
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(role)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <a class="cat-icon-btn" routerLink="/app/access-management/users" title="Open users" aria-label="Open users">
+            <i class="pi pi-users"></i>
+          </a>
         </div>
         <h4>Assigned users</h4>
         <p class="cat-hint" *ngIf="loadingUsers">Loading users…</p>
@@ -156,7 +162,9 @@
               </span>
             </td>
             <td>
-              <button type="button" class="cat-action" (click)="openEdit(r)">Edit</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(r)">
+                <i class="pi pi-pencil"></i>
+              </button>
             </td>
           </tr>
           <tr *ngIf="!filtered.length"><td colspan="5">No roles found.</td></tr>

@@ -74,7 +74,7 @@
 
 <tc-saas-panel *ngIf="active() === 'quick-links'" title="Quick Links" subtitle="Shortcuts to your most-used areas">
   <ul class="link-list">
-    <li><a routerLink="/app"><i class="pi pi-home"></i>Dashboard<small>Your role-specific overview</small></a></li>
+    <li><a [routerLink]="dashboardHome"><i class="pi pi-home"></i>Dashboard<small>Your role-specific overview</small></a></li>
     <li><a routerLink="/app/settings"><i class="pi pi-cog"></i>Settings<small>Theme, language and notifications</small></a></li>
     <li><a routerLink="/app/organization/activity-logs"><i class="pi pi-list"></i>My Activity<small>Recent actions and audit trail</small></a></li>
     <li><a routerLink="/app/communication/announcements"><i class="pi pi-megaphone"></i>Announcements<small>Latest organization updates</small></a></li>

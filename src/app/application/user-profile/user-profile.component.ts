@@ -14,6 +14,7 @@ import {
 import { LoginService } from '../../core/services/login.service';
 import { UserProfileService } from '../services/user-profile.service';
 import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 type TabKey = 'overview' | 'edit' | 'security' | 'quick-links';
 
@@ -50,6 +51,7 @@ export class UserProfileComponent implements OnInit {
 
   readonly user = signal<any>(this.loginService.getUser() ?? {});
   readonly loading = signal(true);
+  readonly dashboardHome = workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM');
 
   readonly edit = signal({
     firstName: this.user()?.firstName || '',
@@ -148,5 +150,7 @@ export class UserProfileComponent implements OnInit {
       });
   }
 
-  goDashboard(): void { this.router.navigate(['/app']); }
+  goDashboard(): void {
+    this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
+  }
 }

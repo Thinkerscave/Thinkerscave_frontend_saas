@@ -48,6 +48,10 @@ export function resolveWorkspaceHome(tokens: string[], isPlatform = false): stri
   return '/app';
 }
 
+export function workspaceHomeForUser(user: unknown, isPlatform = false): string {
+  return resolveWorkspaceHome(roleTokensFromUser(user), isPlatform);
+}
+
 /** First Academics page for `/app/academics`. */
 export function resolveAcademicsEntry(tokens: string[]): string {
   if (hasAny(tokens, ['STUDENT', 'PARENT'])) {
@@ -77,4 +81,29 @@ export function isOrgSetupRole(tokens: string[]): boolean {
     'ADMIN',
     'PRINCIPAL'
   ]);
+}
+
+export type GlobalSearchScope = 'hidden' | 'platform' | 'organization' | 'teacher';
+
+export function resolveGlobalSearchScope(tokens: string[], isPlatform = false): GlobalSearchScope {
+  if (hasAny(tokens, ['STUDENT', 'PARENT'])) {
+    return 'hidden';
+  }
+  if (isPlatform || hasAny(tokens, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'])) {
+    return 'platform';
+  }
+  if (isOrgSetupRole(tokens) || hasAny(tokens, ['HR_MANAGER', 'ACADEMIC_COORDINATOR', 'RECEPTIONIST'])) {
+    return 'organization';
+  }
+  if (hasAny(tokens, ['TEACHER', 'STAFF'])) {
+    return 'teacher';
+  }
+  return 'organization';
+}
+
+export function globalSearchPlaceholder(scope: GlobalSearchScope): string {
+  if (scope === 'platform') return 'Search customers, organizations or menus';
+  if (scope === 'organization') return 'Search students, staff, classes or pages';
+  if (scope === 'teacher') return 'Search students';
+  return 'Search';
 }

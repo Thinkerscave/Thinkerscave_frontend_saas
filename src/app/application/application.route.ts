@@ -102,7 +102,7 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'admin',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
+      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },

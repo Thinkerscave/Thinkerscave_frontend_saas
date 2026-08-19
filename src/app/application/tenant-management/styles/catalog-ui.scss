@@ -317,21 +317,35 @@
 }
 
 .cat-icon-btn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  border: 1px solid var(--tc-border, #e2e8f0);
-  background: transparent;
-  color: var(--tc-text-muted, #64748b);
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--tc-accent, #1f3a93) 22%, var(--tc-border, #e2e8f0));
+  background: color-mix(in srgb, var(--tc-accent, #1f3a93) 8%, #fff);
+  color: var(--tc-accent, #1f3a93);
   cursor: pointer;
+  text-decoration: none;
 }
 
+.cat-icon-btn i { font-size: 0.82rem; }
+
 .cat-icon-btn:hover {
-  background: var(--tc-bg-muted, #f8fafc);
-  color: var(--tc-heading, #0f172a);
+  background: color-mix(in srgb, var(--tc-accent, #1f3a93) 16%, #fff);
+  border-color: var(--tc-accent, #1f3a93);
+}
+
+.cat-icon-btn--danger {
+  border-color: color-mix(in srgb, var(--saas-danger, #ef4444) 32%, var(--tc-border, #e2e8f0));
+  background: var(--saas-danger-soft, #fee2e2);
+  color: var(--saas-danger, #ef4444);
+}
+
+.cat-icon-btn--danger:hover {
+  background: color-mix(in srgb, var(--saas-danger, #ef4444) 18%, #fff);
+  border-color: var(--saas-danger, #ef4444);
 }
 
 .cat-badge {

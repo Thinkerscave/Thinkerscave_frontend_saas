@@ -13,6 +13,8 @@ import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 
 import { AppPageHeader, BreadCrumbService } from '../../core/services/bread-crumb.service';
+import { LoginService } from '../../core/services/login.service';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 
 
@@ -59,6 +61,7 @@ export class BreadcrumbComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly pageHeaderService = inject(BreadCrumbService);
+  private readonly loginService = inject(LoginService);
 
 
 
@@ -71,6 +74,10 @@ export class BreadcrumbComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.home = {
+      icon: 'pi pi-home',
+      routerLink: [workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM')]
+    };
 
     this.pageHeaderService.pageHeader$
 

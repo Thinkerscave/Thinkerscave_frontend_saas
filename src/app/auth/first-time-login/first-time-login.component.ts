@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { LoginService } from '../../core/services/login.service';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-first-time-login',
@@ -82,7 +83,7 @@ export class FirstTimeLoginComponent implements OnInit {
               detail: 'Password changed successfully.'
             });
             setTimeout(() => {
-              this.router.navigate(['/app']);
+              this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
             }, 1200);
           },
           error: () => {

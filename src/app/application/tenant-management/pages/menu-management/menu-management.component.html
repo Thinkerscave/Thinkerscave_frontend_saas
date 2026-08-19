@@ -69,8 +69,12 @@
               </div>
             </div>
             <div class="cat-card__actions" (click)="$event.stopPropagation()">
-              <button type="button" class="cat-action" (click)="openEdit(menu)">Edit</button>
-              <button type="button" class="cat-action cat-action--danger" (click)="confirmDelete(menu)">Delete</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(menu)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Delete" aria-label="Delete" (click)="confirmDelete(menu)">
+                <i class="pi pi-trash"></i>
+              </button>
             </div>
             <div class="cat-card__expand" *ngIf="selectedParent?.id === menu.id" (click)="$event.stopPropagation()">
               <ng-container *ngTemplateOutlet="menuDetail"></ng-container>
@@ -125,9 +129,15 @@
           <div><dt>Feature</dt><dd>{{ selected.featureName || selected.featureCode || '—' }}</dd></div>
         </dl>
         <div class="cat-detail__actions">
-          <button type="button" class="cat-action" (click)="openEdit(selected)">Edit</button>
-          <button type="button" class="cat-action" *ngIf="isGroup(selected)" (click)="openCreate(selected)">Add submenu</button>
-          <button type="button" class="cat-action cat-action--danger" (click)="confirmDelete(selected)">Delete</button>
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(selected)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button type="button" class="cat-icon-btn" *ngIf="isGroup(selected)" title="Add submenu" aria-label="Add submenu" (click)="openCreate(selected)">
+            <i class="pi pi-plus"></i>
+          </button>
+          <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Delete" aria-label="Delete" (click)="confirmDelete(selected)">
+            <i class="pi pi-trash"></i>
+          </button>
         </div>
         <h4 *ngIf="isGroup(selected)">Pages in this menu</h4>
         <div class="cat-page-list" *ngIf="selectedChildren.length">
@@ -138,8 +148,12 @@
               <code>{{ child.route || child.menuCode }}</code>
             </div>
             <div class="cat-detail__actions">
-              <button type="button" class="cat-action" (click)="openEdit(child)">Edit</button>
-              <button type="button" class="cat-action cat-action--danger" (click)="confirmDelete(child)">Delete</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(child)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Delete" aria-label="Delete" (click)="confirmDelete(child)">
+                <i class="pi pi-trash"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -179,8 +193,12 @@
               </span>
             </td>
             <td>
-              <button type="button" class="cat-action" (click)="openEdit(row.menu)">Edit</button>
-              <button type="button" class="cat-action cat-action--danger" (click)="confirmDelete(row.menu)">Delete</button>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(row.menu)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Delete" aria-label="Delete" (click)="confirmDelete(row.menu)">
+                <i class="pi pi-trash"></i>
+              </button>
             </td>
           </tr>
           <tr *ngIf="!filteredRows.length"><td colspan="6">No menus match your search.</td></tr>

@@ -4,6 +4,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { GlobalSearchComponent } from './global-search.component';
 import { DefaultGlobalSearchProvider, GlobalSearchProvider } from './global-search.provider';
+import { LoginService } from '../../../core/services/login.service';
 
 describe('GlobalSearchComponent', () => {
     let component: GlobalSearchComponent;
@@ -14,6 +15,13 @@ describe('GlobalSearchComponent', () => {
             imports: [GlobalSearchComponent],
             providers: [
                 { provide: GlobalSearchProvider, useClass: DefaultGlobalSearchProvider },
+                {
+                  provide: LoginService,
+                  useValue: {
+                    getUser: () => ({ roles: [{ roleType: 'ORGANIZATION_ADMIN' }] }),
+                    getLoginContext: () => 'TENANT'
+                  }
+                },
                 provideRouter([]),
                 provideNoopAnimations()
             ]
@@ -28,7 +36,7 @@ describe('GlobalSearchComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should start hidden', () => {
-        expect(component.visible()).toBeFalse();
+    it('should start with the results panel closed', () => {
+        expect(component.open()).toBeFalse();
     });
 });

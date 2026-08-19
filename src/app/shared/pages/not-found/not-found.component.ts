@@ -2,6 +2,8 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
+import { LoginService } from '../../../core/services/login.service';
+import { workspaceHomeForUser } from '../../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-not-found',
@@ -45,8 +47,9 @@ import { EmptyStateComponent } from '../../components/empty-state/empty-state.co
 })
 export class NotFoundComponent {
   private readonly router = inject(Router);
+  private readonly loginService = inject(LoginService);
 
   goHome(): void {
-    this.router.navigateByUrl('/app');
+    this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
   }
 }
