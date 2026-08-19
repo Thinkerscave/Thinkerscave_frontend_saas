@@ -104,6 +104,7 @@ export const academicsApi = {
 export const accessApi = {
   roles: `${ACCESS_BASE}/roles`,
   roleById: (id: number) => `${ACCESS_BASE}/roles/${id}`,
+  roleUsers: (id: number) => `${ACCESS_BASE}/roles/${id}/users`,
   roleSearch: `${ACCESS_BASE}/roles/search`,
   activateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/activate`,
   deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
@@ -453,6 +454,7 @@ export const platformApi = {
   planFeatures: (planId: number) => `${PLATFORM_BASE}/subscription-plans/${planId}/features`,
   features: `${PLATFORM_BASE}/features`,
   featureById: (id: number) => `${PLATFORM_BASE}/features/${id}`,
+  featureMenus: (id: number) => `${PLATFORM_BASE}/features/${id}/menus`,
   promotions: `${PLATFORM_BASE}/promotions`,
   promotionById: (id: number) => `${PLATFORM_BASE}/promotions/${id}`,
   organizationSubscriptions: `${PLATFORM_BASE}/organization-subscriptions`,

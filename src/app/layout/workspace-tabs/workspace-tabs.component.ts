@@ -95,15 +95,38 @@ export class WorkspaceTabsComponent implements OnInit {
       ]
     } satisfies WorkspaceTabConfig] : []),
     {
+      key: 'subscriptions',
+      label: 'Subscriptions',
+      eyebrow: 'Commercial',
+      icon: 'pi pi-credit-card',
+      matcher: /^\/app\/tenant-management\/(subscription-plans|promotions)(?:\/|$)/,
+      tabs: [
+        { label: 'Subscription Plans', icon: 'pi pi-credit-card', route: '/app/tenant-management/subscription-plans' },
+        { label: 'Promotions', icon: 'pi pi-tag', route: '/app/tenant-management/promotions' }
+      ]
+    },
+    {
       key: 'tenant-management',
       label: 'Tenant Management',
-      eyebrow: 'Platform Team',
-      icon: 'pi pi-building',
-      matcher: /^\/app\/tenant-management(?:\/|$)/,
+      eyebrow: 'Operations',
+      icon: 'pi pi-server',
+      matcher: /^\/app\/tenant-management\/(tenant-health|platform-health|migration-center|audit-center)(?:\/|$)/,
       tabs: [
-        { label: 'Organizations', icon: 'pi pi-building', route: '/app/tenant-management/organizations' },
-        { label: 'Subscription Plans', icon: 'pi pi-credit-card', route: '/app/tenant-management/subscription-plans' },
+        { label: 'Tenant Health', icon: 'pi pi-heart', route: '/app/tenant-management/tenant-health' },
+        { label: 'Migration Center', icon: 'pi pi-sync', route: '/app/tenant-management/migration-center' },
         { label: 'Audit Center', icon: 'pi pi-history', route: '/app/tenant-management/audit-center' }
+      ]
+    },
+    {
+      key: 'platform-catalog',
+      label: 'Platform Catalog',
+      eyebrow: 'Catalogue',
+      icon: 'pi pi-th-large',
+      matcher: /^\/app\/tenant-management\/(menus|roles|feature-catalog)(?:\/|$)/,
+      tabs: [
+        { label: 'Menu Management', icon: 'pi pi-sitemap', route: '/app/tenant-management/menus' },
+        { label: 'Role Management', icon: 'pi pi-user-edit', route: '/app/tenant-management/roles' },
+        { label: 'Feature Catalog', icon: 'pi pi-box', route: '/app/tenant-management/feature-catalog' }
       ]
     },
     {

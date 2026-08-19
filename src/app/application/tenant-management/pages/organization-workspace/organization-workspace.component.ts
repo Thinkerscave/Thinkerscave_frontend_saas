@@ -4,10 +4,14 @@ import {
   HostListener, OnInit, inject
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DropdownModule } from 'primeng/dropdown';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
-import { OrganizationDetail } from '../../models/platform.model';
+import { FeatureOverride, OrganizationDetail, PlatformFeature } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   formatCurrency,
@@ -32,7 +36,8 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, SaasPillComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, SaasPillComponent],
+  providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
 })
@@ -45,13 +50,25 @@ export class OrganizationWorkspaceComponent implements OnInit {
   private readonly feedback = inject(UiFeedbackService);
   private readonly pageHeader = inject(BreadCrumbService);
 
+  private readonly confirm = inject(ConfirmationService);
+
   loading = true;
   actionLoading = false;
+  overrideSaving = false;
   errorMessage = '';
   org: OrganizationDetail | null = null;
   orgId = 0;
   activeTab = 'overview';
   actionsMenuOpen = false;
+  overrideEditorOpen = false;
+  features: PlatformFeature[] = [];
+  overrideDraft: {
+    id?: number;
+    featureId: number | null;
+    enabled: boolean;
+    overrideReason: string;
+    remarks: string;
+  } = this.emptyOverrideDraft();
 
   readonly tabs = [
     { key: 'overview',      label: 'Overview',           icon: 'pi pi-id-card' },
@@ -95,8 +112,11 @@ export class OrganizationWorkspaceComponent implements OnInit {
     }
     this.loading = true;
     this.errorMessage = '';
-    this.api.getOrganization(orgId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: org => {
+    forkJoin({
+      org: this.api.getOrganization(orgId),
+      features: this.api.getFeatures().pipe(catchError(() => of([])))
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ org, features }) => {
         if (!org?.id) {
           this.errorMessage = 'Organization not found. It may have been removed or your access was revoked.';
           this.org = null;
@@ -105,6 +125,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.pageHeader.setPageHeader({ title: org.organizationName || 'Organization Details' });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
+        this.features = (features ?? []).filter(f => f.active !== false);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -130,6 +151,101 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
 
   get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
+
+  get overrideFeatureOptions(): { label: string; value: number }[] {
+    const taken = new Set(this.featureOverrides
+      .filter(item => item.id !== this.overrideDraft.id)
+      .map(item => item.featureId));
+    return this.features
+      .filter(feature => !taken.has(feature.id))
+      .map(feature => ({
+        label: `${feature.displayName || feature.featureName} (${feature.featureCode})`,
+        value: feature.id
+      }));
+  }
+
+  openAddOverride(): void {
+    if (!this.org?.subscription?.id) {
+      this.toast('warn', 'Unavailable', 'Assign a subscription before adding feature overrides.');
+      return;
+    }
+    this.overrideDraft = this.emptyOverrideDraft();
+    this.overrideEditorOpen = true;
+    this.activeTab = 'features';
+  }
+
+  openEditOverride(override: FeatureOverride): void {
+    this.overrideDraft = {
+      id: override.id,
+      featureId: override.featureId,
+      enabled: override.enabled !== false,
+      overrideReason: override.overrideReason ?? '',
+      remarks: override.remarks ?? ''
+    };
+    this.overrideEditorOpen = true;
+    this.activeTab = 'features';
+  }
+
+  closeOverrideEditor(): void {
+    this.overrideEditorOpen = false;
+  }
+
+  saveOverride(): void {
+    const subscriptionId = this.org?.subscription?.id;
+    if (!subscriptionId || !this.overrideDraft.featureId) {
+      this.toast('warn', 'Missing fields', 'Choose a feature to grant or revoke.');
+      return;
+    }
+    this.overrideSaving = true;
+    const payload = {
+      organizationSubscriptionId: subscriptionId,
+      featureId: this.overrideDraft.featureId,
+      enabled: this.overrideDraft.enabled,
+      overrideReason: this.overrideDraft.overrideReason.trim() || undefined,
+      remarks: this.overrideDraft.remarks.trim() || undefined
+    };
+    const request$ = this.overrideDraft.id
+      ? this.api.updateFeatureOverride(this.overrideDraft.id, payload)
+      : this.api.createFeatureOverride(payload);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.overrideSaving = false;
+        this.overrideEditorOpen = false;
+        this.toast('success', 'Override saved', 'The organization is now entitled at feature level. Menus will follow for this tenant.');
+        this.load(this.orgId);
+      },
+      error: () => {
+        this.overrideSaving = false;
+        this.toast('error', 'Failed', 'Could not save the feature override.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  confirmRemoveOverride(override: FeatureOverride): void {
+    this.confirm.confirm({
+      header: 'Remove override?',
+      message: `Remove the extra feature "${override.featureName || override.featureCode}" from this organization?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.api.deleteFeatureOverride(override.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.toast('success', 'Override removed', 'The organization now follows the subscription plan for this feature.');
+          this.load(this.orgId);
+        },
+        error: () => this.toast('error', 'Failed', 'Could not remove this override.')
+      })
+    });
+  }
+
+  private emptyOverrideDraft() {
+    return {
+      featureId: null as number | null,
+      enabled: true,
+      overrideReason: '',
+      remarks: ''
+    };
+  }
 
   get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
     if (!this.org) return [];

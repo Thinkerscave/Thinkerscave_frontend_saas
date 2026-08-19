@@ -130,6 +130,16 @@ export class BreadcrumbComponent implements OnInit {
 
     this.resolvedCrumbs = this.collectRouteCrumbs();
 
+    if (segments[0] === 'app' && segments[1] === 'tenant-management') {
+      const labels = this.tenantManagementLabels(segments).filter(Boolean);
+      if (labels.length) {
+        this.resolvedCrumbs = labels.map((label, index) => ({
+          label,
+          link: index === labels.length - 1 ? null : this.tenantCrumbLink(label)
+        }));
+      }
+    }
+
     if (!this.resolvedCrumbs.length) {
 
       const labels = this.routeLabels(segments);
@@ -376,7 +386,19 @@ export class BreadcrumbComponent implements OnInit {
 
     const grandchild = segments[4] ?? '';
 
-    const root = 'Tenant Management';
+    const catalogPages = new Set(['menus', 'roles', 'feature-catalog']);
+    const subscriptionPages = new Set(['subscription-plans', 'promotions']);
+    const tenantOpsPages = new Set(['tenant-health', 'platform-health', 'migration-center', 'audit-center']);
+    const standalonePages = new Set(['dashboard', 'customers', 'organizations']);
+    const root = catalogPages.has(page)
+      ? 'Platform Catalog'
+      : subscriptionPages.has(page)
+        ? 'Subscriptions'
+        : tenantOpsPages.has(page)
+          ? 'Tenant Management'
+          : standalonePages.has(page)
+            ? ''
+            : 'Tenant Management';
 
 
 
@@ -391,6 +413,10 @@ export class BreadcrumbComponent implements OnInit {
       'subscription-plans': 'Subscription Plans',
 
       promotions: 'Promotions',
+
+      menus: 'Menu Management',
+
+      roles: 'Role Management',
 
       'feature-catalog': 'Feature Catalog',
 
@@ -416,7 +442,7 @@ export class BreadcrumbComponent implements OnInit {
 
     const pageLabel = pageLabels[page] ?? this.titleCase(page.replace(/-/g, ' '));
 
-    const labels = [root, pageLabel];
+    const labels = root ? [root, pageLabel] : [pageLabel];
 
 
 
@@ -470,7 +496,25 @@ export class BreadcrumbComponent implements OnInit {
 
   }
 
-
+  private tenantCrumbLink(label: string): string[] {
+    const links: Record<string, string[]> = {
+      'Platform Catalog': ['/app/tenant-management/menus'],
+      Subscriptions: ['/app/tenant-management/subscription-plans'],
+      'Tenant Management': ['/app/tenant-management/tenant-health'],
+      Dashboard: ['/app/tenant-management/dashboard'],
+      Customers: ['/app/tenant-management/customers'],
+      Organizations: ['/app/tenant-management/organizations'],
+      'Subscription Plans': ['/app/tenant-management/subscription-plans'],
+      Promotions: ['/app/tenant-management/promotions'],
+      'Menu Management': ['/app/tenant-management/menus'],
+      'Role Management': ['/app/tenant-management/roles'],
+      'Feature Catalog': ['/app/tenant-management/feature-catalog'],
+      'Tenant Health': ['/app/tenant-management/tenant-health'],
+      'Migration Center': ['/app/tenant-management/migration-center'],
+      'Audit Center': ['/app/tenant-management/audit-center']
+    };
+    return links[label] ?? ['/app/tenant-management/dashboard'];
+  }
 
   private accessManagementLabels(segments: string[]): string[] {
 

@@ -108,7 +108,9 @@ export interface FeatureOverride {
   featureCode?: string;
   featureName?: string;
   enabled: boolean;
+  overrideReason?: string;
   remarks?: string;
+  createdBy?: string;
 }
 
 export interface OrganizationSubscription {
@@ -322,9 +324,35 @@ export interface PlatformFeature {
   category?: string;
   description?: string;
   icon?: string;
+  displayOrder?: number;
   premiumFeature?: boolean;
   defaultEnabled?: boolean;
+  visible?: boolean;
   active?: boolean;
+}
+
+export interface PlatformFeaturePayload {
+  featureCode: string;
+  featureName: string;
+  displayName?: string;
+  module: string;
+  category?: string;
+  featureKey?: string;
+  description?: string;
+  icon?: string;
+  displayOrder?: number;
+  premiumFeature?: boolean;
+  visible?: boolean;
+  defaultEnabled?: boolean;
+  remarks?: string;
+}
+
+export interface FeatureOverridePayload {
+  organizationSubscriptionId: number;
+  featureId: number;
+  enabled?: boolean;
+  overrideReason?: string;
+  remarks?: string;
 }
 
 export interface Promotion {

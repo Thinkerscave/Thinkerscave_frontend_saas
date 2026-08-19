@@ -128,9 +128,17 @@ export const TENANT_PAGES = {
     breadcrumb: 'Promotions',
     pageSubtitle: 'Manage discount codes and commercial offers for subscriptions'
   },
+  menuManagement: {
+    breadcrumb: 'Menu Management',
+    pageSubtitle: 'Create single-page menus or groups with submenus.'
+  },
+  roleManagement: {
+    breadcrumb: 'Role Management',
+    pageSubtitle: 'Platform roles used across tenants.'
+  },
   featureCatalog: {
     breadcrumb: 'Feature Catalog',
-    pageSubtitle: 'Master catalogue of platform modules and entitlements'
+    pageSubtitle: 'Product features, menus and tenant entitlements.'
   },
   tenantHealth: {
     breadcrumb: 'Tenant Health',
@@ -149,7 +157,7 @@ export const TENANT_PAGES = {
 export const ACCESS_PAGES = {
   dashboard: {
     breadcrumb: 'Dashboard',
-    pageSubtitle: 'Roles, menus, user permissions and security policy for your organization'
+    pageSubtitle: 'User permissions and security policy for your organization'
   },
   roles: {
     breadcrumb: 'Roles & Responsibilities',

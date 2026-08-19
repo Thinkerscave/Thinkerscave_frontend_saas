@@ -90,10 +90,10 @@ export class MenuMappingService {
         // Guardrail: if role filtering/grouping accidentally removes everything,
         // fall back to normalized server sidebar so users still get navigation.
         if (filtered.length === 0 && normalized.length > 0) {
-          return this.ensureOwnerAdminDefaultMenus(normalized);
+          return normalized;
         }
 
-        return this.ensureOwnerAdminDefaultMenus(filtered);
+        return filtered;
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -102,8 +102,7 @@ export class MenuMappingService {
       }),
       catchError(err => {
         this.logger.error('Failed to load side menus', err);
-        // Owner/Admin always keep a core navigation set even when the API fails (403/empty).
-        return of(this.ensureOwnerAdminDefaultMenus(this.applyNavigationRules([])));
+        return of(this.applyNavigationRules([]));
       })
     );
   }
@@ -203,6 +202,8 @@ export class MenuMappingService {
   private workspaceGroups(): WorkspaceMenuGroupDefinition[] {
     return [
       { key: 'dashboard', label: 'Dashboard', icon: 'pi pi-home' },
+      { key: 'customers', label: 'Customers', icon: 'pi pi-users' },
+      { key: 'organizations', label: 'Organizations', icon: 'pi pi-building' },
       { key: 'students', label: 'Students', icon: 'pi pi-users' },
       { key: 'staff', label: 'Staff', icon: 'pi pi-id-card' },
       { key: 'attendance', label: 'Attendance', icon: 'pi pi-calendar-check' },
@@ -211,7 +212,9 @@ export class MenuMappingService {
       { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
       { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
       { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
-      { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-building' },
+      { key: 'subscriptions', label: 'Subscriptions', icon: 'pi pi-credit-card' },
+      { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-server' },
+      { key: 'platform-catalog', label: 'Platform Catalog', icon: 'pi pi-th-large' },
       { key: 'admin', label: 'Administration', icon: 'pi pi-shield' }
     ];
   }
@@ -229,7 +232,7 @@ export class MenuMappingService {
       title: leaf.path.slice(0, -1).join(' / ') || leaf.item.title
     }));
 
-    if (group.key === 'dashboard' && childItems.length === 1) {
+    if ((group.key === 'dashboard' || group.key === 'customers' || group.key === 'organizations') && childItems.length === 1) {
       return {
         ...first,
         label: group.label,
@@ -287,7 +290,15 @@ export class MenuMappingService {
     const haystack = `${label} ${routeText} ${path.join(' ')}`.toLowerCase();
     const route = routeText.toLowerCase();
 
-    if (/^\/?app\/?$/.test(route)) return 'dashboard';
+    if (/^\/?app\/?$/.test(route) || route.includes('/app/tenant-management/dashboard')) return 'dashboard';
+    if (route.includes('/app/tenant-management/customers')) return 'customers';
+    if (route.includes('/app/tenant-management/organizations')) return 'organizations';
+    if (this.isPlatformCatalogRoute(route)) return 'platform-catalog';
+    if (route.includes('/app/tenant-management/subscription-plans') || route.includes('/app/tenant-management/promotions')) return 'subscriptions';
+    if (route.includes('/app/tenant-management/tenant-health')
+      || route.includes('/app/tenant-management/platform-health')
+      || route.includes('/app/tenant-management/migration-center')
+      || route.includes('/app/tenant-management/audit-center')) return 'tenant-management';
     if (route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || route.includes('/app/organization-registration')) return 'tenant-management';
     if (route.includes('/app/organization')) return 'admin';
     if (route.includes('/app/admin')) return 'admin';
@@ -341,10 +352,10 @@ export class MenuMappingService {
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
     const roles = this.currentRoleTokens();
     const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
-    const isAccessManager = this.hasAnyRole(roles, ['ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN']);
 
     let menus = this.normalizeTenantRoutes(items);
     menus = this.pruneNavigationMenus(menus);
+    menus = this.filterNavigationItems(menus, item => this.isOrgCatalogManagementItem(item));
 
     if (!isFeatureEnabled('feeManagementEnabled')) {
       menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
@@ -360,109 +371,9 @@ export class MenuMappingService {
       menus = this.filterNavigationItems(menus, item => this.isRedundantTenantMenuStub(item));
     }
 
-    if (isAccessManager) {
-      menus = this.ensureMenuGroup(menus, this.accessManagementMenuGroup());
-    }
-
     return menus;
   }
-
-  /**
-   * Organization Owner / Admin always receive a default navigation core.
-   * Other users only see menus assigned by the org admin (API permissions).
-   */
-  private ensureOwnerAdminDefaultMenus(items: MenuItem[]): MenuItem[] {
-    const roles = this.currentRoleTokens();
-    const isAccessManager = this.hasAnyRole(roles, [
-      'ORGANIZATION_OWNER',
-      'ORGANIZATION_ADMIN',
-      'ADMIN',
-      'COLLEGE_ADMIN',
-      'INSTITUTION_ADMIN',
-      'ROLE_OWNER',
-      'ROLE_ADMIN'
-    ]);
-    if (!isAccessManager) {
-      return items;
-    }
-
-    let menus = items?.length ? [...items] : [];
-    menus = this.ensureMenuGroup(menus, {
-      label: 'Dashboard',
-      icon: 'pi pi-home',
-      routerLink: ['/app']
-    });
-    menus = this.ensureMenuGroup(menus, this.accessManagementMenuGroup());
-    for (const group of this.defaultOwnerAdminModuleMenus()) {
-      menus = this.ensureMenuGroup(menus, group);
-    }
-    return menus;
-  }
-
-  private defaultOwnerAdminModuleMenus(): MenuItem[] {
-    return [
-      {
-        label: 'Students',
-        icon: 'pi pi-users',
-        routerLink: ['/app/students'],
-        items: [
-          { label: 'Student Directory', icon: 'pi pi-list', routerLink: ['/app/students'] },
-          { label: 'Alumni', icon: 'pi pi-graduation-cap', routerLink: ['/app/students/alumni'] },
-          { label: 'Promotions', icon: 'pi pi-arrow-up', routerLink: ['/app/promotions'] },
-          { label: 'Transfer Requests', icon: 'pi pi-send', routerLink: ['/app/transfers'] }
-        ]
-      },
-      {
-        label: 'Staff',
-        icon: 'pi pi-briefcase',
-        routerLink: ['/app/staff'],
-        items: [
-          { label: 'Staff Directory', icon: 'pi pi-list', routerLink: ['/app/staff'] },
-          { label: 'Payroll', icon: 'pi pi-wallet', routerLink: ['/app/staff/payroll'] }
-        ]
-      },
-      {
-        label: 'Attendance',
-        icon: 'pi pi-calendar',
-        routerLink: ['/app/attendance'],
-        items: [
-          { label: 'Attendance', icon: 'pi pi-user', routerLink: ['/app/attendance'] },
-          { label: 'Calendar', icon: 'pi pi-calendar', routerLink: ['/app/attendance/calendar'] },
-          { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: ['/app/attendance/reports'] },
-          { label: 'Settings', icon: 'pi pi-cog', routerLink: ['/app/attendance/settings'] }
-        ]
-      },
-      {
-        label: 'Academics',
-        icon: 'pi pi-book',
-        routerLink: ['/app/academics/overview'],
-        items: [
-          { label: 'Overview', icon: 'pi pi-chart-bar', routerLink: ['/app/academics/overview'] },
-          { label: 'Academic Year', icon: 'pi pi-calendar', routerLink: ['/app/academics/academic-year'] },
-          { label: 'Classes & Sections', icon: 'pi pi-th-large', routerLink: ['/app/academics/classes-sections'] },
-          { label: 'Subjects', icon: 'pi pi-book', routerLink: ['/app/academics/subjects-mapping'] },
-          { label: 'Teacher Allocation', icon: 'pi pi-user-edit', routerLink: ['/app/academics/teacher-allocation'] },
-          { label: 'Timetable', icon: 'pi pi-table', routerLink: ['/app/academics/timetable'] },
-          { label: 'Academic Calendar', icon: 'pi pi-calendar-plus', routerLink: ['/app/academics/academic-calendar'] },
-          { label: 'My Classes', icon: 'pi pi-id-card', routerLink: ['/app/academics/my-classes'] },
-          { label: 'My Timetable', icon: 'pi pi-clock', routerLink: ['/app/academics/my-timetable'] },
-          { label: 'Academic Structure', icon: 'pi pi-sitemap', routerLink: ['/app/academics/academic-structure'] },
-          { label: 'My Academics', icon: 'pi pi-graduation-cap', routerLink: ['/app/academics/my-academics'] }
-        ]
-      },
-      {
-        label: 'Admissions',
-        icon: 'pi pi-inbox',
-        routerLink: ['/app/admissions/leads'],
-        items: [
-          { label: 'Leads', icon: 'pi pi-users', routerLink: ['/app/admissions/leads'] },
-          { label: 'Follow-ups', icon: 'pi pi-calendar', routerLink: ['/app/admissions/follow-ups'] },
-          { label: 'Applications', icon: 'pi pi-file-edit', routerLink: ['/app/admissions/applications'] }
-        ]
-      }
-    ];
-  }
-
+  
   private pruneNavigationMenus(items: MenuItem[]): MenuItem[] {
     const blockedRoutes = new Set<string>([
       '/app/exams',
@@ -480,7 +391,9 @@ export class MenuMappingService {
       '/app/fees/controls',
       '/app/fees/audit',
       '/app/fees/dashboard',
-      '/app/responsibilities'
+      '/app/responsibilities',
+      '/app/academics/overview',
+      '/app/academics/academic-structure'
     ]);
 
     const canonicalRoute = (routeText: string): string => {
@@ -624,20 +537,20 @@ export class MenuMappingService {
     };
   }
 
-  private accessManagementMenuGroup(): MenuItem {
-    return {
-      label: 'Access Management',
-      icon: 'pi pi-lock',
-      routerLink: ['/app/access-management/dashboard'],
-      items: [
-        { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: ['/app/access-management/dashboard'] },
-        { label: 'Roles', icon: 'pi pi-user-edit', routerLink: ['/app/access-management/roles'] },
-        { label: 'Menu Catalog', icon: 'pi pi-th-large', routerLink: ['/app/access-management/menus'] },
-        { label: 'Users', icon: 'pi pi-users', routerLink: ['/app/access-management/users'] },
-        { label: 'Security Policy', icon: 'pi pi-shield', routerLink: ['/app/access-management/security-policy'] },
-        { label: 'Login History', icon: 'pi pi-history', routerLink: ['/app/access-management/login-history'] }
-      ]
-    };
+  private isPlatformCatalogRoute(route: string): boolean {
+    const normalized = route.toLowerCase();
+    return normalized.includes('/app/tenant-management/menus')
+      || normalized.includes('/app/tenant-management/roles')
+      || normalized.includes('/app/tenant-management/feature-catalog');
+  }
+
+  private isOrgCatalogManagementItem(item: MenuItem): boolean {
+    const route = this.routerLinkText(item.routerLink).toLowerCase();
+    const label = (item.label ?? '').toLowerCase();
+    return route.includes('/app/access-management/roles')
+      || route.includes('/app/access-management/menus')
+      || label === 'menu catalog'
+      || (label === 'roles' && route.includes('/access-management'));
   }
 
   private normalizeTenantRoutes(items: MenuItem[]): MenuItem[] {
@@ -687,17 +600,6 @@ export class MenuMappingService {
       return 'Audit Center';
     }
     return label;
-  }
-
-  private ensureMenuGroup(items: MenuItem[], menuItem: MenuItem): MenuItem[] {
-    if (this.containsRoute(items, this.routerLinkText(menuItem.routerLink))) {
-      return items;
-    }
-
-    const dashboardIndex = items.findIndex(item => this.routerLinkText(item.routerLink) === '/app' || item.label === 'Dashboard');
-    const next = [...items];
-    next.splice(dashboardIndex >= 0 ? dashboardIndex + 1 : next.length, 0, menuItem);
-    return next;
   }
 
   private isRedundantTenantMenuStub(item: MenuItem): boolean {
@@ -758,13 +660,6 @@ export class MenuMappingService {
     });
 
     return filteredItems;
-  }
-
-  private containsRoute(items: MenuItem[], routeText: string): boolean {
-    if (!routeText) {
-      return false;
-    }
-    return (items ?? []).some(item => this.routerLinkText(item.routerLink) === routeText || this.containsRoute(item.items ?? [], routeText));
   }
 
   private currentRoleTokens(): string[] {

@@ -1,0 +1,217 @@
+<div class="cat-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> Add Role</button>
+  </tc-saas-page-header>
+
+  <div *ngIf="errorMessage" class="cat-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
+  <div *ngIf="loading" class="cat-empty"><i class="pi pi-spin pi-spinner"></i><h3>Loading roles…</h3></div>
+
+  <ng-container *ngIf="!loading">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+    <div class="cat-toolbar">
+      <input
+        class="cat-toolbar__search"
+        type="search"
+        [ngModel]="search"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search roles…"
+        aria-label="Search roles">
+      <div class="cat-toolbar__end">
+        <div class="cat-view-toggle" role="group" aria-label="View mode">
+          <button type="button" [class.active]="viewMode === 'grid'" (click)="onListViewModeChange('grid')" aria-label="Grid view">
+            <i class="pi pi-th-large"></i>
+          </button>
+          <button type="button" [class.active]="viewMode === 'table'" (click)="onListViewModeChange('table')" aria-label="List view">
+            <i class="pi pi-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-workspace is-split" *ngIf="viewMode === 'grid'">
+      <div>
+        <div class="cat-grid">
+          <article
+            class="cat-card"
+            *ngFor="let r of paged; trackBy: trackById"
+            [class.is-draft]="r.active === false"
+            [class.is-selected]="selectedRole?.id === r.id"
+            [class.is-expanded]="selectedRole?.id === r.id"
+            (click)="selectRole(r)">
+            <div class="cat-card__top">
+              <div class="cat-card__identity">
+                <span class="cat-card__icon"><i class="pi pi-user-edit"></i></span>
+                <div>
+                  <h2>{{ r.roleName }}</h2>
+                  <code>{{ r.roleCode }}</code>
+                </div>
+              </div>
+              <span class="cat-badge" [class.cat-badge--success]="r.active !== false" [class.cat-badge--warning]="r.active === false">
+                {{ r.active === false ? 'Inactive' : 'Active' }}
+              </span>
+            </div>
+            <p class="cat-card__body">{{ r.description || 'No description yet.' }}</p>
+            <div class="cat-card__tags">
+              <span class="cat-tag">{{ roleTypeLabel(r.roleType) }}</span>
+              <span class="cat-tag" *ngIf="r.systemRole">System</span>
+            </div>
+            <div class="cat-card__stats">
+              <div>
+                <strong>{{ r.activeUserCount ?? 0 }}</strong>
+                <span>Users</span>
+              </div>
+              <div>
+                <strong>{{ r.displayOrder || '—' }}</strong>
+                <span>Order</span>
+              </div>
+            </div>
+            <div class="cat-card__actions" (click)="$event.stopPropagation()">
+              <button type="button" class="cat-action" (click)="openEdit(r)">Edit</button>
+            </div>
+            <div class="cat-card__expand" *ngIf="selectedRole?.id === r.id" (click)="$event.stopPropagation()">
+              <ng-container *ngTemplateOutlet="roleDetail"></ng-container>
+            </div>
+          </article>
+        </div>
+        <div *ngIf="!filtered.length" class="cat-empty">
+          <i class="pi pi-search"></i>
+          <h3>No roles found</h3>
+          <p>Try another name or code.</p>
+        </div>
+        <div class="cat-pager" *ngIf="filtered.length">
+          <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ filtered.length }}</span>
+          <div class="cat-pager__controls">
+            <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
+            <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
+            <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
+            <select class="cat-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Roles per page">
+              <option [ngValue]="8">8 / page</option>
+              <option [ngValue]="12">12 / page</option>
+              <option [ngValue]="24">24 / page</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <aside class="cat-detail">
+        <ng-container *ngIf="selectedRole; else emptyRoleDetail">
+          <ng-container *ngTemplateOutlet="roleDetail"></ng-container>
+        </ng-container>
+        <ng-template #emptyRoleDetail>
+          <p class="cat-hint">Select a role to see assigned users.</p>
+        </ng-template>
+      </aside>
+    </div>
+
+    <ng-template #roleDetail>
+      <ng-container *ngIf="selectedRole as role">
+        <div class="cat-detail__hero">
+          <span class="cat-detail__icon"><i class="pi pi-user-edit"></i></span>
+          <div>
+            <h3>{{ role.roleName }}</h3>
+            <code>{{ role.roleCode }}</code>
+          </div>
+        </div>
+        <p class="cat-hint">{{ role.description || 'No description yet.' }}</p>
+        <dl class="cat-facts">
+          <div><dt>Type</dt><dd>{{ roleTypeLabel(role.roleType) }}</dd></div>
+          <div><dt>Status</dt><dd>{{ role.active === false ? 'Inactive' : 'Active' }}</dd></div>
+          <div><dt>Order</dt><dd>{{ role.displayOrder || '—' }}</dd></div>
+          <div><dt>Users</dt><dd>{{ role.activeUserCount ?? roleUsers.length }}</dd></div>
+        </dl>
+        <div class="cat-detail__actions">
+          <button type="button" class="cat-action" (click)="openEdit(role)">Edit</button>
+          <a class="cat-action" routerLink="/app/access-management/users">Open users</a>
+        </div>
+        <h4>Assigned users</h4>
+        <p class="cat-hint" *ngIf="loadingUsers">Loading users…</p>
+        <div class="cat-page-list" *ngIf="!loadingUsers && roleUsers.length">
+          <div class="cat-user" *ngFor="let user of roleUsers">
+            <div>
+              <strong>{{ userDisplay(user) }}</strong>
+              <small>{{ user.email || user.username }}</small>
+            </div>
+            <span class="cat-badge" [class.cat-badge--success]="user.status === 'ACTIVE'">{{ user.status || 'Active' }}</span>
+          </div>
+        </div>
+        <p class="cat-hint" *ngIf="!loadingUsers && !roleUsers.length">No users have this role yet.</p>
+      </ng-container>
+    </ng-template>
+
+    <div *ngIf="viewMode === 'table'" class="cat-table-wrap">
+      <table class="cat-table">
+        <thead><tr><th>Role</th><th>Type</th><th>Users</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of paged; trackBy: trackById">
+            <td>
+              <strong>{{ r.roleName }}</strong>
+              <code>{{ r.roleCode }}</code>
+            </td>
+            <td>{{ roleTypeLabel(r.roleType) }}</td>
+            <td>{{ r.activeUserCount ?? 0 }}</td>
+            <td>
+              <span class="cat-badge" [class.cat-badge--success]="r.active !== false" [class.cat-badge--warning]="r.active === false">
+                {{ r.active === false ? 'Inactive' : 'Active' }}
+              </span>
+            </td>
+            <td>
+              <button type="button" class="cat-action" (click)="openEdit(r)">Edit</button>
+            </td>
+          </tr>
+          <tr *ngIf="!filtered.length"><td colspan="5">No roles found.</td></tr>
+        </tbody>
+      </table>
+      <div class="cat-pager" *ngIf="filtered.length">
+        <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ filtered.length }}</span>
+        <div class="cat-pager__controls">
+          <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
+          <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
+          <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<p-dialog
+  [header]="draft.id ? 'Edit role' : 'Add role'"
+  [(visible)]="editorOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  [contentStyle]="{ 'max-height': '72vh', overflow: 'auto' }"
+  (onHide)="closeEditor()">
+  <form class="cat-form" (ngSubmit)="save()">
+    <p class="cat-hint">These are platform roles. Organization responsibilities are configured later by the organization admin.</p>
+    <label>
+      Role code *
+      <input [(ngModel)]="draft.roleCode" name="roleCode" [disabled]="!!draft.id" placeholder="ROLE_STAFF">
+    </label>
+    <label>
+      Name *
+      <input [(ngModel)]="draft.roleName" name="roleName" placeholder="Staff">
+    </label>
+    <label>
+      Type
+      <p-dropdown [options]="roleTypeOptions" [(ngModel)]="draft.roleType" name="roleType" optionLabel="label" optionValue="value" appendTo="body" [style]="{ width: '100%' }" [disabled]="!!draft.id"></p-dropdown>
+    </label>
+    <label>
+      Dashboard
+      <input [(ngModel)]="draft.dashboardCode" name="dashboardCode" placeholder="STAFF">
+    </label>
+    <label>
+      Description
+      <textarea [(ngModel)]="draft.description" name="description" placeholder="What this role can do"></textarea>
+    </label>
+    <div class="cat-save-mode">
+      <span>Status</span>
+      <label><input type="radio" name="roleActive" [checked]="draft.active === true" (change)="draft.active = true"> Active</label>
+      <label><input type="radio" name="roleActive" [checked]="draft.active === false" (change)="draft.active = false"> Inactive</label>
+    </div>
+    <div class="cat-form__actions">
+      <button type="button" class="tc-btn" (click)="closeEditor()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+    </div>
+  </form>
+</p-dialog>

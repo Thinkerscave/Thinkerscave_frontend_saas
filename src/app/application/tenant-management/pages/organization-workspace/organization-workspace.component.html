@@ -16,6 +16,7 @@
   </div>
 
   <ng-container *ngIf="!loading && org">
+    <p-confirmDialog></p-confirmDialog>
 
     <!-- ══════════════════════════════════════════════════════════════
          WORKSPACE HEADER
@@ -490,11 +491,52 @@
                 <h3>Feature Overrides</h3>
                 <p>{{ featureOverrides.length }} override(s) applied to this subscription</p>
               </div>
-              <button class="ow-card__hbtn ow-card__hbtn--primary">
+              <button class="ow-card__hbtn ow-card__hbtn--primary" type="button" (click)="openAddOverride()">
                 <i class="pi pi-plus"></i> Add Override
               </button>
             </div>
             <div class="ow-card__body ow-card__body--flush">
+
+              <div class="ow-override-form" *ngIf="overrideEditorOpen">
+                <h4>{{ overrideDraft.id ? 'Edit feature override' : 'Grant or revoke a feature' }}</h4>
+                <p>Overrides apply at feature level. Mapped menus then appear for this organization only.</p>
+                <div class="ow-override-form__grid">
+                  <label class="tc-form-field">
+                    <span>Feature</span>
+                    <p-dropdown
+                      [options]="overrideFeatureOptions"
+                      [(ngModel)]="overrideDraft.featureId"
+                      [disabled]="!!overrideDraft.id"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select a feature"
+                      appendTo="body"
+                      styleClass="att-filter-dropdown">
+                    </p-dropdown>
+                  </label>
+                  <div class="tc-form-field">
+                    <span>Entitlement</span>
+                    <div class="ow-override-form__radios">
+                      <label><input type="radio" name="overrideEnabled" [checked]="overrideDraft.enabled === true" (change)="overrideDraft.enabled = true"> Grant extra feature</label>
+                      <label><input type="radio" name="overrideEnabled" [checked]="overrideDraft.enabled === false" (change)="overrideDraft.enabled = false"> Revoke feature</label>
+                    </div>
+                  </div>
+                  <label class="tc-form-field">
+                    <span>Reason</span>
+                    <input [(ngModel)]="overrideDraft.overrideReason" placeholder="Why this organization needs a different entitlement">
+                  </label>
+                  <label class="tc-form-field">
+                    <span>Remarks</span>
+                    <input [(ngModel)]="overrideDraft.remarks" placeholder="Optional internal note">
+                  </label>
+                </div>
+                <div class="ow-override-form__actions">
+                  <button type="button" class="ow-btn" (click)="closeOverrideEditor()">Cancel</button>
+                  <button type="button" class="ow-btn ow-btn--primary" [disabled]="overrideSaving" (click)="saveOverride()">
+                    <i class="pi" [ngClass]="overrideSaving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save override
+                  </button>
+                </div>
+              </div>
 
               <!-- Empty state -->
               <div class="ow-empty-state" *ngIf="!featureOverrides.length">
@@ -502,7 +544,7 @@
                 <h3>No Feature Overrides</h3>
                 <p>All features follow the default plan configuration.<br>
                    Use "Add Override" to customize individual features for this organization.</p>
-                <button class="ow-btn ow-btn--primary"><i class="pi pi-plus"></i> Add First Override</button>
+                <button class="ow-btn ow-btn--primary" type="button" (click)="openAddOverride()"><i class="pi pi-plus"></i> Add First Override</button>
               </div>
 
               <!-- Table -->
@@ -531,12 +573,12 @@
                                       [tone]="f.enabled ? 'success' : 'danger'"></tc-saas-pill>
                       </td>
                       <td><span class="ow-tag">Custom</span></td>
-                      <td class="ow-text-muted">{{ f.remarks || '—' }}</td>
-                      <td class="ow-text-muted">—</td>
+                      <td class="ow-text-muted">{{ f.overrideReason || f.remarks || '—' }}</td>
+                      <td class="ow-text-muted">{{ f.createdBy || '—' }}</td>
                       <td>
                         <div class="ow-table-actions">
-                          <button class="ow-icon-btn" title="Edit"><i class="pi pi-pencil"></i></button>
-                          <button class="ow-icon-btn ow-icon-btn--danger" title="Remove"><i class="pi pi-trash"></i></button>
+                          <button class="ow-icon-btn" type="button" title="Edit" (click)="openEditOverride(f)"><i class="pi pi-pencil"></i></button>
+                          <button class="ow-icon-btn ow-icon-btn--danger" type="button" title="Remove" (click)="confirmRemoveOverride(f)"><i class="pi pi-trash"></i></button>
                         </div>
                       </td>
                     </tr>
