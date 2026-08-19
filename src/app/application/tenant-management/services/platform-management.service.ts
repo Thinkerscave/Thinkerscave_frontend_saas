@@ -18,6 +18,7 @@ import {
   OrganizationDetail,
   OrganizationQuery,
   OrganizationSummary,
+  OrganizationUpdatePayload,
   PlatformDashboard,
   PlatformFeature,
   PlatformFeaturePayload,
@@ -62,6 +63,12 @@ export class PlatformManagementService {
   getOrganization(id: number): Observable<OrganizationDetail> {
     return this.http.get<unknown>(platformApi.organizationById(id)).pipe(
       map(r => unwrapApiResponse<OrganizationDetail>(r, {} as OrganizationDetail))
+    );
+  }
+
+  updateOrganization(id: number, payload: OrganizationUpdatePayload): Observable<OrganizationSummary> {
+    return this.http.put<unknown>(platformApi.organizationById(id), payload).pipe(
+      map(r => unwrapApiResponse<OrganizationSummary>(r, {} as OrganizationSummary))
     );
   }
 

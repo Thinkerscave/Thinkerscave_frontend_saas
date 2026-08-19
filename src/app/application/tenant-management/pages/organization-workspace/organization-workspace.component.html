@@ -18,6 +18,51 @@
   <ng-container *ngIf="!loading && org">
     <p-confirmDialog></p-confirmDialog>
 
+    <tc-saas-page-header>
+      <div class="ow-header-meta">
+        <span class="ow-header-meta__avatar" [attr.data-color]="orgColor(org.organizationName)">
+          {{ orgInitials(org.organizationName) || 'ORG' }}
+        </span>
+        <div class="ow-header-meta__text">
+          <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
+          <span class="ow-header-meta__code">{{ org.organizationCode }}</span>
+        </div>
+      </div>
+      <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+        <i class="pi pi-arrow-left"></i> Back
+      </button>
+      <button type="button" class="tc-btn" (click)="openEdit()">
+        <i class="pi pi-pencil"></i> Edit
+      </button>
+      <button type="button" class="tc-btn" [disabled]="!org.customerId" (click)="viewCustomer()">
+        <i class="pi pi-users"></i> View Customer
+      </button>
+      <div class="ow-actions-wrap">
+        <button type="button" class="tc-btn" (click)="actionsMenuOpen = !actionsMenuOpen">
+          Actions <i class="pi pi-chevron-down" [class.ow-rotated]="actionsMenuOpen"></i>
+        </button>
+        <div class="ow-actions-menu" *ngIf="actionsMenuOpen">
+          <button type="button" (click)="triggerBackup(); actionsMenuOpen = false" *ngIf="org.tenant">
+            <i class="pi pi-cloud-upload"></i> Trigger Backup
+          </button>
+          <button type="button" (click)="triggerMigration(); actionsMenuOpen = false" *ngIf="org.tenant">
+            <i class="pi pi-sync"></i> Trigger Migration
+          </button>
+          <button type="button" (click)="resumeTenant(); actionsMenuOpen = false" *ngIf="org.tenant">
+            <i class="pi pi-play"></i> Resume Tenant
+          </button>
+        </div>
+      </div>
+      <button type="button" class="ow-btn ow-btn--danger"
+              *ngIf="canSuspend()" [disabled]="actionLoading" (click)="suspend()">
+        <i class="pi pi-power-off"></i> Suspend
+      </button>
+      <button type="button" class="ow-btn ow-btn--success"
+              *ngIf="canActivate()" [disabled]="actionLoading" (click)="activate()">
+        <i class="pi pi-check-circle"></i> Activate
+      </button>
+    </tc-saas-page-header>
+
     <!-- ══════════════════════════════════════════════════════════════
          WORKSPACE HEADER
     ══════════════════════════════════════════════════════════════════ -->
@@ -25,26 +70,20 @@
 
       <!-- Brand: avatar + status + secondary contact (name/code live in page shell) -->
       <div class="ow-header__brand">
-        <div class="ow-avatar" [attr.data-color]="orgColor(org.organizationName)">
-          {{ orgInitials(org.organizationName) || 'ORG' }}
-        </div>
         <div class="ow-header__identity">
-          <div class="ow-header__title-row">
-            <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
-          </div>
           <div class="ow-header__meta-row ow-header__meta-row--muted">
             <span *ngIf="org.customerName"><i class="pi pi-users"></i>{{ org.customerName }}</span>
             <ng-container *ngIf="org.createdOn && org.customerName"><span class="ow-sep">·</span></ng-container>
             <span *ngIf="org.createdOn"><i class="pi pi-calendar"></i>Created {{ formatDate(org.createdOn) }}</span>
-            <ng-container *ngIf="org.email"><span class="ow-sep">·</span></ng-container>
-            <span *ngIf="org.email"><i class="pi pi-envelope"></i>{{ org.email }}</span>
-            <ng-container *ngIf="org.tenant?.tenantDomain"><span class="ow-sep">·</span></ng-container>
-            <span *ngIf="org.tenant?.tenantDomain"><i class="pi pi-globe"></i>{{ org.tenant!.tenantDomain }}</span>
+            <ng-container *ngIf="displayEmail !== '—'"><span class="ow-sep">·</span></ng-container>
+            <span *ngIf="displayEmail !== '—'"><i class="pi pi-envelope"></i>{{ displayEmail }}</span>
+            <ng-container *ngIf="displayWebsite !== '—'"><span class="ow-sep">·</span></ng-container>
+            <span *ngIf="displayWebsite !== '—'"><i class="pi pi-globe"></i>{{ displayWebsite }}</span>
           </div>
         </div>
       </div>
 
-      <!-- KPI strip + actions -->
+      <!-- KPI strip -->
       <div class="ow-header__right">
 
         <!-- Plan KPI -->
@@ -89,53 +128,10 @@
             </span>
           </div>
         </div>
-
-        <!-- Header action buttons -->
-        <div class="ow-header__actions">
-          <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-            <i class="pi pi-arrow-left"></i> Back to list
-          </button>
-          <div class="ow-actions-wrap">
-            <button type="button" class="ow-btn ow-btn--ghost"
-                    (click)="actionsMenuOpen = !actionsMenuOpen">
-              Actions <i class="pi pi-chevron-down" [class.ow-rotated]="actionsMenuOpen"></i>
-            </button>
-            <div class="ow-actions-menu" *ngIf="actionsMenuOpen">
-              <button type="button" (click)="triggerBackup(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-cloud-upload"></i> Trigger Backup
-              </button>
-              <button type="button" (click)="triggerMigration(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-sync"></i> Trigger Migration
-              </button>
-              <button type="button" (click)="resumeTenant(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-play"></i> Resume Tenant
-              </button>
-            </div>
-          </div>
-          <button type="button" class="ow-btn ow-btn--danger"
-                  *ngIf="canSuspend()" [disabled]="actionLoading" (click)="suspend()">
-            <i class="pi pi-power-off"></i> Suspend Organization
-          </button>
-          <button type="button" class="ow-btn ow-btn--success"
-                  *ngIf="canActivate()" [disabled]="actionLoading" (click)="activate()">
-            <i class="pi pi-check-circle"></i> Activate
-          </button>
-        </div>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         NAVIGATION TABS
-    ══════════════════════════════════════════════════════════════════ -->
-    <div class="ow-tabs">
-      <button type="button" class="ow-tab"
-              *ngFor="let tab of tabs"
-              [class.is-active]="activeTab === tab.key"
-              (click)="activeTab = tab.key">
-        <i [class]="tab.icon"></i>
-        <span>{{ tab.label }}</span>
-      </button>
-    </div>
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     <!-- ══════════════════════════════════════════════════════════════
          TAB CONTENT
@@ -150,47 +146,29 @@
           <div class="ow-grid ow-grid--3">
 
             <!-- Organization Information -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-building"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Organization Information</h3>
-                  <p>Core profile and contact details</p>
-                </div>
-                <button class="ow-card__hbtn">
-                  <i class="pi pi-pencil"></i> Edit
-                </button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-info-grid">
+            <tc-saas-panel title="Organization Information" subtitle="Core profile and contact details">
+              <div class="ow-info-grid">
                   <div class="ow-ii"><span class="ow-ii__label">Organization Name</span><span class="ow-ii__value">{{ org.organizationName }}</span></div>
                   <div class="ow-ii"><span class="ow-ii__label">Organization Code</span><span class="ow-ii__value ow-mono">{{ org.organizationCode }}</span></div>
                   <div class="ow-ii"><span class="ow-ii__label">Short Name</span><span class="ow-ii__value">{{ org.shortName || '—' }}</span></div>
                   <div class="ow-ii"><span class="ow-ii__label">Institution Type</span><span class="ow-ii__value">{{ institutionLabel(org.institutionType) }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Board</span><span class="ow-ii__value">{{ org.boardName || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Email</span><span class="ow-ii__value">{{ org.email || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Mobile</span><span class="ow-ii__value">{{ org.mobileNumber || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Website</span><span class="ow-ii__value">{{ org.website || '—' }}</span></div>
-                  <div class="ow-ii ow-ii--full"><span class="ow-ii__label">Address</span><span class="ow-ii__value">{{ org.addressLine1 || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">City / State</span><span class="ow-ii__value">{{ locationLabel || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Time Zone</span><span class="ow-ii__value">{{ org.timeZone || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Currency</span><span class="ow-ii__value">{{ org.currency || '—' }}</span></div>
-                </div>
+                  <div class="ow-ii"><span class="ow-ii__label">Domain</span><span class="ow-ii__value">{{ displayDomain || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Email</span><span class="ow-ii__value">{{ displayEmail }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Mobile</span><span class="ow-ii__value">{{ displayMobile }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Website</span><span class="ow-ii__value">{{ displayWebsite }}</span></div>
+                  <div class="ow-ii ow-ii--full"><span class="ow-ii__label">Address</span><span class="ow-ii__value">{{ displayAddress }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">City</span><span class="ow-ii__value">{{ org.city || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">State</span><span class="ow-ii__value">{{ org.state || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Country</span><span class="ow-ii__value">{{ org.country || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Time Zone</span><span class="ow-ii__value">{{ org.timeZone || org.configuration?.timeZone || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Currency</span><span class="ow-ii__value">{{ org.currency || org.configuration?.currency || '—' }}</span></div>
+                  <div class="ow-ii"><span class="ow-ii__label">Language</span><span class="ow-ii__value">{{ org.language || org.configuration?.language || '—' }}</span></div>
               </div>
-            </div>
+            </tc-saas-panel>
 
             <!-- Customer Information -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-users"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Customer Information</h3>
-                  <p>Linked billing account</p>
-                </div>
-                <button class="ow-card__hbtn ow-card__hbtn--primary">View Customer</button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-info-grid ow-info-grid--single">
+            <tc-saas-panel title="Customer Information" subtitle="Linked billing account">
+              <div class="ow-info-grid ow-info-grid--single">
                   <div class="ow-ii"><span class="ow-ii__label">Customer Name</span><span class="ow-ii__value">{{ org.customerName || '—' }}</span></div>
                   <div class="ow-ii"><span class="ow-ii__label">Customer Code</span><span class="ow-ii__value ow-mono">{{ org.customerCode || '—' }}</span></div>
                   <div class="ow-ii"><span class="ow-ii__label">Customer ID</span><span class="ow-ii__value">{{ org.customerId ?? '—' }}</span></div>
@@ -201,7 +179,7 @@
                                     [tone]="org.onboardingCompleted ? 'success' : 'warning'"></tc-saas-pill>
                     </span>
                   </div>
-                </div>
+              </div>
 
                 <!-- Embedded subscription summary -->
                 <div class="ow-sub-summary" *ngIf="org.subscription">
@@ -224,20 +202,10 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+            </tc-saas-panel>
 
             <!-- Usage & Limits -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-chart-bar"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Usage & Limits</h3>
-                  <p>Operational snapshot</p>
-                </div>
-                <button class="ow-card__hbtn">Edit Limits</button>
-              </div>
-              <div class="ow-card__body">
+            <tc-saas-panel title="Usage & Limits" subtitle="Operational snapshot">
                 <div class="ow-usage-list">
                   <div class="ow-usage-item">
                     <div class="ow-usage-item__row">
@@ -278,8 +246,7 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+            </tc-saas-panel>
           </div><!-- /ow-grid--3 -->
 
           <!-- Quick Actions -->
@@ -758,6 +725,114 @@
 
       </ng-container>
     </div><!-- /ow-content -->
+
+    <p-dialog
+      header="Edit Organization"
+      [(visible)]="editOpen"
+      [modal]="true"
+      [draggable]="false"
+      [style]="{ width: 'min(720px, 94vw)' }"
+      (onHide)="closeEdit()">
+      <form class="ow-edit-form" novalidate (submit)="$event.preventDefault()">
+        <div class="ow-edit-form__grid">
+          <app-input
+            label="Organization Name"
+            placeholder="Enter organization name"
+            [required]="true"
+            [(ngModel)]="editForm.organizationName"
+            name="editOrganizationName"
+            [error]="editFieldError('organizationName')"
+            (ngModelChange)="onEditFieldChange('organizationName')">
+          </app-input>
+          <app-input
+            label="Short Name"
+            placeholder="Enter short name"
+            [(ngModel)]="editForm.shortName"
+            name="editShortName"
+            [error]="editFieldError('shortName')"
+            (ngModelChange)="onEditFieldChange('shortName')">
+          </app-input>
+          <app-select
+            label="Institution Type"
+            placeholder="Select"
+            [required]="true"
+            [options]="institutionOptions"
+            [(ngModel)]="editForm.institutionType"
+            name="editInstitutionType"
+            [error]="editFieldError('institutionType')"
+            (ngModelChange)="onEditFieldChange('institutionType')">
+          </app-select>
+          <app-input
+            label="Email"
+            type="email"
+            placeholder="Enter email address"
+            [required]="true"
+            [(ngModel)]="editForm.email"
+            name="editEmail"
+            [error]="editFieldError('email')"
+            (ngModelChange)="onEditFieldChange('email')">
+          </app-input>
+          <app-phone-input
+            label="Mobile No."
+            placeholder="Enter mobile number"
+            [required]="true"
+            [(ngModel)]="editForm.mobileNumber"
+            name="editMobile"
+            [error]="editFieldError('mobileNumber')"
+            (ngModelChange)="onEditFieldChange('mobileNumber')">
+          </app-phone-input>
+          <app-input
+            label="Website"
+            placeholder="Enter website"
+            [(ngModel)]="editForm.website"
+            name="editWebsite"
+            [error]="editFieldError('website')"
+            (ngModelChange)="onEditFieldChange('website')">
+          </app-input>
+          <app-input
+            class="ow-edit-form__full"
+            label="Address"
+            placeholder="Enter address"
+            [(ngModel)]="editForm.addressLine1"
+            name="editAddress"
+            [error]="editFieldError('addressLine1')"
+            (ngModelChange)="onEditFieldChange('addressLine1')">
+          </app-input>
+          <app-input
+            label="City"
+            placeholder="Enter city"
+            [required]="true"
+            [(ngModel)]="editForm.city"
+            name="editCity"
+            [error]="editFieldError('city')"
+            (ngModelChange)="onEditFieldChange('city')">
+          </app-input>
+          <app-input
+            label="State"
+            placeholder="Enter state"
+            [required]="true"
+            [(ngModel)]="editForm.state"
+            name="editState"
+            [error]="editFieldError('state')"
+            (ngModelChange)="onEditFieldChange('state')">
+          </app-input>
+          <app-select
+            label="Country"
+            placeholder="Select"
+            [required]="true"
+            [options]="countryOptions"
+            [(ngModel)]="editForm.country"
+            name="editCountry"
+            [error]="editFieldError('country')"
+            (ngModelChange)="onEditFieldChange('country')">
+          </app-select>
+        </div>
+        <div class="ow-edit-form__actions">
+          <app-button variant="secondary" [disabled]="editSaving" (clicked)="closeEdit()">Cancel</app-button>
+          <app-button variant="primary" icon="pi pi-check" [loading]="editSaving" (clicked)="saveEdit()">Save</app-button>
+        </div>
+      </form>
+    </p-dialog>
 
   </ng-container>
 </div>

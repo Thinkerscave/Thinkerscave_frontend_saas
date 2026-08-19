@@ -32,12 +32,12 @@
 
       <!-- Type -->
       <p-select
-        class="org-toolbar__pselect"
+        class="org-toolbar__pselect org-toolbar__pselect--type"
         [(ngModel)]="typeFilter"
         (ngModelChange)="onFilterChange()"
         [options]="typeOptions"
         optionLabel="label"
-        optionValue="id"
+        optionValue="value"
         placeholder="All Types"
         appendTo="body">
       </p-select>

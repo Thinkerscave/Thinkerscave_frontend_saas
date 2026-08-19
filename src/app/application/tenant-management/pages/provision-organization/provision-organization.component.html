@@ -25,7 +25,7 @@
 
             <app-searchable-select
               label="Customer"
-              placeholder="Search and select a customer"
+              placeholder="Select"
               searchPlaceholder="Search by name or code…"
               [required]="true"
               [options]="customerOptions"
@@ -57,7 +57,7 @@
             <div class="org-form__grid">
               <app-input
                 label="Organization Name"
-                placeholder="Northstar Institute of Technology"
+                placeholder="Enter organization name"
                 [required]="true"
                 [(ngModel)]="form.organizationName"
                 name="organizationName"
@@ -69,7 +69,7 @@
 
               <app-input
                 label="Short Name"
-                placeholder="NIST"
+                placeholder="Enter short name"
                 [required]="true"
                 [(ngModel)]="form.shortName"
                 name="shortName"
@@ -81,7 +81,7 @@
 
               <app-select
                 label="Institution Type"
-                placeholder="Select institution type"
+                placeholder="Select"
                 [required]="true"
                 [options]="institutionOptions"
                 [(ngModel)]="form.institutionType"
@@ -104,7 +104,7 @@
                     id="org-domain"
                     class="app-field__control"
                     type="text"
-                    placeholder="northstar"
+                    placeholder="Enter domain"
                     [(ngModel)]="form.domain"
                     name="domain"
                     (ngModelChange)="normalizeDomain($event)" />
@@ -124,7 +124,7 @@
 
               <app-input
                 label="City"
-                placeholder="Bengaluru"
+                placeholder="Enter city"
                 [required]="true"
                 [(ngModel)]="form.city"
                 name="city"
@@ -136,7 +136,7 @@
 
               <app-input
                 label="State"
-                placeholder="Karnataka"
+                placeholder="Enter state"
                 [required]="true"
                 [(ngModel)]="form.state"
                 name="state"
@@ -148,7 +148,7 @@
 
               <app-select
                 label="Country"
-                placeholder="Select country"
+                placeholder="Select"
                 [required]="true"
                 [options]="countryOptions"
                 [(ngModel)]="form.country"
@@ -195,7 +195,7 @@
             <div class="org-form__grid">
               <app-input
                 label="Full Name"
-                placeholder="Rajan Mehta"
+                placeholder="Enter full name"
                 [required]="true"
                 autocomplete="name"
                 [(ngModel)]="form.adminFullName"
@@ -209,7 +209,7 @@
               <app-input
                 label="Email"
                 type="email"
-                placeholder="admin@institution.edu.in"
+                placeholder="Enter email address"
                 [required]="true"
                 autocomplete="email"
                 inputMode="email"
@@ -222,13 +222,14 @@
 
 
               <app-phone-input
-                label="Mobile"
+                label="Mobile No."
                 placeholder="Enter mobile number"
                 [required]="true"
                 [(ngModel)]="form.adminMobile"
                 name="adminMobile"
                 [error]="fieldError('adminMobile')"
-                (ngModelChange)="onFieldChange('adminMobile')">
+                (ngModelChange)="onMobileChange()"
+                (blurred)="onMobileBlur()">
               </app-phone-input>
             </div>
           </section>
@@ -247,7 +248,7 @@
             <div class="org-form__grid org-form__grid--single">
               <app-select
                 label="Subscription Plan"
-                placeholder="Select a plan"
+                placeholder="Select"
                 [required]="true"
                 [options]="planOptions"
                 [(ngModel)]="form.subscriptionPlanId"

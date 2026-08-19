@@ -13,7 +13,7 @@ import {
   ProvisionOrganizationPayload, SubscriptionPlan
 } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
-import { formatCurrency, institutionLabel } from '../../utils/platform-display.util';
+import { formatCurrency, institutionTypeOptions } from '../../utils/platform-display.util';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import {
   LOGO_MAX_DATA_URL_CHARS,
@@ -31,7 +31,8 @@ import {
   AppSearchableSelectComponent,
   AppSectionHeaderComponent,
   AppSelectComponent,
-  AppSelectOption
+  AppSelectOption,
+  phoneErrorMessage
 } from '../../../../shared/ui/app-form';
 
 type PaymentOption = 'trial' | 'payment_received';
@@ -42,7 +43,7 @@ interface OrgFormModel {
   customerId: string | null;
   organizationName: string;
   shortName: string;
-  institutionType: InstitutionType;
+  institutionType: InstitutionType | null;
   domain: string;
   city: string;
   state: string;
@@ -142,17 +143,8 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
-  readonly institutionLabel = institutionLabel;
+  readonly institutionOptions: AppSelectOption[] = institutionTypeOptions();
   readonly formatCurrency = formatCurrency;
-
-
-
-  readonly institutionOptions: AppSelectOption[] = [
-    'SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TRAINING_INSTITUTE', 'COACHING', 'OTHER'
-  ].map(value => ({
-    value,
-    label: institutionLabel(value as InstitutionType)
-  }));
 
 
 
@@ -339,12 +331,24 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
   onFieldChange(key: ErrorKey): void {
+    if (key === 'adminMobile') {
+      this.validateMobile(false);
+      return;
+    }
     if (this.errors[key]) {
       const next = { ...this.errors };
       delete next[key];
       this.errors = next;
       this.cdr.markForCheck();
     }
+  }
+
+  onMobileChange(): void {
+    this.validateMobile(false);
+  }
+
+  onMobileBlur(): void {
+    this.validateMobile(true);
   }
 
 
@@ -558,11 +562,11 @@ export class ProvisionOrganizationComponent implements OnInit {
       customerId: null,
       organizationName: '',
       shortName: '',
-      institutionType: 'COLLEGE',
+      institutionType: null,
       domain: '',
       city: '',
       state: '',
-      country: 'India',
+      country: '',
       logoUrl: '',
       adminFullName: '',
       adminEmail: '',
@@ -598,7 +602,7 @@ export class ProvisionOrganizationComponent implements OnInit {
       existingCustomerId: Number(f.customerId),
       organizationName: f.organizationName.trim(),
       shortName: f.shortName.trim(),
-      institutionType: f.institutionType,
+      institutionType: f.institutionType!,
       tenantSubdomain: f.domain.trim(),
       city: f.city.trim(),
       state: f.state.trim(),
@@ -608,6 +612,9 @@ export class ProvisionOrganizationComponent implements OnInit {
       adminLastName: last,
       adminEmail: f.adminEmail.trim().toLowerCase(),
       adminMobile: f.adminMobile.trim(),
+      orgEmail: f.adminEmail.trim().toLowerCase(),
+      orgMobile: f.adminMobile.trim(),
+      addressLine1: [f.city.trim(), f.state.trim(), f.country].filter(Boolean).join(', ') || undefined,
       subscriptionPlanId: Number(f.subscriptionPlanId),
       billingCycle: 'YEARLY',
       trialEnabled: f.paymentOption === 'trial',
@@ -634,7 +641,7 @@ export class ProvisionOrganizationComponent implements OnInit {
       !!f.country &&
       f.adminFullName.trim().length >= 3 &&
       EMAIL_PATTERN.test(f.adminEmail.trim()) &&
-      this.nationalDigits(f.adminMobile).length >= 7 &&
+      phoneErrorMessage(f.adminMobile) === null &&
       !!f.subscriptionPlanId &&
       !!f.paymentOption
     );
@@ -692,7 +699,10 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
     if (!f.adminMobile.trim()) next.adminMobile = 'Mobile number is required.';
-    else if (!this.isValidPhone(f.adminMobile)) next.adminMobile = 'Enter a valid mobile number.';
+    else {
+      const mobileError = phoneErrorMessage(f.adminMobile);
+      if (mobileError) next.adminMobile = mobileError;
+    }
 
 
 
@@ -728,24 +738,26 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
+  private validateMobile(requireValue: boolean): void {
+    const value = this.form.adminMobile.trim();
+    const next = { ...this.errors };
+    if (!value) {
+      if (requireValue) next.adminMobile = 'Mobile number is required.';
+      else delete next.adminMobile;
+    } else {
+      const message = phoneErrorMessage(value);
+      if (message) next.adminMobile = message;
+      else delete next.adminMobile;
+    }
+    this.errors = next;
+    this.cdr.markForCheck();
+  }
+
   private focusFirstInvalid(): void {
     queueMicrotask(() => {
       const invalid = this.host.nativeElement.querySelector('.is-invalid, .app-field__control.is-invalid') as HTMLElement | null;
       invalid?.focus?.();
     });
-  }
-
-
-
-  private isValidPhone(value: string): boolean {
-    const digits = this.nationalDigits(value);
-    return digits.length >= 7 && digits.length <= 15;
-  }
-
-
-
-  private nationalDigits(value: string): string {
-    return (value ?? '').replace(/\D/g, '');
   }
 }
 

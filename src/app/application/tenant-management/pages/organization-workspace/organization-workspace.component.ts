@@ -8,10 +8,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
-import { FeatureOverride, OrganizationDetail, PlatformFeature } from '../../models/platform.model';
+import {
+  FeatureOverride, InstitutionType, OrganizationDetail, OrganizationUpdatePayload, PlatformFeature
+} from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   formatCurrency,
@@ -19,6 +22,7 @@ import {
   healthScore,
   healthTone,
   institutionLabel,
+  institutionTypeOptions,
   orgInitials,
   organizationStatusLabel,
   statusTone,
@@ -27,16 +31,51 @@ import {
 } from '../../utils/platform-display.util';
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-import { SaasPillComponent } from '../../../../shared/ui/saas';
+import {
+  SaasPageHeaderComponent,
+  SaasPanelComponent,
+  SaasPillComponent,
+  SaasTabsComponent
+} from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import {
+  AppButtonComponent,
+  AppInputComponent,
+  AppPhoneInputComponent,
+  AppSelectComponent,
+  AppSelectOption,
+  phoneErrorMessage
+} from '../../../../shared/ui/app-form';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
+
+interface OrgEditForm {
+  organizationName: string;
+  shortName: string;
+  institutionType: InstitutionType | null;
+  email: string;
+  mobileNumber: string;
+  website: string;
+  addressLine1: string;
+  city: string;
+  state: string;
+  country: string;
+  timeZone: string;
+  currency: string;
+  language: string;
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, SaasPillComponent],
+  imports: [
+    CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, DialogModule,
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent,
+    AppInputComponent, AppPhoneInputComponent, AppSelectComponent, AppButtonComponent
+  ],
   providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
@@ -60,6 +99,8 @@ export class OrganizationWorkspaceComponent implements OnInit {
   orgId = 0;
   activeTab = 'overview';
   actionsMenuOpen = false;
+  editOpen = false;
+  editSaving = false;
   overrideEditorOpen = false;
   features: PlatformFeature[] = [];
   overrideDraft: {
@@ -69,6 +110,13 @@ export class OrganizationWorkspaceComponent implements OnInit {
     overrideReason: string;
     remarks: string;
   } = this.emptyOverrideDraft();
+  editForm: OrgEditForm = this.emptyEditForm();
+  editErrors: Partial<Record<keyof OrgEditForm, string>> = {};
+
+  readonly institutionOptions: AppSelectOption[] = institutionTypeOptions();
+  readonly countryOptions: AppSelectOption[] = [
+    'India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Singapore', 'Australia', 'Other'
+  ].map(c => ({ value: c, label: c }));
 
   readonly tabs = [
     { key: 'overview',      label: 'Overview',           icon: 'pi pi-id-card' },
@@ -148,6 +196,35 @@ export class OrganizationWorkspaceComponent implements OnInit {
   get locationLabel(): string {
     if (!this.org) return '';
     return [this.org.city, this.org.state, this.org.country].filter(Boolean).join(', ');
+  }
+
+  get displayEmail(): string {
+    return this.org?.email?.trim() || '—';
+  }
+
+  get displayMobile(): string {
+    return this.org?.mobileNumber?.trim() || '—';
+  }
+
+  get displayWebsite(): string {
+    return this.org?.website?.trim()
+      || this.org?.tenant?.tenantDomain?.trim()
+      || this.org?.domain?.domain?.trim()
+      || this.org?.domain?.customDomain?.trim()
+      || this.displayDomain
+      || '—';
+  }
+
+  get displayDomain(): string {
+    const sub = this.org?.domain?.subDomain || this.org?.domain?.subdomain;
+    if (sub) return `${sub}.thinkerscave.app`;
+    return this.org?.tenant?.tenantDomain?.trim() || '';
+  }
+
+  get displayAddress(): string {
+    const lines = [this.org?.addressLine1, this.org?.addressLine2].filter(Boolean);
+    if (lines.length) return lines.join(', ');
+    return this.locationLabel || '—';
   }
 
   get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
@@ -245,6 +322,41 @@ export class OrganizationWorkspaceComponent implements OnInit {
       overrideReason: '',
       remarks: ''
     };
+  }
+
+  private emptyEditForm(): OrgEditForm {
+    return {
+      organizationName: '',
+      shortName: '',
+      institutionType: null,
+      email: '',
+      mobileNumber: '',
+      website: '',
+      addressLine1: '',
+      city: '',
+      state: '',
+      country: '',
+      timeZone: 'Asia/Kolkata',
+      currency: 'INR',
+      language: 'en'
+    };
+  }
+
+  private validateEdit(): boolean {
+    const f = this.editForm;
+    const next: Partial<Record<keyof OrgEditForm, string>> = {};
+    if (!f.organizationName.trim()) next.organizationName = 'Organization name is required.';
+    if (!f.institutionType) next.institutionType = 'Select an institution type.';
+    if (!f.email.trim()) next.email = 'Email is required.';
+    else if (!EMAIL_PATTERN.test(f.email.trim())) next.email = 'Enter a valid email address.';
+    const mobileError = f.mobileNumber.trim() ? phoneErrorMessage(f.mobileNumber) : 'Mobile number is required.';
+    if (mobileError) next.mobileNumber = mobileError;
+    if (!f.city.trim()) next.city = 'City is required.';
+    if (!f.state.trim()) next.state = 'State is required.';
+    if (!f.country.trim()) next.country = 'Country is required.';
+    this.editErrors = next;
+    this.cdr.markForCheck();
+    return Object.keys(next).length === 0;
   }
 
   get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
@@ -349,8 +461,97 @@ export class OrganizationWorkspaceComponent implements OnInit {
     }
   }
 
+  onTabChange(key: string): void {
+    this.activeTab = key;
+  }
+
   // ── actions ──────────────────────────────────────────────────────
   back(): void { this.router.navigate(['/app/tenant-management/organizations']); }
+
+  viewCustomer(): void {
+    if (!this.org?.customerId) {
+      this.toast('warn', 'Unavailable', 'No customer is linked to this organization.');
+      return;
+    }
+    void this.router.navigate(['/app/tenant-management/customers', this.org.customerId]);
+  }
+
+  openEdit(): void {
+    if (!this.org) return;
+    this.editForm = {
+      organizationName: this.org.organizationName ?? '',
+      shortName: this.org.shortName ?? '',
+      institutionType: this.org.institutionType ?? null,
+      email: this.org.email ?? '',
+      mobileNumber: this.org.mobileNumber ?? '',
+      website: this.displayWebsite === '—' ? (this.displayDomain || '') : this.displayWebsite,
+      addressLine1: this.org.addressLine1 ?? this.locationLabel,
+      city: this.org.city ?? '',
+      state: this.org.state ?? '',
+      country: this.org.country ?? '',
+      timeZone: this.org.timeZone ?? 'Asia/Kolkata',
+      currency: this.org.currency ?? 'INR',
+      language: this.org.language ?? 'en'
+    };
+    this.editErrors = {};
+    this.editOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeEdit(): void {
+    this.editOpen = false;
+  }
+
+  editFieldError(key: keyof OrgEditForm): string {
+    return this.editErrors[key] ?? '';
+  }
+
+  onEditFieldChange(key: keyof OrgEditForm): void {
+    if (!this.editErrors[key]) return;
+    const next = { ...this.editErrors };
+    delete next[key];
+    this.editErrors = next;
+  }
+
+  saveEdit(): void {
+    if (!this.org || this.editSaving || !this.validateEdit()) return;
+    if (!this.org.customerId) {
+      this.toast('warn', 'Unavailable', 'This organization is not linked to a customer.');
+      return;
+    }
+    this.editSaving = true;
+    const payload: OrganizationUpdatePayload = {
+      customerId: this.org.customerId,
+      organizationName: this.editForm.organizationName.trim(),
+      shortName: this.editForm.shortName.trim() || undefined,
+      institutionType: this.editForm.institutionType!,
+      email: this.editForm.email.trim() || undefined,
+      mobileNumber: this.editForm.mobileNumber.trim() || undefined,
+      website: this.editForm.website.trim() || undefined,
+      addressLine1: this.editForm.addressLine1.trim() || undefined,
+      city: this.editForm.city.trim() || undefined,
+      state: this.editForm.state.trim() || undefined,
+      country: this.editForm.country.trim() || undefined,
+      timeZone: this.editForm.timeZone.trim() || undefined,
+      currency: this.editForm.currency.trim() || undefined,
+      language: this.editForm.language.trim() || undefined,
+      logoUrl: this.org.logoUrl,
+      remarks: this.org.remarks
+    };
+    this.api.updateOrganization(this.org.id, payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.editSaving = false;
+        this.editOpen = false;
+        this.toast('success', 'Organization updated', 'Organization information saved.');
+        this.load(this.orgId);
+      },
+      error: () => {
+        this.editSaving = false;
+        this.toast('error', 'Failed', 'Could not update organization information.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   activate(): void {
     if (!this.org) return;

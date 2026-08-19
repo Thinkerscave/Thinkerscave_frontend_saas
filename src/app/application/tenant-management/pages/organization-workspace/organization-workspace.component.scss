@@ -13,6 +13,67 @@
   animation: ow-fade-in 260ms var(--tc-anim-easing, ease) both;
 }
 
+.ow-header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+
+  &__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--tc-primary-600) 12%, transparent);
+    color: var(--tc-primary-700);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  &__code {
+    font-size: 0.78rem;
+    color: var(--tc-text-muted);
+    font-weight: 600;
+  }
+}
+
+.ow-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__full {
+    grid-column: 1 / -1;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 8px;
+  }
+}
+
 @keyframes ow-fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -238,6 +299,7 @@
 // ── Actions dropdown ──────────────────────────────────────────────
 .ow-actions-wrap {
   position: relative;
+  overflow: visible;
 }
 
 .ow-actions-menu {
@@ -380,6 +442,11 @@
 // ══════════════════════════════════════════════════════════════════
 .ow-grid {
   display: grid; gap: 20px;
+
+  tc-saas-panel {
+    min-width: 0;
+    display: flex;
+  }
 
   &--3   { grid-template-columns: repeat(3, 1fr); }
   &--2-1 { grid-template-columns: 2fr 1fr; }

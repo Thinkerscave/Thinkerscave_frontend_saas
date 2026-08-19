@@ -85,10 +85,17 @@ export interface TenantRegistry {
 export interface OrganizationDomain {
   id?: number;
   organizationId?: number;
+  organizationName?: string;
   subdomain?: string;
+  subDomain?: string;
+  domain?: string;
   customDomain?: string;
-  verified?: boolean;
   sslEnabled?: boolean;
+  dnsVerified?: boolean;
+  defaultDomain?: boolean;
+  primaryDomain?: boolean;
+  status?: string;
+  verified?: boolean;
   primary?: boolean;
 }
 
@@ -99,6 +106,9 @@ export interface OrganizationConfiguration {
   maxBranches?: number;
   storageLimitGb?: number;
   apiRequestLimit?: number;
+  currency?: string;
+  timeZone?: string;
+  language?: string;
 }
 
 export interface FeatureOverride {
@@ -175,6 +185,28 @@ export interface OrganizationDetail {
   createdOn?: string;
   createdBy?: string;
   updatedOn?: string;
+}
+
+export interface OrganizationUpdatePayload {
+  customerId: number;
+  organizationName: string;
+  shortName?: string;
+  institutionType: InstitutionType;
+  boardName?: string;
+  email?: string;
+  mobileNumber?: string;
+  website?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  timeZone?: string;
+  currency?: string;
+  language?: string;
+  logoUrl?: string;
+  remarks?: string;
 }
 
 export type CustomerContactType = 'PRIMARY' | 'SECONDARY';
