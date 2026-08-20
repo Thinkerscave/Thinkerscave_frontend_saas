@@ -1,4 +1,4 @@
-@import '../../shared/styles/academics-common';
+@use '../../shared/styles/academics-common' as *;
 
 :host {
   display: block;

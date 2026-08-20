@@ -1,4 +1,4 @@
-@import '../../styles/catalog-ui';
+@use '../../styles/catalog-ui' as *;
 
 :host { display: block; min-height: 100%; }
 

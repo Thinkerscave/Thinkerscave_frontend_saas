@@ -26,13 +26,13 @@
         <h3>Quick Info</h3>
         <div><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
         <div><span>Class-Section</span><strong>{{ d.className }}{{ d.sectionName ? '-' + d.sectionName : '' }}</strong></div>
-        <div><span>Subjects</span><strong>{{ d.subjects?.length || 0 }}</strong></div>
+        <div><span>Subjects</span><strong>{{ d.subjects.length || 0 }}</strong></div>
         <div><span>Timetable</span><strong>{{ d.publishedTimetableExists ? 'Published' : 'Not published' }}</strong></div>
       </article>
     </section>
 
     <section class="ma-shortcuts">
-      <a routerLink="/app/academics/my-academics"><strong>{{ d.subjects?.length || 0 }}</strong><span>Subjects</span><em>View Subjects →</em></a>
+      <a routerLink="/app/academics/my-academics"><strong>{{ d.subjects.length || 0 }}</strong><span>Subjects</span><em>View Subjects →</em></a>
       <a routerLink="/app/academics/my-timetable"><strong>{{ d.publishedTimetableExists ? 'Ready' : '—' }}</strong><span>Timetable</span><em>View Timetable →</em></a>
       <div><strong>{{ d.classTeacher?.staffName || '—' }}</strong><span>Class Teacher</span><em>Primary contact</em></div>
       <div><strong>{{ d.className || '—' }}</strong><span>My Class</span><em>{{ d.sectionName ? 'Section ' + d.sectionName : '—' }}</em></div>
@@ -48,7 +48,7 @@
           </div>
           <span>{{ s.weeklyPeriods }} periods/week</span>
         </div>
-        <div class="ma-empty" *ngIf="!d.subjects?.length">No subjects mapped for your class.</div>
+        <div class="ma-empty" *ngIf="!d.subjects.length">No subjects mapped for your class.</div>
       </article>
 
       <article class="ma-panel">
