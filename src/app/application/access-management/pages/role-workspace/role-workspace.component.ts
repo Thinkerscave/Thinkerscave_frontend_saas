@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import { AccessRole, PermissionMatrixRow } from '../../models/access.model';
@@ -21,8 +21,8 @@ import {
   selector: 'app-role-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule, RouterLink, ToastModule,
+  imports: [AppToastComponent, 
+    CommonModule, RouterLink,
     SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
   ],
   providers: [MessageService],

@@ -11,7 +11,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { MessageService, ConfirmationService } from 'primeng/api';
@@ -33,11 +33,11 @@ interface Override {
   selector: 'app-restriction-overrides',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputTextarea, DropdownModule, CalendarModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule, AutoCompleteModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputTextarea, DropdownModule, CalendarModule, DialogModule, TooltipModule, ConfirmDialogModule, AutoCompleteModule],
   providers: [MessageService, ConfirmationService],
   template: `
     <div class="restriction-overrides">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
 
       <div class="page-header">

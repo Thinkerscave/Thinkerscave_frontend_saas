@@ -71,6 +71,12 @@ export interface TenantRegistry {
   provisionStatus: ProvisionStatus;
   databaseSizeMb?: number;
   storageUsedMb?: number;
+  studentCount?: number;
+  staffCount?: number;
+  branchCount?: number;
+  classCount?: number;
+  sectionCount?: number;
+  usageRefreshedAt?: string;
   lastMigrationAt?: string;
   lastBackupAt?: string;
   lastHealthCheckAt?: string;
@@ -144,9 +150,15 @@ export interface OrganizationSubscription {
   staffLimitOverride?: number;
   branchLimitOverride?: number;
   storageLimitOverride?: number;
+  studentLimit?: number;
+  staffLimit?: number;
+  branchLimit?: number;
+  storageLimitGb?: number;
+  invoiceNumber?: string;
   autoRenew?: boolean;
   status: SubscriptionStatus;
   active?: boolean;
+  remarks?: string;
   featureOverrides?: FeatureOverride[];
 }
 
@@ -160,6 +172,9 @@ export interface OrganizationDetail {
   status: OrganizationStatus;
   email?: string;
   mobileNumber?: string;
+  adminFullName?: string;
+  adminEmail?: string;
+  adminMobile?: string;
   alternateMobileNumber?: string;
   website?: string;
   addressLine1?: string;
@@ -181,6 +196,7 @@ export interface OrganizationDetail {
   tenant?: TenantRegistry;
   domain?: OrganizationDomain;
   subscription?: OrganizationSubscription;
+  entitledFeatures?: SubscriptionPlanFeature[];
   configuration?: OrganizationConfiguration;
   createdOn?: string;
   createdBy?: string;
@@ -195,6 +211,7 @@ export interface OrganizationUpdatePayload {
   boardName?: string;
   email?: string;
   mobileNumber?: string;
+  adminFullName?: string;
   website?: string;
   addressLine1?: string;
   addressLine2?: string;
@@ -316,11 +333,15 @@ export interface CustomerContactCreatePayload {
 }
 
 export interface SubscriptionPlanFeature {
-  id: number;
+  id?: number;
   featureId: number;
   featureCode?: string;
   featureName?: string;
-  included: boolean;
+  featureKey?: string;
+  module?: string;
+  included?: boolean;
+  enabled?: boolean;
+  notes?: string;
   limitValue?: number;
 }
 

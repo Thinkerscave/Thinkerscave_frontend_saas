@@ -7,7 +7,7 @@
 
 
 
-    <app-loader *ngIf="loading" label="Loading customers, plans and promotions…"></app-loader>
+    <app-loader *ngIf="loading" [label]="isEditMode ? 'Loading organization…' : 'Loading customers, plans and promotions…'"></app-loader>
 
 
 
@@ -17,7 +17,7 @@
           <section class="org-form__section">
             <app-section-header
               title="1. Customer"
-              description="Link this organization to an existing customer account."
+              [description]="isEditMode ? 'Billing account is locked after onboarding.' : 'Link this organization to an existing customer account.'"
               icon="pi pi-users">
             </app-section-header>
 
@@ -28,6 +28,7 @@
               placeholder="Select"
               searchPlaceholder="Search by name or code…"
               [required]="true"
+              [disabled]="isEditMode"
               [options]="customerOptions"
               [(ngModel)]="form.customerId"
               name="customerId"
@@ -37,9 +38,12 @@
 
 
 
-            <p class="org-form__helper">
+            <p class="org-form__helper" *ngIf="!isEditMode">
               Can't find the customer?
               <a routerLink="/app/tenant-management/customers/new">Create a new customer first.</a>
+            </p>
+            <p class="org-form__helper" *ngIf="isEditMode">
+              Customer cannot be changed here. Open the customer record if you need to update billing details.
             </p>
           </section>
 
@@ -48,7 +52,7 @@
           <section class="org-form__section">
             <app-section-header
               title="2. Organization Details"
-              description="Core identity and location for the new institution."
+              [description]="isEditMode ? 'Update identity and location. Domain stays as provisioned.' : 'Core identity and location for the new institution.'"
               icon="pi pi-building">
             </app-section-header>
 
@@ -107,15 +111,19 @@
                     placeholder="Enter domain"
                     [(ngModel)]="form.domain"
                     name="domain"
+                    [disabled]="isEditMode"
                     (ngModelChange)="normalizeDomain($event)" />
                   <span class="org-form__domain-suffix">.thinkerscave.app</span>
                 </div>
-                <p *ngIf="domainChecking && !fieldError('domain')" class="app-field__hint">Checking domain availability…</p>
-                <p *ngIf="domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__success" role="status">
+                <p *ngIf="!isEditMode && domainChecking && !fieldError('domain')" class="app-field__hint">Checking domain availability…</p>
+                <p *ngIf="!isEditMode && domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__success" role="status">
                   Available: {{ domainPreview }}
                 </p>
-                <p *ngIf="!domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__hint">
+                <p *ngIf="!isEditMode && !domainAvailable && domainPreview && !fieldError('domain') && !domainChecking" class="app-field__hint">
                   Preview: {{ domainPreview }}
+                </p>
+                <p *ngIf="isEditMode && domainPreview && !fieldError('domain')" class="app-field__hint">
+                  Locked tenant domain: {{ domainPreview }}
                 </p>
                 <p *ngIf="fieldError('domain')" class="app-field__error" role="alert">{{ fieldError('domain') }}</p>
               </div>
@@ -186,7 +194,7 @@
           <section class="org-form__section">
             <app-section-header
               title="3. Organization Admin"
-              description="The first administrator who will access the tenant workspace."
+              [description]="isEditMode ? 'Update the administrator name, email, and mobile number.' : 'The first administrator who will access the tenant workspace.'"
               icon="pi pi-user">
             </app-section-header>
 
@@ -239,7 +247,7 @@
           <section class="org-form__section org-form__section--last">
             <app-section-header
               title="4. Subscription & Payment"
-              description="Choose a plan and how payment should be handled."
+              [description]="isEditMode ? 'Plan and payment were captured at onboarding and cannot be changed on this form.' : 'Choose a plan and how payment should be handled.'"
               icon="pi pi-credit-card">
             </app-section-header>
 
@@ -250,6 +258,7 @@
                 label="Subscription Plan"
                 placeholder="Select"
                 [required]="true"
+                [disabled]="isEditMode"
                 [options]="planOptions"
                 [(ngModel)]="form.subscriptionPlanId"
                 name="subscriptionPlanId"
@@ -263,6 +272,7 @@
             <app-radio-card
               label="Payment Option"
               [required]="true"
+              [disabled]="isEditMode"
               [options]="paymentOptions"
               [(ngModel)]="form.paymentOption"
               name="paymentOption"
@@ -276,19 +286,20 @@
               <app-input
                 label="Coupon"
                 placeholder="Enter coupon code (optional)"
+                [disabled]="isEditMode"
                 [(ngModel)]="form.couponCode"
                 name="couponCode"
                 [error]="fieldError('couponCode')"
                 (ngModelChange)="onFieldChange('couponCode')">
               </app-input>
-              <app-button variant="secondary" size="sm" icon="pi pi-tags" (clicked)="openCouponModal()">
+              <app-button variant="secondary" size="sm" icon="pi pi-tags" [disabled]="isEditMode" (clicked)="openCouponModal()">
                 Browse Coupons
               </app-button>
             </div>
 
 
 
-            <div *ngIf="selectedPromotion" class="org-form__coupon-chip">
+            <div *ngIf="selectedPromotion && !isEditMode" class="org-form__coupon-chip">
               <i class="pi pi-tag" aria-hidden="true"></i>
               <span>{{ selectedPromotion.promotionName }} ({{ selectedPromotion.promotionCode }})</span>
               <button type="button" (click)="clearCoupon()" aria-label="Remove coupon">
@@ -306,11 +317,11 @@
           </app-button>
           <app-button
             variant="primary"
-            icon="pi pi-plus"
+            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
             [loading]="submitting"
             [disabled]="!canSubmit"
             (clicked)="submit()">
-            Create Organization
+            {{ isEditMode ? 'Save Organization' : 'Create Organization' }}
           </app-button>
         </div>
       </app-card>

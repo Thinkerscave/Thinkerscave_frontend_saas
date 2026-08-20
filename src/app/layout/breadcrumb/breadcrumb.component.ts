@@ -471,7 +471,7 @@ export class BreadcrumbComponent implements OnInit {
 
     if (page === 'organizations') {
 
-      if (child === 'create') labels.push('Provision Organization');
+      if (child === 'create') labels.push(this.router.parseUrl(this.router.url).queryParams['orgId'] ? 'Edit Organization' : 'Add Organization');
 
       else if (child) labels.push('Organization Details');
 

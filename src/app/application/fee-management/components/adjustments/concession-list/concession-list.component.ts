@@ -12,7 +12,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { MessageService, ConfirmationService } from 'primeng/api';
@@ -35,11 +35,11 @@ interface ConcessionType {
   selector: 'app-concession-list',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule, InputSwitchModule, MultiSelectModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ConfirmDialogModule, InputSwitchModule, MultiSelectModule],
   providers: [MessageService, ConfirmationService],
   template: `
     <div class="concession-list">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
 
       <div class="page-header">

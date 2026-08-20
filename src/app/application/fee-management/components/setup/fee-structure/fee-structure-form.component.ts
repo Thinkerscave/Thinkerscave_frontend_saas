@@ -10,7 +10,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { TextareaModule } from 'primeng/textarea';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -22,16 +22,15 @@ import { FeeStorageService } from '../../../services/fee-storage.service';
   selector: 'app-fee-structure-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule, RouterModule, FormsModule, ReactiveFormsModule,
     CardModule, ButtonModule, InputTextModule, InputNumberModule,
-    DropdownModule, CalendarModule, TextareaModule, DividerModule,
-    ToastModule, TableModule, TagModule, ToggleSwitchModule, StepsModule
+    DropdownModule, CalendarModule, TextareaModule, DividerModule, TableModule, TagModule, ToggleSwitchModule, StepsModule
   ],
   providers: [MessageService],
   template: `
     <div class="fee-structure-form">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       
       <div class="page-header">
         <div>

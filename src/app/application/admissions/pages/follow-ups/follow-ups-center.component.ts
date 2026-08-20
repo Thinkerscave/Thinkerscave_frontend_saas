@@ -13,7 +13,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -33,12 +33,11 @@ type FollowUpTab = 'today' | 'overdue' | 'all';
   selector: 'app-follow-ups-center',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
     DropdownModule,
-    ToastModule,
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasTabsComponent

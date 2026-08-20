@@ -14,7 +14,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { debounceTime, finalize, Subject } from 'rxjs';
 
 import { SaasPanelComponent } from '../../../../shared/ui/saas';
@@ -41,13 +41,12 @@ interface SelectOption<T = string | null> {
   selector: 'app-leads-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     DropdownModule,
     PaginatorModule,
-    ToastModule,
     ConfirmDialogModule,
     SaasPanelComponent,
     AppGridTableToggleComponent

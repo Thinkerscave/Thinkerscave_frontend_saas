@@ -10,7 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TabViewModule } from 'primeng/tabview';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../core/feedback/app-toast.component';
 import { StandardListViewComponent } from '../../../shared/components/standard-list-view/standard-list-view.component';
 import { ListViewConfig } from '../../../shared/components/standard-list-view/list-view-models';
 interface Application {
@@ -25,7 +25,7 @@ interface Application {
 @Component({
   selector: 'app-staff-application-review',
     changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     ReactiveFormsModule,
     CardModule,
@@ -36,7 +36,6 @@ interface Application {
     DialogModule,
     TabViewModule,
     TagModule,
-    ToastModule,
     InputTextModule,
     StandardListViewComponent
   ],

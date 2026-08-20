@@ -9,7 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { ChartModule } from 'primeng/chart';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { MessageService } from 'primeng/api';
 
 interface Defaulter {
@@ -33,11 +33,11 @@ interface Defaulter {
     selector: 'app-defaulters-report',
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, DropdownModule, TagModule, InputTextModule, TooltipModule, ChartModule, ToastModule],
+    imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, DropdownModule, TagModule, InputTextModule, TooltipModule, ChartModule],
     providers: [MessageService],
     template: `
     <div class="defaulters-report">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
 
       <div class="page-header">
         <div>

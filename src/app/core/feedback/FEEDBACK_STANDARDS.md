@@ -7,7 +7,7 @@ outcomes without scrolling, and field problems are visible next to the field.
 
 1. **Field validation** → red text + invalid border **under the control**.
 2. **Action result** (save / create / archive / API fail) → **PrimeNG Toast**
-   via `UiFeedbackService` (top-right or top-center).
+   via `UiFeedbackService` (placement is global — see below).
 3. Do **not** rely only on a page-top banner for create/save failures when the
    submit button is at the bottom of a long form.
 
@@ -26,8 +26,9 @@ this.feedback.formError('Domain "google" is already in use.');
 this.feedback.error('Create failed', parsed.message);
 ```
 
-Ensure a global `<p-toast position="top-center"></p-toast>` is mounted once
-(in `app.component.html`). Prefer `UiFeedbackService` so messages use the root
+Mount `<app-toast>` once in `app.component.html`. Toast position is controlled
+in `src/app/core/config/ui-toast.config.ts` (`UI_TOAST_CONFIG.position`, default
+`top-right`). Prefer `UiFeedbackService` so messages use the root
 `MessageService` and appear even when the user is scrolled to the bottom of a form.
 
 Do **not** add per-page `providers: [MessageService]` — that shadows the root

@@ -11,7 +11,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { DialogModule } from 'primeng/dialog';
 import { StepsModule } from 'primeng/steps';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -55,7 +55,7 @@ interface Installment {
     selector: 'app-payment-collection',
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [
+    imports: [AppToastComponent, 
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
@@ -69,7 +69,6 @@ interface Installment {
         TableModule,
         TagModule,
         DividerModule,
-        ToastModule,
         DialogModule,
         StepsModule,
         RadioButtonModule,
@@ -78,7 +77,7 @@ interface Installment {
     providers: [MessageService],
     template: `
     <div class="payment-collection">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
 
       <!-- Page Header -->
       <div class="page-header">

@@ -66,6 +66,10 @@ export class PlatformManagementService {
     );
   }
 
+  downloadOrganizationInvoicePdf(id: number): Observable<Blob> {
+    return this.http.get(platformApi.organizationInvoicePdf(id), { responseType: 'blob' });
+  }
+
   updateOrganization(id: number, payload: OrganizationUpdatePayload): Observable<OrganizationSummary> {
     return this.http.put<unknown>(platformApi.organizationById(id), payload).pipe(
       map(r => unwrapApiResponse<OrganizationSummary>(r, {} as OrganizationSummary))

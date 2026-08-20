@@ -10,7 +10,7 @@ import { InputTextarea } from 'primeng/inputtextarea';
 import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
@@ -34,11 +34,11 @@ interface PendingAdjustment {
   selector: 'app-pending-approvals',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputTextarea, DropdownModule, DialogModule, TooltipModule, ConfirmDialogModule],
   providers: [MessageService, ConfirmationService],
   template: `
     <div class="pending-approvals">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
 
       <div class="page-header">

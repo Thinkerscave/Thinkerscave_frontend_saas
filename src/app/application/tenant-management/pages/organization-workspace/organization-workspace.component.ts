@@ -8,22 +8,18 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { TooltipModule } from 'primeng/tooltip';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import {
-  FeatureOverride, InstitutionType, OrganizationDetail, OrganizationUpdatePayload, PlatformFeature
+  FeatureOverride, OrganizationDetail, PlatformFeature
 } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   formatCurrency,
   formatDate,
-  healthScore,
-  healthTone,
   institutionLabel,
-  institutionTypeOptions,
-  orgInitials,
   organizationStatusLabel,
   statusTone,
   subscriptionStatusLabel,
@@ -35,46 +31,20 @@ import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
   SaasPillComponent,
+  SaasTab,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
-import {
-  AppButtonComponent,
-  AppInputComponent,
-  AppPhoneInputComponent,
-  AppSelectComponent,
-  AppSelectOption,
-  phoneErrorMessage
-} from '../../../../shared/ui/app-form';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
-
-interface OrgEditForm {
-  organizationName: string;
-  shortName: string;
-  institutionType: InstitutionType | null;
-  email: string;
-  mobileNumber: string;
-  website: string;
-  addressLine1: string;
-  city: string;
-  state: string;
-  country: string;
-  timeZone: string;
-  currency: string;
-  language: string;
-}
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, DialogModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent,
-    AppInputComponent, AppPhoneInputComponent, AppSelectComponent, AppButtonComponent
+    CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, TooltipModule,
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',
@@ -94,14 +64,18 @@ export class OrganizationWorkspaceComponent implements OnInit {
   loading = true;
   actionLoading = false;
   overrideSaving = false;
+  invoiceDownloading = false;
   errorMessage = '';
   org: OrganizationDetail | null = null;
   orgId = 0;
   activeTab = 'overview';
   actionsMenuOpen = false;
-  editOpen = false;
-  editSaving = false;
   overrideEditorOpen = false;
+  readonly tabs: SaasTab[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'billing', label: 'Subscription & Billing' },
+    { key: 'tenant', label: 'Tenant & Activity' }
+  ];
   features: PlatformFeature[] = [];
   overrideDraft: {
     id?: number;
@@ -110,36 +84,31 @@ export class OrganizationWorkspaceComponent implements OnInit {
     overrideReason: string;
     remarks: string;
   } = this.emptyOverrideDraft();
-  editForm: OrgEditForm = this.emptyEditForm();
-  editErrors: Partial<Record<keyof OrgEditForm, string>> = {};
 
-  readonly institutionOptions: AppSelectOption[] = institutionTypeOptions();
-  readonly countryOptions: AppSelectOption[] = [
-    'India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Singapore', 'Australia', 'Other'
-  ].map(c => ({ value: c, label: c }));
-
-  readonly tabs = [
-    { key: 'overview',      label: 'Overview',           icon: 'pi pi-id-card' },
-    { key: 'subscription',  label: 'Subscription & Plan', icon: 'pi pi-credit-card' },
-    { key: 'features',      label: 'Feature Overrides',   icon: 'pi pi-sliders-h' },
-    { key: 'tenant',        label: 'Tenant Details',      icon: 'pi pi-server' },
-    { key: 'timeline',      label: 'Timeline',            icon: 'pi pi-history' }
-  ];
-
-  // ── util references exposed to template ─────────────────────────
-  readonly orgInitials            = orgInitials;
-  readonly institutionLabel       = institutionLabel;
   readonly organizationStatusLabel = organizationStatusLabel;
   readonly subscriptionStatusLabel = subscriptionStatusLabel;
   readonly formatDate              = formatDate;
   readonly formatCurrency          = formatCurrency;
-  readonly healthScore             = healthScore;
-  readonly healthTone              = healthTone;
 
   // ── lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
     this.orgId = Number(this.route.snapshot.paramMap.get('orgId'));
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.tabs.some(item => item.key === tab)) {
+      this.activeTab = tab;
+    }
     this.load(this.orgId);
+  }
+
+  onTabChange(tab: string): void {
+    this.activeTab = tab;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.cdr.markForCheck();
   }
 
   // ── click-outside closes the actions menu ────────────────────────
@@ -198,21 +167,29 @@ export class OrganizationWorkspaceComponent implements OnInit {
     return [this.org.city, this.org.state, this.org.country].filter(Boolean).join(', ');
   }
 
+  get institutionTypeText(): string {
+    return this.org ? institutionLabel(this.org.institutionType) : '—';
+  }
+
   get displayEmail(): string {
-    return this.org?.email?.trim() || '—';
+    return this.org?.adminEmail?.trim() || this.org?.email?.trim() || '—';
   }
 
   get displayMobile(): string {
-    return this.org?.mobileNumber?.trim() || '—';
+    return this.org?.adminMobile?.trim() || this.org?.mobileNumber?.trim() || '—';
   }
 
-  get displayWebsite(): string {
-    return this.org?.website?.trim()
-      || this.org?.tenant?.tenantDomain?.trim()
-      || this.org?.domain?.domain?.trim()
-      || this.org?.domain?.customDomain?.trim()
-      || this.displayDomain
-      || '—';
+  get entitledFeatures() {
+    return this.org?.entitledFeatures ?? [];
+  }
+
+  get isTrial(): boolean {
+    return this.org?.subscription?.status === 'TRIAL';
+  }
+
+  get amountPaid(): number {
+    if (!this.org?.subscription || this.isTrial) return 0;
+    return this.org.subscription.finalAmount ?? 0;
   }
 
   get displayDomain(): string {
@@ -228,6 +205,34 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
 
   get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
+
+  get planSummary(): string {
+    if (!this.org?.subscription) return 'No subscription';
+    const plan = this.org.subscription.planName || this.org.subscription.planCode || 'Plan';
+    return `${plan} · ${this.billingCycleLabel(this.org.subscription.billingCycle)}`;
+  }
+
+  get orgInitials(): string {
+    const source = this.org?.shortName || this.org?.organizationName || 'ORG';
+    const parts = source.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return source.slice(0, 2).toUpperCase();
+  }
+
+  get paymentStatusLabel(): string {
+    const status = this.org?.subscription?.status;
+    if (!status) return '—';
+    if (this.isTrial) return 'Unpaid';
+    if (status === 'ACTIVE') return 'Paid';
+    if (status === 'EXPIRED') return 'Overdue';
+    return this.subscriptionStatusLabel(status);
+  }
+
+  get recentActivityPreview() {
+    return this.timelineEvents.slice(0, 3);
+  }
 
   get overrideFeatureOptions(): { label: string; value: number }[] {
     const taken = new Set(this.featureOverrides
@@ -246,9 +251,9 @@ export class OrganizationWorkspaceComponent implements OnInit {
       this.toast('warn', 'Unavailable', 'Assign a subscription before adding feature overrides.');
       return;
     }
+    this.onTabChange('billing');
     this.overrideDraft = this.emptyOverrideDraft();
     this.overrideEditorOpen = true;
-    this.activeTab = 'features';
   }
 
   openEditOverride(override: FeatureOverride): void {
@@ -260,7 +265,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
       remarks: override.remarks ?? ''
     };
     this.overrideEditorOpen = true;
-    this.activeTab = 'features';
   }
 
   closeOverrideEditor(): void {
@@ -324,41 +328,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
     };
   }
 
-  private emptyEditForm(): OrgEditForm {
-    return {
-      organizationName: '',
-      shortName: '',
-      institutionType: null,
-      email: '',
-      mobileNumber: '',
-      website: '',
-      addressLine1: '',
-      city: '',
-      state: '',
-      country: '',
-      timeZone: 'Asia/Kolkata',
-      currency: 'INR',
-      language: 'en'
-    };
-  }
-
-  private validateEdit(): boolean {
-    const f = this.editForm;
-    const next: Partial<Record<keyof OrgEditForm, string>> = {};
-    if (!f.organizationName.trim()) next.organizationName = 'Organization name is required.';
-    if (!f.institutionType) next.institutionType = 'Select an institution type.';
-    if (!f.email.trim()) next.email = 'Email is required.';
-    else if (!EMAIL_PATTERN.test(f.email.trim())) next.email = 'Enter a valid email address.';
-    const mobileError = f.mobileNumber.trim() ? phoneErrorMessage(f.mobileNumber) : 'Mobile number is required.';
-    if (mobileError) next.mobileNumber = mobileError;
-    if (!f.city.trim()) next.city = 'City is required.';
-    if (!f.state.trim()) next.state = 'State is required.';
-    if (!f.country.trim()) next.country = 'Country is required.';
-    this.editErrors = next;
-    this.cdr.markForCheck();
-    return Object.keys(next).length === 0;
-  }
-
   get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
     if (!this.org) return [];
     const events: { title: string; detail: string; date?: string; icon: string; color: string }[] = [];
@@ -397,32 +366,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
       title: 'Remarks', color: 'gray',
       detail: this.org.remarks.trim(), icon: 'pi pi-comment'
     });
-    return events;
-  }
-
-  // ── display helpers ──────────────────────────────────────────────
-  orgColor(name: string): string {
-    const palette = ['indigo', 'violet', 'emerald', 'teal', 'amber', 'rose', 'sky', 'orange'];
-    return palette[(name?.charCodeAt(0) ?? 0) % palette.length];
-  }
-
-  storagePercent(org: OrganizationDetail): number {
-    const used = org.tenant?.storageUsedMb ?? 0;
-    const limit = (org.configuration?.storageLimitGb ?? 0) * 1024;
-    if (!limit) return 0;
-    return Math.min(100, Math.round((used / limit) * 100));
-  }
-
-  daysRemaining(endDate?: string | null): number {
-    if (!endDate) return 0;
-    const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86400000);
-    return Math.max(0, diff);
-  }
-
-  healthLabel(score: number): string {
-    if (score >= 80) return 'Healthy';
-    if (score >= 50) return 'At Risk';
-    return 'Critical';
+    return events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }
 
   orgStatusTone(): PillTone { return statusTone(this.org?.status) as PillTone; }
@@ -461,11 +405,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
     }
   }
 
-  onTabChange(key: string): void {
-    this.activeTab = key;
-  }
-
-  // ── actions ──────────────────────────────────────────────────────
   back(): void { this.router.navigate(['/app/tenant-management/organizations']); }
 
   viewCustomer(): void {
@@ -477,79 +416,9 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
 
   openEdit(): void {
-    if (!this.org) return;
-    this.editForm = {
-      organizationName: this.org.organizationName ?? '',
-      shortName: this.org.shortName ?? '',
-      institutionType: this.org.institutionType ?? null,
-      email: this.org.email ?? '',
-      mobileNumber: this.org.mobileNumber ?? '',
-      website: this.displayWebsite === '—' ? (this.displayDomain || '') : this.displayWebsite,
-      addressLine1: this.org.addressLine1 ?? this.locationLabel,
-      city: this.org.city ?? '',
-      state: this.org.state ?? '',
-      country: this.org.country ?? '',
-      timeZone: this.org.timeZone ?? 'Asia/Kolkata',
-      currency: this.org.currency ?? 'INR',
-      language: this.org.language ?? 'en'
-    };
-    this.editErrors = {};
-    this.editOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeEdit(): void {
-    this.editOpen = false;
-  }
-
-  editFieldError(key: keyof OrgEditForm): string {
-    return this.editErrors[key] ?? '';
-  }
-
-  onEditFieldChange(key: keyof OrgEditForm): void {
-    if (!this.editErrors[key]) return;
-    const next = { ...this.editErrors };
-    delete next[key];
-    this.editErrors = next;
-  }
-
-  saveEdit(): void {
-    if (!this.org || this.editSaving || !this.validateEdit()) return;
-    if (!this.org.customerId) {
-      this.toast('warn', 'Unavailable', 'This organization is not linked to a customer.');
-      return;
-    }
-    this.editSaving = true;
-    const payload: OrganizationUpdatePayload = {
-      customerId: this.org.customerId,
-      organizationName: this.editForm.organizationName.trim(),
-      shortName: this.editForm.shortName.trim() || undefined,
-      institutionType: this.editForm.institutionType!,
-      email: this.editForm.email.trim() || undefined,
-      mobileNumber: this.editForm.mobileNumber.trim() || undefined,
-      website: this.editForm.website.trim() || undefined,
-      addressLine1: this.editForm.addressLine1.trim() || undefined,
-      city: this.editForm.city.trim() || undefined,
-      state: this.editForm.state.trim() || undefined,
-      country: this.editForm.country.trim() || undefined,
-      timeZone: this.editForm.timeZone.trim() || undefined,
-      currency: this.editForm.currency.trim() || undefined,
-      language: this.editForm.language.trim() || undefined,
-      logoUrl: this.org.logoUrl,
-      remarks: this.org.remarks
-    };
-    this.api.updateOrganization(this.org.id, payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.editSaving = false;
-        this.editOpen = false;
-        this.toast('success', 'Organization updated', 'Organization information saved.');
-        this.load(this.orgId);
-      },
-      error: () => {
-        this.editSaving = false;
-        this.toast('error', 'Failed', 'Could not update organization information.');
-        this.cdr.markForCheck();
-      }
+    if (!this.orgId) return;
+    void this.router.navigate(['/app/tenant-management/organizations/create'], {
+      queryParams: { orgId: this.orgId }
     });
   }
 
@@ -559,7 +428,13 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
   suspend(): void {
     if (!this.org) return;
-    this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.');
+    this.confirm.confirm({
+      header: 'Suspend organization?',
+      message: `Suspend ${this.org.organizationName}? Users of this tenant will not be able to sign in until it is activated again.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.')
+    });
   }
   setMaintenance(): void {
     const id = this.org?.tenant?.id;
@@ -580,6 +455,39 @@ export class OrganizationWorkspaceComponent implements OnInit {
     const id = this.org?.tenant?.id;
     if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
     this.runAction(() => this.api.triggerTenantMigration(id), 'Migration started', 'Tenant migration job triggered.');
+  }
+
+  downloadInvoicePdf(): void {
+    if (!this.orgId || !this.org?.subscription) {
+      this.toast('warn', 'Unavailable', 'No subscription invoice is available yet.');
+      return;
+    }
+    this.invoiceDownloading = true;
+    this.cdr.markForCheck();
+    this.api.downloadOrganizationInvoicePdf(this.orgId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: blob => {
+          this.invoiceDownloading = false;
+          const name = `${this.org?.subscription?.invoiceNumber || `onboarding-invoice-${this.orgId}`}.pdf`;
+          this.saveBlob(blob, name);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.invoiceDownloading = false;
+          this.toast('error', 'Download failed', 'Could not generate the invoice PDF.');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   private runAction<T>(fn: () => Observable<T>, summary: string, detail: string): void {

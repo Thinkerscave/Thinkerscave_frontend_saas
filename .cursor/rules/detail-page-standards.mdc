@@ -1,0 +1,42 @@
+---
+description: Detail-page layout — dense, onboarding-shaped, no duplicate facts, verified on localhost
+alwaysApply: true
+---
+
+# Detail page standard
+
+This is a premium product for Indian schools. Open the page on localhost and look at it before calling the work done.
+
+## Verify
+- Load the real record (not a mock). Confirm every field comes from the API.
+- Blank email/mobile/usage after onboarding is a mapping bug, not an empty-state.
+- If two sections show the same plan, code, or status, delete one.
+
+## What to show
+Shape the page from the **Add** form, not from leftover tabs:
+- Identity (name lives in the shell; status + one-line plan/admin on a compact row)
+- Organization basics captured at create (short name, type, domain, address, timezone, currency, language)
+- Dedicated admin/contact block (name, email, mobile)
+- Linked parent (customer, class, etc.) with **View details →**
+- Commercial block (plan, invoice generated from the subscription, trial vs paid, amount paid, coupon)
+- Entitlements + live usage vs plan limits (snapshot from backend, refreshed daily)
+- Tenant/ops (schema, DB size, URL, SSL, maintenance, migration) only once
+- Recent activity from real events (created, provisioned, subscription, backup)
+
+Prefer **one scrolling page**. Tabs only if each tab has unique data and zero repeats.
+
+## Layout
+- `tc-saas-page-header` is actions only: Back, Edit, overflow Actions with tooltips.
+- Tight gaps (~0.7rem). Cards shrink to content. Do not stretch empty columns.
+- No KPI hero, no second copy of the org code, no Suspend button outside Actions.
+
+## Edit
+- Edit navigates to the Add form titled **Edit {Entity}**.
+- Disable immutable fields (customer, domain, original subscription).
+- Keep admin email/mobile, name, address, logo enabled when those are allowed to change.
+
+## Do not
+- Hardcode students/staff/storage percentages or invoice amounts
+- Repeat the same fact on two tabs or two cards
+- Invent actions without a tooltip
+- Ship without opening localhost

@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import {
@@ -34,11 +34,10 @@ interface EnrollmentForm {
   selector: 'app-enrollment-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     FormsModule,
     PaginatorModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent

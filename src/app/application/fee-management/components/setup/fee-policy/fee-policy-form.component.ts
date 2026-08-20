@@ -11,7 +11,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarModule } from 'primeng/calendar';
 import { TextareaModule } from 'primeng/textarea';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { MessageService } from 'primeng/api';
 import { FeeStorageService } from '../../../services/fee-storage.service';
 
@@ -19,16 +19,16 @@ import { FeeStorageService } from '../../../services/fee-storage.service';
   selector: 'app-fee-policy-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule, RouterModule, FormsModule, ReactiveFormsModule,
     CardModule, ButtonModule, InputTextModule, InputNumberModule,
     DropdownModule, CheckboxModule, CalendarModule, TextareaModule,
-    DividerModule, ToastModule
+    DividerModule
   ],
   providers: [MessageService],
   template: `
     <div class="fee-policy-form">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       
       <div class="page-header">
         <div>

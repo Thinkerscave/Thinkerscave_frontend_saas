@@ -436,6 +436,7 @@ export const platformApi = {
   dashboard: `${PLATFORM_BASE}/dashboard`,
   organizations: `${PLATFORM_BASE}/organizations`,
   organizationById: (id: number) => `${PLATFORM_BASE}/organizations/${id}`,
+  organizationInvoicePdf: (id: number) => `${PLATFORM_BASE}/organizations/${id}/invoice`,
   activateOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/activate`,
   suspendOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/suspend`,
   archiveOrganization: (id: number) => `${PLATFORM_BASE}/organizations/${id}/archive`,

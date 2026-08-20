@@ -5,7 +5,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FeeStorageService, FeeGroup } from '../../../services/fee-storage.service';
@@ -14,11 +14,11 @@ import { FeeStorageService, FeeGroup } from '../../../services/fee-storage.servi
   selector: 'app-fee-group-list',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, RouterModule, TableModule, ButtonModule, TagModule, TooltipModule, ToastModule, ConfirmDialogModule],
+  imports: [AppToastComponent, CommonModule, RouterModule, TableModule, ButtonModule, TagModule, TooltipModule, ConfirmDialogModule],
   providers: [ConfirmationService, MessageService],
   template: `
     <div class="fee-group-list">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
       
       <div class="page-header">
