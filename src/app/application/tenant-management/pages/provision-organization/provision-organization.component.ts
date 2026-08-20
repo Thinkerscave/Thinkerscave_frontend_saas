@@ -9,11 +9,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, finalize, Subject, debounceTime, switchMap, of, catchError } from 'rxjs';
 
 import {
-  CustomerListItem, InstitutionType, Promotion,
+  CustomerListItem, InstitutionType, OrganizationDetail, OrganizationUpdatePayload, Promotion,
   ProvisionOrganizationPayload, SubscriptionPlan
 } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
-import { formatCurrency, institutionLabel } from '../../utils/platform-display.util';
+import { formatCurrency, institutionTypeOptions } from '../../utils/platform-display.util';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import {
   LOGO_MAX_DATA_URL_CHARS,
@@ -21,6 +21,7 @@ import {
   fileToCompressedLogoDataUrl
 } from '../../../../shared/utils/logo-data-url.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import {
   AppButtonComponent,
   AppCardComponent,
@@ -31,7 +32,8 @@ import {
   AppSearchableSelectComponent,
   AppSectionHeaderComponent,
   AppSelectComponent,
-  AppSelectOption
+  AppSelectOption,
+  phoneErrorMessage
 } from '../../../../shared/ui/app-form';
 
 type PaymentOption = 'trial' | 'payment_received';
@@ -42,7 +44,7 @@ interface OrgFormModel {
   customerId: string | null;
   organizationName: string;
   shortName: string;
-  institutionType: InstitutionType;
+  institutionType: InstitutionType | null;
   domain: string;
   city: string;
   state: string;
@@ -112,6 +114,7 @@ export class ProvisionOrganizationComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly pageHeader = inject(BreadCrumbService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   loading = true;
@@ -122,6 +125,9 @@ export class ProvisionOrganizationComponent implements OnInit {
   domainAvailable = false;
   couponModalOpen = false;
   couponSearch = '';
+  isEditMode = false;
+  editingOrgId: number | null = null;
+  private editingOrg: OrganizationDetail | null = null;
 
 
 
@@ -142,17 +148,8 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
-  readonly institutionLabel = institutionLabel;
+  readonly institutionOptions: AppSelectOption[] = institutionTypeOptions();
   readonly formatCurrency = formatCurrency;
-
-
-
-  readonly institutionOptions: AppSelectOption[] = [
-    'SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TRAINING_INSTITUTE', 'COACHING', 'OTHER'
-  ].map(value => ({
-    value,
-    label: institutionLabel(value as InstitutionType)
-  }));
 
 
 
@@ -180,14 +177,23 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
   ngOnInit(): void {
+    const orgId = Number(this.route.snapshot.queryParamMap.get('orgId'));
+    if (orgId && !Number.isNaN(orgId)) {
+      this.isEditMode = true;
+      this.editingOrgId = orgId;
+      this.pageHeader.setPageHeader({
+        title: 'Edit Organization',
+        subtitle: 'Update profile, location, logo, and organization admin contact.'
+      });
+    }
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const customerId = Number(params.get('customerId'));
       if (customerId && !Number.isNaN(customerId)) {
         this.pendingCustomerId = customerId;
         this.linkedCustomerId = customerId;
         this.applyPendingCustomer();
-        this.cdr.markForCheck();
       }
+      this.cdr.markForCheck();
     });
     this.domainCheck$
       .pipe(
@@ -325,9 +331,8 @@ export class ProvisionOrganizationComponent implements OnInit {
     return this.isMinimallyValid()
       && !this.submitting
       && !this.loading
-      && !this.domainChecking
       && !this.logoProcessing
-      && !this.errors.domain;
+      && (this.isEditMode || (!this.domainChecking && !this.errors.domain));
   }
 
 
@@ -339,6 +344,10 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
   onFieldChange(key: ErrorKey): void {
+    if (key === 'adminMobile') {
+      this.validateMobile(false);
+      return;
+    }
     if (this.errors[key]) {
       const next = { ...this.errors };
       delete next[key];
@@ -347,12 +356,24 @@ export class ProvisionOrganizationComponent implements OnInit {
     }
   }
 
+  onMobileChange(): void {
+    this.validateMobile(false);
+  }
+
+  onMobileBlur(): void {
+    this.validateMobile(true);
+  }
+
 
 
   normalizeDomain(value: string): void {
     this.form.domain = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     this.onFieldChange('domain');
     this.errorMessage = '';
+    if (this.isEditMode) {
+      this.domainAvailable = true;
+      return;
+    }
     this.domainAvailable = false;
     this.domainCheck$.next(this.form.domain.trim());
   }
@@ -434,6 +455,10 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
   cancel(): void {
+    if (this.isEditMode && this.editingOrgId) {
+      void this.router.navigate(['/app/tenant-management/organizations', this.editingOrgId]);
+      return;
+    }
     if (this.linkedCustomerId) {
       void this.router.navigate(['/app/tenant-management/customers', this.linkedCustomerId]);
       return;
@@ -452,6 +477,11 @@ export class ProvisionOrganizationComponent implements OnInit {
       this.feedback.formError(message, 'Logo upload issue');
       this.focusFirstInvalid();
       this.cdr.markForCheck();
+      return;
+    }
+
+    if (this.isEditMode && this.editingOrgId) {
+      this.submitUpdate();
       return;
     }
 
@@ -512,8 +542,10 @@ export class ProvisionOrganizationComponent implements OnInit {
     }).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => {
-        this.loading = false;
-        this.cdr.markForCheck();
+        if (!this.editingOrgId) {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
       })
     ).subscribe({
       next: ({ customers, plans, promotions }) => {
@@ -523,16 +555,18 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
-        if (!this.form.subscriptionPlanId && this.plans.length) {
+        if (!this.isEditMode && !this.form.subscriptionPlanId && this.plans.length) {
           const recommended = this.plans.find(p => p.recommended) ?? this.plans[0];
           this.form.subscriptionPlanId = String(recommended.id);
         }
 
-
-
         this.applyPendingCustomer();
+        if (this.editingOrgId) {
+          this.loadOrganization(this.editingOrgId);
+        }
       },
       error: () => {
+        this.loading = false;
         this.errorMessage = 'Unable to load customers, plans, or promotions.';
         this.feedback.error('Load failed', this.errorMessage);
       }
@@ -551,6 +585,137 @@ export class ProvisionOrganizationComponent implements OnInit {
     }
   }
 
+  private loadOrganization(orgId: number): void {
+    this.loading = true;
+    this.api.getOrganization(orgId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: org => {
+          if (!org?.id) {
+            this.errorMessage = 'Organization not found.';
+            return;
+          }
+          this.editingOrg = org;
+          this.ensureCustomerOption(org);
+          this.patchFormFromOrg(org);
+          this.pageHeader.setPageHeader({
+            title: 'Edit Organization',
+            subtitle: org.organizationName
+          });
+        },
+        error: () => {
+          this.errorMessage = 'Unable to load this organization for editing.';
+          this.feedback.error('Load failed', this.errorMessage);
+        }
+      });
+  }
+
+  private ensureCustomerOption(org: OrganizationDetail): void {
+    if (!org.customerId) return;
+    const exists = this.customers.some(c => c.id === org.customerId);
+    if (!exists) {
+      this.customers = [
+        {
+          id: org.customerId,
+          customerCode: org.customerCode || '',
+          customerName: org.customerName || 'Customer'
+        },
+        ...this.customers
+      ];
+    }
+  }
+
+  private patchFormFromOrg(org: OrganizationDetail): void {
+    this.form = {
+      customerId: org.customerId ? String(org.customerId) : null,
+      organizationName: org.organizationName ?? '',
+      shortName: org.shortName ?? '',
+      institutionType: org.institutionType ?? null,
+      domain: this.subdomainOf(org),
+      city: org.city ?? '',
+      state: org.state ?? '',
+      country: org.country || 'India',
+      logoUrl: org.logoUrl ?? '',
+      adminFullName: org.adminFullName ?? '',
+      adminEmail: org.adminEmail || org.email || '',
+      adminMobile: org.adminMobile || org.mobileNumber || '',
+      subscriptionPlanId: org.subscription?.subscriptionPlanId
+        ? String(org.subscription.subscriptionPlanId)
+        : this.form.subscriptionPlanId,
+      paymentOption: org.subscription?.status === 'TRIAL' ? 'trial' : 'payment_received',
+      couponCode: org.subscription?.promotionCode ?? '',
+      promotionId: org.subscription?.promotionId ?? null
+    };
+    this.domainAvailable = true;
+    this.cdr.markForCheck();
+  }
+
+  private subdomainOf(org: OrganizationDetail): string {
+    const sub = org.domain?.subDomain || org.domain?.subdomain;
+    if (sub) return sub;
+    const host = org.tenant?.tenantDomain || org.domain?.domain || '';
+    const first = host.split('.')[0];
+    return first && first !== host ? first : host.replace(/\.thinkerscave\.app$/i, '');
+  }
+
+  private submitUpdate(): void {
+    if (!this.editingOrgId || !this.editingOrg) return;
+    this.submitting = true;
+    this.errorMessage = '';
+    this.api.updateOrganization(this.editingOrgId, this.buildUpdatePayload())
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.submitting = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.feedback.success('Organization updated', `${this.form.organizationName.trim()} was saved.`);
+          void this.router.navigate(['/app/tenant-management/organizations', this.editingOrgId]);
+        },
+        error: err => {
+          const parsed = extractApiError(err, 'Could not update organization. Verify inputs and retry.');
+          this.errorMessage = parsed.message;
+          this.feedback.formError(parsed.message, 'Could not update organization');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private buildUpdatePayload(): OrganizationUpdatePayload {
+    const f = this.form;
+    const org = this.editingOrg;
+    return {
+      customerId: Number(f.customerId),
+      organizationName: f.organizationName.trim(),
+      shortName: f.shortName.trim() || undefined,
+      institutionType: f.institutionType!,
+      boardName: org?.boardName,
+      email: f.adminEmail.trim().toLowerCase(),
+      mobileNumber: f.adminMobile.trim(),
+      adminFullName: f.adminFullName.trim(),
+      website: org?.website,
+      addressLine1: [f.city.trim(), f.state.trim(), f.country].filter(Boolean).join(', ') || undefined,
+      city: f.city.trim() || undefined,
+      state: f.state.trim() || undefined,
+      country: f.country,
+      postalCode: org?.postalCode,
+      timeZone: org?.timeZone || org?.configuration?.timeZone || 'Asia/Kolkata',
+      currency: org?.currency || org?.configuration?.currency || 'INR',
+      language: org?.language || org?.configuration?.language || 'en',
+      logoUrl: f.logoUrl.trim() || undefined,
+      remarks: org?.remarks
+    };
+  }
+
 
 
   private emptyForm(): OrgFormModel {
@@ -558,11 +723,11 @@ export class ProvisionOrganizationComponent implements OnInit {
       customerId: null,
       organizationName: '',
       shortName: '',
-      institutionType: 'COLLEGE',
+      institutionType: null,
       domain: '',
       city: '',
       state: '',
-      country: 'India',
+      country: '',
       logoUrl: '',
       adminFullName: '',
       adminEmail: '',
@@ -598,7 +763,7 @@ export class ProvisionOrganizationComponent implements OnInit {
       existingCustomerId: Number(f.customerId),
       organizationName: f.organizationName.trim(),
       shortName: f.shortName.trim(),
-      institutionType: f.institutionType,
+      institutionType: f.institutionType!,
       tenantSubdomain: f.domain.trim(),
       city: f.city.trim(),
       state: f.state.trim(),
@@ -608,6 +773,9 @@ export class ProvisionOrganizationComponent implements OnInit {
       adminLastName: last,
       adminEmail: f.adminEmail.trim().toLowerCase(),
       adminMobile: f.adminMobile.trim(),
+      orgEmail: f.adminEmail.trim().toLowerCase(),
+      orgMobile: f.adminMobile.trim(),
+      addressLine1: [f.city.trim(), f.state.trim(), f.country].filter(Boolean).join(', ') || undefined,
       subscriptionPlanId: Number(f.subscriptionPlanId),
       billingCycle: 'YEARLY',
       trialEnabled: f.paymentOption === 'trial',
@@ -634,7 +802,7 @@ export class ProvisionOrganizationComponent implements OnInit {
       !!f.country &&
       f.adminFullName.trim().length >= 3 &&
       EMAIL_PATTERN.test(f.adminEmail.trim()) &&
-      this.nationalDigits(f.adminMobile).length >= 7 &&
+      phoneErrorMessage(f.adminMobile) === null &&
       !!f.subscriptionPlanId &&
       !!f.paymentOption
     );
@@ -664,11 +832,13 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
     const domain = f.domain.trim();
-    if (!domain) next.domain = 'Domain is required.';
-    else if (!/^[a-z0-9-]+$/.test(domain)) next.domain = 'Use lowercase letters, numbers, and hyphens only.';
-    else if (domain.length < 2) next.domain = 'Domain must be at least 2 characters.';
-    else if (['www', 'api', 'app', 'admin', 'platform', 'public', 'tenant', 'mail', 'test', 'staging'].includes(domain)) {
-      next.domain = `Domain "${domain}" is reserved. Choose another.`;
+    if (!this.isEditMode) {
+      if (!domain) next.domain = 'Domain is required.';
+      else if (!/^[a-z0-9-]+$/.test(domain)) next.domain = 'Use lowercase letters, numbers, and hyphens only.';
+      else if (domain.length < 2) next.domain = 'Domain must be at least 2 characters.';
+      else if (['www', 'api', 'app', 'admin', 'platform', 'public', 'tenant', 'mail', 'test', 'staging'].includes(domain)) {
+        next.domain = `Domain "${domain}" is reserved. Choose another.`;
+      }
     }
 
 
@@ -692,7 +862,10 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
     if (!f.adminMobile.trim()) next.adminMobile = 'Mobile number is required.';
-    else if (!this.isValidPhone(f.adminMobile)) next.adminMobile = 'Enter a valid mobile number.';
+    else {
+      const mobileError = phoneErrorMessage(f.adminMobile);
+      if (mobileError) next.adminMobile = mobileError;
+    }
 
 
 
@@ -701,7 +874,7 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
-    if (f.couponCode.trim() && !f.promotionId) {
+    if (!this.isEditMode && f.couponCode.trim() && !f.promotionId) {
       const matched = this.promotions.find(p => p.promotionCode.toLowerCase() === f.couponCode.trim().toLowerCase());
       if (matched) {
         this.form.promotionId = matched.id;
@@ -728,24 +901,26 @@ export class ProvisionOrganizationComponent implements OnInit {
 
 
 
+  private validateMobile(requireValue: boolean): void {
+    const value = this.form.adminMobile.trim();
+    const next = { ...this.errors };
+    if (!value) {
+      if (requireValue) next.adminMobile = 'Mobile number is required.';
+      else delete next.adminMobile;
+    } else {
+      const message = phoneErrorMessage(value);
+      if (message) next.adminMobile = message;
+      else delete next.adminMobile;
+    }
+    this.errors = next;
+    this.cdr.markForCheck();
+  }
+
   private focusFirstInvalid(): void {
     queueMicrotask(() => {
       const invalid = this.host.nativeElement.querySelector('.is-invalid, .app-field__control.is-invalid') as HTMLElement | null;
       invalid?.focus?.();
     });
-  }
-
-
-
-  private isValidPhone(value: string): boolean {
-    const digits = this.nationalDigits(value);
-    return digits.length >= 7 && digits.length <= 15;
-  }
-
-
-
-  private nationalDigits(value: string): string {
-    return (value ?? '').replace(/\D/g, '');
   }
 }
 

@@ -7,7 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
@@ -34,9 +34,8 @@ interface SourceEntry {
   selector: 'app-admissions-reports',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasStatGridComponent

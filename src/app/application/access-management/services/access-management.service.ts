@@ -10,6 +10,7 @@ import {
   AccessMenu,
   AccessRole,
   AccessUser,
+  CreateMenuPayload,
   CreateRolePayload,
   EffectivePermission,
   LoginHistoryEntry,
@@ -19,6 +20,7 @@ import {
   RoleType,
   SecurityPolicy,
   SpringPage,
+  UpdateMenuPayload,
   UpdateRolePayload,
   UserPermissionOverride,
   UserStatus
@@ -55,14 +57,16 @@ export class AccessManagementService {
           activeUsers: userList.filter(u => u.status === 'ACTIVE').length,
           totalMenus: flatMenus.length,
           activeMenus,
-          lockedUsers
+          lockedUsers,
+          roles
         };
       })
     );
   }
 
-  getRoles(): Observable<AccessRole[]> {
-    return this.http.get<unknown>(accessApi.roles).pipe(
+  getRoles(includeInactive = false): Observable<AccessRole[]> {
+    const params = includeInactive ? new HttpParams().set('includeInactive', 'true') : undefined;
+    return this.http.get<unknown>(accessApi.roles, { params }).pipe(
       map(r => unwrapApiResponse<AccessRole[]>(r, []))
     );
   }
@@ -79,6 +83,14 @@ export class AccessManagementService {
   getRole(id: number): Observable<AccessRole> {
     return this.http.get<unknown>(accessApi.roleById(id)).pipe(
       map(r => unwrapApiResponse<AccessRole>(r, {} as AccessRole))
+    );
+  }
+
+  getRoleUsers(roleId: number, organizationId?: number): Observable<AccessUser[]> {
+    let params = new HttpParams();
+    if (organizationId != null) params = params.set('organizationId', String(organizationId));
+    return this.http.get<unknown>(accessApi.roleUsers(roleId), { params }).pipe(
+      map(r => unwrapApiResponse<AccessUser[]>(r, []))
     );
   }
 
@@ -112,10 +124,27 @@ export class AccessManagementService {
     return this.http.put<unknown>(accessApi.rolePermissions(roleId, organizationId), { permissions }).pipe(map(() => undefined));
   }
 
-  getMenuTree(): Observable<AccessMenu[]> {
-    return this.http.get<unknown>(accessApi.menuTree).pipe(
+  getMenuTree(includeInactive = false): Observable<AccessMenu[]> {
+    const params = includeInactive ? new HttpParams().set('includeInactive', 'true') : undefined;
+    return this.http.get<unknown>(accessApi.menuTree, { params }).pipe(
       map(r => unwrapApiResponse<AccessMenu[]>(r, []))
     );
+  }
+
+  createMenu(payload: CreateMenuPayload): Observable<AccessMenu> {
+    return this.http.post<unknown>(accessApi.menus, payload).pipe(
+      map(r => unwrapApiResponse<AccessMenu>(r, {} as AccessMenu))
+    );
+  }
+
+  updateMenu(id: number, payload: UpdateMenuPayload): Observable<AccessMenu> {
+    return this.http.put<unknown>(accessApi.menuById(id), payload).pipe(
+      map(r => unwrapApiResponse<AccessMenu>(r, {} as AccessMenu))
+    );
+  }
+
+  deleteMenu(id: number): Observable<void> {
+    return this.http.delete<unknown>(accessApi.menuById(id)).pipe(map(() => undefined));
   }
 
   activateMenu(id: number): Observable<void> {

@@ -11,7 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -53,10 +53,9 @@ interface SourceEntry {
   selector: 'app-admissions-overview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     RouterLink,
-    ToastModule,
     SaasStatGridComponent,
     SaasPanelComponent
   ],

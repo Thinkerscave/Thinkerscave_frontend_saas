@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, OnChanges, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { StaffAttendanceToggleData } from '../../models/dashboard.model';
 
@@ -13,11 +13,11 @@ import { StaffAttendanceToggleData } from '../../models/dashboard.model';
 @Component({
   selector: 'tc-staff-attendance-toggle-widget',
   standalone: true,
-  imports: [CommonModule, ToastModule],
+  imports: [AppToastComponent, CommonModule],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <p-toast position="top-right" key="attendance"></p-toast>
+    <app-toast key="attendance"></app-toast>
     <div class="w-attendance-toggle">
       <div class="w-attendance-toggle__status">
         <span class="w-attendance-toggle__dot" [attr.data-active]="state.signedIn && !state.signedOut" [attr.data-done]="state.signedOut"></span>

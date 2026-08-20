@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/c
 import { Router, RouterLink, RouterOutlet, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
-import { ToastModule } from 'primeng/toast';
 import { AuthIllustrationComponent } from '../components/auth-illustration/auth-illustration.component';
 import { AuthTrustStripComponent } from '../components/auth-trust-strip/auth-trust-strip.component';
 

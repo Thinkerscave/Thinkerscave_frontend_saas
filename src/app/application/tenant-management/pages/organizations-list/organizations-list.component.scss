@@ -34,8 +34,8 @@
   gap: 8px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--tc-border);
-  overflow-x: auto;           // scroll on very narrow screens instead of stacking
-  flex-wrap: nowrap;          // never wrap — everything stays in one row
+  overflow: visible;
+  flex-wrap: wrap;
 
   // ── Spacer — pushes right-side controls to the end ──
   &__spacer { flex: 1; }
@@ -98,6 +98,10 @@
       padding: 0 0.7rem;
       display: flex;
       align-items: center;
+    }
+
+    &--type {
+      width: 196px;
     }
   }
 

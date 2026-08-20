@@ -4,6 +4,7 @@ export type RoleType =
   | 'SUPER_ADMIN' | 'ORGANIZATION_OWNER' | 'ORGANIZATION_ADMIN' | 'STAFF' | 'STUDENT' | 'PARENT';
 
 export type MenuType = 'MODULE' | 'PAGE';
+export type MenuScope = 'PLATFORM' | 'CORE' | 'SUBSCRIPTION';
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED' | 'SUSPENDED';
 export type LoginStatus = 'SUCCESS' | 'FAILED' | 'LOCKED' | 'LOGGED_OUT';
 
@@ -46,6 +47,10 @@ export interface AccessMenu {
   showInSidebar?: boolean;
   active?: boolean;
   defaultPage?: boolean;
+  menuScope?: MenuScope;
+  featureId?: number;
+  featureCode?: string;
+  featureName?: string;
   children?: AccessMenu[];
 }
 
@@ -137,6 +142,36 @@ export interface LoginHistoryEntry {
   failureReason?: string;
 }
 
+export interface CreateMenuPayload {
+  menuCode: string;
+  menuName: string;
+  description?: string;
+  route?: string;
+  icon?: string;
+  menuType: MenuType;
+  parentMenuId?: number | null;
+  displayOrder?: number;
+  showInSidebar?: boolean;
+  defaultPage?: boolean;
+  active?: boolean;
+  menuScope?: MenuScope;
+  featureId?: number | null;
+}
+
+export interface UpdateMenuPayload {
+  menuName: string;
+  description?: string;
+  route?: string;
+  icon?: string;
+  parentMenuId?: number | null;
+  displayOrder?: number;
+  showInSidebar?: boolean;
+  defaultPage?: boolean;
+  active?: boolean;
+  menuScope?: MenuScope;
+  featureId?: number | null;
+}
+
 export interface CreateRolePayload {
   roleCode: string;
   roleName: string;
@@ -144,6 +179,7 @@ export interface CreateRolePayload {
   roleType: RoleType;
   dashboardCode?: string;
   displayOrder?: number;
+  active?: boolean;
 }
 
 export interface UpdateRolePayload {
@@ -176,4 +212,5 @@ export interface AccessDashboardSummary {
   totalMenus: number;
   activeMenus: number;
   lockedUsers: number;
+  roles?: AccessRole[];
 }

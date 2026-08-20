@@ -4,18 +4,22 @@ import {
   HostListener, OnInit, inject
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DropdownModule } from 'primeng/dropdown';
+import { TooltipModule } from 'primeng/tooltip';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
-import { OrganizationDetail } from '../../models/platform.model';
+import {
+  FeatureOverride, OrganizationDetail, PlatformFeature
+} from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import {
   formatCurrency,
   formatDate,
-  healthScore,
-  healthTone,
   institutionLabel,
-  orgInitials,
   organizationStatusLabel,
   statusTone,
   subscriptionStatusLabel,
@@ -23,7 +27,13 @@ import {
 } from '../../utils/platform-display.util';
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-import { SaasPillComponent } from '../../../../shared/ui/saas';
+import {
+  SaasPageHeaderComponent,
+  SaasPanelComponent,
+  SaasPillComponent,
+  SaasTab,
+  SaasTabsComponent
+} from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
@@ -32,7 +42,11 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   selector: 'app-organization-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, SaasPillComponent],
+  imports: [
+    CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, TooltipModule,
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
+  ],
+  providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',
   styleUrl: './organization-workspace.component.scss'
 })
@@ -45,36 +59,56 @@ export class OrganizationWorkspaceComponent implements OnInit {
   private readonly feedback = inject(UiFeedbackService);
   private readonly pageHeader = inject(BreadCrumbService);
 
+  private readonly confirm = inject(ConfirmationService);
+
   loading = true;
   actionLoading = false;
+  overrideSaving = false;
+  invoiceDownloading = false;
   errorMessage = '';
   org: OrganizationDetail | null = null;
   orgId = 0;
   activeTab = 'overview';
   actionsMenuOpen = false;
-
-  readonly tabs = [
-    { key: 'overview',      label: 'Overview',           icon: 'pi pi-id-card' },
-    { key: 'subscription',  label: 'Subscription & Plan', icon: 'pi pi-credit-card' },
-    { key: 'features',      label: 'Feature Overrides',   icon: 'pi pi-sliders-h' },
-    { key: 'tenant',        label: 'Tenant Details',      icon: 'pi pi-server' },
-    { key: 'timeline',      label: 'Timeline',            icon: 'pi pi-history' }
+  overrideEditorOpen = false;
+  readonly tabs: SaasTab[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'billing', label: 'Subscription & Billing' },
+    { key: 'tenant', label: 'Tenant & Activity' }
   ];
+  features: PlatformFeature[] = [];
+  overrideDraft: {
+    id?: number;
+    featureId: number | null;
+    enabled: boolean;
+    overrideReason: string;
+    remarks: string;
+  } = this.emptyOverrideDraft();
 
-  // ── util references exposed to template ─────────────────────────
-  readonly orgInitials            = orgInitials;
-  readonly institutionLabel       = institutionLabel;
   readonly organizationStatusLabel = organizationStatusLabel;
   readonly subscriptionStatusLabel = subscriptionStatusLabel;
   readonly formatDate              = formatDate;
   readonly formatCurrency          = formatCurrency;
-  readonly healthScore             = healthScore;
-  readonly healthTone              = healthTone;
 
   // ── lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
     this.orgId = Number(this.route.snapshot.paramMap.get('orgId'));
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.tabs.some(item => item.key === tab)) {
+      this.activeTab = tab;
+    }
     this.load(this.orgId);
+  }
+
+  onTabChange(tab: string): void {
+    this.activeTab = tab;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.cdr.markForCheck();
   }
 
   // ── click-outside closes the actions menu ────────────────────────
@@ -95,8 +129,11 @@ export class OrganizationWorkspaceComponent implements OnInit {
     }
     this.loading = true;
     this.errorMessage = '';
-    this.api.getOrganization(orgId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: org => {
+    forkJoin({
+      org: this.api.getOrganization(orgId),
+      features: this.api.getFeatures().pipe(catchError(() => of([])))
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ org, features }) => {
         if (!org?.id) {
           this.errorMessage = 'Organization not found. It may have been removed or your access was revoked.';
           this.org = null;
@@ -105,6 +142,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.pageHeader.setPageHeader({ title: org.organizationName || 'Organization Details' });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
+        this.features = (features ?? []).filter(f => f.active !== false);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -129,7 +167,166 @@ export class OrganizationWorkspaceComponent implements OnInit {
     return [this.org.city, this.org.state, this.org.country].filter(Boolean).join(', ');
   }
 
+  get institutionTypeText(): string {
+    return this.org ? institutionLabel(this.org.institutionType) : '—';
+  }
+
+  get displayEmail(): string {
+    return this.org?.adminEmail?.trim() || this.org?.email?.trim() || '—';
+  }
+
+  get displayMobile(): string {
+    return this.org?.adminMobile?.trim() || this.org?.mobileNumber?.trim() || '—';
+  }
+
+  get entitledFeatures() {
+    return this.org?.entitledFeatures ?? [];
+  }
+
+  get isTrial(): boolean {
+    return this.org?.subscription?.status === 'TRIAL';
+  }
+
+  get amountPaid(): number {
+    if (!this.org?.subscription || this.isTrial) return 0;
+    return this.org.subscription.finalAmount ?? 0;
+  }
+
+  get displayDomain(): string {
+    const sub = this.org?.domain?.subDomain || this.org?.domain?.subdomain;
+    if (sub) return `${sub}.thinkerscave.app`;
+    return this.org?.tenant?.tenantDomain?.trim() || '';
+  }
+
+  get displayAddress(): string {
+    const lines = [this.org?.addressLine1, this.org?.addressLine2].filter(Boolean);
+    if (lines.length) return lines.join(', ');
+    return this.locationLabel || '—';
+  }
+
   get featureOverrides() { return this.org?.subscription?.featureOverrides ?? []; }
+
+  get planSummary(): string {
+    if (!this.org?.subscription) return 'No subscription';
+    const plan = this.org.subscription.planName || this.org.subscription.planCode || 'Plan';
+    return `${plan} · ${this.billingCycleLabel(this.org.subscription.billingCycle)}`;
+  }
+
+  get orgInitials(): string {
+    const source = this.org?.shortName || this.org?.organizationName || 'ORG';
+    const parts = source.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return source.slice(0, 2).toUpperCase();
+  }
+
+  get paymentStatusLabel(): string {
+    const status = this.org?.subscription?.status;
+    if (!status) return '—';
+    if (this.isTrial) return 'Unpaid';
+    if (status === 'ACTIVE') return 'Paid';
+    if (status === 'EXPIRED') return 'Overdue';
+    return this.subscriptionStatusLabel(status);
+  }
+
+  get recentActivityPreview() {
+    return this.timelineEvents.slice(0, 3);
+  }
+
+  get overrideFeatureOptions(): { label: string; value: number }[] {
+    const taken = new Set(this.featureOverrides
+      .filter(item => item.id !== this.overrideDraft.id)
+      .map(item => item.featureId));
+    return this.features
+      .filter(feature => !taken.has(feature.id))
+      .map(feature => ({
+        label: `${feature.displayName || feature.featureName} (${feature.featureCode})`,
+        value: feature.id
+      }));
+  }
+
+  openAddOverride(): void {
+    if (!this.org?.subscription?.id) {
+      this.toast('warn', 'Unavailable', 'Assign a subscription before adding feature overrides.');
+      return;
+    }
+    this.onTabChange('billing');
+    this.overrideDraft = this.emptyOverrideDraft();
+    this.overrideEditorOpen = true;
+  }
+
+  openEditOverride(override: FeatureOverride): void {
+    this.overrideDraft = {
+      id: override.id,
+      featureId: override.featureId,
+      enabled: override.enabled !== false,
+      overrideReason: override.overrideReason ?? '',
+      remarks: override.remarks ?? ''
+    };
+    this.overrideEditorOpen = true;
+  }
+
+  closeOverrideEditor(): void {
+    this.overrideEditorOpen = false;
+  }
+
+  saveOverride(): void {
+    const subscriptionId = this.org?.subscription?.id;
+    if (!subscriptionId || !this.overrideDraft.featureId) {
+      this.toast('warn', 'Missing fields', 'Choose a feature to grant or revoke.');
+      return;
+    }
+    this.overrideSaving = true;
+    const payload = {
+      organizationSubscriptionId: subscriptionId,
+      featureId: this.overrideDraft.featureId,
+      enabled: this.overrideDraft.enabled,
+      overrideReason: this.overrideDraft.overrideReason.trim() || undefined,
+      remarks: this.overrideDraft.remarks.trim() || undefined
+    };
+    const request$ = this.overrideDraft.id
+      ? this.api.updateFeatureOverride(this.overrideDraft.id, payload)
+      : this.api.createFeatureOverride(payload);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.overrideSaving = false;
+        this.overrideEditorOpen = false;
+        this.toast('success', 'Override saved', 'The organization is now entitled at feature level. Menus will follow for this tenant.');
+        this.load(this.orgId);
+      },
+      error: () => {
+        this.overrideSaving = false;
+        this.toast('error', 'Failed', 'Could not save the feature override.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  confirmRemoveOverride(override: FeatureOverride): void {
+    this.confirm.confirm({
+      header: 'Remove override?',
+      message: `Remove the extra feature "${override.featureName || override.featureCode}" from this organization?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.api.deleteFeatureOverride(override.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.toast('success', 'Override removed', 'The organization now follows the subscription plan for this feature.');
+          this.load(this.orgId);
+        },
+        error: () => this.toast('error', 'Failed', 'Could not remove this override.')
+      })
+    });
+  }
+
+  private emptyOverrideDraft() {
+    return {
+      featureId: null as number | null,
+      enabled: true,
+      overrideReason: '',
+      remarks: ''
+    };
+  }
 
   get timelineEvents(): { title: string; detail: string; date?: string; icon: string; color: string }[] {
     if (!this.org) return [];
@@ -169,32 +366,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
       title: 'Remarks', color: 'gray',
       detail: this.org.remarks.trim(), icon: 'pi pi-comment'
     });
-    return events;
-  }
-
-  // ── display helpers ──────────────────────────────────────────────
-  orgColor(name: string): string {
-    const palette = ['indigo', 'violet', 'emerald', 'teal', 'amber', 'rose', 'sky', 'orange'];
-    return palette[(name?.charCodeAt(0) ?? 0) % palette.length];
-  }
-
-  storagePercent(org: OrganizationDetail): number {
-    const used = org.tenant?.storageUsedMb ?? 0;
-    const limit = (org.configuration?.storageLimitGb ?? 0) * 1024;
-    if (!limit) return 0;
-    return Math.min(100, Math.round((used / limit) * 100));
-  }
-
-  daysRemaining(endDate?: string | null): number {
-    if (!endDate) return 0;
-    const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86400000);
-    return Math.max(0, diff);
-  }
-
-  healthLabel(score: number): string {
-    if (score >= 80) return 'Healthy';
-    if (score >= 50) return 'At Risk';
-    return 'Critical';
+    return events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }
 
   orgStatusTone(): PillTone { return statusTone(this.org?.status) as PillTone; }
@@ -233,8 +405,22 @@ export class OrganizationWorkspaceComponent implements OnInit {
     }
   }
 
-  // ── actions ──────────────────────────────────────────────────────
   back(): void { this.router.navigate(['/app/tenant-management/organizations']); }
+
+  viewCustomer(): void {
+    if (!this.org?.customerId) {
+      this.toast('warn', 'Unavailable', 'No customer is linked to this organization.');
+      return;
+    }
+    void this.router.navigate(['/app/tenant-management/customers', this.org.customerId]);
+  }
+
+  openEdit(): void {
+    if (!this.orgId) return;
+    void this.router.navigate(['/app/tenant-management/organizations/create'], {
+      queryParams: { orgId: this.orgId }
+    });
+  }
 
   activate(): void {
     if (!this.org) return;
@@ -242,7 +428,13 @@ export class OrganizationWorkspaceComponent implements OnInit {
   }
   suspend(): void {
     if (!this.org) return;
-    this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.');
+    this.confirm.confirm({
+      header: 'Suspend organization?',
+      message: `Suspend ${this.org.organizationName}? Users of this tenant will not be able to sign in until it is activated again.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.runAction(() => this.api.suspendOrganization(this.org!.id), 'Suspended', 'Organization suspended.')
+    });
   }
   setMaintenance(): void {
     const id = this.org?.tenant?.id;
@@ -263,6 +455,39 @@ export class OrganizationWorkspaceComponent implements OnInit {
     const id = this.org?.tenant?.id;
     if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
     this.runAction(() => this.api.triggerTenantMigration(id), 'Migration started', 'Tenant migration job triggered.');
+  }
+
+  downloadInvoicePdf(): void {
+    if (!this.orgId || !this.org?.subscription) {
+      this.toast('warn', 'Unavailable', 'No subscription invoice is available yet.');
+      return;
+    }
+    this.invoiceDownloading = true;
+    this.cdr.markForCheck();
+    this.api.downloadOrganizationInvoicePdf(this.orgId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: blob => {
+          this.invoiceDownloading = false;
+          const name = `${this.org?.subscription?.invoiceNumber || `onboarding-invoice-${this.orgId}`}.pdf`;
+          this.saveBlob(blob, name);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.invoiceDownloading = false;
+          this.toast('error', 'Download failed', 'Could not generate the invoice PDF.');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   private runAction<T>(fn: () => Observable<T>, summary: string, detail: string): void {

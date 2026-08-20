@@ -10,7 +10,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CommonModule } from '@angular/common';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../core/feedback/app-toast.component';
 import { AdmissionService } from '../../../services/admission.service';
 import { LoginService } from '../../../core/services/login.service';
 import { TenantConfigService, TenantConfig } from '../../../core/services/tenant-config.service';
@@ -19,7 +19,7 @@ import { LoggerService } from '../../../core/services/logger.service';
 @Component({
   selector: 'app-student-admission-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     ReactiveFormsModule,
     StepsModule,
@@ -29,8 +29,7 @@ import { LoggerService } from '../../../core/services/logger.service';
     DropdownModule,
     FileUploadModule,
     ButtonModule,
-    CheckboxModule,
-    ToastModule
+    CheckboxModule
   ],
   templateUrl: './student-admission-form.component.html',
   styleUrl: './student-admission-form.component.scss',

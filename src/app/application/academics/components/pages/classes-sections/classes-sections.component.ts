@@ -90,7 +90,7 @@ export class ClassesSectionsPageComponent implements OnInit {
   activeFilter: boolean | null = true;
   viewMode: 'grid' | 'list' = 'grid';
   page = 1;
-  pageSize = 10;
+  pageSize = 12;
 
   showClassDialog = false;
   editingClassId: number | null = null;
@@ -204,7 +204,7 @@ export class ClassesSectionsPageComponent implements OnInit {
   }
 
   setPageSize(size: number): void {
-    this.pageSize = Number(size) || 10;
+    this.pageSize = Number(size) || 12;
     this.page = 1;
     this.cdr.markForCheck();
   }
@@ -344,13 +344,6 @@ export class ClassesSectionsPageComponent implements OnInit {
     );
   }
 
-  openSubjectMapping(classId: number): void {
-    void this.router.navigate(
-      ['/app/academics/classes-sections', classId, 'subjects'],
-      { queryParams: { from: 'classes' } }
-    );
-  }
-
   buildMenu(cls: AcademicClassDto): void {
     const items: MenuItem[] = [
       {
@@ -359,14 +352,6 @@ export class ClassesSectionsPageComponent implements OnInit {
         command: () => this.openDetails(cls.classId)
       }
     ];
-
-    if (this.canManage && cls.active) {
-      items.push({
-        label: 'Map Subjects',
-        icon: 'pi pi-link',
-        command: () => this.openSubjectMapping(cls.classId)
-      });
-    }
 
     if (this.canManage) {
       items.push({

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, finalize, switchMap, timer, takeWhile, tap } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -26,7 +26,6 @@ import { TeacherAllocationApiService } from '../../../services/teacher-allocatio
 import { TimetableApiService } from '../../../services/timetable-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
-import { ClassSectionDto } from '../../../models/classes-sections.model';
 import {
   ACADEMICS_TIMETABLE_RESOURCE,
   AcademicResource,
@@ -44,6 +43,8 @@ import {
   TimetableVersion,
   TimetableWorkingDay
 } from '../../../models/timetable.model';
+
+type TimetableTab = 'readiness' | 'configuration' | 'timetable' | 'conflicts';
 
 @Component({
   selector: 'app-timetable-page',
@@ -91,8 +92,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   selectedYearId: number | null = null;
   dashboard: TimetableDashboard | null = null;
   readiness: TimetableReadiness | null = null;
-  configOpen = false;
-  readinessOpen = false;
+  activeTab: TimetableTab = 'readiness';
 
   generationProgress: GenerationProgress | null = null;
   activeGenerationId: string | null = null;
@@ -107,8 +107,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   gridView: GridView = 'CLASS';
   grid: TimetableGrid | null = null;
   conflicts: TimetableConflict[] = [];
-  conflictPage = 1;
-  conflictPageSize = 8;
 
   classOptions: { label: string; value: number }[] = [];
   sectionOptions: { label: string; value: number }[] = [];
@@ -125,8 +123,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   };
 
   private allClasses: any[] = [];
-  private cellIndex = new Map<string, TimetableGridCell[]>();
-  loadingSections = false;
 
   get readOnly(): boolean {
     return !!this.dashboard?.yearReadOnly;
@@ -138,54 +134,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   get canApprove(): boolean {
     return this.permissions.canApprove(this.resource);
-  }
-
-  get gridFill(): { filled: number; slots: number } {
-    const teaching = (this.grid?.periods || []).filter((p) => p.slotKind !== 'BREAK').length;
-    const days = this.grid?.workingDays?.length ?? 0;
-    const slots = teaching * days;
-    const filled = new Set(
-      (this.grid?.cells || [])
-        .filter((c) => !!c.subjectName)
-        .map((c) => `${this.normalizeDay(c.dayOfWeek)}-${c.periodNumber ?? c.periodId}`)
-    ).size;
-    return { filled, slots };
-  }
-
-  get gridSubjects(): string[] {
-    const names = (this.grid?.cells || [])
-      .map((c) => (c.subjectName || '').trim())
-      .filter(Boolean);
-    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
-  }
-
-  get gridLooksSingleSubject(): boolean {
-    return this.gridSubjects.length === 1 && this.gridFill.filled > 3;
-  }
-
-  get canGenerateNow(): boolean {
-    if (!this.canManage || this.generating || this.loadingReadiness) return false;
-    return !!this.readiness?.ready;
-  }
-
-  get openBlockingCount(): number {
-    return this.conflicts.filter((c) => c.status === 'OPEN' && c.blocking).length;
-  }
-
-  get pagedConflicts(): TimetableConflict[] {
-    const start = (this.conflictPage - 1) * this.conflictPageSize;
-    return this.conflicts.slice(start, start + this.conflictPageSize);
-  }
-
-  get conflictPages(): number {
-    return Math.max(1, Math.ceil(this.conflicts.length / this.conflictPageSize));
-  }
-
-  get classHasNoSections(): boolean {
-    return this.gridView === 'CLASS'
-      && !!this.gridClassId
-      && !this.gridSectionId
-      && !this.loadingSections;
   }
 
   ngOnInit(): void {
@@ -223,18 +171,16 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.cancelPoll$.complete();
   }
 
-  reload(showPageLoader = true): void {
+  reload(): void {
     if (!this.selectedYearId) return;
-    if (showPageLoader) this.loading = true;
+    this.loading = true;
     this.api.getDashboard(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
+          this.loadSupportingData();
           this.loadReadiness();
-          this.loadClasses();
-          this.loadVersions();
-          this.loadConflictsForLatest();
         },
         error: (err) => this.messages.add({
           severity: 'error',
@@ -249,35 +195,23 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.readiness = null;
     this.config = this.emptyConfig();
     this.versions = [];
-    this.selectedVersionId = null;
     this.grid = null;
-    this.indexGrid(null);
-    this.gridClassId = null;
-    this.gridSectionId = null;
-    this.sectionOptions = [];
-    this.staffOptions = [];
-    this.gridStaffId = null;
-    this.gridResourceId = null;
     this.conflicts = [];
-    this.configOpen = false;
-    this.readinessOpen = false;
     this.stopPolling();
     this.reload();
   }
 
-  toggleReadiness(): void {
-    this.readinessOpen = !this.readinessOpen;
-    if (this.readinessOpen && !this.readiness) this.loadReadiness();
-  }
-
-  openConfigure(): void {
-    this.configOpen = true;
-    if (!this.config.timetableConfigurationId) this.loadConfiguration();
-    if (!this.resources.length) this.loadResources();
-  }
-
-  closeConfigure(): void {
-    this.configOpen = false;
+  switchTab(tab: TimetableTab): void {
+    this.activeTab = tab;
+    if (tab === 'configuration' && !this.config.timetableConfigurationId) {
+      this.loadConfiguration();
+    }
+    if (tab === 'timetable') {
+      this.loadVersions();
+    }
+    if (tab === 'conflicts') {
+      this.loadConflictsForLatest();
+    }
   }
 
   /* ═══ READINESS ═══ */
@@ -288,10 +222,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.api.getReadiness(this.selectedYearId)
       .pipe(finalize(() => { this.loadingReadiness = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: (r) => {
-          this.readiness = r;
-          if (!r.ready) this.readinessOpen = true;
-        },
+        next: (r) => this.readiness = r,
         error: () => this.messages.add({ severity: 'error', summary: 'Unable to load readiness checks' })
       });
   }
@@ -406,24 +337,28 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
         summary: 'Timetable generated',
         detail: `Version ${progress.versionNumber} · ${result?.totalConflicts ?? 0} conflicts`
       });
+      this.reload();
+      this.activeTab = 'timetable';
       this.selectedVersionId = progress.timetableVersionId;
-      this.reload(false);
+      this.loadVersions();
+      this.loadGrid();
     } else if (kind === 'BLOCKED') {
       this.messages.add({
         severity: 'warn',
         summary: 'Generation blocked',
         detail: result?.message || progress.message || 'Generation completed with blocking conflicts'
       });
+      this.reload();
+      this.activeTab = 'conflicts';
       this.selectedVersionId = progress.timetableVersionId;
-      this.readinessOpen = true;
-      this.reload(false);
+      this.loadConflictsForLatest();
     } else {
       this.messages.add({
         severity: 'error',
         summary: 'Generation failed',
         detail: progress.message || `Generation ${progress.generationId} failed`
       });
-      this.reload(false);
+      this.reload();
     }
 
     this.generationProgress = null;
@@ -435,7 +370,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.api.submitVersion(versionId)
       .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => { this.messages.add({ severity: 'success', summary: 'Version submitted' }); this.reload(false); },
+        next: () => { this.messages.add({ severity: 'success', summary: 'Version submitted' }); this.reload(); },
         error: (err) => this.messages.add({ severity: 'error', summary: 'Submit failed', detail: err?.error?.message })
       });
   }
@@ -445,7 +380,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.api.approveVersion(versionId)
       .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => { this.messages.add({ severity: 'success', summary: 'Version approved' }); this.reload(false); },
+        next: () => { this.messages.add({ severity: 'success', summary: 'Version approved' }); this.reload(); },
         error: (err) => this.messages.add({ severity: 'error', summary: 'Approval failed', detail: err?.error?.message })
       });
   }
@@ -455,7 +390,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.api.rejectVersion(versionId)
       .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => { this.messages.add({ severity: 'success', summary: 'Version rejected' }); this.reload(false); },
+        next: () => { this.messages.add({ severity: 'success', summary: 'Version rejected' }); this.reload(); },
         error: (err) => this.messages.add({ severity: 'error', summary: 'Rejection failed', detail: err?.error?.message })
       });
   }
@@ -470,7 +405,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
         this.api.publishVersion(versionId)
           .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
           .subscribe({
-            next: () => { this.messages.add({ severity: 'success', summary: 'Timetable published' }); this.reload(false); },
+            next: () => { this.messages.add({ severity: 'success', summary: 'Timetable published' }); this.reload(); },
             error: (err) => this.messages.add({ severity: 'error', summary: 'Publish failed', detail: err?.error?.message })
           });
       }
@@ -514,7 +449,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
         next: (saved) => {
           this.config = saved;
           this.messages.add({ severity: 'success', summary: 'Configuration saved' });
-          this.loadReadiness();
         },
         error: (err) => this.messages.add({
           severity: 'error',
@@ -609,13 +543,10 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
           value: v.timetableVersionId
         }));
         if (!this.selectedVersionId && list.length) {
-          const sorted = [...list].sort((a, b) => b.versionNumber - a.versionNumber);
-          const preferred = sorted.find((v) => v.status === 'PUBLISHED') ?? sorted[0];
-          this.selectedVersionId = preferred.timetableVersionId;
+          this.selectedVersionId = list[0].timetableVersionId;
         }
         if (this.selectedVersionId) {
           this.loadGrid();
-          this.loadConflictsForLatest();
         }
         this.cdr.markForCheck();
       },
@@ -624,31 +555,12 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   }
 
   loadGrid(): void {
-    if (!this.selectedVersionId) {
-      this.grid = null;
-      this.indexGrid(null);
-      return;
-    }
-    if (this.gridView === 'CLASS' && !this.gridSectionId) {
-      this.grid = null;
-      this.indexGrid(null);
-      return;
-    }
-    if (this.gridView === 'TEACHER' && !this.gridStaffId) {
-      this.grid = null;
-      this.indexGrid(null);
-      return;
-    }
-    if (this.gridView === 'ROOM' && !this.gridResourceId) {
-      this.grid = null;
-      this.indexGrid(null);
-      return;
-    }
+    if (!this.selectedVersionId) { this.grid = null; return; }
     this.loadingGrid = true;
     const params: Record<string, any> = {};
-    if (this.gridView === 'CLASS' && this.gridSectionId) {
-      params['sectionId'] = this.gridSectionId;
-      if (this.gridClassId) params['classId'] = this.gridClassId;
+    if (this.gridView === 'CLASS') {
+      if (this.gridSectionId) params['sectionId'] = this.gridSectionId;
+      else if (this.gridClassId) params['classId'] = this.gridClassId;
     }
     if (this.gridView === 'TEACHER' && this.gridStaffId) params['staffId'] = this.gridStaffId;
     if (this.gridView === 'ROOM' && this.gridResourceId) params['resourceId'] = this.gridResourceId;
@@ -656,91 +568,24 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.api.getGrid(this.selectedVersionId, this.gridView, params)
       .pipe(finalize(() => { this.loadingGrid = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: (g) => {
-          this.grid = g;
-          this.indexGrid(g);
-        },
-        error: () => {
-          this.grid = null;
-          this.indexGrid(null);
-          this.messages.add({ severity: 'error', summary: 'Unable to load grid' });
-        }
+        next: (g) => this.grid = g,
+        error: () => { this.grid = null; this.messages.add({ severity: 'error', summary: 'Unable to load grid' }); }
       });
-  }
-
-  onVersionChange(): void {
-    this.conflictPage = 1;
-    this.loadGrid();
-    this.loadConflictsForLatest();
-  }
-
-  setGridView(view: GridView): void {
-    if (this.gridView === view) {
-      this.loadGrid();
-      return;
-    }
-    this.gridView = view;
-    this.grid = null;
-    this.indexGrid(null);
-    if (view === 'CLASS') {
-      if (this.gridClassId && this.gridSectionId) this.loadGrid();
-      else if (this.gridClassId) this.onGridClassChange();
-      else this.loadClasses();
-      return;
-    }
-    if (view === 'TEACHER') {
-      this.ensureStaffThenLoad();
-      return;
-    }
-    this.ensureRoomThenLoad();
   }
 
   onGridClassChange(): void {
     this.gridSectionId = null;
-    this.sectionOptions = [];
-    this.grid = null;
-    this.indexGrid(null);
-    if (!this.gridClassId) return;
-
-    const cached = this.allClasses.find((c: any) => c.classId === this.gridClassId);
-    const local = this.activeSections(cached?.sections);
-    if (local.length) {
-      this.applyGridSections(local);
-      return;
+    if (this.gridClassId) {
+      const cls = this.allClasses.find((c: any) => c.classId === this.gridClassId);
+      this.sectionOptions = (cls?.sections || []).map((s: any) => ({ label: s.name, value: s.sectionId }));
+    } else {
+      this.sectionOptions = [];
     }
-
-    this.loadingSections = true;
-    this.classesApi.getClass(this.gridClassId).subscribe({
-      next: (cls) => {
-        this.loadingSections = false;
-        const sections = this.activeSections(cls.sections);
-        const idx = this.allClasses.findIndex((c: any) => c.classId === cls.classId);
-        if (idx >= 0) this.allClasses[idx] = { ...this.allClasses[idx], sections: cls.sections };
-        this.applyGridSections(sections);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.loadingSections = false;
-        this.messages.add({ severity: 'warn', summary: 'Unable to load sections for this class' });
-        this.cdr.markForCheck();
-      }
-    });
+    this.loadGrid();
   }
 
-  cellsFor(day: DayOfWeek | string, periodNumber: number): TimetableGridCell[] {
-    const key = this.cellKey(day, periodNumber);
-    let list = this.cellIndex.get(key) ?? [];
-    if (!list.length && this.grid?.cells?.length) {
-      list = this.grid.cells.filter((c) =>
-        this.normalizeDay(c.dayOfWeek) === this.normalizeDay(day)
-        && (c.periodNumber === periodNumber || c.periodId === periodNumber)
-      );
-    }
-    if (this.gridView === 'CLASS' && this.gridSectionId) {
-      const scoped = list.filter((c) => c.sectionId == null || c.sectionId === this.gridSectionId);
-      if (scoped.length) list = scoped;
-    }
-    return list;
+  getCell(day: DayOfWeek, periodNumber: number): TimetableGridCell | undefined {
+    return this.grid?.cells.find(c => c.dayOfWeek === day && c.periodNumber === periodNumber);
   }
 
   /* ═══ CONFLICTS ═══ */
@@ -750,17 +595,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
       ?? this.dashboard?.latestVersion?.timetableVersionId;
     if (!versionId) { this.conflicts = []; return; }
     this.api.getConflicts(versionId).subscribe({
-      next: (list) => {
-        this.conflicts = [...list].sort((a, b) => {
-          const aOpen = a.status === 'OPEN' ? 0 : 1;
-          const bOpen = b.status === 'OPEN' ? 0 : 1;
-          if (aOpen !== bOpen) return aOpen - bOpen;
-          if (!!a.blocking !== !!b.blocking) return a.blocking ? -1 : 1;
-          return 0;
-        });
-        this.conflictPage = 1;
-        this.cdr.markForCheck();
-      },
+      next: (list) => { this.conflicts = list; this.cdr.markForCheck(); },
       error: () => { this.conflicts = []; this.messages.add({ severity: 'error', summary: 'Unable to load conflicts' }); }
     });
   }
@@ -796,8 +631,14 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   /* ═══ HELPERS ═══ */
 
   formatDay(day: string): string {
-    const n = this.normalizeDay(day);
-    return n.charAt(0) + n.slice(1).toLowerCase();
+    return day.charAt(0) + day.slice(1).toLowerCase();
+  }
+
+  private loadSupportingData(): void {
+    if (!this.selectedYearId) return;
+    this.loadClasses();
+    this.loadResources();
+    this.loadStaffOptions();
   }
 
   private loadClasses(): void {
@@ -806,81 +647,24 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
       next: (dash) => {
         this.allClasses = dash.classes || [];
         this.classOptions = this.allClasses.map((c: any) => ({ label: c.name, value: c.classId }));
-        if (!this.gridClassId && this.allClasses.length) {
-          this.gridClassId = this.allClasses[0].classId;
-        }
-        if (this.gridClassId && (!this.sectionOptions.length || !this.gridSectionId)) {
-          this.onGridClassChange();
-        } else if (this.gridView === 'CLASS') {
-          this.loadGrid();
-        }
         this.cdr.markForCheck();
       },
       error: () => { this.classOptions = []; }
     });
   }
 
-  private applyGridSections(sections: ClassSectionDto[]): void {
-    this.sectionOptions = sections.map((s) => ({ label: s.name, value: s.sectionId }));
-    const stillValid = this.sectionOptions.some((s) => s.value === this.gridSectionId);
-    if (!stillValid) this.gridSectionId = this.sectionOptions[0]?.value ?? null;
-    this.loadGrid();
-  }
-
-  private activeSections(sections?: ClassSectionDto[] | null): ClassSectionDto[] {
-    return (sections || []).filter((s) => s.active !== false);
-  }
-
-  private indexGrid(grid: TimetableGrid | null): void {
-    this.cellIndex.clear();
-    if (!grid?.cells?.length) return;
-    for (const cell of grid.cells) {
-      const key = this.cellKey(cell.dayOfWeek, cell.periodNumber ?? cell.periodId);
-      const list = this.cellIndex.get(key) ?? [];
-      list.push(cell);
-      this.cellIndex.set(key, list);
-    }
-  }
-
-  private cellKey(day: string, periodNumber: number): string {
-    return `${this.normalizeDay(day)}|${periodNumber}`;
-  }
-
-  private normalizeDay(day: string): string {
-    const raw = String(day || '').toUpperCase().replace(/[^A-Z]/g, '');
-    const short: Record<string, string> = {
-      MON: 'MONDAY',
-      TUE: 'TUESDAY',
-      TUES: 'TUESDAY',
-      WED: 'WEDNESDAY',
-      THU: 'THURSDAY',
-      THUR: 'THURSDAY',
-      THURS: 'THURSDAY',
-      FRI: 'FRIDAY',
-      SAT: 'SATURDAY',
-      SUN: 'SUNDAY'
-    };
-    return short[raw] || raw;
-  }
-
-  private loadResources(selectAndLoad = false): void {
+  private loadResources(): void {
     this.api.listResources().subscribe({
       next: (list) => {
         this.resources = list;
         this.refreshResourceOptions();
-        if (selectAndLoad) {
-          if (!this.gridResourceId && this.resourceOptions.length) {
-            this.gridResourceId = this.resourceOptions[0].value;
-          }
-          this.loadGrid();
-        }
         this.cdr.markForCheck();
       },
       error: () => { this.resources = []; }
     });
   }
 
-  private loadStaffOptions(selectAndLoad = false): void {
+  private loadStaffOptions(): void {
     if (!this.selectedYearId) return;
     this.workloadsApi.workloads(this.selectedYearId).subscribe({
       next: (list) => {
@@ -892,34 +676,10 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
             this.staffOptions.push({ label: w.staffName, value: w.staffId });
           }
         }
-        if (selectAndLoad) {
-          if (!this.gridStaffId && this.staffOptions.length) {
-            this.gridStaffId = this.staffOptions[0].value;
-          }
-          this.loadGrid();
-        }
         this.cdr.markForCheck();
       },
       error: () => { this.staffOptions = []; }
     });
-  }
-
-  private ensureStaffThenLoad(): void {
-    if (this.staffOptions.length) {
-      if (!this.gridStaffId) this.gridStaffId = this.staffOptions[0].value;
-      this.loadGrid();
-      return;
-    }
-    this.loadStaffOptions(true);
-  }
-
-  private ensureRoomThenLoad(): void {
-    if (this.resourceOptions.length) {
-      if (!this.gridResourceId) this.gridResourceId = this.resourceOptions[0].value;
-      this.loadGrid();
-      return;
-    }
-    this.loadResources(true);
   }
 
   private refreshResourceOptions(): void {

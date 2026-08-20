@@ -5,13 +5,13 @@ import { Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { LoginService } from '../../core/services/login.service';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-first-time-login',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PasswordModule, CommonModule, FormsModule, ToastModule, ButtonModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [PasswordModule, CommonModule, FormsModule, ButtonModule, RouterModule],
   templateUrl: './first-time-login.component.html',
   styleUrl: './first-time-login.component.scss'
 })
@@ -82,7 +82,7 @@ export class FirstTimeLoginComponent implements OnInit {
               detail: 'Password changed successfully.'
             });
             setTimeout(() => {
-              this.router.navigate(['/app']);
+              this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
             }, 1200);
           },
           error: () => {

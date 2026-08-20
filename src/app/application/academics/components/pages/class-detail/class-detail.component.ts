@@ -74,7 +74,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   cls: AcademicClassDto | null = null;
   private classId: number | null = null;
   offerSections = false;
-  private sectionsOfferConsumed = false;
   showClassDialog = false;
   showSectionDialog = false;
   editingSectionId: number | null = null;
@@ -116,7 +115,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     });
     this.route.queryParamMap.subscribe((q) => {
       this.offerSections = q.get('offerSections') === '1';
-      this.maybeOpenSectionsOffer();
       this.cdr.markForCheck();
     });
   }
@@ -153,10 +151,9 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
       next: (cls) => {
         this.cls = cls;
         this.pageHeader.setPageHeader({
-          title: 'Class Detail',
-          subtitle: `${cls.name}${cls.academicYearName ? ' · ' + cls.academicYearName : ''}`
+          title: cls.name,
+          subtitle: cls.academicYearName || 'Class details'
         });
-        this.maybeOpenSectionsOffer();
       },
       error: () => {
         this.cls = null;
@@ -211,14 +208,6 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.sectionForm.reset({ name: '', code: '', classTeacherStaffId: null });
     this.showSectionDialog = true;
     this.offerSections = false;
-  }
-
-  /** After create, open Add Section once instead of a second banner button. */
-  private maybeOpenSectionsOffer(): void {
-    if (this.sectionsOfferConsumed || !this.offerSections || !this.canManage || !this.cls) return;
-    this.sectionsOfferConsumed = true;
-    this.openAddSection();
-    this.dismissOffer();
   }
 
   openEditSection(section: ClassSectionDto): void {

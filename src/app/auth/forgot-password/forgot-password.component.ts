@@ -10,7 +10,6 @@ import { DividerModule } from 'primeng/divider';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { LoginService } from '../../core/services/login.service';
 
 @Component({
@@ -23,7 +22,7 @@ import { LoginService } from '../../core/services/login.service';
     PasswordModule,
     ButtonModule,
     CardModule,
-    DividerModule, CheckboxModule, FloatLabelModule, ToastModule],
+    DividerModule, CheckboxModule, FloatLabelModule],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss'
 })

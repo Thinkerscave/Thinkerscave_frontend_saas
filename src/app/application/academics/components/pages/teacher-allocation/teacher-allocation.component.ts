@@ -7,7 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -28,8 +28,7 @@ import {
   TeacherAllocationDashboard,
   TeacherAllocationRow,
   TeacherAllocationStatus,
-  TeacherRecommendation,
-  TeacherWorkload
+  TeacherRecommendation
 } from '../../../models/teacher-allocation.model';
 
 @Component({
@@ -39,6 +38,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     DialogModule,
     DropdownModule,
     ProgressBarModule,
@@ -84,11 +84,6 @@ export class TeacherAllocationPageComponent implements OnInit {
   subjectFilter: number | null = null;
   statusFilter: TeacherAllocationStatus | null = null;
   dashboard: TeacherAllocationDashboard | null = null;
-  searchTerm = '';
-  page = 1;
-  pageSize = 10;
-  sortKey: 'className' | 'sectionName' | 'subjectName' | 'primaryStaffName' | 'status' = 'className';
-  sortDir: 'asc' | 'desc' = 'asc';
 
   showAssign = false;
   assignTarget: TeacherAllocationRow | null = null;
@@ -110,57 +105,6 @@ export class TeacherAllocationPageComponent implements OnInit {
     return Math.round((d.assignedSlots / d.totalSlots) * 100);
   }
 
-  get filteredRows(): TeacherAllocationRow[] {
-    const q = this.searchTerm.trim().toLowerCase();
-    let rows = this.dashboard?.rows ?? [];
-    if (q) {
-      rows = rows.filter((row) =>
-        [row.className, row.sectionName, row.subjectName, row.subjectCode, row.primaryStaffName]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(q))
-      );
-    }
-    const dir = this.sortDir === 'asc' ? 1 : -1;
-    return [...rows].sort((a, b) => {
-      const av = String(a[this.sortKey] ?? '');
-      const bv = String(b[this.sortKey] ?? '');
-      return av.localeCompare(bv) * dir;
-    });
-  }
-
-  get totalPages(): number {
-    const total = this.activeTab === 'workload'
-      ? (this.dashboard?.workloads?.length ?? 0)
-      : this.filteredRows.length;
-    return Math.max(1, Math.ceil(total / this.pageSize));
-  }
-
-  get pageStart(): number {
-    const total = this.activeTab === 'workload'
-      ? (this.dashboard?.workloads?.length ?? 0)
-      : this.filteredRows.length;
-    if (!total) return 0;
-    return (this.page - 1) * this.pageSize + 1;
-  }
-
-  get pageEnd(): number {
-    const total = this.activeTab === 'workload'
-      ? (this.dashboard?.workloads?.length ?? 0)
-      : this.filteredRows.length;
-    return Math.min(this.page * this.pageSize, total);
-  }
-
-  get pagedRows(): TeacherAllocationRow[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.filteredRows.slice(start, start + this.pageSize);
-  }
-
-  get pagedWorkloads(): TeacherWorkload[] {
-    const all = this.dashboard?.workloads ?? [];
-    const start = (this.page - 1) * this.pageSize;
-    return all.slice(start, start + this.pageSize);
-  }
-
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
     this.showBack = !!qp.get('from');
@@ -179,7 +123,7 @@ export class TeacherAllocationPageComponent implements OnInit {
         const current = preferred ?? years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
         this.selectedYearId = current?.academicYearId ?? null;
         if (this.selectedYearId) {
-          this.loadClassesThenDashboard();
+          this.reload();
         } else {
           this.loading = false;
           this.cdr.markForCheck();
@@ -199,8 +143,7 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   reload(): void {
     if (!this.selectedYearId) return;
-    const initial = !this.dashboard;
-    if (initial) this.loading = true;
+    this.loading = true;
     this.api
       .getDashboard(this.selectedYearId, {
         classId: this.classFilter,
@@ -216,7 +159,7 @@ export class TeacherAllocationPageComponent implements OnInit {
         next: (dash) => {
           this.dashboard = dash;
           this.refreshFilterOptions(dash);
-          if (this.page > this.totalPages) this.page = this.totalPages;
+          this.loadClasses();
         },
         error: (err) => this.messages.add({
           severity: 'error',
@@ -230,48 +173,12 @@ export class TeacherAllocationPageComponent implements OnInit {
     this.classFilter = null;
     this.sectionFilter = null;
     this.subjectFilter = null;
-    this.page = 1;
-    this.loadClassesThenDashboard();
+    this.reload();
   }
 
   onClassChange(): void {
     this.sectionFilter = null;
-    this.page = 1;
     this.reload();
-  }
-
-  setTab(tab: 'allocation' | 'workload'): void {
-    this.activeTab = tab;
-    this.page = 1;
-    this.cdr.markForCheck();
-  }
-
-  onSearchChange(value: string): void {
-    this.searchTerm = value ?? '';
-    this.page = 1;
-    this.cdr.markForCheck();
-  }
-
-  sortBy(key: typeof this.sortKey): void {
-    if (this.sortKey === key) {
-      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortKey = key;
-      this.sortDir = 'asc';
-    }
-    this.page = 1;
-    this.cdr.markForCheck();
-  }
-
-  setPage(next: number): void {
-    this.page = Math.min(Math.max(1, next), this.totalPages);
-    this.cdr.markForCheck();
-  }
-
-  setPageSize(size: number): void {
-    this.pageSize = Number(size) || 10;
-    this.page = 1;
-    this.cdr.markForCheck();
   }
 
   openAssign(row: TeacherAllocationRow): void {
@@ -396,9 +303,8 @@ export class TeacherAllocationPageComponent implements OnInit {
     ];
   }
 
-  private loadClassesThenDashboard(): void {
+  private loadClasses(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
     this.classesApi.getDashboard(this.selectedYearId, { active: true }).subscribe({
       next: (dash) => {
         this.classes = dash.classes || [];
@@ -406,31 +312,26 @@ export class TeacherAllocationPageComponent implements OnInit {
           { label: 'All Classes', value: null },
           ...this.classes.map((cls) => ({ label: cls.name, value: cls.classId }))
         ];
-        if (this.classFilter == null && this.classes.length) {
-          this.classFilter = this.classes[0].classId;
+
+        const sectionOpts: { label: string; value: number | null }[] = [];
+        for (const cls of this.classes) {
+          if (this.classFilter && cls.classId !== this.classFilter) continue;
+          for (const section of cls.sections || []) {
+            sectionOpts.push({
+              label: `${cls.name}-${section.name}`,
+              value: section.sectionId
+            });
+          }
         }
-        this.applySectionOptionsFromClasses();
-        this.reload();
+        if (sectionOpts.length) {
+          this.sections = [{ label: 'All Sections', value: null }, ...sectionOpts];
+        }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.classes = [];
         this.classOptions = [{ label: 'All Classes', value: null }];
-        this.reload();
       }
     });
-  }
-
-  private applySectionOptionsFromClasses(): void {
-    const sectionOpts: { label: string; value: number | null }[] = [];
-    for (const cls of this.classes) {
-      if (this.classFilter && cls.classId !== this.classFilter) continue;
-      for (const section of cls.sections || []) {
-        sectionOpts.push({
-          label: `${cls.name}-${section.name}`,
-          value: section.sectionId
-        });
-      }
-    }
-    this.sections = [{ label: 'All Sections', value: null }, ...sectionOpts];
   }
 }

@@ -27,6 +27,7 @@
     height: var(--tc-topbar-height);
     flex-shrink: 0;
     z-index: 1200;
+    overflow: visible;
   }
 
   .shell-body {
@@ -66,7 +67,7 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0.5rem var(--tc-space-4) var(--tc-space-3);
+    padding: 0.35rem var(--tc-space-4) var(--tc-space-3);
     background: var(--tc-bg-gradient);
   }
 

@@ -8,7 +8,7 @@ import {
   inject
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -41,7 +41,6 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
     SaasPageHeaderComponent,
     DialogModule,
     DropdownModule,
@@ -77,7 +76,6 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
   subject: SubjectDto | null = null;
   private subjectId: number | null = null;
   offerMap = false;
-  private mapOfferConsumed = false;
   showSubjectDialog = false;
   showMapDialog = false;
   classes: AcademicClassDto[] = [];
@@ -123,7 +121,6 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     });
     this.route.queryParamMap.subscribe((q) => {
       this.offerMap = q.get('offerMap') === '1';
-      this.maybeOpenMapOffer();
       this.cdr.markForCheck();
     });
   }
@@ -160,8 +157,8 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
       next: (subject) => {
         this.subject = subject;
         this.pageHeader.setPageHeader({
-          title: 'Subject Detail',
-          subtitle: `${subject.name}${subject.academicYearName ? ' · ' + subject.academicYearName : ''}`
+          title: subject.name,
+          subtitle: subject.academicYearName || 'Subject details'
         });
         this.loadClasses(subject.academicYearId);
       },
@@ -176,24 +173,12 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     this.classesApi.getDashboard(yearId, { active: true }).subscribe({
       next: (dash) => {
         this.classes = dash.classes || [];
-        this.maybeOpenMapOffer();
         this.cdr.markForCheck();
       },
       error: () => {
         this.classes = [];
       }
     });
-  }
-
-  /** After create, open the map dialog once instead of showing a second Map to Class banner. */
-  private maybeOpenMapOffer(): void {
-    if (this.mapOfferConsumed || !this.offerMap || !this.canManage || !this.subject) return;
-    if (!this.classes.length) return;
-    this.mapOfferConsumed = true;
-    if (this.availableClasses.length) {
-      this.openMapDialog();
-    }
-    this.dismissOffer();
   }
 
   categoryLabel(category: SubjectCategory): string {

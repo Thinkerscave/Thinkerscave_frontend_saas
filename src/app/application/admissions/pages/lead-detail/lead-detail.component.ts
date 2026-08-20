@@ -13,7 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import {
@@ -37,11 +37,10 @@ type DetailTab = 'overview' | 'activities' | 'counseling' | 'timeline';
   selector: 'app-lead-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     ReactiveFormsModule,
     DropdownModule,
-    ToastModule,
     ConfirmDialogModule,
     SaasTabsComponent,
     SaasPillComponent

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import { AccessUser, EffectivePermission } from '../../models/access.model';
@@ -16,7 +16,7 @@ import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '
   selector: 'app-user-permissions',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, ToastModule, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent],
+  imports: [AppToastComponent, CommonModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent],
   providers: [MessageService],
   templateUrl: './user-permissions.component.html',
   styleUrl: './user-permissions.component.scss'

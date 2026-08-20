@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
-import { AppListEmptyStateComponent } from '../../../../../shared/ui/app-list/app-empty-state.component';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
@@ -16,7 +15,7 @@ import { ACADEMICS_MY_CLASSES_RESOURCE, TeacherMyClasses } from '../../../models
   selector: 'app-my-classes-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent, AppListEmptyStateComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent],
   templateUrl: './my-classes.component.html',
   styleUrls: ['./my-classes.component.scss']
 })
@@ -25,7 +24,6 @@ export class MyClassesPageComponent implements OnInit {
   private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
-  private readonly router = inject(Router);
 
   readonly resource = ACADEMICS_MY_CLASSES_RESOURCE;
   loading = true;
@@ -36,17 +34,13 @@ export class MyClassesPageComponent implements OnInit {
   viewMode: 'list' | 'grid' = 'list';
 
   ngOnInit(): void {
-    this.yearApi.search(undefined, undefined, { skipErrorToast: true }).subscribe({
+    this.yearApi.search().subscribe({
       next: (years) => {
         this.years = years;
         this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
         this.reload();
       },
-      error: () => {
-        this.years = [];
-        this.selectedYearId = null;
-        this.reload();
-      }
+      error: () => { this.loading = false; this.cdr.markForCheck(); }
     });
   }
 
@@ -60,20 +54,12 @@ export class MyClassesPageComponent implements OnInit {
       });
   }
 
-  get hasAssignments(): boolean {
-    return (this.data?.classes?.length ?? 0) > 0;
-  }
-
   get filteredClasses() {
     const list = this.data?.classes || [];
     const q = this.q.trim().toLowerCase();
     if (!q) return list;
     return list.filter((c) =>
       `${c.className} ${c.sectionName} ${c.classCode || ''} ${c.subjects.map((s) => s.subjectName).join(' ')}`.toLowerCase().includes(q));
-  }
-
-  openStructure(): void {
-    void this.router.navigateByUrl('/app/academics/academic-structure');
   }
 
   shortCode(c: TeacherMyClasses['classes'][number]): string {

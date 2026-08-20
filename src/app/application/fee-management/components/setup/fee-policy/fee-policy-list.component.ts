@@ -7,7 +7,7 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FeeStorageService, FeePolicy } from '../../../services/fee-storage.service';
 
@@ -15,7 +15,7 @@ import { FeeStorageService, FeePolicy } from '../../../services/fee-storage.serv
   selector: 'app-fee-policy-list',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     RouterModule,
     TableModule,
@@ -23,13 +23,12 @@ import { FeeStorageService, FeePolicy } from '../../../services/fee-storage.serv
     TagModule,
     InputTextModule,
     ConfirmDialogModule,
-    TooltipModule,
-    ToastModule
+    TooltipModule
   ],
   providers: [ConfirmationService, MessageService],
   template: `
     <div class="fee-policy-list">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
       
       <div class="page-header">

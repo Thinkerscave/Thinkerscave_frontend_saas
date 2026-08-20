@@ -12,6 +12,7 @@ import { PlatformManagementService } from '../../services/platform-management.se
 import {
   formatDate,
   institutionLabel,
+  institutionTypeOptions,
   orgInitials,
   organizationStatusLabel,
   statusTone
@@ -69,13 +70,9 @@ export class OrganizationsListComponent implements OnInit {
     { id: 'INACTIVE', label: 'Inactive' }
   ];
 
-  readonly typeOptions: { id: 'all' | InstitutionType; label: string }[] = [
-    { id: 'all', label: 'All Types' },
-    { id: 'SCHOOL', label: 'School' },
-    { id: 'COLLEGE', label: 'College' },
-    { id: 'UNIVERSITY', label: 'University' },
-    { id: 'COACHING', label: 'Coaching' },
-    { id: 'OTHER', label: 'Other' }
+  readonly typeOptions: { value: 'all' | InstitutionType; label: string }[] = [
+    { value: 'all', label: 'All Types' },
+    ...institutionTypeOptions()
   ];
 
   readonly institutionLabel = institutionLabel;

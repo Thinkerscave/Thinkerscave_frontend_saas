@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { platformApi, auditApi } from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
+import { AccessMenu } from '../../access-management/models/access.model';
 import {
   Customer,
   CustomerContact,
@@ -17,8 +18,12 @@ import {
   OrganizationDetail,
   OrganizationQuery,
   OrganizationSummary,
+  OrganizationUpdatePayload,
   PlatformDashboard,
   PlatformFeature,
+  PlatformFeaturePayload,
+  FeatureOverride,
+  FeatureOverridePayload,
   Promotion,
   ProvisionOrganizationPayload,
   ProvisioningJob,
@@ -58,6 +63,16 @@ export class PlatformManagementService {
   getOrganization(id: number): Observable<OrganizationDetail> {
     return this.http.get<unknown>(platformApi.organizationById(id)).pipe(
       map(r => unwrapApiResponse<OrganizationDetail>(r, {} as OrganizationDetail))
+    );
+  }
+
+  downloadOrganizationInvoicePdf(id: number): Observable<Blob> {
+    return this.http.get(platformApi.organizationInvoicePdf(id), { responseType: 'blob' });
+  }
+
+  updateOrganization(id: number, payload: OrganizationUpdatePayload): Observable<OrganizationSummary> {
+    return this.http.put<unknown>(platformApi.organizationById(id), payload).pipe(
+      map(r => unwrapApiResponse<OrganizationSummary>(r, {} as OrganizationSummary))
     );
   }
 
@@ -166,6 +181,50 @@ export class PlatformManagementService {
     return this.http.get<unknown>(platformApi.features).pipe(
       map(r => unwrapApiResponse<PlatformFeature[]>(r, []))
     );
+  }
+
+  createFeature(payload: PlatformFeaturePayload): Observable<PlatformFeature> {
+    return this.http.post<unknown>(platformApi.features, payload).pipe(
+      map(r => unwrapApiResponse<PlatformFeature>(r, {} as PlatformFeature))
+    );
+  }
+
+  updateFeature(id: number, payload: PlatformFeaturePayload): Observable<PlatformFeature> {
+    return this.http.put<unknown>(platformApi.featureById(id), payload).pipe(
+      map(r => unwrapApiResponse<PlatformFeature>(r, {} as PlatformFeature))
+    );
+  }
+
+  deleteFeature(id: number): Observable<void> {
+    return this.http.delete<unknown>(platformApi.featureById(id)).pipe(map(() => undefined));
+  }
+
+  getFeatureMenus(id: number): Observable<AccessMenu[]> {
+    return this.http.get<unknown>(platformApi.featureMenus(id)).pipe(
+      map(r => unwrapApiResponse<AccessMenu[]>(r, []))
+    );
+  }
+
+  replaceFeatureMenus(id: number, menuIds: number[]): Observable<AccessMenu[]> {
+    return this.http.put<unknown>(platformApi.featureMenus(id), { menuIds }).pipe(
+      map(r => unwrapApiResponse<AccessMenu[]>(r, []))
+    );
+  }
+
+  createFeatureOverride(payload: FeatureOverridePayload): Observable<FeatureOverride> {
+    return this.http.post<unknown>(platformApi.featureOverrides, payload).pipe(
+      map(r => unwrapApiResponse<FeatureOverride>(r, {} as FeatureOverride))
+    );
+  }
+
+  updateFeatureOverride(id: number, payload: Partial<FeatureOverridePayload>): Observable<FeatureOverride> {
+    return this.http.put<unknown>(platformApi.featureOverrideById(id), payload).pipe(
+      map(r => unwrapApiResponse<FeatureOverride>(r, {} as FeatureOverride))
+    );
+  }
+
+  deleteFeatureOverride(id: number): Observable<void> {
+    return this.http.delete<unknown>(platformApi.featureOverrideById(id)).pipe(map(() => undefined));
   }
 
   getPromotions(): Observable<Promotion[]> {

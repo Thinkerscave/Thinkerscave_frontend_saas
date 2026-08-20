@@ -9,7 +9,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 
@@ -32,11 +32,11 @@ interface LateFeeConfig {
   selector: 'app-late-fee-config',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, CardModule, InputNumberModule, DropdownModule, MultiSelectModule, InputSwitchModule, DividerModule, ToastModule, TagModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, CardModule, InputNumberModule, DropdownModule, MultiSelectModule, InputSwitchModule, DividerModule, TagModule],
   providers: [MessageService],
   template: `
     <div class="late-fee-config">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
 
       <div class="page-header">
         <div>

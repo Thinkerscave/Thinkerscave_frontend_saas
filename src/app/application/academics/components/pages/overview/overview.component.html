@@ -1,19 +1,15 @@
 <div class="ov-page acad-page" *ngIf="!loading; else loadingTpl">
-  <section class="ov-context" *ngIf="overview as ov" aria-label="Academic year context">
-    <div class="ov-context__primary">
-      <div class="ov-context__label">Academic Year</div>
-      <div class="ov-context__controls">
-        <p-dropdown
-          [options]="years"
-          [(ngModel)]="selectedYearId"
-          (onChange)="reload()"
-          optionLabel="name"
-          optionValue="academicYearId">
-        </p-dropdown>
-        <span class="ov-pill" *ngIf="ov.yearHeader?.status === 'CURRENT'">Active</span>
-      </div>
-    </div>
-  </section>
+  <tc-saas-page-header>
+    <p-dropdown
+      [options]="years"
+      [(ngModel)]="selectedYearId"
+      (onChange)="reload()"
+      optionLabel="name"
+      optionValue="academicYearId">
+    </p-dropdown>
+    <span class="ov-pill" *ngIf="overview?.yearHeader?.status === 'CURRENT'">Active</span>
+    <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }">Academic Year</a>
+  </tc-saas-page-header>
 
   <ng-container *ngIf="overview as ov">
     <section class="ov-banner">
@@ -228,6 +224,18 @@
           <li *ngIf="!ov.importantDates?.length" class="ov-muted">No dates configured for this year.</li>
         </ul>
       </article>
+    </section>
+
+    <section class="ov-actions">
+      <a routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
+      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-th-large"></i> Add Class</a>
+      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-sitemap"></i> Add Section</a>
+      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-book"></i> Add Subject</a>
+      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-link"></i> Map Subjects</a>
+      <a routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'overview' }"><i class="pi pi-user-edit"></i> Assign Teachers</a>
+      <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-cog"></i> Configure Timetable</a>
+      <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-sparkles"></i> Generate Timetable</a>
+      <a routerLink="/app/academics/academic-calendar" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar"></i> Academic Calendar</a>
     </section>
   </ng-container>
 </div>

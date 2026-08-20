@@ -3,8 +3,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 import { LoginService } from '../../../core/services/login.service';
-import { OrganizationContextService } from '../../../core/services/organization-context.service';
-import { resolveWorkspaceHome, roleTokensFromUser } from '../../../core/utils/workspace-home';
+import { workspaceHomeForUser } from '../../../core/utils/workspace-home';
 
 /**
  * Shown when a logged-in user navigates to a route they lack permissions for.
@@ -53,11 +52,8 @@ import { resolveWorkspaceHome, roleTokensFromUser } from '../../../core/utils/wo
 export class UnauthorizedComponent {
   private readonly router = inject(Router);
   private readonly loginService = inject(LoginService);
-  private readonly orgContext = inject(OrganizationContextService);
 
   goBack(): void {
-    void this.router.navigateByUrl(
-      resolveWorkspaceHome(roleTokensFromUser(this.loginService.getUser()), this.orgContext.isPlatformLogin())
-    );
+    this.router.navigateByUrl(workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM'));
   }
 }

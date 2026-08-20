@@ -11,8 +11,8 @@ import { OrganizationContextService } from '../../core/services/organization-con
 import { MenuMappingService } from '../../application/services/menu-mapping.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { UserInfo } from '../../shared/models/auth.model';
-import { resolveWorkspaceHome, roleTokensFromUser } from '../../core/utils/workspace-home';
 import { ForgotPasswordModalComponent } from '../components/forgot-password-modal/forgot-password-modal.component';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-login',
@@ -182,7 +182,7 @@ export class LoginComponent {
 
     this.idleTimeoutService.start();
 
-    const target = resolveWorkspaceHome(roleTokensFromUser(user), this.orgContext.isPlatformLogin());
+    const target = workspaceHomeForUser(user, this.orgContext.isPlatformLogin());
 
     this.finishSubmit();
 

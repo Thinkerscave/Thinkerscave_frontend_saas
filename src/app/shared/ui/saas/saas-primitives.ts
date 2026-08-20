@@ -165,6 +165,7 @@ export class SaasPillComponent {
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`:host { display: block; width: 100%; min-width: 0; }`],
   template: `
     <section class="saas-panel" [class.is-elevated]="elevated">
       <header class="saas-panel__header" *ngIf="title || actions">

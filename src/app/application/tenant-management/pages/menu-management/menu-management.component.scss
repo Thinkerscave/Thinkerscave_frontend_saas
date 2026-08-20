@@ -1,0 +1,11 @@
+@use '../../styles/catalog-ui' as *;
+
+:host { display: block; min-height: 100%; }
+
+:host ::ng-deep .cat-form .p-dropdown {
+  width: 100%;
+}
+
+:host ::ng-deep .p-dialog-content {
+  padding-top: 0.75rem;
+}

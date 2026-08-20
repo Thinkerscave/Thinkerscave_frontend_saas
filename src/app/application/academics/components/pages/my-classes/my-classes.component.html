@@ -1,18 +1,6 @@
 <div class="mc-page acad-page" *ngIf="!loading; else loadingTpl">
   <tc-saas-page-header>
-    <label class="mc-year" *ngIf="years.length">
-      <span>Year</span>
-      <p-dropdown
-        inputId="mc-year"
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="reload()"
-        optionLabel="name"
-        optionValue="academicYearId"
-        placeholder="Academic year"
-        appendTo="body">
-      </p-dropdown>
-    </label>
+    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
   </tc-saas-page-header>
 
   <div class="mc-summary" *ngIf="data as d">
@@ -23,16 +11,16 @@
     <div><strong>{{ d.summary.weeklyPeriods }}</strong><span>Periods / Week</span></div>
   </div>
 
-  <div class="mc-toolbar" *ngIf="hasAssignments">
+  <div class="mc-toolbar">
     <input class="mc-search" type="search" placeholder="Search by class, section or subject…" [(ngModel)]="q" />
     <div class="mc-view">
-      <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" aria-label="List view"><i class="pi pi-list"></i></button>
-      <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" aria-label="Grid view"><i class="pi pi-th-large"></i></button>
+      <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'"><i class="pi pi-list"></i></button>
+      <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'"><i class="pi pi-th-large"></i></button>
     </div>
     <a routerLink="/app/academics/my-timetable" class="mc-link">Open My Timetable →</a>
   </div>
 
-  <div class="mc-list" [class.mc-list--grid]="viewMode === 'grid'" *ngIf="filteredClasses.length; else emptyTpl">
+  <div class="mc-list" [class.mc-list--grid]="viewMode === 'grid'">
     <article class="mc-card" *ngFor="let c of filteredClasses">
       <div class="mc-badge">{{ shortCode(c) }}</div>
       <div class="mc-card__body">
@@ -55,19 +43,7 @@
         <a routerLink="/app/academics/academic-structure">Structure</a>
       </div>
     </article>
+    <div class="mc-empty" *ngIf="!filteredClasses.length">No assigned classes for this year.</div>
   </div>
-
-  <ng-template #emptyTpl>
-    <app-list-empty-state
-      [icon]="hasAssignments ? 'pi pi-search' : 'pi pi-users'"
-      [title]="hasAssignments ? 'No matching classes' : 'No classes assigned yet'"
-      [description]="hasAssignments
-        ? 'Try a different search, or clear it to see all assigned classes.'
-        : 'You are not allocated to any class-section for this academic year. Ask the academic coordinator to assign you from Teacher Allocation.'"
-      [actionLabel]="hasAssignments ? '' : 'View academic structure'"
-      actionIcon="pi pi-sitemap"
-      (actionClick)="openStructure()">
-    </app-list-empty-state>
-  </ng-template>
 </div>
 <ng-template #loadingTpl><div class="mc-empty">Loading your classes…</div></ng-template>

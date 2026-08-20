@@ -7,15 +7,7 @@
     </button>
     <button
       type="button"
-      class="tc-btn"
-      *tcHasPerm="resource; action: 'manage'"
-      (click)="openTransition()">
-      <i class="pi pi-refresh"></i>
-      Year transition
-    </button>
-    <button
-      type="button"
-      class="tc-btn tc-btn--primary"
+      class="ay-btn ay-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       (click)="openCreate()">
       <i class="pi pi-plus"></i>
@@ -75,12 +67,16 @@
 
           <div class="ay-card__actions">
             <a class="ay-btn ay-btn--ghost" routerLink="/app/academics/classes-sections">View Academic Structure →</a>
+            <a class="ay-btn ay-btn--primary" routerLink="/app/academics">View Academics Overview →</a>
           </div>
         </article>
         <ng-template #noCurrent>
           <article class="ay-card ay-card--empty">
             <h2>No Current Academic Year</h2>
-            <p>Create and activate an academic year from the header to begin operations.</p>
+            <p>Create and activate an academic year to begin operations.</p>
+            <button type="button" class="ay-btn ay-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+              Create Academic Year
+            </button>
           </article>
         </ng-template>
 
@@ -151,7 +147,10 @@
         <ng-template #noUpcoming>
           <article class="ay-card ay-card--empty">
             <h2>No Upcoming Academic Year</h2>
-            <p>When you are ready, create the next year from the header, then use Year transition to copy structure.</p>
+            <p>Prepare the next academic year when you are ready.</p>
+            <button type="button" class="ay-btn ay-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+              Create Academic Year
+            </button>
           </article>
         </ng-template>
       </section>
@@ -177,7 +176,7 @@
           </div>
         </div>
 
-        <p-table [value]="history" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,20,50]" styleClass="ay-table">
+        <p-table [value]="history" [paginator]="true" [rows]="8" styleClass="ay-table">
           <ng-template pTemplate="header">
             <tr>
               <th>Academic Year</th>
@@ -224,6 +223,26 @@
         </p>
       </section>
     </div>
+
+    <aside class="ay-side">
+      <div class="ay-side-card">
+        <h4>Quick Actions</h4>
+        <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+          <i class="pi pi-plus-circle"></i> Prepare Next Academic Year
+        </button>
+        <a class="ay-side-link" routerLink="/app/academics/classes-sections">
+          <i class="pi pi-sitemap"></i> View Academic Structure
+        </a>
+        <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openTransition()">
+          <i class="pi pi-refresh"></i> Academic Year Transition
+        </button>
+      </div>
+      <div class="ay-side-card ay-side-card--help">
+        <h4>Need Help?</h4>
+        <p>Learn how academic year lifecycle, approval and activation work.</p>
+        <a href="javascript:void(0)">View Help Guide</a>
+      </div>
+    </aside>
   </div>
 </div>
 

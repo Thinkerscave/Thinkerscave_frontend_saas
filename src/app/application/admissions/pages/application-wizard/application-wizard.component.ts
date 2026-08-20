@@ -16,7 +16,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -38,12 +38,11 @@ import {
   selector: 'app-application-wizard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     DropdownModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,

@@ -1,108 +1,312 @@
-<div class="tc-page feature-catalog">
+<div class="cat-page">
   <tc-saas-page-header>
     <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
-    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset Filters</button>
+    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> Add Feature</button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="tc-empty-state"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading features...</div>
+  <p-confirmDialog></p-confirmDialog>
+  <div *ngIf="errorMessage" class="cat-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
+  <div *ngIf="loading" class="cat-empty"><i class="pi pi-spin pi-spinner"></i><h3>Loading features…</h3></div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-    <tc-saas-panel title="Catalogue" subtitle="Features available for subscription plans and overrides">
-      <tc-saas-filter-row>
-        <label class="saas-search"><i class="pi pi-search"></i>
-          <input type="search" placeholder="Search by name or code" [ngModel]="search()" (ngModelChange)="search.set($event)">
-        </label>
-        <label class="tc-form-field"><span>Category</span>
-          <p-dropdown
-            [options]="categoryOptions()"
-            [ngModel]="categoryFilter()"
-            (ngModelChange)="categoryFilter.set($event)"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="att-filter-dropdown">
-          </p-dropdown>
-        </label>
-        <app-grid-table-toggle
-          [storageKey]="'tc.featureCatalog.viewMode'"
-          [mode]="listViewMode"
-          (modeChange)="onListViewModeChange($event)">
-        </app-grid-table-toggle>
-      </tc-saas-filter-row>
+    <div class="cat-toolbar">
+      <input
+        class="cat-toolbar__search"
+        type="search"
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search features or menus"
+        aria-label="Search features">
+      <div class="cat-toolbar__filters">
+        <p-dropdown
+          [options]="categoryOptions()"
+          [ngModel]="categoryFilter()"
+          (ngModelChange)="onCategoryChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="cat-filter-dd">
+        </p-dropdown>
+      </div>
+      <div class="cat-toolbar__end">
+        <div class="cat-view-toggle" role="group" aria-label="View mode">
+          <button type="button" [class.active]="viewMode() === 'grid'" (click)="onListViewModeChange('grid')" aria-label="Grid view">
+            <i class="pi pi-th-large"></i>
+          </button>
+          <button type="button" [class.active]="viewMode() === 'table'" (click)="onListViewModeChange('table')" aria-label="List view">
+            <i class="pi pi-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
-      <div *ngIf="viewMode() === 'grouped'" class="feature-catalog__grouped">
-        <div *ngFor="let group of groupedFeatures()" class="saas-section-group">
-          <h3 class="saas-section-title">
-            <i class="pi pi-box"></i> {{ group.module }}
-          </h3>
-          <div class="tc-card is-clickable-grid">
-            <article class="saas-org-card feature-catalog__card" *ngFor="let m of group.features">
-              <div class="saas-org-card__head">
-                <div class="saas-org-card__title">
-                  <strong>{{ m.displayName || m.featureName }}</strong>
-                  <small>{{ m.featureCode }}</small>
-                </div>
-                <tc-saas-pill
-                  [label]="m.premiumFeature ? 'Premium' : (m.defaultEnabled ? 'Core' : 'Optional')"
-                  [tone]="pillTone(m)">
-                </tc-saas-pill>
-              </div>
-              <p class="feature-catalog__description">
-                {{ m.description || 'No description available.' }}
-              </p>
-              <div class="saas-org-card__meta">
-                <span *ngIf="m.category"><i class="pi pi-tags"></i> {{ m.category }}</span>
-              </div>
-            </article>
+    <div class="cat-workspace is-split" *ngIf="viewMode() === 'grid'">
+      <div>
+        <div class="cat-grid">
+      <article
+        class="cat-card"
+        *ngFor="let item of pagedShowcases; trackBy: trackByShowcase"
+        [class.is-selected]="selectedFeatureId === item.feature.id"
+        [class.is-expanded]="selectedFeatureId === item.feature.id"
+        [class.is-archived]="item.feature.active === false"
+        (click)="selectFeature(item.feature)">
+        <div class="cat-card__top">
+          <div class="cat-card__identity">
+            <span class="cat-card__icon"><i [ngClass]="featureIcon(item.feature)"></i></span>
+            <div>
+              <h2>{{ item.feature.displayName || item.feature.featureName }}</h2>
+              <code>{{ item.feature.featureCode }}</code>
+            </div>
+          </div>
+          <span
+            class="cat-badge"
+            [class.cat-badge--success]="item.feature.active !== false && !item.feature.premiumFeature"
+            [class.cat-badge--warning]="item.feature.premiumFeature && item.feature.active !== false"
+            [class.cat-badge--info]="item.feature.active === false">
+            {{ typeLabel(item.feature) }}
+          </span>
+        </div>
+        <p class="cat-card__body">{{ blurb(item.feature) }}</p>
+        <div class="cat-card__tags">
+          <span class="cat-tag">{{ item.feature.module || item.feature.category || 'Module' }}</span>
+        </div>
+        <div class="cat-card__stats">
+          <div>
+            <strong>{{ item.menus.length }}</strong>
+            <span>{{ item.menus.length === 1 ? 'Menu' : 'Menus' }}</span>
+          </div>
+          <div>
+            <strong>{{ item.pageCount }}</strong>
+            <span>Screens</span>
+          </div>
+          <div>
+            <strong>{{ item.feature.displayOrder || '—' }}</strong>
+            <span>Order</span>
           </div>
         </div>
-        <div *ngIf="!groupedFeatures().length" class="tc-empty-state">
+        <div class="cat-card__actions" (click)="$event.stopPropagation()">
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="cat-icon-btn cat-icon-btn--danger"
+            *ngIf="item.feature.active !== false"
+            title="Delete"
+            aria-label="Delete"
+            (click)="confirmArchive(item.feature)">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+        <div class="cat-card__expand" *ngIf="selectedFeatureId === item.feature.id" (click)="$event.stopPropagation()">
+          <ng-container *ngTemplateOutlet="featureDetail"></ng-container>
+        </div>
+      </article>
+    </div>
+        <div *ngIf="!showcases().length" class="cat-empty">
           <i class="pi pi-search"></i>
-          <strong>No features match the current filters.</strong>
+          <h3>No features match your filters</h3>
+          <p>Try another search or category.</p>
+        </div>
+        <div class="cat-pager" *ngIf="showcases().length">
+          <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ showcases().length }}</span>
+          <div class="cat-pager__controls">
+            <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
+            <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
+            <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
+            <select class="cat-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Features per page">
+              <option [ngValue]="8">8 / page</option>
+              <option [ngValue]="12">12 / page</option>
+              <option [ngValue]="24">24 / page</option>
+            </select>
+          </div>
         </div>
       </div>
+      <aside class="cat-detail">
+        <ng-container *ngIf="selectedShowcase; else emptyFeatureDetail">
+          <ng-container *ngTemplateOutlet="featureDetail"></ng-container>
+        </ng-container>
+        <ng-template #emptyFeatureDetail>
+          <p class="cat-hint">Select a feature to see the menus and pages it unlocks.</p>
+        </ng-template>
+      </aside>
+    </div>
 
-      <div *ngIf="viewMode() === 'table'" class="tc-table-wrap">
-        <table class="saas-data-table">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Module</th>
-              <th>Category</th>
-              <th>Description</th>
-              <th>Type</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let m of filtered()">
-              <td>
-                <div class="module-cell">
-                  <strong>{{ m.displayName || m.featureName }}</strong>
-                  <small>{{ m.featureCode }}</small>
-                </div>
-              </td>
-              <td>{{ m.module || '—' }}</td>
-              <td>{{ m.category || '—' }}</td>
-              <td class="muted">{{ m.description || '—' }}</td>
-              <td>
-                <tc-saas-pill
-                  [label]="m.premiumFeature ? 'Premium' : (m.defaultEnabled ? 'Core' : 'Optional')"
-                  [tone]="pillTone(m)">
-                </tc-saas-pill>
-              </td>
-            </tr>
-            <tr *ngIf="!filtered().length">
-              <td colspan="5" class="empty">No features match the current filters.</td>
-            </tr>
-          </tbody>
-        </table>
+    <ng-template #featureDetail>
+      <ng-container *ngIf="selectedShowcase as selected">
+        <div class="cat-detail__hero">
+          <span class="cat-detail__icon"><i [ngClass]="featureIcon(selected.feature)"></i></span>
+          <div>
+            <h3>{{ selected.feature.displayName || selected.feature.featureName }}</h3>
+            <code>{{ selected.feature.featureCode }}</code>
+          </div>
+        </div>
+        <p class="cat-hint">{{ blurb(selected.feature) }}</p>
+        <dl class="cat-facts">
+          <div><dt>Module</dt><dd>{{ selected.feature.module || '—' }}</dd></div>
+          <div><dt>Category</dt><dd>{{ selected.feature.category || '—' }}</dd></div>
+          <div><dt>Order</dt><dd>{{ selected.feature.displayOrder || '—' }}</dd></div>
+          <div><dt>Status</dt><dd>{{ typeLabel(selected.feature) }}</dd></div>
+          <div><dt>Menus</dt><dd>{{ selected.menus.length }}</dd></div>
+          <div><dt>Screens</dt><dd>{{ selected.pageCount }}</dd></div>
+        </dl>
+        <div class="cat-detail__actions">
+          <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(selected.feature)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="cat-icon-btn cat-icon-btn--danger"
+            *ngIf="selected.feature.active !== false"
+            title="Delete"
+            aria-label="Delete"
+            (click)="confirmArchive(selected.feature)">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+        <h4>What this feature includes</h4>
+        <div class="cat-page-list" *ngIf="selected.menus.length">
+          <ng-container *ngFor="let menu of selected.menus; trackBy: trackByMenu">
+            <div class="cat-page-row">
+              <span class="cat-page-row__order">{{ menu.displayOrder || '—' }}</span>
+              <div>
+                <strong>{{ menu.menuName }}</strong>
+                <small>{{ menuSummary(menu) }}</small>
+              </div>
+              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Unmap" aria-label="Unmap" (click)="unmapMenu(selected.feature, menu)">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+            <div class="cat-page-row is-child" *ngFor="let page of pagesOf(menu); trackBy: trackByMenu">
+              <span class="cat-page-row__order">{{ page.displayOrder || '—' }}</span>
+              <div>
+                <strong>{{ page.menuName }}</strong>
+                <small>{{ pageSummary(page) }}</small>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+        <p class="cat-hint" *ngIf="!selected.menus.length">No menus mapped yet. Use Edit to map top-level menus.</p>
+      </ng-container>
+    </ng-template>
+
+    <div *ngIf="viewMode() === 'table'" class="cat-table-wrap">
+      <table class="cat-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Menus</th>
+            <th>Screens</th>
+            <th>Type</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of pagedShowcases; trackBy: trackByShowcase">
+            <td>
+              <strong>{{ item.feature.displayName || item.feature.featureName }}</strong>
+              <code>{{ item.feature.featureCode }}</code>
+            </td>
+            <td>{{ menuNames(item) }}</td>
+            <td>{{ item.pageCount }}</td>
+            <td>
+              <span
+                class="cat-badge"
+                [class.cat-badge--success]="item.feature.active !== false && !item.feature.premiumFeature"
+                [class.cat-badge--warning]="item.feature.premiumFeature && item.feature.active !== false">
+                {{ typeLabel(item.feature) }}
+              </span>
+            </td>
+            <td>
+              <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                type="button"
+                class="cat-icon-btn cat-icon-btn--danger"
+                *ngIf="item.feature.active !== false"
+                title="Delete"
+                aria-label="Delete"
+                (click)="confirmArchive(item.feature)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!showcases().length"><td colspan="5">No features match your filters.</td></tr>
+        </tbody>
+      </table>
+      <div class="cat-pager" *ngIf="showcases().length">
+        <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ showcases().length }}</span>
+        <div class="cat-pager__controls">
+          <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
+          <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
+          <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
+        </div>
       </div>
-    </tc-saas-panel>
+    </div>
   </ng-container>
 </div>
 
-
-
+<p-dialog
+  [header]="draft.id ? 'Edit feature' : 'Add feature'"
+  [(visible)]="editorOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  [contentStyle]="{ 'max-height': '72vh', overflow: 'auto' }"
+  (onHide)="closeEditor()">
+  <form class="cat-form" (ngSubmit)="save()">
+    <p class="cat-hint">Fill each field, then map the menus this feature unlocks for entitled tenants.</p>
+    <label>
+      Feature code *
+      <input [(ngModel)]="draft.featureCode" name="featureCode" [disabled]="!!draft.id" placeholder="ACADEMICS">
+    </label>
+    <label>
+      Name *
+      <input [(ngModel)]="draft.featureName" name="featureName" placeholder="Academics">
+    </label>
+    <label>
+      Display name
+      <input [(ngModel)]="draft.displayName" name="displayName" placeholder="Academics">
+    </label>
+    <label>
+      Module *
+      <input [(ngModel)]="draft.module" name="module" placeholder="Academics">
+    </label>
+    <label>
+      Category
+      <input [(ngModel)]="draft.category" name="category" placeholder="Core">
+    </label>
+    <label>
+      Description
+      <textarea [(ngModel)]="draft.description" name="description" placeholder="What the customer gets with this feature"></textarea>
+    </label>
+    <div class="cat-checks">
+      <label><input type="checkbox" [(ngModel)]="draft.premiumFeature" name="premiumFeature"> Premium</label>
+      <label><input type="checkbox" [(ngModel)]="draft.defaultEnabled" name="defaultEnabled"> Included by default</label>
+      <label><input type="checkbox" [(ngModel)]="draft.visible" name="visible"> Visible in plans</label>
+    </div>
+    <div>
+      <strong>Menus this feature unlocks</strong>
+      <p class="cat-hint">Map top-level menus. Submenus follow automatically.</p>
+      <div class="cat-map-list" *ngIf="mappableMenus.length; else noMenus">
+        <label class="cat-map" *ngFor="let menu of mappableMenus; trackBy: trackByMenu">
+          <input type="checkbox" [checked]="isMenuSelected(menu.id)" (change)="onMenuToggle(menu.id, $event)">
+          <span>
+            <strong>{{ menu.menuName }}</strong>
+            <small *ngIf="menu.active === false">Draft — hidden until saved</small>
+            <small *ngIf="mappedHint(menu)">{{ mappedHint(menu) }}</small>
+          </span>
+        </label>
+      </div>
+      <ng-template #noMenus><p class="cat-hint">No top-level menus yet. Create them in Menu Management first.</p></ng-template>
+    </div>
+    <div class="cat-form__actions">
+      <button type="button" class="tc-btn" (click)="closeEditor()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+    </div>
+  </form>
+</p-dialog>

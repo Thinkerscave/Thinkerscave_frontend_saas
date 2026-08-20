@@ -1,7 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
-import { LoginService } from '../../../../core/services/login.service';
-import { resolveAcademicsEntry, roleTokensFromUser } from '../../../../core/utils/workspace-home';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 /**
  * Thin Academics shell — navigation lives in the app side menu only
@@ -30,17 +28,3 @@ import { resolveAcademicsEntry, roleTokensFromUser } from '../../../../core/util
   `]
 })
 export class AcademicsWorkspaceComponent {}
-
-/** `/app/academics` landing — students and teachers never hit admin Overview. */
-@Component({
-  selector: 'app-academics-index-redirect',
-  standalone: true,
-  template: ''
-})
-export class AcademicsIndexRedirectComponent {
-  constructor() {
-    const router = inject(Router);
-    const login = inject(LoginService);
-    void router.navigateByUrl(resolveAcademicsEntry(roleTokensFromUser(login.getUser())), { replaceUrl: true });
-  }
-}

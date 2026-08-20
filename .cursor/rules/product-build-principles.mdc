@@ -1,0 +1,35 @@
+---
+description: Premium Indian-school SaaS build principles — inspect the real UI, DB-driven data, no duplicate facts
+alwaysApply: true
+---
+
+# Product build principles
+
+This is a production product for Indian schools and colleges (target: hundreds of tenants). Do not treat screens as a practice project.
+
+## Verify on the real page
+- Open the page on `localhost` (frontend typically `:4300`, backend `:8080`) and look at it yourself before saying the work is done.
+- Judge density, duplicate facts, blank fields, missing tooltips, and whether the data matches what was captured on the create form.
+- Do not ship a layout from HTML/CSS theory if you have not seen the rendered page.
+
+## Data is backend-driven
+- No hardcoded counts, amounts, emails, names, invoice numbers, usage bars, or demo strings in the UI.
+- Show only fields the API/DB actually stores. If a value is missing, fix the API mapping or persist it at onboarding — do not invent a placeholder.
+- Usage (students, staff, branches, classes, sections, DB size) comes from a stored snapshot that a daily job recalculates, not from fake percentages.
+
+## One fact, one place
+- Prefer a single dense page over tabs that repeat the same fields.
+- Tabs are fine only when each tab owns unique data. Never copy org code, status, plan, or contact into a second tab.
+- Related records (customer, student, class): 2–3 fields plus **View details →**. Do not embed the other entity’s full profile.
+
+## Details mirror create
+- An entity details page shows what onboarding captured: identity, admin/contact, linked parent record, commercial/subscription, tenant/ops, activity.
+- **Edit** opens the same Add form, titled Edit {Entity}. Immutable fields (customer, domain, original plan) are disabled; changeable fields (name, address, admin email/mobile) stay enabled.
+
+## Operator actions need guidance
+- Opaque actions (backup, migration, maintenance, suspend, resume) must have a tooltip that says what happens to the school.
+- Destructive actions confirm once, in one place.
+
+## Layout
+- Tight spacing. Fill the viewport with information, not empty card gutters.
+- Shell title already names the record. Do not add a second hero that repeats it.

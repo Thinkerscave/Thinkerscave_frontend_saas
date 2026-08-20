@@ -14,8 +14,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 
 import { AppPageHeader, BreadCrumbService } from '../../core/services/bread-crumb.service';
 import { LoginService } from '../../core/services/login.service';
-import { OrganizationContextService } from '../../core/services/organization-context.service';
-import { resolveWorkspaceHome, roleTokensFromUser } from '../../core/utils/workspace-home';
+import { workspaceHomeForUser } from '../../core/utils/workspace-home';
 
 
 
@@ -53,6 +52,8 @@ export class BreadcrumbComponent implements OnInit {
 
   subtitle: string | null = null;
 
+
+
   private readonly router = inject(Router);
 
   private readonly destroyRef = inject(DestroyRef);
@@ -60,10 +61,7 @@ export class BreadcrumbComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly pageHeaderService = inject(BreadCrumbService);
-
   private readonly loginService = inject(LoginService);
-
-  private readonly orgContext = inject(OrganizationContextService);
 
 
 
@@ -76,13 +74,9 @@ export class BreadcrumbComponent implements OnInit {
 
 
   ngOnInit(): void {
-
     this.home = {
-
       icon: 'pi pi-home',
-
-      routerLink: [resolveWorkspaceHome(roleTokensFromUser(this.loginService.getUser()), this.orgContext.isPlatformLogin())]
-
+      routerLink: [workspaceHomeForUser(this.loginService.getUser(), this.loginService.getLoginContext() === 'PLATFORM')]
     };
 
     this.pageHeaderService.pageHeader$
@@ -143,6 +137,16 @@ export class BreadcrumbComponent implements OnInit {
 
     this.resolvedCrumbs = this.collectRouteCrumbs();
 
+    if (segments[0] === 'app' && segments[1] === 'tenant-management') {
+      const labels = this.tenantManagementLabels(segments).filter(Boolean);
+      if (labels.length) {
+        this.resolvedCrumbs = labels.map((label, index) => ({
+          label,
+          link: index === labels.length - 1 ? null : this.tenantCrumbLink(label)
+        }));
+      }
+    }
+
     if (!this.resolvedCrumbs.length) {
 
       const labels = this.routeLabels(segments);
@@ -179,15 +183,13 @@ export class BreadcrumbComponent implements OnInit {
 
       const isLast = index === this.resolvedCrumbs.length - 1;
 
-      const label = isLast && this.pageOverride?.title ? this.pageOverride.title : crumb.label;
-
       if (isLast || !crumb.link) {
 
-        return { label };
+        return { label: crumb.label };
 
       }
 
-      return { label, routerLink: crumb.link };
+      return { label: crumb.label, routerLink: crumb.link };
 
     });
 
@@ -391,7 +393,19 @@ export class BreadcrumbComponent implements OnInit {
 
     const grandchild = segments[4] ?? '';
 
-    const root = 'Tenant Management';
+    const catalogPages = new Set(['menus', 'roles', 'feature-catalog']);
+    const subscriptionPages = new Set(['subscription-plans', 'promotions']);
+    const tenantOpsPages = new Set(['tenant-health', 'platform-health', 'migration-center', 'audit-center']);
+    const standalonePages = new Set(['dashboard', 'customers', 'organizations']);
+    const root = catalogPages.has(page)
+      ? 'Platform Catalog'
+      : subscriptionPages.has(page)
+        ? 'Subscriptions'
+        : tenantOpsPages.has(page)
+          ? 'Tenant Management'
+          : standalonePages.has(page)
+            ? ''
+            : 'Tenant Management';
 
 
 
@@ -406,6 +420,10 @@ export class BreadcrumbComponent implements OnInit {
       'subscription-plans': 'Subscription Plans',
 
       promotions: 'Promotions',
+
+      menus: 'Menu Management',
+
+      roles: 'Role Management',
 
       'feature-catalog': 'Feature Catalog',
 
@@ -431,7 +449,7 @@ export class BreadcrumbComponent implements OnInit {
 
     const pageLabel = pageLabels[page] ?? this.titleCase(page.replace(/-/g, ' '));
 
-    const labels = [root, pageLabel];
+    const labels = root ? [root, pageLabel] : [pageLabel];
 
 
 
@@ -453,7 +471,7 @@ export class BreadcrumbComponent implements OnInit {
 
     if (page === 'organizations') {
 
-      if (child === 'create') labels.push('Provision Organization');
+      if (child === 'create') labels.push(this.router.parseUrl(this.router.url).queryParams['orgId'] ? 'Edit Organization' : 'Add Organization');
 
       else if (child) labels.push('Organization Details');
 
@@ -485,7 +503,25 @@ export class BreadcrumbComponent implements OnInit {
 
   }
 
-
+  private tenantCrumbLink(label: string): string[] {
+    const links: Record<string, string[]> = {
+      'Platform Catalog': ['/app/tenant-management/menus'],
+      Subscriptions: ['/app/tenant-management/subscription-plans'],
+      'Tenant Management': ['/app/tenant-management/tenant-health'],
+      Dashboard: ['/app/tenant-management/dashboard'],
+      Customers: ['/app/tenant-management/customers'],
+      Organizations: ['/app/tenant-management/organizations'],
+      'Subscription Plans': ['/app/tenant-management/subscription-plans'],
+      Promotions: ['/app/tenant-management/promotions'],
+      'Menu Management': ['/app/tenant-management/menus'],
+      'Role Management': ['/app/tenant-management/roles'],
+      'Feature Catalog': ['/app/tenant-management/feature-catalog'],
+      'Tenant Health': ['/app/tenant-management/tenant-health'],
+      'Migration Center': ['/app/tenant-management/migration-center'],
+      'Audit Center': ['/app/tenant-management/audit-center']
+    };
+    return links[label] ?? ['/app/tenant-management/dashboard'];
+  }
 
   private accessManagementLabels(segments: string[]): string[] {
 

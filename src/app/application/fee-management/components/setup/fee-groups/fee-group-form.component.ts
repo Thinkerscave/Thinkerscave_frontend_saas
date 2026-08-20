@@ -8,7 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { PickListModule } from 'primeng/picklist';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -29,16 +29,16 @@ interface FeeHead {
   selector: 'app-fee-group-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule, RouterModule, FormsModule, ReactiveFormsModule,
     CardModule, ButtonModule, InputTextModule, InputNumberModule,
-    TextareaModule, DividerModule, ToastModule, PickListModule,
+    TextareaModule, DividerModule, PickListModule,
     TableModule, TagModule, ToggleSwitchModule
   ],
   providers: [MessageService],
   template: `
     <div class="fee-group-form">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       
       <div class="page-header">
         <div>

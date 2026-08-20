@@ -22,6 +22,16 @@ const INSTITUTION_LABELS: Record<InstitutionType, string> = {
   OTHER: 'Other'
 };
 
+/** Institution types shown on Add Organization and the Organizations type filter. */
+export const ORGANIZATION_INSTITUTION_TYPES: InstitutionType[] = [
+  'SCHOOL',
+  'COLLEGE',
+  'UNIVERSITY',
+  'TRAINING_INSTITUTE',
+  'COACHING',
+  'OTHER'
+];
+
 const STATUS_LABELS: Record<OrganizationStatus, string> = {
   PENDING: 'Pending',
   ACTIVE: 'Active',
@@ -70,6 +80,13 @@ export function customerStatusTone(status?: CustomerStatus | string | null): 'su
 export function institutionLabel(type?: InstitutionType | string | null): string {
   if (!type) return '—';
   return INSTITUTION_LABELS[type as InstitutionType] ?? String(type).replace(/_/g, ' ');
+}
+
+export function institutionTypeOptions(): { value: InstitutionType; label: string }[] {
+  return ORGANIZATION_INSTITUTION_TYPES.map(value => ({
+    value,
+    label: institutionLabel(value)
+  }));
 }
 
 export function organizationStatusLabel(status?: OrganizationStatus | string | null): string {

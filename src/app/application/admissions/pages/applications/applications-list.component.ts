@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import { APPLICATION_STATUS_TABS } from '../../data/admissions-workspace.config';
@@ -32,12 +32,11 @@ import {
   selector: 'app-applications-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [AppToastComponent, 
     CommonModule,
     FormsModule,
     PaginatorModule,
     ConfirmDialogModule,
-    ToastModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,

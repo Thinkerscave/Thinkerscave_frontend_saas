@@ -10,7 +10,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 
@@ -30,11 +30,11 @@ interface Student {
   selector: 'app-adjustment-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, AutoCompleteModule, CardModule, DividerModule, ToastModule, TagModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, InputTextModule, InputNumberModule, InputTextarea, DropdownModule, AutoCompleteModule, CardModule, DividerModule, TagModule],
   providers: [MessageService],
   template: `
     <div class="adjustment-form">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <div class="page-header">
         <div>
           <h2><i class="pi pi-percentage"></i> Create Adjustment</h2>

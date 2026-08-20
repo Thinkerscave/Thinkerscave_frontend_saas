@@ -1,65 +1,68 @@
-<button type="button" class="gs-trigger" (click)="open()" aria-label="Open global search">
-  <i class="pi pi-search" aria-hidden="true"></i>
-  <span>Search</span>
-  <kbd>Ctrl K</kbd>
-</button>
-
 @if (visible()) {
-  <div class="gs-overlay" role="presentation" (click)="close()">
-    <section class="gs-dialog" role="dialog" aria-modal="true" aria-label="Global search" (click)="$event.stopPropagation()">
-      <div class="gs">
-        <div class="gs__input-row">
-          <i class="pi pi-search" aria-hidden="true"></i>
-          <input #searchInput type="text"
-                 class="gs__input"
-                 pInputText
-                 placeholder="Search anything…"
-                 [ngModel]="term()"
-                 (ngModelChange)="onTermChange($event)"
-                 (keydown)="onKey($event)"
-                 autocomplete="off" />
-          <kbd>Esc</kbd>
-        </div>
+  <div class="gs" [class.is-open]="open()">
+    <div class="gs__field">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input
+        #searchInput
+        type="search"
+        class="gs__input"
+        [placeholder]="placeholder()"
+        [ngModel]="term()"
+        (ngModelChange)="onTermChange($event)"
+        (focus)="focusInput()"
+        (keydown)="onKey($event)"
+        autocomplete="off"
+        aria-label="Global search"
+        [attr.aria-expanded]="open()">
+      @if (term()) {
+        <button
+          type="button"
+          class="gs__clear"
+          (click)="clear(); $event.stopPropagation()"
+          aria-label="Clear search">
+          <i class="pi pi-times"></i>
+        </button>
+      }
+      <kbd>Ctrl K</kbd>
+    </div>
 
-        <div class="gs__body">
-          @if (loading()) {
-            <app-skeleton shape="list" [rows]="3"></app-skeleton>
-          } @else if (!results().length) {
-            <app-empty-state
-                [compact]="true"
-                icon="pi pi-search"
-                [title]="term().length < 2 ? 'Start typing to search' : 'No matches found'"
-                [message]="term().length < 2 ? 'Press Ctrl K from anywhere to open this palette.' : 'Try different keywords or check your filters.'"></app-empty-state>
-          } @else {
-            @for (group of groupedResults; track group.category) {
-              <div class="gs__group">
-                <header class="gs__group-header">{{ group.category }}</header>
-                @for (item of group.items; track item.label) {
-                  <button type="button" class="gs__item"
-                          [class.gs__item--active]="isHighlighted(item)"
-                          (mouseenter)="highlighted.set(results().indexOf(item))"
-                          (click)="select(item)">
-                    <span class="gs__item-icon"><i [class]="item.icon || 'pi pi-circle-fill'"></i></span>
-                    <span class="gs__item-text">
-                      <strong>{{ item.label }}</strong>
-                      @if (item.description) {
-                        <small>{{ item.description }}</small>
-                      }
-                    </span>
-                    <i class="pi pi-arrow-right gs__item-go"></i>
-                  </button>
-                }
-              </div>
-            }
+    @if (open()) {
+      <div class="gs__panel" role="listbox" aria-label="Search results">
+        @if (loading()) {
+          <app-skeleton shape="list" [rows]="3"></app-skeleton>
+        } @else if (term().trim().length < 2) {
+          <p class="gs__hint">Type at least 2 characters to search.</p>
+        } @else if (!results().length) {
+          <app-empty-state
+            [compact]="true"
+            icon="pi pi-search"
+            title="No matches found"
+            message="Try another name, code or page."></app-empty-state>
+        } @else {
+          @for (group of groupedResults; track group.category) {
+            <div class="gs__group">
+              <header class="gs__group-header">{{ group.category }}</header>
+              @for (item of group.items; track item.id) {
+                <button
+                  type="button"
+                  class="gs__item"
+                  [class.gs__item--active]="isHighlighted(item)"
+                  (mouseenter)="highlighted.set(results().indexOf(item))"
+                  (click)="select(item)">
+                  <span class="gs__item-icon"><i [class]="item.icon || 'pi pi-circle-fill'"></i></span>
+                  <span class="gs__item-text">
+                    <strong>{{ item.label }}</strong>
+                    @if (item.description) {
+                      <small>{{ item.description }}</small>
+                    }
+                  </span>
+                  <i class="pi pi-arrow-right gs__item-go"></i>
+                </button>
+              }
+            </div>
           }
-        </div>
-
-        <footer class="gs__footer">
-          <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-          <span><kbd>↵</kbd> open</span>
-          <span><kbd>Esc</kbd> close</span>
-        </footer>
+        }
       </div>
-    </section>
+    }
   </div>
 }

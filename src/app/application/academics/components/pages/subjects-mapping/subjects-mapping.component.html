@@ -6,17 +6,15 @@
     <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
       <i class="pi pi-arrow-left"></i> Back
     </button>
-    <ng-container *ngIf="workspaceTab === 'catalogue'">
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="readOnly"
-        (click)="openCreateSubject()">
-        <i class="pi pi-plus"></i>
-        Add Subject
-      </button>
-    </ng-container>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="readOnly"
+      (click)="openCreateSubject()">
+      <i class="pi pi-plus"></i>
+      Add Subject
+    </button>
   </tc-saas-page-header>
 
   <section class="sm-context" *ngIf="dashboard as dash" aria-label="Academic year context">
@@ -51,26 +49,6 @@
     </div>
   </section>
 
-  <div class="sm-workspace-tabs" role="tablist" aria-label="Subjects workspace">
-    <button
-      type="button"
-      role="tab"
-      [class.active]="workspaceTab === 'catalogue'"
-      [attr.aria-selected]="workspaceTab === 'catalogue'"
-      (click)="setWorkspaceTab('catalogue')">
-      Catalogue
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [class.active]="workspaceTab === 'classes'"
-      [attr.aria-selected]="workspaceTab === 'classes'"
-      (click)="setWorkspaceTab('classes')">
-      By class
-    </button>
-  </div>
-
-  <ng-container *ngIf="workspaceTab === 'catalogue'">
   <div class="acad-toolbar sm-toolbar">
     <input
       class="acad-toolbar__search"
@@ -171,22 +149,9 @@
           </div>
 
           <div class="sm-card__actions" (click)="$event.stopPropagation()">
-            <div class="sm-card__links">
-              <button type="button" class="sm-details" (click)="openDetails(subject.subjectId)">
-                View Details <span aria-hidden="true">→</span>
-              </button>
-              <span
-                *ngIf="canManage && subject.active"
-                [attr.title]="mapDisabledReason(subject)">
-                <button
-                  type="button"
-                  class="sm-details"
-                  [disabled]="isFullyMapped(subject)"
-                  (click)="openDetails(subject.subjectId, true)">
-                  Map to Class
-                </button>
-              </span>
-            </div>
+            <button type="button" class="sm-details" (click)="openDetails(subject.subjectId)">
+              View Details <span aria-hidden="true">→</span>
+            </button>
             <button
               type="button"
               class="sm-icon-btn"
@@ -235,17 +200,6 @@
                   </span>
                 </td>
                 <td class="sm-table__actions" (click)="$event.stopPropagation()">
-                  <span
-                    *ngIf="canManage && subject.active"
-                    [attr.title]="mapDisabledReason(subject)">
-                    <button
-                      type="button"
-                      class="sm-details"
-                      [disabled]="isFullyMapped(subject)"
-                      (click)="openDetails(subject.subjectId, true)">
-                      Map
-                    </button>
-                  </span>
                   <button
                     type="button"
                     class="sm-icon-btn"
@@ -274,9 +228,9 @@
           <i class="pi pi-angle-right"></i>
         </button>
         <select class="sm-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Subjects per page">
-          <option [ngValue]="10">10 / page</option>
-          <option [ngValue]="20">20 / page</option>
-          <option [ngValue]="50">50 / page</option>
+          <option [ngValue]="12">12 / page</option>
+          <option [ngValue]="24">24 / page</option>
+          <option [ngValue]="48">48 / page</option>
         </select>
       </div>
     </div>
@@ -296,74 +250,19 @@
         <p>
           There are no subjects configured for
           {{ dashboard?.academicYearName || 'this academic year' }}.
-          Use Add Subject in the header to create the first one.
         </p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly"
+          (click)="openCreateSubject()">
+          <i class="pi pi-plus"></i>
+          Add Subject
+        </button>
       </div>
     </ng-template>
   </ng-template>
-  </ng-container>
-
-  <ng-container *ngIf="workspaceTab === 'classes'">
-    <div class="acad-toolbar sm-toolbar">
-      <input
-        class="acad-toolbar__search"
-        type="search"
-        placeholder="Search classes by name or code..."
-        [(ngModel)]="classSearch"
-        (ngModelChange)="onClassSearchChange($event)"
-        aria-label="Search classes by name or code" />
-    </div>
-
-    <div class="sm-table-wrap" *ngIf="filteredClassRows.length; else noClassesTpl">
-      <table class="sm-table">
-        <thead>
-          <tr>
-            <th>Class</th>
-            <th>Code</th>
-            <th>Stage</th>
-            <th>Sections</th>
-            <th>Students</th>
-            <th class="sm-table__actions" aria-label="Actions"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let cls of pagedClassRows">
-            <td><strong>{{ cls.name }}</strong></td>
-            <td><code>{{ cls.code || '—' }}</code></td>
-            <td>{{ stageLabel(cls.stage) }}</td>
-            <td>{{ cls.sectionCount || 0 }}</td>
-            <td>{{ cls.studentCount || 0 }}</td>
-            <td class="sm-table__actions">
-              <a
-                class="sm-details"
-                [routerLink]="['/app/academics/classes-sections', cls.classId, 'subjects']"
-                [queryParams]="{ from: 'subjects', tab: 'classes' }">
-                Map subjects
-              </a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="sm-pager" *ngIf="filteredClassRows.length > pageSize">
-      <span class="sm-pager__meta">Showing {{ ((page - 1) * pageSize) + 1 }}–{{ classPageEnd }} of {{ filteredClassRows.length }} classes</span>
-      <div class="sm-pager__controls">
-        <button type="button" class="sm-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)">‹</button>
-        <span class="sm-pager__page">{{ page }} / {{ classTotalPages }}</span>
-        <button type="button" class="sm-pager__btn" [disabled]="page >= classTotalPages" (click)="setPage(page + 1)">›</button>
-      </div>
-    </div>
-
-    <ng-template #noClassesTpl>
-      <div class="sm-empty">
-        <i class="pi pi-th-large" aria-hidden="true"></i>
-        <h3>No classes this year</h3>
-        <p>
-          Add classes first from Classes &amp; Sections, then return here to map subjects by class.
-        </p>
-      </div>
-    </ng-template>
-  </ng-container>
 </div>
 
 <ng-template #loadingTpl>

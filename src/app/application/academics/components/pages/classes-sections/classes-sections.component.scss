@@ -1,4 +1,4 @@
-@import '../../shared/styles/academics-common';
+@use '../../shared/styles/academics-common' as *;
 
 :host { display: block; }
 
@@ -235,13 +235,6 @@
   margin-top: auto;
   padding-top: 0.55rem;
   border-top: 1px solid var(--tc-border, #e2e8f0);
-}
-
-.cs-card__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
 }
 
 .cs-details {

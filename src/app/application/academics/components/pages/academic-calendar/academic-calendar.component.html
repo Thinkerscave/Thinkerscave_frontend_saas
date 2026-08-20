@@ -34,41 +34,27 @@
         <button
           type="button"
           [class.active]="viewMode === 'calendar'"
-          (click)="setViewMode('calendar')"
-          aria-label="Calendar view"
-          title="Calendar">
-          <i class="pi pi-calendar" aria-hidden="true"></i>
+          (click)="setViewMode('calendar')">
+          Calendar
         </button>
         <button
           type="button"
           [class.active]="viewMode === 'list'"
-          (click)="setViewMode('list')"
-          aria-label="List view"
-          title="List">
-          <i class="pi pi-list" aria-hidden="true"></i>
+          (click)="setViewMode('list')">
+          List
         </button>
       </div>
     </div>
 
-    <div class="ac-topbar__actions">
-      <button type="button" class="tc-btn" (click)="exportEvents()">
-        <i class="pi pi-download"></i>
-        Export
-      </button>
-      <button type="button" class="tc-btn" (click)="printCalendar()">
-        <i class="pi pi-print"></i>
-        Print
-      </button>
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="readOnly"
-        (click)="openCreateEvent()">
-        <i class="pi pi-plus"></i>
-        Add Event
-      </button>
-    </div>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="readOnly"
+      (click)="openCreateEvent()">
+      <i class="pi pi-plus"></i>
+      Add Event
+    </button>
   </section>
 
   <!-- ========== CALENDAR VIEW ========== -->
@@ -162,6 +148,20 @@
         <ng-template #noUpcoming>
           <p class="ac-side-empty">No upcoming events in this year.</p>
         </ng-template>
+      </section>
+
+      <section class="ac-side-card">
+        <h3>Quick Actions</h3>
+        <div class="ac-quick">
+          <button type="button" class="ac-quick__btn" (click)="exportEvents()">
+            <i class="pi pi-download" aria-hidden="true"></i>
+            Export Calendar
+          </button>
+          <button type="button" class="ac-quick__btn" (click)="printCalendar()">
+            <i class="pi pi-print" aria-hidden="true"></i>
+            Print Calendar
+          </button>
+        </div>
       </section>
     </aside>
   </div>
@@ -319,9 +319,9 @@
             <i class="pi pi-angle-right"></i>
           </button>
           <select class="ac-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Events per page">
-            <option [ngValue]="10">10 / page</option>
-            <option [ngValue]="20">20 / page</option>
-            <option [ngValue]="50">50 / page</option>
+            <option [ngValue]="12">12 / page</option>
+            <option [ngValue]="24">24 / page</option>
+            <option [ngValue]="48">48 / page</option>
           </select>
         </div>
       </div>
@@ -342,8 +342,16 @@
         <p>
           There are no calendar events for
           {{ dashboard?.name || 'this academic year' }}.
-          Use Add Event in the toolbar to create the first one.
         </p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly"
+          (click)="openCreateEvent()">
+          <i class="pi pi-plus"></i>
+          Add Event
+        </button>
       </div>
     </ng-template>
   </ng-template>

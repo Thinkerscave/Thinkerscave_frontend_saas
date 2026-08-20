@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { debounceTime, Subject } from 'rxjs';
 
 import { AccessUser, UserStatus } from '../../models/access.model';
@@ -23,8 +23,8 @@ import {
   selector: 'app-users-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule, FormsModule, ToastModule, DropdownModule,
+  imports: [AppToastComponent, 
+    CommonModule, FormsModule, DropdownModule,
     SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],

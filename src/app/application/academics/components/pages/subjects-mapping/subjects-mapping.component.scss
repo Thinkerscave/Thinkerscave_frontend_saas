@@ -1,4 +1,4 @@
-@import '../../shared/styles/academics-common';
+@use '../../shared/styles/academics-common' as *;
 
 :host { display: block; }
 
@@ -52,35 +52,6 @@
 
 .sm-dot {
   opacity: 0.55;
-}
-
-.sm-workspace-tabs {
-  display: inline-flex;
-  border: 1px solid var(--tc-border, #e2e8f0);
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--tc-surface-card, #fff);
-}
-
-.sm-workspace-tabs button {
-  border: 0;
-  background: transparent;
-  padding: 0.45rem 0.95rem;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--tc-text-muted, #64748b);
-  cursor: pointer;
-}
-
-.sm-workspace-tabs button.active {
-  background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 12%, #fff);
-  color: var(--tc-primary-600, #2563eb);
-}
-
-a.sm-details {
-  text-decoration: none;
-  display: inline-flex;
 }
 
 .sm-readonly {
@@ -286,13 +257,6 @@ a.sm-details {
   border-top: 1px solid var(--tc-border, #e2e8f0);
 }
 
-.sm-card__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
-
 .sm-details {
   border: 0;
   background: transparent;
@@ -303,13 +267,8 @@ a.sm-details {
   cursor: pointer;
 }
 
-.sm-details:hover:not(:disabled) {
+.sm-details:hover {
   color: var(--tc-primary-600, #2563eb);
-}
-
-.sm-details:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .sm-results--refreshing {
@@ -367,12 +326,8 @@ a.sm-details {
 }
 
 .sm-table__actions {
-  min-width: 5.5rem;
+  width: 2.5rem;
   text-align: right;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.55rem;
 }
 
 .sm-muted {

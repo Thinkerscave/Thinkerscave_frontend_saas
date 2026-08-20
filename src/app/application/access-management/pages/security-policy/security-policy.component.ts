@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import { SecurityPolicy } from '../../models/access.model';
@@ -14,7 +14,7 @@ import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/
   selector: 'app-security-policy',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ToastModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [AppToastComponent, CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent],
   providers: [MessageService],
   templateUrl: './security-policy.component.html',
   styleUrl: './security-policy.component.scss'

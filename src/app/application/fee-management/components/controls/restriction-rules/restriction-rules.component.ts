@@ -12,7 +12,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
@@ -34,11 +34,11 @@ interface RestrictionRule {
   selector: 'app-restriction-rules',
     changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputNumberModule, DropdownModule, MultiSelectModule, InputSwitchModule, DialogModule, TooltipModule, ToastModule, ConfirmDialogModule],
+  imports: [AppToastComponent, CommonModule, FormsModule, RouterModule, ButtonModule, TableModule, TagModule, InputTextModule, InputNumberModule, DropdownModule, MultiSelectModule, InputSwitchModule, DialogModule, TooltipModule, ConfirmDialogModule],
   providers: [MessageService, ConfirmationService],
   template: `
     <div class="restriction-rules">
-      <p-toast></p-toast>
+      <app-toast></app-toast>
       <p-confirmDialog></p-confirmDialog>
 
       <div class="page-header">

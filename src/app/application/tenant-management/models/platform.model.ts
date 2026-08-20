@@ -71,6 +71,12 @@ export interface TenantRegistry {
   provisionStatus: ProvisionStatus;
   databaseSizeMb?: number;
   storageUsedMb?: number;
+  studentCount?: number;
+  staffCount?: number;
+  branchCount?: number;
+  classCount?: number;
+  sectionCount?: number;
+  usageRefreshedAt?: string;
   lastMigrationAt?: string;
   lastBackupAt?: string;
   lastHealthCheckAt?: string;
@@ -85,10 +91,17 @@ export interface TenantRegistry {
 export interface OrganizationDomain {
   id?: number;
   organizationId?: number;
+  organizationName?: string;
   subdomain?: string;
+  subDomain?: string;
+  domain?: string;
   customDomain?: string;
-  verified?: boolean;
   sslEnabled?: boolean;
+  dnsVerified?: boolean;
+  defaultDomain?: boolean;
+  primaryDomain?: boolean;
+  status?: string;
+  verified?: boolean;
   primary?: boolean;
 }
 
@@ -99,6 +112,9 @@ export interface OrganizationConfiguration {
   maxBranches?: number;
   storageLimitGb?: number;
   apiRequestLimit?: number;
+  currency?: string;
+  timeZone?: string;
+  language?: string;
 }
 
 export interface FeatureOverride {
@@ -108,7 +124,9 @@ export interface FeatureOverride {
   featureCode?: string;
   featureName?: string;
   enabled: boolean;
+  overrideReason?: string;
   remarks?: string;
+  createdBy?: string;
 }
 
 export interface OrganizationSubscription {
@@ -132,9 +150,15 @@ export interface OrganizationSubscription {
   staffLimitOverride?: number;
   branchLimitOverride?: number;
   storageLimitOverride?: number;
+  studentLimit?: number;
+  staffLimit?: number;
+  branchLimit?: number;
+  storageLimitGb?: number;
+  invoiceNumber?: string;
   autoRenew?: boolean;
   status: SubscriptionStatus;
   active?: boolean;
+  remarks?: string;
   featureOverrides?: FeatureOverride[];
 }
 
@@ -148,6 +172,9 @@ export interface OrganizationDetail {
   status: OrganizationStatus;
   email?: string;
   mobileNumber?: string;
+  adminFullName?: string;
+  adminEmail?: string;
+  adminMobile?: string;
   alternateMobileNumber?: string;
   website?: string;
   addressLine1?: string;
@@ -169,10 +196,34 @@ export interface OrganizationDetail {
   tenant?: TenantRegistry;
   domain?: OrganizationDomain;
   subscription?: OrganizationSubscription;
+  entitledFeatures?: SubscriptionPlanFeature[];
   configuration?: OrganizationConfiguration;
   createdOn?: string;
   createdBy?: string;
   updatedOn?: string;
+}
+
+export interface OrganizationUpdatePayload {
+  customerId: number;
+  organizationName: string;
+  shortName?: string;
+  institutionType: InstitutionType;
+  boardName?: string;
+  email?: string;
+  mobileNumber?: string;
+  adminFullName?: string;
+  website?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  timeZone?: string;
+  currency?: string;
+  language?: string;
+  logoUrl?: string;
+  remarks?: string;
 }
 
 export type CustomerContactType = 'PRIMARY' | 'SECONDARY';
@@ -282,11 +333,15 @@ export interface CustomerContactCreatePayload {
 }
 
 export interface SubscriptionPlanFeature {
-  id: number;
+  id?: number;
   featureId: number;
   featureCode?: string;
   featureName?: string;
-  included: boolean;
+  featureKey?: string;
+  module?: string;
+  included?: boolean;
+  enabled?: boolean;
+  notes?: string;
   limitValue?: number;
 }
 
@@ -322,9 +377,35 @@ export interface PlatformFeature {
   category?: string;
   description?: string;
   icon?: string;
+  displayOrder?: number;
   premiumFeature?: boolean;
   defaultEnabled?: boolean;
+  visible?: boolean;
   active?: boolean;
+}
+
+export interface PlatformFeaturePayload {
+  featureCode: string;
+  featureName: string;
+  displayName?: string;
+  module: string;
+  category?: string;
+  featureKey?: string;
+  description?: string;
+  icon?: string;
+  displayOrder?: number;
+  premiumFeature?: boolean;
+  visible?: boolean;
+  defaultEnabled?: boolean;
+  remarks?: string;
+}
+
+export interface FeatureOverridePayload {
+  organizationSubscriptionId: number;
+  featureId: number;
+  enabled?: boolean;
+  overrideReason?: string;
+  remarks?: string;
 }
 
 export interface Promotion {

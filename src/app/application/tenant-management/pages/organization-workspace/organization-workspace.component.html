@@ -1,11 +1,9 @@
 <div class="ow-page">
-<!-- ── Loading ── -->
   <div *ngIf="loading" class="ow-loading">
     <i class="pi pi-spin pi-spinner"></i>
     <span>Loading organization…</span>
   </div>
 
-  <!-- ── Error ── -->
   <div *ngIf="errorMessage" class="ow-error">
     <div class="ow-error__icon"><i class="pi pi-exclamation-triangle"></i></div>
     <strong>{{ errorMessage }}</strong>
@@ -16,706 +14,364 @@
   </div>
 
   <ng-container *ngIf="!loading && org">
+    <p-confirmDialog></p-confirmDialog>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         WORKSPACE HEADER
-    ══════════════════════════════════════════════════════════════════ -->
-    <div class="ow-header">
-
-      <!-- Brand: avatar + status + secondary contact (name/code live in page shell) -->
-      <div class="ow-header__brand">
-        <div class="ow-avatar" [attr.data-color]="orgColor(org.organizationName)">
-          {{ orgInitials(org.organizationName) || 'ORG' }}
-        </div>
-        <div class="ow-header__identity">
-          <div class="ow-header__title-row">
-            <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
-          </div>
-          <div class="ow-header__meta-row ow-header__meta-row--muted">
-            <span *ngIf="org.customerName"><i class="pi pi-users"></i>{{ org.customerName }}</span>
-            <ng-container *ngIf="org.createdOn && org.customerName"><span class="ow-sep">·</span></ng-container>
-            <span *ngIf="org.createdOn"><i class="pi pi-calendar"></i>Created {{ formatDate(org.createdOn) }}</span>
-            <ng-container *ngIf="org.email"><span class="ow-sep">·</span></ng-container>
-            <span *ngIf="org.email"><i class="pi pi-envelope"></i>{{ org.email }}</span>
-            <ng-container *ngIf="org.tenant?.tenantDomain"><span class="ow-sep">·</span></ng-container>
-            <span *ngIf="org.tenant?.tenantDomain"><i class="pi pi-globe"></i>{{ org.tenant!.tenantDomain }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI strip + actions -->
-      <div class="ow-header__right">
-
-        <!-- Plan KPI -->
-        <div class="ow-hkpi ow-hkpi--plan" *ngIf="org.subscription">
-          <i class="pi pi-credit-card ow-hkpi__icon"></i>
-          <div class="ow-hkpi__body">
-            <span class="ow-hkpi__label">{{ org.subscription.planName || '—' }}</span>
-            <span class="ow-hkpi__sub">{{ billingCycleLabel(org.subscription.billingCycle) }} Subscription</span>
-          </div>
-          <button type="button" class="ow-hkpi__link" (click)="activeTab = 'subscription'">
-            View Subscription →
+    <tc-saas-page-header>
+      <button type="button" class="tc-btn tc-btn--back" (click)="back()">
+        <i class="pi pi-arrow-left"></i> Back
+      </button>
+      <button type="button" class="tc-btn" (click)="openEdit()"
+              pTooltip="Open the organization form to change profile, logo, and admin contact."
+              tooltipPosition="bottom">
+        <i class="pi pi-pencil"></i> Edit
+      </button>
+      <div class="ow-actions-wrap">
+        <button type="button" class="tc-btn" (click)="actionsMenuOpen = !actionsMenuOpen"
+                pTooltip="Tenant operations: maintenance, backup, migration, and access."
+                tooltipPosition="bottom">
+          Actions <i class="pi pi-chevron-down" [class.ow-rotated]="actionsMenuOpen"></i>
+        </button>
+        <div class="ow-actions-menu" *ngIf="actionsMenuOpen">
+          <button type="button" *ngIf="org.tenant" (click)="triggerBackup(); actionsMenuOpen = false"
+                  pTooltip="Start a database backup for this tenant schema." tooltipPosition="left">
+            <i class="pi pi-cloud-upload"></i> Trigger Backup
           </button>
-        </div>
-
-        <!-- Health gauge -->
-        <div class="ow-hkpi ow-hkpi--health">
-          <div class="ow-gauge" [style.--pct]="healthScore(org.tenant)">
-            <span class="ow-gauge__val">{{ healthScore(org.tenant) }}%</span>
-          </div>
-          <div class="ow-hkpi__body">
-            <span class="ow-hkpi__label">Health Score</span>
-            <span class="ow-hkpi__sub ow-hkpi__sub--health"
-                  [attr.data-tone]="healthTone(healthScore(org.tenant))">
-              {{ healthLabel(healthScore(org.tenant)) }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Storage KPI -->
-        <div class="ow-hkpi ow-hkpi--storage">
-          <i class="pi pi-database ow-hkpi__icon"></i>
-          <div class="ow-hkpi__body">
-            <span class="ow-hkpi__label">{{ formatStorageMb(org.tenant?.storageUsedMb) }}</span>
-            <span class="ow-hkpi__sub">Storage Used</span>
-            <div class="ow-storage-bar">
-              <div class="ow-storage-bar__fill"
-                   [style.width]="storagePercent(org) + '%'"
-                   [attr.data-warn]="storagePercent(org) > 80"></div>
-            </div>
-            <span class="ow-hkpi__sub">
-              of {{ org.configuration?.storageLimitGb ? org.configuration!.storageLimitGb + ' GB' : '—' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Header action buttons -->
-        <div class="ow-header__actions">
-          <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-            <i class="pi pi-arrow-left"></i> Back to list
+          <button type="button" *ngIf="org.tenant" (click)="triggerMigration(); actionsMenuOpen = false"
+                  pTooltip="Apply pending schema migrations to this tenant." tooltipPosition="left">
+            <i class="pi pi-sync"></i> Trigger Migration
           </button>
-          <div class="ow-actions-wrap">
-            <button type="button" class="ow-btn ow-btn--ghost"
-                    (click)="actionsMenuOpen = !actionsMenuOpen">
-              Actions <i class="pi pi-chevron-down" [class.ow-rotated]="actionsMenuOpen"></i>
-            </button>
-            <div class="ow-actions-menu" *ngIf="actionsMenuOpen">
-              <button type="button" (click)="triggerBackup(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-cloud-upload"></i> Trigger Backup
-              </button>
-              <button type="button" (click)="triggerMigration(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-sync"></i> Trigger Migration
-              </button>
-              <button type="button" (click)="resumeTenant(); actionsMenuOpen = false" *ngIf="org.tenant">
-                <i class="pi pi-play"></i> Resume Tenant
-              </button>
-            </div>
-          </div>
-          <button type="button" class="ow-btn ow-btn--danger"
-                  *ngIf="canSuspend()" [disabled]="actionLoading" (click)="suspend()">
-            <i class="pi pi-power-off"></i> Suspend Organization
+          <button type="button" *ngIf="org.tenant" (click)="setMaintenance(); actionsMenuOpen = false"
+                  pTooltip="Put the tenant in maintenance so staff cannot use the workspace." tooltipPosition="left">
+            <i class="pi pi-wrench"></i> Set Maintenance
           </button>
-          <button type="button" class="ow-btn ow-btn--success"
-                  *ngIf="canActivate()" [disabled]="actionLoading" (click)="activate()">
+          <button type="button" *ngIf="org.tenant" (click)="resumeTenant(); actionsMenuOpen = false"
+                  pTooltip="Take the tenant out of maintenance and restore access." tooltipPosition="left">
+            <i class="pi pi-play"></i> Resume Tenant
+          </button>
+          <button type="button" class="ow-actions-menu__danger" *ngIf="canSuspend()" (click)="suspend(); actionsMenuOpen = false"
+                  pTooltip="Block all users of this organization until you activate it again." tooltipPosition="left">
+            <i class="pi pi-power-off"></i> Suspend
+          </button>
+          <button type="button" class="ow-actions-menu__success" *ngIf="canActivate()" (click)="activate(); actionsMenuOpen = false"
+                  pTooltip="Restore access for this organization." tooltipPosition="left">
             <i class="pi pi-check-circle"></i> Activate
           </button>
         </div>
       </div>
+    </tc-saas-page-header>
+
+    <header class="ow-identity">
+      <div class="ow-identity__lead">
+        <img *ngIf="org.logoUrl" class="ow-identity__logo" [src]="org.logoUrl" [alt]="org.organizationName">
+        <span *ngIf="!org.logoUrl" class="ow-identity__mark" aria-hidden="true">{{ orgInitials }}</span>
+        <p class="ow-identity__meta">
+          <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
+          <ng-container *ngIf="org.adminFullName">
+            <span aria-hidden="true">·</span>
+            <span>{{ org.adminFullName }}</span>
+          </ng-container>
+        </p>
+      </div>
+      <div class="ow-identity__summary">
+        <tc-saas-pill *ngIf="org.subscription" [label]="planSummary" tone="neutral"></tc-saas-pill>
+        <tc-saas-pill *ngIf="isTrial" label="Trial" tone="info"></tc-saas-pill>
+      </div>
+    </header>
+
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
+
+    <div class="ow-tab-panel" *ngIf="activeTab === 'overview'">
+      <div class="ow-grid ow-grid--2">
+        <tc-saas-panel title="Organization" subtitle="Captured at onboarding">
+          <div class="ow-info-grid ow-info-grid--3">
+            <div class="ow-ii"><span class="ow-ii__label">Short Name</span><span class="ow-ii__value">{{ org.shortName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Institution Type</span><span class="ow-ii__value">{{ institutionTypeText }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Domain</span><span class="ow-ii__value">{{ displayDomain || '—' }}</span></div>
+            <div class="ow-ii ow-ii--full"><span class="ow-ii__label">Address</span><span class="ow-ii__value">{{ displayAddress }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Time Zone</span><span class="ow-ii__value">{{ org.timeZone || org.configuration?.timeZone || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Currency</span><span class="ow-ii__value">{{ org.currency || org.configuration?.currency || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Language</span><span class="ow-ii__value">{{ org.language || org.configuration?.language || '—' }}</span></div>
+          </div>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Organization Admin" subtitle="First tenant administrator">
+          <div class="ow-info-grid">
+            <div class="ow-ii"><span class="ow-ii__label">Full Name</span><span class="ow-ii__value">{{ org.adminFullName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Email</span><span class="ow-ii__value">{{ displayEmail }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Mobile</span><span class="ow-ii__value">{{ displayMobile }}</span></div>
+          </div>
+        </tc-saas-panel>
+      </div>
+
+      <div class="ow-grid ow-grid--2">
+        <tc-saas-panel title="Customer" subtitle="Linked billing account">
+          <div class="ow-info-grid">
+            <div class="ow-ii"><span class="ow-ii__label">Customer Name</span><span class="ow-ii__value">{{ org.customerName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Customer Code</span><span class="ow-ii__value ow-mono">{{ org.customerCode || '—' }}</span></div>
+          </div>
+          <button type="button" class="ow-details-link" [disabled]="!org.customerId" (click)="viewCustomer()">
+            View customer details <span aria-hidden="true">→</span>
+          </button>
+        </tc-saas-panel>
+
+        <tc-saas-panel title="Organization health" subtitle="Tenant operational snapshot">
+          <div class="ow-info-grid">
+            <div class="ow-ii">
+              <span class="ow-ii__label">Provision Status</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="provisionStatusLabel(org.tenant?.provisionStatus)" [tone]="provisionTone(org.tenant?.provisionStatus)"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Tenant Status</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="organizationStatusLabel(org.status)" [tone]="orgStatusTone()"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">SSL</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="org.domain?.sslEnabled ? 'Enabled' : 'Disabled'" [tone]="org.domain?.sslEnabled ? 'success' : 'neutral'"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Maintenance Mode</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="org.tenant?.maintenanceMode ? 'On' : 'Off'" [tone]="org.tenant?.maintenanceMode ? 'warning' : 'neutral'"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii"><span class="ow-ii__label">Last Migration</span><span class="ow-ii__value">{{ formatDate(org.tenant?.lastMigrationAt) }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Last Backup</span><span class="ow-ii__value">{{ formatDate(org.tenant?.lastBackupAt) }}</span></div>
+          </div>
+        </tc-saas-panel>
+      </div>
+
+      <tc-saas-panel title="Recent activity" subtitle="Latest provisioning and subscription events" [actions]="true">
+        <button type="button" panel-actions class="ow-details-link ow-details-link--header" (click)="onTabChange('tenant')">
+          View all activity <span aria-hidden="true">→</span>
+        </button>
+        <div class="ow-timeline" *ngIf="recentActivityPreview.length; else noActivityPreview">
+          <div class="ow-tl-item" *ngFor="let ev of recentActivityPreview" [attr.data-color]="ev.color">
+            <div class="ow-tl-item__dot"><i [class]="ev.icon"></i></div>
+            <div class="ow-tl-item__body">
+              <strong>{{ ev.title }}</strong>
+              <p>{{ ev.detail }}</p>
+              <small *ngIf="ev.date">{{ formatDate(ev.date) }}</small>
+            </div>
+          </div>
+        </div>
+        <ng-template #noActivityPreview><p class="ow-empty-inline">No events recorded yet.</p></ng-template>
+      </tc-saas-panel>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         NAVIGATION TABS
-    ══════════════════════════════════════════════════════════════════ -->
-    <div class="ow-tabs">
-      <button type="button" class="ow-tab"
-              *ngFor="let tab of tabs"
-              [class.is-active]="activeTab === tab.key"
-              (click)="activeTab = tab.key">
-        <i [class]="tab.icon"></i>
-        <span>{{ tab.label }}</span>
-      </button>
+    <div class="ow-tab-panel" *ngIf="activeTab === 'billing'">
+      <tc-saas-panel title="Subscription" subtitle="Plan, billing cycle, trial, and entitlements">
+        <ng-container *ngIf="org.subscription; else noSub">
+          <div class="ow-info-grid ow-info-grid--3">
+            <div class="ow-ii"><span class="ow-ii__label">Plan</span><span class="ow-ii__value">{{ org.subscription.planName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Plan Code</span><span class="ow-ii__value ow-mono">{{ org.subscription.planCode || '—' }}</span></div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Status</span>
+              <span class="ow-ii__value"><tc-saas-pill [label]="subscriptionStatusLabel(org.subscription.status)" [tone]="subStatusTone()"></tc-saas-pill></span>
+            </div>
+            <div class="ow-ii"><span class="ow-ii__label">Billing Cycle</span><span class="ow-ii__value">{{ billingCycleLabel(org.subscription.billingCycle) }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Start Date</span><span class="ow-ii__value">{{ formatDate(org.subscription.startDate) }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Expiry Date</span><span class="ow-ii__value">{{ formatDate(org.subscription.endDate) }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Auto Renew</span><span class="ow-ii__value">{{ org.subscription.autoRenew ? 'On' : 'Off' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Plan Price</span><span class="ow-ii__value">{{ formatCurrency(org.subscription.planPrice, org.currency || 'INR') }}</span></div>
+            <div class="ow-ii" *ngIf="org.subscription.trialEndDate"><span class="ow-ii__label">Trial Ends</span><span class="ow-ii__value">{{ formatDate(org.subscription.trialEndDate) }}</span></div>
+            <div class="ow-ii" *ngIf="org.subscription.remarks"><span class="ow-ii__label">Remarks</span><span class="ow-ii__value">{{ org.subscription.remarks }}</span></div>
+          </div>
+
+          <h3 class="ow-subhead">Limits / entitlements</h3>
+          <div class="ow-usage-inline">
+            <div class="ow-usage-inline__item">
+              <span>Students</span>
+              <strong>{{ org.tenant?.studentCount ?? 0 }} / {{ org.subscription.studentLimit ?? '—' }}</strong>
+            </div>
+            <div class="ow-usage-inline__item">
+              <span>Staff</span>
+              <strong>{{ org.tenant?.staffCount ?? 0 }} / {{ org.subscription.staffLimit ?? '—' }}</strong>
+            </div>
+            <div class="ow-usage-inline__item">
+              <span>Branches</span>
+              <strong>{{ org.tenant?.branchCount ?? 0 }} / {{ org.subscription.branchLimit ?? '—' }}</strong>
+            </div>
+            <div class="ow-usage-inline__item">
+              <span>Classes</span>
+              <strong>{{ org.tenant?.classCount ?? 0 }}</strong>
+            </div>
+            <div class="ow-usage-inline__item">
+              <span>Sections</span>
+              <strong>{{ org.tenant?.sectionCount ?? 0 }}</strong>
+            </div>
+            <div class="ow-usage-inline__item">
+              <span>Database</span>
+              <strong>{{ formatStorageMb(org.tenant?.databaseSizeMb) }} / {{ org.subscription.storageLimitGb ?? '—' }} GB</strong>
+            </div>
+          </div>
+          <p class="ow-hint" *ngIf="org.tenant?.usageRefreshedAt">Usage last calculated {{ formatDate(org.tenant?.usageRefreshedAt) }} (refreshed daily from the tenant database).</p>
+
+          <h3 class="ow-subhead">Assigned features</h3>
+          <div class="ow-feature-chips" *ngIf="entitledFeatures.length; else noFeatures">
+            <span class="ow-chip" *ngFor="let f of entitledFeatures">{{ f.featureName || f.featureCode }}</span>
+          </div>
+          <ng-template #noFeatures><p class="ow-empty-inline">No plan features are linked yet.</p></ng-template>
+
+          <div class="ow-override-head">
+            <h3 class="ow-subhead">Feature overrides</h3>
+            <button type="button" class="ow-card__hbtn ow-card__hbtn--primary" (click)="openAddOverride()">
+              <i class="pi pi-plus"></i> Add Override
+            </button>
+          </div>
+          <div class="ow-override-form" *ngIf="overrideEditorOpen">
+            <h4>{{ overrideDraft.id ? 'Edit feature override' : 'Grant or revoke a feature' }}</h4>
+            <div class="ow-override-form__grid">
+              <label class="tc-form-field">
+                <span>Feature</span>
+                <p-dropdown
+                  [options]="overrideFeatureOptions"
+                  [(ngModel)]="overrideDraft.featureId"
+                  [disabled]="!!overrideDraft.id"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select a feature"
+                  appendTo="body"
+                  styleClass="att-filter-dropdown">
+                </p-dropdown>
+              </label>
+              <div class="tc-form-field">
+                <span>Entitlement</span>
+                <div class="ow-override-form__radios">
+                  <label><input type="radio" name="overrideEnabled" [checked]="overrideDraft.enabled === true" (change)="overrideDraft.enabled = true"> Grant extra feature</label>
+                  <label><input type="radio" name="overrideEnabled" [checked]="overrideDraft.enabled === false" (change)="overrideDraft.enabled = false"> Revoke feature</label>
+                </div>
+              </div>
+              <label class="tc-form-field">
+                <span>Reason</span>
+                <input [(ngModel)]="overrideDraft.overrideReason" placeholder="Why this organization needs a different entitlement">
+              </label>
+            </div>
+            <div class="ow-override-form__actions">
+              <button type="button" class="ow-btn" (click)="closeOverrideEditor()">Cancel</button>
+              <button type="button" class="ow-btn ow-btn--primary" [disabled]="overrideSaving" (click)="saveOverride()">Save override</button>
+            </div>
+          </div>
+          <div class="ow-table-wrap" *ngIf="featureOverrides.length">
+            <table class="ow-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th class="ow-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let f of featureOverrides">
+                  <td>{{ f.featureName || f.featureCode }}</td>
+                  <td><tc-saas-pill [label]="f.enabled ? 'Enabled' : 'Disabled'" [tone]="f.enabled ? 'success' : 'danger'"></tc-saas-pill></td>
+                  <td class="ow-text-muted">{{ f.overrideReason || f.remarks || '—' }}</td>
+                  <td>
+                    <div class="ow-table-actions">
+                      <button class="ow-icon-btn" type="button" title="Edit" (click)="openEditOverride(f)"><i class="pi pi-pencil"></i></button>
+                      <button class="ow-icon-btn ow-icon-btn--danger" type="button" title="Remove" (click)="confirmRemoveOverride(f)"><i class="pi pi-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ow-empty-inline" *ngIf="!featureOverrides.length && !overrideEditorOpen">No custom overrides. The organization uses the plan defaults above.</p>
+        </ng-container>
+        <ng-template #noSub><p class="ow-empty-inline">No subscription assigned.</p></ng-template>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Onboarding Invoice" subtitle="Generated from the subscription at provision time" [actions]="true">
+        <button type="button" panel-actions class="ow-btn ow-btn--primary" [disabled]="!org.subscription || invoiceDownloading"
+                (click)="downloadInvoicePdf()"
+                pTooltip="Download a PDF of this onboarding invoice."
+                tooltipPosition="left">
+          <i class="pi" [ngClass]="invoiceDownloading ? 'pi-spin pi-spinner' : 'pi-download'"></i>
+          Download Invoice PDF
+        </button>
+        <ng-container *ngIf="org.subscription; else noInvoice">
+          <div class="ow-info-grid ow-info-grid--3">
+            <div class="ow-ii"><span class="ow-ii__label">Invoice Number</span><span class="ow-ii__value ow-mono">{{ org.subscription.invoiceNumber || '—' }}</span></div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Invoice Type</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="isTrial ? 'Free trial' : 'Paid'" [tone]="isTrial ? 'warning' : 'success'"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Payment Status</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="paymentStatusLabel" [tone]="isTrial ? 'warning' : 'success'"></tc-saas-pill>
+              </span>
+            </div>
+            <div class="ow-ii"><span class="ow-ii__label">Plan Price</span><span class="ow-ii__value">{{ formatCurrency(org.subscription.planPrice, org.currency || 'INR') }}</span></div>
+            <div class="ow-ii" *ngIf="org.subscription.discountAmount"><span class="ow-ii__label">Discount</span><span class="ow-ii__value">− {{ formatCurrency(org.subscription.discountAmount, org.currency || 'INR') }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Amount Paid</span><span class="ow-ii__value">{{ formatCurrency(amountPaid, org.currency || 'INR') }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Final Amount</span><span class="ow-ii__value">{{ formatCurrency(org.subscription.finalAmount, org.currency || 'INR') }}</span></div>
+            <div class="ow-ii" *ngIf="org.subscription.trialEndDate"><span class="ow-ii__label">Trial End Date</span><span class="ow-ii__value">{{ formatDate(org.subscription.trialEndDate) }}</span></div>
+            <div class="ow-ii" *ngIf="org.subscription.promotionCode"><span class="ow-ii__label">Coupon</span><span class="ow-ii__value ow-mono">{{ org.subscription.promotionCode }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Customer</span><span class="ow-ii__value">{{ org.customerName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Customer Code</span><span class="ow-ii__value ow-mono">{{ org.customerCode || '—' }}</span></div>
+          </div>
+        </ng-container>
+        <ng-template #noInvoice><p class="ow-empty-inline">No subscription invoice yet.</p></ng-template>
+      </tc-saas-panel>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         TAB CONTENT
-    ══════════════════════════════════════════════════════════════════ -->
-    <div class="ow-content">
-      <ng-container [ngSwitch]="activeTab">
-
-        <!-- ════════════ OVERVIEW ════════════ -->
-        <section *ngSwitchCase="'overview'" class="ow-tab-panel">
-
-          <!-- 3-column info grid -->
-          <div class="ow-grid ow-grid--3">
-
-            <!-- Organization Information -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-building"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Organization Information</h3>
-                  <p>Core profile and contact details</p>
-                </div>
-                <button class="ow-card__hbtn">
-                  <i class="pi pi-pencil"></i> Edit
-                </button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-info-grid">
-                  <div class="ow-ii"><span class="ow-ii__label">Organization Name</span><span class="ow-ii__value">{{ org.organizationName }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Organization Code</span><span class="ow-ii__value ow-mono">{{ org.organizationCode }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Short Name</span><span class="ow-ii__value">{{ org.shortName || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Institution Type</span><span class="ow-ii__value">{{ institutionLabel(org.institutionType) }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Board</span><span class="ow-ii__value">{{ org.boardName || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Email</span><span class="ow-ii__value">{{ org.email || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Mobile</span><span class="ow-ii__value">{{ org.mobileNumber || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Website</span><span class="ow-ii__value">{{ org.website || '—' }}</span></div>
-                  <div class="ow-ii ow-ii--full"><span class="ow-ii__label">Address</span><span class="ow-ii__value">{{ org.addressLine1 || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">City / State</span><span class="ow-ii__value">{{ locationLabel || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Time Zone</span><span class="ow-ii__value">{{ org.timeZone || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Currency</span><span class="ow-ii__value">{{ org.currency || '—' }}</span></div>
-                </div>
-              </div>
+    <div class="ow-tab-panel" *ngIf="activeTab === 'tenant'">
+      <tc-saas-panel title="Tenant" subtitle="Schema, access, and migrations">
+        <ng-container *ngIf="org.tenant; else noTenant">
+          <div class="ow-info-grid ow-info-grid--3">
+            <div class="ow-ii"><span class="ow-ii__label">Schema</span><span class="ow-ii__value ow-mono">{{ org.tenant.schemaName || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Tenant URL</span><span class="ow-ii__value ow-mono">{{ org.tenant.tenantDomain || displayDomain || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Custom Domain</span><span class="ow-ii__value ow-mono">{{ org.tenant.customDomain || org.domain?.customDomain || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Database Size</span><span class="ow-ii__value">{{ formatStorageMb(org.tenant.databaseSizeMb) }}</span></div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Provision Status</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="provisionStatusLabel(org.tenant.provisionStatus)" [tone]="provisionTone(org.tenant.provisionStatus)"></tc-saas-pill>
+              </span>
             </div>
-
-            <!-- Customer Information -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-users"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Customer Information</h3>
-                  <p>Linked billing account</p>
-                </div>
-                <button class="ow-card__hbtn ow-card__hbtn--primary">View Customer</button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-info-grid ow-info-grid--single">
-                  <div class="ow-ii"><span class="ow-ii__label">Customer Name</span><span class="ow-ii__value">{{ org.customerName || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Customer Code</span><span class="ow-ii__value ow-mono">{{ org.customerCode || '—' }}</span></div>
-                  <div class="ow-ii"><span class="ow-ii__label">Customer ID</span><span class="ow-ii__value">{{ org.customerId ?? '—' }}</span></div>
-                  <div class="ow-ii">
-                    <span class="ow-ii__label">Onboarding</span>
-                    <span class="ow-ii__value">
-                      <tc-saas-pill [label]="org.onboardingCompleted ? 'Completed' : 'Pending'"
-                                    [tone]="org.onboardingCompleted ? 'success' : 'warning'"></tc-saas-pill>
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Embedded subscription summary -->
-                <div class="ow-sub-summary" *ngIf="org.subscription">
-                  <div class="ow-sub-summary__hdr">
-                    <i class="pi pi-credit-card"></i>
-                    <span>Subscription Status</span>
-                    <tc-saas-pill [label]="subscriptionStatusLabel(org.subscription.status)" [tone]="subStatusTone()"></tc-saas-pill>
-                  </div>
-                  <div class="ow-sub-summary__grid">
-                    <div class="ow-sub-summary__item"><span>Plan Name</span><strong>{{ org.subscription.planName || '—' }}</strong></div>
-                    <div class="ow-sub-summary__item"><span>Billing Cycle</span><strong>{{ billingCycleLabel(org.subscription.billingCycle) }}</strong></div>
-                    <div class="ow-sub-summary__item"><span>Start Date</span><strong>{{ formatDate(org.subscription.startDate) }}</strong></div>
-                    <div class="ow-sub-summary__item"><span>End Date</span><strong>{{ formatDate(org.subscription.endDate) }}</strong></div>
-                  </div>
-                  <div class="ow-days-badge" *ngIf="org.subscription.endDate">
-                    <div class="ow-days-badge__num">{{ daysRemaining(org.subscription.endDate) }}</div>
-                    <div class="ow-days-badge__txt">Days<br>Remaining</div>
-                    <div class="ow-days-badge__renew" *ngIf="org.subscription.autoRenew">
-                      <i class="pi pi-refresh"></i> Auto Renew
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">SSL</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="org.domain?.sslEnabled ? 'Enabled' : 'Disabled'" [tone]="org.domain?.sslEnabled ? 'success' : 'neutral'"></tc-saas-pill>
+              </span>
             </div>
-
-            <!-- Usage & Limits -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-chart-bar"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Usage & Limits</h3>
-                  <p>Operational snapshot</p>
-                </div>
-                <button class="ow-card__hbtn">Edit Limits</button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-usage-list">
-                  <div class="ow-usage-item">
-                    <div class="ow-usage-item__row">
-                      <span class="ow-usage-icon ow-usage-icon--blue"><i class="pi pi-graduation-cap"></i></span>
-                      <span class="ow-usage-item__label">Students</span>
-                      <span class="ow-usage-item__val">820 / {{ org.configuration?.maxStudents ?? '—' }}</span>
-                    </div>
-                    <div class="ow-bar"><div class="ow-bar__fill ow-bar__fill--blue ow-bar__fill--students"></div></div>
-                  </div>
-                  <div class="ow-usage-item">
-                    <div class="ow-usage-item__row">
-                      <span class="ow-usage-icon ow-usage-icon--orange"><i class="pi pi-users"></i></span>
-                      <span class="ow-usage-item__label">Staff</span>
-                      <span class="ow-usage-item__val">120 / {{ org.configuration?.maxStaff ?? '—' }}</span>
-                    </div>
-                    <div class="ow-bar"><div class="ow-bar__fill ow-bar__fill--orange ow-bar__fill--staff"></div></div>
-                  </div>
-                  <div class="ow-usage-item">
-                    <div class="ow-usage-item__row">
-                      <span class="ow-usage-icon ow-usage-icon--purple"><i class="pi pi-sitemap"></i></span>
-                      <span class="ow-usage-item__label">Branches</span>
-                      <span class="ow-usage-item__val">2 / {{ org.configuration?.maxBranches ?? '—' }}</span>
-                    </div>
-                    <div class="ow-bar"><div class="ow-bar__fill ow-bar__fill--purple ow-bar__fill--branches"></div></div>
-                  </div>
-                  <div class="ow-usage-item">
-                    <div class="ow-usage-item__row">
-                      <span class="ow-usage-icon ow-usage-icon--teal"><i class="pi pi-database"></i></span>
-                      <span class="ow-usage-item__label">Storage</span>
-                      <span class="ow-usage-item__val">
-                        {{ formatStorageMb(org.tenant?.storageUsedMb) }} / {{ org.configuration?.storageLimitGb ? org.configuration!.storageLimitGb + ' GB' : '—' }}
-                      </span>
-                    </div>
-                    <div class="ow-bar">
-                      <div class="ow-bar__fill ow-bar__fill--teal"
-                           [style.width]="storagePercent(org) + '%'"
-                           [attr.data-warn]="storagePercent(org) > 80"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="ow-ii">
+              <span class="ow-ii__label">Maintenance Mode</span>
+              <span class="ow-ii__value">
+                <tc-saas-pill [label]="org.tenant.maintenanceMode ? 'On' : 'Off'" [tone]="org.tenant.maintenanceMode ? 'warning' : 'neutral'"></tc-saas-pill>
+              </span>
             </div>
-          </div><!-- /ow-grid--3 -->
+            <div class="ow-ii"><span class="ow-ii__label">Template</span><span class="ow-ii__value ow-mono">{{ org.tenant.templateVersion || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Migration</span><span class="ow-ii__value ow-mono">{{ org.tenant.migrationVersion || '—' }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Last Migration</span><span class="ow-ii__value">{{ formatDate(org.tenant.lastMigrationAt) }}</span></div>
+            <div class="ow-ii"><span class="ow-ii__label">Last Backup</span><span class="ow-ii__value">{{ formatDate(org.tenant.lastBackupAt) }}</span></div>
+          </div>
+        </ng-container>
+        <ng-template #noTenant><p class="ow-empty-inline">This organization has not been provisioned to a tenant yet.</p></ng-template>
+      </tc-saas-panel>
 
-          <!-- Quick Actions -->
-          <div class="ow-card">
-            <div class="ow-card__header">
-              <div class="ow-card__hicon ow-card__hicon--amber"><i class="pi pi-bolt"></i></div>
-              <div class="ow-card__htitles">
-                <h3>Quick Actions</h3>
-                <p>Quick actions for this organization</p>
-              </div>
-            </div>
-            <div class="ow-card__body">
-              <div class="ow-quick-grid">
-                <button type="button" class="ow-quick-btn ow-quick-btn--danger"
-                        [disabled]="actionLoading || !canSuspend()" (click)="suspend()">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-ban"></i></div>
-                  <span>Suspend Organization</span>
-                </button>
-                <button type="button" class="ow-quick-btn" [disabled]="actionLoading">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-refresh"></i></div>
-                  <span>Renew Subscription</span>
-                </button>
-                <button type="button" class="ow-quick-btn" [disabled]="actionLoading"
-                        (click)="activeTab = 'features'">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-sliders-h"></i></div>
-                  <span>Feature Override</span>
-                </button>
-                <button type="button" class="ow-quick-btn" [disabled]="actionLoading"
-                        (click)="triggerBackup()">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-cloud-upload"></i></div>
-                  <span>Trigger Backup</span>
-                </button>
-                <button type="button" class="ow-quick-btn" [disabled]="actionLoading"
-                        (click)="activeTab = 'tenant'">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-external-link"></i></div>
-                  <span>Open Tenant</span>
-                </button>
-                <button type="button" class="ow-quick-btn" [disabled]="actionLoading"
-                        (click)="activeTab = 'timeline'">
-                  <div class="ow-quick-btn__icon"><i class="pi pi-history"></i></div>
-                  <span>View Audit Logs</span>
-                </button>
-              </div>
+      <tc-saas-panel title="Activity history" subtitle="Provisioning, subscription, and configuration events">
+        <div class="ow-timeline" *ngIf="timelineEvents.length; else noActivity">
+          <div class="ow-tl-item" *ngFor="let ev of timelineEvents" [attr.data-color]="ev.color">
+            <div class="ow-tl-item__dot"><i [class]="ev.icon"></i></div>
+            <div class="ow-tl-item__body">
+              <strong>{{ ev.title }}</strong>
+              <p>{{ ev.detail }}</p>
+              <small *ngIf="ev.date">{{ formatDate(ev.date) }}</small>
             </div>
           </div>
-
-          <!-- Recent Activity -->
-          <div class="ow-card" *ngIf="timelineEvents.length">
-            <div class="ow-card__header">
-              <div class="ow-card__hicon"><i class="pi pi-history"></i></div>
-              <div class="ow-card__htitles">
-                <h3>Recent Activity</h3>
-                <p>Latest activities and events</p>
-              </div>
-            </div>
-            <div class="ow-card__body">
-              <div class="ow-timeline">
-                <div class="ow-tl-item" *ngFor="let ev of timelineEvents"
-                     [attr.data-color]="ev.color">
-                  <div class="ow-tl-item__dot"><i [class]="ev.icon"></i></div>
-                  <div class="ow-tl-item__body">
-                    <strong>{{ ev.title }}</strong>
-                    <p>{{ ev.detail }}</p>
-                    <small *ngIf="ev.date">{{ formatDate(ev.date) }}</small>
-                  </div>
-                </div>
-              </div>
-              <button type="button" class="ow-view-full-btn" (click)="activeTab = 'timeline'">
-                View full timeline →
-              </button>
-            </div>
-          </div>
-
-        </section><!-- /overview -->
-
-        <!-- ════════════ SUBSCRIPTION & PLAN ════════════ -->
-        <section *ngSwitchCase="'subscription'" class="ow-tab-panel">
-
-          <ng-container *ngIf="org.subscription; else noSubscription">
-            <div class="ow-grid ow-grid--2-1">
-
-              <!-- Plan summary card -->
-              <div class="ow-card ow-card--plan-feature">
-                <div class="ow-card__header">
-                  <div class="ow-card__hicon ow-card__hicon--primary"><i class="pi pi-star-fill"></i></div>
-                  <div class="ow-card__htitles">
-                    <h3>{{ org.subscription.planName || org.subscription.planCode || 'Plan' }}</h3>
-                    <p>{{ billingCycleLabel(org.subscription.billingCycle) }} Subscription</p>
-                  </div>
-                  <tc-saas-pill [label]="subscriptionStatusLabel(org.subscription.status)" [tone]="subStatusTone()"></tc-saas-pill>
-                </div>
-                <div class="ow-card__body">
-                  <!-- Pricing breakdown -->
-                  <div class="ow-pricing">
-                    <div class="ow-pricing__row">
-                      <span>Post Price</span>
-                      <span class="ow-pricing__original">{{ formatCurrency(org.subscription.planPrice, org.currency || 'INR') }}</span>
-                    </div>
-                    <div class="ow-pricing__row" *ngIf="org.subscription.discountAmount">
-                      <span>Discount Applied</span>
-                      <span class="ow-pricing__discount">− {{ formatCurrency(org.subscription.discountAmount, org.currency || 'INR') }}</span>
-                    </div>
-                    <div class="ow-pricing__divider"></div>
-                    <div class="ow-pricing__final">
-                      <span>Final Amount</span>
-                      <strong>{{ formatCurrency(org.subscription.finalAmount, org.currency || 'INR') }}</strong>
-                    </div>
-                    <div class="ow-pricing__save" *ngIf="org.subscription.discountAmount">
-                      You save {{ formatCurrency(org.subscription.discountAmount, org.currency || 'INR') }}
-                    </div>
-                  </div>
-
-                  <!-- Billing meta grid -->
-                  <div class="ow-sub-meta-grid">
-                    <div class="ow-smi"><span>Billing Cycle</span><strong>{{ billingCycleLabel(org.subscription.billingCycle) }}</strong></div>
-                    <div class="ow-smi"><span>Start Date</span><strong>{{ formatDate(org.subscription.startDate) }}</strong></div>
-                    <div class="ow-smi"><span>End Date</span><strong>{{ formatDate(org.subscription.endDate) }}</strong></div>
-                    <div class="ow-smi">
-                      <span>Auto Renewal</span>
-                      <tc-saas-pill [label]="org.subscription.autoRenew ? 'Enabled' : 'Disabled'"
-                                    [tone]="org.subscription.autoRenew ? 'success' : 'neutral'"></tc-saas-pill>
-                    </div>
-                    <div class="ow-smi" *ngIf="org.subscription.trialEndDate">
-                      <span>Trial Ends</span><strong>{{ formatDate(org.subscription.trialEndDate) }}</strong>
-                    </div>
-                    <div class="ow-smi" *ngIf="org.subscription.promotionCode">
-                      <span>Promotion Code</span><strong class="ow-mono">{{ org.subscription.promotionCode }}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Limits & Quotas -->
-              <div class="ow-card">
-                <div class="ow-card__header">
-                  <div class="ow-card__hicon"><i class="pi pi-list-check"></i></div>
-                  <div class="ow-card__htitles">
-                    <h3>Limits & Quotas</h3>
-                    <p>Applied plan limits for this org</p>
-                  </div>
-                </div>
-                <div class="ow-card__body">
-                  <div class="ow-limit-list">
-                    <div class="ow-limit-item">
-                      <span><i class="pi pi-graduation-cap"></i> Max Students</span>
-                      <strong>{{ org.subscription.studentLimitOverride ?? org.configuration?.maxStudents ?? '—' }}</strong>
-                    </div>
-                    <div class="ow-limit-item">
-                      <span><i class="pi pi-users"></i> Max Staff</span>
-                      <strong>{{ org.subscription.staffLimitOverride ?? org.configuration?.maxStaff ?? '—' }}</strong>
-                    </div>
-                    <div class="ow-limit-item">
-                      <span><i class="pi pi-sitemap"></i> Max Branches</span>
-                      <strong>{{ org.subscription.branchLimitOverride ?? org.configuration?.maxBranches ?? '—' }}</strong>
-                    </div>
-                    <div class="ow-limit-item">
-                      <span><i class="pi pi-database"></i> Storage Limit</span>
-                      <strong>{{ org.subscription.storageLimitOverride ?? org.configuration?.storageLimitGb ?? '—' }} GB</strong>
-                    </div>
-                    <div class="ow-limit-item" *ngIf="org.subscription.autoRenew != null">
-                      <span><i class="pi pi-refresh"></i> Auto Renew</span>
-                      <tc-saas-pill [label]="org.subscription.autoRenew ? 'On' : 'Off'"
-                                    [tone]="org.subscription.autoRenew ? 'success' : 'neutral'"></tc-saas-pill>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div><!-- /ow-grid--2-1 -->
-
-            <!-- Included Features (from feature overrides) -->
-            <div class="ow-card" *ngIf="featureOverrides.length">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon"><i class="pi pi-check-square"></i></div>
-                <div class="ow-card__htitles">
-                  <h3>Included Features</h3>
-                  <p>Features included in this plan</p>
-                </div>
-                <button class="ow-card__hbtn" (click)="activeTab = 'features'">View All Features</button>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-feature-chips">
-                  <div class="ow-feature-chip" *ngFor="let f of featureOverrides"
-                       [attr.data-enabled]="f.enabled">
-                    <i class="pi" [class.pi-check]="f.enabled" [class.pi-times]="!f.enabled"></i>
-                    {{ f.featureName || f.featureCode || 'Feature #' + f.featureId }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-
-          <ng-template #noSubscription>
-            <div class="ow-card">
-              <div class="ow-empty-state">
-                <div class="ow-empty-state__icon"><i class="pi pi-credit-card"></i></div>
-                <h3>No Subscription Assigned</h3>
-                <p>This organization does not have an active subscription record.</p>
-              </div>
-            </div>
-          </ng-template>
-        </section><!-- /subscription -->
-
-        <!-- ════════════ FEATURE OVERRIDES ════════════ -->
-        <section *ngSwitchCase="'features'" class="ow-tab-panel">
-          <div class="ow-card">
-            <div class="ow-card__header">
-              <div class="ow-card__hicon"><i class="pi pi-sliders-h"></i></div>
-              <div class="ow-card__htitles">
-                <h3>Feature Overrides</h3>
-                <p>{{ featureOverrides.length }} override(s) applied to this subscription</p>
-              </div>
-              <button class="ow-card__hbtn ow-card__hbtn--primary">
-                <i class="pi pi-plus"></i> Add Override
-              </button>
-            </div>
-            <div class="ow-card__body ow-card__body--flush">
-
-              <!-- Empty state -->
-              <div class="ow-empty-state" *ngIf="!featureOverrides.length">
-                <div class="ow-empty-state__icon"><i class="pi pi-sliders-h"></i></div>
-                <h3>No Feature Overrides</h3>
-                <p>All features follow the default plan configuration.<br>
-                   Use "Add Override" to customize individual features for this organization.</p>
-                <button class="ow-btn ow-btn--primary"><i class="pi pi-plus"></i> Add First Override</button>
-              </div>
-
-              <!-- Table -->
-              <div class="ow-table-wrap" *ngIf="featureOverrides.length">
-                <table class="ow-table">
-                  <thead>
-                    <tr>
-                      <th>Feature / Module</th>
-                      <th>Status</th>
-                      <th>Override Type</th>
-                      <th>Reason</th>
-                      <th>Overridden By</th>
-                      <th class="ow-table__actions-col">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let f of featureOverrides">
-                      <td>
-                        <div class="ow-table-cell">
-                          <strong>{{ f.featureName || f.featureCode || 'Feature #' + f.featureId }}</strong>
-                          <small *ngIf="f.featureCode" class="ow-mono">{{ f.featureCode }}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <tc-saas-pill [label]="f.enabled ? 'Enabled' : 'Disabled'"
-                                      [tone]="f.enabled ? 'success' : 'danger'"></tc-saas-pill>
-                      </td>
-                      <td><span class="ow-tag">Custom</span></td>
-                      <td class="ow-text-muted">{{ f.remarks || '—' }}</td>
-                      <td class="ow-text-muted">—</td>
-                      <td>
-                        <div class="ow-table-actions">
-                          <button class="ow-icon-btn" title="Edit"><i class="pi pi-pencil"></i></button>
-                          <button class="ow-icon-btn ow-icon-btn--danger" title="Remove"><i class="pi pi-trash"></i></button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-          </div>
-        </section><!-- /features -->
-
-        <!-- ════════════ TENANT DETAILS ════════════ -->
-        <section *ngSwitchCase="'tenant'" class="ow-tab-panel">
-          <ng-container *ngIf="org.tenant; else noTenant">
-
-            <div class="ow-grid ow-grid--3">
-
-              <!-- Infrastructure -->
-              <div class="ow-card">
-                <div class="ow-card__header">
-                  <div class="ow-card__hicon"><i class="pi pi-server"></i></div>
-                  <div class="ow-card__htitles"><h3>Infrastructure</h3><p>Tenant environment info</p></div>
-                </div>
-                <div class="ow-card__body">
-                  <div class="ow-info-grid ow-info-grid--single">
-                    <div class="ow-ii"><span class="ow-ii__label">Schema Name</span><span class="ow-ii__value ow-mono">{{ org.tenant.schemaName || '—' }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Database</span><span class="ow-ii__value">{{ org.tenant.databaseVersion || '—' }}</span></div>
-                    <div class="ow-ii">
-                      <span class="ow-ii__label">Environment</span>
-                      <span class="ow-ii__value">
-                        <tc-saas-pill [label]="provisionStatusLabel(org.tenant.provisionStatus)"
-                                      [tone]="provisionTone(org.tenant.provisionStatus)"></tc-saas-pill>
-                      </span>
-                    </div>
-                    <div class="ow-ii"><span class="ow-ii__label">Template Version</span><span class="ow-ii__value ow-mono">{{ org.tenant.templateVersion || '—' }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Migration Version</span><span class="ow-ii__value ow-mono">{{ org.tenant.migrationVersion || '—' }}</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Storage & Health -->
-              <div class="ow-card">
-                <div class="ow-card__header">
-                  <div class="ow-card__hicon"><i class="pi pi-database"></i></div>
-                  <div class="ow-card__htitles"><h3>Storage & Database</h3><p>Resource usage and health</p></div>
-                </div>
-                <div class="ow-card__body">
-                  <div class="ow-info-grid ow-info-grid--single">
-                    <div class="ow-ii"><span class="ow-ii__label">Database Size</span><span class="ow-ii__value">{{ formatStorageMb(org.tenant.databaseSizeMb) }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Storage Used</span><span class="ow-ii__value">{{ formatStorageMb(org.tenant.storageUsedMb) }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Backup Status</span><span class="ow-ii__value">{{ formatDate(org.tenant.lastBackupAt) }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Health Status</span><span class="ow-ii__value">{{ formatDate(org.tenant.lastHealthCheckAt) }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Last Migration</span><span class="ow-ii__value">{{ formatDate(org.tenant.lastMigrationAt) }}</span></div>
-                    <div class="ow-ii">
-                      <span class="ow-ii__label">Maintenance Mode</span>
-                      <span class="ow-ii__value">
-                        <tc-saas-pill [label]="org.tenant.maintenanceMode ? 'ON' : 'OFF'"
-                                      [tone]="org.tenant.maintenanceMode ? 'warning' : 'neutral'"></tc-saas-pill>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Domain & Access -->
-              <div class="ow-card">
-                <div class="ow-card__header">
-                  <div class="ow-card__hicon"><i class="pi pi-globe"></i></div>
-                  <div class="ow-card__htitles"><h3>Domain & Access</h3><p>Tenant access configuration</p></div>
-                </div>
-                <div class="ow-card__body">
-                  <div class="ow-info-grid ow-info-grid--single">
-                    <div class="ow-ii"><span class="ow-ii__label">Tenant URL</span><span class="ow-ii__value ow-mono">{{ org.tenant.tenantDomain || org.domain?.subdomain || '—' }}</span></div>
-                    <div class="ow-ii"><span class="ow-ii__label">Custom Domain</span><span class="ow-ii__value ow-mono">{{ org.tenant.customDomain || org.domain?.customDomain || '—' }}</span></div>
-                    <div class="ow-ii">
-                      <span class="ow-ii__label">SSL</span>
-                      <span class="ow-ii__value">
-                        <tc-saas-pill [label]="org.domain?.sslEnabled ? 'Enabled' : 'Disabled'"
-                                      [tone]="org.domain?.sslEnabled ? 'success' : 'neutral'"></tc-saas-pill>
-                      </span>
-                    </div>
-                    <div class="ow-ii">
-                      <span class="ow-ii__label">Maintenance Mode</span>
-                      <span class="ow-ii__value">
-                        <tc-saas-pill [label]="org.tenant.maintenanceMode ? 'ON' : 'OFF'"
-                                      [tone]="org.tenant.maintenanceMode ? 'warning' : 'neutral'"></tc-saas-pill>
-                      </span>
-                    </div>
-                    <div class="ow-ii">
-                      <span class="ow-ii__label">Active</span>
-                      <span class="ow-ii__value">
-                        <tc-saas-pill [label]="org.tenant.active ? 'Yes' : 'No'"
-                                      [tone]="org.tenant.active ? 'success' : 'neutral'"></tc-saas-pill>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div><!-- /ow-grid--3 -->
-
-            <!-- Tenant quick actions -->
-            <div class="ow-card">
-              <div class="ow-card__header">
-                <div class="ow-card__hicon ow-card__hicon--amber"><i class="pi pi-bolt"></i></div>
-                <div class="ow-card__htitles"><h3>Quick Actions</h3><p>Tenant management operations</p></div>
-              </div>
-              <div class="ow-card__body">
-                <div class="ow-tenant-actions">
-                  <button type="button" class="ow-action-btn" [disabled]="actionLoading" (click)="setMaintenance()">
-                    <i class="pi pi-wrench"></i><span>Set Maintenance</span>
-                  </button>
-                  <button type="button" class="ow-action-btn" [disabled]="actionLoading" (click)="resumeTenant()">
-                    <i class="pi pi-play"></i><span>Resume Tenant</span>
-                  </button>
-                  <button type="button" class="ow-action-btn" [disabled]="actionLoading" (click)="triggerBackup()">
-                    <i class="pi pi-cloud-upload"></i><span>Trigger Backup</span>
-                  </button>
-                  <button type="button" class="ow-action-btn ow-action-btn--primary"
-                          [disabled]="actionLoading" (click)="triggerMigration()">
-                    <i class="pi pi-sync"></i><span>Trigger Migration</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </ng-container>
-
-          <ng-template #noTenant>
-            <div class="ow-card">
-              <div class="ow-empty-state">
-                <div class="ow-empty-state__icon"><i class="pi pi-server"></i></div>
-                <h3>No Tenant Provisioned</h3>
-                <p>This organization has not been provisioned to a tenant registry yet.</p>
-              </div>
-            </div>
-          </ng-template>
-        </section><!-- /tenant -->
-
-        <!-- ════════════ TIMELINE ════════════ -->
-        <section *ngSwitchCase="'timeline'" class="ow-tab-panel">
-          <div class="ow-card">
-            <div class="ow-card__header">
-              <div class="ow-card__hicon"><i class="pi pi-history"></i></div>
-              <div class="ow-card__htitles">
-                <h3>Activity Timeline</h3>
-                <p>Key dates and events for this organization</p>
-              </div>
-            </div>
-            <div class="ow-card__body">
-
-              <div class="ow-empty-state" *ngIf="!timelineEvents.length">
-                <div class="ow-empty-state__icon"><i class="pi pi-history"></i></div>
-                <h3>No Timeline Events</h3>
-                <p>No recorded events found for this organization yet.</p>
-              </div>
-
-              <div class="ow-full-timeline" *ngIf="timelineEvents.length">
-                <div class="ow-ftl-item" *ngFor="let ev of timelineEvents; let i = index"
-                     [attr.data-color]="ev.color">
-                  <div class="ow-ftl-item__track">
-                    <div class="ow-ftl-item__dot"><i [class]="ev.icon"></i></div>
-                    <div class="ow-ftl-item__line" *ngIf="i < timelineEvents.length - 1"></div>
-                  </div>
-                  <div class="ow-ftl-item__body">
-                    <div class="ow-ftl-item__hdr">
-                      <strong>{{ ev.title }}</strong>
-                      <small *ngIf="ev.date">{{ formatDate(ev.date) }}</small>
-                    </div>
-                    <p>{{ ev.detail }}</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </section><!-- /timeline -->
-
-      </ng-container>
-    </div><!-- /ow-content -->
-
+        </div>
+        <ng-template #noActivity><p class="ow-empty-inline">No events recorded yet.</p></ng-template>
+      </tc-saas-panel>
+    </div>
   </ng-container>
 </div>

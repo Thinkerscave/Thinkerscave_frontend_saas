@@ -8,7 +8,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { ToastModule } from 'primeng/toast';
+import { AppToastComponent } from '../../core/feedback/app-toast.component';
 import { MessageService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
 import { DividerModule } from 'primeng/divider';
@@ -25,7 +25,7 @@ interface ClassOption {
     selector: 'app-public-inquiry',
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [
+    imports: [AppToastComponent, 
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
@@ -34,7 +34,6 @@ interface ClassOption {
         TextareaModule,
         ButtonModule,
         CardModule,
-        ToastModule,
         RippleModule,
         DividerModule,
         FloatLabelModule,

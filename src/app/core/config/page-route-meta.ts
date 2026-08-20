@@ -12,7 +12,7 @@ export const ACCESS_MGMT_ROOT = {
 
 export const ACADEMICS_ROOT = {
   breadcrumb: 'Academics',
-  breadcrumbLink: ['/app/academics']
+  breadcrumbLink: ['/app/academics/overview']
 } as const;
 
 export const ACADEMICS_PAGES = {
@@ -29,21 +29,21 @@ export const ACADEMICS_PAGES = {
     pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.'
   },
   classDetail: {
-    breadcrumb: 'Class Detail',
+    breadcrumb: 'Class',
     breadcrumbLink: ['/app/academics/classes-sections'],
     pageSubtitle: 'Sections, teachers and related academic setup for this class.'
   },
   subjectsMapping: {
     breadcrumb: 'Subjects',
-    pageSubtitle: 'Subject catalogue and class-by-class mapping.'
+    pageSubtitle: 'Create and manage subjects and map them to classes.'
   },
   subjectDetail: {
-    breadcrumb: 'Subject Detail',
+    breadcrumb: 'Subject',
     breadcrumbLink: ['/app/academics/subjects-mapping'],
     pageSubtitle: 'Subject information and class mappings.'
   },
   classSubjects: {
-    breadcrumb: 'Class Subjects',
+    breadcrumb: 'Subject Mapping',
     breadcrumbLink: ['/app/academics/classes-sections'],
     pageSubtitle: 'Subjects taught in this class and how they are mapped.'
   },
@@ -60,7 +60,7 @@ export const ACADEMICS_PAGES = {
     pageSubtitle: 'Plan, manage and publish important dates, holidays and events for the academic year.'
   },
   calendarEventDetail: {
-    breadcrumb: 'Event Detail',
+    breadcrumb: 'Event',
     breadcrumbLink: ['/app/academics/academic-calendar'],
     pageSubtitle: 'Event information and visibility.'
   },
@@ -128,9 +128,17 @@ export const TENANT_PAGES = {
     breadcrumb: 'Promotions',
     pageSubtitle: 'Manage discount codes and commercial offers for subscriptions'
   },
+  menuManagement: {
+    breadcrumb: 'Menu Management',
+    pageSubtitle: 'Create single-page menus or groups with submenus.'
+  },
+  roleManagement: {
+    breadcrumb: 'Role Management',
+    pageSubtitle: 'Platform roles used across tenants.'
+  },
   featureCatalog: {
     breadcrumb: 'Feature Catalog',
-    pageSubtitle: 'Master catalogue of platform modules and entitlements'
+    pageSubtitle: 'Product features, menus and tenant entitlements.'
   },
   tenantHealth: {
     breadcrumb: 'Tenant Health',
@@ -149,7 +157,7 @@ export const TENANT_PAGES = {
 export const ACCESS_PAGES = {
   dashboard: {
     breadcrumb: 'Dashboard',
-    pageSubtitle: 'Roles, menus, user permissions and security policy for your organization'
+    pageSubtitle: 'User permissions and security policy for your organization'
   },
   roles: {
     breadcrumb: 'Roles & Responsibilities',

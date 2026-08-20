@@ -125,21 +125,6 @@ app-global-search {
   max-width: 480px;
 }
 
-::ng-deep .topbar-center .gs-trigger {
-  width: 100%;
-  height: 40px;
-  justify-content: flex-start;
-  border-color: var(--tc-topbar-border);
-  background: color-mix(in srgb, var(--tc-surface-card-solid) 72%, transparent);
-  color: var(--tc-text-muted);
-  box-shadow: inset 0 1px 4px rgba(15, 23, 42, 0.08);
-
-  span {
-    flex: 1;
-    text-align: left;
-  }
-}
-
 .topbar-right {
   display: flex;
   align-items: center;
