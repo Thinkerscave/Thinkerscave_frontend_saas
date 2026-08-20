@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
-import { isFeatureEnabled } from '../../core/config/feature-flags';
 
 interface WorkspaceTab {
   label: string;
@@ -78,22 +77,6 @@ export class WorkspaceTabsComponent implements OnInit {
         { label: 'Settings', icon: 'pi pi-cog', route: '/app/academics/settings' }
       ]
     },
-    ...(isFeatureEnabled('feeManagementEnabled') ? [{
-      key: 'finance',
-      label: 'Finance Workspace',
-      eyebrow: 'Fees',
-      icon: 'pi pi-wallet',
-      matcher: /^\/app\/(fees|reports)(?:\/|$)/,
-      tabs: [
-        { label: 'Dashboard', icon: 'pi pi-chart-line', route: '/app/fees/dashboard' },
-        { label: 'Setup', icon: 'pi pi-cog', route: '/app/fees/setup' },
-        { label: 'Contracts', icon: 'pi pi-file', route: '/app/fees/contracts' },
-        { label: 'Ledger', icon: 'pi pi-book', route: '/app/fees/ledger' },
-        { label: 'Payments', icon: 'pi pi-credit-card', route: '/app/fees/payments' },
-        { label: 'Reports', icon: 'pi pi-chart-bar', route: '/app/fees/reports' },
-        { label: 'Audit', icon: 'pi pi-history', route: '/app/fees/audit' }
-      ]
-    } satisfies WorkspaceTabConfig] : []),
     {
       key: 'subscriptions',
       label: 'Subscriptions',

@@ -55,7 +55,7 @@
 
     @if (loading()) {
       <ul class="org-select__list org-select__list--skeleton" aria-busy="true" aria-label="Loading institutions">
-        @for (i of [1, 2, 3, 4]; track i) {
+        @for (i of [1, 2, 3]; track i) {
           <li class="org-card org-card--skeleton" aria-hidden="true">
             <span class="org-card__avatar skeleton-block"></span>
             <span class="org-card__meta">

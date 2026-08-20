@@ -150,6 +150,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
     label: 'Academics',
     icon: 'pi pi-book',
     pages: [
+      'overview',
       'academic-year',
       'classes-sections',
       'subjects-mapping',
@@ -158,7 +159,8 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'academic-calendar',
       'my-classes',
       'my-timetable',
-      'my-academics'
+      'my-academics',
+      'academic-structure'
     ]
   }
 ];

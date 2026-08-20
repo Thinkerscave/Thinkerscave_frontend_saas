@@ -159,6 +159,47 @@
   margin: 0 auto;
 }
 
+/* Org-select must fit the viewport so Continue stays on-screen. */
+.auth-shell--org-select {
+  overflow: hidden;
+}
+
+.auth-card--org-select {
+  height: min(780px, calc(100dvh - 2rem));
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+}
+
+.auth-card--org-select .auth-pane--form {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  gap: 1rem;
+  padding-top: clamp(1.15rem, 2vw, 1.75rem);
+  padding-bottom: clamp(1.15rem, 2vw, 1.75rem);
+}
+
+.auth-card--org-select .auth-pane__main {
+  flex: 1;
+  min-height: 0;
+  justify-content: flex-start;
+  overflow: hidden;
+
+  router-outlet {
+    display: none;
+  }
+
+  app-org-select {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 /* Visual/illustration pane */
 .auth-pane--visual {
   position: relative;
@@ -197,6 +238,11 @@
 
   .auth-pane__main {
     max-width: min(440px, 100%);
+  }
+
+  .auth-card--org-select {
+    height: calc(100dvh - 2.5rem);
+    max-height: calc(100dvh - 2.5rem);
   }
 }
 
@@ -237,5 +283,14 @@
     max-width: 100%;
     justify-content: flex-start;
     padding-top: 0.35rem;
+  }
+
+  .auth-card--org-select {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .auth-card--org-select .auth-pane--form {
+    padding-bottom: 0.75rem;
   }
 }

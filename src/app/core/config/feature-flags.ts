@@ -1,15 +1,11 @@
-import { environment } from '../../../environments/environment';
-
 /**
  * Central feature flags for release gating.
- * Re-enable a module by flipping the matching environment flag and redeploying.
+ * Add a key and wire `environment.features` when a module needs to be hidden.
  */
-export const featureFlags = {
-  feeManagementEnabled: environment.features?.feeManagementEnabled === true
-} as const;
+export const featureFlags: Record<string, boolean> = {};
 
-export type FeatureFlagKey = keyof typeof featureFlags;
+export type FeatureFlagKey = string;
 
 export function isFeatureEnabled(flag: FeatureFlagKey): boolean {
-  return featureFlags[flag];
+  return featureFlags[flag] === true;
 }

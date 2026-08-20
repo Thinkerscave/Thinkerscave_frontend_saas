@@ -508,7 +508,7 @@ export class BreadcrumbComponent implements OnInit {
       'Platform Catalog': ['/app/tenant-management/menus'],
       Subscriptions: ['/app/tenant-management/subscription-plans'],
       'Tenant Management': ['/app/tenant-management/tenant-health'],
-      Dashboard: ['/app/tenant-management/dashboard'],
+      Dashboard: ['/app'],
       Customers: ['/app/tenant-management/customers'],
       Organizations: ['/app/tenant-management/organizations'],
       'Subscription Plans': ['/app/tenant-management/subscription-plans'],
@@ -520,7 +520,7 @@ export class BreadcrumbComponent implements OnInit {
       'Migration Center': ['/app/tenant-management/migration-center'],
       'Audit Center': ['/app/tenant-management/audit-center']
     };
-    return links[label] ?? ['/app/tenant-management/dashboard'];
+    return links[label] ?? ['/app'];
   }
 
   private accessManagementLabels(segments: string[]): string[] {
@@ -633,7 +633,7 @@ export class BreadcrumbComponent implements OnInit {
 
       if (index === 0) {
 
-        return ['/app/tenant-management/dashboard'];
+        return ['/app'];
 
       }
 

@@ -3,9 +3,7 @@ import { ACADEMICS_PAGES, ACADEMICS_ROOT, ACCESS_MGMT_ROOT, ACCESS_PAGES, TENANT
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
-import { FEE_MANAGEMENT_ROUTES } from './fee-management/fee-management.routes';
 import { roleGuard } from '../core/guard/role.guard';
-import { featureFlagGuard } from '../core/guard/feature-flag.guard';
 
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
@@ -28,8 +26,8 @@ export const APPLICATION_ROUTES: Routes = [
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     data: { ...TENANT_MGMT_ROOT },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', data: { ...TENANT_PAGES.dashboard }, loadComponent: () => import('./tenant-management/pages/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent) },
+      { path: '', pathMatch: 'full', redirectTo: 'organizations' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
       { path: 'customers', data: { ...TENANT_PAGES.customers }, loadComponent: () => import('./tenant-management/pages/customers-list/customers-list.component').then(m => m.CustomersListComponent) },
       { path: 'customers/new', data: { ...TENANT_PAGES.customersNew }, loadComponent: () => import('./tenant-management/pages/customer-form/customer-form.component').then(m => m.CustomerFormComponent) },
       { path: 'customers/archived', data: { ...TENANT_PAGES.customersArchived }, loadComponent: () => import('./tenant-management/pages/customers-archive/customers-archive.component').then(m => m.CustomersArchiveComponent) },
@@ -55,11 +53,11 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'platform',
     canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
+      { path: '', pathMatch: 'full', redirectTo: '/app' },
       { path: 'customers', pathMatch: 'full', redirectTo: '/app/tenant-management/customers' },
       { path: 'customers/new', pathMatch: 'full', redirectTo: '/app/tenant-management/customers/new' },
       { path: 'customers/:id', pathMatch: 'full', redirectTo: '/app/tenant-management/customers/:id' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'organizations/:orgId', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations/:orgId' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
@@ -102,8 +100,8 @@ export const APPLICATION_ROUTES: Routes = [
     path: 'admin',
     canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/tenant-management/dashboard' },
+      { path: '', pathMatch: 'full', redirectTo: '/app' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
       { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
@@ -382,16 +380,6 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: '',
     children: RESPONSIBILITY_MANAGEMENT_ROUTES
-  },
-  {
-    path: 'fees',
-    canActivate: [featureFlagGuard('feeManagementEnabled')],
-    children: FEE_MANAGEMENT_ROUTES
-  },
-  {
-    path: 'reports',
-    pathMatch: 'full',
-    redirectTo: 'fees/reports'
   },
   // ━━━ Master Data ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {

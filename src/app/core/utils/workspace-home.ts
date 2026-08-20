@@ -35,16 +35,7 @@ function hasAny(tokens: string[], candidates: string[]): boolean {
  * Post-login / logo / unauthorized home.
  * Students and teaching staff skip `/app` when that dashboard 403s for their role.
  */
-export function resolveWorkspaceHome(tokens: string[], isPlatform = false): string {
-  if (isPlatform || hasAny(tokens, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'])) {
-    return '/app/tenant-management/dashboard';
-  }
-  if (hasAny(tokens, ['STUDENT', 'PARENT'])) {
-    return '/app/academics/my-academics';
-  }
-  if (hasAny(tokens, ['TEACHER', 'STAFF']) && !isOrgSetupRole(tokens)) {
-    return '/app/academics/my-classes';
-  }
+export function resolveWorkspaceHome(_tokens: string[], _isPlatform = false): string {
   return '/app';
 }
 
