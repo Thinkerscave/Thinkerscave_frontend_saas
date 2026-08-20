@@ -98,11 +98,43 @@ export class MenuManagementComponent implements OnInit {
 
   get stats(): SaasStat[] {
     const all = this.rows.map(r => r.menu);
+    const menus = all.filter(m => m.parentMenuId == null);
+    const submenus = all.filter(m => m.parentMenuId != null);
+    const pages = all.filter(m => m.menuType === 'PAGE');
+    const drafts = all.filter(m => m.active === false);
     return [
-      { key: 'total', label: 'Items', value: all.length, icon: 'pi pi-sitemap', tone: 'primary' },
-      { key: 'groups', label: 'Groups', value: this.parents.filter(m => this.isGroup(m)).length, icon: 'pi pi-folder', tone: 'info' },
-      { key: 'pages', label: 'Pages', value: all.filter(m => m.menuType === 'PAGE').length, icon: 'pi pi-file', tone: 'success' },
-      { key: 'drafts', label: 'Drafts', value: all.filter(m => m.active === false).length, icon: 'pi pi-pencil', tone: 'warning' }
+      {
+        key: 'menus',
+        label: 'Menu Count',
+        value: menus.length,
+        icon: 'pi pi-sitemap',
+        tone: 'primary',
+        helper: 'Top-level sidebar entries such as Dashboard, Academics, and Staff.'
+      },
+      {
+        key: 'submenus',
+        label: 'Submenu Count',
+        value: submenus.length,
+        icon: 'pi pi-list',
+        tone: 'info',
+        helper: 'Nested items under a parent menu, for example Academic Year under Academics.'
+      },
+      {
+        key: 'pages',
+        label: 'Page Count',
+        value: pages.length,
+        icon: 'pi pi-file',
+        tone: 'success',
+        helper: 'Leaf screens with a route that a user can open.'
+      },
+      {
+        key: 'drafts',
+        label: 'Draft Count',
+        value: drafts.length,
+        icon: 'pi pi-pencil',
+        tone: 'warning',
+        helper: 'Inactive catalog items that tenants cannot see until they are activated.'
+      }
     ];
   }
 

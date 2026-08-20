@@ -4,7 +4,6 @@ import { MenuItem } from 'primeng/api';
 import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
-import { isFeatureEnabled } from '../../core/config/feature-flags';
 import { accessApi } from '../../shared/constants/api.endpoint';
 import { unwrapApiList, unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { normalizePrimeIcon } from '../../shared/utils/prime-icon.util';
@@ -356,10 +355,7 @@ export class MenuMappingService {
     let menus = this.normalizeTenantRoutes(items);
     menus = this.pruneNavigationMenus(menus);
     menus = this.filterNavigationItems(menus, item => this.isOrgCatalogManagementItem(item));
-
-    if (!isFeatureEnabled('feeManagementEnabled')) {
-      menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
-    }
+    menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
 
     if (!isTenantManager) {
       menus = this.filterNavigationItems(menus, item => this.isTenantManagementItem(item));
@@ -384,6 +380,7 @@ export class MenuMappingService {
       '/app/staff/alumni',
       '/app/admissions/overview',
       '/app/admissions/enrollment',
+      '/app/fees',
       '/app/fees/setup',
       '/app/fees/contracts',
       '/app/fees/ledger',
@@ -392,8 +389,11 @@ export class MenuMappingService {
       '/app/fees/audit',
       '/app/fees/dashboard',
       '/app/responsibilities',
-      '/app/academics/overview',
-      '/app/academics/academic-structure'
+      '/app/onboarding',
+      '/app/profile',
+      '/app/settings',
+      '/app/organization-profile',
+      '/app/organization/profile'
     ]);
 
     const canonicalRoute = (routeText: string): string => {
@@ -422,7 +422,7 @@ export class MenuMappingService {
         if (routeText && blockedRoutes.has(routeText)) {
           continue;
         }
-        if (routeText.startsWith('/app/exams')) {
+        if (routeText.startsWith('/app/exams') || routeText.startsWith('/app/fees')) {
           continue;
         }
         if (routeText.startsWith('/app/fees/setup')) {

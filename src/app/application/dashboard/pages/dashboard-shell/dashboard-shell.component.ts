@@ -7,7 +7,6 @@ import { DashboardResponse, DashboardType, WidgetDTO } from '../../models/dashbo
 import { WidgetHostComponent } from '../../widgets/widget-host.component';
 import { WidgetCardComponent } from '../../widgets/widget-card/widget-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
-import { isFeatureEnabled } from '../../../../core/config/feature-flags';
 import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
 
 /** Placeholder spans rendered while the workspace call is in flight — mirrors a typical widget layout so the shell never visibly "jumps". */
@@ -104,12 +103,12 @@ export class DashboardShellComponent implements OnInit {
   }
 
   private filterDisabledWidgets(response: DashboardResponse): DashboardResponse {
-    if (isFeatureEnabled('feeManagementEnabled') || !response?.widgets?.length) {
+    if (!response?.widgets?.length) {
       return response;
     }
     return {
       ...response,
-      widgets: response.widgets.filter(widget => widget.widgetKey !== 'FEE_SUMMARY')
+      widgets: response.widgets.filter(widget => widget.widgetType !== 'FEE_SUMMARY' && widget.widgetKey !== 'FEE_SUMMARY')
     };
   }
 
@@ -154,7 +153,7 @@ export class DashboardShellComponent implements OnInit {
     return { ...response, widgets: ordered };
   }
 
-  /** Ensure attendance + fee visualization charts exist even when API omits CHART widgets. */
+  /** Ensure an attendance chart exists even when API omits usable CHART widgets. */
   private ensureInsightCharts(widgets: WidgetDTO<any>[]): WidgetDTO<any>[] {
     const chartWidgets = widgets.filter(widget => widget.widgetType === 'CHART');
     const hasUsableChart = chartWidgets.some(widget => this.hasChartSeries(widget));
@@ -170,17 +169,7 @@ export class DashboardShellComponent implements OnInit {
           return widget;
         }
         if (/fee|collection|payment/i.test(`${widget.widgetKey} ${widget.title ?? ''}`)) {
-          return {
-            ...widget,
-            dataMode: 'SAMPLE',
-            state: 'SUCCESS',
-            data: {
-              chartType: 'donut',
-              labels: ['Collected', 'Outstanding', 'Overdue'],
-              series: [{ name: 'Amount', data: [2845000, 1250000, 320000] }],
-              unit: 'INR'
-            }
-          };
+          return widget;
         }
         return {
           ...widget,
@@ -213,28 +202,10 @@ export class DashboardShellComponent implements OnInit {
           series: [{ name: 'Present %', data: [92, 88, 95, 90, 93, 70, 86] }],
           unit: '%'
         }
-      },
-      {
-        widgetKey: 'FEE_COLLECTION_CHART',
-        widgetType: 'CHART',
-        title: 'Fee collection',
-        subtitle: 'Breakdown',
-        span: 2,
-        dataMode: 'SAMPLE',
-        state: 'SUCCESS',
-        data: {
-          chartType: 'donut',
-          labels: ['Collected', 'Outstanding', 'Overdue'],
-          series: [{ name: 'Amount', data: [2845000, 1250000, 320000] }],
-          unit: 'INR'
-        }
       }
     ];
 
-    if (!isFeatureEnabled('feeManagementEnabled')) {
-      return [...widgets, extras[0]];
-    }
-    return [...widgets, ...extras];
+    return [...widgets, extras[0]];
   }
 
   private hasChartSeries(widget: WidgetDTO<any>): boolean {

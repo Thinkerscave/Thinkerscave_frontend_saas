@@ -1,5 +1,5 @@
-<div class="auth-shell" [class.auth-shell--focused]="isLogin()">
-  <div class="auth-card" [class.auth-card--focused]="isLogin()">
+<div class="auth-shell" [class.auth-shell--focused]="isLogin()" [class.auth-shell--org-select]="isOrgSelect()">
+  <div class="auth-card" [class.auth-card--focused]="isLogin()" [class.auth-card--org-select]="isOrgSelect()">
     <div class="auth-pane auth-pane--form">
       <a routerLink="/" class="auth-brand" aria-label="ThinkersCave home">
         <span class="auth-brand__mark" aria-hidden="true"><i class="pi pi-graduation-cap"></i></span>

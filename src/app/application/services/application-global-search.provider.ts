@@ -6,7 +6,6 @@ import { dashboardApi } from '../../shared/constants/api.endpoint';
 import { GlobalSearchProvider, GlobalSearchResult } from '../../shared/components/global-search/global-search.provider';
 import { unwrapApiResponse } from '../../shared/utils/api-response.util';
 import { MenuMappingService } from './menu-mapping.service';
-import { isFeatureEnabled } from '../../core/config/feature-flags';
 import { LoginService } from '../../core/services/login.service';
 import {
   GlobalSearchScope,
@@ -196,16 +195,13 @@ export class ApplicationGlobalSearchProvider extends GlobalSearchProvider {
   }
 
   private isDisabledFeatureResult(result: GlobalSearchResult): boolean {
-    if (isFeatureEnabled('feeManagementEnabled')) {
-      return false;
-    }
     const link = String(result.link ?? '').toLowerCase();
     const category = String(result.category ?? '').toLowerCase();
     const label = String(result.label ?? '').toLowerCase();
     return link.includes('/app/fees')
       || link.includes('/app/reports')
-      || category.includes('fee')
-      || label.includes('fee');
+      || category === 'fee'
+      || label === 'fee management';
   }
 
   private flattenMenu(items: MenuItem[], parents: string[] = []): Array<{

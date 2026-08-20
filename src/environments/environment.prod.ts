@@ -12,8 +12,5 @@ export const environment = {
     h2ConsoleUrl: '',
     // Required so Login → Thinkers Department (PLATFORM) or an institution (TENANT)
     requireOrganizationSelection: true,
-    authUseHttpOnlyRefresh: true,
-    features: {
-        feeManagementEnabled: false
-    }
+    authUseHttpOnlyRefresh: true
 };

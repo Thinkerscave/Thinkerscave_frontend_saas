@@ -62,7 +62,7 @@ export class SaasPageHeaderComponent implements OnChanges {
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="saas-stat-card" [attr.data-tone]="stat.tone">
+    <article class="saas-stat-card" [attr.data-tone]="stat.tone" [attr.title]="stat.helper || stat.label">
       <div class="saas-stat-card__body">
         <small>{{ stat.label }}</small>
         <strong>{{ stat.value }}</strong>

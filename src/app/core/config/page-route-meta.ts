@@ -2,7 +2,7 @@
 
 export const TENANT_MGMT_ROOT = {
   breadcrumb: 'Tenant Management',
-  breadcrumbLink: ['/app/tenant-management/dashboard']
+  breadcrumbLink: ['/app']
 } as const;
 
 export const ACCESS_MGMT_ROOT = {

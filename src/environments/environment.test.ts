@@ -9,8 +9,5 @@ export const environment = {
     defaultOrganizationId: 1,
     h2ConsoleUrl: '',
     requireOrganizationSelection: true,
-    authUseHttpOnlyRefresh: true,
-    features: {
-        feeManagementEnabled: false
-    }
+    authUseHttpOnlyRefresh: true
 };
