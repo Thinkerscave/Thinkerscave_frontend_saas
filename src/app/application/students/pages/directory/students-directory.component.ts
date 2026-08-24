@@ -15,7 +15,6 @@ import {
   StudentSearchRequest
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService, PageEnvelope } from '../../services/students-workspace.service';
-import { AddStudentDrawerComponent } from '../add-student/add-student-drawer.component';
 import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
@@ -50,7 +49,6 @@ interface FilterOption<T = string | null> {
     AppGridTableToggleComponent,
     AvatarComponent,
     SkeletonComponent,
-    AddStudentDrawerComponent,
     TcTranslatePipe,
     EmptyStateComponent
   ],
@@ -68,9 +66,6 @@ export class StudentsDirectoryComponent implements OnInit {
   errorMessage = '';
 
   view: AppListViewMode = 'grid';
-
-  // ---- Add Student Drawer ----
-  showAddDrawer = false;
 
   // ---- Bulk Import ----
   showImport = false;
@@ -236,18 +231,8 @@ export class StudentsDirectoryComponent implements OnInit {
     this.router.navigate(['/app/students/profile', s.studentId]);
   }
 
-  // ---- Add Student Drawer ----
-  openAddDrawer(): void {
-    this.showAddDrawer = true;
-  }
-
-  closeAddDrawer(): void {
-    this.showAddDrawer = false;
-  }
-
-  onStudentAdded(): void {
-    this.showAddDrawer = false;
-    this.loadAll();
+  openAddStudent(): void {
+    this.router.navigate(['/app/students/add-student']);
   }
 
   // ---- Bulk Import ----

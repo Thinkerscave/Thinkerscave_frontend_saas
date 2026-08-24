@@ -12,25 +12,31 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { debounceTime, finalize, Subject } from 'rxjs';
 
-import { SaasPanelComponent } from '../../../../shared/ui/saas';
+import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
 import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { CounselorPickerComponent } from '../../components/counselor-picker/counselor-picker.component';
 import {
   LEAD_SOURCE_OPTIONS,
   LEAD_STATUS_OPTIONS,
-  admissionsPageConfig
+  admissionsPageConfig,
+  formatAdmissionsLabel
 } from '../../data/admissions-workspace.config';
 import {
+  CounselorOption,
   LeadCreateRequest,
   LeadRecord,
   LeadSearchRequest,
-  LeadStatus
+  LeadStatus,
+  LookupOption
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
+import { AdmissionsNavService } from '../../services/admissions-nav.service';
 
 interface SelectOption<T = string | null> {
   label: string;
@@ -48,15 +54,19 @@ interface SelectOption<T = string | null> {
     DropdownModule,
     PaginatorModule,
     ConfirmDialogModule,
+    DialogModule,
+    SaasPageHeaderComponent,
     SaasPanelComponent,
-    AppGridTableToggleComponent
+    AppGridTableToggleComponent,
+    CounselorPickerComponent
   ],
   providers: [MessageService, ConfirmationService],
-  styleUrls: ['../../admissions.shared.scss', '../../../students/students.shared.scss'],
+  styleUrls: ['../../../students/students.shared.scss', '../../admissions.shared.scss'],
   templateUrl: './leads-list.component.html'
 })
 export class LeadsListComponent implements OnInit {
   private readonly api = inject(AdmissionsCrmService);
+  private readonly nav = inject(AdmissionsNavService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
@@ -70,7 +80,7 @@ export class LeadsListComponent implements OnInit {
   readonly sourceOptions = LEAD_SOURCE_OPTIONS;
   readonly statusSelectOptions: SelectOption[] = [
     { label: 'All', value: null },
-    ...LEAD_STATUS_OPTIONS.map(s => ({ label: s, value: s }))
+    ...LEAD_STATUS_OPTIONS.map(s => ({ label: formatAdmissionsLabel(s), value: s }))
   ];
   readonly sourceSelectOptions: SelectOption[] = [
     { label: 'All', value: null },
@@ -86,10 +96,17 @@ export class LeadsListComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly leads = signal<LeadRecord[]>([]);
   readonly totalElements = signal(0);
-  readonly viewMode = signal<'table' | 'card'>('table');
-  readonly drawerOpen = signal(false);
+  readonly viewMode = signal<'table' | 'card'>('card');
+  dialogVisible = false;
   readonly saving = signal(false);
   readonly editingLead = signal<LeadRecord | null>(null);
+  readonly counselorPickerOpen = signal(false);
+  readonly counselorTarget = signal<LeadRecord | null>(null);
+  readonly years = signal<LookupOption[]>([]);
+  readonly classes = signal<LookupOption[]>([]);
+  readonly filterClasses = signal<LookupOption[]>([]);
+  readonly counselorOptions = signal<SelectOption<number | null>[]>([{ label: 'All counselors', value: null }]);
+  filterYearId: number | null = null;
 
   pageIndex = 0;
   pageSize = 20;
@@ -99,9 +116,11 @@ export class LeadsListComponent implements OnInit {
 
   readonly leadForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
-    mobileNumber: ['', [Validators.required, Validators.pattern(/^[\d+\-\s()]{7,15}$/)]],
-    email: [''],
-    classInterestedIn: ['', Validators.required],
+    mobileNumber: ['', [Validators.required, Validators.pattern(/^(?:\+91[\s-]?)?[6-9]\d{9}$/)]],
+    email: ['', [Validators.email]],
+    classInterestedIn: [''],
+    academicYearId: [null as number | null, Validators.required],
+    classId: [null as number | null, Validators.required],
     address: [''],
     inquirySource: [''],
     referredBy: [''],
@@ -115,14 +134,28 @@ export class LeadsListComponent implements OnInit {
       .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.runSearch());
 
+    this.api.academicYears().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: years => this.years.set(years)
+    });
+    this.api.searchCounselors('', 0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: page => this.counselorOptions.set([
+        { label: 'All counselors', value: null },
+        ...(page.content ?? []).map(c => ({ label: c.fullName, value: c.staffId }))
+      ])
+    });
+
+    this.leadForm.controls.academicYearId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(yearId => this.onYearChange(yearId));
+
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const status = params.get('status');
-      const openDrawer = params.get('openDrawer');
+      const openCreate = params.get('openCreate') ?? params.get('openDrawer');
       if (status) {
         this.filter = { ...this.filter, status: status as LeadStatus };
       }
-      if (openDrawer === '1') {
-        this.openDrawer();
+      if (openCreate === '1') {
+        this.openDialog();
       }
       this.loadInitial();
     });
@@ -132,7 +165,7 @@ export class LeadsListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.api
-      .searchLeads(this.filter, this.pageIndex, this.pageSize, this.sort)
+      .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false))
@@ -154,7 +187,7 @@ export class LeadsListComponent implements OnInit {
     this.searching.set(true);
     this.pageIndex = 0;
     this.api
-      .searchLeads(this.filter, this.pageIndex, this.pageSize, this.sort)
+      .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.searching.set(false))
@@ -178,7 +211,7 @@ export class LeadsListComponent implements OnInit {
     this.pageSize = event.rows ?? this.pageSize;
     this.searching.set(true);
     this.api
-      .searchLeads(this.filter, this.pageIndex, this.pageSize, this.sort)
+      .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
       .pipe(finalize(() => this.searching.set(false)))
       .subscribe({
         next: page => {
@@ -191,7 +224,38 @@ export class LeadsListComponent implements OnInit {
 
   clearFilters(): void {
     this.filter = {};
+    this.filterYearId = null;
+    this.filterClasses.set([]);
     this.runSearch();
+  }
+
+  onFilterYearChange(yearId: number | null): void {
+    this.filterYearId = yearId;
+    this.filter.classId = null;
+    this.filter.academicYearId = yearId;
+    this.filterClasses.set([]);
+    if (!yearId) return;
+    this.api.academicClasses(yearId).subscribe({
+      next: classes => this.filterClasses.set(classes)
+    });
+  }
+
+  private searchPayload(): LeadSearchRequest {
+    const className = this.filterClasses().find(c => c.id === this.filter.classId)?.name
+      ?? this.filter.classInterestedIn
+      ?? this.filter.classInterested
+      ?? null;
+    return {
+      keyword: this.filter.keyword,
+      status: this.filter.status,
+      counselorId: this.filter.counselorId,
+      source: this.filter.source ?? this.filter.inquirySource,
+      classInterestedIn: className,
+      academicYearId: this.filter.academicYearId ?? this.filterYearId,
+      classId: this.filter.classId,
+      followUpFrom: this.filter.followUpFrom,
+      followUpTo: this.filter.followUpTo
+    };
   }
 
   get listViewMode(): AppListViewMode {
@@ -206,7 +270,7 @@ export class LeadsListComponent implements OnInit {
     this.viewMode.set(mode);
   }
 
-  openDrawer(lead?: LeadRecord): void {
+  openDialog(lead?: LeadRecord): void {
     this.editingLead.set(lead ?? null);
     if (lead) {
       this.leadForm.patchValue({
@@ -214,6 +278,8 @@ export class LeadsListComponent implements OnInit {
         mobileNumber: lead.mobileNumber,
         email: lead.email ?? '',
         classInterestedIn: lead.classInterestedIn,
+        academicYearId: lead.academicYearId ?? null,
+        classId: lead.classId ?? null,
         address: lead.address ?? '',
         inquirySource: lead.inquirySource ?? '',
         referredBy: lead.referredBy ?? '',
@@ -227,6 +293,8 @@ export class LeadsListComponent implements OnInit {
         mobileNumber: '',
         email: '',
         classInterestedIn: '',
+        academicYearId: null,
+        classId: null,
         address: '',
         inquirySource: '',
         referredBy: '',
@@ -235,15 +303,18 @@ export class LeadsListComponent implements OnInit {
         nextFollowUpDate: ''
       });
     }
-    this.drawerOpen.set(true);
+    this.dialogVisible = true;
+    if (lead?.academicYearId) {
+      this.onYearChange(lead.academicYearId, lead.classId ?? null);
+    }
   }
 
-  closeDrawer(): void {
-    this.drawerOpen.set(false);
+  closeDialog(): void {
+    this.dialogVisible = false;
     this.editingLead.set(null);
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { openDrawer: null },
+      queryParams: { openDrawer: null, openCreate: null },
       queryParamsHandling: 'merge'
     });
   }
@@ -253,7 +324,13 @@ export class LeadsListComponent implements OnInit {
       this.leadForm.markAllAsTouched();
       return;
     }
-    const payload = this.leadForm.getRawValue() as LeadCreateRequest;
+    const className = this.classes().find(c => c.id === this.leadForm.value.classId)?.name
+      ?? this.leadForm.value.classInterestedIn
+      ?? '';
+    const payload = {
+      ...this.leadForm.getRawValue(),
+      classInterestedIn: className
+    } as LeadCreateRequest;
     const editing = this.editingLead();
     this.saving.set(true);
 
@@ -262,13 +339,15 @@ export class LeadsListComponent implements OnInit {
       : this.api.createLead(payload);
 
     req$.pipe(finalize(() => this.saving.set(false))).subscribe({
-      next: () => {
+      next: created => {
         this.messages.add({
           severity: 'success',
           summary: editing ? 'Lead updated' : 'Lead created',
-          detail: editing ? 'Changes saved successfully.' : 'New lead added to pipeline.'
+          detail: editing
+            ? 'Changes saved successfully.'
+            : `Lead created${created.inquiryNumber ? ` as ${created.inquiryNumber}` : ''}.`
         });
-        this.closeDrawer();
+        this.closeDialog();
         this.runSearch();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Save failed', detail: 'Could not save lead.' })
@@ -276,7 +355,7 @@ export class LeadsListComponent implements OnInit {
   }
 
   openLead(lead: LeadRecord): void {
-    this.router.navigate(['/app/admissions/lead', lead.inquiryId]);
+    this.nav.toLead(lead.inquiryId, 'leads');
   }
 
   callPhone(lead: LeadRecord, event: Event): void {
@@ -298,7 +377,7 @@ export class LeadsListComponent implements OnInit {
 
   editLead(lead: LeadRecord, event: Event): void {
     event.stopPropagation();
-    this.openDrawer(lead);
+    this.openDialog(lead);
   }
 
   deleteLead(lead: LeadRecord, event: Event): void {
@@ -322,19 +401,38 @@ export class LeadsListComponent implements OnInit {
 
   assignCounselor(lead: LeadRecord, event: Event): void {
     event.stopPropagation();
-    const raw = window.prompt('Enter counselor user ID to assign:');
-    if (!raw?.trim()) return;
-    const counselorId = Number(raw);
-    if (!Number.isFinite(counselorId) || counselorId <= 0) {
-      this.messages.add({ severity: 'warn', summary: 'Invalid ID', detail: 'Please enter a valid counselor ID.' });
-      return;
-    }
-    this.api.assignCounselor(lead.inquiryId, counselorId).subscribe({
+    this.counselorTarget.set(lead);
+    this.counselorPickerOpen.set(true);
+  }
+
+  onCounselorPicked(person: CounselorOption): void {
+    const lead = this.counselorTarget();
+    this.counselorPickerOpen.set(false);
+    if (!lead) return;
+    this.api.assignCounselor(lead.inquiryId, person.staffId).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Assigned', detail: 'Counselor assigned successfully.' });
+        this.messages.add({
+          severity: 'success',
+          summary: 'Assigned',
+          detail: `${person.fullName} assigned as counselor.`
+        });
         this.runSearch();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Assignment failed.' })
+    });
+  }
+
+  onYearChange(yearId: number | null, keepClassId: number | null = null): void {
+    this.classes.set([]);
+    if (!yearId) {
+      this.leadForm.patchValue({ classId: null, classInterestedIn: '' });
+      return;
+    }
+    this.api.academicClasses(yearId).subscribe({
+      next: classes => {
+        this.classes.set(classes);
+        this.leadForm.patchValue({ classId: keepClassId });
+      }
     });
   }
 
@@ -362,6 +460,10 @@ export class LeadsListComponent implements OnInit {
     a.download = `leads-page-${this.pageIndex + 1}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  formatStatus(status: LeadStatus): string {
+    return formatAdmissionsLabel(status);
   }
 
   statusTone(status: LeadStatus): 'info' | 'success' | 'warning' | 'danger' | 'neutral' {

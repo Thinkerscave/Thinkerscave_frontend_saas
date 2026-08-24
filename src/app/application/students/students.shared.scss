@@ -1729,6 +1729,164 @@
 }
 
 /* ============================================================
+   ADD STUDENT PAGE
+   ============================================================ */
+.stu-add-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0 0 1rem;
+  min-width: 0;
+}
+
+.stu-add-page .saas-page-header {
+  margin: 0;
+  min-height: 0;
+}
+
+.stu-add-page__banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--tc-info, #2563eb) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tc-info, #2563eb) 28%, var(--tc-border));
+  color: var(--tc-info-700, #1d4ed8);
+
+  i { margin-top: 0.1rem; }
+
+  &.is-danger {
+    background: #fef2f2;
+    border-color: rgba(239, 68, 68, 0.28);
+    color: #dc2626;
+  }
+}
+
+.stu-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.stu-add-form__section + .stu-add-form__section {
+  border-top: 1px solid var(--tc-border);
+  padding-top: 1rem;
+}
+
+.stu-add-form__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.stu-add-form__span-2 { grid-column: span 2; }
+
+.stu-add-form__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--tc-text);
+  cursor: pointer;
+}
+
+.stu-add-form__subhead {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tc-text-muted);
+}
+
+.stu-add-form__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.stu-add-form__parent {
+  padding: 0.75rem 0 0;
+}
+
+.stu-add-form__parent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.stu-add-form__footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 1100px) {
+  .stu-add-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stu-add-form__span-2 { grid-column: span 2; }
+}
+
+@media (max-width: 700px) {
+  .stu-add-form__grid,
+  .stu-add-form__span-2 { grid-template-columns: 1fr; grid-column: auto; }
+}
+
+:host ::ng-deep .stu-add-page {
+  .app-card {
+    padding: 0.85rem 1rem 0.7rem;
+  }
+
+  .app-card__body { gap: 0.65rem; }
+
+  .app-card__footer {
+    margin-top: 0.7rem;
+    padding-top: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .app-section-header { margin-bottom: 0.7rem; gap: 0.65rem; }
+
+  .app-section-header__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+  }
+
+  .app-section-header__title { font-size: 0.98rem; }
+
+  .app-section-header__description {
+    font-size: 0.78rem;
+    margin-top: 0.1rem;
+  }
+
+  .app-field__required { color: #ef4444; }
+
+  .app-field__control {
+    min-height: 42px;
+    padding: 0.45rem 0.75rem;
+    border-radius: 10px;
+  }
+
+  .saas-tabs {
+    padding: 0;
+    margin: 0 0 0.15rem;
+  }
+
+  .saas-tabs button { padding: 0.55rem 0.7rem; font-size: 0.84rem; }
+}
+
+/* ============================================================
    ADD STUDENT DRAWER — 2-step form helpers
    ============================================================ */
 .stu-wizard-stepper--compact .stu-step {

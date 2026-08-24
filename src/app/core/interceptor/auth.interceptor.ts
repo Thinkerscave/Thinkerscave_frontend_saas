@@ -39,8 +39,13 @@ export const authInterceptor: HttpInterceptorFn = (
   const loginService = inject(LoginService);
   const token = loginService.getAccessToken();
 
+  const isPublicCatalog =
+    req.url.includes('/public/organizations') ||
+    req.url.includes('/auth/organizations') ||
+    req.url.includes('/public/subscription-plans');
+
   let authReq = req;
-  if (token && !req.url.includes('/auth/refresh')) {
+  if (token && !req.url.includes('/auth/refresh') && !isPublicCatalog) {
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });

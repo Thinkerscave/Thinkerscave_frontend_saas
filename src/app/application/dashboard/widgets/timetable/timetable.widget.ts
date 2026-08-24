@@ -9,7 +9,7 @@ import { TimetableData } from '../../models/dashboard.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="w-list">
-      <div class="w-list__row" *ngFor="let slot of data.slots">
+      <div class="w-list__row" *ngFor="let slot of data?.slots || []">
         <span class="w-list__icon"><i class="pi pi-book"></i></span>
         <div class="w-list__main">
           <p class="w-list__title">

@@ -1,21 +1,14 @@
 <app-toast />
 
-<section class="tc-page-shell">
-  <tc-saas-page-header
-    title="Admissions Settings"
-    subtitle="Sources, statuses, document checklist, and numbering rules."
-  >
-    <button type="button" class="tc-btn tc-btn--primary" (click)="refresh()" [disabled]="loading">
+<section class="tc-page-shell adm-page">
+  <tc-saas-page-header subtitle="Sources, documents, numbering, and counselor assignment for this school.">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading" title="Reload tenant admissions settings">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="loading || saving || !settings" title="Save admissions settings for this school">
+      <i class="pi pi-save"></i> Save
+    </button>
   </tc-saas-page-header>
-
-  <div class="tc-card tc-card--panel adm-info-banner">
-    <p class="adm-info-banner__text">
-      <i class="pi pi-info-circle adm-info-banner__icon"></i>
-      Settings are read-only. Backend edit APIs are not available yet — contact your administrator to change configuration.
-    </p>
-  </div>
 
   <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
@@ -25,66 +18,75 @@
     <i class="pi pi-spin pi-spinner"></i> Loading settings…
   </div>
 
-  <div *ngIf="!loading && settings" class="adm-settings-grid">
-    <tc-saas-panel title="Inquiry sources">
-      <div class="adm-chip-row">
-        <span *ngFor="let s of settings.inquirySources" class="adm-chip is-active">{{ s }}</span>
-      </div>
-      <div class="tc-empty-state adm-empty-compact" *ngIf="!settings.inquirySources.length">
-        <p>No sources configured.</p>
-      </div>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Inquiry statuses">
-      <div class="adm-chip-row">
-        <span *ngFor="let s of settings.inquiryStatuses" class="adm-chip is-active">{{ s }}</span>
-      </div>
-      <div class="tc-empty-state adm-empty-compact" *ngIf="!settings.inquiryStatuses.length">
-        <p>No statuses configured.</p>
-      </div>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Required documents">
-      <div class="adm-chip-row">
-        <span *ngFor="let d of settings.requiredDocuments" class="adm-chip is-active">
-          <i class="pi pi-file"></i> {{ d }}
-        </span>
-      </div>
-      <div class="tc-empty-state adm-empty-compact" *ngIf="!settings.requiredDocuments.length">
-        <p>No required documents configured.</p>
-      </div>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Numbering rules">
-      <div class="adm-config-grid">
-        <div *ngFor="let entry of settings.numbering | keyvalue" class="adm-config-row">
-          <span>{{ formatLabel(entry.key) }}</span>
-          <strong>{{ entry.value }}</strong>
+  <tc-saas-panel *ngIf="!loading && settings" title="School setup">
+    <div class="adm-settings-layout">
+      <div class="adm-form-grid">
+        <div class="tc-form-field tc-form-field--full">
+          <label>Lead sources</label>
+          <textarea rows="5" [(ngModel)]="sourcesText" placeholder="Website&#10;Walk-in&#10;Referral"></textarea>
+          <small class="adm-help-text">One source per line. Used on New Lead.</small>
+        </div>
+        <div class="tc-form-field tc-form-field--full">
+          <label>Required documents</label>
+          <textarea rows="5" [(ngModel)]="documentsText" placeholder="BIRTH_CERTIFICATE&#10;AADHAR&#10;TRANSFER_CERTIFICATE"></textarea>
+          <small class="adm-help-text">One document type per line. Shown on the application form.</small>
+        </div>
+        <div class="tc-form-field tc-form-field--full">
+          <label>Lead pipeline</label>
+          <div class="adm-chip-row">
+            <span class="adm-chip is-active" *ngFor="let status of pipelineStatuses">{{ status }}</span>
+          </div>
+          <small class="adm-help-text">Fixed CRM stages. Status changes happen from lead and follow-up actions.</small>
         </div>
       </div>
-      <div class="tc-empty-state adm-empty-compact" *ngIf="!hasEntries(settings.numbering)">
-        <p>No numbering rules configured.</p>
-      </div>
-    </tc-saas-panel>
 
-    <tc-saas-panel title="Reminder rules">
-      <div class="adm-config-grid">
-        <div *ngFor="let entry of settings.reminderRules | keyvalue" class="adm-config-row">
-          <span>{{ formatLabel(entry.key) }}</span>
-          <strong>{{ entry.value }}</strong>
+      <div class="adm-form-grid" style="grid-template-columns: 1fr;">
+        <div class="tc-form-field">
+          <label>Lead prefix</label>
+          <input [(ngModel)]="leadPrefix" maxlength="8" />
+        </div>
+        <div class="tc-form-field">
+          <label>Application prefix</label>
+          <input [(ngModel)]="applicationPrefix" maxlength="8" />
+        </div>
+        <div class="tc-form-field">
+          <label>Admission prefix</label>
+          <input [(ngModel)]="admissionPrefix" maxlength="8" />
+        </div>
+        <div class="tc-form-field">
+          <label>Counselor assignment</label>
+          <p-dropdown
+            [options]="assignmentOptions"
+            [(ngModel)]="assignmentMode"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-field">
+          <label>Follow-up reminder</label>
+          <p-dropdown
+            [options]="reminderModeOptions"
+            [(ngModel)]="reminderMode"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-field">
+          <label>Remind before</label>
+          <p-dropdown
+            [options]="reminderLeadOptions"
+            [(ngModel)]="reminderLeadTime"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown">
+          </p-dropdown>
         </div>
       </div>
-      <div class="tc-empty-state adm-empty-compact" *ngIf="!hasEntries(settings.reminderRules)">
-        <p>No reminder rules configured.</p>
-      </div>
-    </tc-saas-panel>
-  </div>
-
-  <div class="tc-empty-state" *ngIf="!loading && !settings && !errorMessage">
-    <i class="pi pi-cog"></i>
-    <h3>No settings loaded</h3>
-    <p>Click Refresh to load configuration from the server.</p>
-  </div>
+    </div>
+  </tc-saas-panel>
 </section>
-
-

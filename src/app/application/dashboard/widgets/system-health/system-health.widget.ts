@@ -10,10 +10,10 @@ import { SystemHealthData } from '../../models/dashboard.model';
   template: `
     <div class="w-summary-highlight">
       <span>Overall status</span>
-      <strong class="w-tag" [attr.data-tone]="overallTone()">{{ data.overallStatus }}</strong>
+      <strong class="w-tag" [attr.data-tone]="overallTone()">{{ data?.overallStatus }}</strong>
     </div>
     <div class="w-list">
-      <div class="w-list__row" *ngFor="let check of data.checks">
+      <div class="w-list__row" *ngFor="let check of data?.checks || []">
         <span class="w-list__icon"><i class="pi" [ngClass]="check.icon || 'pi-server'"></i></span>
         <div class="w-list__main">
           <p class="w-list__title">{{ check.label }}</p>
@@ -27,7 +27,7 @@ export class SystemHealthWidgetComponent {
   @Input({ required: true }) data!: SystemHealthData;
 
   overallTone(): string {
-    const status = (this.data.overallStatus || '').toLowerCase();
+    const status = (this.data?.overallStatus || '').toLowerCase();
     if (status.includes('healthy') || status.includes('operational') || status.includes('ok')) return 'success';
     if (status.includes('degraded') || status.includes('warning')) return 'warning';
     if (status.includes('down') || status.includes('error')) return 'danger';

@@ -12,7 +12,7 @@
       </button>
     </div>
     <div class="stu-directory-toolbar__actions">
-      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddDrawer()">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddStudent()">
         <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
       </button>
       <button type="button" class="tc-btn" (click)="openImport()">
@@ -263,7 +263,7 @@
       message="Try adjusting your filters or add new students."
       actionLabel="Add Student"
       actionIcon="pi pi-plus"
-      (action)="openAddDrawer()">
+      (action)="openAddStudent()">
     </app-empty-state>
 
     <div class="stu-paginator" *ngIf="!loading && totalElements > 0">
@@ -361,11 +361,3 @@
     </div>
   </div>
 </div>
-
-<ng-container *ngIf="showAddDrawer">
-  <div class="tc-overlay" (click)="closeAddDrawer()"></div>
-  <app-add-student-drawer
-    (closed)="closeAddDrawer()"
-    (saved)="onStudentAdded()">
-  </app-add-student-drawer>
-</ng-container>

@@ -223,27 +223,28 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'public/admission',
     pathMatch: 'full',
-    redirectTo: '/public/admission'
+    redirectTo: '/public/inquiry'
   },
   // ━━━ Admissions CRM module (EduReach workspace) ━━━
   {
     path: 'admissions',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'STAFF', 'RECEPTIONIST', 'PARENT'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])],
     children: [
       { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
-      { path: 'wizard/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'form/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'wizard/:id', pathMatch: 'full', redirectTo: 'form/:id' },
       {
         path: '',
         loadComponent: () => import('./admissions/components/admissions-workspace/admissions-workspace.component').then(m => m.AdmissionsWorkspaceComponent),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'leads' },
-          { path: 'overview', pathMatch: 'full', redirectTo: 'leads' },
+          { path: '', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'overview', data: { workspacePage: 'overview' }, loadComponent: () => import('./admissions/pages/overview/admissions-overview.component').then(m => m.AdmissionsOverviewComponent) },
           { path: 'leads', data: { workspacePage: 'leads' }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
           { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
           { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
-          { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
           { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
+          { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
+          { path: 'reports', pathMatch: 'full', redirectTo: 'overview' },
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
@@ -265,7 +266,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'applications', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'documents', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'communication', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
-      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/reports' },
+      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
       { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
       { path: 'detail/:id', pathMatch: 'full', redirectTo: '/app/admissions/lead/:id' }
@@ -288,7 +289,7 @@ export const APPLICATION_ROUTES: Routes = [
           // Legacy paths kept as redirects so deep links and bookmarks remain stable.
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'add-student', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
           { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },

@@ -1,216 +1,262 @@
 <app-toast />
 
-<section class="tc-page-shell adm-wizard">
+<section class="tc-page-shell adm-page adm-wizard adm-form-canvas">
   <tc-saas-page-header
-    [title]="applicationId ? 'Edit Application' : 'New Application'"
-    subtitle="Complete all steps to submit for admission review."
+    [title]="applicationId ? 'Edit application' : 'Application form'"
+    subtitle="Capture student, family, previous school, documents, and fee received at the counter."
   >
-    <button type="button" class="tc-btn tc-btn--ghost" (click)="cancel()">
-      <i class="pi pi-times"></i> Cancel
+    <button type="button" class="tc-btn tc-btn--back" (click)="cancel()">
+      <i class="pi pi-arrow-left"></i> Back
     </button>
   </tc-saas-page-header>
 
   <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
-
-  <div class="tc-loading" *ngIf="loading">
-    <i class="pi pi-spin pi-spinner"></i> Loading application…
-  </div>
+  <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading application…</div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stepper [steps]="steps" [activeIndex]="activeStep" />
-
-    <div class="adm-wizard__progress">
-      <div class="adm-wizard__bar">
-        <span [style.width.%]="completionPercent()"></span>
-      </div>
-      <span class="adm-wizard__pct">{{ completionPercent() }}%</span>
+    <div class="adm-wizard__progress" *ngIf="progress">
+      <div class="adm-wizard__bar"><span [style.width.%]="progress.completionPercent"></span></div>
+      <span class="adm-wizard__pct">{{ progress.completionPercent }}%</span>
     </div>
 
     <tc-saas-panel [title]="steps[activeStep].label">
       <form [formGroup]="form">
-        <!-- Step 1: Student Info -->
-        <div class="adm-wizard__body" *ngIf="activeStep === 0" formGroupName="student">
-          <div class="tc-form-field">
-            <label>Applicant name *</label>
-            <input type="text" formControlName="applicantName" />
-          </div>
-          <div class="tc-form-field">
-            <label>Date of birth *</label>
-            <input type="date" formControlName="dateOfBirth" />
-          </div>
-          <div class="tc-form-field">
-            <label>Gender *</label>
-            <p-dropdown
-              [options]="genderOptions"
-              formControlName="gender"
-              optionLabel="label"
-              optionValue="value"
-              appendTo="body"
-              styleClass="att-filter-dropdown">
-            </p-dropdown>
-          </div>
-          <div class="tc-form-field">
-            <label>Applying for class *</label>
-            <input type="text" formControlName="applyingForClass" placeholder="e.g. Grade 5" />
-          </div>
-          <div class="tc-form-field">
-            <label>Email</label>
-            <input type="email" formControlName="email" />
-          </div>
-          <div class="tc-form-field">
-            <label>Contact number *</label>
-            <input type="tel" formControlName="contactNumber" />
-          </div>
-        </div>
-
-        <!-- Step 2: Parents -->
-        <div class="adm-wizard__body" *ngIf="activeStep === 1" formGroupName="parents">
-          <div class="tc-form-field">
-            <label>Parent / guardian name *</label>
-            <input type="text" formControlName="parentName" />
-          </div>
-          <div class="tc-form-field">
-            <label>Parent contact *</label>
-            <input type="tel" formControlName="parentContact" />
-          </div>
-          <div class="tc-form-field tc-form-field--full">
-            <label>Parent email</label>
-            <input type="email" formControlName="parentEmail" />
-          </div>
-        </div>
-
-        <!-- Step 3: Address -->
-        <div class="adm-wizard__body" *ngIf="activeStep === 2" formGroupName="address">
-          <div class="tc-form-field tc-form-field--full">
-            <label>Address line *</label>
-            <input type="text" formControlName="line1" />
-          </div>
-          <div class="tc-form-field">
-            <label>City *</label>
-            <input type="text" formControlName="city" />
-          </div>
-          <div class="tc-form-field">
-            <label>State *</label>
-            <input type="text" formControlName="state" />
-          </div>
-          <div class="tc-form-field">
-            <label>PIN code *</label>
-            <input type="text" formControlName="pinCode" />
-          </div>
-        </div>
-
-        <!-- Step 4: Academic -->
-        <div class="adm-wizard__body" *ngIf="activeStep === 3" formGroupName="academic">
-          <div class="tc-form-field tc-form-field--full">
-            <label>Academic notes</label>
-            <textarea formControlName="academicNotes" placeholder="Previous school, marks, special requirements…"></textarea>
-          </div>
-        </div>
-
-        <!-- Step 5: Documents -->
-        <div class="adm-wizard__body" *ngIf="activeStep === 4">
-          <div class="tc-form-field tc-form-field--full">
-            <label>Add document reference</label>
-            <div class="adm-inline-actions">
-              <input
-                type="text"
-                [(ngModel)]="newDocumentName"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="e.g. Birth certificate"
-                (keyup.enter)="addDocument()"
-              />
-              <button type="button" class="tc-btn tc-btn--primary" (click)="addDocument()">
-                <i class="pi pi-plus"></i> Add
-              </button>
+        <div class="adm-wizard__body" *ngIf="activeStep === 0">
+          <fieldset class="adm-fieldset" formGroupName="student">
+            <legend>Student</legend>
+            <div class="tc-form-field">
+              <label>Full name *</label>
+              <input type="text" formControlName="applicantName" />
+              <small class="adm-field-error" *ngIf="showError('student.applicantName')">Required</small>
             </div>
-          </div>
-          <div class="adm-chip-row" *ngIf="uploadedDocuments.length">
-            <span *ngFor="let doc of uploadedDocuments" class="adm-chip is-active">
-              <i class="pi pi-file"></i> {{ doc }}
-              <button
-                type="button"
-                class="tc-btn tc-btn--ghost tc-btn--icon"
-                class="adm-chip-remove-btn"
-                (click)="removeDocument(doc)"
-              >
-                <i class="pi pi-times"></i>
-              </button>
-            </span>
-          </div>
-          <div class="tc-empty-state adm-empty-compact" *ngIf="!uploadedDocuments.length">
-            <i class="pi pi-file"></i>
-            <p>No documents listed yet.</p>
-          </div>
+            <div class="tc-form-field">
+              <label>Date of birth *</label>
+              <input type="date" formControlName="dateOfBirth" [max]="today" />
+            </div>
+            <div class="tc-form-field">
+              <label>Gender *</label>
+              <p-dropdown [options]="genderOptions" formControlName="gender" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Blood group</label>
+              <p-dropdown [options]="bloodGroups" formControlName="bloodGroup" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Category</label>
+              <p-dropdown [options]="categoryOptions" formControlName="category" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Aadhaar</label>
+              <input type="text" formControlName="aadhaarNumber" maxlength="12" placeholder="12 digits" />
+            </div>
+            <div class="tc-form-field">
+              <label>Nationality</label>
+              <input type="text" formControlName="nationality" />
+            </div>
+            <div class="tc-form-field">
+              <label>Religion</label>
+              <p-dropdown [options]="religionOptions" formControlName="religion" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Place of birth</label>
+              <input type="text" formControlName="placeOfBirth" />
+            </div>
+            <div class="tc-form-field">
+              <label>Mother tongue</label>
+              <input type="text" formControlName="motherTongue" />
+            </div>
+            <div class="tc-form-field">
+              <label>Contact *</label>
+              <input type="tel" formControlName="contactNumber" />
+            </div>
+            <div class="tc-form-field">
+              <label>Email</label>
+              <input type="email" formControlName="email" />
+            </div>
+          </fieldset>
+          <fieldset class="adm-fieldset" formGroupName="parents">
+            <legend>Parents / guardian</legend>
+            <div class="tc-form-field">
+              <label>Father / guardian *</label>
+              <input type="text" formControlName="parentName" />
+            </div>
+            <div class="tc-form-field">
+              <label>Occupation</label>
+              <input type="text" formControlName="fatherOccupation" />
+            </div>
+            <div class="tc-form-field">
+              <label>Mobile *</label>
+              <input type="tel" formControlName="parentContact" />
+            </div>
+            <div class="tc-form-field">
+              <label>Mother name</label>
+              <input type="text" formControlName="motherName" />
+            </div>
+            <div class="tc-form-field">
+              <label>Mother occupation</label>
+              <input type="text" formControlName="motherOccupation" />
+            </div>
+            <div class="tc-form-field">
+              <label>Parent email</label>
+              <input type="email" formControlName="parentEmail" />
+            </div>
+          </fieldset>
+          <fieldset class="adm-fieldset" formGroupName="address">
+            <legend>Address</legend>
+            <div class="tc-form-field" style="grid-column: 1 / -1;">
+              <label>Address line *</label>
+              <input type="text" formControlName="line1" />
+            </div>
+            <div class="tc-form-field">
+              <label>City *</label>
+              <input type="text" formControlName="city" />
+            </div>
+            <div class="tc-form-field">
+              <label>State</label>
+              <input type="text" formControlName="state" placeholder="Odisha" />
+            </div>
+            <div class="tc-form-field">
+              <label>PIN *</label>
+              <input type="text" formControlName="pinCode" maxlength="6" />
+            </div>
+          </fieldset>
         </div>
 
-        <!-- Step 6: Review -->
-        <div *ngIf="activeStep === 5">
-          <div class="adm-dl">
-            <div *ngFor="let entry of reviewSummary() | keyvalue">
-              <dt>{{ entry.key }}</dt>
-              <dd>{{ entry.value }}</dd>
+        <div class="adm-wizard__body" *ngIf="activeStep === 1">
+          <fieldset class="adm-fieldset" formGroupName="student">
+            <legend>Applying for</legend>
+            <div class="tc-form-field">
+              <label>Academic year *</label>
+              <p-dropdown [options]="years" formControlName="academicYearId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
             </div>
+            <div class="tc-form-field">
+              <label>Class *</label>
+              <p-dropdown [options]="classes" formControlName="classId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Preferred section</label>
+              <p-dropdown [options]="sections" formControlName="sectionId" optionLabel="name" optionValue="id" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+          </fieldset>
+          <fieldset class="adm-fieldset" formGroupName="academic">
+            <legend>Previous school</legend>
+            <div class="tc-form-field">
+              <label>School / college name</label>
+              <input type="text" formControlName="previousSchoolName" />
+            </div>
+            <div class="tc-form-field">
+              <label>Board</label>
+              <p-dropdown [options]="boardOptions" formControlName="previousBoard" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Last class attended</label>
+              <input type="text" formControlName="previousClass" />
+            </div>
+            <div class="tc-form-field">
+              <label>Last % / grade</label>
+              <input type="text" formControlName="lastPercentage" />
+            </div>
+            <div class="tc-form-field">
+              <label>TC number</label>
+              <input type="text" formControlName="tcNumber" />
+            </div>
+            <div class="tc-form-field">
+              <label>Medium</label>
+              <p-dropdown [options]="mediumOptions" formControlName="mediumOfInstruction" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>First language</label>
+              <input type="text" formControlName="firstLanguage" />
+            </div>
+            <div class="tc-form-field">
+              <label>Sibling in this school</label>
+              <input type="text" formControlName="siblingName" placeholder="Name if any" />
+            </div>
+            <div class="tc-form-field" style="grid-column: 1 / -1;">
+              <label>Notes</label>
+              <textarea formControlName="academicNotes" rows="2"></textarea>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="adm-wizard__body" *ngIf="activeStep === 2">
+          <div class="tc-form-field">
+            <label>Document type</label>
+            <p-dropdown [options]="documentTypes" [(ngModel)]="selectedDocumentType" [ngModelOptions]="{ standalone: true }" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
           </div>
-          <div class="adm-review-progress" *ngIf="progress">
-            <tc-saas-pill [label]="progress.status" tone="info" />
-            <small class="adm-review-progress__hint">
-              {{ progress.completedSteps }} of {{ progress.totalSteps }} steps complete
-            </small>
+          <div class="tc-form-field">
+            <label>Upload</label>
+            <input type="file" (change)="onFileSelected($event)" />
+          </div>
+          <div class="tc-form-field" style="grid-column: 1 / -1;" *ngIf="documents.length">
+            <article *ngFor="let doc of documents" class="tc-card adm-static-card">
+              <strong>{{ doc.documentType }}</strong>
+              <small>{{ doc.originalName }} · {{ doc.status }}</small>
+              <div class="adm-inline-actions-sm">
+                <button type="button" class="tc-btn" (click)="verifyDoc(doc, 'VERIFIED')">Verify</button>
+                <button type="button" class="tc-btn tc-btn--danger" (click)="verifyDoc(doc, 'REJECTED')">Reject</button>
+                <button type="button" class="tc-btn tc-btn--ghost" (click)="removeUploaded(doc)">Delete</button>
+              </div>
+            </article>
+          </div>
+          <fieldset class="adm-fieldset" formGroupName="fee">
+            <legend>Fee received at counter (no online payment)</legend>
+            <div class="tc-form-field">
+              <label>Amount</label>
+              <input type="number" formControlName="amount" />
+            </div>
+            <div class="tc-form-field">
+              <label>Receipt number</label>
+              <input type="text" formControlName="receiptNumber" />
+            </div>
+            <div class="tc-form-field">
+              <label>Mode</label>
+              <p-dropdown [options]="paymentModes" formControlName="paymentMode" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Date</label>
+              <input type="date" formControlName="paidOn" />
+            </div>
+            <div class="tc-form-field">
+              <label>Received by</label>
+              <input type="text" formControlName="receivedBy" />
+            </div>
+            <div class="tc-form-field">
+              <label>Remarks</label>
+              <input type="text" formControlName="remarks" />
+            </div>
+            <div class="tc-form-field">
+              <label>&nbsp;</label>
+              <button type="button" class="tc-btn tc-btn--primary" (click)="saveFee()" [disabled]="saving">Record fee</button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="adm-review-grid" *ngIf="activeStep === 3">
+          <div class="tc-card tc-card--panel">
+            <h2>Review</h2>
+            <dl class="adm-dl adm-dl--compact">
+              <div *ngFor="let entry of reviewSummary() | keyvalue">
+                <dt>{{ entry.key }}</dt>
+                <dd>{{ entry.value }}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </form>
 
       <div class="adm-wizard__footer">
-        <div>
-          <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0">
-            <i class="pi pi-arrow-left"></i> Back
-          </button>
-        </div>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0">Back</button>
         <div class="adm-wizard-actions">
-          <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving">
-            Save draft
-          </button>
-          <button
-            *ngIf="applicationId"
-            type="button"
-            class="tc-btn"
-            (click)="update()"
-            [disabled]="saving"
-          >
-            Update
-          </button>
-          <button
-            *ngIf="activeStep < steps.length - 1"
-            type="button"
-            class="tc-btn tc-btn--primary"
-            (click)="next()"
-          >
-            Next <i class="pi pi-arrow-right"></i>
-          </button>
-          <button
-            *ngIf="activeStep === steps.length - 1"
-            type="button"
-            class="tc-btn tc-btn--primary"
-            (click)="submit()"
-            [disabled]="saving"
-          >
-            Submit application
-          </button>
-          <button
-            *ngIf="activeStep === steps.length - 1 && applicationId && canApprove()"
-            type="button"
-            class="tc-btn tc-btn--primary"
-            (click)="approve()"
-            [disabled]="saving"
-          >
-            Approve
-          </button>
+          <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving">Save draft</button>
+          <button *ngIf="activeStep < steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="next()">Next</button>
+          <button *ngIf="activeStep === steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="submit()" [disabled]="saving">Submit application</button>
+          <button *ngIf="activeStep === steps.length - 1 && applicationId" type="button" class="tc-btn" (click)="approve()" [disabled]="saving || !canApprove()">Approve</button>
         </div>
       </div>
     </tc-saas-panel>
   </ng-container>
 </section>
-
-

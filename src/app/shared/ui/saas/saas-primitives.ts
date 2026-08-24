@@ -62,7 +62,7 @@ export class SaasPageHeaderComponent implements OnChanges {
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="saas-stat-card" [attr.data-tone]="stat.tone" [attr.title]="stat.helper || stat.label">
+    <article class="saas-stat-card" [attr.data-tone]="stat.tone" [attr.title]="stat.helper || stat.label" (click)="select.emit(stat)" role="button" tabindex="0">
       <div class="saas-stat-card__body">
         <small>{{ stat.label }}</small>
         <strong>{{ stat.value }}</strong>
@@ -77,6 +77,7 @@ export class SaasPageHeaderComponent implements OnChanges {
 })
 export class SaasStatCardComponent {
   @Input({ required: true }) stat!: SaasStat;
+  @Output() select = new EventEmitter<SaasStat>();
 }
 
 /* -------- Stat grid wrapper -------- */
@@ -87,12 +88,13 @@ export class SaasStatCardComponent {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="saas-stat-grid">
-      <tc-saas-stat-card *ngFor="let stat of stats" [stat]="stat"></tc-saas-stat-card>
+      <tc-saas-stat-card *ngFor="let stat of stats" [stat]="stat" (select)="statSelect.emit($event)"></tc-saas-stat-card>
     </section>
   `
 })
 export class SaasStatGridComponent {
   @Input() stats: SaasStat[] = [];
+  @Output() statSelect = new EventEmitter<SaasStat>();
 }
 
 /* -------- Tab strip -------- */

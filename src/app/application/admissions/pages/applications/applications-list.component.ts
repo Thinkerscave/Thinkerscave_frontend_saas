@@ -7,20 +7,24 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
-import { APPLICATION_STATUS_TABS } from '../../data/admissions-workspace.config';
+import { APPLICATION_STATUS_GROUPS, APPLICATION_STATUS_TABS } from '../../data/admissions-workspace.config';
 import {
   ApplicationRecord,
   ApplicationSearchRequest,
-  ApplicationStatus
+  ApplicationStatus,
+  LookupOption
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
+import { AdmissionsNavService } from '../../services/admissions-nav.service';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -37,12 +41,14 @@ import {
     FormsModule,
     PaginatorModule,
     ConfirmDialogModule,
+    DialogModule,
+    DropdownModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,
     SaasTabsComponent
   ],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, MessageService],
   styleUrls: ['../../admissions.shared.scss'],
   templateUrl: './applications-list.component.html',
   styles: [`
@@ -86,6 +92,8 @@ import {
 export class ApplicationsListComponent implements OnInit {
   private readonly api = inject(AdmissionsCrmService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly nav = inject(AdmissionsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirmation = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
@@ -101,6 +109,16 @@ export class ApplicationsListComponent implements OnInit {
   pageIndex = 0;
   pageSize = 20;
   totalElements = 0;
+  rejectDialogOpen = false;
+  rejectRemarks = '';
+  rejectTarget: ApplicationRecord | null = null;
+  enrollVisible = false;
+  enrolling = false;
+  selected: ApplicationRecord | null = null;
+  enrollmentForm = { academicYearId: null as number | null, classId: null as number | null, sectionId: null as number | null };
+  years: LookupOption[] = [];
+  classes: LookupOption[] = [];
+  sections: LookupOption[] = [];
 
   readonly statusTabs = APPLICATION_STATUS_TABS.map(t => ({
     key: t.key,
@@ -108,17 +126,34 @@ export class ApplicationsListComponent implements OnInit {
   }));
 
   ngOnInit(): void {
+    this.api.academicYears().subscribe({
+      next: years => {
+        this.years = years;
+        this.cdr.markForCheck();
+      }
+    });
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'READY' || tab === 'IN_PROGRESS' || tab === 'CLOSED' || tab === 'ALL') {
+      this.activeStatusTab = tab;
+    }
+    this.applyStatusFilter();
     this.loadApplications();
   }
 
   onStatusTabChange(key: string): void {
     this.activeStatusTab = key;
+    this.pageIndex = 0;
+    this.applyStatusFilter();
+    this.loadApplications();
+  }
+
+  private applyStatusFilter(): void {
+    const group = APPLICATION_STATUS_GROUPS[this.activeStatusTab];
     this.filter = {
       ...this.filter,
-      status: key === 'ALL' ? null : (key as ApplicationStatus)
+      status: null,
+      statuses: group ? (group as ApplicationStatus[]) : null
     };
-    this.pageIndex = 0;
-    this.loadApplications();
   }
 
   onSearch(): void {
@@ -169,11 +204,11 @@ export class ApplicationsListComponent implements OnInit {
   }
 
   openApplication(record: ApplicationRecord): void {
-    this.router.navigate(['/app/admissions/wizard', record.applicationId]);
+    this.nav.toApplication(record.applicationId, 'applications');
   }
 
   newApplication(): void {
-    this.router.navigate(['/app/admissions/wizard', 'new']);
+    this.nav.toApplication('new', 'applications');
   }
 
   approve(record: ApplicationRecord, event: Event): void {
@@ -205,16 +240,34 @@ export class ApplicationsListComponent implements OnInit {
 
   reject(record: ApplicationRecord, event: Event): void {
     event.stopPropagation();
-    const remarks = window.prompt('Rejection remarks (optional):') ?? undefined;
-    if (remarks === null) return;
+    this.rejectTarget = record;
+    this.rejectRemarks = '';
+    this.rejectDialogOpen = true;
+    this.cdr.markForCheck();
+  }
 
-    this.api.rejectApplication(record.applicationId, remarks || undefined).subscribe({
+  closeRejectDialog(): void {
+    this.rejectDialogOpen = false;
+    this.rejectTarget = null;
+    this.cdr.markForCheck();
+  }
+
+  confirmReject(): void {
+    if (!this.rejectTarget) return;
+    const remarks = this.rejectRemarks.trim();
+    if (!remarks) {
+      this.messages.add({ severity: 'warn', summary: 'Reason required', detail: 'Enter a rejection reason.' });
+      return;
+    }
+    const record = this.rejectTarget;
+    this.api.rejectApplication(record.applicationId, remarks).subscribe({
       next: () => {
         this.messages.add({
           severity: 'warn',
           summary: 'Rejected',
           detail: `${record.applicantName} has been rejected.`
         });
+        this.closeRejectDialog();
         this.loadApplications();
       },
       error: () =>
@@ -228,6 +281,79 @@ export class ApplicationsListComponent implements OnInit {
 
   canReview(record: ApplicationRecord): boolean {
     return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'].includes(record.status);
+  }
+
+  openEnroll(record: ApplicationRecord, event: Event): void {
+    event.stopPropagation();
+    this.selected = record;
+    this.enrollmentForm = {
+      academicYearId: record.academicYearId ?? null,
+      classId: record.classId ?? null,
+      sectionId: record.sectionId ?? null
+    };
+    this.enrollVisible = true;
+    if (this.enrollmentForm.academicYearId) {
+      this.onYearChange(this.enrollmentForm.academicYearId, this.enrollmentForm.classId);
+    }
+  }
+
+  closeEnroll(): void {
+    this.enrollVisible = false;
+    this.selected = null;
+  }
+
+  enroll(): void {
+    if (!this.selected || !this.enrollmentForm.academicYearId || !this.enrollmentForm.classId) return;
+    this.enrolling = true;
+    this.api
+      .enrollApplication(this.selected.applicationId, {
+        academicYearId: this.enrollmentForm.academicYearId,
+        classId: this.enrollmentForm.classId,
+        sectionId: this.enrollmentForm.sectionId
+      })
+      .pipe(finalize(() => {
+        this.enrolling = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: result => {
+          this.messages.add({
+            severity: 'success',
+            summary: 'Enrolled',
+            detail: `${result.studentName || this.selected?.applicantName} is now in Students.`
+          });
+          this.closeEnroll();
+          this.loadApplications();
+        },
+        error: () => this.messages.add({ severity: 'error', summary: 'Enrollment failed', detail: 'Could not create the student.' })
+      });
+  }
+
+  onYearChange(yearId: number | null, keepClassId: number | null = null): void {
+    this.classes = [];
+    this.sections = [];
+    this.enrollmentForm.classId = keepClassId;
+    this.enrollmentForm.sectionId = null;
+    if (!yearId) return;
+    this.api.academicClasses(yearId).subscribe({
+      next: classes => {
+        this.classes = classes;
+        if (keepClassId) this.onClassChange(keepClassId);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onClassChange(classId: number | null): void {
+    this.sections = [];
+    this.enrollmentForm.sectionId = null;
+    if (!classId) return;
+    this.api.academicSections(classId).subscribe({
+      next: sections => {
+        this.sections = sections;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   exportCsv(): void {

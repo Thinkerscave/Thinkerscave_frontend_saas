@@ -1,221 +1,348 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { MessageService } from 'primeng/api';
+import { catchError, finalize, of } from 'rxjs';
 
-import { StudentCreateRequest } from '../../models/students-workspace.model';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { ParentInfo, StudentWizardRequest } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import {
+  SaasPageHeaderComponent,
+  SaasTab,
+  SaasTabsComponent
+} from '../../../../shared/ui/saas';
+import {
+  AppCardComponent,
+  AppInputComponent,
+  AppPhoneInputComponent,
+  AppSectionHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption,
+  AppTextareaComponent,
+  AppValidationMessageComponent,
+  phoneErrorMessage
+} from '../../../../shared/ui/app-form';
+
+type WizardStep = 1 | 2;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: 'app-add-student',
   standalone: true,
-  imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <section class="add-student-shell">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">Students</p>
-          <h1>Add Student</h1>
-          <p>Create a student record and enrol guardian details in one pass.</p>
-        </div>
-        <button type="button" class="ghost-btn" (click)="goBack()">Back to Directory</button>
-      </header>
-
-      <div class="card" *ngIf="errorMessage">
-        <i class="pi pi-exclamation-triangle"></i>
-        <span>{{ errorMessage }}</span>
-      </div>
-
-      <div class="card success" *ngIf="successMessage">
-        <i class="pi pi-check-circle"></i>
-        <span>{{ successMessage }}</span>
-      </div>
-
-      <form class="card form-grid" (ngSubmit)="save()">
-        <label>
-          <span>First Name *</span>
-          <input [(ngModel)]="form.firstName" name="firstName" required />
-        </label>
-        <label>
-          <span>Middle Name</span>
-          <input [(ngModel)]="form.middleName" name="middleName" />
-        </label>
-        <label>
-          <span>Last Name *</span>
-          <input [(ngModel)]="form.lastName" name="lastName" required />
-        </label>
-        <label>
-          <span>Email *</span>
-          <input [(ngModel)]="form.email" name="email" type="email" required />
-        </label>
-        <label>
-          <span>Mobile Number *</span>
-          <input [(ngModel)]="form.mobileNumber" name="mobileNumber" required />
-        </label>
-        <label>
-          <span>Gender</span>
-          <input [(ngModel)]="form.gender" name="gender" />
-        </label>
-        <label>
-          <span>Date of Birth</span>
-          <input [(ngModel)]="form.dateOfBirth" name="dateOfBirth" type="date" />
-        </label>
-        <label>
-          <span>Enrollment Date</span>
-          <input [(ngModel)]="form.enrollmentDate" name="enrollmentDate" type="date" />
-        </label>
-        <label>
-          <span>Class ID *</span>
-          <input [(ngModel)]="classIdInput" name="classId" type="number" min="1" required />
-        </label>
-        <label>
-          <span>Section ID *</span>
-          <input [(ngModel)]="sectionIdInput" name="sectionId" type="number" min="1" required />
-        </label>
-        <label>
-          <span>Guardian First Name *</span>
-          <input [(ngModel)]="form.guardianFirstName" name="guardianFirstName" required />
-        </label>
-        <label>
-          <span>Guardian Last Name *</span>
-          <input [(ngModel)]="form.guardianLastName" name="guardianLastName" required />
-        </label>
-        <label>
-          <span>Guardian Phone *</span>
-          <input [(ngModel)]="form.guardianPhoneNumber" name="guardianPhoneNumber" required />
-        </label>
-        <label>
-          <span>Guardian Email</span>
-          <input [(ngModel)]="form.guardianEmail" name="guardianEmail" type="email" />
-        </label>
-        <label class="full">
-          <span>Remarks</span>
-          <textarea [(ngModel)]="form.remarks" name="remarks" rows="4"></textarea>
-        </label>
-
-        <div class="actions full">
-          <button type="button" class="ghost-btn" (click)="goBack()">Cancel</button>
-          <button type="submit" class="primary-btn" [disabled]="saving">
-            {{ saving ? 'Saving...' : 'Create Student' }}
-          </button>
-        </div>
-      </form>
-    </section>
-  `,
-  styles: [`
-    :host { display: block; min-height: 100%; background: linear-gradient(180deg, color-mix(in srgb, var(--tc-surface) 88%, white) 0%, var(--tc-background) 100%); }
-    .add-student-shell { max-width: 1180px; margin: 0 auto; padding: 28px; color: var(--tc-text); }
-    .hero { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:20px; }
-    .eyebrow { margin:0 0 8px; text-transform:uppercase; letter-spacing:.12em; font-size:.72rem; color:var(--tc-primary-600); font-weight:700; }
-    h1 { margin:0; font-size:clamp(2rem, 3vw, 3rem); color:var(--tc-heading); }
-    .hero p { margin:.35rem 0 0; color:var(--tc-text-muted); }
-    .card { background: var(--tc-surface-card-solid); border:1px solid var(--tc-border); border-radius:20px; box-shadow:var(--tc-shadow-lg); padding:18px; display:flex; gap:10px; align-items:center; }
-    .card.success { margin-top:12px; color:var(--tc-success-700); }
-    .form-grid { margin-top:12px; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; align-items:start; }
-    label { display:flex; flex-direction:column; gap:6px; font-size:.9rem; color:var(--tc-text); }
-    label span { font-weight:600; color:var(--tc-heading); }
-    input, textarea { width:100%; border:1px solid var(--tc-border); border-radius:14px; padding:12px 14px; background:var(--tc-background); color:var(--tc-text); }
-    input:focus, textarea:focus { outline:none; border-color:var(--tc-primary-500); box-shadow:0 0 0 3px color-mix(in srgb, var(--tc-primary-500) 18%, transparent); }
-    .full { grid-column: 1 / -1; }
-    .actions { display:flex; justify-content:flex-end; gap:12px; padding-top:4px; }
-    .ghost-btn, .primary-btn { border:none; border-radius:999px; padding:12px 18px; font-weight:700; cursor:pointer; }
-    .ghost-btn { background: color-mix(in srgb, var(--tc-surface) 82%, white); color: var(--tc-text); }
-    .primary-btn { background: linear-gradient(135deg, var(--tc-primary-600), var(--tc-primary-500)); color:white; box-shadow:0 16px 32px color-mix(in srgb, var(--tc-primary-600) 28%, transparent); }
-    .primary-btn:disabled { opacity:.7; cursor:not-allowed; }
-    @media (max-width: 820px) {
-      .hero { flex-direction:column; }
-      .form-grid { grid-template-columns: 1fr; }
-      .actions { justify-content:stretch; }
-      .actions button { flex:1; }
-    }
-  `]
+  imports: [
+    CommonModule,
+    FormsModule,
+    AppToastComponent,
+    SaasPageHeaderComponent,
+    SaasTabsComponent,
+    AppCardComponent,
+    AppInputComponent,
+    AppPhoneInputComponent,
+    AppSectionHeaderComponent,
+    AppSelectComponent,
+    AppTextareaComponent,
+    AppValidationMessageComponent
+  ],
+  providers: [MessageService],
+  styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
+  templateUrl: './add-student.component.html'
 })
 export class AddStudentComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly messages = inject(MessageService);
 
+  currentStep: WizardStep = 1;
+  attempted = false;
   saving = false;
-  errorMessage = '';
-  successMessage = '';
-  classIdInput = 1;
-  sectionIdInput = 1;
+  apiError = '';
+  lookupWarning = '';
+  sameAddress = false;
+  classIdValue: string | null = null;
+  sectionIdValue: string | null = null;
 
-  form: StudentCreateRequest = {
+  readonly today = new Date().toISOString().slice(0, 10);
+
+  readonly tabs: SaasTab[] = [
+    { key: 'basic', label: 'Basic Details', icon: 'pi pi-user' },
+    { key: 'additional', label: 'Additional Details', icon: 'pi pi-list' }
+  ];
+
+  classOptions: AppSelectOption[] = [];
+  sectionOptions: AppSelectOption[] = [];
+  academicYearOptions: AppSelectOption[] = [];
+
+  readonly genderOptions: AppSelectOption[] = [
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' }
+  ];
+  readonly religionOptions: AppSelectOption[] = [
+    { label: 'Hindu', value: 'Hindu' },
+    { label: 'Muslim', value: 'Muslim' },
+    { label: 'Christian', value: 'Christian' },
+    { label: 'Sikh', value: 'Sikh' },
+    { label: 'Jain', value: 'Jain' },
+    { label: 'Buddhist', value: 'Buddhist' },
+    { label: 'Other', value: 'Other' }
+  ];
+  readonly bloodGroupOptions: AppSelectOption[] = [
+    { label: 'A+', value: 'A+' },
+    { label: 'A-', value: 'A-' },
+    { label: 'B+', value: 'B+' },
+    { label: 'B-', value: 'B-' },
+    { label: 'AB+', value: 'AB+' },
+    { label: 'AB-', value: 'AB-' },
+    { label: 'O+', value: 'O+' },
+    { label: 'O-', value: 'O-' }
+  ];
+  readonly relationshipOptions: AppSelectOption[] = [
+    { label: 'Father', value: 'Father' },
+    { label: 'Mother', value: 'Mother' },
+    { label: 'Guardian', value: 'Guardian' }
+  ];
+  readonly enrollmentStatusOptions: AppSelectOption[] = [
+    { label: 'Active', value: 'Active' },
+    { label: 'Inactive', value: 'Inactive' },
+    { label: 'Pending', value: 'Pending' }
+  ];
+
+  form: StudentWizardRequest = {
     firstName: '',
-    middleName: null,
     lastName: '',
-    email: '',
-    mobileNumber: '',
-    gender: null,
-    dateOfBirth: null,
-    enrollmentDate: new Date().toISOString().substring(0, 10),
-    isSameAddress: true,
-    currentCountry: 'India',
-    currentState: 'Karnataka',
-    currentCity: 'Bangalore',
-    guardianFirstName: '',
-    guardianLastName: '',
-    guardianPhoneNumber: '',
-    guardianEmail: null,
-    classId: 1,
-    sectionId: 1,
-    remarks: null
+    parents: [this.emptyParent('Father')],
+    enrollmentStatus: 'Active',
+    sameAsCurrentAddress: false
   };
 
   ngOnInit(): void {
-    this.syncIds();
+    this.loadAcademicYears();
+    this.loadClasses();
   }
 
-  save(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.syncIds();
+  get activeTab(): string {
+    return this.currentStep === 1 ? 'basic' : 'additional';
+  }
 
-    if (!this.form.firstName.trim() || !this.form.lastName.trim() || !this.form.email.trim() || !this.form.mobileNumber.trim() || !this.form.guardianFirstName.trim() || !this.form.guardianLastName.trim() || !(this.form.guardianPhoneNumber ?? '').trim()) {
-      this.errorMessage = 'Fill in all required fields before saving.';
-      this.cdr.markForCheck();
-      return;
+  get fullName(): string {
+    return [this.form.firstName, this.form.middleName, this.form.lastName].filter(Boolean).join(' ');
+  }
+
+  get primaryParent(): ParentInfo {
+    if (!this.form.parents?.length) {
+      this.form.parents = [this.emptyParent('Father')];
     }
-
-    this.saving = true;
-    this.api.createStudent(this.form)
-      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: () => {
-          this.successMessage = 'Student created successfully.';
-          this.form = {
-            ...this.form,
-            firstName: '',
-            middleName: null,
-            lastName: '',
-            email: '',
-            mobileNumber: '',
-            gender: null,
-            dateOfBirth: null,
-            guardianFirstName: '',
-            guardianLastName: '',
-            guardianPhoneNumber: '',
-            guardianEmail: null,
-            remarks: null
-          };
-          this.cdr.markForCheck();
-        },
-        error: err => {
-          this.errorMessage = err?.error?.message || 'Could not create the student record.';
-          this.cdr.markForCheck();
-        }
-      });
+    return this.form.parents[0];
   }
 
   goBack(): void {
     this.router.navigate(['/app/students/directory']);
   }
 
-  private syncIds(): void {
-    this.form.classId = Number(this.classIdInput) || null;
-    this.form.sectionId = Number(this.sectionIdInput) || null;
+  emptyParent(relationship = 'Father'): ParentInfo {
+    return {
+      relationship,
+      firstName: '',
+      lastName: '',
+      mobile: '',
+      isPrimaryContact: relationship === 'Father',
+      receiveSms: true,
+      receiveEmail: true,
+      isPickupAuthorized: false
+    };
+  }
+
+  addParent(): void {
+    if (!this.form.parents) this.form.parents = [];
+    this.form.parents.push(this.emptyParent('Guardian'));
+  }
+
+  removeParent(index: number): void {
+    this.form.parents?.splice(index, 1);
+  }
+
+  onTabChange(key: string): void {
+    if (key === 'additional') {
+      this.next();
+      return;
+    }
+    this.back();
+  }
+
+  onClassChange(value: string | null): void {
+    this.classIdValue = value;
+    this.form.classId = value ? Number(value) : null;
+    this.sectionIdValue = null;
+    this.form.sectionId = null;
+    this.sectionOptions = [];
+    this.clearField('classId');
+    if (this.form.classId) {
+      this.api.listSectionsByClass(this.form.classId)
+        .pipe(catchError(() => {
+          this.lookupWarning = 'Sections could not be loaded for the selected class.';
+          return of([]);
+        }))
+        .subscribe(sections => {
+          this.sectionOptions = sections.map(s => ({ label: s.label, value: String(s.id) }));
+          this.cdr.markForCheck();
+        });
+    }
+  }
+
+  onSectionChange(value: string | null): void {
+    this.sectionIdValue = value;
+    this.form.sectionId = value ? Number(value) : null;
+  }
+
+  onSameAddressToggle(): void {
+    this.form.sameAsCurrentAddress = this.sameAddress;
+    if (this.sameAddress) {
+      this.form.permanentAddressLine1 = this.form.currentAddressLine1;
+      this.form.permanentCity = this.form.currentCity;
+      this.form.permanentState = this.form.currentState;
+      this.form.permanentPincode = this.form.currentPincode;
+    }
+  }
+
+  clearField(_key: string): void {
+    this.cdr.markForCheck();
+  }
+
+  fieldError(key: string): string {
+    if (!this.attempted) return '';
+    const parent = this.form.parents?.[0];
+    switch (key) {
+      case 'firstName':
+        return this.form.firstName?.trim() ? '' : 'First name is required.';
+      case 'lastName':
+        return this.form.lastName?.trim() ? '' : 'Last name is required.';
+      case 'dateOfBirth':
+        if (!this.form.dateOfBirth) return 'Date of birth is required.';
+        if (this.form.dateOfBirth > this.today) return 'Date of birth cannot be in the future.';
+        return '';
+      case 'classId':
+        return this.form.classId ? '' : 'Class is required.';
+      case 'parentFirstName':
+        return parent?.firstName?.trim() ? '' : 'Parent first name is required.';
+      case 'parentMobile':
+        return phoneErrorMessage(parent?.mobile ?? '') ?? '';
+      case 'mobile':
+        return this.form.mobile?.trim() ? (phoneErrorMessage(this.form.mobile) ?? '') : '';
+      case 'email':
+        return this.optionalEmailError(this.form.email);
+      case 'parentEmail':
+        return this.optionalEmailError(parent?.email);
+      default:
+        return '';
+    }
+  }
+
+  next(): void {
+    this.attempted = true;
+    this.apiError = '';
+    if (!this.canProceedStep1()) {
+      this.messages.add({
+        severity: 'error',
+        summary: 'Missing required fields',
+        detail: 'Please fill the highlighted fields before continuing.'
+      });
+      this.cdr.markForCheck();
+      return;
+    }
+    this.currentStep = 2;
+    this.cdr.markForCheck();
+  }
+
+  back(): void {
+    this.currentStep = 1;
+    this.apiError = '';
+    this.cdr.markForCheck();
+  }
+
+  canProceedStep1(): boolean {
+    const previous = this.attempted;
+    this.attempted = true;
+    const invalid = [
+      'firstName', 'lastName', 'dateOfBirth', 'classId',
+      'parentFirstName', 'parentMobile', 'mobile', 'email', 'parentEmail'
+    ].some(key => !!this.fieldError(key));
+    this.attempted = previous;
+    return !invalid;
+  }
+
+  submit(): void {
+    this.attempted = true;
+    this.apiError = '';
+    if (!this.canProceedStep1()) {
+      this.currentStep = 1;
+      this.messages.add({
+        severity: 'error',
+        summary: 'Missing required fields',
+        detail: 'Please fill the highlighted fields on Basic Details before submitting.'
+      });
+      this.cdr.markForCheck();
+      return;
+    }
+    this.saving = true;
+    this.api.createStudentWizard(this.form)
+      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: () => {
+          this.messages.add({
+            severity: 'success',
+            summary: 'Student created',
+            detail: `${this.fullName} has been added to the directory.`
+          });
+          this.router.navigate(['/app/students/directory']);
+        },
+        error: err => {
+          this.apiError = err?.error?.message || 'Failed to create student. Please retry.';
+        }
+      });
+  }
+
+  parentLabel(index: number): string {
+    return this.form.parents?.[index]?.relationship || `Parent ${index + 1}`;
+  }
+
+  private optionalEmailError(value?: string | null): string {
+    const email = value?.trim() ?? '';
+    if (!email) return '';
+    return EMAIL_PATTERN.test(email) ? '' : 'Enter a valid email address.';
+  }
+
+  private loadAcademicYears(): void {
+    this.api.listAcademicYears()
+      .pipe(catchError(() => {
+        this.lookupWarning = 'Academic year options could not be refreshed.';
+        return of([]);
+      }))
+      .subscribe(years => {
+        this.academicYearOptions = years.map(y => ({ label: y.label, value: y.label }));
+        this.cdr.markForCheck();
+      });
+  }
+
+  private loadClasses(): void {
+    this.api.listClasses()
+      .pipe(catchError(() => {
+        this.lookupWarning = 'Class options could not be loaded. Please retry after checking academic setup.';
+        return of([]);
+      }))
+      .subscribe(classes => {
+        this.classOptions = classes.map(c => ({ label: c.label, value: String(c.id) }));
+        this.cdr.markForCheck();
+      });
   }
 }

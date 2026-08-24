@@ -357,6 +357,8 @@ export class BreadcrumbComponent implements OnInit {
 
       inquiry: 'Admissions',
 
+      admissions: 'Admissions',
+
       academics: 'Academics',
 
       fees: 'Finance',
@@ -591,7 +593,18 @@ export class BreadcrumbComponent implements OnInit {
 
       admin: { dashboard: 'Dashboard', access: 'Access Control', monitoring: 'Monitoring', audit: 'Audit Center' },
 
-      students: { dashboard: 'Dashboard', directory: 'Directory' },
+      students: { dashboard: 'Dashboard', directory: 'Directory', 'add-student': 'Add Student' },
+
+      admissions: {
+        overview: 'Overview',
+        leads: 'Leads',
+        'follow-ups': 'Follow-ups',
+        applications: 'Applications',
+        settings: 'Settings',
+        lead: 'Lead',
+        form: 'Application form',
+        wizard: 'Application form'
+      },
 
       staff: { dashboard: 'Dashboard', directory: 'Directory' },
 
@@ -682,6 +695,10 @@ export class BreadcrumbComponent implements OnInit {
     }
 
 
+
+    if (workspace === 'students' && page === 'add-student' && index === 0) {
+      return ['/app/students/directory'];
+    }
 
     if (index === 0) {
 

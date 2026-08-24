@@ -7,10 +7,12 @@
   inset: 0;
   z-index: 1400;
   pointer-events: none;
+  visibility: hidden;
 }
 
 .tc-drawer-form.is-open {
   pointer-events: auto;
+  visibility: visible;
 }
 
 .tc-drawer-form__backdrop {
