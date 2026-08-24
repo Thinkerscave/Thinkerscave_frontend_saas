@@ -1,1 +1,7 @@
-.login-history__toolbar { margin-bottom: 1rem; }
+.login-history__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}

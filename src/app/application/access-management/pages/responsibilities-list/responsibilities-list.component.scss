@@ -1,0 +1,50 @@
+.responsibilities-list {
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.85rem;
+  }
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem;
+    border: 1px solid var(--saas-border, #e2e8f0);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    code, p { color: var(--saas-text-soft, #64748b); margin: 0; font-size: 0.82rem; }
+    &:hover { border-color: var(--saas-primary, #2563eb); }
+  }
+  &__card-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--saas-text-soft, #64748b);
+  }
+  &__form {
+    display: grid;
+    gap: 0.85rem;
+  }
+  &__form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+  }
+}
+.saas-field--full { grid-column: 1 / -1; }

@@ -70,13 +70,16 @@ export const APPLICATION_ROUTES: Routes = [
     canActivate: [roleGuard(ACCESS_MANAGEMENT_ROLES)],
     data: { ...ACCESS_MGMT_ROOT },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', data: { ...ACCESS_PAGES.dashboard }, loadComponent: () => import('./access-management/pages/access-dashboard/access-dashboard.component').then(m => m.AccessDashboardComponent) },
-      { path: 'roles', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'menus', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: '', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'roles', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'menus', data: { ...ACCESS_PAGES.menus }, loadComponent: () => import('./access-management/pages/menu-catalog/menu-catalog.component').then(m => m.MenuCatalogComponent) },
+      { path: 'responsibilities', data: { ...ACCESS_PAGES.responsibilities }, loadComponent: () => import('./access-management/pages/responsibilities-list/responsibilities-list.component').then(m => m.ResponsibilitiesListComponent) },
+      { path: 'responsibilities/:responsibilityId', data: { ...ACCESS_PAGES.responsibilityWorkspace }, loadComponent: () => import('./access-management/pages/responsibility-workspace/responsibility-workspace.component').then(m => m.ResponsibilityWorkspaceComponent) },
       { path: 'users', data: { ...ACCESS_PAGES.users }, loadComponent: () => import('./access-management/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
-      { path: 'users/:userId/permissions', data: { ...ACCESS_PAGES.userPermissions }, loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'users/:userId', data: { ...ACCESS_PAGES.userPermissions }, loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'users/:userId/permissions', pathMatch: 'full', redirectTo: '/app/access-management/users/:userId' },
       { path: 'security-policy', data: { ...ACCESS_PAGES.securityPolicy }, loadComponent: () => import('./access-management/pages/security-policy/security-policy.component').then(m => m.SecurityPolicyComponent) },
       { path: 'login-history', data: { ...ACCESS_PAGES.loginHistory }, loadComponent: () => import('./access-management/pages/login-history/login-history.component').then(m => m.LoginHistoryComponent) }
     ]
@@ -92,7 +95,7 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
       { path: 'profile', loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent) },
-      { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
+      { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/users' },
       { path: 'activity-logs', loadComponent: () => import('./organization-profile/pages/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) }
     ]
   },
@@ -104,7 +107,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
-      { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
+      { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/users' },
       { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' },
       { path: 'feature-catalog', pathMatch: 'full', redirectTo: '/app/tenant-management/feature-catalog' },
@@ -114,7 +117,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'navigation-access',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'system-settings',
@@ -129,22 +132,22 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'manage-menu',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'manage-sub-menu',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'menu-sequence',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'role-menu-mapping',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'organization-registration',
@@ -174,7 +177,7 @@ export const APPLICATION_ROUTES: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
-          { path: 'responsibilities', data: { workspacePage: 'responsibilities' }, loadComponent: () => import('./staff/pages/responsibilities/staff-responsibilities.component').then(m => m.StaffResponsibilitiesComponent) },
+          { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
           { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
           { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
@@ -213,12 +216,12 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'role/manage',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'role/privilege-mapping',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'public/admission',

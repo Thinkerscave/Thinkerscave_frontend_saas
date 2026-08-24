@@ -1,49 +1,123 @@
 <div class="saas-page users-list">
-  <tc-saas-page-header>
-  </tc-saas-page-header>
+  <tc-saas-page-header></tc-saas-page-header>
 
   <app-toast></app-toast>
+  <p-confirmDialog></p-confirmDialog>
+
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading users...</div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Organization Users" [subtitle]="totalRecords + ' total'">
-      <div class="users-list__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search users...">
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="statusFilter"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          placeholder="Status"
-          (onChange)="onFilterChange()">
-        </p-dropdown>
+    <div *ngIf="resetResult" class="users-list__reset" role="status">
+      <div>
+        <strong>Password reset for {{ resetResult.user }}</strong>
+        <p *ngIf="resetResult.password">Temporary password: <code>{{ resetResult.password }}</code> — copy it now; it will not be shown again.</p>
+        <p *ngIf="!resetResult.password">Share the new credentials with the user securely.</p>
       </div>
-      <div class="saas-table-wrap">
+      <button type="button" class="tc-btn" (click)="dismissResetResult()">Dismiss</button>
+    </div>
+
+    <tc-saas-panel title="Organization users" [subtitle]="totalRecords + ' people · newest first'">
+      <div class="users-list__toolbar">
+        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name, email or username">
+        <p-dropdown [options]="roleOptions" [(ngModel)]="roleFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Role" (onChange)="onFilterChange()"></p-dropdown>
+        <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Status" (onChange)="onFilterChange()"></p-dropdown>
+        <app-grid-table-toggle storageKey="access.users.view" [(mode)]="view" ariaLabel="Users view"></app-grid-table-toggle>
+      </div>
+
+      <div class="users-list__grid" *ngIf="view === 'grid'">
+        <article class="users-list__card" *ngFor="let u of users; trackBy: trackById" (click)="openDetails(u)">
+          <span class="users-list__avatar users-list__avatar--lg">{{ userInitials(u) }}</span>
+          <strong>{{ userDisplayName(u) }}</strong>
+          <small>{{ u.email || u.username }}</small>
+          <p>{{ formatRoles(u) }}</p>
+          <div class="users-list__card-meta">
+            <tc-saas-pill [label]="userStatusLabel(u.status)" [tone]="userStatusTone(u.status)"></tc-saas-pill>
+            <span>Created {{ formatDate(u.createdOn) }}</span>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!users.length">No users match these filters.</p>
+      </div>
+
+      <div class="saas-table-wrap" *ngIf="view === 'table'">
         <table class="saas-data-table">
-          <thead><tr><th>User</th><th>Email</th><th>Roles</th><th>Status</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Last sign-in</th>
+              <th>Action</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let u of users; trackBy: trackById">
               <td>
                 <span class="users-list__avatar">{{ userInitials(u) }}</span>
                 <strong>{{ userDisplayName(u) }}</strong><br><small>{{ u.username }}</small>
               </td>
-              <td>{{ u.email }}</td>
+              <td>{{ u.email || '—' }}</td>
               <td>{{ formatRoles(u) }}</td>
               <td><tc-saas-pill [label]="userStatusLabel(u.status)" [tone]="userStatusTone(u.status)"></tc-saas-pill></td>
-              <td>
-                <button type="button" class="saas-icon-btn" (click)="openPermissions(u)" title="Permissions"><i class="pi pi-key"></i></button>
-                <button type="button" class="saas-icon-btn" (click)="toggleLock(u)" title="Lock/unlock"><i class="pi pi-lock"></i></button>
+              <td>{{ formatDate(u.createdOn) }}</td>
+              <td>{{ formatDateTime(u.lastLoginAt) }}</td>
+              <td class="users-list__actions">
+                <button type="button" class="tc-btn tc-btn--ghost" (click)="openInfo(u)" pTooltip="Account summary" tooltipPosition="top">
+                  <i class="pi pi-eye"></i> Info
+                </button>
+                <button type="button" class="tc-btn tc-btn--ghost" (click)="openDetails(u)" pTooltip="See menus assigned to this person" tooltipPosition="top">
+                  View access
+                </button>
+                <ng-container *ngIf="canManage">
+                  <button type="button" class="tc-btn tc-btn--ghost" (click)="toggleLock(u)" [pTooltip]="isLocked(u) ? 'Allow this person to sign in again' : 'Block this person from signing in'" tooltipPosition="top">
+                    {{ isLocked(u) ? 'Unlock account' : 'Lock account' }}
+                  </button>
+                  <button type="button" class="tc-btn tc-btn--ghost" (click)="confirmResetPassword(u)" pTooltip="Issue a new temporary password" tooltipPosition="top">
+                    Reset password
+                  </button>
+                </ng-container>
               </td>
             </tr>
-            <tr *ngIf="!users.length"><td colspan="5" class="empty">No users found.</td></tr>
+            <tr *ngIf="!users.length"><td colspan="7" class="empty">No users match these filters.</td></tr>
           </tbody>
         </table>
       </div>
+
+      <p-paginator
+        *ngIf="totalRecords > 0"
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [first]="page * pageSize"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>
 
-
+<p-dialog
+  header="User summary"
+  [visible]="!!infoUser"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(440px, 94vw)' }"
+  (visibleChange)="onInfoVisible($event)"
+  (onHide)="closeInfo()">
+  <dl class="users-list__info" *ngIf="infoUser">
+    <div><dt>Name</dt><dd>{{ userDisplayName(infoUser) }}</dd></div>
+    <div><dt>Username</dt><dd>{{ infoUser.username || '—' }}</dd></div>
+    <div><dt>Email</dt><dd>{{ infoUser.email || '—' }}</dd></div>
+    <div><dt>Mobile</dt><dd>{{ infoUser.mobileNumber || '—' }}</dd></div>
+    <div><dt>Role</dt><dd>{{ formatRoles(infoUser) }}</dd></div>
+    <div><dt>Status</dt><dd>{{ userStatusLabel(infoUser.status) }}</dd></div>
+    <div><dt>Created</dt><dd>{{ formatDate(infoUser.createdOn) }}</dd></div>
+    <div><dt>Last sign-in</dt><dd>{{ formatDateTime(infoUser.lastLoginAt) }}</dd></div>
+  </dl>
+  <div class="users-list__info-actions">
+    <button type="button" class="tc-btn" (click)="closeInfo()">Close</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="infoUser && openDetails(infoUser)">View assigned menus</button>
+  </div>
+</p-dialog>

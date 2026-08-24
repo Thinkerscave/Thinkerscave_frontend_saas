@@ -35,6 +35,7 @@ const MENU_LABEL_KEYS: Record<string, string> = {
   Roles: 'menu.roles',
   'Menu Catalog': 'menu.menuCatalog',
   Users: 'menu.users',
+  Responsibilities: 'menu.responsibilities',
   'Security Policy': 'menu.securityPolicy',
   'Login History': 'menu.loginHistory',
   Directory: 'menu.directory',

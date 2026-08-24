@@ -1,32 +1,49 @@
 <div class="saas-page user-permissions">
   <tc-saas-page-header>
-    <a class="tc-btn" routerLink="/app/access-management/users"><i class="pi pi-arrow-left"></i> Back</a>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
-      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Overrides
-    </button>
+    <a class="tc-btn" routerLink="/app/access-management/users"><i class="pi pi-arrow-left"></i> Back to users</a>
+    <ng-container *ngIf="canManage && user">
+      <button type="button" class="tc-btn" (click)="toggleLock()">{{ isLocked() ? 'Unlock account' : 'Lock account' }}</button>
+      <button type="button" class="tc-btn" (click)="confirmResetPassword()">Reset password</button>
+    </ng-container>
   </tc-saas-page-header>
 
   <app-toast></app-toast>
+  <p-confirmDialog></p-confirmDialog>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading permissions...</div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading user...</div>
 
-  <tc-saas-panel *ngIf="!loading && !errorMessage" title="Effective Permissions" subtitle="Checked rows with override badge are saved as user-level exceptions">
-    <div class="saas-table-wrap">
-      <table class="saas-data-table">
-        <thead><tr><th>Menu</th><th>View</th><th>Manage</th><th>Approve</th><th>Source</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let p of permissions; trackBy: trackByMenuId">
-            <td><strong>{{ p.menuName }}</strong><br><code>{{ p.menuCode }}</code></td>
-            <td class="permission-cell"><input type="checkbox" [checked]="p.canView" (change)="toggle(p, 'canView')"></td>
-            <td class="permission-cell"><input type="checkbox" [checked]="p.canManage" (change)="toggle(p, 'canManage')"></td>
-            <td class="permission-cell"><input type="checkbox" [checked]="p.canApprove" (change)="toggle(p, 'canApprove')"></td>
-            <td><tc-saas-pill [label]="p.isOverride ? 'Override' : 'Role'" [tone]="p.isOverride ? 'warning' : 'neutral'"></tc-saas-pill></td>
-          </tr>
-          <tr *ngIf="!permissions.length"><td colspan="5" class="empty">No permissions found for this user.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </tc-saas-panel>
+  <ng-container *ngIf="!loading && user">
+    <tc-saas-panel title="Account">
+      <dl class="user-permissions__meta">
+        <div><dt>Name</dt><dd>{{ userDisplayName(user) }}</dd></div>
+        <div><dt>Username</dt><dd>{{ user.username || '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ user.email || '—' }}</dd></div>
+        <div><dt>Mobile</dt><dd>{{ user.mobileNumber || '—' }}</dd></div>
+        <div><dt>Role</dt><dd>{{ formatRoles() }}</dd></div>
+        <div><dt>Status</dt><dd><tc-saas-pill [label]="userStatusLabel(user.status)" [tone]="userStatusTone(user.status)"></tc-saas-pill></dd></div>
+        <div><dt>Created</dt><dd>{{ formatDate(user.createdOn) }}</dd></div>
+        <div><dt>Last sign-in</dt><dd>{{ formatDateTime(user.lastLoginAt) }}</dd></div>
+      </dl>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Assigned menus" subtitle="What this person can open, based on their responsibility">
+      <section class="user-permissions__group" *ngFor="let group of groups">
+        <h3>{{ group.module }}</h3>
+        <div class="saas-table-wrap">
+          <table class="saas-data-table">
+            <thead><tr><th>Menu</th><th>View</th><th>Manage</th><th>Approve</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let p of group.items; trackBy: trackByMenuId">
+                <td><strong>{{ p.menuName }}</strong><br><code>{{ p.menuCode }}</code></td>
+                <td>{{ p.canView ? 'Yes' : 'No' }}</td>
+                <td>{{ p.canManage ? 'Yes' : 'No' }}</td>
+                <td>{{ p.canApprove ? 'Yes' : 'No' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <p *ngIf="!groups.length" class="empty">No menus are assigned to this user yet.</p>
+    </tc-saas-panel>
+  </ng-container>
 </div>
-
-

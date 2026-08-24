@@ -7,7 +7,7 @@ export const TENANT_MGMT_ROOT = {
 
 export const ACCESS_MGMT_ROOT = {
   breadcrumb: 'Access Management',
-  breadcrumbLink: ['/app/access-management/dashboard']
+  breadcrumbLink: ['/app/access-management/users']
 } as const;
 
 export const ACADEMICS_ROOT = {
@@ -156,8 +156,8 @@ export const TENANT_PAGES = {
 
 export const ACCESS_PAGES = {
   dashboard: {
-    breadcrumb: 'Dashboard',
-    pageSubtitle: 'User permissions and security policy for your organization'
+    breadcrumb: 'Overview',
+    pageSubtitle: 'Users, responsibilities and security for your organization'
   },
   roles: {
     breadcrumb: 'Roles & Responsibilities',
@@ -168,22 +168,32 @@ export const ACCESS_PAGES = {
   },
   menus: {
     breadcrumb: 'Menu Catalog',
-    pageSubtitle: 'Organization navigation modules and pages'
+    pageSubtitle: 'Navigation modules and pages available to your organization (view only).'
+  },
+  responsibilities: {
+    breadcrumb: 'Responsibilities',
+    pageSubtitle: 'Create organization responsibilities and assign menus to each one.'
+  },
+  responsibilityWorkspace: {
+    breadcrumb: 'Menu Assignment',
+    breadcrumbLink: ['/app/access-management/responsibilities'],
+    pageSubtitle: 'Choose which menus and submenus this responsibility can use.'
   },
   users: {
-    breadcrumb: 'Users & Access',
-    pageSubtitle: 'Manage user accounts, roles and permission overrides'
+    breadcrumb: 'Users',
+    pageSubtitle: 'Lock or unlock accounts, reset passwords, and review assigned menus.'
   },
   userPermissions: {
-    breadcrumb: 'User Permissions',
-    pageSubtitle: 'Custom permissions applied on top of role defaults'
+    breadcrumb: 'User access',
+    breadcrumbLink: ['/app/access-management/users'],
+    pageSubtitle: 'Account details and menus assigned to this person.'
   },
   securityPolicy: {
     breadcrumb: 'Security Policy',
-    pageSubtitle: 'Password complexity, lockout rules and session controls'
+    pageSubtitle: 'Password, lockout and session rules for this organization.'
   },
   loginHistory: {
     breadcrumb: 'Login History',
-    pageSubtitle: 'Sign-in audit trail for your organization'
+    pageSubtitle: 'Sign-ins from the last 7 or 30 days. Older events are not kept.'
   }
 } as const;

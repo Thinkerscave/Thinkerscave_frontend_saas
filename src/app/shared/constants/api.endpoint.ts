@@ -132,6 +132,10 @@ export const accessApi = {
     `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/effective-permissions`,
   userPermissions: (userId: number, organizationId: number) =>
     `${ACCESS_BASE}/users/${userId}/permissions?organizationId=${organizationId}`,
+  resetUserPassword: (orgId: number, userId: number) =>
+    `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/reset-password`,
+  responsibilityPermissions: (responsibilityId: number, organizationId: number) =>
+    `${ACCESS_BASE}/responsibilities/${responsibilityId}/permissions?organizationId=${organizationId}`,
   securityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy`,
   resetSecurityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy/reset`,
   orgLoginHistory: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}`,
@@ -212,6 +216,7 @@ export const staffApi = {
   deactivate: (id: number) => `${BASE}/staff/${id}/deactivate`,
   responsibilities: `${BASE}/staff/responsibilities`,
   responsibilityById: (id: number) => `${BASE}/staff/responsibilities/${id}`,
+  responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
   responsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
   staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
   salaryStructures: `${BASE}/staff/salary-structures`,

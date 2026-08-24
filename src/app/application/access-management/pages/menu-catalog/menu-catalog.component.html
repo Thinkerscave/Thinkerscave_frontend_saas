@@ -3,34 +3,80 @@
     <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
   </tc-saas-page-header>
 
-  <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading menus...</div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading menu catalog...</div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Menu Tree" [subtitle]="filtered.length + ' items'">
-      <input type="search" class="saas-search menu-catalog__search" [(ngModel)]="search" placeholder="Search menus...">
-      <div class="saas-table-wrap">
-        <table class="saas-data-table">
-          <thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Route</th><th>Parent</th><th>Sidebar</th><th>Status</th><th></th></tr></thead>
-          <tbody>
-            <tr *ngFor="let m of filtered; trackBy: trackById">
-              <td><i class="pi" [ngClass]="m.menuType === 'MODULE' ? 'pi-folder' : 'pi-file'"></i> <strong>{{ m.menuName }}</strong></td>
-              <td><code>{{ m.menuCode }}</code></td>
-              <td>{{ m.menuType || '—' }}</td>
-              <td><code>{{ m.route || '—' }}</code></td>
-              <td>{{ m.parentMenuName || '—' }}</td>
-              <td>{{ m.showInSidebar !== false ? 'Yes' : 'No' }}</td>
-              <td><tc-saas-pill [label]="m.active === false ? 'Inactive' : 'Active'" [tone]="m.active === false ? 'danger' : 'success'"></tc-saas-pill></td>
-              <td><button type="button" class="saas-icon-btn" (click)="toggleMenu(m)"><i class="pi pi-power-off"></i></button></td>
-            </tr>
-            <tr *ngIf="!filtered.length"><td colspan="8" class="empty">No menus match your search.</td></tr>
-          </tbody>
-        </table>
+    <tc-saas-panel title="Published menus" subtitle="View only · these are the modules you can assign to a responsibility">
+      <div class="menu-catalog__toolbar">
+        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search module, page or route">
+        <div class="menu-catalog__views" role="group" aria-label="Catalog view">
+          <button type="button" class="tc-btn" [class.tc-btn--primary]="view === 'cards'" (click)="setView('cards')">Cards</button>
+          <button type="button" class="tc-btn" [class.tc-btn--primary]="view === 'hierarchy'" (click)="setView('hierarchy')">Hierarchy</button>
+        </div>
       </div>
+
+      <div class="menu-catalog__cards" *ngIf="view === 'cards'">
+        <article
+          class="menu-catalog__card"
+          *ngFor="let module of pagedModules; trackBy: trackByMenu"
+          [class.is-open]="isExpanded(module)"
+          (click)="toggleCard(module)">
+          <div class="menu-catalog__card-head">
+            <span class="menu-catalog__icon"><i class="pi" [ngClass]="module.icon || 'pi-folder'"></i></span>
+            <div>
+              <strong>{{ menuLabel(module) }}</strong>
+              <code>{{ module.menuCode || '—' }}</code>
+            </div>
+            <tc-saas-pill [label]="module.active === false ? 'Inactive' : 'Active'" [tone]="module.active === false ? 'danger' : 'success'"></tc-saas-pill>
+          </div>
+          <p>{{ module.description || 'School menus published under this module.' }}</p>
+          <small>{{ childCount(module) }} {{ childCount(module) === 1 ? 'page' : 'pages' }}</small>
+          <ul class="menu-catalog__children" *ngIf="isExpanded(module) && module.children?.length" (click)="$event.stopPropagation()">
+            <li *ngFor="let child of module.children; trackBy: trackByMenu">
+              <strong>{{ menuLabel(child) }}</strong>
+              <span>{{ child.route || child.menuCode || '—' }}</span>
+            </li>
+          </ul>
+        </article>
+        <p class="empty" *ngIf="!pagedModules.length">No menus match this search.</p>
+      </div>
+
+      <ul class="menu-catalog__tree" *ngIf="view === 'hierarchy'">
+        <ng-container *ngFor="let module of pagedModules; trackBy: trackByMenu">
+          <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: module, depth: 0 }"></ng-container>
+        </ng-container>
+        <li class="empty" *ngIf="!pagedModules.length">No menus match this search.</li>
+      </ul>
+
+      <p-paginator
+        *ngIf="totalModules > 0"
+        [rows]="pageSize"
+        [totalRecords]="totalModules"
+        [first]="page * pageSize"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>
 
-
+<ng-template #nodeTpl let-node let-depth="depth">
+  <li class="menu-catalog__node" [style.paddingLeft.rem]="depth * 0.85">
+    <div class="menu-catalog__node-row">
+      <i class="pi" [ngClass]="node.children?.length ? 'pi-folder' : 'pi-file'"></i>
+      <div>
+        <strong>{{ menuLabel(node) }}</strong>
+        <code>{{ node.menuCode || '—' }}</code>
+      </div>
+      <span class="menu-catalog__route">{{ node.route || '—' }}</span>
+      <tc-saas-pill [label]="node.menuType || (node.children?.length ? 'Module' : 'Page')" tone="neutral"></tc-saas-pill>
+    </div>
+    <ul *ngIf="node.children?.length">
+      <ng-container *ngFor="let child of node.children; trackBy: trackByMenu">
+        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+      </ng-container>
+    </ul>
+  </li>
+</ng-template>

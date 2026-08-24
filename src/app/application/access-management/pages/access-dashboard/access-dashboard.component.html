@@ -14,53 +14,43 @@
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
     <div class="access-dashboard__actions">
-      <tc-saas-panel title="Quick Actions" subtitle="Common access administration tasks">
+      <tc-saas-panel title="Organization access" subtitle="You manage users and responsibilities. Platform roles and menu definitions stay with ThinkersCave.">
         <div class="access-dashboard__grid">
           <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/users')">
-            <i class="pi pi-users"></i><span>User Access</span><small>Assign roles and custom overrides</small>
+            <i class="pi pi-users"></i><span>Users</span><small>Lock, unlock and reset passwords</small>
           </button>
-          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/security-policy')">
-            <i class="pi pi-shield"></i><span>Security Policy</span><small>Password rules and session controls</small>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/responsibilities')">
+            <i class="pi pi-sitemap"></i><span>Responsibilities</span><small>Create and assign menus</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/menus')">
+            <i class="pi pi-th-large"></i><span>Menu catalog</span><small>View menus you can assign</small>
           </button>
           <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/login-history')">
-            <i class="pi pi-history"></i><span>Login History</span><small>Audit sign-in activity</small>
+            <i class="pi pi-history"></i><span>Login history</span><small>Sign-in audit for this school</small>
+          </button>
+          <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/security-policy')">
+            <i class="pi pi-shield"></i><span>Security policy</span><small>Password and lockout rules</small>
           </button>
         </div>
       </tc-saas-panel>
 
-      <tc-saas-panel title="Roles" subtitle="Click a role to see assigned users. Assign or remove people from User Access.">
-        <div class="access-roles" *ngIf="roles.length; else noRoles">
+      <tc-saas-panel title="Responsibilities" subtitle="Click a responsibility to assign menus and submenus.">
+        <div class="access-roles" *ngIf="responsibilities.length; else noItems">
           <article
             class="access-roles__item"
-            *ngFor="let role of roles"
-            [class.is-open]="selectedRole?.id === role.id"
-            (click)="selectRole(role)">
+            *ngFor="let item of responsibilities; trackBy: trackById"
+            (click)="openResponsibility(item)">
             <div class="access-roles__head">
               <div>
-                <strong>{{ role.roleName }}</strong>
-                <code>{{ role.roleCode }}</code>
+                <strong>{{ item.responsibilityName }}</strong>
+                <code>{{ item.responsibilityCode }}</code>
               </div>
-              <small>{{ role.activeUserCount ?? 0 }} users</small>
-            </div>
-            <div class="access-roles__users" *ngIf="selectedRole?.id === role.id" (click)="$event.stopPropagation()">
-              <p *ngIf="loadingUsers">Loading users…</p>
-              <div *ngIf="!loadingUsers && roleUsers.length">
-                <div class="access-roles__user" *ngFor="let user of roleUsers">
-                  <div>
-                    <strong>{{ userDisplayName(user) }}</strong>
-                    <small>{{ user.email || user.username }}</small>
-                  </div>
-                </div>
-              </div>
-              <p *ngIf="!loadingUsers && !roleUsers.length">No users have this role yet.</p>
-              <a class="access-roles__link" routerLink="/app/access-management/users">Open users</a>
+              <small>{{ item.active === false ? 'Inactive' : 'Active' }}</small>
             </div>
           </article>
         </div>
-        <ng-template #noRoles><p>No roles available in this organization.</p></ng-template>
+        <ng-template #noItems><p>No responsibilities yet. Create one to start assigning menus.</p></ng-template>
       </tc-saas-panel>
     </div>
   </ng-container>
 </div>
-
-

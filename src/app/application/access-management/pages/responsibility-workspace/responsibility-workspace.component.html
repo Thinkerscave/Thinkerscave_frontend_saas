@@ -1,0 +1,50 @@
+<div class="saas-page responsibility-workspace">
+  <tc-saas-page-header>
+    <a class="tc-btn tc-btn--back" routerLink="/app/access-management/responsibilities"><i class="pi pi-arrow-left"></i> Back to list</a>
+    <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
+      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save assignment
+    </button>
+  </tc-saas-page-header>
+
+  <app-toast></app-toast>
+
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading responsibility...</div>
+
+  <ng-container *ngIf="!loading && responsibility">
+    <tc-saas-panel title="Responsibility">
+      <dl class="responsibility-workspace__meta">
+        <div><dt>Code</dt><dd><code>{{ responsibility.responsibilityCode }}</code></dd></div>
+        <div><dt>Type</dt><dd>{{ responsibility.systemDefined ? 'System' : 'Custom' }}</dd></div>
+        <div><dt>Status</dt><dd><tc-saas-pill [label]="responsibility.active === false ? 'Inactive' : 'Active'" [tone]="responsibility.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
+        <div *ngIf="responsibility.description"><dt>Description</dt><dd>{{ responsibility.description }}</dd></div>
+      </dl>
+    </tc-saas-panel>
+
+    <tc-saas-panel title="Menu assignment" [subtitle]="canManage ? 'Tick View, Manage or Approve for this responsibility.' : 'View only — you can see assigned menus but cannot change them.'">
+      <div class="saas-table-wrap">
+        <table class="saas-data-table permission-matrix">
+          <thead>
+            <tr>
+              <th>Menu</th>
+              <th>Module</th>
+              <th>View</th>
+              <th>Manage</th>
+              <th>Approve</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows; trackBy: trackByMenuId">
+              <td><strong>{{ row.menuName }}</strong><br><code>{{ row.menuCode }}</code></td>
+              <td>{{ row.parentMenuName || '—' }}</td>
+              <td class="permission-cell"><input type="checkbox" [checked]="row.canView" [disabled]="!canManage" (change)="toggle(row, 'canView')"></td>
+              <td class="permission-cell"><input type="checkbox" [checked]="row.canManage" [disabled]="!canManage" (change)="toggle(row, 'canManage')"></td>
+              <td class="permission-cell"><input type="checkbox" [checked]="row.canApprove" [disabled]="!canManage" (change)="toggle(row, 'canApprove')"></td>
+            </tr>
+            <tr *ngIf="!rows.length"><td colspan="5" class="empty">No menus available to assign. Confirm the menu catalog is published for this organization.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </tc-saas-panel>
+  </ng-container>
+</div>

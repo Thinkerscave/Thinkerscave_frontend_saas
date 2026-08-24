@@ -67,11 +67,41 @@ export interface PermissionMatrixRow {
 }
 
 export interface PermissionMatrix {
-  roleId: number;
-  roleCode: string;
-  roleName: string;
+  roleId?: number;
+  responsibilityId?: number;
+  roleCode?: string;
+  roleName?: string;
+  responsibilityCode?: string;
+  responsibilityName?: string;
   organizationId: number;
   rows: PermissionMatrixRow[];
+}
+
+export interface PasswordResetResult {
+  temporaryPassword?: string;
+  username?: string;
+  message?: string;
+}
+
+export interface AccessResponsibility {
+  responsibilityId: number;
+  responsibilityCode: string;
+  responsibilityName: string;
+  description?: string;
+  displayOrder?: number;
+  systemDefined?: boolean;
+  active: boolean;
+  remarks?: string;
+  createdOn?: string;
+  updatedOn?: string;
+}
+
+export interface AccessResponsibilityRequest {
+  responsibilityCode: string;
+  responsibilityName: string;
+  description?: string;
+  displayOrder?: number;
+  remarks?: string;
 }
 
 export interface EffectivePermission {
@@ -212,5 +242,8 @@ export interface AccessDashboardSummary {
   totalMenus: number;
   activeMenus: number;
   lockedUsers: number;
+  totalResponsibilities?: number;
+  activeResponsibilities?: number;
   roles?: AccessRole[];
+  responsibilities?: AccessResponsibility[];
 }

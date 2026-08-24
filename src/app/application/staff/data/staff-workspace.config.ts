@@ -10,14 +10,6 @@ export const STAFF_PAGES: StaffPageConfig[] = [
     route: '/app/staff/directory'
   },
   {
-    page: 'responsibilities',
-    label: 'Responsibilities',
-    title: 'Responsibilities',
-    description: 'Define roles, assign responsibilities, and track accountability.',
-    icon: 'pi pi-sitemap',
-    route: '/app/staff/responsibilities'
-  },
-  {
     page: 'payroll',
     label: 'Payroll',
     title: 'Payroll Management',

@@ -8,8 +8,19 @@
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Recent Sign-ins" [subtitle]="totalRecords + ' total events'">
+    <tc-saas-panel
+      title="Recent sign-ins"
+      [subtitle]="'Only the last ' + rangeDays + ' days are kept. Older events are not stored.'">
       <div class="login-history__toolbar">
+        <p-dropdown
+          [options]="rangeOptions"
+          [(ngModel)]="rangeDays"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          placeholder="Time window"
+          (onChange)="onFilterChange()">
+        </p-dropdown>
         <p-dropdown
           [options]="statusOptions"
           [(ngModel)]="statusFilter"
@@ -22,22 +33,42 @@
       </div>
       <div class="saas-table-wrap">
         <table class="saas-data-table">
-          <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Logout</th><th>IP</th><th>Client</th></tr></thead>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Status</th>
+              <th>Signed in</th>
+              <th>Signed out</th>
+              <th>IP address</th>
+              <th>Device</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let e of entries; trackBy: trackById">
-              <td><strong>{{ e.displayName || e.username }}</strong></td>
+              <td>
+                <strong>{{ e.displayName || e.username || '—' }}</strong>
+                <br *ngIf="e.displayName && e.username"><small *ngIf="e.displayName && e.username">{{ e.username }}</small>
+              </td>
               <td><tc-saas-pill [label]="loginStatusLabel(e.status)" [tone]="loginStatusTone(e.status)"></tc-saas-pill></td>
               <td>{{ formatDateTime(e.loginTime) }}</td>
               <td>{{ formatDateTime(e.logoutTime) }}</td>
               <td>{{ e.ipAddress || '—' }}</td>
               <td>{{ e.browser || e.operatingSystem || '—' }}</td>
             </tr>
-            <tr *ngIf="!entries.length"><td colspan="6" class="empty">No login events found.</td></tr>
+            <tr *ngIf="!entries.length">
+              <td colspan="6" class="empty">No sign-ins in the last {{ rangeDays }} days.</td>
+            </tr>
           </tbody>
         </table>
       </div>
+      <p-paginator
+        *ngIf="totalRecords > 0"
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [first]="page * pageSize"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>
-
-

@@ -536,19 +536,11 @@ export class BreadcrumbComponent implements OnInit {
 
 
     const pageLabels: Record<string, string> = {
-
-      dashboard: 'Access Management',
-
-      roles: 'Roles & Responsibilities',
-
       menus: 'Menu Catalog',
-
-      users: 'Users & Access',
-
+      responsibilities: 'Responsibilities',
+      users: 'Users',
       'security-policy': 'Security Policy',
-
       'login-history': 'Login History'
-
     };
 
 
@@ -565,7 +557,7 @@ export class BreadcrumbComponent implements OnInit {
 
     if (child) {
 
-      labels.push(page === 'roles' ? 'Role Workspace' : page === 'users' ? 'User Permissions' : this.titleCase(child));
+      labels.push(page === 'responsibilities' ? 'Menu Assignment' : page === 'users' ? 'User Access' : this.titleCase(child));
 
     }
 
@@ -682,7 +674,7 @@ export class BreadcrumbComponent implements OnInit {
 
       if (index === 0) {
 
-        return ['/app/access-management/dashboard'];
+        return ['/app/access-management/users'];
 
       }
 
