@@ -2,8 +2,12 @@
   <tc-saas-page-header>
     <app-back-nav fallback="/app/access-management/users" label="Back to users"></app-back-nav>
     <ng-container *ngIf="canManage && user">
-      <button type="button" class="tc-btn" (click)="toggleLock()">{{ isLocked() ? 'Unlock account' : 'Lock account' }}</button>
-      <button type="button" class="tc-btn" (click)="confirmResetPassword()">Reset password</button>
+      <button type="button" class="tc-btn" (click)="toggleLock()" [pTooltip]="lockTooltip()" tooltipPosition="bottom">
+        {{ isLocked() ? 'Unlock account' : 'Lock account' }}
+      </button>
+      <button type="button" class="tc-btn" (click)="confirmResetPassword()" [pTooltip]="resetTooltip" tooltipPosition="bottom">
+        Reset password
+      </button>
     </ng-container>
   </tc-saas-page-header>
 
@@ -13,37 +17,62 @@
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading user...</div>
 
   <ng-container *ngIf="!loading && user">
+    <div *ngIf="resetBanner" class="user-permissions__banner" role="status">
+      {{ resetBanner }}
+      <button type="button" class="tc-btn tc-btn--ghost" (click)="resetBanner = null">Dismiss</button>
+    </div>
+
     <tc-saas-panel title="Account">
       <dl class="user-permissions__meta">
         <div><dt>Name</dt><dd>{{ userDisplayName(user) }}</dd></div>
         <div><dt>Username</dt><dd>{{ user.username || '—' }}</dd></div>
         <div><dt>Email</dt><dd>{{ user.email || '—' }}</dd></div>
         <div><dt>Mobile</dt><dd>{{ user.mobileNumber || '—' }}</dd></div>
+        <div><dt>User code</dt><dd>{{ user.userCode || '—' }}</dd></div>
         <div><dt>Role</dt><dd>{{ formatRoles() }}</dd></div>
-        <div><dt>Status</dt><dd><tc-saas-pill [label]="userStatusLabel(user.status)" [tone]="userStatusTone(user.status)"></tc-saas-pill></dd></div>
+        <div><dt>Status</dt><dd><tc-saas-pill [label]="statusLabel()" [tone]="statusTone()"></tc-saas-pill></dd></div>
         <div><dt>Created</dt><dd>{{ formatDate(user.createdOn) }}</dd></div>
         <div><dt>Last sign-in</dt><dd>{{ formatDateTime(user.lastLoginAt) }}</dd></div>
+        <div *ngIf="isLocked()"><dt>Locked at</dt><dd>{{ formatDateTime(user.lockedAt) }}</dd></div>
+        <div><dt>Must change password</dt><dd>{{ user.firstTimeLogin ? 'Yes — at next sign-in' : 'No' }}</dd></div>
       </dl>
+      <p class="user-permissions__history">
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="openLoginHistory()">
+          View login history
+        </button>
+      </p>
     </tc-saas-panel>
 
-    <tc-saas-panel title="Assigned menus" subtitle="What this person can open, based on their responsibility">
-      <section class="user-permissions__group" *ngFor="let group of groups">
-        <h3>{{ group.module }}</h3>
-        <div class="saas-table-wrap">
-          <table class="saas-data-table">
-            <thead><tr><th>Menu</th><th>View</th><th>Manage</th><th>Approve</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let p of group.items; trackBy: trackByMenuId">
-                <td><strong>{{ p.menuName }}</strong><br><code>{{ p.menuCode }}</code></td>
-                <td>{{ p.canView ? 'Yes' : 'No' }}</td>
-                <td>{{ p.canManage ? 'Yes' : 'No' }}</td>
-                <td>{{ p.canApprove ? 'Yes' : 'No' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <p *ngIf="!groups.length" class="empty">No menus are assigned to this user yet.</p>
+    <tc-saas-panel
+      title="Assigned menus"
+      [subtitle]="modules.length ? (modules.length + ' modules · ' + pageCount + ' pages this person can open') : 'No menus assigned yet'">
+      <div class="user-permissions__tree" *ngIf="modules.length">
+        <section class="user-permissions__module" *ngFor="let module of modules; trackBy: trackByMenuId">
+          <header>
+            <i class="pi pi-folder"></i>
+            <div>
+              <strong>{{ module.menuName }}</strong>
+              <small *ngIf="module.children.length">{{ module.children.length }} {{ module.children.length === 1 ? 'submenu' : 'submenus' }}</small>
+            </div>
+            <div class="user-permissions__chips" *ngIf="!module.children.length">
+              <span class="chip" *ngIf="module.canView">View</span>
+              <span class="chip chip--manage" *ngIf="module.canManage">Manage</span>
+              <span class="chip chip--approve" *ngIf="module.canApprove">Approve</span>
+            </div>
+          </header>
+          <ul *ngIf="module.children.length">
+            <li *ngFor="let page of module.children; trackBy: trackByMenuId">
+              <span>{{ page.menuName }}</span>
+              <div class="user-permissions__chips">
+                <span class="chip" *ngIf="page.canView">View</span>
+                <span class="chip chip--manage" *ngIf="page.canManage">Manage</span>
+                <span class="chip chip--approve" *ngIf="page.canApprove">Approve</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+      </div>
+      <p *ngIf="!modules.length" class="empty">No menus are assigned to this user yet.</p>
     </tc-saas-panel>
   </ng-container>
 </div>

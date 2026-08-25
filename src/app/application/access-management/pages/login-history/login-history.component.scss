@@ -5,3 +5,14 @@
   margin-bottom: 1rem;
   align-items: center;
 }
+
+.login-history__chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: var(--saas-primary-soft, #dbeafe);
+  font-weight: 600;
+}

@@ -181,12 +181,12 @@ export const ACCESS_PAGES = {
   },
   users: {
     breadcrumb: 'Users',
-    pageSubtitle: 'Lock or unlock accounts, reset passwords, and review assigned menus.'
+    pageSubtitle: 'Click a person to open their account, lock status, assigned menus and sign-in history.'
   },
   userPermissions: {
     breadcrumb: 'User access',
     breadcrumbLink: ['/app/access-management/users'],
-    pageSubtitle: 'Account details and menus assigned to this person.'
+    pageSubtitle: 'Account, assigned menus and sign-in activity for this person.'
   },
   securityPolicy: {
     breadcrumb: 'Security Policy',

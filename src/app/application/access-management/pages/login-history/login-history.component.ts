@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 
 import { LoginHistoryEntry, LoginStatus } from '../../models/access.model';
@@ -33,6 +34,8 @@ export class LoginHistoryComponent implements OnInit {
   private readonly api = inject(AccessManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   loading = true;
   errorMessage = '';
@@ -42,6 +45,8 @@ export class LoginHistoryComponent implements OnInit {
   totalRecords = 0;
   page = 0;
   pageSize = defaultPageSizeForView('table');
+  userIdFilter: number | null = null;
+  userNameFilter = '';
 
   readonly rangeOptions: { label: string; value: 7 | 30 }[] = [
     { label: 'Last 7 days', value: 7 },
@@ -60,7 +65,15 @@ export class LoginHistoryComponent implements OnInit {
   readonly loginStatusTone = loginStatusTone;
   readonly formatDateTime = formatDateTime;
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const userId = Number(params.get('userId'));
+      this.userIdFilter = userId || null;
+      this.userNameFilter = params.get('user') || '';
+      this.page = 0;
+      this.load();
+    });
+  }
 
   get pageSizeOptions(): number[] {
     return pageSizeOptionsForView('table');
@@ -84,7 +97,8 @@ export class LoginHistoryComponent implements OnInit {
       {
         status: this.statusFilter === 'all' ? undefined : this.statusFilter,
         from: this.windowStart(),
-        to: this.windowEnd()
+        to: this.windowEnd(),
+        userId: this.userIdFilter ?? undefined
       },
       this.page,
       this.pageSize
@@ -109,6 +123,10 @@ export class LoginHistoryComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  clearUserFilter(): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
   onFilterChange(): void {

@@ -38,6 +38,12 @@ export function loginStatusLabel(status?: LoginStatus | string | null): string {
   return LOGIN_STATUS_LABELS[status as LoginStatus] ?? String(status);
 }
 
+export function userEffectiveStatus(user: { status?: UserStatus; accountLocked?: boolean } | null | undefined): UserStatus | undefined {
+  if (!user) return undefined;
+  if (user.accountLocked || user.status === 'LOCKED') return 'LOCKED';
+  return user.status;
+}
+
 export function userStatusTone(status?: UserStatus | string | null): 'success' | 'warning' | 'danger' | 'neutral' {
   switch (status) {
     case 'ACTIVE': return 'success';

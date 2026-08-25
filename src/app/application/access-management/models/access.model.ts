@@ -108,6 +108,9 @@ export interface EffectivePermission {
   menuId: number;
   menuCode: string;
   menuName: string;
+  menuType?: string;
+  parentMenuId?: number;
+  parentMenuName?: string;
   canView: boolean;
   canManage: boolean;
   canApprove: boolean;
@@ -128,6 +131,7 @@ export interface AccessUser {
   firstTimeLogin?: boolean;
   lastLoginAt?: string;
   createdOn?: string;
+  lockedAt?: string;
   roles?: AccessUserRole[];
 }
 

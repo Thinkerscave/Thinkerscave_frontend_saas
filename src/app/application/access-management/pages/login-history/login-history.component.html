@@ -10,8 +10,14 @@
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <tc-saas-panel
       title="Recent sign-ins"
-      [subtitle]="'Only the last ' + rangeDays + ' days are kept. Older events are not stored.'">
+      [subtitle]="userNameFilter
+        ? ('Sign-ins for ' + userNameFilter + ' · last ' + rangeDays + ' days')
+        : ('Only the last ' + rangeDays + ' days are kept. Older events are not stored.')">
       <div class="login-history__toolbar">
+        <p class="login-history__chip" *ngIf="userIdFilter">
+          {{ userNameFilter || ('User #' + userIdFilter) }}
+          <button type="button" class="tc-btn tc-btn--ghost" (click)="clearUserFilter()">Show all users</button>
+        </p>
         <p-dropdown
           [options]="rangeOptions"
           [(ngModel)]="rangeDays"

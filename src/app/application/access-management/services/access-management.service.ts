@@ -176,13 +176,16 @@ export class AccessManagementService {
     if (query.roleType) params = params.set('roleType', query.roleType);
     if (query.search) params = params.set('search', query.search);
     return this.http.get<unknown>(accessApi.orgUsers(organizationId), { params }).pipe(
-      map(r => this.mapPageResponse<AccessUser>(r))
+      map(r => {
+        const page = this.mapPageResponse<AccessUser>(r);
+        return { ...page, content: (page.content ?? []).map(user => this.normalizeUser(user)) };
+      })
     );
   }
 
   getUser(organizationId: number, userId: number): Observable<AccessUser> {
     return this.http.get<unknown>(accessApi.orgUserById(organizationId, userId)).pipe(
-      map(r => unwrapApiResponse<AccessUser>(r, {} as AccessUser))
+      map(r => this.normalizeUser(unwrapApiResponse<AccessUser>(r, {} as AccessUser)))
     );
   }
 
@@ -212,7 +215,10 @@ export class AccessManagementService {
 
   getUserEffectivePermissions(userId: number, organizationId = this.organizationId()): Observable<EffectivePermission[]> {
     return this.http.get<unknown>(accessApi.userEffectivePermissions(organizationId, userId)).pipe(
-      map(r => unwrapApiResponse<EffectivePermission[]>(r, []))
+      map(r => {
+        const list = unwrapApiResponse<EffectivePermission[]>(r, []) ?? [];
+        return (Array.isArray(list) ? list : []).map(item => this.normalizePermission(item));
+      })
     );
   }
 
@@ -239,10 +245,13 @@ export class AccessManagementService {
 
   getOrgLoginHistory(
     organizationId = this.organizationId(),
-    query: { status?: LoginStatus; from?: string; to?: string } = {},
+    query: { status?: LoginStatus; from?: string; to?: string; userId?: number } = {},
     page = 0,
     size = 20
   ): Observable<SpringPage<LoginHistoryEntry>> {
+    if (query.userId) {
+      return this.getUserLoginHistory(query.userId, query, page, size);
+    }
     let params = new HttpParams()
       .set('page', String(page))
       .set('size', String(size))
@@ -251,6 +260,23 @@ export class AccessManagementService {
     if (query.from) params = params.set('from', query.from);
     if (query.to) params = params.set('to', query.to);
     return this.http.get<unknown>(accessApi.orgLoginHistory(organizationId), { params }).pipe(
+      map(r => this.mapPageResponse<LoginHistoryEntry>(r))
+    );
+  }
+
+  getUserLoginHistory(
+    userId: number,
+    query: { status?: LoginStatus; from?: string; to?: string } = {},
+    page = 0,
+    size = 20
+  ): Observable<SpringPage<LoginHistoryEntry>> {
+    let params = new HttpParams()
+      .set('page', String(page))
+      .set('size', String(size));
+    if (query.status) params = params.set('status', query.status);
+    if (query.from) params = params.set('from', query.from);
+    if (query.to) params = params.set('to', query.to);
+    return this.http.get<unknown>(accessApi.userLoginHistory(userId), { params }).pipe(
       map(r => this.mapPageResponse<LoginHistoryEntry>(r))
     );
   }
@@ -370,6 +396,33 @@ export class AccessManagementService {
       totalPages: page.totalPages ?? 0,
       number: page.number ?? page.page ?? 0,
       size: page.size ?? 10
+    };
+  }
+
+  private normalizeUser(user: AccessUser): AccessUser {
+    const raw = user as AccessUser & { created_on?: string; createdAt?: string; last_login_at?: string };
+    const createdOn = user.createdOn || raw.created_on || raw.createdAt || undefined;
+    const lastLoginAt = user.lastLoginAt || raw.last_login_at || undefined;
+    const locked = !!user.accountLocked || user.status === 'LOCKED';
+    return {
+      ...user,
+      createdOn,
+      lastLoginAt,
+      accountLocked: locked,
+      status: locked ? 'LOCKED' : user.status
+    };
+  }
+
+  private normalizePermission(item: EffectivePermission): EffectivePermission {
+    const raw = item as EffectivePermission & Record<string, unknown>;
+    const parentId = item.parentMenuId ?? raw['parent_menu_id'];
+    const parentName = item.parentMenuName ?? raw['parent_menu_name'];
+    const menuType = item.menuType ?? raw['menu_type'];
+    return {
+      ...item,
+      parentMenuId: parentId != null && parentId !== '' ? Number(parentId) : undefined,
+      parentMenuName: parentName != null ? String(parentName) : undefined,
+      menuType: menuType != null ? String(menuType) : undefined
     };
   }
 
