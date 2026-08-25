@@ -5,31 +5,22 @@
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="cat-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
-  <div *ngIf="loading" class="cat-empty"><i class="pi pi-spin pi-spinner"></i><h3>Loading roles…</h3></div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-    <div class="cat-toolbar">
-      <input
-        class="cat-toolbar__search"
-        type="search"
-        [ngModel]="search"
-        (ngModelChange)="onSearchChange($event)"
-        placeholder="Search roles…"
-        aria-label="Search roles">
-      <div class="cat-toolbar__end">
-        <div class="cat-view-toggle" role="group" aria-label="View mode">
-          <button type="button" [class.active]="viewMode === 'grid'" (click)="onListViewModeChange('grid')" aria-label="Grid view">
-            <i class="pi pi-th-large"></i>
-          </button>
-          <button type="button" [class.active]="viewMode === 'table'" (click)="onListViewModeChange('table')" aria-label="List view">
-            <i class="pi pi-list"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+  <app-list-toolbar
+    [search]="search"
+    searchPlaceholder="Search roles…"
+    [view]="viewMode"
+    viewAriaLabel="View mode"
+    (searchChange)="onSearchChange($event)"
+    (searchDebounced)="applyQuery()"
+    (submitted)="applyQuery()"
+    (reset)="resetFilters()"
+    (viewChange)="onListViewModeChange($event)">
+  </app-list-toolbar>
 
+  <app-list-results [busy]="loading">
     <div class="cat-workspace is-split" *ngIf="viewMode === 'grid'">
       <div>
         <div class="cat-grid">
@@ -82,19 +73,15 @@
           <h3>No roles found</h3>
           <p>Try another name or code.</p>
         </div>
-        <div class="cat-pager" *ngIf="filtered.length">
-          <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ filtered.length }}</span>
-          <div class="cat-pager__controls">
-            <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
-            <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
-            <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
-            <select class="cat-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Roles per page">
-              <option [ngValue]="8">8 / page</option>
-              <option [ngValue]="12">12 / page</option>
-              <option [ngValue]="24">24 / page</option>
-            </select>
-          </div>
-        </div>
+        <app-paginator
+          *ngIf="filtered.length"
+          [page]="page"
+          [rows]="pageSize"
+          [totalRecords]="filtered.length"
+          [pageSizeOptions]="pageSizeOptions"
+          noun="roles"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
       </div>
       <aside class="cat-detail">
         <ng-container *ngIf="selectedRole; else emptyRoleDetail">
@@ -170,16 +157,17 @@
           <tr *ngIf="!filtered.length"><td colspan="5">No roles found.</td></tr>
         </tbody>
       </table>
-      <div class="cat-pager" *ngIf="filtered.length">
-        <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ filtered.length }}</span>
-        <div class="cat-pager__controls">
-          <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
-          <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
-          <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
-        </div>
-      </div>
+      <app-paginator
+        *ngIf="filtered.length"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="filtered.length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="roles"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </div>
-  </ng-container>
+  </app-list-results>
 </div>
 
 <p-dialog

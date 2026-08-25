@@ -17,8 +17,11 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-import { AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { normalizePrimeIcon } from '../../../../shared/utils/prime-icon.util';
 
 interface FeatureDraft {
@@ -55,7 +58,9 @@ interface FeatureShowcase {
     DialogModule,
     ConfirmDialogModule,
     SaasPageHeaderComponent,
-    SaasStatGridComponent
+    SaasStatGridComponent,
+    AppListToolbarComponent,
+    AppPaginatorComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './feature-catalog.component.html',
@@ -68,6 +73,7 @@ export class FeatureCatalogComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly confirm = inject(ConfirmationService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   saving = false;
@@ -76,31 +82,41 @@ export class FeatureCatalogComponent implements OnInit {
   menus: AccessMenu[] = [];
   draft: FeatureDraft = this.emptyDraft();
   selectedFeatureId: number | null = null;
-  page = 1;
-  pageSize = 8;
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
   readonly normalizePrimeIcon = normalizePrimeIcon;
 
   readonly search = signal('');
+  readonly appliedSearch = signal('');
   readonly categoryFilter = signal('all');
-  readonly viewMode = signal<AppListViewMode>('grid');
+  readonly appliedCategory = signal('all');
+  readonly viewMode = signal<AppListViewMode>(this.viewPrefs.globalDefault());
   readonly modules = signal<PlatformFeature[]>([]);
 
   ngOnInit(): void { this.load(); }
 
   onListViewModeChange(mode: AppListViewMode): void {
     this.viewMode.set(mode);
-    this.page = 1;
   }
 
   onSearchChange(value: string): void {
     this.search.set(value);
-    this.page = 1;
-    this.ensureSelectedFeature();
   }
 
   onCategoryChange(value: string): void {
     this.categoryFilter.set(value);
-    this.page = 1;
+  }
+
+  applySearch(): void {
+    this.appliedSearch.set(this.search());
+    this.page = 0;
+    this.ensureSelectedFeature();
+  }
+
+  applyFilters(): void {
+    this.appliedSearch.set(this.search());
+    this.appliedCategory.set(this.categoryFilter());
+    this.page = 0;
     this.ensureSelectedFeature();
   }
 
@@ -127,8 +143,8 @@ export class FeatureCatalogComponent implements OnInit {
   });
 
   readonly filtered = computed<PlatformFeature[]>(() => {
-    const q = this.search().trim().toLowerCase();
-    const cat = this.categoryFilter();
+    const q = this.appliedSearch().trim().toLowerCase();
+    const cat = this.appliedCategory();
     return this.modules()
       .filter(m => {
         const category = m.category || m.module || 'General';
@@ -155,35 +171,25 @@ export class FeatureCatalogComponent implements OnInit {
   );
 
   get pagedShowcases(): FeatureShowcase[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.showcases().slice(start, start + this.pageSize);
+    return slicePage(this.showcases(), this.page, this.pageSize);
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.showcases().length / this.pageSize) || 1);
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
   }
 
-  get pageStart(): number {
-    const total = this.showcases().length;
-    return total ? (this.page - 1) * this.pageSize + 1 : 0;
-  }
-
-  get pageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.showcases().length);
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   get selectedShowcase(): FeatureShowcase | null {
     if (this.selectedFeatureId == null) return null;
     return this.showcases().find(item => item.feature.id === this.selectedFeatureId) ?? null;
-  }
-
-  setPage(next: number): void {
-    this.page = Math.min(Math.max(1, next), this.totalPages);
-  }
-
-  setPageSize(size: number | string): void {
-    this.pageSize = Number(size);
-    this.page = 1;
   }
 
   get mappableMenus(): AccessMenu[] {
@@ -347,8 +353,10 @@ export class FeatureCatalogComponent implements OnInit {
 
   reset(): void {
     this.search.set('');
+    this.appliedSearch.set('');
     this.categoryFilter.set('all');
-    this.page = 1;
+    this.appliedCategory.set('all');
+    this.page = 0;
     this.ensureSelectedFeature();
   }
 
@@ -388,7 +396,7 @@ export class FeatureCatalogComponent implements OnInit {
     }
     this.selectedFeatureId = items[0].feature.id;
     const index = items.findIndex(item => item.feature.id === this.selectedFeatureId);
-    if (index >= 0) this.page = Math.floor(index / this.pageSize) + 1;
+    if (index >= 0) this.page = Math.floor(index / this.pageSize);
   }
 
   private emptyDraft(): FeatureDraft {

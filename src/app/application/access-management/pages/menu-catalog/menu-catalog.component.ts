@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { PaginatorModule } from 'primeng/paginator';
 import { finalize } from 'rxjs';
 
 import { AccessMenu } from '../../models/access.model';
@@ -14,16 +13,18 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-
-type CatalogView = 'cards' | 'hierarchy';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 
 @Component({
   selector: 'app-menu-catalog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, PaginatorModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+    CommonModule, FormsModule,
+    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
+    AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent
   ],
   templateUrl: './menu-catalog.component.html',
   styleUrl: './menu-catalog.component.scss'
@@ -32,19 +33,20 @@ export class MenuCatalogComponent implements OnInit {
   private readonly api = inject(AccessManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   errorMessage = '';
   search = '';
-  view: CatalogView = 'cards';
+  appliedSearch = '';
+  view: AppListViewMode = this.viewPrefs.globalDefault();
   menus: AccessMenu[] = [];
   page = 0;
-  pageSize = 12;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
   expanded = new Set<number | string>();
 
   ngOnInit(): void {
-    const saved = localStorage.getItem('access.menus.view');
-    if (saved === 'cards' || saved === 'hierarchy') this.view = saved;
     this.load();
   }
 
@@ -79,7 +81,7 @@ export class MenuCatalogComponent implements OnInit {
   }
 
   get filteredModules(): AccessMenu[] {
-    return this.filterTree(this.menus, this.search.trim().toLowerCase());
+    return this.filterTree(this.menus, this.appliedSearch.trim().toLowerCase());
   }
 
   get pagedModules(): AccessMenu[] {
@@ -91,19 +93,34 @@ export class MenuCatalogComponent implements OnInit {
     return this.filteredModules.length;
   }
 
-  setView(view: CatalogView): void {
-    this.view = view;
-    localStorage.setItem('access.menus.view', view);
+  onViewChange(mode: AppListViewMode): void {
+    this.view = mode;
     this.cdr.markForCheck();
   }
 
-  onSearchChange(): void {
+  onSearchTermChange(value: string): void {
+    this.search = value;
+  }
+
+  applyQuery(): void {
+    this.appliedSearch = this.search;
     this.page = 0;
+    this.cdr.markForCheck();
+  }
+
+  resetFilters(): void {
+    this.search = '';
+    this.appliedSearch = '';
+    this.page = 0;
+    this.cdr.markForCheck();
   }
 
   onPageChange(event: { page?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
   }
 
   toggleCard(menu: AccessMenu): void {

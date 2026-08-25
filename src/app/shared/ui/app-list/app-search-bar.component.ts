@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
         [placeholder]="placeholder"
         [ngModel]="value"
         (ngModelChange)="onInput($event)"
+        (keydown.enter)="onEnter($event)"
         [attr.aria-label]="ariaLabel || placeholder" />
       <button
         *ngIf="value"
@@ -35,10 +36,16 @@ export class AppSearchBarComponent {
   @Input() value = '';
   @Output() valueChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<string>();
+  @Output() enter = new EventEmitter<string>();
 
   onInput(next: string): void {
     this.valueChange.emit(next);
     this.search.emit(next);
+  }
+
+  onEnter(event: Event): void {
+    event.preventDefault();
+    this.enter.emit(this.value);
   }
 
   clear(): void {

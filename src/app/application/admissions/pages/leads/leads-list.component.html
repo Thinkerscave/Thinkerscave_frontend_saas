@@ -9,88 +9,66 @@
   </tc-saas-page-header>
 
   <tc-saas-panel [title]="'Leads · ' + totalElements()" [actions]="true">
-    <div panel-actions>
-      <app-grid-table-toggle
-        [storageKey]="'tc.leads.view.v2'"
-        [mode]="listViewMode"
-        (modeChange)="onListViewModeChange($event)">
-      </app-grid-table-toggle>
-    </div>
-
-    <div class="tc-filter-bar">
-      <div class="tc-form-field adm-filter-grow">
-        <label>Search</label>
-        <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, mobile, email, lead number…"
-               (keyup.enter)="runSearch()" />
-      </div>
-      <div class="tc-form-field">
-        <label>Status</label>
-        <p-dropdown
-          [options]="statusSelectOptions"
-          [(ngModel)]="filter.status"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Source</label>
-        <p-dropdown
-          [options]="sourceSelectOptions"
-          [(ngModel)]="filter.source"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Academic year</label>
-        <p-dropdown
-          [options]="years()"
-          [(ngModel)]="filterYearId"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="All years"
-          [showClear]="true"
-          appendTo="body"
-          styleClass="att-filter-dropdown"
-          (onChange)="onFilterYearChange(filterYearId)">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Class</label>
-        <p-dropdown
-          [options]="filterClasses()"
-          [(ngModel)]="filter.classId"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="All classes"
-          [showClear]="true"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Counselor</label>
-        <p-dropdown
-          [options]="counselorOptions()"
-          [(ngModel)]="filter.counselorId"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field adm-filter-actions-field">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching()">
-          <i class="pi" [class.pi-search]="!searching()" [class.pi-spin]="searching()" [class.pi-spinner]="searching()"></i>
-          Search
-        </button>
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
-      </div>
-    </div>
+    <app-list-toolbar
+      [search]="filter.keyword || ''"
+      searchPlaceholder="Name, mobile, email, lead number…"
+      [searching]="searching()"
+      [view]="listViewMode"
+      viewAriaLabel="Leads view"
+      (searchChange)="onKeywordChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="runSearch()"
+      (reset)="clearFilters()"
+      (viewChange)="onListViewModeChange($event)">
+      <p-dropdown
+        [options]="statusSelectOptions"
+        [(ngModel)]="filter.status"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All statuses"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="sourceSelectOptions"
+        [(ngModel)]="filter.source"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All sources"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="years()"
+        [(ngModel)]="filterYearId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="All years"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="att-filter-dropdown"
+        (onChange)="onFilterYearChange(filterYearId)">
+      </p-dropdown>
+      <p-dropdown
+        [options]="filterClasses()"
+        [(ngModel)]="filter.classId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="All classes"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="counselorOptions()"
+        [(ngModel)]="filter.counselorId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All counselors"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </app-list-toolbar>
 
     @if (error()) {
       <div class="tc-empty-state tc-empty-state--inline" role="alert">
@@ -99,9 +77,10 @@
       </div>
     }
 
-    @if (loading()) {
+    <app-list-results [busy]="refreshing()">
+    @if (!hasLoaded() && loading()) {
       <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
-    } @else if (!leads().length) {
+    } @else if (hasLoaded() && !leads().length) {
       <div class="tc-empty-state">
         <i class="pi pi-inbox"></i>
         <h3>No leads found</h3>
@@ -189,13 +168,17 @@
       </div>
     }
 
-    @if (!loading()) {
-      <p-paginator
+    </app-list-results>
+
+    @if (totalElements() > 0) {
+      <app-paginator
+        [page]="pageIndex"
         [rows]="pageSize"
         [totalRecords]="totalElements()"
-        [first]="pageIndex * pageSize"
-        [rowsPerPageOptions]="[10, 20, 50]"
-        (onPageChange)="onPageChange($event)" />
+        [pageSizeOptions]="pageSizeOptions"
+        noun="leads"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     }
   </tc-saas-panel>
 </section>

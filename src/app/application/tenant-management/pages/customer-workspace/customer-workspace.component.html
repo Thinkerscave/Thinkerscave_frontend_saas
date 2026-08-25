@@ -9,7 +9,7 @@
         <span class="customer-workspace__code">{{ customer.customerCode }}</span>
       </div>
     </div>
-    <button type="button" class="tc-btn tc-btn--back" (click)="back()"><i class="pi pi-arrow-left"></i> Back to list</button>
+    <app-back-nav fallback="/app/tenant-management/customers" label="Back to list"></app-back-nav>
     <button type="button" class="tc-btn" *ngIf="customer" (click)="edit()"><i class="pi pi-pencil"></i> Edit</button>
     <button type="button" class="tc-btn tc-btn--primary" *ngIf="customer" (click)="addOrganization()">
       <i class="pi pi-plus"></i> Add Organization
@@ -20,7 +20,7 @@
     <i class="pi pi-exclamation-triangle"></i>
     <strong>{{ errorMessage }}</strong>
     <button type="button" class="tc-btn" (click)="load(customerId)"><i class="pi pi-refresh"></i> Retry</button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="back()">Back to customers</button>
+    <app-back-nav fallback="/app/tenant-management/customers" label="Back to customers"></app-back-nav>
   </div>
 
   <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading customer…</div>

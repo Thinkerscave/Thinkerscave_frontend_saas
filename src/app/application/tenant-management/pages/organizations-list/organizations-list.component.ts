@@ -3,9 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Host
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { PaginatorModule } from 'primeng/paginator';
 import { Select } from 'primeng/select';
-import { debounceTime, Subject } from 'rxjs';
 
 import { InstitutionType, OrganizationStatus, OrganizationSummary, PlatformDashboard } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
@@ -23,19 +21,25 @@ import {
   SaasPillComponent,
   SaasStat
 } from '../../../../shared/ui/saas';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 type StatusFilter = 'all' | OrganizationStatus;
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
+
+const LIST_KEY = 'tc.organizations.viewMode';
 
 @Component({
   selector: 'app-organizations-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, RouterLink, PaginatorModule,
-    Select, SaasStatGridComponent, SaasPillComponent, AppGridTableToggleComponent
+    CommonModule, FormsModule, RouterLink,
+    Select, SaasStatGridComponent, SaasPillComponent, AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent
   ],
   templateUrl: './organizations-list.component.html',
   styleUrl: './organizations-list.component.scss'
@@ -46,9 +50,13 @@ export class OrganizationsListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(PlatformManagementService);
   private readonly feedback = inject(UiFeedbackService);
-  private readonly search$ = new Subject<string>();
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   errorMessage = '';
   dashboard: PlatformDashboard | null = null;
   organizations: OrganizationSummary[] = [];
@@ -56,10 +64,14 @@ export class OrganizationsListComponent implements OnInit {
   statusFilter: StatusFilter = 'all';
   typeFilter: 'all' | InstitutionType = 'all';
   customerFilter = 'all';
-  viewMode: AppListViewMode = 'grid';
+  private appliedStatus: StatusFilter = 'all';
+  private appliedType: 'all' | InstitutionType = 'all';
+  private appliedCustomer = 'all';
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
   openMenuFor: number | null = null;
   page = 0;
-  pageSize = 24;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
   totalRecords = 0;
 
   readonly statusChips: { id: StatusFilter; label: string }[] = [
@@ -81,60 +93,103 @@ export class OrganizationsListComponent implements OnInit {
   readonly orgInitials = orgInitials;
 
   ngOnInit(): void {
-    this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.page = 0;
-      this.loadOrganizations();
-    });
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.page = saved.page ?? this.page;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.search = saved.search ?? this.search;
+      this.viewMode = this.viewPrefs.initialView(saved.view);
+      if (saved.filters?.['status']) {
+        this.statusFilter = saved.filters['status'] as StatusFilter;
+        this.appliedStatus = this.statusFilter;
+      }
+      if (saved.filters?.['type']) {
+        this.typeFilter = saved.filters['type'] as 'all' | InstitutionType;
+        this.appliedType = this.typeFilter;
+      }
+      if (typeof saved.filters?.['customer'] === 'string') {
+        this.customerFilter = saved.filters['customer'];
+        this.appliedCustomer = this.customerFilter;
+      }
+    }
     this.load();
   }
 
   load(): void {
-    this.loading = true;
     this.errorMessage = '';
     this.api.getDashboard().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: d => { this.dashboard = d; this.loadOrganizations(); },
+      next: d => { this.dashboard = d; this.cdr.markForCheck(); this.loadOrganizations(); },
       error: () => { this.dashboard = null; this.loadOrganizations(); }
     });
   }
 
   loadOrganizations(): void {
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.api.getOrganizations({
-      status: this.statusFilter === 'all' ? undefined : this.statusFilter,
-      institutionType: this.typeFilter === 'all' ? undefined : this.typeFilter,
+      status: this.appliedStatus === 'all' ? undefined : this.appliedStatus,
+      institutionType: this.appliedType === 'all' ? undefined : this.appliedType,
       search: this.search.trim() || undefined,
       page: this.page,
       size: this.pageSize
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.organizations = page.content ?? [];
         this.totalRecords = page.totalElements ?? 0;
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       },
       error: () => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.errorMessage = 'Could not load organizations. Verify platform APIs and Super Admin access.';
         this.organizations = [];
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }
     });
   }
 
-  onSearchChange(): void { this.search$.next(this.search); }
-  onFilterChange(): void { this.page = 0; this.loadOrganizations(); }
+  onSearchTermChange(value: string): void {
+    this.search = value;
+  }
+
+  applyQuery(): void {
+    this.page = 0;
+    this.loadOrganizations();
+  }
+
+  applyFilters(): void {
+    this.appliedStatus = this.statusFilter;
+    this.appliedType = this.typeFilter;
+    this.appliedCustomer = this.customerFilter;
+    this.page = 0;
+    this.loadOrganizations();
+  }
 
   onPageChange(event: { page?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    if (event.rows) this.pageSize = event.rows;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.loadOrganizations();
   }
 
   onViewModeChange(mode: AppListViewMode): void {
-    if (this.viewMode === mode) return;
     this.viewMode = mode;
-    this.pageSize = mode === 'table' ? 20 : 24;
-    this.page = 0;
-    this.loadOrganizations();
+    this.cdr.markForCheck();
   }
 
   get stats(): SaasStat[] {
@@ -174,12 +229,13 @@ export class OrganizationsListComponent implements OnInit {
 
   /** Applies the client-side customer filter on top of the server-paged results. */
   get filteredOrganizations(): OrganizationSummary[] {
-    if (this.customerFilter === 'all') return this.organizations;
-    return this.organizations.filter(o => (o.customerName ?? '') === this.customerFilter);
+    if (this.appliedCustomer === 'all') return this.organizations;
+    return this.organizations.filter(o => (o.customerName ?? '') === this.appliedCustomer);
   }
 
   openWorkspace(org: OrganizationSummary, event?: MouseEvent): void {
     if (event && (event.target as HTMLElement).closest('.org-menu-wrap, .org-more-btn')) return;
+    this.persistListContext();
     this.router.navigate(['/app/tenant-management/organizations', org.id]);
   }
 
@@ -200,6 +256,7 @@ export class OrganizationsListComponent implements OnInit {
     event.stopPropagation();
     this.openMenuFor = null;
     if (action === 'view') {
+      this.persistListContext();
       this.router.navigate(['/app/tenant-management/organizations', org.id]);
       return;
     }
@@ -227,9 +284,22 @@ export class OrganizationsListComponent implements OnInit {
     this.statusFilter = 'all';
     this.typeFilter = 'all';
     this.customerFilter = 'all';
+    this.appliedStatus = 'all';
+    this.appliedType = 'all';
+    this.appliedCustomer = 'all';
     this.page = 0;
     this.loadOrganizations();
   }
 
   trackById(_: number, org: OrganizationSummary): number { return org.id; }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.page,
+      size: this.pageSize,
+      search: this.search,
+      view: this.viewMode,
+      filters: { status: this.appliedStatus, type: this.appliedType, customer: this.appliedCustomer }
+    });
+  }
 }

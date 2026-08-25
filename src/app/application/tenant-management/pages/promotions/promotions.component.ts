@@ -22,8 +22,11 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppGridTableToggleComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 
 interface PromotionDraft {
   promotionCode: string;
@@ -47,7 +50,8 @@ interface PromotionDraft {
     SaasPanelComponent,
     SaasPillComponent,
     CalendarModule,
-    AppGridTableToggleComponent
+    AppGridTableToggleComponent,
+    AppPaginatorComponent
   ],
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.scss'
@@ -57,6 +61,7 @@ export class PromotionsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   saving = false;
@@ -64,7 +69,9 @@ export class PromotionsComponent implements OnInit {
   errorMessage = '';
   promotions: Promotion[] = [];
   createOpen = false;
-  viewMode: AppListViewMode = 'grid';
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
   draft: PromotionDraft = this.emptyDraft();
 
   readonly discountTypes: DiscountType[] = ['PERCENTAGE', 'FLAT_AMOUNT'];
@@ -94,6 +101,28 @@ export class PromotionsComponent implements OnInit {
       { key: 'expired', label: 'Expired', value: expired, helper: 'Past validity window', icon: 'pi pi-clock', tone: 'warning' },
       { key: 'used', label: 'Total Redemptions', value: totalUsed, helper: 'Across all promotions', icon: 'pi pi-shopping-cart', tone: 'info' }
     ];
+  }
+
+  get paged(): Promotion[] {
+    return slicePage(this.promotions, this.page, this.pageSize);
+  }
+
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.viewMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   load(): void {

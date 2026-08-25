@@ -7,16 +7,23 @@
 
   <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading responsibilities...</div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Organization responsibilities" [subtitle]="totalRecords + ' items · newest first'">
-      <div class="responsibilities-list__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name or code">
-        <app-grid-table-toggle storageKey="access.responsibilities.view" [(mode)]="view" ariaLabel="Responsibilities view"></app-grid-table-toggle>
-      </div>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-panel title="Organization responsibilities" [subtitle]="totalRecords + ' items · newest first'">
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search name or code"
+      [searching]="refreshing"
+      [view]="view"
+      viewAriaLabel="Responsibilities view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyQuery()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewModeChange($event)">
+    </app-list-toolbar>
 
+    <app-list-results [busy]="refreshing">
       <div class="responsibilities-list__grid" *ngIf="view === 'grid'">
         <article class="responsibilities-list__card" *ngFor="let r of list; trackBy: trackById" (click)="openWorkspace(r)">
           <strong>{{ r.responsibilityName }}</strong>
@@ -68,16 +75,18 @@
         </table>
       </div>
 
-      <p-paginator
-        *ngIf="totalRecords > 0"
-        [rows]="pageSize"
-        [totalRecords]="totalRecords"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
-    </tc-saas-panel>
-  </ng-container>
+    </app-list-results>
+
+    <app-paginator
+      *ngIf="totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="responsibilities"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </tc-saas-panel>
 </div>
 
 <p-dialog

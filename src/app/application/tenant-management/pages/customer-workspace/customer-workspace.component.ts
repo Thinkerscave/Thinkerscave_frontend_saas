@@ -24,7 +24,7 @@ import {
   SaasStatGridComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppGridTableToggleComponent, AppListViewMode, AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -39,7 +39,8 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
     SaasTabsComponent,
     SaasPillComponent,
     SaasStatGridComponent,
-    AppGridTableToggleComponent
+    AppGridTableToggleComponent,
+    AppBackNavComponent
   ],
   templateUrl: './customer-workspace.component.html',
   styleUrl: './customer-workspace.component.scss'
@@ -189,10 +190,6 @@ export class CustomerWorkspaceComponent implements OnInit {
 
   orgStatusTone(status?: string | null): PillTone {
     return statusTone(status) as PillTone;
-  }
-
-  back(): void {
-    void this.router.navigate(['/app/tenant-management/customers']);
   }
 
   edit(): void {

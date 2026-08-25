@@ -1,0 +1,116 @@
+.app-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tc-space-3);
+  padding: var(--tc-space-3) var(--tc-space-5);
+  border-top: 1px solid var(--tc-border);
+  background: var(--tc-surface-card-solid);
+}
+
+.app-paginator__summary {
+  margin: 0;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
+  white-space: nowrap;
+}
+
+.app-paginator__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.app-paginator__size select {
+  appearance: none;
+  min-height: 2rem;
+  min-width: 3.5rem;
+  padding: 0 1.6rem 0 0.55rem;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-sm, 8px);
+  background:
+    var(--tc-surface-card-solid)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E")
+    no-repeat right 8px center;
+  font-family: inherit;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text);
+  cursor: pointer;
+}
+
+.app-paginator__size select:focus {
+  outline: none;
+  border-color: var(--tc-primary-500, var(--tc-accent));
+  box-shadow: var(--tc-focus-ring, 0 0 0 3px color-mix(in srgb, var(--tc-accent) 20%, transparent));
+}
+
+.app-paginator__nav,
+.app-paginator__page {
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0 0.65rem;
+  border: 1px solid transparent;
+  border-radius: var(--tc-radius-sm, 8px);
+  background: transparent;
+  color: var(--tc-text);
+  font-family: inherit;
+  font-size: var(--tc-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.app-paginator__nav:hover:not(:disabled),
+.app-paginator__page:hover:not(.is-active) {
+  background: var(--tc-surface-hover, var(--tc-surface-100));
+  color: var(--tc-primary-600, var(--tc-accent));
+}
+
+.app-paginator__page.is-active {
+  background: var(--tc-primary-50, color-mix(in srgb, var(--tc-accent) 12%, white));
+  color: var(--tc-primary-600, var(--tc-accent));
+  border-color: color-mix(in srgb, var(--tc-accent) 22%, transparent);
+}
+
+.app-paginator__nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-paginator__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.app-paginator__ellipsis {
+  padding: 0 0.2rem;
+  color: var(--tc-text-muted);
+}
+
+.app-paginator__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .app-paginator {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--tc-space-3);
+  }
+
+  .app-paginator__controls {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}

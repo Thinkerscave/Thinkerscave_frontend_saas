@@ -4,9 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule } from 'primeng/paginator';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
 import {
@@ -37,6 +40,8 @@ interface FilterOption<T = string | null> {
   value: T;
 }
 
+const LIST_KEY = 'students.directory.view';
+
 @Component({
   selector: 'app-students-directory',
   standalone: true,
@@ -45,8 +50,9 @@ interface FilterOption<T = string | null> {
     CommonModule,
     FormsModule,
     DropdownModule,
-    PaginatorModule,
-    AppGridTableToggleComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
     AvatarComponent,
     SkeletonComponent,
     TcTranslatePipe,
@@ -60,12 +66,17 @@ export class StudentsDirectoryComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   searching = false;
   errorMessage = '';
 
-  view: AppListViewMode = 'grid';
+  view: AppListViewMode = this.viewPrefs.globalDefault();
 
   // ---- Bulk Import ----
   showImport = false;
@@ -92,11 +103,14 @@ export class StudentsDirectoryComponent implements OnInit {
   sectionOptions: SelectOption[] = [];
 
   filter: StudentSearchRequest = {};
+  private appliedFilter: StudentSearchRequest = {};
+  private appliedSort = 'firstName,asc';
   activeKpi: keyof StudentKpi | null = null;
 
   // Pagination
   pageIndex = 0;
-  pageSize = 20;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
   totalElements = 0;
   sortField = 'firstName,asc';
 
@@ -132,11 +146,27 @@ export class StudentsDirectoryComponent implements OnInit {
     const sectionId = qp.get('sectionId');
     if (classId) this.filter.classId = classId;
     if (sectionId) this.filter.sectionId = sectionId;
-    this.loadAll();
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.pageIndex = saved.page ?? this.pageIndex;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.view = this.viewPrefs.initialView(saved.view);
+      if (saved.search) this.filter = { ...this.filter, keyword: saved.search };
+      if (saved.sort) {
+        this.sortField = saved.sort;
+        this.appliedSort = saved.sort;
+      }
+    }
+    this.appliedFilter = {
+      classId: this.filter.classId,
+      sectionId: this.filter.sectionId,
+      status: this.filter.status
+    };
+    this.loadAll(!saved);
   }
 
-  loadAll(): void {
-    this.pageIndex = 0;
+  loadAll(resetPage = true): void {
+    if (resetPage) this.pageIndex = 0;
     this.api.kpi().subscribe(kpi => {
       this.kpi = kpi;
       this.cdr.markForCheck();
@@ -161,34 +191,81 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   runSearch(): void {
-    this.loading = true;
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
     this.searching = true;
-    this.api.search(this.filter, this.pageIndex, this.pageSize, this.sortField)
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
+    const request: StudentSearchRequest = {
+      ...this.appliedFilter,
+      keyword: this.filter.keyword
+    };
+    this.api.search(request, this.pageIndex, this.pageSize, this.appliedSort)
       .pipe(finalize(() => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.loading = false;
+        this.refreshing = false;
         this.searching = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }))
       .subscribe({
         next: (page: PageEnvelope<StudentDirectoryCard>) => {
+          if (!this.query.isCurrent(requestId)) {
+            return;
+          }
           this.students = page.content;
           this.totalElements = page.totalElements;
           this.errorMessage = '';
         },
-        error: () => { this.errorMessage = 'Search failed. Please retry.'; }
+        error: () => {
+          if (!this.query.isCurrent(requestId)) {
+            return;
+          }
+          this.errorMessage = 'Search failed. Please retry.';
+        }
       });
   }
 
-  onPageChange(event: any): void {
-    this.pageIndex = event.page;
-    this.pageSize = event.rows;
+  applyQuery(): void {
+    this.pageIndex = 0;
     this.runSearch();
+  }
+
+  applyFilters(): void {
+    this.appliedFilter = {
+      classId: this.filter.classId,
+      sectionId: this.filter.sectionId,
+      status: this.filter.status
+    };
+    this.appliedSort = this.sortField;
+    this.pageIndex = 0;
+    this.runSearch();
+  }
+
+  onPageChange(event: { page?: number; rows?: number }): void {
+    this.pageIndex = event.page ?? 0;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.pageIndex = 0;
+    }
+    this.runSearch();
+  }
+
+  onSearchTermChange(value: string): void {
+    this.filter = { ...this.filter, keyword: value };
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.cdr.markForCheck();
   }
 
   onSortChange(field: string): void {
     this.sortField = field;
-    this.pageIndex = 0;
-    this.runSearch();
   }
 
   toggleKpiFilter(tile: KpiTile): void {
@@ -198,17 +275,24 @@ export class StudentsDirectoryComponent implements OnInit {
     }
     if (this.activeKpi === tile.key) {
       this.activeKpi = null;
-      this.filter = {};
+      this.filter = { keyword: this.filter.keyword };
+      this.appliedFilter = {};
     } else {
       this.activeKpi = tile.key;
       this.filter = { ...this.filter, ...(tile.filter ?? {}) };
+      this.appliedFilter = { ...this.appliedFilter, ...(tile.filter ?? {}) };
     }
+    this.pageIndex = 0;
     this.runSearch();
   }
 
   clearFilters(): void {
     this.filter = {};
+    this.appliedFilter = {};
+    this.sortField = 'firstName,asc';
+    this.appliedSort = this.sortField;
     this.activeKpi = null;
+    this.pageIndex = 0;
     this.runSearch();
   }
 
@@ -221,13 +305,12 @@ export class StudentsDirectoryComponent implements OnInit {
         this.cdr.markForCheck();
       });
     }
-    this.pageIndex = 0;
-    this.runSearch();
   }
 
   // ---- Profile navigation ----
   openProfile(s: StudentDirectoryCard, event?: Event): void {
     event?.stopPropagation();
+    this.persistListContext();
     this.router.navigate(['/app/students/profile', s.studentId]);
   }
 
@@ -369,6 +452,7 @@ export class StudentsDirectoryComponent implements OnInit {
   viewTimeline(s: StudentDirectoryCard, event: Event): void {
     event.stopPropagation();
     this.openMoreMenuId = null;
+    this.persistListContext();
     this.router.navigate(['/app/students/profile', s.studentId], { queryParams: { tab: 'TIMELINE' } });
   }
 
@@ -414,6 +498,16 @@ export class StudentsDirectoryComponent implements OnInit {
     return s === 'PRESENT_TODAY' ? 'Present today'
          : s === 'ABSENT_TODAY'  ? 'Absent today'
          : 'Not marked';
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.pageIndex,
+      size: this.pageSize,
+      search: this.filter.keyword ?? '',
+      sort: this.sortField,
+      view: this.view
+    });
   }
 }
 

@@ -4,7 +4,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule } from 'primeng/paginator';
 import { debounceTime, Subject } from 'rxjs';
 
 import { CustomerListItem } from '../../models/platform.model';
@@ -21,7 +20,12 @@ import {
   SaasPanelComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+
+const LIST_KEY = 'tc-customers-archive';
 
 @Component({
   selector: 'app-customers-archive',
@@ -32,7 +36,7 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
     FormsModule,
     RouterLink,
     DropdownModule,
-    PaginatorModule,
+    AppPaginatorComponent,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasFilterRowComponent,
@@ -47,6 +51,7 @@ export class CustomersArchiveComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly listContext = inject(ListContextService);
   private readonly search$ = new Subject<string>();
 
   loading = true;
@@ -56,7 +61,7 @@ export class CustomersArchiveComponent implements OnInit {
   search = '';
   archivedOnly = true;
   page = 0;
-  pageSize = 20;
+  pageSize = defaultPageSizeForView('grid');
   totalRecords = 0;
 
   readonly archivedOptions: { label: string; value: boolean }[] = [
@@ -69,11 +74,24 @@ export class CustomersArchiveComponent implements OnInit {
   readonly customerStatusTone = customerStatusTone;
   readonly formatDate = formatDate;
 
+  get pageSizeOptions(): number[] {
+    return pageSizeOptionsForView('grid');
+  }
+
   ngOnInit(): void {
     this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.page = 0;
       this.loadCustomers();
     });
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.page = saved.page ?? this.page;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.search = saved.search ?? this.search;
+      if (saved.filters?.['archivedOnly'] !== undefined) {
+        this.archivedOnly = !!saved.filters['archivedOnly'];
+      }
+    }
     this.loadCustomers();
   }
 
@@ -119,11 +137,15 @@ export class CustomersArchiveComponent implements OnInit {
 
   onPageChange(event: { page?: number; first?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    if (event.rows) this.pageSize = event.rows;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.loadCustomers();
   }
 
   openCustomer(customer: CustomerListItem): void {
+    this.persistListContext();
     void this.router.navigate(['/app/tenant-management/customers', customer.id]);
   }
 
@@ -147,6 +169,15 @@ export class CustomersArchiveComponent implements OnInit {
 
   trackById(_: number, item: CustomerListItem): number {
     return item.id;
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.page,
+      size: this.pageSize,
+      search: this.search,
+      filters: { archivedOnly: this.archivedOnly }
+    });
   }
 
   private runAction(

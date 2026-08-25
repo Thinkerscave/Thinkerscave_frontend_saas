@@ -14,12 +14,14 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
-import { debounceTime, finalize, Subject } from 'rxjs';
+import { finalize } from 'rxjs';
 
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { CounselorPickerComponent } from '../../components/counselor-picker/counselor-picker.component';
 import {
   LEAD_SOURCE_OPTIONS,
@@ -43,6 +45,8 @@ interface SelectOption<T = string | null> {
   value: T;
 }
 
+const LIST_KEY = 'tc.leads.view.v2';
+
 @Component({
   selector: 'app-leads-list',
   standalone: true,
@@ -52,12 +56,13 @@ interface SelectOption<T = string | null> {
     FormsModule,
     ReactiveFormsModule,
     DropdownModule,
-    PaginatorModule,
     ConfirmDialogModule,
     DialogModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
-    AppGridTableToggleComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
     CounselorPickerComponent
   ],
   providers: [MessageService, ConfirmationService],
@@ -73,7 +78,8 @@ export class LeadsListComponent implements OnInit {
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly searchTrigger$ = new Subject<void>();
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   readonly pageConfig = admissionsPageConfig('leads');
   readonly statusOptions = LEAD_STATUS_OPTIONS;
@@ -92,11 +98,13 @@ export class LeadsListComponent implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly refreshing = signal(false);
+  readonly hasLoaded = signal(false);
   readonly searching = signal(false);
   readonly error = signal<string | null>(null);
   readonly leads = signal<LeadRecord[]>([]);
   readonly totalElements = signal(0);
-  readonly viewMode = signal<'table' | 'card'>('card');
+  readonly viewMode = signal<'table' | 'card'>(this.viewPrefs.globalDefault() === 'grid' ? 'card' : 'table');
   dialogVisible = false;
   readonly saving = signal(false);
   readonly editingLead = signal<LeadRecord | null>(null);
@@ -109,10 +117,11 @@ export class LeadsListComponent implements OnInit {
   filterYearId: number | null = null;
 
   pageIndex = 0;
-  pageSize = 20;
+  pageSize = UI_PAGINATION.defaultSize;
   readonly sort = 'createdOn,desc';
 
   filter: LeadSearchRequest = {};
+  private applied: LeadSearchRequest = {};
 
   readonly leadForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -130,9 +139,14 @@ export class LeadsListComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.searchTrigger$
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.runSearch());
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.pageIndex = saved.page ?? this.pageIndex;
+      this.pageSize = saved.size ?? this.pageSize;
+      if (saved.search) {
+        this.filter = { ...this.filter, keyword: saved.search };
+      }
+    }
 
     this.api.academicYears().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: years => this.years.set(years)
@@ -153,6 +167,7 @@ export class LeadsListComponent implements OnInit {
       const openCreate = params.get('openCreate') ?? params.get('openDrawer');
       if (status) {
         this.filter = { ...this.filter, status: status as LeadStatus };
+        this.applied = { ...this.applied, status: status as LeadStatus };
       }
       if (openCreate === '1') {
         this.openDialog();
@@ -162,35 +177,37 @@ export class LeadsListComponent implements OnInit {
   }
 
   loadInitial(): void {
-    this.loading.set(true);
+    this.reloadLeads(true);
+  }
+
+  runSearch(): void {
+    this.applied = { ...this.filter, academicYearId: this.filterYearId };
+    this.pageIndex = 0;
+    this.reloadLeads(false);
+  }
+
+  applyQuery(): void {
+    this.pageIndex = 0;
+    this.reloadLeads(false);
+  }
+
+  private reloadLeads(first: boolean): void {
+    if (first || !this.hasLoaded()) {
+      this.loading.set(true);
+    }
+    this.refreshing.set(true);
+    this.searching.set(true);
     this.error.set(null);
     this.api
       .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
-      )
-      .subscribe({
-        next: page => {
-          this.leads.set(page.content);
-          this.totalElements.set(page.totalElements);
-        },
-        error: () => {
-          const msg = 'Unable to load leads. Please retry.';
-          this.error.set(msg);
-          this.messages.add({ severity: 'error', summary: 'Load failed', detail: msg });
-        }
-      });
-  }
-
-  runSearch(): void {
-    this.searching.set(true);
-    this.pageIndex = 0;
-    this.api
-      .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.searching.set(false))
+        finalize(() => {
+          this.loading.set(false);
+          this.refreshing.set(false);
+          this.searching.set(false);
+          this.hasLoaded.set(true);
+        })
       )
       .subscribe({
         next: page => {
@@ -199,34 +216,33 @@ export class LeadsListComponent implements OnInit {
           this.error.set(null);
         },
         error: () => {
-          const msg = 'Search failed. Please retry.';
+          const msg = first ? 'Unable to load leads. Please retry.' : 'Search failed. Please retry.';
           this.error.set(msg);
-          this.messages.add({ severity: 'error', summary: 'Search failed', detail: msg });
+          this.messages.add({ severity: 'error', summary: first ? 'Load failed' : 'Search failed', detail: msg });
         }
       });
   }
 
-  onPageChange(event: PaginatorState): void {
+  onPageChange(event: { page?: number; rows?: number }): void {
     this.pageIndex = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
-    this.searching.set(true);
-    this.api
-      .searchLeads(this.searchPayload(), this.pageIndex, this.pageSize, this.sort)
-      .pipe(finalize(() => this.searching.set(false)))
-      .subscribe({
-        next: page => {
-          this.leads.set(page.content);
-          this.totalElements.set(page.totalElements);
-        },
-        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Failed to load page.' })
-      });
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.pageIndex = 0;
+    }
+    this.reloadLeads(false);
+  }
+
+  onKeywordChange(value: string): void {
+    this.filter = { ...this.filter, keyword: value };
   }
 
   clearFilters(): void {
     this.filter = {};
+    this.applied = {};
     this.filterYearId = null;
     this.filterClasses.set([]);
-    this.runSearch();
+    this.pageIndex = 0;
+    this.reloadLeads(false);
   }
 
   onFilterYearChange(yearId: number | null): void {
@@ -241,25 +257,29 @@ export class LeadsListComponent implements OnInit {
   }
 
   private searchPayload(): LeadSearchRequest {
-    const className = this.filterClasses().find(c => c.id === this.filter.classId)?.name
+    const className = this.filterClasses().find(c => c.id === this.applied.classId)?.name
       ?? this.filter.classInterestedIn
       ?? this.filter.classInterested
       ?? null;
     return {
       keyword: this.filter.keyword,
-      status: this.filter.status,
-      counselorId: this.filter.counselorId,
-      source: this.filter.source ?? this.filter.inquirySource,
+      status: this.applied.status,
+      counselorId: this.applied.counselorId,
+      source: this.applied.source ?? this.applied.inquirySource,
       classInterestedIn: className,
-      academicYearId: this.filter.academicYearId ?? this.filterYearId,
-      classId: this.filter.classId,
-      followUpFrom: this.filter.followUpFrom,
-      followUpTo: this.filter.followUpTo
+      academicYearId: this.applied.academicYearId ?? this.filterYearId,
+      classId: this.applied.classId,
+      followUpFrom: this.applied.followUpFrom,
+      followUpTo: this.applied.followUpTo
     };
   }
 
   get listViewMode(): AppListViewMode {
     return this.viewMode() === 'card' ? 'grid' : 'table';
+  }
+
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
   }
 
   onListViewModeChange(mode: AppListViewMode): void {
@@ -355,6 +375,7 @@ export class LeadsListComponent implements OnInit {
   }
 
   openLead(lead: LeadRecord): void {
+    this.persistListContext();
     this.nav.toLead(lead.inquiryId, 'leads');
   }
 
@@ -490,5 +511,13 @@ export class LeadsListComponent implements OnInit {
   private csvEscape(value: string): string {
     if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
     return value;
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.pageIndex,
+      size: this.pageSize,
+      search: this.filter.keyword ?? ''
+    });
   }
 }

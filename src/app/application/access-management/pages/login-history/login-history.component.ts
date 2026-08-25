@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule } from 'primeng/paginator';
 
 import { LoginHistoryEntry, LoginStatus } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
@@ -15,14 +14,17 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 
 @Component({
   selector: 'app-login-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, DropdownModule, PaginatorModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+    CommonModule, FormsModule, DropdownModule,
+    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
+    AppPaginatorComponent
   ],
   templateUrl: './login-history.component.html',
   styleUrl: './login-history.component.scss'
@@ -39,7 +41,7 @@ export class LoginHistoryComponent implements OnInit {
   entries: LoginHistoryEntry[] = [];
   totalRecords = 0;
   page = 0;
-  pageSize = 12;
+  pageSize = defaultPageSizeForView('table');
 
   readonly rangeOptions: { label: string; value: 7 | 30 }[] = [
     { label: 'Last 7 days', value: 7 },
@@ -59,6 +61,10 @@ export class LoginHistoryComponent implements OnInit {
   readonly formatDateTime = formatDateTime;
 
   ngOnInit(): void { this.load(); }
+
+  get pageSizeOptions(): number[] {
+    return pageSizeOptionsForView('table');
+  }
 
   get stats(): SaasStat[] {
     const success = this.entries.filter(e => e.status === 'SUCCESS').length;
@@ -112,7 +118,10 @@ export class LoginHistoryComponent implements OnInit {
 
   onPageChange(event: { page?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.load();
   }
 

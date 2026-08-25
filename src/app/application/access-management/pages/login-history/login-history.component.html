@@ -61,14 +61,15 @@
           </tbody>
         </table>
       </div>
-      <p-paginator
+      <app-paginator
         *ngIf="totalRecords > 0"
+        [page]="page"
         [rows]="pageSize"
         [totalRecords]="totalRecords"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
+        [pageSizeOptions]="pageSizeOptions"
+        noun="sign-ins"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>

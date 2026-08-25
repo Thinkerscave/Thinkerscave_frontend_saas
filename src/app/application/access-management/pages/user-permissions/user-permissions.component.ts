@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
@@ -15,6 +15,7 @@ import { AccessManagementService } from '../../services/access-management.servic
 import { formatDate, formatDateTime, userDisplayName, userStatusLabel, userStatusTone } from '../../utils/access-display.util';
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
 import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 interface MenuGroup {
   module: string;
@@ -25,7 +26,7 @@ interface MenuGroup {
   selector: 'app-user-permissions',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, ConfirmDialogModule, CommonModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent],
+  imports: [AppToastComponent, ConfirmDialogModule, CommonModule, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, AppBackNavComponent],
   providers: [MessageService, ConfirmationService],
   templateUrl: './user-permissions.component.html',
   styleUrl: './user-permissions.component.scss'

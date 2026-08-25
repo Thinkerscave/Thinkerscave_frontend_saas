@@ -23,7 +23,7 @@
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     <tc-saas-panel [title]="panelTitle()" subtitle="Manage and complete scheduled interactions">
-      @if (pagedItems().length) {
+      @if (pagedItems.length) {
         <div class="stu-table-wrap">
           <table class="stu-table">
             <thead>
@@ -37,7 +37,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of pagedItems(); track item.followUpId) {
+              @for (item of pagedItems; track item.followUpId) {
                 <tr>
                   <td>
                     @if (item.inquiryId) {
@@ -73,12 +73,14 @@
             </tbody>
           </table>
         </div>
-        <p-paginator
+        <app-paginator
+          [page]="pageIndex"
           [rows]="pageSize"
           [totalRecords]="visibleItems().length"
-          [first]="pageIndex * pageSize"
-          [rowsPerPageOptions]="[10, 20, 50]"
-          (onPageChange)="onPageChange($event)" />
+          [pageSizeOptions]="pageSizeOptions"
+          noun="follow-ups"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
       } @else {
         <div class="tc-empty-state">
           <i class="pi pi-calendar"></i>

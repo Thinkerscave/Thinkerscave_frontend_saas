@@ -12,7 +12,6 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
@@ -31,6 +30,11 @@ import {
   SaasPillComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+
+const LIST_KEY = 'tc.applications.list';
 
 @Component({
   selector: 'app-applications-list',
@@ -39,55 +43,18 @@ import {
   imports: [AppToastComponent, 
     CommonModule,
     FormsModule,
-    PaginatorModule,
     ConfirmDialogModule,
     DialogModule,
     DropdownModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    SaasTabsComponent
+    SaasTabsComponent,
+    AppPaginatorComponent
   ],
   providers: [ConfirmationService, MessageService],
   styleUrls: ['../../admissions.shared.scss'],
-  templateUrl: './applications-list.component.html',
-  styles: [`
-    .adm-table-wrap { overflow-x: auto; }
-    .adm-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-    }
-    .adm-table th, .adm-table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--tc-border);
-    }
-    .adm-table th {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--tc-text-muted);
-      font-weight: 700;
-    }
-    .adm-table tbody tr {
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .adm-table tbody tr:hover { background: var(--tc-surface-50); }
-    .adm-row-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .adm-row-actions button { padding: 6px 10px; font-size: 0.78rem; }
-    .adm-pagination {
-      display: flex;
-      justify-content: flex-end;
-      padding-top: 12px;
-      border-top: 1px solid var(--tc-border);
-    }
-  `]
+  templateUrl: './applications-list.component.html'
 })
 export class ApplicationsListComponent implements OnInit {
   private readonly api = inject(AdmissionsCrmService);
@@ -97,6 +64,7 @@ export class ApplicationsListComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirmation = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
+  private readonly listContext = inject(ListContextService);
 
   loading = false;
   searching = false;
@@ -107,7 +75,7 @@ export class ApplicationsListComponent implements OnInit {
   activeStatusTab = 'ALL';
 
   pageIndex = 0;
-  pageSize = 20;
+  pageSize = defaultPageSizeForView('grid');
   totalElements = 0;
   rejectDialogOpen = false;
   rejectRemarks = '';
@@ -125,6 +93,10 @@ export class ApplicationsListComponent implements OnInit {
     label: t.label
   }));
 
+  get pageSizeOptions(): number[] {
+    return pageSizeOptionsForView('grid');
+  }
+
   ngOnInit(): void {
     this.api.academicYears().subscribe({
       next: years => {
@@ -135,6 +107,17 @@ export class ApplicationsListComponent implements OnInit {
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'READY' || tab === 'IN_PROGRESS' || tab === 'CLOSED' || tab === 'ALL') {
       this.activeStatusTab = tab;
+    }
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.pageIndex = saved.page ?? this.pageIndex;
+      this.pageSize = saved.size ?? this.pageSize;
+      if (saved.search) {
+        this.filter = { ...this.filter, keyword: saved.search };
+      }
+      if (!tab && saved.tab && (saved.tab === 'READY' || saved.tab === 'IN_PROGRESS' || saved.tab === 'CLOSED' || saved.tab === 'ALL')) {
+        this.activeStatusTab = saved.tab;
+      }
     }
     this.applyStatusFilter();
     this.loadApplications();
@@ -168,9 +151,12 @@ export class ApplicationsListComponent implements OnInit {
     this.loadApplications();
   }
 
-  onPageChange(event: PaginatorState): void {
+  onPageChange(event: { page?: number; rows?: number }): void {
     this.pageIndex = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.pageIndex = 0;
+    }
     this.loadApplications();
   }
 
@@ -204,6 +190,7 @@ export class ApplicationsListComponent implements OnInit {
   }
 
   openApplication(record: ApplicationRecord): void {
+    this.persistListContext();
     this.nav.toApplication(record.applicationId, 'applications');
   }
 
@@ -429,5 +416,14 @@ export class ApplicationsListComponent implements OnInit {
       default:
         return 'neutral';
     }
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.pageIndex,
+      size: this.pageSize,
+      search: this.filter.keyword ?? '',
+      tab: this.activeStatusTab
+    });
   }
 }

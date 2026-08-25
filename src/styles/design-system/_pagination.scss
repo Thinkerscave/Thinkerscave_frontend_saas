@@ -1,11 +1,49 @@
-/* Pagination */
-.tc-pagination {
+/* Pagination — canonical layout: summary left, size + pages right. */
+
+.tc-pagination,
+.app-paginator {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  padding: var(--tc-space-4) 0;
+  padding: var(--tc-space-3) var(--tc-space-5);
+}
 
+.app-list-view-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--tc-space-2);
+  margin-left: auto;
+}
+
+.p-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.p-paginator .p-paginator-current {
+  margin-right: auto;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
+}
+
+@media (max-width: 768px) {
+  .tc-pagination,
+  .app-paginator,
+  .p-paginator {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.tc-pagination {
   &__btn {
     display: inline-flex;
     align-items: center;
@@ -43,6 +81,5 @@
   &__info {
     font-size: var(--tc-font-size-sm);
     color: var(--tc-text-muted);
-    margin-left: 1rem;
   }
 }

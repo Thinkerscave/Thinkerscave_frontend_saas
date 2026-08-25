@@ -5,27 +5,34 @@
   <p-confirmDialog></p-confirmDialog>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading users...</div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <div *ngIf="resetResult" class="users-list__reset" role="status">
-      <div>
-        <strong>Password reset for {{ resetResult.user }}</strong>
-        <p *ngIf="resetResult.password">Temporary password: <code>{{ resetResult.password }}</code> — copy it now; it will not be shown again.</p>
-        <p *ngIf="!resetResult.password">Share the new credentials with the user securely.</p>
-      </div>
-      <button type="button" class="tc-btn" (click)="dismissResetResult()">Dismiss</button>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <div *ngIf="resetResult" class="users-list__reset" role="status">
+    <div>
+      <strong>Password reset for {{ resetResult.user }}</strong>
+      <p *ngIf="resetResult.password">Temporary password: <code>{{ resetResult.password }}</code> — copy it now; it will not be shown again.</p>
+      <p *ngIf="!resetResult.password">Share the new credentials with the user securely.</p>
     </div>
+    <button type="button" class="tc-btn" (click)="dismissResetResult()">Dismiss</button>
+  </div>
 
-    <tc-saas-panel title="Organization users" [subtitle]="totalRecords + ' people · newest first'">
-      <div class="users-list__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search name, email or username">
-        <p-dropdown [options]="roleOptions" [(ngModel)]="roleFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Role" (onChange)="onFilterChange()"></p-dropdown>
-        <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Status" (onChange)="onFilterChange()"></p-dropdown>
-        <app-grid-table-toggle storageKey="access.users.view" [(mode)]="view" ariaLabel="Users view"></app-grid-table-toggle>
-      </div>
+  <tc-saas-panel title="Organization users" [subtitle]="totalRecords + ' people · newest first'">
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search name, email or username"
+      [searching]="refreshing"
+      [view]="view"
+      viewAriaLabel="Users view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyFilters()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewModeChange($event)">
+      <p-dropdown [options]="roleOptions" [(ngModel)]="roleFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Role"></p-dropdown>
+      <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Status"></p-dropdown>
+    </app-list-toolbar>
 
+    <app-list-results [busy]="refreshing">
       <div class="users-list__grid" *ngIf="view === 'grid'">
         <article class="users-list__card" *ngFor="let u of users; trackBy: trackById" (click)="openDetails(u)">
           <span class="users-list__avatar users-list__avatar--lg">{{ userInitials(u) }}</span>
@@ -86,16 +93,18 @@
         </table>
       </div>
 
-      <p-paginator
-        *ngIf="totalRecords > 0"
-        [rows]="pageSize"
-        [totalRecords]="totalRecords"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
-    </tc-saas-panel>
-  </ng-container>
+    </app-list-results>
+
+    <app-paginator
+      *ngIf="totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="users"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </tc-saas-panel>
 </div>
 
 <p-dialog

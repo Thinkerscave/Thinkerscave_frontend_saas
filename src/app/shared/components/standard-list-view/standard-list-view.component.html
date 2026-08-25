@@ -84,9 +84,9 @@
     <p-table #dt [value]="data" [columns]="visibleColumns" [lazy]="!config.isClientSide"
         (onLazyLoad)="onLazyLoad($event)" [paginator]="true" [rows]="config.rows || 10"
         [totalRecords]="config.totalRecords || data.length" [loading]="config.loading"
-        [rowsPerPageOptions]="config.rowsPerPageOptions || [10, 25, 50]" responsiveLayout="scroll"
+        [rowsPerPageOptions]="config.rowsPerPageOptions || [10, 20, 50, 100]" responsiveLayout="scroll"
         [globalFilterFields]="globalFilterFields" styleClass="p-datatable-sm p-datatable-striped"
-        [rowHover]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [rowHover]="true" currentPageReportTemplate="Showing {first}–{last} of {totalRecords} results"
         [showCurrentPageReport]="true" [(selection)]="selectedRows" [dataKey]="config.dataKey || ''">
 
         <!-- Table Header -->

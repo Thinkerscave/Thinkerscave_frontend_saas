@@ -14,6 +14,9 @@ import {
   SaasStatGridComponent,
   SaasStat
 } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
 type PriorityFilter = 'all' | 'High' | 'Medium' | 'Low';
 type StatusFilter = 'all' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
@@ -27,7 +30,7 @@ interface SelectOption {
   selector: 'app-announcements-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent, AppPaginatorComponent],
   templateUrl: './announcements-list.component.html',
   styleUrl: './announcements-list.component.scss'
 })
@@ -43,6 +46,9 @@ export class AnnouncementsListComponent implements OnInit {
   audienceFilter = 'all';
   priorityFilter: PriorityFilter = 'all';
   statusFilter: StatusFilter = 'all';
+  page = 0;
+  pageSize: number = UI_PAGINATION.table.defaultSize;
+  readonly pageSizeOptions = [...UI_PAGINATION.table.options];
 
   readonly priorityOptions: SelectOption[] = [
     { label: 'All', value: 'all' },
@@ -102,6 +108,28 @@ export class AnnouncementsListComponent implements OnInit {
       if (q && !n.title.toLowerCase().includes(q)) return false;
       return true;
     });
+  }
+
+  get paged(): Notice[] {
+    return slicePage(this.filtered, this.page, this.pageSize);
+  }
+
+  onSearchChange(value: string): void {
+    this.search = value;
+    this.page = 0;
+  }
+
+  onFilterChange(): void {
+    this.page = 0;
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   statusTone(s: string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {

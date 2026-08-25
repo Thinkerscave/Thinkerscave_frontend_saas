@@ -14,7 +14,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -30,8 +29,13 @@ import { FOLLOW_UP_TYPES, admissionsPageConfig } from '../../data/admissions-wor
 import { FollowUpRecord, FollowUpType, LeadRecord, LeadStatus } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 import { AdmissionsNavService } from '../../services/admissions-nav.service';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
 
 type FollowUpTab = 'today' | 'overdue' | 'upcoming' | 'all';
+
+const LIST_KEY = 'tc.follow-ups.list';
 
 @Component({
   selector: 'app-follow-ups-center',
@@ -44,11 +48,11 @@ type FollowUpTab = 'today' | 'overdue' | 'upcoming' | 'all';
     ReactiveFormsModule,
     DropdownModule,
     DialogModule,
-    PaginatorModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent,
-    SaasTabsComponent
+    SaasTabsComponent,
+    AppPaginatorComponent
   ],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss', '../../../students/students.shared.scss'],
@@ -62,6 +66,7 @@ export class FollowUpsCenterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly listContext = inject(ListContextService);
 
   readonly pageConfig = admissionsPageConfig('follow-ups');
   readonly followUpTypes = FOLLOW_UP_TYPES;
@@ -146,16 +151,25 @@ export class FollowUpsCenterComponent implements OnInit {
   });
 
   pageIndex = 0;
-  pageSize = 20;
+  pageSize = defaultPageSizeForView('table');
 
-  readonly pagedItems = computed((): FollowUpRecord[] => {
+  get pageSizeOptions(): number[] {
+    return pageSizeOptionsForView('table');
+  }
+
+  get pagedItems(): FollowUpRecord[] {
     const start = this.pageIndex * this.pageSize;
     return this.visibleItems().slice(start, start + this.pageSize);
-  });
+  }
 
   ngOnInit(): void {
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.pageIndex = saved.page ?? this.pageIndex;
+      this.pageSize = saved.size ?? this.pageSize;
+    }
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      const tab = params.get('tab');
+      const tab = params.get('tab') ?? saved?.tab;
       if (tab === 'today' || tab === 'overdue' || tab === 'upcoming' || tab === 'all') {
         this.activeTab.set(tab);
       }
@@ -201,9 +215,12 @@ export class FollowUpsCenterComponent implements OnInit {
     });
   }
 
-  onPageChange(event: PaginatorState): void {
+  onPageChange(event: { page?: number; rows?: number }): void {
     this.pageIndex = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.pageIndex = 0;
+    }
   }
 
   complete(item: FollowUpRecord): void {
@@ -275,6 +292,7 @@ export class FollowUpsCenterComponent implements OnInit {
   }
 
   openLead(inquiryId: number): void {
+    this.persistListContext();
     this.nav.toLead(inquiryId, 'follow-ups');
   }
 
@@ -314,5 +332,13 @@ export class FollowUpsCenterComponent implements OnInit {
       map.set(item.followUpId, item);
     }
     return [...map.values()].sort((x, y) => (y.followUpDate ?? '').localeCompare(x.followUpDate ?? ''));
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.pageIndex,
+      size: this.pageSize,
+      tab: this.activeTab()
+    });
   }
 }

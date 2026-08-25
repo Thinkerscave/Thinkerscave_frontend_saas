@@ -67,13 +67,15 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="newApplication()">New Application</button>
     </div>
 
-    <p-paginator
-      *ngIf="!loading"
+    <app-paginator
+      *ngIf="!loading && totalElements > 0"
+      [page]="pageIndex"
       [rows]="pageSize"
       [totalRecords]="totalElements"
-      [first]="pageIndex * pageSize"
-      [rowsPerPageOptions]="[10, 20, 50]"
-      (onPageChange)="onPageChange($event)" />
+      [pageSizeOptions]="pageSizeOptions"
+      noun="applications"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </tc-saas-panel>
 </section>
 

@@ -30,97 +30,76 @@
         <h2 class="stu-panel-title">{{ 'students.directory' | tcTranslate }}</h2>
         <small class="tc-card__hint">{{ totalElements }} total result(s)</small>
       </div>
-      <div class="stu-panel-tools">
-        <div class="tc-view-switch">
-          <app-grid-table-toggle
-            storageKey="students.directory.view"
-            [(mode)]="view"
-            ariaLabel="Student directory view">
-          </app-grid-table-toggle>
-        </div>
-        <p-dropdown
-          [options]="sortOptions"
-          [(ngModel)]="sortField"
-          optionLabel="label"
-          optionValue="value"
-          [filter]="false"
-          appendTo="body"
-          styleClass="stu-filter-dropdown"
-          (onChange)="onSortChange(sortField)">
-        </p-dropdown>
-      </div>
     </div>
 
-    <div class="tc-filter-bar">
-      <div class="tc-form-field stu-filter-grow">
-        <label>Search</label>
-        <input type="text" [(ngModel)]="filter.keyword"
-               placeholder="Name, Admission No., Roll No., Mobile…"
-               (keyup.enter)="runSearch()"/>
-      </div>
-      <div class="tc-form-field">
-        <label>Class</label>
-        <p-dropdown
-          [options]="classSelectOptions"
-          [(ngModel)]="filter.classId"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Classes"
-          [showClear]="true"
-          [filter]="true"
-          filterBy="label"
-          appendTo="body"
-          styleClass="stu-filter-dropdown"
-          (onChange)="onClassChanged()">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Section</label>
-        <p-dropdown
-          [options]="sectionSelectOptions"
-          [(ngModel)]="filter.sectionId"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Sections"
-          [showClear]="true"
-          [filter]="true"
-          filterBy="label"
-          [disabled]="!filter.classId"
-          appendTo="body"
-          styleClass="stu-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Status</label>
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="filter.status"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Status"
-          [showClear]="true"
-          appendTo="body"
-          styleClass="stu-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field stu-filter-actions">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
-          <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
-          Search
-        </button>
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
-      </div>
-    </div>
+    <app-list-toolbar
+      [search]="filter.keyword || ''"
+      searchPlaceholder="Name, Admission No., Roll No., Mobile…"
+      [searching]="searching"
+      [view]="view"
+      viewAriaLabel="Student directory view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyFilters()"
+      (reset)="clearFilters()"
+      (viewChange)="onViewModeChange($event)">
+      <p-dropdown
+        [options]="classSelectOptions"
+        [(ngModel)]="filter.classId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Classes"
+        [showClear]="true"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="stu-filter-dropdown"
+        (onChange)="onClassChanged()">
+      </p-dropdown>
+      <p-dropdown
+        [options]="sectionSelectOptions"
+        [(ngModel)]="filter.sectionId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Sections"
+        [showClear]="true"
+        [filter]="true"
+        filterBy="label"
+        [disabled]="!filter.classId"
+        appendTo="body"
+        styleClass="stu-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="filter.status"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Status"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="stu-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="sortOptions"
+        [(ngModel)]="sortField"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="false"
+        appendTo="body"
+        styleClass="stu-filter-dropdown">
+      </p-dropdown>
+    </app-list-toolbar>
 
     <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
 
-    <div class="stu-directory-skeleton" *ngIf="loading">
+    <app-list-results [busy]="refreshing">
+    <div class="stu-directory-skeleton" *ngIf="!hasLoaded && loading">
       <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
     </div>
 
-    <div class="stu-directory-grid" *ngIf="!loading && students.length && view === 'grid'">
+    <div class="stu-directory-grid" *ngIf="students.length && view === 'grid'">
       <article *ngFor="let s of students; let i = index"
                class="tc-card is-clickable stu-student-card"
                [style.animation-delay.ms]="i * 40"
@@ -181,7 +160,7 @@
       </article>
     </div>
 
-    <div class="tc-table-wrap" *ngIf="!loading && students.length && view === 'table'">
+    <div class="tc-table-wrap" *ngIf="students.length && view === 'table'">
       <table class="tc-table">
         <thead>
           <tr>
@@ -257,7 +236,7 @@
     </div>
 
     <app-empty-state
-      *ngIf="!loading && !students.length"
+      *ngIf="hasLoaded && !students.length"
       illustration="students"
       title="No students found"
       message="Try adjusting your filters or add new students."
@@ -265,15 +244,17 @@
       actionIcon="pi pi-plus"
       (action)="openAddStudent()">
     </app-empty-state>
+    </app-list-results>
 
-    <div class="stu-paginator" *ngIf="!loading && totalElements > 0">
-      <p-paginator
-        [first]="pageIndex * pageSize"
+    <div class="stu-paginator" *ngIf="totalElements > 0">
+      <app-paginator
+        [page]="pageIndex"
         [rows]="pageSize"
         [totalRecords]="totalElements"
-        [rowsPerPageOptions]="[10, 20, 50]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
+        [pageSizeOptions]="pageSizeOptions"
+        noun="students"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </div>
   </div>
 

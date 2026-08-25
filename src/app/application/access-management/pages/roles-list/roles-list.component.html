@@ -37,7 +37,7 @@
 
     <tc-saas-panel title="All Roles" [subtitle]="filtered.length + ' roles'">
       <div class="roles-list__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" placeholder="Search roles...">
+        <input type="search" class="saas-search" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search roles...">
       </div>
       <div class="saas-table-wrap">
         <table class="saas-data-table">
@@ -45,7 +45,7 @@
             <tr><th>Role</th><th>Type</th><th>Users</th><th>Status</th><th></th></tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of filtered; trackBy: trackById" (click)="openWorkspace(r)" class="roles-list__row">
+            <tr *ngFor="let r of paged; trackBy: trackById" (click)="openWorkspace(r)" class="roles-list__row">
               <td><strong>{{ r.roleName }}</strong><br><code>{{ r.roleCode }}</code></td>
               <td>{{ roleTypeLabel(r.roleType) }}</td>
               <td>{{ r.activeUserCount ?? 0 }}</td>
@@ -62,6 +62,15 @@
           </tbody>
         </table>
       </div>
+      <app-paginator
+        *ngIf="filtered.length"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="filtered.length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="roles"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>

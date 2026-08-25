@@ -23,7 +23,7 @@
     padding: 1rem;
     border: 1px solid var(--saas-border, #e2e8f0);
     border-radius: 12px;
-    background: #fff;
+    background: var(--tc-surface-card-solid);
     cursor: pointer;
     code, p { color: var(--saas-text-soft, #64748b); margin: 0; font-size: 0.82rem; }
     &:hover { border-color: var(--saas-primary, #2563eb); }

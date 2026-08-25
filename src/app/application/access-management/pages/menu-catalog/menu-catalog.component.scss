@@ -23,7 +23,7 @@
     padding: 1rem;
     border: 1px solid var(--saas-border, #e2e8f0);
     border-radius: 12px;
-    background: #fff;
+    background: var(--tc-surface-card-solid);
     cursor: pointer;
     p, small, code { margin: 0; color: var(--saas-text-soft, #64748b); font-size: 0.82rem; }
     &:hover, &.is-open { border-color: var(--saas-primary, #2563eb); }
@@ -78,7 +78,7 @@
     padding: 0.55rem 0.7rem;
     border: 1px solid var(--saas-border, #e2e8f0);
     border-radius: 10px;
-    background: #fff;
+    background: var(--tc-surface-card-solid);
     code, .menu-catalog__route {
       color: var(--saas-text-soft, #64748b);
       font-size: 0.78rem;

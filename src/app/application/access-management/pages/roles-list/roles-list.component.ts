@@ -18,6 +18,9 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
 @Component({
   selector: 'app-roles-list',
@@ -25,7 +28,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppToastComponent, 
     CommonModule, FormsModule, DropdownModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
+    AppPaginatorComponent
   ],
   providers: [MessageService],
   templateUrl: './roles-list.component.html',
@@ -43,6 +47,9 @@ export class RolesListComponent implements OnInit {
   saving = false;
   errorMessage = '';
   search = '';
+  page = 0;
+  pageSize: number = UI_PAGINATION.table.defaultSize;
+  readonly pageSizeOptions = [...UI_PAGINATION.table.options];
   roles: AccessRole[] = [];
   createOpen = false;
   draft: CreateRolePayload = this.emptyDraft();
@@ -79,6 +86,24 @@ export class RolesListComponent implements OnInit {
     return this.roles.filter(r =>
       r.roleName.toLowerCase().includes(q) || r.roleCode.toLowerCase().includes(q)
     );
+  }
+
+  get paged(): AccessRole[] {
+    return slicePage(this.filtered, this.page, this.pageSize);
+  }
+
+  onSearchChange(value: string): void {
+    this.search = value;
+    this.page = 0;
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   load(): void {

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
@@ -16,6 +16,7 @@ import {
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 type ProfileTab = 'OVERVIEW' | 'PERSONAL' | 'FAMILY' | 'ACADEMICS' | 'DOCUMENTS' | 'MEDICAL' | 'TIMELINE';
 type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
@@ -24,7 +25,7 @@ type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
   selector: 'app-student-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, ChartModule, DropdownModule, AvatarComponent],
+  imports: [CommonModule, FormsModule, ChartModule, DropdownModule, AvatarComponent, AppBackNavComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-profile-360.component.html'
 })

@@ -83,12 +83,14 @@
       </article>
     </div>
 
-    <p-paginator
-      *ngIf="!loading && totalRecords > pageSize"
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalRecords > 0"
+      [page]="page"
       [rows]="pageSize"
       [totalRecords]="totalRecords"
-      [first]="page * pageSize"
-      (onPageChange)="onPageChange($event)">
-    </p-paginator>
+      [pageSizeOptions]="pageSizeOptions"
+      noun="customers"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </tc-saas-panel>
 </div>

@@ -10,7 +10,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule } from 'primeng/paginator';
 
 import {
   EmploymentCategory,
@@ -23,7 +22,11 @@ import {
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { CreateStaffComponent } from '../create-staff/create-staff.component';
@@ -40,6 +43,8 @@ interface FilterOption<T = string | null> {
   value: T;
 }
 
+const LIST_KEY = 'staff.directory.view';
+
 @Component({
   selector: 'app-staff-directory',
   standalone: true,
@@ -48,8 +53,9 @@ interface FilterOption<T = string | null> {
     CommonModule,
     FormsModule,
     DropdownModule,
-    PaginatorModule,
-    AppGridTableToggleComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
     AvatarComponent,
     SkeletonComponent,
     EmptyStateComponent,
@@ -62,13 +68,18 @@ export class StaffDirectoryComponent implements OnInit {
   private readonly api = inject(StaffService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   searching = false;
   errorMessage = '';
   showAddDrawer = false;
 
-  view: AppListViewMode = 'grid';
+  view: AppListViewMode = this.viewPrefs.globalDefault();
 
   dashboard: StaffDashboard = {
     totalStaff: 0, teachingStaff: 0, nonTeachingStaff: 0,
@@ -79,7 +90,9 @@ export class StaffDirectoryComponent implements OnInit {
     content: [], totalElements: 0, totalPages: 0, size: 20, number: 0
   };
 
-  filters: StaffFilterParams = { page: 0, size: 12, sort: 'createdOn,desc' };
+  filters: StaffFilterParams = { page: 0, size: UI_PAGINATION.defaultSize, sort: 'createdOn,desc' };
+  private appliedFilters: StaffFilterParams = { page: 0, size: UI_PAGINATION.defaultSize, sort: 'createdOn,desc' };
+  readonly pageSizeOptions = UI_PAGINATION.options;
 
   openMenuId: number | null = null;
   actionLoading: number | null = null;
@@ -119,6 +132,17 @@ export class StaffDirectoryComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.view = this.viewPrefs.initialView(saved.view);
+      this.filters = {
+        ...this.filters,
+        page: saved.page ?? this.filters.page,
+        size: saved.size ?? this.filters.size,
+        keyword: saved.search || undefined
+      };
+      this.appliedFilters = { ...this.filters };
+    }
     this.loadDashboard();
     this.loadStaff();
   }
@@ -131,41 +155,89 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   loadStaff(): void {
-    this.loading = true;
-    this.api.getStaffList(this.filters)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
+    this.searching = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
+    const request: StaffFilterParams = {
+      ...this.appliedFilters,
+      keyword: this.filters.keyword,
+      page: this.filters.page,
+      size: this.filters.size,
+      sort: this.filters.sort
+    };
+    this.api.getStaffList(request)
+      .pipe(finalize(() => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
+        this.loading = false;
+        this.refreshing = false;
+        this.searching = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: page => { this.staffPage = page; },
-        error: () => { this.errorMessage = 'Unable to load staff. Please try again.'; }
+        next: page => {
+          if (!this.query.isCurrent(requestId)) {
+            return;
+          }
+          this.staffPage = page;
+          this.errorMessage = '';
+        },
+        error: () => {
+          if (!this.query.isCurrent(requestId)) {
+            return;
+          }
+          this.errorMessage = 'Unable to load staff. Please try again.';
+        }
       });
+  }
+
+  applyQuery(): void {
+    this.filters = { ...this.filters, page: 0 };
+    this.loadStaff();
   }
 
   search(): void {
+    this.appliedFilters = {
+      staffType: this.filters.staffType,
+      employmentCategory: this.filters.employmentCategory,
+      employmentStatus: this.filters.employmentStatus
+    };
     this.filters = { ...this.filters, page: 0 };
-    this.searching = true;
-    this.api.getStaffList(this.filters)
-      .pipe(finalize(() => { this.searching = false; this.cdr.markForCheck(); }))
-      .subscribe({
-        next: page => { this.staffPage = page; this.errorMessage = ''; },
-        error: () => { this.errorMessage = 'Search failed. Please retry.'; }
-      });
+    this.loadStaff();
   }
 
   clearFilters(): void {
-    this.filters = { page: 0, size: 12, sort: 'createdOn,desc' };
-    this.search();
+    this.filters = { page: 0, size: UI_PAGINATION.defaultSize, sort: 'createdOn,desc' };
+    this.appliedFilters = { page: 0, size: UI_PAGINATION.defaultSize, sort: 'createdOn,desc' };
+    this.loadStaff();
   }
 
   onPageChange(event: { page?: number; rows?: number }): void {
+    const nextSize = event.rows ?? this.filters.size;
     this.filters = {
       ...this.filters,
-      page: event.page ?? 0,
-      size: event.rows ?? this.filters.size
+      page: nextSize !== this.filters.size ? 0 : (event.page ?? 0),
+      size: nextSize
     };
     this.loadStaff();
   }
 
+  onKeywordChange(value: string): void {
+    this.filters = { ...this.filters, keyword: value };
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.cdr.markForCheck();
+  }
+
   openProfile(staff: StaffSummary): void {
+    this.persistListContext();
     this.router.navigate(['/app/staff/profile', staff.staffId]);
   }
 
@@ -186,6 +258,7 @@ export class StaffDirectoryComponent implements OnInit {
   editStaff(staff: StaffSummary, event?: Event): void {
     event?.stopPropagation();
     this.closeMenu();
+    this.persistListContext();
     this.router.navigate(['/app/staff/edit', staff.staffId]);
   }
 
@@ -236,5 +309,14 @@ export class StaffDirectoryComponent implements OnInit {
 
   categoryLabel(category: EmploymentCategory): string {
     return this.categoryOptions.find(o => o.value === category)?.label ?? category;
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.filters.page,
+      size: this.filters.size,
+      search: this.filters.keyword ?? '',
+      view: this.view
+    });
   }
 }

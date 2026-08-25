@@ -4,7 +4,6 @@
   @include tokens.app-list-card-surface;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--tc-space-3);
   padding: var(--tc-space-3) var(--tc-space-4);
   flex-wrap: wrap;
@@ -16,6 +15,13 @@
     flex: 1 1 auto;
     flex-wrap: wrap;
     min-width: 0;
+
+    > app-search-bar,
+    > .app-search-bar {
+      flex: 1 1 28%;
+      min-width: 200px;
+      max-width: 28rem;
+    }
   }
 
   &__end {

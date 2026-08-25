@@ -341,19 +341,19 @@ export class PlatformManagementService {
       page?: number;
       number?: number;
       size?: number;
-    }>(response, { content: [], totalElements: 0, totalPages: 0, page: 0, size: 20 });
+    }>(response, { content: [], totalElements: 0, totalPages: 0, page: 0, size: 10 });
 
     return {
       content: page.content ?? [],
       totalElements: page.totalElements ?? 0,
       totalPages: page.totalPages ?? 0,
       number: page.number ?? page.page ?? 0,
-      size: page.size ?? 20
+      size: page.size ?? 10
     };
   }
 
   private emptyPage<T>(): SpringPage<T> {
-    return { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 };
+    return { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
   }
 
   private emptyDashboard(): PlatformDashboard {

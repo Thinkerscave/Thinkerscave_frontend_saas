@@ -1,6 +1,6 @@
 <div class="saas-page user-permissions">
   <tc-saas-page-header>
-    <a class="tc-btn" routerLink="/app/access-management/users"><i class="pi pi-arrow-left"></i> Back to users</a>
+    <app-back-nav fallback="/app/access-management/users" label="Back to users"></app-back-nav>
     <ng-container *ngIf="canManage && user">
       <button type="button" class="tc-btn" (click)="toggleLock()">{{ isLocked() ? 'Unlock account' : 'Lock account' }}</button>
       <button type="button" class="tc-btn" (click)="confirmResetPassword()">Reset password</button>

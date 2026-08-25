@@ -4,20 +4,23 @@
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading menu catalog...</div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Published menus" subtitle="View only · these are the modules you can assign to a responsibility">
-      <div class="menu-catalog__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search module, page or route">
-        <div class="menu-catalog__views" role="group" aria-label="Catalog view">
-          <button type="button" class="tc-btn" [class.tc-btn--primary]="view === 'cards'" (click)="setView('cards')">Cards</button>
-          <button type="button" class="tc-btn" [class.tc-btn--primary]="view === 'hierarchy'" (click)="setView('hierarchy')">Hierarchy</button>
-        </div>
-      </div>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-panel title="Published menus" subtitle="View only · these are the modules you can assign to a responsibility">
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search module, page or route"
+      [view]="view"
+      viewAriaLabel="Menu catalog view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyQuery()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewChange($event)">
+    </app-list-toolbar>
 
-      <div class="menu-catalog__cards" *ngIf="view === 'cards'">
+    <app-list-results [busy]="loading">
+      <div class="menu-catalog__cards app-data-grid" *ngIf="view === 'grid'">
         <article
           class="menu-catalog__card"
           *ngFor="let module of pagedModules; trackBy: trackByMenu"
@@ -43,23 +46,24 @@
         <p class="empty" *ngIf="!pagedModules.length">No menus match this search.</p>
       </div>
 
-      <ul class="menu-catalog__tree" *ngIf="view === 'hierarchy'">
+      <ul class="menu-catalog__tree" *ngIf="view === 'table'">
         <ng-container *ngFor="let module of pagedModules; trackBy: trackByMenu">
           <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: module, depth: 0 }"></ng-container>
         </ng-container>
         <li class="empty" *ngIf="!pagedModules.length">No menus match this search.</li>
       </ul>
+    </app-list-results>
 
-      <p-paginator
-        *ngIf="totalModules > 0"
-        [rows]="pageSize"
-        [totalRecords]="totalModules"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
-    </tc-saas-panel>
-  </ng-container>
+    <app-paginator
+      *ngIf="totalModules > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalModules"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="modules"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </tc-saas-panel>
 </div>
 
 <ng-template #nodeTpl let-node let-depth="depth">

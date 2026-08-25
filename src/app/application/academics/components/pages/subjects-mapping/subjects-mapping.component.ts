@@ -15,11 +15,15 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenuModule } from 'primeng/menu';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { AppGridTableToggleComponent, AppListViewMode, AppPaginatorComponent } from '../../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/utils/paged-result.util';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { ViewPreferenceService } from '../../../../services/view-preference.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
@@ -42,6 +46,8 @@ import {
     FormsModule,
     ReactiveFormsModule,
     SaasPageHeaderComponent,
+    AppGridTableToggleComponent,
+    AppPaginatorComponent,
     DialogModule,
     DropdownModule,
     MenuModule,
@@ -63,6 +69,7 @@ export class SubjectsMappingPageComponent implements OnInit {
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly viewPrefs = inject(ViewPreferenceService);
   readonly permissions = inject(PermissionService);
 
   readonly resource = ACADEMICS_SUBJECTS_RESOURCE;
@@ -91,9 +98,9 @@ export class SubjectsMappingPageComponent implements OnInit {
   categoryFilter: SubjectCategory | null = null;
   /** Default Active so deactivated subjects stay out of the main working list. */
   activeFilter: boolean | null = true;
-  viewMode: 'grid' | 'list' = 'grid';
-  page = 1;
-  pageSize = 12;
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
 
   showSubjectDialog = false;
   editingSubjectId: number | null = null;
@@ -120,23 +127,12 @@ export class SubjectsMappingPageComponent implements OnInit {
     return this.dashboard?.subjects?.length ?? 0;
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalSubjects / this.pageSize));
-  }
-
-  get pageStart(): number {
-    if (!this.totalSubjects) return 0;
-    return (this.page - 1) * this.pageSize + 1;
-  }
-
-  get pageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.totalSubjects);
-  }
-
   get pagedSubjects(): SubjectDto[] {
-    const all = this.dashboard?.subjects ?? [];
-    const start = (this.page - 1) * this.pageSize;
-    return all.slice(start, start + this.pageSize);
+    return slicePage(this.dashboard?.subjects ?? [], this.page, this.pageSize);
+  }
+
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
   }
 
   get hasActiveFilters(): boolean {
@@ -172,7 +168,7 @@ export class SubjectsMappingPageComponent implements OnInit {
     this.search$
       .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.page = 1;
+        this.page = 0;
         this.reload();
       });
 
@@ -205,41 +201,44 @@ export class SubjectsMappingPageComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   onYearChange(): void {
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
-  setPage(next: number): void {
-    this.page = Math.min(Math.max(1, next), this.totalPages);
+  onViewModeChange(mode: AppListViewMode): void {
+    this.viewMode = mode;
     this.cdr.markForCheck();
   }
 
-  setPageSize(size: number): void {
-    this.pageSize = Number(size) || 12;
-    this.page = 1;
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.cdr.markForCheck();
   }
 
   clearSearch(): void {
     this.searchTerm = '';
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearCategory(): void {
     this.categoryFilter = null;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearStatus(): void {
     this.activeFilter = null;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
@@ -247,7 +246,7 @@ export class SubjectsMappingPageComponent implements OnInit {
     this.searchTerm = '';
     this.categoryFilter = null;
     this.activeFilter = true;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
@@ -273,9 +272,7 @@ export class SubjectsMappingPageComponent implements OnInit {
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
-          if (this.page > this.totalPages) {
-            this.page = this.totalPages;
-          }
+          this.page = clampPage(this.page, Math.ceil(this.totalSubjects / this.pageSize));
         },
         error: (err) => this.messages.add({
           severity: 'error',

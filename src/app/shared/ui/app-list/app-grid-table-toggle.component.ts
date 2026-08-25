@@ -4,13 +4,13 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
-  inject,
   Input,
-  OnInit,
-  Output
+  Output,
+  inject
 } from '@angular/core';
+import { AppListViewMode } from '../../config/ui-standards';
 
-export type AppListViewMode = 'table' | 'grid';
+export type { AppListViewMode };
 
 @Component({
   selector: 'app-grid-table-toggle',
@@ -22,51 +22,41 @@ export type AppListViewMode = 'table' | 'grid';
       <button
         type="button"
         class="app-grid-table-toggle__btn"
-        [class.is-active]="mode === 'table'"
-        [attr.aria-pressed]="mode === 'table'"
-        title="Table view"
-        (click)="setMode('table')">
-        <i class="pi pi-list" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="app-grid-table-toggle__btn"
         [class.is-active]="mode === 'grid'"
         [attr.aria-pressed]="mode === 'grid'"
         title="Grid view"
         (click)="setMode('grid')">
         <i class="pi pi-th-large" aria-hidden="true"></i>
       </button>
+      <button
+        type="button"
+        class="app-grid-table-toggle__btn"
+        [class.is-active]="mode === 'table'"
+        [attr.aria-pressed]="mode === 'table'"
+        title="Table view"
+        (click)="setMode('table')">
+        <i class="pi pi-list" aria-hidden="true"></i>
+      </button>
     </div>
   `,
   styleUrl: './app-grid-table-toggle.component.scss'
 })
-export class AppGridTableToggleComponent implements OnInit {
+export class AppGridTableToggleComponent {
   private readonly cdr = inject(ChangeDetectorRef);
 
-  @Input({ required: true }) storageKey!: string;
-  @Input() mode: AppListViewMode = 'grid';
+  /** @deprecated Parent owns view state. Kept so existing templates keep compiling. */
+  @Input() pageKey?: string;
+  /** @deprecated Use pageKey. Kept so existing templates keep compiling. */
+  @Input() storageKey?: string;
+  @Input() mode: AppListViewMode = 'table';
   @Input() ariaLabel = 'View mode';
   @Output() modeChange = new EventEmitter<AppListViewMode>();
 
-  ngOnInit(): void {
-    const saved = localStorage.getItem(this.storageKey);
-    if (saved === 'table' || saved === 'grid') {
-      this.mode = saved;
-      this.modeChange.emit(this.mode);
-      this.cdr.markForCheck();
-    } else if (saved === 'cards') {
-      this.mode = 'grid';
-      localStorage.setItem(this.storageKey, 'grid');
-      this.modeChange.emit(this.mode);
-      this.cdr.markForCheck();
-    }
-  }
-
   setMode(next: AppListViewMode): void {
-    if (this.mode === next) return;
+    if (this.mode === next) {
+      return;
+    }
     this.mode = next;
-    localStorage.setItem(this.storageKey, next);
     this.modeChange.emit(next);
     this.cdr.markForCheck();
   }

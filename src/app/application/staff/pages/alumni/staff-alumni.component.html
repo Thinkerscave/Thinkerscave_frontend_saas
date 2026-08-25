@@ -9,7 +9,7 @@
   <div class="sd-filter-panel">
     <div class="sd-filter-panel__search">
       <i class="pi pi-search sd-filter-panel__search-icon"></i>
-      <input type="search" [(ngModel)]="keyword" placeholder="Search alumni by name, ID, or designation..." />
+      <input type="search" [ngModel]="keyword" (ngModelChange)="onKeywordChange($event)" placeholder="Search alumni by name, ID, or designation..." />
     </div>
     <button type="button" class="sd-btn sd-btn--ghost" (click)="loadAlumni()">
       <i class="pi pi-refresh"></i> Refresh
@@ -34,7 +34,7 @@
 
   @if (!loading && filteredAlumni().length > 0) {
     <div class="sd-card-grid">
-      @for (s of filteredAlumni(); track trackByStaff($index, s)) {
+      @for (s of pagedAlumni(); track trackByStaff($index, s)) {
         <article class="sd-card" (click)="openProfile(s)">
           <div class="sd-card__avatar">
             @if (s.photoUrl) {
@@ -60,6 +60,14 @@
         </article>
       }
     </div>
+    <app-paginator
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="filteredAlumni().length"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="alumni"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   }
 </section>
 

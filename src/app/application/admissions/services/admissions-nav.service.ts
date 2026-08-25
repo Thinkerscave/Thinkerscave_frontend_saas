@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { BackNavigationService } from '../../../core/services/back-navigation.service';
 
 /** Back navigation that returns to the page that opened the current screen. */
 @Injectable({ providedIn: 'root' })
 export class AdmissionsNavService {
   private readonly router = inject(Router);
-  private readonly location = inject(Location);
+  private readonly nav = inject(BackNavigationService);
 
   readonly fallbacks: Record<string, string> = {
     overview: '/app/admissions/overview',
@@ -17,17 +17,7 @@ export class AdmissionsNavService {
   };
 
   back(route: ActivatedRoute, fallback = '/app/admissions/leads'): void {
-    const from = route.snapshot.queryParamMap.get('from');
-    const mapped = from ? this.fallbacks[from] : null;
-    if (mapped) {
-      void this.router.navigateByUrl(mapped);
-      return;
-    }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      this.location.back();
-      return;
-    }
-    void this.router.navigateByUrl(fallback);
+    this.nav.back({ fallback, route, fromMap: this.fallbacks });
   }
 
   toLead(inquiryId: number, from: string): void {

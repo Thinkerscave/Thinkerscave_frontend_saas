@@ -23,6 +23,7 @@ import {
   PageResponse
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 type ProfileTab = 'overview' | 'responsibilities' | 'salary' | 'payroll' | 'documents' | 'activity';
 
@@ -32,7 +33,7 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
@@ -284,8 +285,6 @@ export class StaffProfile360Component implements OnInit {
     if (!name) { return '?'; }
     return name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
   }
-
-  back(): void { this.router.navigate(['/app/staff/directory']); }
 
   monthName(month: number): string {
     return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' });

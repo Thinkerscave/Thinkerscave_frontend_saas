@@ -7,13 +7,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { LoginService } from '../../../../core/services/login.service';
-import { debounceTime, Subject } from 'rxjs';
-
+import { ListContextService } from '../../../../core/services/list-context.service';
 import { AccessUser, PasswordResetResult, RoleType, UserStatus } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
 import {
@@ -26,7 +24,10 @@ import {
   userStatusTone
 } from '../../utils/access-display.util';
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
-import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -35,13 +36,15 @@ import {
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
 
+const LIST_KEY = 'access.users.view';
+
 @Component({
   selector: 'app-users-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppToastComponent, ConfirmDialogModule, DialogModule, TooltipModule,
-    CommonModule, FormsModule, DropdownModule, PaginatorModule, AppGridTableToggleComponent,
+    CommonModule, FormsModule, DropdownModule, AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
     SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService, ConfirmationService],
@@ -57,18 +60,25 @@ export class UsersListComponent implements OnInit {
   private readonly messages = inject(MessageService);
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
-  private readonly search$ = new Subject<string>();
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   errorMessage = '';
   search = '';
   statusFilter: 'all' | UserStatus = 'all';
   roleFilter: 'all' | RoleType = 'all';
+  private appliedStatus: 'all' | UserStatus = 'all';
+  private appliedRole: 'all' | RoleType = 'all';
   users: AccessUser[] = [];
   totalRecords = 0;
   page = 0;
-  pageSize = 12;
-  view: AppListViewMode = 'table';
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
+  view: AppListViewMode = this.viewPrefs.globalDefault();
   resetResult: { user: string; password?: string } | null = null;
   infoUser: AccessUser | null = null;
 
@@ -101,11 +111,22 @@ export class UsersListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.page = 0;
-      this.load();
-    });
-    this.load();
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.page = saved.page ?? this.page;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.search = saved.search ?? this.search;
+      this.view = this.viewPrefs.initialView(saved.view);
+      if (saved.filters?.['status']) {
+        this.statusFilter = saved.filters['status'] as 'all' | UserStatus;
+        this.appliedStatus = this.statusFilter;
+      }
+      if (saved.filters?.['role']) {
+        this.roleFilter = saved.filters['role'] as 'all' | RoleType;
+        this.appliedRole = this.roleFilter;
+      }
+    }
+    this.reload();
   }
 
   get stats(): SaasStat[] {
@@ -118,40 +139,86 @@ export class UsersListComponent implements OnInit {
     ];
   }
 
-  load(): void {
-    this.loading = true;
+  reload(): void {
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.errorMessage = '';
     this.api.searchUsers(this.api.organizationId(), {
       search: this.search.trim() || undefined,
-      status: this.statusFilter === 'all' ? undefined : this.statusFilter,
-      roleType: this.roleFilter === 'all' ? undefined : this.roleFilter,
+      status: this.appliedStatus === 'all' ? undefined : this.appliedStatus,
+      roleType: this.appliedRole === 'all' ? undefined : this.appliedRole,
       sort: 'createdOn,desc'
     }, this.page, this.pageSize).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.users = page.content ?? [];
         this.totalRecords = page.totalElements ?? 0;
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       },
       error: () => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.users = [];
         this.errorMessage = 'Could not load users.';
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }
     });
   }
 
-  onSearchChange(): void { this.search$.next(this.search); }
-  onFilterChange(): void { this.page = 0; this.load(); }
+  onSearchTermChange(value: string): void {
+    this.search = value;
+  }
+
+  applyQuery(): void {
+    this.page = 0;
+    this.reload();
+  }
+
+  applyFilters(): void {
+    this.appliedRole = this.roleFilter;
+    this.appliedStatus = this.statusFilter;
+    this.page = 0;
+    this.reload();
+  }
+
+  resetFilters(): void {
+    this.search = '';
+    this.statusFilter = 'all';
+    this.roleFilter = 'all';
+    this.appliedStatus = 'all';
+    this.appliedRole = 'all';
+    this.page = 0;
+    this.reload();
+  }
 
   onPageChange(event: { page?: number; rows?: number }): void {
     this.page = event.page ?? 0;
-    this.pageSize = event.rows ?? this.pageSize;
-    this.load();
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.reload();
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.cdr.markForCheck();
   }
 
   openDetails(user: AccessUser): void {
+    this.persistListContext();
     this.router.navigate(['/app/access-management/users', user.id]);
   }
 
@@ -180,7 +247,7 @@ export class UsersListComponent implements OnInit {
             ? `${userDisplayName(user)} can sign in again.`
             : `${userDisplayName(user)} cannot sign in until you unlock them.`
         });
-        this.load();
+        this.reload();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Update failed', detail: 'Could not change lock status.' })
     });
@@ -231,5 +298,15 @@ export class UsersListComponent implements OnInit {
   formatRoles(user: AccessUser): string {
     const names = (user.roles ?? []).map(r => r.roleName).filter(Boolean);
     return names.length ? names.join(', ') : '—';
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.page,
+      size: this.pageSize,
+      search: this.search,
+      view: this.view,
+      filters: { status: this.appliedStatus, role: this.appliedRole }
+    });
   }
 }
