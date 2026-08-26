@@ -1,21 +1,40 @@
 .responsibilities-list {
-  &__toolbar {
+  &__intro {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
     align-items: center;
-  }
-  &__actions {
-    display: flex;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
     flex-wrap: wrap;
-    gap: 0.35rem;
   }
+
+  &__intro tc-saas-stat-grid {
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+
+  &__new {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  &__row {
+    cursor: pointer;
+    &:hover { background: var(--saas-surface-muted, #f8fafc); }
+  }
+
+  &__name {
+    color: var(--saas-primary, #2563eb);
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 0.85rem;
   }
+
   &__card {
     display: flex;
     flex-direction: column;
@@ -28,6 +47,7 @@
     code, p { color: var(--saas-text-soft, #64748b); margin: 0; font-size: 0.82rem; }
     &:hover { border-color: var(--saas-primary, #2563eb); }
   }
+
   &__card-meta {
     display: flex;
     justify-content: space-between;
@@ -37,14 +57,21 @@
     font-size: 0.75rem;
     color: var(--saas-text-soft, #64748b);
   }
+
   &__form {
     display: grid;
     gap: 0.85rem;
   }
+
   &__form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.6rem;
   }
 }
+
 .saas-field--full { grid-column: 1 / -1; }
+
+:host ::ng-deep .responsibilities-list__form .p-multiselect {
+  width: 100%;
+}

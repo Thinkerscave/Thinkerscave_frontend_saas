@@ -168,16 +168,16 @@ export const ACCESS_PAGES = {
   },
   menus: {
     breadcrumb: 'Menu Catalog',
-    pageSubtitle: 'Navigation modules and pages available to your organization (view only).'
+    pageSubtitle: 'Features and menus included in this school’s plan. Assign these to responsibilities.'
   },
   responsibilities: {
     breadcrumb: 'Responsibilities',
-    pageSubtitle: 'Create organization responsibilities and assign menus to each one.'
+    pageSubtitle: 'Default and custom duties. Click a name to assign staff and menus.'
   },
   responsibilityWorkspace: {
-    breadcrumb: 'Menu Assignment',
+    breadcrumb: 'Responsibility',
     breadcrumbLink: ['/app/access-management/responsibilities'],
-    pageSubtitle: 'Choose which menus and submenus this responsibility can use.'
+    pageSubtitle: 'Details, assigned staff, and the menus this responsibility can use.'
   },
   users: {
     breadcrumb: 'Users',

@@ -51,6 +51,7 @@ export interface AccessMenu {
   featureId?: number;
   featureCode?: string;
   featureName?: string;
+  featureIcon?: string;
   children?: AccessMenu[];
 }
 
@@ -61,6 +62,7 @@ export interface PermissionMatrixRow {
   menuType?: string;
   parentMenuId?: number;
   parentMenuName?: string;
+  displayOrder?: number;
   canView: boolean;
   canManage: boolean;
   canApprove: boolean;
@@ -100,8 +102,18 @@ export interface AccessResponsibilityRequest {
   responsibilityCode: string;
   responsibilityName: string;
   description?: string;
-  displayOrder?: number;
   remarks?: string;
+}
+
+export interface ResponsibilityStaffAssignment {
+  assignmentId: number;
+  staffId: number;
+  staffName?: string;
+  staffCode?: string;
+  userId?: number | null;
+  responsibilityId: number;
+  effectiveFrom?: string;
+  active?: boolean;
 }
 
 export interface EffectivePermission {

@@ -20,10 +20,10 @@
             <i class="pi pi-users"></i><span>Users</span><small>Lock, unlock and reset passwords</small>
           </button>
           <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/responsibilities')">
-            <i class="pi pi-sitemap"></i><span>Responsibilities</span><small>Create and assign menus</small>
+            <i class="pi pi-sitemap"></i><span>Responsibilities</span><small>Assign staff and menus</small>
           </button>
           <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/menus')">
-            <i class="pi pi-th-large"></i><span>Menu catalog</span><small>View menus you can assign</small>
+            <i class="pi pi-th-large"></i><span>Menu catalog</span><small>Features and menus in this school’s plan</small>
           </button>
           <button type="button" class="access-dashboard__action" (click)="navigate('/app/access-management/login-history')">
             <i class="pi pi-history"></i><span>Login history</span><small>Sign-in audit for this school</small>
@@ -34,7 +34,7 @@
         </div>
       </tc-saas-panel>
 
-      <tc-saas-panel title="Responsibilities" subtitle="Click a responsibility to assign menus and submenus.">
+      <tc-saas-panel title="Responsibilities" subtitle="Click a responsibility to see staff, menus and details.">
         <div class="access-roles" *ngIf="responsibilities.length; else noItems">
           <article
             class="access-roles__item"

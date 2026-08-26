@@ -1,50 +1,231 @@
 <div class="saas-page responsibility-workspace">
   <tc-saas-page-header>
-    <a class="tc-btn tc-btn--back" routerLink="/app/access-management/responsibilities"><i class="pi pi-arrow-left"></i> Back to list</a>
-    <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
-      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save assignment
-    </button>
+    <app-back-nav fallback="/app/access-management/responsibilities" label="Back to list"></app-back-nav>
+    <ng-container *ngIf="canManage && responsibility">
+      <button type="button" class="tc-btn" (click)="openEdit()" pTooltip="Change name or description" tooltipPosition="bottom">
+        Edit
+      </button>
+      <button
+        type="button"
+        class="tc-btn"
+        (click)="confirmToggleActive()"
+        [pTooltip]="responsibility.active === false ? 'Make this responsibility available again' : 'Stop using this responsibility for new assignments'"
+        tooltipPosition="bottom">
+        {{ responsibility.active === false ? 'Activate' : 'Deactivate' }}
+      </button>
+    </ng-container>
   </tc-saas-page-header>
 
   <app-toast></app-toast>
+  <p-confirmDialog></p-confirmDialog>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading responsibility...</div>
 
   <ng-container *ngIf="!loading && responsibility">
-    <tc-saas-panel title="Responsibility">
+    <tc-saas-panel title="Details">
       <dl class="responsibility-workspace__meta">
+        <div><dt>Name</dt><dd>{{ responsibility.responsibilityName }}</dd></div>
         <div><dt>Code</dt><dd><code>{{ responsibility.responsibilityCode }}</code></dd></div>
-        <div><dt>Type</dt><dd>{{ responsibility.systemDefined ? 'System' : 'Custom' }}</dd></div>
+        <div><dt>Type</dt><dd><tc-saas-pill [label]="typeLabel()" [tone]="responsibility.systemDefined ? 'info' : 'neutral'"></tc-saas-pill></dd></div>
         <div><dt>Status</dt><dd><tc-saas-pill [label]="responsibility.active === false ? 'Inactive' : 'Active'" [tone]="responsibility.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
-        <div *ngIf="responsibility.description"><dt>Description</dt><dd>{{ responsibility.description }}</dd></div>
+        <div><dt>Created</dt><dd>{{ formatDate(responsibility.createdOn) }}</dd></div>
+        <div class="responsibility-workspace__desc"><dt>Description</dt><dd>{{ responsibility.description || '—' }}</dd></div>
       </dl>
     </tc-saas-panel>
 
-    <tc-saas-panel title="Menu assignment" [subtitle]="canManage ? 'Tick View, Manage or Approve for this responsibility.' : 'View only — you can see assigned menus but cannot change them.'">
-      <div class="saas-table-wrap">
-        <table class="saas-data-table permission-matrix">
+    <tc-saas-panel
+      title="Assigned staff"
+      [subtitle]="assignedStaff.length ? (assignedStaff.length + ' people currently hold this responsibility') : 'No staff assigned yet'">
+      <div class="responsibility-workspace__staff-head" *ngIf="canManage">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="openAssignStaff()">
+          <i class="pi pi-user-plus"></i> Assign staff
+        </button>
+      </div>
+      <div class="saas-table-wrap" *ngIf="assignedStaff.length">
+        <table class="saas-data-table">
           <thead>
             <tr>
-              <th>Menu</th>
-              <th>Module</th>
-              <th>View</th>
-              <th>Manage</th>
-              <th>Approve</th>
+              <th>Staff</th>
+              <th>Code</th>
+              <th>Assigned from</th>
+              <th *ngIf="canManage"></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of rows; trackBy: trackByMenuId">
-              <td><strong>{{ row.menuName }}</strong><br><code>{{ row.menuCode }}</code></td>
-              <td>{{ row.parentMenuName || '—' }}</td>
-              <td class="permission-cell"><input type="checkbox" [checked]="row.canView" [disabled]="!canManage" (change)="toggle(row, 'canView')"></td>
-              <td class="permission-cell"><input type="checkbox" [checked]="row.canManage" [disabled]="!canManage" (change)="toggle(row, 'canManage')"></td>
-              <td class="permission-cell"><input type="checkbox" [checked]="row.canApprove" [disabled]="!canManage" (change)="toggle(row, 'canApprove')"></td>
+            <tr *ngFor="let person of assignedStaff; trackBy: trackByAssignment">
+              <td>
+                <a class="responsibility-workspace__name" href="#" (click)="openStaff(person, $event)">
+                  {{ person.staffName || 'Staff' }}
+                </a>
+              </td>
+              <td><code>{{ person.staffCode || '—' }}</code></td>
+              <td>{{ formatDate(person.effectiveFrom) }}</td>
+              <td *ngIf="canManage">
+                <button type="button" class="tc-btn tc-btn--ghost" (click)="confirmRemoveStaff(person)">Remove</button>
+              </td>
             </tr>
-            <tr *ngIf="!rows.length"><td colspan="5" class="empty">No menus available to assign. Confirm the menu catalog is published for this organization.</td></tr>
           </tbody>
         </table>
       </div>
+      <p *ngIf="!assignedStaff.length" class="empty">Use Assign staff to give this responsibility to several people at once. You can still assign it from a staff profile one person at a time.</p>
+    </tc-saas-panel>
+
+    <tc-saas-panel
+      title="Assigned menus"
+      [subtitle]="editingMenus
+        ? 'Tick a module to grant that privilege to every submenu. You can still change a submenu on its own.'
+        : (assignedMenuCount ? (assignedMenuCount + ' menus this responsibility can use') : 'No menus assigned yet')">
+      <div class="responsibility-workspace__staff-head" *ngIf="canManage && !editingMenus">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="startEditMenus()">
+          <i class="pi pi-pencil"></i> Edit menus
+        </button>
+      </div>
+
+      <ng-container *ngIf="!editingMenus">
+        <div class="responsibility-workspace__tree" *ngIf="assignedModules.length">
+          <section class="responsibility-workspace__module" *ngFor="let module of assignedModules; trackBy: trackByMenuId">
+            <header>
+              <i class="pi pi-folder"></i>
+              <div>
+                <strong>{{ module.row.menuName }}</strong>
+                <small *ngIf="module.children.length">{{ module.children.length }} {{ module.children.length === 1 ? 'submenu' : 'submenus' }}</small>
+              </div>
+              <div class="responsibility-workspace__chips" *ngIf="!module.children.length">
+                <span class="chip" *ngIf="module.row.canView">View</span>
+                <span class="chip chip--manage" *ngIf="module.row.canManage">Manage</span>
+                <span class="chip chip--approve" *ngIf="module.row.canApprove">Approve</span>
+              </div>
+            </header>
+            <ul *ngIf="module.children.length">
+              <li *ngFor="let page of module.children; trackBy: trackByMenuId">
+                <span>{{ page.row.menuName }}</span>
+                <div class="responsibility-workspace__chips">
+                  <span class="chip" *ngIf="page.row.canView">View</span>
+                  <span class="chip chip--manage" *ngIf="page.row.canManage">Manage</span>
+                  <span class="chip chip--approve" *ngIf="page.row.canApprove">Approve</span>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+        <p *ngIf="!assignedModules.length" class="empty">No menus are assigned yet. Use Edit menus to choose modules and submenus.</p>
+      </ng-container>
+
+      <ng-container *ngIf="editingMenus">
+        <div class="responsibility-workspace__tree" *ngIf="modules.length">
+          <section class="responsibility-workspace__module" *ngFor="let module of modules; trackBy: trackByMenuId">
+            <header>
+              <i class="pi pi-folder"></i>
+              <div>
+                <strong>{{ module.row.menuName }}</strong>
+                <small *ngIf="module.children.length">{{ module.children.length }} {{ module.children.length === 1 ? 'submenu' : 'submenus' }}</small>
+              </div>
+              <div class="responsibility-workspace__checks">
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canView') : module.row.canView"
+                    [indeterminate]="someChildrenHave(module, 'canView')"
+                    (change)="toggleModule(module, 'canView')"> View
+                </label>
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canManage') : module.row.canManage"
+                    [indeterminate]="someChildrenHave(module, 'canManage')"
+                    (change)="toggleModule(module, 'canManage')"> Manage
+                </label>
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canApprove') : module.row.canApprove"
+                    [indeterminate]="someChildrenHave(module, 'canApprove')"
+                    (change)="toggleModule(module, 'canApprove')"> Approve
+                </label>
+              </div>
+            </header>
+            <ul *ngIf="module.children.length">
+              <li *ngFor="let page of module.children; trackBy: trackByMenuId">
+                <span>{{ page.row.menuName }}</span>
+                <div class="responsibility-workspace__checks">
+                  <label><input type="checkbox" [checked]="page.row.canView" (change)="toggleLeaf(page.row, 'canView')"> View</label>
+                  <label><input type="checkbox" [checked]="page.row.canManage" (change)="toggleLeaf(page.row, 'canManage')"> Manage</label>
+                  <label><input type="checkbox" [checked]="page.row.canApprove" (change)="toggleLeaf(page.row, 'canApprove')"> Approve</label>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+        <p *ngIf="!modules.length" class="empty">No menus are available to assign. Confirm this organization's plan includes features with menus.</p>
+        <div class="responsibility-workspace__form-actions">
+          <button type="button" class="tc-btn" (click)="cancelEditMenus()" [disabled]="saving">Cancel</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="saveMenus()" [disabled]="saving">
+            <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>
+            {{ saving ? 'Saving…' : 'Save menus' }}
+          </button>
+        </div>
+      </ng-container>
     </tc-saas-panel>
   </ng-container>
 </div>
+
+<p-dialog
+  header="Edit responsibility"
+  [(visible)]="editorOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="closeEditor()">
+  <form class="responsibility-workspace__form" (ngSubmit)="saveDetails()">
+    <label class="saas-field">
+      <span>Name</span>
+      <input [(ngModel)]="form.responsibilityName" name="editName" placeholder="e.g. Class teacher">
+    </label>
+    <label class="saas-field">
+      <span>Code</span>
+      <input [ngModel]="form.responsibilityCode" name="editCode" readonly>
+    </label>
+    <label class="saas-field">
+      <span>Description</span>
+      <textarea [(ngModel)]="form.description" name="editDescription" rows="3" placeholder="e.g. Coordinates a class section and its daily academic work"></textarea>
+    </label>
+    <div class="responsibility-workspace__form-actions">
+      <button type="button" class="tc-btn" (click)="closeEditor()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Update' }}</button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Assign staff"
+  [(visible)]="assignOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="assignOpen = false">
+  <div class="responsibility-workspace__form">
+    <p *ngIf="loadingStaff" class="empty">Loading staff…</p>
+    <p *ngIf="staffLoadError" class="empty">{{ staffLoadError }}</p>
+    <label class="saas-field" *ngIf="!loadingStaff && !staffLoadError">
+      <span>Staff</span>
+      <p-multiSelect
+        [options]="staffOptions"
+        [(ngModel)]="selectedStaffIds"
+        name="assignStaffIds"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select staff to assign"
+        [filter]="true"
+        [showClear]="true"
+        appendTo="body"
+        display="chip"
+        [ngModelOptions]="{standalone: true}">
+      </p-multiSelect>
+    </label>
+    <p class="empty" *ngIf="!loadingStaff && !staffLoadError && !staffOptions.length">Every active staff member already holds this responsibility, or no staff are available.</p>
+    <div class="responsibility-workspace__form-actions">
+      <button type="button" class="tc-btn" (click)="assignOpen = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" [disabled]="assigning || loadingStaff || !selectedStaffIds.length" (click)="saveAssignedStaff()">
+        {{ assigning ? 'Assigning…' : 'Assign' }}
+      </button>
+    </div>
+  </div>
+</p-dialog>

@@ -174,6 +174,7 @@ export interface ResponsibilityAssignment {
   staffId: number;
   staffName?: string;
   staffCode?: string;
+  userId?: number | null;
   responsibilityId: number;
   responsibilityCode?: string;
   responsibilityName: string;

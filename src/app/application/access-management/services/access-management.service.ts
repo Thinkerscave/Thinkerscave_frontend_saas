@@ -20,6 +20,7 @@ import {
   PasswordResetResult,
   PermissionMatrix,
   PermissionUpdateRow,
+  ResponsibilityStaffAssignment,
   RoleType,
   SecurityPolicy,
   SpringPage,
@@ -47,7 +48,7 @@ export class AccessManagementService {
         catchError(() => of({ content: [] as AccessResponsibility[], totalElements: 0, totalPages: 0, number: 0, size: 50 }))
       ),
       users: this.searchUsers(orgId, {}, 0, 1),
-      menus: this.getMenuTree().pipe(catchError(() => of([] as AccessMenu[])))
+      menus: this.getOrganizationMenuCatalog().pipe(catchError(() => of([] as AccessMenu[])))
     }).pipe(
       map(({ responsibilities, users, menus }) => {
         const flatMenus = this.flattenMenus(menus);
@@ -134,6 +135,12 @@ export class AccessManagementService {
   getMenuTree(includeInactive = false): Observable<AccessMenu[]> {
     const params = includeInactive ? new HttpParams().set('includeInactive', 'true') : undefined;
     return this.http.get<unknown>(accessApi.menuTree, { params }).pipe(
+      map(r => this.normalizeMenuTree(unwrapApiResponse<unknown>(r, [])))
+    );
+  }
+
+  getOrganizationMenuCatalog(organizationId = this.organizationId()): Observable<AccessMenu[]> {
+    return this.http.get<unknown>(accessApi.menuCatalog(organizationId)).pipe(
       map(r => this.normalizeMenuTree(unwrapApiResponse<unknown>(r, [])))
     );
   }
@@ -287,12 +294,19 @@ export class AccessManagementService {
     );
   }
 
-  getResponsibilities(query: { search?: string; page?: number; size?: number; sort?: string } = {}): Observable<SpringPage<AccessResponsibility>> {
+  getResponsibilities(query: {
+    search?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+    includeInactive?: boolean;
+  } = {}): Observable<SpringPage<AccessResponsibility>> {
     let params = new HttpParams()
       .set('page', String(query.page ?? 0))
       .set('size', String(query.size ?? 20))
       .set('sort', query.sort || 'createdOn,desc');
     if (query.search) params = params.set('search', query.search);
+    if (query.includeInactive) params = params.set('includeInactive', 'true');
     return this.http.get<unknown>(staffApi.responsibilities, { params }).pipe(
       map(r => {
         const page = this.tryMapPage<AccessResponsibility>(r);
@@ -326,9 +340,12 @@ export class AccessManagementService {
     );
   }
 
-  createResponsibility(payload: AccessResponsibilityRequest): Observable<AccessResponsibility> {
+  createResponsibility(payload: AccessResponsibilityRequest): Observable<{ responsibilityId: number }> {
     return this.http.post<unknown>(staffApi.responsibilities, payload).pipe(
-      map(r => unwrapApiResponse<AccessResponsibility>(r, {} as AccessResponsibility))
+      map(r => {
+        const data = unwrapApiResponse<{ responsibilityId?: number; id?: number }>(r, {});
+        return { responsibilityId: data.responsibilityId ?? data.id ?? 0 };
+      })
     );
   }
 
@@ -351,10 +368,7 @@ export class AccessManagementService {
       rows: []
     };
     return this.http.get<unknown>(accessApi.responsibilityPermissions(responsibilityId, organizationId)).pipe(
-      map(r => unwrapApiResponse<PermissionMatrix>(r, empty)),
-      catchError(() => this.http.get<unknown>(staffApi.responsibilityPermissions(responsibilityId)).pipe(
-        map(r => unwrapApiResponse<PermissionMatrix>(r, empty))
-      ))
+      map(r => unwrapApiResponse<PermissionMatrix>(r, empty))
     );
   }
 
@@ -363,12 +377,27 @@ export class AccessManagementService {
     permissions: PermissionUpdateRow[],
     organizationId = this.organizationId()
   ): Observable<void> {
-    const body = { permissions };
-    return this.http.put<unknown>(accessApi.responsibilityPermissions(responsibilityId, organizationId), body).pipe(
-      map(() => undefined),
-      catchError(() => this.http.put<unknown>(staffApi.responsibilityPermissions(responsibilityId), body).pipe(
-        map(() => undefined)
-      ))
+    return this.http.put<unknown>(
+      accessApi.responsibilityPermissions(responsibilityId, organizationId),
+      { permissions }
+    ).pipe(map(() => undefined));
+  }
+
+  getResponsibilityStaff(responsibilityId: number): Observable<ResponsibilityStaffAssignment[]> {
+    return this.http.get<unknown>(staffApi.responsibilityAssignments(responsibilityId)).pipe(
+      map(r => unwrapApiResponse<ResponsibilityStaffAssignment[]>(r, []) ?? [])
+    );
+  }
+
+  assignStaffToResponsibility(responsibilityId: number, staffIds: number[]): Observable<void> {
+    return this.http.post<unknown>(staffApi.responsibilityAssignments(responsibilityId), { staffIds }).pipe(
+      map(() => undefined)
+    );
+  }
+
+  removeResponsibilityAssignment(assignmentId: number): Observable<void> {
+    return this.http.patch<unknown>(`${staffApi.staffResponsibilityAssignments}/${assignmentId}/deactivate`, {}).pipe(
+      map(() => undefined)
     );
   }
 
@@ -465,6 +494,12 @@ export class AccessManagementService {
       displayOrder: record['displayOrder'] != null ? Number(record['displayOrder']) : undefined,
       showInSidebar: record['showInSidebar'] !== false,
       active: record['active'] !== false,
+      defaultPage: record['defaultPage'] === true,
+      menuScope: record['menuScope'] != null ? String(record['menuScope']) as AccessMenu['menuScope'] : undefined,
+      featureId: record['featureId'] != null ? Number(record['featureId']) : undefined,
+      featureCode: record['featureCode'] != null ? String(record['featureCode']) : undefined,
+      featureName: record['featureName'] != null ? String(record['featureName']) : undefined,
+      featureIcon: record['featureIcon'] != null ? String(record['featureIcon']) : undefined,
       children: (nested ?? []).map(child => this.normalizeMenu(child, menuName))
     };
   }

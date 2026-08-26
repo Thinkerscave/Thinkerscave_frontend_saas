@@ -1,86 +1,174 @@
-<div class="saas-page menu-catalog">
+<div class="cat-page">
   <tc-saas-page-header>
     <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset</button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+  <div *ngIf="errorMessage" class="cat-empty">
+    <i class="pi pi-exclamation-triangle"></i>
+    <h3>{{ errorMessage }}</h3>
+  </div>
 
-  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-  <tc-saas-panel title="Published menus" subtitle="View only · these are the modules you can assign to a responsibility">
-    <app-list-toolbar
-      [search]="search"
-      searchPlaceholder="Search module, page or route"
-      [view]="view"
-      viewAriaLabel="Menu catalog view"
-      (searchChange)="onSearchTermChange($event)"
-      (searchDebounced)="applyQuery()"
-      (submitted)="applyQuery()"
-      (reset)="resetFilters()"
-      (viewChange)="onViewChange($event)">
-    </app-list-toolbar>
+  <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-    <app-list-results [busy]="loading">
-      <div class="menu-catalog__cards app-data-grid" *ngIf="view === 'grid'">
+  <app-list-toolbar
+    [search]="search()"
+    searchPlaceholder="Search features, menus or submenus"
+    [view]="viewMode()"
+    viewAriaLabel="View mode"
+    (searchChange)="onSearchChange($event)"
+    (searchDebounced)="applySearch()"
+    (submitted)="applySearch()"
+    (reset)="reset()"
+    (viewChange)="onListViewModeChange($event)">
+  </app-list-toolbar>
+
+  <div class="cat-workspace is-split" *ngIf="viewMode() === 'grid'">
+    <div>
+      <div class="cat-grid">
         <article
-          class="menu-catalog__card"
-          *ngFor="let module of pagedModules; trackBy: trackByMenu"
-          [class.is-open]="isExpanded(module)"
-          (click)="toggleCard(module)">
-          <div class="menu-catalog__card-head">
-            <span class="menu-catalog__icon"><i class="pi" [ngClass]="module.icon || 'pi-folder'"></i></span>
-            <div>
-              <strong>{{ menuLabel(module) }}</strong>
-              <code>{{ module.menuCode || '—' }}</code>
+          class="cat-card"
+          *ngFor="let group of pagedGroups; trackBy: trackByGroup"
+          [class.is-selected]="selectedKey === group.key"
+          [class.is-expanded]="selectedKey === group.key"
+          (click)="selectGroup(group)">
+          <div class="cat-card__top">
+            <div class="cat-card__identity">
+              <span class="cat-card__icon"><i [ngClass]="groupIcon(group)"></i></span>
+              <div>
+                <h2>{{ group.title }}</h2>
+                <code>{{ group.code }}</code>
+              </div>
             </div>
-            <tc-saas-pill [label]="module.active === false ? 'Inactive' : 'Active'" [tone]="module.active === false ? 'danger' : 'success'"></tc-saas-pill>
+            <span
+              class="cat-badge"
+              [class.cat-badge--success]="group.scope === 'CORE'"
+              [class.cat-badge--warning]="group.scope !== 'CORE'">
+              {{ scopeLabel(group) }}
+            </span>
           </div>
-          <p>{{ module.description || 'School menus published under this module.' }}</p>
-          <small>{{ childCount(module) }} {{ childCount(module) === 1 ? 'page' : 'pages' }}</small>
-          <ul class="menu-catalog__children" *ngIf="isExpanded(module) && module.children?.length" (click)="$event.stopPropagation()">
-            <li *ngFor="let child of module.children; trackBy: trackByMenu">
-              <strong>{{ menuLabel(child) }}</strong>
-              <span>{{ child.route || child.menuCode || '—' }}</span>
-            </li>
-          </ul>
+          <p class="cat-card__body" *ngIf="group.description">{{ group.description }}</p>
+          <div class="cat-card__tags">
+            <span class="cat-tag" *ngFor="let menu of group.menus; trackBy: trackByMenu">{{ menu.menuName }}</span>
+          </div>
+          <div class="cat-card__stats">
+            <div>
+              <strong>{{ group.menuCount }}</strong>
+              <span>{{ group.menuCount === 1 ? 'Menu' : 'Menus' }}</span>
+            </div>
+            <div>
+              <strong>{{ group.submenuCount }}</strong>
+              <span>{{ group.submenuCount === 1 ? 'Submenu' : 'Submenus' }}</span>
+            </div>
+          </div>
+          <div class="cat-card__expand" *ngIf="selectedKey === group.key" (click)="$event.stopPropagation()">
+            <ng-container *ngTemplateOutlet="groupDetail"></ng-container>
+          </div>
         </article>
-        <p class="empty" *ngIf="!pagedModules.length">No menus match this search.</p>
       </div>
+      <div *ngIf="!filteredGroups().length && !loading" class="cat-empty">
+        <i class="pi pi-search"></i>
+        <h3>{{ groups().length ? 'No features match your search' : 'No menus in this school’s plan' }}</h3>
+        <p>{{ groups().length ? 'Try another search.' : 'Ask ThinkersCave to entitle features for this organization.' }}</p>
+      </div>
+      <app-paginator
+        *ngIf="filteredGroups().length"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="filteredGroups().length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="features"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
+    </div>
+    <aside class="cat-detail">
+      <ng-container *ngIf="selectedGroup; else emptyGroupDetail">
+        <ng-container *ngTemplateOutlet="groupDetail"></ng-container>
+      </ng-container>
+      <ng-template #emptyGroupDetail>
+        <p class="cat-hint">Select a feature to see the menus and submenus you can assign to a responsibility.</p>
+      </ng-template>
+    </aside>
+  </div>
 
-      <ul class="menu-catalog__tree" *ngIf="view === 'table'">
-        <ng-container *ngFor="let module of pagedModules; trackBy: trackByMenu">
-          <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: module, depth: 0 }"></ng-container>
+  <ng-template #groupDetail>
+    <ng-container *ngIf="selectedGroup as selected">
+      <div class="cat-detail__hero">
+        <span class="cat-detail__icon"><i [ngClass]="groupIcon(selected)"></i></span>
+        <div>
+          <h3>{{ selected.title }}</h3>
+          <code>{{ selected.code }}</code>
+        </div>
+      </div>
+      <p class="cat-hint" *ngIf="selected.description">{{ selected.description }}</p>
+      <dl class="cat-facts">
+        <div><dt>Type</dt><dd>{{ scopeLabel(selected) }}</dd></div>
+        <div><dt>Menus</dt><dd>{{ selected.menuCount }}</dd></div>
+        <div><dt>Submenus</dt><dd>{{ selected.submenuCount }}</dd></div>
+        <div><dt>Items</dt><dd>{{ selected.menuCount + selected.submenuCount }}</dd></div>
+      </dl>
+      <h4>Menus and submenus</h4>
+      <div class="cat-page-list" *ngIf="selected.menus.length">
+        <ng-container *ngFor="let menu of selected.menus; trackBy: trackByMenu">
+          <ng-container *ngTemplateOutlet="menuBranch; context: { $implicit: menu, depth: 0 }"></ng-container>
         </ng-container>
-        <li class="empty" *ngIf="!pagedModules.length">No menus match this search.</li>
-      </ul>
-    </app-list-results>
+      </div>
+    </ng-container>
+  </ng-template>
 
+  <ng-template #menuBranch let-menu let-depth="depth">
+    <div class="cat-page-row" [class.is-child]="depth > 0" [style.marginLeft.rem]="depth > 0 ? depth * 1.15 : null">
+      <span class="cat-page-row__order"><i [ngClass]="menuIcon(menu)"></i></span>
+      <div>
+        <strong>{{ menu.menuName }}</strong>
+        <small>{{ menuSummary(menu) }}</small>
+      </div>
+    </div>
+    <ng-container *ngFor="let child of childrenOf(menu); trackBy: trackByMenu">
+      <ng-container *ngTemplateOutlet="menuBranch; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+    </ng-container>
+  </ng-template>
+
+  <div *ngIf="viewMode() === 'table'" class="cat-table-wrap">
+    <table class="cat-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Menus</th>
+          <th>Submenus</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let group of pagedGroups; trackBy: trackByGroup" (click)="selectGroup(group)">
+          <td>
+            <strong>{{ group.title }}</strong>
+            <code>{{ group.code }}</code>
+          </td>
+          <td>{{ menuNames(group) }}</td>
+          <td>{{ group.submenuCount }}</td>
+          <td>
+            <span
+              class="cat-badge"
+              [class.cat-badge--success]="group.scope === 'CORE'"
+              [class.cat-badge--warning]="group.scope !== 'CORE'">
+              {{ scopeLabel(group) }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="!filteredGroups().length">
+          <td colspan="4">{{ groups().length ? 'No features match your search.' : 'No menus in this school’s plan.' }}</td>
+        </tr>
+      </tbody>
+    </table>
     <app-paginator
-      *ngIf="totalModules > 0"
+      *ngIf="filteredGroups().length"
       [page]="page"
       [rows]="pageSize"
-      [totalRecords]="totalModules"
+      [totalRecords]="filteredGroups().length"
       [pageSizeOptions]="pageSizeOptions"
-      noun="modules"
+      noun="features"
       (pageChange)="onPageChange($event)">
     </app-paginator>
-  </tc-saas-panel>
+  </div>
 </div>
-
-<ng-template #nodeTpl let-node let-depth="depth">
-  <li class="menu-catalog__node" [style.paddingLeft.rem]="depth * 0.85">
-    <div class="menu-catalog__node-row">
-      <i class="pi" [ngClass]="node.children?.length ? 'pi-folder' : 'pi-file'"></i>
-      <div>
-        <strong>{{ menuLabel(node) }}</strong>
-        <code>{{ node.menuCode || '—' }}</code>
-      </div>
-      <span class="menu-catalog__route">{{ node.route || '—' }}</span>
-      <tc-saas-pill [label]="node.menuType || (node.children?.length ? 'Module' : 'Page')" tone="neutral"></tc-saas-pill>
-    </div>
-    <ul *ngIf="node.children?.length">
-      <ng-container *ngFor="let child of node.children; trackBy: trackByMenu">
-        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
-      </ng-container>
-    </ul>
-  </li>
-</ng-template>
