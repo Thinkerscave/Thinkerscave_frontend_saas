@@ -306,25 +306,15 @@
         </div>
       </div>
 
-      <div class="ac-pager" *ngIf="totalEvents > 0">
-        <span class="ac-pager__meta">
-          Showing {{ pageStart }}–{{ pageEnd }} of {{ totalEvents }} events
-        </span>
-        <div class="ac-pager__controls">
-          <button type="button" class="ac-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page">
-            <i class="pi pi-angle-left"></i>
-          </button>
-          <span class="ac-pager__page">{{ page }} / {{ totalPages }}</span>
-          <button type="button" class="ac-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page">
-            <i class="pi pi-angle-right"></i>
-          </button>
-          <select class="ac-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Events per page">
-            <option [ngValue]="12">12 / page</option>
-            <option [ngValue]="24">24 / page</option>
-            <option [ngValue]="48">48 / page</option>
-          </select>
-        </div>
-      </div>
+      <app-paginator
+        *ngIf="totalEvents > 0"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="totalEvents"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="events"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </ng-container>
   </ng-container>
 

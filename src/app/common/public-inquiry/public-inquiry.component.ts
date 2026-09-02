@@ -1,4 +1,4 @@
-import { Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit , ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 
@@ -18,7 +18,9 @@ import { PublicInquiryService } from '../../services/public-inquiry.service';
 
 interface ClassOption {
     label: string;
-    value: string;
+    value: number;
+    name: string;
+    academicYearId?: number | null;
 }
 
 @Component({
@@ -48,36 +50,38 @@ export class PublicInquiryComponent implements OnInit {
     isSubmitting: boolean = false;
     isSubmitted: boolean = false;
 
-    classOptions: ClassOption[] = [
-        { label: 'Nursery', value: 'nursery' },
-        { label: 'LKG', value: 'lkg' },
-        { label: 'UKG', value: 'ukg' },
-        { label: 'Class 1', value: 'class-1' },
-        { label: 'Class 2', value: 'class-2' },
-        { label: 'Class 3', value: 'class-3' },
-        { label: 'Class 4', value: 'class-4' },
-        { label: 'Class 5', value: 'class-5' },
-        { label: 'Class 6', value: 'class-6' },
-        { label: 'Class 7', value: 'class-7' },
-        { label: 'Class 8', value: 'class-8' },
-        { label: 'Class 9', value: 'class-9' },
-        { label: 'Class 10', value: 'class-10' },
-        { label: 'Class 11 - Science', value: 'class-11-science' },
-        { label: 'Class 11 - Commerce', value: 'class-11-commerce' },
-        { label: 'Class 11 - Arts', value: 'class-11-arts' },
-        { label: 'Class 12 - Science', value: 'class-12-science' },
-        { label: 'Class 12 - Commerce', value: 'class-12-commerce' },
-        { label: 'Class 12 - Arts', value: 'class-12-arts' }
-    ];
+    classOptions: ClassOption[] = [];
+    selectedYearId: number | null = null;
 
     constructor(
         private fb: FormBuilder,
         private messageService: MessageService,
-        private inquiryService: PublicInquiryService 
+        private inquiryService: PublicInquiryService,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
         this.initForm();
+        this.inquiryService.loadFormConfig().subscribe({
+            next: res => {
+                const data = res.data;
+                this.selectedYearId = data?.defaultAcademicYearId ?? null;
+                this.classOptions = (data?.classes ?? []).map(c => ({
+                    label: c.name,
+                    value: c.id,
+                    name: c.name,
+                    academicYearId: this.selectedYearId
+                }));
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Unavailable',
+                    detail: 'Could not load classes for this school.'
+                });
+            }
+        });
     }
 
     private initForm(): void {
@@ -97,12 +101,16 @@ export class PublicInquiryComponent implements OnInit {
     
         this.isSubmitting = true;
     
+        const selected = this.classOptions.find(opt => opt.value === this.inquiryForm.value.classInterested);
         const payload = {
             name: this.inquiryForm.value.name,
             mobileNumber: this.inquiryForm.value.mobileNumber,
             email: this.inquiryForm.value.email,
-            classInterestedIn: this.inquiryForm.value.classInterested,
-            address: this.inquiryForm.value.address
+            classInterestedIn: selected?.name ?? '',
+            classId: selected?.value ?? null,
+            academicYearId: this.selectedYearId,
+            address: this.inquiryForm.value.address,
+            inquirySource: 'Website'
         };
     
         this.inquiryService.submitInquiry(payload).subscribe({

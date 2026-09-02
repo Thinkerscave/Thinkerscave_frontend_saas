@@ -1,18 +1,12 @@
-<section class="tc-page-shell">
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>{{ pageConfig.title }}</h1>
-      <p>{{ pageConfig.description }}</p>
-    </div>
-    <div class="tc-page-header__actions">
-      <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()">
-        <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
-      </button>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="newLead()">
-        <i class="pi pi-plus"></i> New Lead
-      </button>
-    </div>
-  </header>
+<section class="tc-page-shell adm-page">
+    <tc-saas-page-header subtitle="Pipeline health, today's queue, and source summary.">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()" title="Reload pipeline numbers from the server">
+      <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
+    </button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="newLead()" title="Capture a new inquiry">
+      <i class="pi pi-plus"></i> New Lead
+    </button>
+  </tc-saas-page-header>
 
   @if (error()) {
     <div class="tc-empty-state" role="alert">
@@ -29,7 +23,7 @@
     </div>
     <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading pipeline summary…</div>
   } @else {
-    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+    <tc-saas-stat-grid [stats]="stats()" (statSelect)="onStatSelect($event)"></tc-saas-stat-grid>
 
     <div class="adm-quick-grid">
       @for (tile of quickTiles; track tile.key) {
@@ -93,7 +87,7 @@
           <table class="stu-table">
             <thead>
               <tr>
-                <th>Lead ID</th>
+                <th>Lead</th>
                 <th>Type</th>
                 <th>Date</th>
                 <th>Status After</th>
@@ -105,8 +99,8 @@
                 <tr class="adm-click-row" (click)="openFollowUp(fu)">
                   <td>
                     @if (fu.inquiryId) {
-                      <a [routerLink]="['/app/admissions/lead', fu.inquiryId]" (click)="$event.stopPropagation()">
-                        #{{ fu.inquiryId }}
+                      <a [routerLink]="['/app/admissions/lead', fu.inquiryId]" [queryParams]="{ from: 'overview' }" (click)="$event.stopPropagation()">
+                        {{ fu.leadName || ('Lead #' + fu.inquiryId) }}
                       </a>
                     } @else {
                       —
@@ -127,6 +121,35 @@
           <h3>No follow-ups today</h3>
           <p>You're all caught up for today.</p>
           <a class="tc-btn" routerLink="/app/admissions/follow-ups">Open Follow-up Center</a>
+        </div>
+      }
+    </tc-saas-panel>
+    <tc-saas-panel title="Counselor load" subtitle="Leads owned by each counselor">
+      @if (counselorRows().length) {
+        <div class="stu-table-wrap">
+          <table class="stu-table">
+            <thead>
+              <tr>
+                @for (col of counselorColumns(); track col) {
+                  <th>{{ formatCol(col) }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of counselorRows(); track $index) {
+                <tr>
+                  @for (col of counselorColumns(); track col) {
+                    <td>{{ formatCell(row[col]) }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="tc-empty-state">
+          <h3>No counselor data yet</h3>
+          <p>Assign counselors on leads to see ownership here.</p>
         </div>
       }
     </tc-saas-panel>

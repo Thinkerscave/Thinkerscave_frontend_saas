@@ -1,0 +1,415 @@
+<app-toast />
+
+<section class="stu-add-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--back" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> Back
+    </button>
+  </tc-saas-page-header>
+
+  <div *ngIf="lookupWarning" class="stu-add-page__banner" role="status">
+    <i class="pi pi-info-circle"></i>
+    <span>{{ lookupWarning }}</span>
+  </div>
+  <div *ngIf="apiError" class="stu-add-page__banner is-danger" role="alert">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ apiError }}</span>
+  </div>
+
+  <app-card [hasFooter]="true" [elevated]="true">
+    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
+
+    <form class="stu-add-form" novalidate (submit)="$event.preventDefault()">
+      <ng-container *ngIf="currentStep === 1">
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Student details"
+            description="Identity captured at admission."
+            icon="pi pi-id-card">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-input
+              label="Admission Number"
+              placeholder="Auto-generated if empty"
+              [(ngModel)]="form.admissionNumber"
+              name="admissionNumber">
+            </app-input>
+            <app-input
+              label="First Name"
+              placeholder="Enter first name"
+              [required]="true"
+              [(ngModel)]="form.firstName"
+              name="firstName"
+              [error]="fieldError('firstName')"
+              (ngModelChange)="clearField('firstName')">
+            </app-input>
+            <app-input
+              label="Middle Name"
+              placeholder="Enter middle name"
+              [(ngModel)]="form.middleName"
+              name="middleName">
+            </app-input>
+            <app-input
+              label="Last Name"
+              placeholder="Enter last name"
+              [required]="true"
+              [(ngModel)]="form.lastName"
+              name="lastName"
+              [error]="fieldError('lastName')"
+              (ngModelChange)="clearField('lastName')">
+            </app-input>
+            <app-select
+              label="Gender"
+              placeholder="Select gender"
+              [options]="genderOptions"
+              [(ngModel)]="form.gender"
+              name="gender">
+            </app-select>
+            <div class="app-field">
+              <label class="app-field__label" for="stu-dob">
+                Date of Birth<span class="app-field__required" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="stu-dob"
+                class="app-field__control"
+                type="date"
+                [max]="today"
+                [class.is-invalid]="!!fieldError('dateOfBirth')"
+                [(ngModel)]="form.dateOfBirth"
+                name="dateOfBirth"
+                (ngModelChange)="clearField('dateOfBirth')" />
+              <app-validation-message [message]="fieldError('dateOfBirth')"></app-validation-message>
+            </div>
+            <app-phone-input
+              label="Mobile"
+              placeholder="10-digit mobile"
+              [(ngModel)]="form.mobile"
+              name="studentMobile"
+              [error]="fieldError('mobile')"
+              (ngModelChange)="clearField('mobile')">
+            </app-phone-input>
+            <app-input
+              label="Email"
+              type="email"
+              placeholder="Enter email"
+              [(ngModel)]="form.email"
+              name="email"
+              [error]="fieldError('email')"
+              (ngModelChange)="clearField('email')">
+            </app-input>
+          </div>
+        </section>
+
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Primary parent / guardian"
+            description="First contact for this student."
+            icon="pi pi-users">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-select
+              label="Relationship"
+              placeholder="Select relationship"
+              [required]="true"
+              [options]="relationshipOptions"
+              [(ngModel)]="primaryParent.relationship"
+              name="parentRelationship">
+            </app-select>
+            <app-input
+              label="First Name"
+              placeholder="Enter first name"
+              [required]="true"
+              [(ngModel)]="primaryParent.firstName"
+              name="parentFirstName"
+              [error]="fieldError('parentFirstName')"
+              (ngModelChange)="clearField('parentFirstName')">
+            </app-input>
+            <app-input
+              label="Last Name"
+              placeholder="Enter last name"
+              [(ngModel)]="primaryParent.lastName"
+              name="parentLastName">
+            </app-input>
+            <app-phone-input
+              label="Mobile"
+              placeholder="10-digit mobile"
+              [required]="true"
+              [(ngModel)]="primaryParent.mobile"
+              name="parentMobile"
+              [error]="fieldError('parentMobile')"
+              (ngModelChange)="clearField('parentMobile')">
+            </app-phone-input>
+            <app-input
+              label="Email"
+              type="email"
+              placeholder="Enter email"
+              [(ngModel)]="primaryParent.email"
+              name="parentEmail"
+              [error]="fieldError('parentEmail')"
+              (ngModelChange)="clearField('parentEmail')">
+            </app-input>
+            <app-input
+              label="Occupation"
+              placeholder="Enter occupation"
+              [(ngModel)]="primaryParent.occupation"
+              name="parentOccupation">
+            </app-input>
+          </div>
+        </section>
+
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Academic placement"
+            description="Class, section, and enrolment for the current year."
+            icon="pi pi-book">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-select
+              label="Academic Year"
+              placeholder="Select year"
+              [options]="academicYearOptions"
+              [(ngModel)]="form.academicYear"
+              name="academicYear">
+            </app-select>
+            <app-select
+              label="Class"
+              placeholder="Select class"
+              [required]="true"
+              [options]="classOptions"
+              [(ngModel)]="classIdValue"
+              name="classId"
+              [error]="fieldError('classId')"
+              (ngModelChange)="onClassChange($event)">
+            </app-select>
+            <app-select
+              label="Section"
+              placeholder="Select section"
+              [options]="sectionOptions"
+              [(ngModel)]="sectionIdValue"
+              name="sectionId"
+              [disabled]="!form.classId"
+              (ngModelChange)="onSectionChange($event)">
+            </app-select>
+            <app-input
+              label="Roll Number"
+              placeholder="Enter roll number"
+              [(ngModel)]="form.rollNumber"
+              name="rollNumber">
+            </app-input>
+            <div class="app-field">
+              <label class="app-field__label" for="stu-enroll">Enrollment Date</label>
+              <input
+                id="stu-enroll"
+                class="app-field__control"
+                type="date"
+                [(ngModel)]="form.enrollmentDate"
+                name="enrollmentDate" />
+            </div>
+            <app-select
+              label="Status"
+              placeholder="Select status"
+              [options]="enrollmentStatusOptions"
+              [(ngModel)]="form.enrollmentStatus"
+              name="enrollmentStatus">
+            </app-select>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngIf="currentStep === 2">
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Current address"
+            description="Residential address used for communication."
+            icon="pi pi-map-marker">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-input
+              class="stu-add-form__span-2"
+              label="Address Line 1"
+              placeholder="House / street"
+              [(ngModel)]="form.currentAddressLine1"
+              name="currentAddressLine1">
+            </app-input>
+            <app-input
+              label="Address Line 2"
+              placeholder="Landmark (optional)"
+              [(ngModel)]="form.currentAddressLine2"
+              name="currentAddressLine2">
+            </app-input>
+            <app-input
+              label="City"
+              placeholder="Enter city"
+              [(ngModel)]="form.currentCity"
+              name="currentCity">
+            </app-input>
+            <app-input
+              label="State"
+              placeholder="Enter state"
+              [(ngModel)]="form.currentState"
+              name="currentState">
+            </app-input>
+            <app-input
+              label="Pincode"
+              placeholder="6-digit pincode"
+              [(ngModel)]="form.currentPincode"
+              name="currentPincode">
+            </app-input>
+          </div>
+
+          <label class="stu-add-form__check">
+            <input type="checkbox" [(ngModel)]="sameAddress" name="sameAddress" (ngModelChange)="onSameAddressToggle()" />
+            Permanent address is same as current address
+          </label>
+
+          <ng-container *ngIf="!sameAddress">
+            <h3 class="stu-add-form__subhead">Permanent address</h3>
+            <div class="stu-add-form__grid">
+              <app-input
+                class="stu-add-form__span-2"
+                label="Address Line 1"
+                placeholder="House / street"
+                [(ngModel)]="form.permanentAddressLine1"
+                name="permanentAddressLine1">
+              </app-input>
+              <app-input
+                label="City"
+                placeholder="Enter city"
+                [(ngModel)]="form.permanentCity"
+                name="permanentCity">
+              </app-input>
+              <app-input
+                label="State"
+                placeholder="Enter state"
+                [(ngModel)]="form.permanentState"
+                name="permanentState">
+              </app-input>
+              <app-input
+                label="Pincode"
+                placeholder="6-digit pincode"
+                [(ngModel)]="form.permanentPincode"
+                name="permanentPincode">
+              </app-input>
+            </div>
+          </ng-container>
+        </section>
+
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Medical information"
+            description="Optional health notes for school records."
+            icon="pi pi-heart">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-select
+              label="Blood Group"
+              placeholder="Select blood group"
+              [options]="bloodGroupOptions"
+              [(ngModel)]="form.bloodGroup"
+              name="bloodGroup">
+            </app-select>
+            <app-select
+              label="Religion"
+              placeholder="Select religion"
+              [options]="religionOptions"
+              [(ngModel)]="form.religion"
+              name="religion">
+            </app-select>
+            <app-input
+              label="Doctor Name"
+              placeholder="Enter doctor name"
+              [(ngModel)]="form.doctorName"
+              name="doctorName">
+            </app-input>
+            <app-phone-input
+              label="Doctor Contact"
+              placeholder="10-digit mobile"
+              [(ngModel)]="form.doctorContact"
+              name="doctorContact">
+            </app-phone-input>
+            <app-textarea
+              class="stu-add-form__span-2"
+              label="Allergies"
+              placeholder="Dust, peanuts…"
+              [compact]="true"
+              [rows]="2"
+              [(ngModel)]="form.allergies"
+              name="allergies">
+            </app-textarea>
+            <app-textarea
+              class="stu-add-form__span-2"
+              label="Medical Conditions"
+              placeholder="Asthma…"
+              [compact]="true"
+              [rows]="2"
+              [(ngModel)]="form.medicalConditions"
+              name="medicalConditions">
+            </app-textarea>
+          </div>
+        </section>
+
+        <section class="stu-add-form__section">
+          <div class="stu-add-form__section-head">
+            <app-section-header
+              title="Additional parents"
+              description="Optional second parent or guardian."
+              icon="pi pi-user-plus">
+            </app-section-header>
+            <button type="button" class="tc-btn" (click)="addParent()">
+              <i class="pi pi-plus"></i> Add parent
+            </button>
+          </div>
+
+          <article class="stu-add-form__parent" *ngFor="let parent of form.parents; let i = index">
+            <ng-container *ngIf="i > 0">
+              <div class="stu-add-form__parent-head">
+                <strong>{{ parentLabel(i) }}</strong>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="removeParent(i)" title="Remove">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+              <div class="stu-add-form__grid">
+                <app-select
+                  label="Relationship"
+                  [options]="relationshipOptions"
+                  [(ngModel)]="parent.relationship"
+                  [name]="'extraRel' + i">
+                </app-select>
+                <app-input
+                  label="First Name"
+                  [(ngModel)]="parent.firstName"
+                  [name]="'extraFirst' + i">
+                </app-input>
+                <app-input
+                  label="Last Name"
+                  [(ngModel)]="parent.lastName"
+                  [name]="'extraLast' + i">
+                </app-input>
+                <app-phone-input
+                  label="Mobile"
+                  [(ngModel)]="parent.mobile"
+                  [name]="'extraMobile' + i">
+                </app-phone-input>
+              </div>
+            </ng-container>
+          </article>
+        </section>
+      </ng-container>
+    </form>
+
+    <div card-footer class="stu-add-form__footer">
+      <button type="button" class="tc-btn tc-btn--ghost" (click)="currentStep > 1 ? back() : goBack()">
+        <i class="pi" [class.pi-arrow-left]="currentStep > 1" [class.pi-times]="currentStep === 1"></i>
+        {{ currentStep > 1 ? 'Previous' : 'Cancel' }}
+      </button>
+      <button *ngIf="currentStep < 2" type="button" class="tc-btn tc-btn--primary" (click)="next()">
+        Next <i class="pi pi-arrow-right"></i>
+      </button>
+      <button *ngIf="currentStep === 2" type="button" class="tc-btn tc-btn--primary"
+              [disabled]="saving" (click)="submit()">
+        <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
+        {{ saving ? 'Saving…' : 'Create student' }}
+      </button>
+    </div>
+  </app-card>
+</section>

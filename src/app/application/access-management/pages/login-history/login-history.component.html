@@ -1,15 +1,122 @@
 <div class="saas-page login-history">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="load(); loadRetention()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading history...</div>
 
+  <p-confirmDialog key="retentionPurge"></p-confirmDialog>
+  <p-toast position="top-right"></p-toast>
+
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Recent Sign-ins" [subtitle]="totalRecords + ' total events'">
+
+    <tc-saas-panel
+      title="Archival &amp; retention"
+      subtitle="Old sign-in records are purged automatically. The window and schedule are centrally configured; admins can also run the job on demand and inspect its history.">
+      <div *ngIf="retentionLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading archival status...</div>
+      <div *ngIf="retentionError" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ retentionError }}</strong></div>
+      <ng-container *ngIf="retention && !retentionLoading">
+        <div class="login-history__retention-grid">
+          <div class="login-history__retention-fact">
+            <small>Retention window</small>
+            <strong>{{ retention.retentionDays }} days</strong>
+            <span>{{ retention.schedule || 'Daily' }}</span>
+          </div>
+          <div class="login-history__retention-fact">
+            <small>Last archival run</small>
+            <strong>{{ lastRunLabel }}</strong>
+            <span *ngIf="retention.lastRun">Triggered {{ triggerLabel(retention.lastRun.triggerType) }}</span>
+          </div>
+          <div class="login-history__retention-fact">
+            <small>Next scheduled</small>
+            <strong>{{ nextRunLabel }}</strong>
+            <span *ngIf="retention.enabled !== false && retention.nextScheduledHint">Automatic nightly job</span>
+          </div>
+          <div class="login-history__retention-fact">
+            <small>Status</small>
+            <tc-saas-pill [label]="retention.enabled === false ? 'Disabled' : 'Scheduled'" [tone]="retention.enabled === false ? 'warning' : 'success'"></tc-saas-pill>
+            <span>Total cleaned in last {{ retention.recentRuns?.length || 0 }} run(s): {{ totalDeletedRecent }} record(s)</span>
+          </div>
+        </div>
+        <div class="login-history__retention-actions">
+          <button type="button" class="tc-btn" (click)="purgeNow()"><i class="pi pi-trash"></i> Purge now</button>
+          <span class="login-history__retention-note">
+            Deletes records older than {{ retention.retentionDays }} days for this organization only.
+          </span>
+        </div>
+
+        <div class="login-history__recent-runs" *ngIf="retention.recentRuns?.length">
+          <h3>Recent archival runs</h3>
+          <div class="saas-table-wrap">
+            <table class="saas-data-table">
+              <thead>
+                <tr>
+                  <th>Ran at</th>
+                  <th>Trigger</th>
+                  <th>Scope</th>
+                  <th>Records deleted</th>
+                  <th>Cut-off</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let run of retention.recentRuns">
+                  <td>{{ formatDateTime(run.ranAt) }}</td>
+                  <td>{{ triggerLabel(run.triggerType) }}</td>
+                  <td>{{ allOrgRunLabel(run) }}</td>
+                  <td>{{ run.deletedCount ?? 0 }}</td>
+                  <td>{{ formatDateTime(run.cutoffAt) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+    </tc-saas-panel>
+
+    <tc-saas-panel
+      title="Recent sign-ins"
+      [subtitle]="userNameFilter
+        ? ('Sign-ins for ' + userNameFilter + ' · last ' + rangeDays + ' days')
+        : ('Only the last ' + (retention?.retentionDays ?? rangeDays) + ' days are kept. Older events are archived automatically.')">
       <div class="login-history__toolbar">
+        <p class="login-history__chip" *ngIf="userIdFilter">
+          {{ userNameFilter || ('User #' + userIdFilter) }}
+          <button type="button" class="tc-btn tc-btn--ghost" (click)="clearUserFilter()">Show all users</button>
+        </p>
+        <p-autoComplete
+          [(ngModel)]="userSearchTerm"
+          [suggestions]="userSuggestions"
+          (completeMethod)="onUserSearch($event)"
+          (onSelect)="onUserSelected($event.value)"
+          (onClear)="onUserSearchCleared()"
+          field="displayName"
+          placeholder="Search user by name…"
+          [dropdown]="false"
+          [minLength]="2"
+          [delay]="300"
+          [showEmptyMessage]="false"
+          appendTo="body">
+          <ng-template let-user pTemplate="item">
+            <div class="login-history__user-option">
+              <span class="login-history__user-avatar">{{ userInitials(user) }}</span>
+              <span class="login-history__user-meta">
+                <strong>{{ userDisplayName(user) }}</strong>
+                <small>{{ user.username }}{{ (user.username && user.email) ? ' · ' : '' }}{{ user.email }}</small>
+              </span>
+            </div>
+          </ng-template>
+        </p-autoComplete>
+        <p-dropdown
+          [options]="rangeOptions"
+          [(ngModel)]="rangeDays"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          placeholder="Time window"
+          (onChange)="onFilterChange()">
+        </p-dropdown>
         <p-dropdown
           [options]="statusOptions"
           [(ngModel)]="statusFilter"
@@ -22,22 +129,43 @@
       </div>
       <div class="saas-table-wrap">
         <table class="saas-data-table">
-          <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Logout</th><th>IP</th><th>Client</th></tr></thead>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Status</th>
+              <th>Signed in</th>
+              <th>Signed out</th>
+              <th>IP address</th>
+              <th>Device</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let e of entries; trackBy: trackById">
-              <td><strong>{{ e.displayName || e.username }}</strong></td>
+              <td>
+                <strong>{{ e.displayName || e.username || '—' }}</strong>
+                <br *ngIf="e.displayName && e.username"><small *ngIf="e.displayName && e.username">{{ e.username }}</small>
+              </td>
               <td><tc-saas-pill [label]="loginStatusLabel(e.status)" [tone]="loginStatusTone(e.status)"></tc-saas-pill></td>
               <td>{{ formatDateTime(e.loginTime) }}</td>
               <td>{{ formatDateTime(e.logoutTime) }}</td>
               <td>{{ e.ipAddress || '—' }}</td>
               <td>{{ e.browser || e.operatingSystem || '—' }}</td>
             </tr>
-            <tr *ngIf="!entries.length"><td colspan="6" class="empty">No login events found.</td></tr>
+            <tr *ngIf="!entries.length">
+              <td colspan="6" class="empty">No sign-ins in the last {{ rangeDays }} days.</td>
+            </tr>
           </tbody>
         </table>
       </div>
+      <app-paginator
+        *ngIf="totalRecords > 0"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="sign-ins"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>
-
-

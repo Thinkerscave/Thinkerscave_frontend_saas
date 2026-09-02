@@ -1,0 +1,64 @@
+@use './app-list-tokens' as tokens;
+
+.app-list-toolbar {
+  @include tokens.app-list-card-surface;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+
+  &__cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__search {
+    flex: 1 1 16rem;
+    min-width: 12rem;
+    max-width: 24rem;
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  &__views {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-list-toolbar {
+    &__search {
+      flex: 1 1 100%;
+      max-width: none;
+    }
+
+    &__views {
+      width: 100%;
+      justify-content: flex-end;
+      margin-left: 0;
+    }
+  }
+}

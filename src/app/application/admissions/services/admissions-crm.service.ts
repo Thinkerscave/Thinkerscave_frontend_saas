@@ -6,11 +6,16 @@ import { environment } from '../../../../environments/environment';
 import {
   AdmissionsSettings,
   ApplicationCreateRequest,
+  ApplicationDocument,
   ApplicationProgress,
   ApplicationRecord,
   ApplicationSearchRequest,
+  CompleteFollowUpRequest,
   CounselingNote,
   CounselingNoteRequest,
+  CounselorOption,
+  EnrollmentResult,
+  EnrollApplicationRequest,
   FollowUpCreateRequest,
   FollowUpRecord,
   LeadCreateRequest,
@@ -20,7 +25,9 @@ import {
   LeadRecord,
   LeadSearchRequest,
   LeadTimelineItem,
-  PageResponse
+  LookupOption,
+  PageResponse,
+  RecordFeeRequest
 } from '../models/admissions-crm.model';
 
 interface ApiEnvelope<T> {
@@ -87,6 +94,36 @@ export class AdmissionsCrmService {
     return this.http.get<ApiEnvelope<AdmissionsSettings>>(`${this.workspace}/settings`).pipe(map(r => r.data));
   }
 
+  saveSettings(payload: AdmissionsSettings): Observable<AdmissionsSettings> {
+    return this.http.put<ApiEnvelope<AdmissionsSettings>>(`${this.workspace}/settings`, payload).pipe(map(r => r.data));
+  }
+
+  searchCounselors(keyword = '', page = 0, size = 20): Observable<PageResponse<CounselorOption>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (keyword.trim()) params = params.set('keyword', keyword.trim());
+    return this.http
+      .get<ApiEnvelope<PageResponse<CounselorOption>>>(`${this.workspace}/counselors`, { params })
+      .pipe(map(r => this.mapPage(r.data)));
+  }
+
+  academicYears(): Observable<LookupOption[]> {
+    return this.http
+      .get<ApiEnvelope<LookupOption[]>>(`${environment.baseUrl}/academics/lookup/years`)
+      .pipe(map(r => r.data ?? []));
+  }
+
+  academicClasses(yearId: number): Observable<LookupOption[]> {
+    return this.http
+      .get<ApiEnvelope<LookupOption[]>>(`${environment.baseUrl}/academics/lookup/years/${yearId}/classes`)
+      .pipe(map(r => r.data ?? []));
+  }
+
+  academicSections(classId: number): Observable<LookupOption[]> {
+    return this.http
+      .get<ApiEnvelope<LookupOption[]>>(`${environment.baseUrl}/academics/lookup/classes/${classId}/sections`)
+      .pipe(map(r => r.data ?? []));
+  }
+
   // ─── Leads ──────────────────────────────────────────────────────────────
 
   createLead(payload: LeadCreateRequest): Observable<LeadRecord> {
@@ -145,7 +182,17 @@ export class AdmissionsCrmService {
           inquiry: this.mapLead(d.inquiry ?? d as unknown as LeadRecord),
           followUps: d.followUps ?? [],
           counselingNotes: d.counselingNotes ?? [],
-          timeline: d.timeline ?? []
+          timeline: (d.timeline ?? []).map(item => ({
+            ...item,
+            action: item.action ?? item.eventType ?? 'EVENT',
+            performedAt: item.performedAt ?? item.performedOn ?? ''
+          })),
+          applicationId: d.applicationId,
+          applicationNumber: d.applicationNumber,
+          applicationStatus: d.applicationStatus,
+          studentId: d.studentId,
+          studentCode: d.studentCode,
+          admissionNumber: d.admissionNumber
         };
       })
     );
@@ -185,9 +232,21 @@ export class AdmissionsCrmService {
     return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/overdue`).pipe(map(r => r.data ?? []));
   }
 
-  completeFollowUp(followUpId: number): Observable<FollowUpRecord> {
+  upcomingFollowUps(): Observable<FollowUpRecord[]> {
+    return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/upcoming`).pipe(map(r => r.data ?? []));
+  }
+
+  completeFollowUp(followUpId: number, payload: CompleteFollowUpRequest = {}): Observable<FollowUpRecord> {
     return this.http
-      .post<ApiEnvelope<FollowUpRecord>>(`${this.followUps}/${followUpId}/complete`, {})
+      .post<ApiEnvelope<FollowUpRecord>>(`${this.followUps}/${followUpId}/complete`, payload)
+      .pipe(map(r => r.data));
+  }
+
+  cancelFollowUp(followUpId: number, remarks?: string): Observable<FollowUpRecord> {
+    let params = new HttpParams();
+    if (remarks) params = params.set('remarks', remarks);
+    return this.http
+      .post<ApiEnvelope<FollowUpRecord>>(`${this.followUps}/${followUpId}/cancel`, {}, { params })
       .pipe(map(r => r.data));
   }
 
@@ -244,6 +303,55 @@ export class AdmissionsCrmService {
     return this.http
       .put<ApiEnvelope<ApplicationRecord>>(`${this.applications}/${id}/status`, {}, { params })
       .pipe(map(r => r.data));
+  }
+
+  submitExistingApplication(id: number, payload: ApplicationCreateRequest): Observable<ApplicationRecord> {
+    return this.http
+      .post<ApiEnvelope<ApplicationRecord>>(`${this.applications}/${id}/submit`, payload)
+      .pipe(map(r => r.data));
+  }
+
+  recordFee(id: number, payload: RecordFeeRequest): Observable<ApplicationRecord> {
+    return this.http.post<ApiEnvelope<ApplicationRecord>>(`${this.applications}/${id}/fee`, payload).pipe(map(r => r.data));
+  }
+
+  enrollApplication(id: number, payload: EnrollApplicationRequest): Observable<EnrollmentResult> {
+    return this.http
+      .post<ApiEnvelope<EnrollmentResult>>(`${this.applications}/${id}/enroll`, payload)
+      .pipe(map(r => r.data));
+  }
+
+  listDocuments(applicationId: number): Observable<ApplicationDocument[]> {
+    return this.http
+      .get<ApiEnvelope<ApplicationDocument[]>>(`${this.applications}/${applicationId}/documents`)
+      .pipe(map(r => r.data ?? []));
+  }
+
+  uploadDocument(applicationId: number, file: File, documentType: string): Observable<ApplicationDocument> {
+    const body = new FormData();
+    body.append('file', file);
+    const params = new HttpParams().set('documentType', documentType);
+    return this.http
+      .post<ApiEnvelope<ApplicationDocument>>(`${this.applications}/${applicationId}/documents`, body, { params })
+      .pipe(map(r => r.data));
+  }
+
+  verifyDocument(documentId: number, status: string, remarks?: string): Observable<ApplicationDocument> {
+    let params = new HttpParams().set('status', status);
+    if (remarks) params = params.set('remarks', remarks);
+    return this.http
+      .post<ApiEnvelope<ApplicationDocument>>(`${this.applications}/documents/${documentId}/verify`, {}, { params })
+      .pipe(map(r => r.data));
+  }
+
+  deleteDocument(documentId: number): Observable<void> {
+    return this.http
+      .delete<ApiEnvelope<void>>(`${this.applications}/documents/${documentId}`)
+      .pipe(map(() => void 0));
+  }
+
+  documentDownloadUrl(documentId: number): string {
+    return `${this.applications}/documents/${documentId}/download`;
   }
 
   applicationProgress(id: number): Observable<ApplicationProgress> {

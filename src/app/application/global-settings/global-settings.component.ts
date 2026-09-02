@@ -12,9 +12,11 @@ import { ThemeService } from '../../shared/theme/theme.service';
 import { LoginService } from '../../core/services/login.service';
 import { LanguageService } from '../../core/services/language.service';
 import { UserPreferencesService } from '../services/user-preferences.service';
+import { ViewPreferenceService } from '../services/view-preference.service';
 import { SettingsUiService } from '../../core/services/settings-ui.service';
 import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
 import { PwaService } from '../../core/services/pwa.service';
+import { AppListViewMode } from '../../shared/config/ui-standards';
 
 type TabKey = 'appearance' | 'notifications' | 'localization';
 
@@ -41,6 +43,7 @@ interface SelectOption {
 export class GlobalSettingsComponent {
   private readonly themeService = inject(ThemeService);
   private readonly preferencesService = inject(UserPreferencesService);
+  private readonly viewPreference = inject(ViewPreferenceService);
   private readonly languageService = inject(LanguageService);
   private readonly loginService = inject(LoginService);
   private readonly settingsUi = inject(SettingsUiService);
@@ -69,6 +72,7 @@ export class GlobalSettingsComponent {
     !(this.accentPresets as readonly string[]).some(c => c.toLowerCase() === this.accent().toLowerCase())
   );
   readonly reduceMotion = signal(this.preferencesService.getBool('reduceMotion', false));
+  readonly defaultView = signal<AppListViewMode>(this.viewPreference.globalDefault());
 
   readonly notifEmail = signal(this.preferencesService.getBool('notifEmail', true));
   readonly notifPush = signal(this.preferencesService.getBool('notifPush', true));
@@ -156,6 +160,7 @@ export class GlobalSettingsComponent {
   save(): void {
     this.preferencesService.set('accent', this.accent());
     this.preferencesService.setBool('reduceMotion', this.reduceMotion());
+    this.viewPreference.setGlobalDefault(this.defaultView());
     this.preferencesService.setBool('notifEmail', this.notifEmail());
     this.preferencesService.setBool('notifPush', this.notifPush());
     this.preferencesService.setBool('notifSms', this.notifSms());
@@ -173,6 +178,7 @@ export class GlobalSettingsComponent {
     this.accent.set('#1F3A93');
     this.customAccent.set(false);
     this.reduceMotion.set(false);
+    this.defaultView.set('table');
     this.notifEmail.set(true);
     this.notifPush.set(true);
     this.notifSms.set(false);

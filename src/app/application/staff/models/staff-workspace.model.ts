@@ -1,6 +1,5 @@
 export type StaffWorkspacePage =
   | 'directory'
-  | 'responsibilities'
   | 'payroll'
   | 'leave';
 

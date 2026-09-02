@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize, forkJoin } from 'rxjs';
@@ -16,14 +16,16 @@ import {
   SaasPillComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 @Component({
   selector: 'app-role-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppToastComponent, 
-    CommonModule, RouterLink,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
+    CommonModule,
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent,
+    AppBackNavComponent
   ],
   providers: [MessageService],
   templateUrl: './role-workspace.component.html',

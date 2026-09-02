@@ -63,9 +63,9 @@
   <tc-saas-panel title="All Promotions" [subtitle]="promotions.length + ' offers'">
     <ng-container panel-actions>
       <app-grid-table-toggle
-        [storageKey]="'tc.promotions.viewMode'"
+        pageKey="platform.promotions.view"
         [mode]="viewMode"
-        (modeChange)="viewMode = $event">
+        (modeChange)="onViewModeChange($event)">
       </app-grid-table-toggle>
     </ng-container>
 
@@ -85,7 +85,7 @@
     </div>
 
     <div *ngIf="!loading && promotions.length && viewMode === 'grid'" class="promotions__cards">
-      <article class="saas-org-card promotions__card" *ngFor="let p of promotions; trackBy: trackById">
+      <article class="saas-org-card promotions__card" *ngFor="let p of paged; trackBy: trackById">
         <div class="saas-org-card__head promotions__card-head">
           <tc-saas-pill [label]="p.promotionCode" tone="primary" icon="pi pi-tag"></tc-saas-pill>
           <div class="saas-inline-spacer"></div>
@@ -125,7 +125,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of promotions; trackBy: trackById">
+          <tr *ngFor="let p of paged; trackBy: trackById">
             <td><strong class="promotions__code">{{ p.promotionCode }}</strong></td>
             <td>{{ p.promotionName }}</td>
             <td><tc-saas-pill [label]="discountTypeLabel(p.discountType)" tone="info"></tc-saas-pill></td>
@@ -148,6 +148,15 @@
         </tbody>
       </table>
     </div>
+    <app-paginator
+      *ngIf="!loading && promotions.length"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="promotions.length"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="promotions"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </tc-saas-panel>
 </div>
 

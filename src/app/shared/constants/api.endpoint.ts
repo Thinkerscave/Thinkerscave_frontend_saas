@@ -113,6 +113,8 @@ export const accessApi = {
   menus: `${ACCESS_BASE}/menus`,
   menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
   menuTree: `${ACCESS_BASE}/menus/tree`,
+  menuCatalog: (organizationId: number) =>
+    `${ACCESS_BASE}/menus/catalog?organizationId=${organizationId}`,
   menuSearch: `${ACCESS_BASE}/menus/search`,
   activateMenu: (id: number) => `${ACCESS_BASE}/menus/${id}/activate`,
   deactivateMenu: (id: number) => `${ACCESS_BASE}/menus/${id}/deactivate`,
@@ -132,10 +134,16 @@ export const accessApi = {
     `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/effective-permissions`,
   userPermissions: (userId: number, organizationId: number) =>
     `${ACCESS_BASE}/users/${userId}/permissions?organizationId=${organizationId}`,
+  resetUserPassword: (orgId: number, userId: number) =>
+    `${ACCESS_BASE}/organizations/${orgId}/users/${userId}/reset-password`,
+  responsibilityPermissions: (responsibilityId: number, organizationId: number) =>
+    `${ACCESS_BASE}/responsibilities/${responsibilityId}/permissions?organizationId=${organizationId}`,
   securityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy`,
   resetSecurityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy/reset`,
   orgLoginHistory: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}`,
   userLoginHistory: (userId: number) => `${ACCESS_BASE}/login-history/users/${userId}`,
+  orgLoginHistoryRetention: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}/retention`,
+  orgLoginHistoryPurge: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}/purge`,
 };
 
 export const loginApi = {
@@ -212,7 +220,9 @@ export const staffApi = {
   deactivate: (id: number) => `${BASE}/staff/${id}/deactivate`,
   responsibilities: `${BASE}/staff/responsibilities`,
   responsibilityById: (id: number) => `${BASE}/staff/responsibilities/${id}`,
-  responsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
+  responsibilityAssignments: (id: number) => `${BASE}/staff/responsibilities/${id}/assignments`,
+  responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
+  staffResponsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
   staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
   salaryStructures: `${BASE}/staff/salary-structures`,
   salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
@@ -478,4 +488,7 @@ export const platformApi = {
   provisioningTemplates: `${PLATFORM_BASE}/provisioning-templates`,
   maintenanceSchedules: `${PLATFORM_BASE}/maintenance`,
   orgConfiguration: (orgId: number) => `${PLATFORM_BASE}/organization-configurations/${orgId}`,
+  retention: `${PLATFORM_BASE}/retention`,
+  retentionTask: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}`,
+  runRetention: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}/run`
 };

@@ -1,12 +1,9 @@
 <app-toast />
 <p-confirmDialog />
 
-<section class="tc-page-shell">
-  <tc-saas-page-header
-    title="Applications"
-    subtitle="Track admission applications through review and approval."
-  >
-    <button type="button" class="tc-btn tc-btn--primary" (click)="newApplication()">
+<section class="tc-page-shell adm-page">
+  <tc-saas-page-header subtitle="Review applications and enroll approved students into class.">
+    <button type="button" class="tc-btn tc-btn--primary" (click)="newApplication()" title="Start a new admission application">
       <i class="pi pi-plus"></i> New Application
     </button>
     <button type="button" class="tc-btn" (click)="exportCsv()" [disabled]="!applications.length">
@@ -14,134 +11,121 @@
     </button>
   </tc-saas-page-header>
 
-  <tc-saas-tabs
-    [tabs]="statusTabs"
-    [active]="activeStatusTab"
-    (changeTab)="onStatusTabChange($event)"
-  />
+  <tc-saas-tabs [tabs]="statusTabs" [active]="activeStatusTab" (changeTab)="onStatusTabChange($event)" />
 
-  <tc-saas-panel title="Application workspace" [actions]="true">
-    <div panel-actions>
-      <small class="tc-card tc-card--panel__hint">{{ totalElements }} total</small>
-    </div>
-
+  <tc-saas-panel [title]="'Applications · ' + totalElements">
     <div class="tc-filter-bar">
-      <div class="tc-form-field">
+      <div class="tc-form-field adm-filter-grow">
         <label>Search</label>
-        <input
-          type="text"
-          [(ngModel)]="filter.keyword"
-          placeholder="Name, mobile, parent…"
-          (keyup.enter)="onSearch()"
-        />
-      </div>
-      <div class="tc-form-field">
-        <label>Application #</label>
-        <input type="text" [(ngModel)]="filter.admissionId" placeholder="APP-…" />
-      </div>
-      <div class="tc-form-field">
-        <label>Student name</label>
-        <input type="text" [(ngModel)]="filter.studentName" />
+        <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, mobile, application #…" (keyup.enter)="onSearch()" />
       </div>
       <div class="tc-form-field">
         <label>Class</label>
-        <input type="text" [(ngModel)]="filter.classApplied" placeholder="e.g. Grade 5" />
+        <input type="text" [(ngModel)]="filter.classApplied" placeholder="Class I" />
       </div>
-      <div class="tc-form-field">
-        <label>&nbsp;</label>
-        <div class="adm-inline-actions-sm">
-          <button type="button" class="tc-btn tc-btn--primary" (click)="onSearch()" [disabled]="searching">
-            <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
-            Search
-          </button>
-          <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Clear</button>
-        </div>
+      <div class="tc-form-field adm-filter-actions-field">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="onSearch()" [disabled]="searching">Search</button>
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Clear</button>
       </div>
     </div>
 
     <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
       <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
     </div>
+    <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading applications…</div>
 
-    <div class="tc-loading" *ngIf="loading">
-      <i class="pi pi-spin pi-spinner"></i> Loading applications…
-    </div>
-
-    <div class="tc-table-wrap" *ngIf="!loading && applications.length">
-      <table class="tc-table">
-        <thead>
-          <tr>
-            <th>Application</th>
-            <th>Applicant</th>
-            <th>Class</th>
-            <th>Contact</th>
-            <th>Parent</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let app of applications" (click)="openApplication(app)">
-            <td>{{ app.applicationNumber || ('#' + app.applicationId) }}</td>
-            <td>{{ app.applicantName }}</td>
-            <td>{{ app.applyingForClass || '—' }}</td>
-            <td>{{ app.contactNumber || '—' }}</td>
-            <td>{{ app.parentName || '—' }}</td>
-            <td>
-              <tc-saas-pill
-                [label]="statusLabel(app.status)"
-                [tone]="statusTone(app.status)"
-              />
-            </td>
-            <td>{{ app.createdOn | date: 'mediumDate' }}</td>
-            <td>
-              <div class="adm-row-actions" (click)="$event.stopPropagation()">
-                <button
-                  *ngIf="canReview(app)"
-                  type="button"
-                  class="tc-btn tc-btn--primary"
-                  (click)="approve(app, $event)"
-                >
-                  Approve
-                </button>
-                <button
-                  *ngIf="canReview(app)"
-                  type="button"
-                  class="tc-btn tc-btn--danger"
-                  (click)="reject(app, $event)"
-                >
-                  Reject
-                </button>
-                <button type="button" class="tc-btn" (click)="openApplication(app)">
-                  Open
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="adm-pagination">
-        <p-paginator
-          [rows]="pageSize"
-          [totalRecords]="totalElements"
-          [first]="pageIndex * pageSize"
-          [rowsPerPageOptions]="[10, 20, 50]"
-          (onPageChange)="onPageChange($event)"
-        />
-      </div>
+    <div class="adm-app-grid" *ngIf="!loading && applications.length">
+      <article class="adm-lead-card" *ngFor="let app of applications" (click)="openApplication(app)">
+        <header class="adm-lead-card__head">
+          <div class="adm-avatar">{{ (app.applicantName || '?').charAt(0) }}</div>
+          <div class="adm-lead-card__title">
+            <strong>{{ app.applicantName }}</strong>
+            <small>{{ app.applicationNumber || ('#' + app.applicationId) }} · {{ app.applyingForClass || '—' }}</small>
+          </div>
+          <tc-saas-pill [label]="statusLabel(app.status)" [tone]="statusTone(app.status)" />
+        </header>
+        <div class="adm-lead-card__meta">
+          <span><i class="pi pi-phone"></i> <em>{{ app.contactNumber || '—' }}</em></span>
+          <span><i class="pi pi-users"></i> <em>{{ app.parentName || '—' }}</em></span>
+          <span><i class="pi pi-wallet"></i> <em>{{ app.feeStatus || (app.feeAmount ? ('₹' + app.feeAmount) : 'Fee pending') }}</em></span>
+          <span><i class="pi pi-calendar"></i> <em>{{ app.createdOn ? (app.createdOn | date:'mediumDate') : '—' }}</em></span>
+        </div>
+        <footer class="adm-lead-card__foot" (click)="$event.stopPropagation()">
+          <button type="button" class="tc-btn" (click)="openApplication(app)">Open form</button>
+          <div class="adm-lead-card__icons">
+            <button *ngIf="canReview(app)" type="button" class="tc-btn tc-btn--primary" (click)="approve(app, $event)">Approve</button>
+            <button *ngIf="canReview(app)" type="button" class="tc-btn tc-btn--danger" (click)="reject(app, $event)">Reject</button>
+            <button *ngIf="app.status === 'APPROVED'" type="button" class="tc-btn tc-btn--primary" (click)="openEnroll(app, $event)">Enroll</button>
+          </div>
+        </footer>
+      </article>
     </div>
 
     <div class="tc-empty-state" *ngIf="!loading && !applications.length">
-      <i class="pi pi-folder-open"></i>
-      <h3>No applications found</h3>
-      <p>Adjust filters or create a new application to get started.</p>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="newApplication()">
-        <i class="pi pi-plus"></i> New Application
-      </button>
+      <h3>No applications in this view</h3>
+      <p>Approved applications appear under Ready to enroll. That is where a student record is created.</p>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="newApplication()">New Application</button>
     </div>
+
+    <app-paginator
+      *ngIf="!loading && totalElements > 0"
+      [page]="pageIndex"
+      [rows]="pageSize"
+      [totalRecords]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="applications"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </tc-saas-panel>
 </section>
 
+<p-dialog
+  header="Enroll student"
+  [(visible)]="enrollVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="closeEnroll()">
+  <ng-container *ngIf="selected">
+    <p class="adm-body-text">{{ selected.applicantName }} · {{ selected.applicationNumber }}</p>
+    <p class="adm-enroll-note">Enrollment creates the student in the directory and assigns class/section for {{ selected.applyingForClass }}.</p>
+    <div class="adm-form-grid" style="margin-top: 12px;">
+      <div class="tc-form-field">
+        <label>Academic year *</label>
+        <p-dropdown [options]="years" [(ngModel)]="enrollmentForm.academicYearId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown" (onChange)="onYearChange(enrollmentForm.academicYearId)"></p-dropdown>
+      </div>
+      <div class="tc-form-field">
+        <label>Class *</label>
+        <p-dropdown [options]="classes" [(ngModel)]="enrollmentForm.classId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown" (onChange)="onClassChange(enrollmentForm.classId)"></p-dropdown>
+      </div>
+      <div class="tc-form-field tc-form-field--full">
+        <label>Section</label>
+        <p-dropdown [options]="sections" [(ngModel)]="enrollmentForm.sectionId" optionLabel="name" optionValue="id" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+      </div>
+    </div>
+    <div class="adm-dialog-actions" style="margin-top: 16px;">
+      <button type="button" class="tc-btn" (click)="closeEnroll()">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="enroll()" [disabled]="enrolling || !enrollmentForm.academicYearId || !enrollmentForm.classId">
+        Confirm enrollment
+      </button>
+    </div>
+  </ng-container>
+</p-dialog>
 
+<p-dialog
+  header="Reject application"
+  [(visible)]="rejectDialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="closeRejectDialog()">
+  <p class="adm-small-muted">{{ rejectTarget?.applicantName }}</p>
+  <div class="tc-form-field">
+    <label>Reason *</label>
+    <textarea [(ngModel)]="rejectRemarks" rows="4"></textarea>
+  </div>
+  <div class="adm-dialog-actions">
+    <button type="button" class="tc-btn" (click)="closeRejectDialog()">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--danger" (click)="confirmReject()">Reject</button>
+  </div>
+</p-dialog>

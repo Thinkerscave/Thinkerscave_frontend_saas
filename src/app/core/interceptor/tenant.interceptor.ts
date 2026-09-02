@@ -22,7 +22,7 @@ export const tenantInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, 
   if (isPublicOrganizationsRequest) {
     const headers = req.headers
       .set('X-Tenant-ID', 'public')
-      .set('X-Login-Context', 'TENANT')
+      .set('X-Login-Context', 'PLATFORM')
       .delete('X-Organization-ID');
 
     return next(req.clone({ headers }));

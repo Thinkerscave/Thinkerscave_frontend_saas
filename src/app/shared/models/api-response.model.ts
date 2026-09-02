@@ -6,12 +6,14 @@ export interface ApiResponse<T> {
 }
 
 /**
- * Mirrors backend PageResponse<T> wrapper. List endpoints typically return
- * ApiResponse<PageResponse<T>>; the FE unwraps `data.content` to a flat array.
+ * Canonical paged payload. Backend PageResponse uses `page`; Spring Data Page
+ * uses `number`. Always read through `normalizePagedResult()` so both work.
  */
 export interface PageResponse<T> {
     content: T[];
     page: number;
+    /** Spring Data alias of `page`. Prefer `page` in new code. */
+    number?: number;
     size: number;
     totalElements: number;
     totalPages: number;

@@ -1,69 +1,74 @@
-<section class="tc-page-shell">
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>{{ pageConfig.title }}</h1>
-      <p>{{ pageConfig.description }}</p>
-      <span class="adm-count"><i class="pi pi-users"></i> {{ totalElements() }} leads</span>
-    </div>
-    <div class="tc-page-header__actions">
-      <button type="button" class="tc-btn" (click)="exportCsv()">
-        <i class="pi pi-download"></i> Export
-      </button>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="openDrawer()">
-        <i class="pi pi-plus"></i> New Lead
-      </button>
-    </div>
-  </header>
+<section class="tc-page-shell adm-page">
+  <tc-saas-page-header subtitle="Manage prospective families from first contact to application.">
+    <button type="button" class="tc-btn" (click)="exportCsv()" title="Download the current lead list as CSV">
+      <i class="pi pi-download"></i> Export
+    </button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openDialog()" title="Capture a new inquiry">
+      <i class="pi pi-plus"></i> New Lead
+    </button>
+  </tc-saas-page-header>
 
-  <tc-saas-panel title="Lead workspace" [actions]="true">
-    <div panel-actions>
-      <app-grid-table-toggle
-        [storageKey]="'tc.leads.viewMode'"
-        [mode]="listViewMode"
-        (modeChange)="onListViewModeChange($event)">
-      </app-grid-table-toggle>
-    </div>
-
-    <div class="tc-filter-bar">
-      <div class="tc-form-field adm-filter-grow">
-        <label>Search</label>
-        <input type="text" [(ngModel)]="filter.keyword" placeholder="Name, mobile, email…"
-               (keyup.enter)="runSearch()" />
-      </div>
-      <div class="tc-form-field">
-        <label>Status</label>
-        <p-dropdown
-          [options]="statusSelectOptions"
-          [(ngModel)]="filter.status"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Source</label>
-        <p-dropdown
-          [options]="sourceSelectOptions"
-          [(ngModel)]="filter.inquirySource"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Class</label>
-        <input type="text" [(ngModel)]="filter.classInterested" placeholder="e.g. Grade 10" />
-      </div>
-      <div class="tc-form-field adm-filter-actions-field">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching()">
-          <i class="pi" [class.pi-search]="!searching()" [class.pi-spin]="searching()" [class.pi-spinner]="searching()"></i>
-          Search
-        </button>
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
-      </div>
-    </div>
+  <tc-saas-panel [title]="'Leads · ' + totalElements()" [actions]="true">
+    <app-list-toolbar
+      [search]="filter.keyword || ''"
+      searchPlaceholder="Name, mobile, email, lead number…"
+      [searching]="searching()"
+      [view]="listViewMode"
+      viewAriaLabel="Leads view"
+      (searchChange)="onKeywordChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="runSearch()"
+      (reset)="clearFilters()"
+      (viewChange)="onListViewModeChange($event)">
+      <p-dropdown
+        [options]="statusSelectOptions"
+        [(ngModel)]="filter.status"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All statuses"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="sourceSelectOptions"
+        [(ngModel)]="filter.source"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All sources"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="years()"
+        [(ngModel)]="filterYearId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="All years"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="att-filter-dropdown"
+        (onChange)="onFilterYearChange(filterYearId)">
+      </p-dropdown>
+      <p-dropdown
+        [options]="filterClasses()"
+        [(ngModel)]="filter.classId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="All classes"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+      <p-dropdown
+        [options]="counselorOptions()"
+        [(ngModel)]="filter.counselorId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All counselors"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </app-list-toolbar>
 
     @if (error()) {
       <div class="tc-empty-state tc-empty-state--inline" role="alert">
@@ -72,45 +77,46 @@
       </div>
     }
 
-    @if (loading()) {
+    <app-list-results [busy]="refreshing()">
+    @if (!hasLoaded() && loading()) {
       <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
-    } @else if (!leads().length) {
+    } @else if (hasLoaded() && !leads().length) {
       <div class="tc-empty-state">
         <i class="pi pi-inbox"></i>
         <h3>No leads found</h3>
         <p>Adjust filters or capture a new lead to get started.</p>
-        <button type="button" class="tc-btn tc-btn--primary" (click)="openDrawer()">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="openDialog()">
           <i class="pi pi-plus"></i> New Lead
         </button>
       </div>
     } @else if (viewMode() === 'card') {
-      <div class="tc-card is-clickable-grid">
+      <div class="adm-lead-grid">
         @for (lead of leads(); track lead.inquiryId) {
-          <article class="tc-card is-clickable" (click)="openLead(lead)">
-            <header class="tc-card__header">
+          <article class="adm-lead-card" (click)="openLead(lead)">
+            <header class="adm-lead-card__head">
               <div class="adm-avatar">{{ (lead.name || '?').charAt(0) }}</div>
-              <div class="tc-card is-clickable__title">
+              <div class="adm-lead-card__title">
                 <strong>{{ lead.name }}</strong>
-                <small>LEAD-{{ lead.inquiryId }} · {{ lead.classInterestedIn }}</small>
+                <small>{{ lead.inquiryNumber || ('LEAD-' + lead.inquiryId) }} · {{ lead.classInterestedIn }}</small>
               </div>
-              <span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ lead.status }}</span>
+              <span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ formatStatus(lead.status) }}</span>
             </header>
-            <div class="tc-card is-clickable__meta">
-              <span><i class="pi pi-phone"></i> {{ lead.mobileNumber || '—' }}</span>
-              <span><i class="pi pi-envelope"></i> {{ lead.email || '—' }}</span>
-              <span><i class="pi pi-tag"></i> {{ lead.inquirySource || '—' }}</span>
-              <span><i class="pi pi-calendar"></i> {{ lead.nextFollowUpDate || '—' }}</span>
+            <div class="adm-lead-card__meta">
+              <span><i class="pi pi-phone"></i> <em>{{ lead.mobileNumber || '—' }}</em></span>
+              <span><i class="pi pi-tag"></i> <em>{{ lead.inquirySource || '—' }}</em></span>
+              <span><i class="pi pi-user"></i> <em>{{ lead.assignedCounselorName || 'Unassigned' }}</em></span>
+              <span><i class="pi pi-calendar"></i> <em>{{ lead.nextFollowUpDate || 'No follow-up' }}</em></span>
             </div>
-            <footer class="tc-card__footer">
-              <small>{{ lead.createdOn | date:'mediumDate' }}</small>
-              <div class="tc-card is-clickable__actions">
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
+            <footer class="adm-lead-card__foot" (click)="$event.stopPropagation()">
+              <div class="adm-lead-card__icons">
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" (click)="callPhone(lead, $event)"><i class="pi pi-phone"></i></button>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
               </div>
+              <button type="button" class="tc-btn" (click)="assignCounselor(lead, $event)">
+                {{ lead.assignedCounselorId ? 'Reassign counselor' : 'Assign counselor' }}
+              </button>
             </footer>
           </article>
         }
@@ -126,7 +132,8 @@
               <th>Class</th>
               <th>Source</th>
               <th>Status</th>
-              <th>Next Follow-up</th>
+              <th>Counselor</th>
+              <th>Next follow-up</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -136,12 +143,13 @@
                 <td>{{ pageIndex * pageSize + i + 1 }}</td>
                 <td>
                   <strong>{{ lead.name }}</strong>
-                  <small class="adm-subtle-id">#{{ lead.inquiryId }}</small>
+                  <small class="adm-subtle-id">{{ lead.inquiryNumber || ('#' + lead.inquiryId) }}</small>
                 </td>
                 <td>{{ lead.mobileNumber }}</td>
                 <td>{{ lead.classInterestedIn }}</td>
                 <td>{{ lead.inquirySource || '—' }}</td>
-                <td><span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ lead.status }}</span></td>
+                <td><span class="adm-badge" [attr.data-tone]="statusTone(lead.status)">{{ formatStatus(lead.status) }}</span></td>
+                <td>{{ lead.assignedCounselorName || 'Unassigned' }}</td>
                 <td>{{ lead.nextFollowUpDate || '—' }}</td>
                 <td (click)="$event.stopPropagation()">
                   <div class="adm-inline-actions-xs">
@@ -149,7 +157,7 @@
                     <button class="tc-btn tc-btn--ghost tc-btn--icon" title="WhatsApp" (click)="whatsapp(lead, $event)"><i class="pi pi-whatsapp"></i></button>
                     <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Email" (click)="emailContact(lead, $event)"><i class="pi pi-envelope"></i></button>
                     <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Edit" (click)="editLead(lead, $event)"><i class="pi pi-pencil"></i></button>
-                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Assign" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Assign counselor" (click)="assignCounselor(lead, $event)"><i class="pi pi-user-plus"></i></button>
                     <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Archive" (click)="deleteLead(lead, $event)"><i class="pi pi-trash"></i></button>
                   </div>
                 </td>
@@ -160,90 +168,111 @@
       </div>
     }
 
-    @if (!loading() && totalElements() > pageSize) {
-      <p-paginator
+    </app-list-results>
+
+    @if (totalElements() > 0) {
+      <app-paginator
+        [page]="pageIndex"
         [rows]="pageSize"
         [totalRecords]="totalElements()"
-        [first]="pageIndex * pageSize"
-        [rowsPerPageOptions]="[10, 20, 50]"
-        (onPageChange)="onPageChange($event)" />
+        [pageSizeOptions]="pageSizeOptions"
+        noun="leads"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     }
   </tc-saas-panel>
 </section>
 
-@if (drawerOpen()) {
-  <div class="stu-drawer-overlay" (click)="closeDrawer()"></div>
-  <div class="stu-drawer">
-    <div class="stu-drawer__header">
-      <div>
-        <h2>{{ editingLead() ? 'Edit Lead' : 'New Lead' }}</h2>
-        <p>{{ editingLead() ? 'Update lead information' : 'Capture a new prospective family' }}</p>
-      </div>
-      <button type="button" class="stu-drawer__close" (click)="closeDrawer()">
-        <i class="pi pi-times"></i>
-      </button>
+<p-dialog
+  [header]="editingLead() ? 'Edit Lead' : 'New Lead'"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(640px, 94vw)' }"
+  (onHide)="closeDialog()">
+  <form [formGroup]="leadForm" class="adm-dialog-form adm-form-grid" (ngSubmit)="saveLead()">
+    <div class="tc-form-field">
+      <label>Name *</label>
+      <input type="text" formControlName="name" placeholder="Student / parent name" />
+      @if (leadForm.controls.name.touched && leadForm.controls.name.invalid) {
+        <small class="adm-field-error">Enter at least 2 characters.</small>
+      }
     </div>
-    <div class="stu-drawer__body">
-      <form [formGroup]="leadForm" class="adm-wizard__body" (ngSubmit)="saveLead()">
-        <div class="tc-form-field">
-          <label>Name *</label>
-          <input type="text" formControlName="name" placeholder="Student / parent name" />
-        </div>
-        <div class="tc-form-field">
-          <label>Mobile *</label>
-          <input type="tel" formControlName="mobileNumber" placeholder="+91…" />
-        </div>
-        <div class="tc-form-field">
-          <label>Email</label>
-          <input type="email" formControlName="email" />
-        </div>
-        <div class="tc-form-field">
-          <label>Class interested *</label>
-          <input type="text" formControlName="classInterestedIn" placeholder="e.g. Grade 10" />
-        </div>
-        <div class="tc-form-field tc-form-field--full">
-          <label>Address</label>
-          <textarea formControlName="address" rows="2"></textarea>
-        </div>
-        <div class="tc-form-field">
-          <label>Source</label>
-          <p-dropdown
-            [options]="inquirySourceOptions"
-            formControlName="inquirySource"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="att-filter-dropdown">
-          </p-dropdown>
-        </div>
-        <div class="tc-form-field">
-          <label>Referred by</label>
-          <input type="text" formControlName="referredBy" />
-        </div>
-        <div class="tc-form-field">
-          <label>Counselor ID</label>
-          <input type="number" formControlName="assignedCounselorId" />
-        </div>
-        <div class="tc-form-field">
-          <label>Next follow-up</label>
-          <input type="date" formControlName="nextFollowUpDate" />
-        </div>
-        <div class="tc-form-field tc-form-field--full">
-          <label>Comments</label>
-          <textarea formControlName="comments" rows="3"></textarea>
-        </div>
-      </form>
+    <div class="tc-form-field">
+      <label>Mobile *</label>
+      <input type="tel" formControlName="mobileNumber" placeholder="10-digit Indian mobile" />
+      @if (leadForm.controls.mobileNumber.touched && leadForm.controls.mobileNumber.invalid) {
+        <small class="adm-field-error">Enter a valid 10-digit Indian mobile.</small>
+      }
     </div>
-    <div class="stu-drawer__footer adm-drawer-footer-end">
-      <button type="button" class="tc-btn" (click)="closeDrawer()">Cancel</button>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="saveLead()" [disabled]="saving() || leadForm.invalid">
-        <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
+    <div class="tc-form-field">
+      <label>Email</label>
+      <input type="email" formControlName="email" placeholder="parent@email.com" />
+    </div>
+    <div class="tc-form-field">
+      <label>Source</label>
+      <p-dropdown
+        [options]="inquirySourceOptions"
+        formControlName="inquirySource"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </div>
+    <div class="tc-form-field">
+      <label>Academic year *</label>
+      <p-dropdown
+        [options]="years()"
+        formControlName="academicYearId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select year"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </div>
+    <div class="tc-form-field">
+      <label>Class interested *</label>
+      <p-dropdown
+        [options]="classes()"
+        formControlName="classId"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select class"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </div>
+    <div class="tc-form-field">
+      <label>Referred by</label>
+      <input type="text" formControlName="referredBy" />
+    </div>
+    <div class="tc-form-field">
+      <label>Next follow-up</label>
+      <input type="date" formControlName="nextFollowUpDate" />
+    </div>
+    <div class="tc-form-field tc-form-field--full">
+      <label>Address</label>
+      <textarea formControlName="address" rows="2"></textarea>
+    </div>
+    <div class="tc-form-field tc-form-field--full">
+      <label>Comments</label>
+      <textarea formControlName="comments" rows="2"></textarea>
+    </div>
+    <div class="tc-form-field tc-form-field--full adm-form-actions">
+      <button type="button" class="tc-btn" (click)="closeDialog()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || leadForm.invalid">
         {{ editingLead() ? 'Update Lead' : 'Create Lead' }}
       </button>
     </div>
-  </div>
-}
+  </form>
+</p-dialog>
 
 <app-toast />
 <p-confirmDialog />
-
+<app-counselor-picker
+  [open]="counselorPickerOpen()"
+  (cancel)="counselorPickerOpen.set(false)"
+  (selected)="onCounselorPicked($event)"
+/>

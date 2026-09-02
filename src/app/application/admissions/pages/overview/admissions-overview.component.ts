@@ -15,6 +15,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { finalize, forkJoin } from 'rxjs';
 
 import {
+  SaasPageHeaderComponent,
   SaasPanelComponent,
   SaasStat,
   SaasStatGridComponent
@@ -56,6 +57,7 @@ interface SourceEntry {
   imports: [AppToastComponent, 
     CommonModule,
     RouterLink,
+    SaasPageHeaderComponent,
     SaasStatGridComponent,
     SaasPanelComponent
   ],
@@ -126,6 +128,7 @@ export class AdmissionsOverviewComponent implements OnInit {
   readonly funnel = signal<Record<string, number>>({});
   readonly sourceAnalysis = signal<Record<string, number>>({});
   readonly todayFollowUps = signal<FollowUpRecord[]>([]);
+  readonly counselorRows = signal<Record<string, unknown>[]>([]);
 
   readonly quickTiles: QuickTile[] = [
     {
@@ -172,7 +175,6 @@ export class AdmissionsOverviewComponent implements OnInit {
     if (!k) return [];
 
     const pipelineTotal = this.numFromReport(r, ['totalLeads', 'totalInquiries', 'pipelineTotal']);
-    const conversion = this.numFromReport(r, ['conversionRate', 'conversionPercent']);
 
     return [
       {
@@ -193,33 +195,33 @@ export class AdmissionsOverviewComponent implements OnInit {
       },
       {
         key: 'interested',
-        label: 'Interested',
+        label: 'Interested Leads',
         value: k.interested,
         helper: 'Ready for counseling',
         icon: 'pi pi-heart',
         tone: 'success'
       },
       {
+        key: 'applicationsStarted',
+        label: 'Applications Started',
+        value: k.applicationsStarted ?? 0,
+        helper: 'Drafts and submitted applications',
+        icon: 'pi pi-file-edit',
+        tone: 'info'
+      },
+      {
         key: 'admissionReady',
-        label: 'Admission Ready',
+        label: 'Ready for Admission',
         value: k.admissionReady,
         helper: 'Documents collected',
         icon: 'pi pi-check-circle',
         tone: 'success'
       },
       {
-        key: 'futureProspects',
-        label: 'Future Prospects',
-        value: k.futureProspects,
-        helper: 'Long-term opportunities',
-        icon: 'pi pi-clock',
-        tone: 'neutral'
-      },
-      {
-        key: 'closed',
-        label: 'Closed',
-        value: k.closed,
-        helper: conversion != null ? `${conversion}% conversion` : 'Lost or converted',
+        key: 'lostLeads',
+        label: 'Lost Leads',
+        value: k.lostLeads ?? 0,
+        helper: 'Closed without conversion',
         icon: 'pi pi-ban',
         tone: 'danger'
       }
@@ -264,20 +266,22 @@ export class AdmissionsOverviewComponent implements OnInit {
       overview: this.api.reportsOverview(),
       funnel: this.api.reportsFunnel(),
       sources: this.api.reportsSourceAnalysis(),
-      today: this.api.todayFollowUps()
+      today: this.api.todayFollowUps(),
+      counselors: this.api.reportsCounselorPerformance()
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false))
       )
       .subscribe({
-        next: ({ kpi, quick, overview, funnel, sources, today }) => {
+        next: ({ kpi, quick, overview, funnel, sources, today, counselors }) => {
           this.kpi.set(kpi);
           this.quick.set(quick);
           this.reportsOverview.set(overview);
           this.funnel.set(funnel ?? {});
           this.sourceAnalysis.set(sources ?? {});
           this.todayFollowUps.set(today);
+          this.counselorRows.set(counselors ?? []);
         },
         error: () => {
           const msg = 'Unable to load admissions overview. Please retry.';
@@ -291,14 +295,46 @@ export class AdmissionsOverviewComponent implements OnInit {
     this.router.navigate([tile.route], { queryParams: tile.queryParams });
   }
 
+  onStatSelect(stat: SaasStat): void {
+    const routes: Record<string, { path: string; query?: Record<string, string> }> = {
+      newInquiries: { path: '/app/admissions/leads', query: { status: 'NEW' } },
+      todaysFollowUps: { path: '/app/admissions/follow-ups', query: { tab: 'today' } },
+      interested: { path: '/app/admissions/leads', query: { status: 'INTERESTED' } },
+      applicationsStarted: { path: '/app/admissions/applications' },
+      admissionReady: { path: '/app/admissions/leads', query: { status: 'READY_FOR_ADMISSION' } },
+      lostLeads: { path: '/app/admissions/leads', query: { status: 'LOST' } }
+    };
+    const target = routes[stat.key];
+    if (target) {
+      this.router.navigate([target.path], { queryParams: target.query });
+    }
+  }
+
   newLead(): void {
-    this.router.navigate(['/app/admissions/leads'], { queryParams: { openDrawer: '1' } });
+    this.router.navigate(['/app/admissions/leads'], { queryParams: { openCreate: '1' } });
   }
 
   openFollowUp(fu: FollowUpRecord): void {
     if (fu.inquiryId) {
-      this.router.navigate(['/app/admissions/lead', fu.inquiryId]);
+      this.router.navigate(['/app/admissions/lead', fu.inquiryId], { queryParams: { from: 'overview' } });
     }
+  }
+
+  counselorColumns(): string[] {
+    const first = this.counselorRows()[0];
+    return first ? Object.keys(first) : [];
+  }
+
+  formatCell(value: unknown): string {
+    if (value == null || value === '') return '—';
+    if (typeof value === 'number' && value > 0 && value < 1) {
+      return `${(value * 100).toFixed(1)}%`;
+    }
+    return String(value);
+  }
+
+  formatCol(key: string): string {
+    return this.formatLabel(key);
   }
 
   private numFromReport(r: Record<string, unknown> | null, keys: string[]): number | null {

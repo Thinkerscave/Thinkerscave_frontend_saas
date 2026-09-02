@@ -18,6 +18,9 @@ import {
   PayrollStatus
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
 
 interface KpiTile {
   key: keyof PayrollDashboard | 'currentMonth';
@@ -31,7 +34,7 @@ interface KpiTile {
   selector: 'app-staff-payroll',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, AppPaginatorComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-payroll.component.html'
 })
@@ -51,10 +54,11 @@ export class StaffPayrollComponent implements OnInit {
   };
 
   payrollPage: PageResponse<Payroll> = {
-    content: [], totalElements: 0, totalPages: 0, size: 20, number: 0
+    content: [], totalElements: 0, totalPages: 0, size: UI_PAGINATION.table.defaultSize, number: 0
   };
 
-  filters: PayrollFilterParams = { page: 0, size: 12 };
+  filters: PayrollFilterParams = { page: 0, size: UI_PAGINATION.table.defaultSize };
+  readonly pageSizeOptions = UI_PAGINATION.table.options;
 
   readonly kpiTiles: KpiTile[] = [
     { key: 'currentMonth',     label: 'Current Month',      icon: 'pi-calendar',      color: 'blue' },
@@ -146,9 +150,9 @@ export class StaffPayrollComponent implements OnInit {
       .subscribe({ next: page => { this.payrollPage = page; } });
   }
 
-  goToPage(page: number): void {
-    if (page < 0 || page >= this.payrollPage.totalPages) { return; }
-    this.filters.page = page;
+  onPageChange(event: AppPageChangeEvent): void {
+    this.filters.page = event.page;
+    this.filters.size = event.rows;
     this.loadList();
   }
 
@@ -256,16 +260,6 @@ export class StaffPayrollComponent implements OnInit {
 
   monthName(monthNum: number): string {
     return new Date(2000, monthNum - 1, 1).toLocaleString('default', { month: 'long' });
-  }
-
-  get pageNumbers(): number[] {
-    const total = this.payrollPage.totalPages;
-    const current = this.payrollPage.number;
-    const pages: number[] = [];
-    for (let i = Math.max(0, current - 2); i <= Math.min(total - 1, current + 2); i++) {
-      pages.push(i);
-    }
-    return pages;
   }
 
   trackById(_: number, p: Payroll): number { return p.payrollId; }

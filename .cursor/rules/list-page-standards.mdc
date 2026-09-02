@@ -1,0 +1,69 @@
+---
+description: Application-wide list, pagination, view-switcher, modal-vs-page, and back-navigation standards. Apply when creating or changing list pages, tables, grids, or paginated APIs.
+globs: src/app/**/*.{ts,html,scss}
+alwaysApply: false
+---
+
+# List page and pagination standard
+
+New list/table/grid screens must consume the shared kit. Do not copy page-size arrays, paginator markup, or view-toggle buttons into a module.
+
+## Pagination
+
+- Use `<app-paginator>` under the content. Summary on the **left**, page size + Previous/pages/Next on the **right**.
+- Grid and table share one size: **10**. Options: **10, 20, 50, 100** from `UI_PAGINATION`.
+- Import sizes from `src/app/shared/config/ui-standards.ts`. Never hard-code `pageSize = 20` on a page.
+- Parse API pages with `normalizePagedResult()` so both Spring `number` and `PageResponse.page` work.
+- Query params: `page` (0-based), `size`, `sort`.
+
+## Toolbar
+
+Use `<app-list-toolbar>` whenever the page is a real searchable list (students, staff, users, roles, catalogs). Skip it only for tiny datasets (e.g. a handful of sections).
+
+Fixed structure, left to right:
+
+1. Search (~4/12)
+2. One to three page-specific filters
+3. **Search** and **Reset**, immediately beside those controls
+4. Grid / Table icons, far right — not in the filter cluster
+
+Placeholders, filters, and tooltips may differ. The layout must not.
+
+## Search vs filters (backend pagination)
+
+- **Text search** is live with debounce (`UI_SEARCH.debounceMs`). Bind `(searchDebounced)` to query. It queries the **backend** for the full dataset, then the API paginates. Never filter only the rows on the current page.
+- **Dropdown/date filters** stay in the form until the user clicks **Search** (or presses Enter). Keep a committed copy of those filters; debounce search must reuse the last committed filters, not the unsubmitted dropdown values.
+- Bind `(submitted)` to copy draft filters → committed, then query. Do not fire an API call on every dropdown change.
+- **Reset** clears search, filters, optional sort, and page (back to 0), cancels a pending debounce, and reloads the default query.
+- A new search/filter resets the **page number** only. Keep view mode, page size, and the typed/selected form values.
+
+## Partial refresh
+
+Do not wrap the whole page in `*ngIf="!loading"` for search/filter. Keep header, stats, toolbar, and view toggle mounted. Use `<app-list-results [busy]="refreshing">` so only the table/grid shows a loading overlay. First visit may skeleton the results area; later queries overlay the existing rows.
+
+Grid and table are the same query. Only the template changes.
+
+## Grid / table view
+
+- Use `<app-grid-table-toggle>` (already included by `app-list-toolbar`). Icons: grid (`pi-th-large`) then table (`pi-list`).
+- The parent initializes `view` from `ViewPreferenceService.globalDefault()` (or `initialView(saved.view)` after Back).
+- The toggle is presentational: bind `[mode]` and handle `(modeChange)`. Do not resolve preference inside the toggle. Do not persist the page switch as a global setting.
+- Persist list pagination/search/view with `ListContextService` before navigating to detail/edit so Back restores context. A fresh visit from the menu uses the global default again.
+
+## Cards
+
+Use the shared `.app-data-grid` density (`minmax(280px)` auto-fill). Cards must `min-width: 0` and wrap/ellipsis so content never overlaps or spills past the card width.
+
+## Back navigation
+
+- Deeper pages (detail, edit, create, wizards) use `<app-back-nav [fallback]="'/app/.../list'">` or `BackNavigationService`.
+- Do not leave users with only the side menu as a way back.
+
+## Modal vs dedicated page
+
+- **Modal**: few fields, quick add/edit, little surrounding context (e.g. Add Category).
+- **Dedicated page**: many fields, tabs/sections, or a major workflow (admission, student, staff, customer, organization).
+
+## PrimeNG tables
+
+If a screen still uses `p-table` paging, set `[rows]="10"`, `[rowsPerPageOptions]="[10, 20, 50, 100]"`, `[showCurrentPageReport]="true"`, and `currentPageReportTemplate="Showing {first}–{last} of {totalRecords} results"`.

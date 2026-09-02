@@ -214,6 +214,7 @@ export class MenuMappingService {
       { key: 'subscriptions', label: 'Subscriptions', icon: 'pi pi-credit-card' },
       { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-server' },
       { key: 'platform-catalog', label: 'Platform Catalog', icon: 'pi pi-th-large' },
+      { key: 'access', label: 'Access Management', icon: 'pi pi-lock' },
       { key: 'admin', label: 'Administration', icon: 'pi pi-shield' }
     ];
   }
@@ -240,11 +241,18 @@ export class MenuMappingService {
       };
     }
 
+    // Parent group must not reuse the first child's route — prune would drop that child
+    // as a duplicate (this is why Academics Overview disappeared from the submenu).
+    const parentRouterLink =
+      group.key === 'academics' ? '/app/academics'
+        : group.key === 'admissions' ? '/app/admissions'
+          : first.routerLink;
+
     return {
       label: group.label,
       icon: group.icon,
-      routerLink: first.routerLink,
-      queryParams: first.queryParams,
+      routerLink: parentRouterLink,
+      queryParams: group.key === 'academics' || group.key === 'admissions' ? undefined : first.queryParams,
       items: childItems
     };
   }
@@ -299,13 +307,14 @@ export class MenuMappingService {
       || route.includes('/app/tenant-management/migration-center')
       || route.includes('/app/tenant-management/audit-center')) return 'tenant-management';
     if (route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || route.includes('/app/organization-registration')) return 'tenant-management';
+    if (route.includes('/app/access-management') || route.includes('/app/organization/access-control')) return 'access';
     if (route.includes('/app/organization')) return 'admin';
     if (route.includes('/app/admin')) return 'admin';
     if (route.includes('/app/academics')) return 'academics';
     if (route.includes('/app/students') || /managestudent|manage-class|manage-section/.test(route)) return 'students';
     if (route.includes('/app/staff') || /salary|leave|manage-branch|manage-department/.test(route)) return 'staff';
     if (route.includes('/app/attendance')) return 'attendance';
-    if (route.includes('/app/inquiry') || route.includes('/app/counsellor') || route.includes('/public/admission')) return 'admissions';
+    if (route.includes('/app/admissions') || route.includes('/app/inquiry') || route.includes('/app/counsellor') || route.includes('/public/admission')) return 'admissions';
     if (route.includes('/app/fees') || route.includes('/app/reports')) return 'finance';
 
     if (/academic|academics|subject|syllabus|curriculum|timetable|calendar|teacher-allocation|hierarchy|year|course/.test(haystack)) return 'academics';
@@ -317,6 +326,7 @@ export class MenuMappingService {
     if (/exam|marks|mark sheet|marksheet|grade|result/.test(haystack)) return 'exams';
     if (/communication|message|notice|notification|email|sms|chat/.test(haystack)) return 'communication';
     if (/tenant management|subscription plan|tenant onboarding|organization directory|organization management/.test(haystack)) return 'tenant-management';
+    if (/access management|access and management|access control|login history|security policy/.test(haystack)) return 'access';
     if (/platform control|my organization/.test(haystack)) return 'admin';
     if (/admin|administration|role|permission|access|audit|monitoring|setting|menu|privilege|navigation|system/.test(haystack)) return 'admin';
     if (/\bdashboard\b/.test(haystack)) return 'dashboard';
@@ -348,6 +358,65 @@ export class MenuMappingService {
     return label;
   }
 
+  private ensureAdmissionsWorkspace(items: MenuItem[]): MenuItem[] {
+    const pages: Array<{ label: string; route: string; icon: string }> = [
+      { label: 'Overview', route: '/app/admissions/overview', icon: 'pi pi-chart-bar' },
+      { label: 'Leads', route: '/app/admissions/leads', icon: 'pi pi-users' },
+      { label: 'Follow-ups', route: '/app/admissions/follow-ups', icon: 'pi pi-calendar' },
+      { label: 'Applications', route: '/app/admissions/applications', icon: 'pi pi-file-edit' },
+      { label: 'Settings', route: '/app/admissions/settings', icon: 'pi pi-cog' }
+    ];
+
+    const childItems: MenuItem[] = pages.map(page => ({
+      label: page.label,
+      icon: page.icon,
+      routerLink: page.route
+    }));
+
+    const group: MenuItem = {
+      label: 'Admissions',
+      icon: 'pi pi-inbox',
+      routerLink: '/app/admissions',
+      items: childItems
+    };
+
+    const index = items.findIndex(item => {
+      const label = (item.label ?? '').toLowerCase();
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      return label === 'admissions' || route.includes('/app/admissions');
+    });
+
+    if (index >= 0) {
+      const current = items[index];
+      const existing = current.items ?? [];
+      const ordered = pages.map(page => {
+        const found = existing.find(child =>
+          this.routerLinkText(child.routerLink).toLowerCase() === page.route
+        );
+        return found
+          ? { ...found, label: page.label, icon: found.icon || page.icon, routerLink: page.route }
+          : { label: page.label, icon: page.icon, routerLink: page.route };
+      });
+      const next = [...items];
+      next[index] = {
+        ...current,
+        label: 'Admissions',
+        icon: current.icon || 'pi pi-inbox',
+        routerLink: '/app/admissions',
+        items: ordered
+      };
+      return next;
+    }
+
+    const after = items.findIndex(item => {
+      const label = (item.label ?? '').toLowerCase();
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      return label === 'attendance' || route.includes('/app/attendance');
+    });
+    const insertAt = after >= 0 ? after + 1 : items.length;
+    return [...items.slice(0, insertAt), group, ...items.slice(insertAt)];
+  }
+
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
     const roles = this.currentRoleTokens();
     const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
@@ -362,12 +431,164 @@ export class MenuMappingService {
     }
 
     menus = this.filterNavigationItems(menus, item => this.isOrganizationProfileItem(item));
+    if (this.hasAnyRole(roles, ['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])) {
+      menus = this.ensureAdmissionsWorkspace(menus);
+    }
+
+    if (this.hasAnyRole(roles, ['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL'])) {
+      menus = this.ensureAcademicsWorkspace(menus);
+    }
+
+    if (!isTenantManager && this.hasAnyRole(roles, [
+      'ADMIN',
+      'COLLEGE_ADMIN',
+      'INSTITUTION_ADMIN',
+      'ORGANIZATION_ADMIN',
+      'ORGANIZATION_OWNER'
+    ])) {
+      menus = this.ensureAccessManagementWorkspace(menus);
+    }
 
     if (isTenantManager) {
       menus = this.filterNavigationItems(menus, item => this.isRedundantTenantMenuStub(item));
     }
 
     return menus;
+  }
+
+  /**
+   * Org-admin Academics side menu must always expose Overview as a child leaf.
+   * Also folds stray top-level Timetable / academics pages back under Academics.
+   */
+  private ensureAcademicsWorkspace(items: MenuItem[]): MenuItem[] {
+    const pages: Array<{ label: string; route: string; icon: string }> = [
+      { label: 'Overview', route: '/app/academics/overview', icon: 'pi pi-home' },
+      { label: 'Academic Year', route: '/app/academics/academic-year', icon: 'pi pi-calendar' },
+      { label: 'Classes & Sections', route: '/app/academics/classes-sections', icon: 'pi pi-th-large' },
+      { label: 'Subjects & Mapping', route: '/app/academics/subjects-mapping', icon: 'pi pi-book' },
+      { label: 'Teacher Allocation', route: '/app/academics/teacher-allocation', icon: 'pi pi-user-edit' },
+      { label: 'Timetable', route: '/app/academics/timetable', icon: 'pi pi-table' },
+      { label: 'Academic Calendar', route: '/app/academics/academic-calendar', icon: 'pi pi-calendar-plus' }
+    ];
+    const pageRoutes = new Set(pages.map(p => p.route));
+
+    const collectExisting = (nodes: MenuItem[]): MenuItem[] => {
+      const found: MenuItem[] = [];
+      for (const node of nodes ?? []) {
+        const route = this.routerLinkText(node.routerLink).toLowerCase();
+        if (route.startsWith('/app/academics/') || pageRoutes.has(route)) {
+          found.push(node);
+        }
+        if (node.items?.length) {
+          found.push(...collectExisting(node.items));
+        }
+      }
+      return found;
+    };
+
+    const existingLeaves = collectExisting(items);
+    const byRoute = new Map<string, MenuItem>();
+    for (const leaf of existingLeaves) {
+      const route = this.routerLinkText(leaf.routerLink).toLowerCase();
+      if (!byRoute.has(route)) {
+        byRoute.set(route, leaf);
+      }
+    }
+
+    // Keep only admin pages that the role already has (or always keep Overview).
+    const orderedChildren: MenuItem[] = [];
+    for (const page of pages) {
+      const found = byRoute.get(page.route);
+      if (found || page.route === '/app/academics/overview') {
+        orderedChildren.push(
+          found
+            ? { ...found, label: page.label, icon: found.icon || page.icon, routerLink: page.route, items: undefined }
+            : { label: page.label, icon: page.icon, routerLink: page.route }
+        );
+      }
+    }
+
+    // Preserve any other /app/academics/* leaves (e.g. role pages) after the admin set.
+    for (const [route, leaf] of byRoute) {
+      if (pageRoutes.has(route)) continue;
+      if (!route.startsWith('/app/academics/')) continue;
+      orderedChildren.push({ ...leaf, items: undefined });
+    }
+
+    if (!orderedChildren.length) {
+      return items;
+    }
+
+    const group: MenuItem = {
+      label: 'Academics',
+      icon: 'pi pi-book',
+      routerLink: '/app/academics',
+      items: orderedChildren
+    };
+
+    // Drop top-level Academics / Timetable stubs; replace with one group.
+    const withoutAcademics = items.filter(item => {
+      const label = (item.label ?? '').toLowerCase();
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      if (label === 'academics') return false;
+      if (route === '/app/academics' || route.startsWith('/app/academics/')) return false;
+      if (label === 'timetable' && (route.includes('/academics/timetable') || !route)) return false;
+      return true;
+    });
+
+    const after = withoutAcademics.findIndex(item => {
+      const label = (item.label ?? '').toLowerCase();
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      return label === 'admissions' || route.includes('/app/admissions');
+    });
+    const insertAt = after >= 0 ? after + 1 : withoutAcademics.length;
+    return [...withoutAcademics.slice(0, insertAt), group, ...withoutAcademics.slice(insertAt)];
+  }
+
+  /**
+   * Org-admin Access Management must appear even when the backend sidebar no longer
+   * returns it (roles/menus moved to platform catalog). Org admins manage users,
+   * responsibilities and menu assignment — never platform roles or menu CRUD.
+   */
+  private ensureAccessManagementWorkspace(items: MenuItem[]): MenuItem[] {
+    const pages: Array<{ label: string; route: string; icon: string }> = [
+      { label: 'Users', route: '/app/access-management/users', icon: 'pi pi-users' },
+      { label: 'Responsibilities', route: '/app/access-management/responsibilities', icon: 'pi pi-sitemap' },
+      { label: 'Feature Catalog', route: '/app/access-management/feature-catalog', icon: 'pi pi-th-large' },
+      { label: 'Login History', route: '/app/access-management/login-history', icon: 'pi pi-history' },
+      { label: 'Security Policy', route: '/app/access-management/security-policy', icon: 'pi pi-shield' }
+    ];
+
+    const childItems: MenuItem[] = pages.map(page => ({
+      label: page.label,
+      icon: page.icon,
+      routerLink: page.route
+    }));
+
+    const group: MenuItem = {
+      label: 'Access Management',
+      icon: 'pi pi-lock',
+      routerLink: '/app/access-management/users',
+      items: childItems
+    };
+
+    const stripped = this.filterNavigationItems(items, item => {
+      if (this.isAccessManagementItem(item) || this.isOrgCatalogManagementItem(item)) {
+        return true;
+      }
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      const label = (item.label ?? '').toLowerCase();
+      return route === '/app/staff/responsibilities'
+        || (label === 'responsibilities' && route.includes('/staff'));
+    });
+
+    const after = stripped.findIndex(item => {
+      const label = (item.label ?? '').toLowerCase();
+      const route = this.routerLinkText(item.routerLink).toLowerCase();
+      return label === 'staff' || route.includes('/app/staff');
+    });
+    const insertAt = after >= 0 ? after + 1 : stripped.length;
+    return [...stripped.slice(0, insertAt), group, ...stripped.slice(insertAt)];
   }
   
   private pruneNavigationMenus(items: MenuItem[]): MenuItem[] {
@@ -378,8 +599,6 @@ export class MenuMappingService {
       '/app/students/documents',
       '/app/staff/documents',
       '/app/staff/alumni',
-      '/app/admissions/overview',
-      '/app/admissions/enrollment',
       '/app/fees',
       '/app/fees/setup',
       '/app/fees/contracts',
@@ -389,6 +608,7 @@ export class MenuMappingService {
       '/app/fees/audit',
       '/app/fees/dashboard',
       '/app/responsibilities',
+      '/app/staff/responsibilities',
       '/app/onboarding',
       '/app/profile',
       '/app/settings',
@@ -401,6 +621,8 @@ export class MenuMappingService {
       if (routeText === '/app/staff/directory') return '/app/staff';
       if (routeText === '/app/attendance/students') return '/app/attendance';
       if (routeText === '/app/admissions/overview') return '/app/admissions';
+      if (routeText === '/app/academics/overview') return '/app/academics';
+      if (routeText === '/app/access-management/users') return '/app/access-management';
       return routeText;
     };
 
@@ -410,7 +632,28 @@ export class MenuMappingService {
       '/app/staff',
       '/app/staff/directory',
       '/app/attendance',
-      '/app/attendance/students'
+      '/app/attendance/students',
+      '/app/admissions',
+      '/app/admissions/overview',
+      '/app/admissions/leads',
+      '/app/admissions/follow-ups',
+      '/app/admissions/applications',
+      '/app/admissions/settings',
+      '/app/academics',
+      '/app/academics/overview',
+      '/app/academics/academic-year',
+      '/app/academics/classes-sections',
+      '/app/academics/subjects-mapping',
+      '/app/academics/teacher-allocation',
+      '/app/academics/timetable',
+      '/app/academics/academic-calendar',
+      '/app/access-management',
+      '/app/access-management/users',
+      '/app/access-management/responsibilities',
+      '/app/access-management/feature-catalog',
+      '/app/access-management/menus',
+      '/app/access-management/login-history',
+      '/app/access-management/security-policy'
     ]);
 
     const walk = (menuItems: MenuItem[]): MenuItem[] => {
@@ -548,9 +791,8 @@ export class MenuMappingService {
     const route = this.routerLinkText(item.routerLink).toLowerCase();
     const label = (item.label ?? '').toLowerCase();
     return route.includes('/app/access-management/roles')
-      || route.includes('/app/access-management/menus')
-      || label === 'menu catalog'
-      || (label === 'roles' && route.includes('/access-management'));
+      || (label === 'roles' && route.includes('/access-management'))
+      || (label === 'roles & responsibilities' && route.includes('/access-management'));
   }
 
   private normalizeTenantRoutes(items: MenuItem[]): MenuItem[] {
@@ -620,7 +862,11 @@ export class MenuMappingService {
   private isAccessManagementItem(item: MenuItem): boolean {
     const route = this.routerLinkText(item.routerLink).toLowerCase();
     const label = (item.label ?? '').toLowerCase();
-    return route.includes('/app/access-management') || route.includes('/app/organization/access-control') || label.includes('access management') || label.includes('access control');
+    return route.includes('/app/access-management')
+      || route.includes('/app/organization/access-control')
+      || label.includes('access management')
+      || label.includes('access and management')
+      || label.includes('access control');
   }
 
   private isOrganizationProfileItem(item: MenuItem): boolean {
@@ -630,6 +876,9 @@ export class MenuMappingService {
 
   private isFeeManagementItem(item: MenuItem): boolean {
     const route = this.routerLinkText(item.routerLink).toLowerCase();
+    if (route.includes('/app/admissions')) {
+      return false;
+    }
     const label = (item.label ?? '').toLowerCase();
     const id = String(item.id ?? '').toLowerCase();
     return route.includes('/app/fees')

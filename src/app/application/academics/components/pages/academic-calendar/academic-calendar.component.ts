@@ -19,6 +19,9 @@ import { MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/utils/paged-result.util';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
@@ -57,6 +60,7 @@ export interface AcademicCalendarDayCell {
     FormsModule,
     ReactiveFormsModule,
     SaasPageHeaderComponent,
+    AppPaginatorComponent,
     DialogModule,
     DropdownModule,
     MultiSelectModule,
@@ -115,8 +119,9 @@ export class AcademicCalendarPageComponent implements OnInit {
   fromDate = '';
   toDate = '';
   viewMode: 'calendar' | 'list' = 'calendar';
-  page = 1;
-  pageSize = 12;
+  page = 0;
+  pageSize: number = UI_PAGINATION.table.defaultSize;
+  readonly pageSizeOptions = [...UI_PAGINATION.table.options];
   /** Visible month for calendar grid (1st of month, local). */
   visibleMonth = this.startOfMonth(new Date());
   readonly weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -163,23 +168,8 @@ export class AcademicCalendarPageComponent implements OnInit {
     return this.dashboard?.events?.length ?? 0;
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalEvents / this.pageSize));
-  }
-
-  get pageStart(): number {
-    if (!this.totalEvents) return 0;
-    return (this.page - 1) * this.pageSize + 1;
-  }
-
-  get pageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.totalEvents);
-  }
-
   get pagedEvents(): AcademicCalendarEventDto[] {
-    const all = this.dashboard?.events ?? [];
-    const start = (this.page - 1) * this.pageSize;
-    return all.slice(start, start + this.pageSize);
+    return slicePage(this.dashboard?.events ?? [], this.page, this.pageSize);
   }
 
   get upcomingPreview(): AcademicCalendarEventDto[] {
@@ -227,7 +217,7 @@ export class AcademicCalendarPageComponent implements OnInit {
     this.search$
       .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.page = 1;
+        this.page = 0;
         this.reload();
       });
 
@@ -269,26 +259,24 @@ export class AcademicCalendarPageComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   onYearChange(): void {
-    this.page = 1;
+    this.page = 0;
     if (this.selectedYearId) {
       this.loadClassOptions(this.selectedYearId);
     }
     this.reload();
   }
 
-  setPage(next: number): void {
-    this.page = Math.min(Math.max(1, next), this.totalPages);
-    this.cdr.markForCheck();
-  }
-
-  setPageSize(size: number): void {
-    this.pageSize = Number(size) || 12;
-    this.page = 1;
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
     this.cdr.markForCheck();
   }
 
@@ -371,37 +359,37 @@ export class AcademicCalendarPageComponent implements OnInit {
 
   clearSearch(): void {
     this.searchTerm = '';
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearType(): void {
     this.typeFilter = null;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearStatus(): void {
     this.statusFilter = null;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearAudience(): void {
     this.audienceFilter = null;
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearFrom(): void {
     this.fromDate = '';
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
   clearTo(): void {
     this.toDate = '';
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
@@ -412,7 +400,7 @@ export class AcademicCalendarPageComponent implements OnInit {
     this.audienceFilter = null;
     this.fromDate = '';
     this.toDate = '';
-    this.page = 1;
+    this.page = 0;
     this.reload();
   }
 
@@ -441,9 +429,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
-          if (this.page > this.totalPages) {
-            this.page = this.totalPages;
-          }
+          this.page = clampPage(this.page, Math.ceil(this.totalEvents / this.pageSize));
         },
         error: (err) => this.messages.add({
           severity: 'error',

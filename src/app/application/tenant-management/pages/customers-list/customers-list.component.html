@@ -44,20 +44,22 @@
   </section>
 
   <!-- Filters -->
-  <app-filter-toolbar>
-    <app-search-bar
-      class="customers-list__search"
-      placeholder="Search customers…"
-      [value]="search"
-      (search)="onSearchChange($event)">
-    </app-search-bar>
-
+  <app-list-toolbar
+    [search]="search"
+    searchPlaceholder="Search customers…"
+    [searching]="refreshing"
+    [view]="viewMode"
+    viewAriaLabel="Customers view"
+    (searchChange)="onSearchChange($event)"
+    (searchDebounced)="applyQuery()"
+    (submitted)="applyFilters()"
+    (reset)="resetFilters()"
+    (viewChange)="onViewModeChange($event)">
     <label class="customers-list__filter">
       <span class="customers-list__filter-label">Sort By</span>
       <p-dropdown
         [options]="sortOptions"
         [(ngModel)]="sortBy"
-        (ngModelChange)="onFilterChange()"
         optionLabel="label"
         optionValue="value"
         appendTo="body"
@@ -70,7 +72,6 @@
       <p-dropdown
         [options]="statusOptions"
         [(ngModel)]="statusFilter"
-        (ngModelChange)="onFilterChange()"
         optionLabel="label"
         optionValue="value"
         appendTo="body"
@@ -83,32 +84,19 @@
       <p-dropdown
         [options]="createdOptions"
         [(ngModel)]="createdFilter"
-        (ngModelChange)="onFilterChange()"
         optionLabel="label"
         optionValue="value"
         appendTo="body"
         styleClass="att-filter-dropdown">
       </p-dropdown>
     </label>
-
-    <button type="button" class="customers-list__more-filters" disabled title="Coming soon">
-      <i class="pi pi-sliders-h" aria-hidden="true"></i>
-      More Filters
-    </button>
-
-    <app-grid-table-toggle
-      toolbarEnd
-      [storageKey]="viewStorageKey"
-      [mode]="viewMode"
-      (modeChange)="onViewModeChange($event)">
-    </app-grid-table-toggle>
-  </app-filter-toolbar>
+  </app-list-toolbar>
 
   <!-- Content panel -->
   <section class="customers-list__panel">
-    <!-- Error -->
+    <app-list-results [busy]="refreshing">
     <app-list-empty-state
-      *ngIf="errorMessage && !loading"
+      *ngIf="errorMessage && hasLoaded"
       icon="pi pi-exclamation-triangle"
       title="Something went wrong"
       [description]="errorMessage"
@@ -117,19 +105,16 @@
       (actionClick)="load()">
     </app-list-empty-state>
 
-    <!-- Loading skeletons -->
-    <ng-container *ngIf="loading">
-      <app-skeleton-loader *ngIf="effectiveViewMode === 'table'" variant="toolbar"></app-skeleton-loader>
+    <ng-container *ngIf="!hasLoaded && loading">
       <app-skeleton-group
         [variant]="effectiveViewMode === 'table' ? 'row' : 'card'"
         [layout]="effectiveViewMode === 'grid' ? 'grid' : 'stack'"
-        [count]="effectiveViewMode === 'table' ? 6 : 6">
+        [count]="6">
       </app-skeleton-group>
     </ng-container>
 
-    <!-- Empty -->
     <app-list-empty-state
-      *ngIf="!loading && !errorMessage && !customers.length"
+      *ngIf="hasLoaded && !errorMessage && !customers.length"
       icon="pi pi-users"
       title="No customers yet"
       description="Create your first customer account to start managing organizations."
@@ -138,9 +123,8 @@
       (actionClick)="addCustomer()">
     </app-list-empty-state>
 
-    <!-- Grid view -->
     <div
-      *ngIf="!loading && !errorMessage && customers.length && effectiveViewMode === 'grid'"
+      *ngIf="!errorMessage && customers.length && effectiveViewMode === 'grid'"
       class="customers-list__grid">
       <app-customer-card
         *ngFor="let c of customers; trackBy: trackById"
@@ -151,7 +135,7 @@
 
     <!-- Table view -->
     <div
-      *ngIf="!loading && !errorMessage && customers.length && effectiveViewMode === 'table'"
+      *ngIf="!errorMessage && customers.length && effectiveViewMode === 'table'"
       class="customers-list__table-wrap">
       <table class="customers-list__table">
         <thead>
@@ -213,17 +197,16 @@
     </div>
 
     <!-- Pagination -->
-    <div *ngIf="!loading && !errorMessage && totalRecords > 0" class="customers-list__pagination">
-      <span class="customers-list__pagination-info">
-        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalRecords }} Customers
-      </span>
-      <p-paginator
-        [rows]="pageSize"
-        [totalRecords]="totalRecords"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="pageSizeOptions"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
-    </div>
+    </app-list-results>
+
+    <app-paginator
+      *ngIf="!errorMessage && totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="results"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </section>
 </div>

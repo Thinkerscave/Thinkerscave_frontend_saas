@@ -25,8 +25,15 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-import { AppListViewMode } from '../../../../shared/ui/app-list';
+import {
+  AppListToolbarComponent,
+  AppListViewMode,
+  AppPaginatorComponent
+} from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 
 interface MenuRow {
   menu: AccessMenu;
@@ -56,7 +63,8 @@ interface MenuDraft {
   imports: [
     CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, DialogModule,
     DragDropModule,
-    SaasPageHeaderComponent, SaasStatGridComponent
+    SaasPageHeaderComponent, SaasStatGridComponent,
+    AppListToolbarComponent, AppPaginatorComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './menu-management.component.html',
@@ -69,16 +77,18 @@ export class MenuManagementComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly confirm = inject(ConfirmationService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   saving = false;
   reordering = false;
   errorMessage = '';
   search = '';
+  appliedSearch = '';
   editorOpen = false;
-  viewMode: AppListViewMode = 'grid';
-  page = 1;
-  pageSize = 8;
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
   menus: AccessMenu[] = [];
   parents: AccessMenu[] = [];
   rows: MenuRow[] = [];
@@ -143,43 +153,21 @@ export class MenuManagementComponent implements OnInit {
   }
 
   get pagedRows(): MenuRow[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.filteredRows.slice(start, start + this.pageSize);
+    return slicePage(this.filteredRows, this.page, this.pageSize);
   }
 
   get filteredParents(): AccessMenu[] {
-    const q = this.search.trim().toLowerCase();
+    const q = this.appliedSearch.trim().toLowerCase();
     if (!q) return this.parents;
     return this.parents.filter(menu => this.matchesSearch(menu, q) || (menu.children ?? []).some(child => this.matchesSearch(child, q)));
   }
 
   get pagedParents(): AccessMenu[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.filteredParents.slice(start, start + this.pageSize);
+    return slicePage(this.filteredParents, this.page, this.pageSize);
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredParents.length / this.pageSize) || 1);
-  }
-
-  get pageStart(): number {
-    return this.filteredParents.length ? (this.page - 1) * this.pageSize + 1 : 0;
-  }
-
-  get pageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.filteredParents.length);
-  }
-
-  get tableTotalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredRows.length / this.pageSize) || 1);
-  }
-
-  get tablePageStart(): number {
-    return this.filteredRows.length ? (this.page - 1) * this.pageSize + 1 : 0;
-  }
-
-  get tablePageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.filteredRows.length);
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
   }
 
   get selectedChildren(): AccessMenu[] {
@@ -228,23 +216,34 @@ export class MenuManagementComponent implements OnInit {
 
   onListViewModeChange(mode: AppListViewMode): void {
     this.viewMode = mode;
-    this.page = 1;
+    this.cdr.markForCheck();
   }
 
-  setPage(next: number): void {
-    const max = this.viewMode === 'table' ? this.tableTotalPages : this.totalPages;
-    this.page = Math.min(Math.max(1, next), max);
+  resetFilters(): void {
+    this.search = '';
+    this.appliedSearch = '';
+    this.page = 0;
+    this.cdr.markForCheck();
   }
 
-  setPageSize(size: number | string): void {
-    this.pageSize = Number(size);
-    this.page = 1;
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   onSearchChange(value: string): void {
     this.search = value;
-    this.page = 1;
+  }
+
+  applyQuery(): void {
+    this.appliedSearch = this.search;
+    this.page = 0;
     this.ensureSelectedParent();
+    this.cdr.markForCheck();
   }
 
   load(): void {
@@ -463,7 +462,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   private applySearch(rows: MenuRow[]): MenuRow[] {
-    const q = this.search.trim().toLowerCase();
+    const q = this.appliedSearch.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter(({ menu }) => this.matchesSearch(menu, q));
   }
@@ -562,7 +561,7 @@ export class MenuManagementComponent implements OnInit {
     }
     this.selectedParent = this.preferredParent(list);
     const index = list.findIndex(menu => menu.id === this.selectedParent?.id);
-    if (index >= 0) this.page = Math.floor(index / this.pageSize) + 1;
+    if (index >= 0) this.page = Math.floor(index / this.pageSize);
   }
 
   private preferredParent(list: AccessMenu[]): AccessMenu {

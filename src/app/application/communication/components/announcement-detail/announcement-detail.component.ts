@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { CommunicationService, Notice } from '../../services/communication.service';
 import {
@@ -9,6 +9,7 @@ import {
   SaasPanelComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 interface DeliverySegment { key: string; label: string; value: number; color: string; }
 
@@ -16,7 +17,7 @@ interface DeliverySegment { key: string; label: string; value: number; color: st
   selector: 'app-announcement-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent],
+  imports: [CommonModule, DatePipe, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, AppBackNavComponent],
   templateUrl: './announcement-detail.component.html',
   styleUrl: './announcement-detail.component.scss'
 })

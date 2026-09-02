@@ -1,0 +1,66 @@
+/* Standard list card grid: ~4 cards on a typical desktop, 3/2/1 as the viewport shrinks.
+   Cards never overflow their column — content wraps or ellipsizes. */
+
+.app-data-grid,
+.cat-grid,
+.sd-card-grid,
+.stu-directory-grid,
+.users-list__grid,
+.responsibilities-list__grid,
+.menu-catalog__cards,
+.customers-list__grid,
+.org-grid,
+.promotions__cards,
+.cs-grid,
+.sm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.app-data-card,
+.cat-card,
+.sd-card,
+.stu-student-card,
+.users-list__card,
+.responsibilities-list__card,
+.menu-catalog__card,
+.app-data-grid > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.app-data-card h1,
+.app-data-card h2,
+.app-data-card h3,
+.app-data-card strong,
+.app-data-card p,
+.app-data-card small,
+.app-data-card code,
+.cat-card h2,
+.cat-card code,
+.cat-card p,
+.cat-card small,
+.sd-card strong,
+.sd-card p,
+.sd-card small,
+.stu-student-card strong,
+.stu-student-card small,
+.stu-student-card p,
+.users-list__card strong,
+.users-list__card small,
+.users-list__card p,
+.responsibilities-list__card strong,
+.responsibilities-list__card p,
+.responsibilities-list__card code,
+.menu-catalog__card strong,
+.menu-catalog__card p,
+.menu-catalog__card code,
+.menu-catalog__card small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

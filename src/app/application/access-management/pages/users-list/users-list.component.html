@@ -1,49 +1,86 @@
 <div class="saas-page users-list">
-  <tc-saas-page-header>
-  </tc-saas-page-header>
+  <tc-saas-page-header></tc-saas-page-header>
 
-  <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading users...</div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
-    <tc-saas-panel title="Organization Users" [subtitle]="totalRecords + ' total'">
-      <div class="users-list__toolbar">
-        <input type="search" class="saas-search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search users...">
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="statusFilter"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          placeholder="Status"
-          (onChange)="onFilterChange()">
-        </p-dropdown>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+
+  <tc-saas-panel title="Organization users" [subtitle]="totalRecords + ' people · click a name to open their access'">
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search name, email or username"
+      [searching]="refreshing"
+      [view]="view"
+      viewAriaLabel="Users view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyFilters()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewModeChange($event)">
+      <p-dropdown [options]="roleOptions" [(ngModel)]="roleFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Role"></p-dropdown>
+      <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" optionLabel="label" optionValue="value" appendTo="body" placeholder="Status"></p-dropdown>
+    </app-list-toolbar>
+
+    <app-list-results [busy]="refreshing">
+      <div class="users-list__grid" *ngIf="view === 'grid'">
+        <article class="users-list__card" *ngFor="let u of users; trackBy: trackById" (click)="openDetails(u)">
+          <span class="users-list__avatar users-list__avatar--lg">{{ userInitials(u) }}</span>
+          <strong>{{ userDisplayName(u) }}</strong>
+          <small>{{ u.email || u.username }}</small>
+          <p>{{ formatRoles(u) }}</p>
+          <div class="users-list__card-meta">
+            <tc-saas-pill [label]="statusLabel(u)" [tone]="statusTone(u)"></tc-saas-pill>
+            <span>Created {{ formatDate(u.createdOn) }}</span>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!users.length">No users match these filters.</p>
       </div>
-      <div class="saas-table-wrap">
+
+      <div class="saas-table-wrap" *ngIf="view === 'table'">
         <table class="saas-data-table">
-          <thead><tr><th>User</th><th>Email</th><th>Roles</th><th>Status</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Last sign-in</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr *ngFor="let u of users; trackBy: trackById">
+            <tr class="users-list__row" *ngFor="let u of users; trackBy: trackById" (click)="openDetails(u)">
               <td>
                 <span class="users-list__avatar">{{ userInitials(u) }}</span>
-                <strong>{{ userDisplayName(u) }}</strong><br><small>{{ u.username }}</small>
+                <a class="users-list__name" [routerLink]="['/app/access-management/users', u.id]" (click)="rememberListContext($event)">
+                  {{ userDisplayName(u) }}
+                </a>
+                <ng-container *ngIf="secondaryIdentity(u)">
+                  <br><small>{{ secondaryIdentity(u) }}</small>
+                </ng-container>
               </td>
-              <td>{{ u.email }}</td>
+              <td>{{ u.email || '—' }}</td>
+              <td>{{ u.mobileNumber || '—' }}</td>
               <td>{{ formatRoles(u) }}</td>
-              <td><tc-saas-pill [label]="userStatusLabel(u.status)" [tone]="userStatusTone(u.status)"></tc-saas-pill></td>
-              <td>
-                <button type="button" class="saas-icon-btn" (click)="openPermissions(u)" title="Permissions"><i class="pi pi-key"></i></button>
-                <button type="button" class="saas-icon-btn" (click)="toggleLock(u)" title="Lock/unlock"><i class="pi pi-lock"></i></button>
-              </td>
+              <td><tc-saas-pill [label]="statusLabel(u)" [tone]="statusTone(u)"></tc-saas-pill></td>
+              <td>{{ formatDate(u.createdOn) }}</td>
+              <td>{{ formatDateTime(u.lastLoginAt) }}</td>
             </tr>
-            <tr *ngIf="!users.length"><td colspan="5" class="empty">No users found.</td></tr>
+            <tr *ngIf="!users.length"><td colspan="7" class="empty">No users match these filters.</td></tr>
           </tbody>
         </table>
       </div>
-    </tc-saas-panel>
-  </ng-container>
+    </app-list-results>
+
+    <app-paginator
+      *ngIf="totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="users"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </tc-saas-panel>
 </div>
-
-

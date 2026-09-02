@@ -179,6 +179,55 @@
   border-color: var(--tc-border) !important;
 }
 
+.tc-theme-dark .cat-detail,
+.tc-theme-dark .cat-card,
+.tc-theme-dark .cat-user,
+.tc-theme-dark .cat-shape button,
+.tc-theme-dark .cat-toolbar,
+.tc-theme-dark .users-list__card,
+.tc-theme-dark .menu-catalog__card,
+.tc-theme-dark .menu-catalog__node-row,
+.tc-theme-dark .responsibilities-list__card,
+.tc-theme-dark .sd-card,
+.tc-theme-dark .stu-student-card,
+.tc-theme-dark .saas-table-wrap,
+.tc-theme-dark .saas-data-table,
+.tc-theme-dark .saas-search,
+.tc-theme-dark .org-workspace,
+.tc-theme-dark .promotions__cards article {
+  background: var(--tc-surface-card-solid) !important;
+  color: var(--tc-text) !important;
+  border-color: var(--tc-border) !important;
+}
+
+.tc-theme-dark .cat-detail h3,
+.tc-theme-dark .cat-card h2,
+.tc-theme-dark .users-list__card strong,
+.tc-theme-dark .menu-catalog__card strong,
+.tc-theme-dark .sd-card strong,
+.tc-theme-dark .stu-student-card strong {
+  color: var(--tc-heading) !important;
+}
+
+.tc-theme-dark .cat-card code,
+.tc-theme-dark .cat-card p,
+.tc-theme-dark .cat-card small,
+.tc-theme-dark .users-list__card small,
+.tc-theme-dark .users-list__card p,
+.tc-theme-dark .menu-catalog__card p,
+.tc-theme-dark .menu-catalog__card code,
+.tc-theme-dark .menu-catalog__card small {
+  color: var(--tc-text-muted) !important;
+}
+
+.tc-theme-dark input,
+.tc-theme-dark select,
+.tc-theme-dark textarea {
+  background-color: var(--tc-input-bg, var(--tc-surface-card-solid));
+  color: var(--tc-text);
+  border-color: var(--tc-input-border, var(--tc-border));
+}
+
 /* Workspace variable overrides removed — workspace SCSS files now
    reference --tc-* tokens directly, so they adapt automatically. */
 

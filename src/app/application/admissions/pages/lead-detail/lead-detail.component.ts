@@ -8,74 +8,68 @@ import {
   signal
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import {
+  SaasPageHeaderComponent,
   SaasPillComponent,
   SaasTab,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
-import { FOLLOW_UP_TYPES } from '../../data/admissions-workspace.config';
+import { CounselorPickerComponent } from '../../components/counselor-picker/counselor-picker.component';
+import { FOLLOW_UP_TYPES, formatAdmissionsLabel } from '../../data/admissions-workspace.config';
 import {
   CounselingNote,
+  CounselorOption,
   FollowUpRecord,
   LeadFullDetail,
   LeadStatus,
   LeadTimelineItem
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
+import { AdmissionsNavService } from '../../services/admissions-nav.service';
 
-type DetailTab = 'overview' | 'activities' | 'counseling' | 'timeline';
+type DetailTab = 'overview' | 'activity' | 'counseling';
 
 @Component({
   selector: 'app-lead-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, 
+  imports: [
+    AppToastComponent,
     CommonModule,
+    RouterLink,
+    FormsModule,
     ReactiveFormsModule,
     DropdownModule,
     ConfirmDialogModule,
+    DialogModule,
+    SaasPageHeaderComponent,
     SaasTabsComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    CounselorPickerComponent
   ],
   providers: [MessageService, ConfirmationService],
   styleUrls: ['../../admissions.shared.scss'],
-  templateUrl: './lead-detail.component.html',
-  styles: [`
-    .adm-lost-dialog {
-      position: fixed; inset: 0; z-index: 400;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(15, 23, 42, 0.48); backdrop-filter: blur(4px);
-    }
-    .adm-lost-dialog__panel {
-      width: min(480px, 92vw);
-      background: var(--tc-surface-0);
-      border: 1px solid var(--tc-border);
-      border-radius: 16px;
-      padding: 22px;
-      display: flex; flex-direction: column; gap: 14px;
-      box-shadow: var(--tc-shadow-lg, 0 20px 40px rgba(15,23,42,0.15));
-    }
-  `]
+  templateUrl: './lead-detail.component.html'
 })
 export class LeadDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly api = inject(AdmissionsCrmService);
+  private readonly nav = inject(AdmissionsNavService);
   private readonly fb = inject(FormBuilder);
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly followUpTypes = FOLLOW_UP_TYPES;
-  readonly followUpTypeOptions = FOLLOW_UP_TYPES.map(t => ({ label: t, value: t }));
+  readonly followUpTypeOptions = FOLLOW_UP_TYPES.map(t => ({ label: formatAdmissionsLabel(t), value: t }));
   readonly statusAfterOptions = [
     { label: 'CONTACTED', value: 'CONTACTED' },
     { label: 'INTERESTED', value: 'INTERESTED' },
@@ -92,14 +86,35 @@ export class LeadDetailComponent implements OnInit {
   readonly detail = signal<LeadFullDetail | null>(null);
   readonly activeTab = signal<DetailTab>('overview');
   readonly showLostDialog = signal(false);
+  readonly counselorPickerOpen = signal(false);
+  readonly completeTarget = signal<FollowUpRecord | null>(null);
+  completeOutcome = '';
+  completeRemarks = '';
+
+  get completeVisible(): boolean {
+    return !!this.completeTarget();
+  }
+  set completeVisible(value: boolean) {
+    if (!value) this.completeTarget.set(null);
+  }
+
+  get lostVisible(): boolean {
+    return this.showLostDialog();
+  }
+  set lostVisible(value: boolean) {
+    this.showLostDialog.set(value);
+  }
 
   leadId = 0;
 
+  get d(): LeadFullDetail {
+    return this.detail()!;
+  }
+
   readonly tabs: SaasTab[] = [
     { key: 'overview', label: 'Overview', icon: 'pi pi-user' },
-    { key: 'activities', label: 'Activities', icon: 'pi pi-history' },
-    { key: 'counseling', label: 'Counseling', icon: 'pi pi-comments' },
-    { key: 'timeline', label: 'Timeline', icon: 'pi pi-clock' }
+    { key: 'activity', label: 'Activity', icon: 'pi pi-history' },
+    { key: 'counseling', label: 'Counseling', icon: 'pi pi-comments' }
   ];
 
   readonly followUpForm = this.fb.group({
@@ -118,10 +133,6 @@ export class LeadDetailComponent implements OnInit {
     notes: ['', [Validators.required, Validators.minLength(3)]]
   });
 
-  readonly assignForm = this.fb.group({
-    counselorId: [null as number | null, Validators.required]
-  });
-
   readonly lostForm = this.fb.group({
     reason: ['', [Validators.required, Validators.minLength(3)]]
   });
@@ -129,7 +140,7 @@ export class LeadDetailComponent implements OnInit {
   ngOnInit(): void {
     this.leadId = Number(this.route.snapshot.paramMap.get('id'));
     if (!this.leadId) {
-      this.router.navigate(['/app/admissions/leads']);
+      this.nav.back(this.route, '/app/admissions/leads');
       return;
     }
     this.load();
@@ -159,41 +170,39 @@ export class LeadDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/app/admissions/leads']);
+    this.nav.back(this.route, '/app/admissions/leads');
   }
 
-  statusTone(status: LeadStatus): 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary' {
-    switch (status) {
-      case 'NEW':
-      case 'CONTACTED':
-        return 'info';
-      case 'INTERESTED':
-      case 'COUNSELING':
-      case 'READY_FOR_ADMISSION':
-      case 'CONVERTED':
-        return 'success';
-      case 'FOLLOW_UP_REQUIRED':
-      case 'DOCUMENTS_PENDING':
-        return 'warning';
-      case 'LOST':
-      case 'CLOSED':
-        return 'danger';
-      default:
-        return 'neutral';
-    }
+  canMarkInterested(): boolean {
+    const status = this.detail()?.inquiry.status;
+    return !!status && !['INTERESTED', 'LOST', 'CLOSED', 'CONVERTED'].includes(status);
+  }
+
+  canMarkLost(): boolean {
+    const d = this.detail();
+    const status = d?.inquiry.status;
+    return !!status && !['LOST', 'CLOSED', 'CONVERTED'].includes(status) && !d?.studentId;
+  }
+
+  canProceedToApplication(): boolean {
+    const d = this.detail();
+    const status = d?.inquiry.status;
+    return !!status && !['LOST', 'CLOSED'].includes(status) && !d?.applicationId;
   }
 
   markInterested(): void {
+    if (!this.canMarkInterested()) return;
     this.api.markInterested(this.leadId).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Updated', detail: 'Lead marked as interested.' });
+        this.messages.add({ severity: 'success', summary: 'Updated', detail: 'Lead marked interested.' });
         this.load();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Action failed.' })
+      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not update lead.' })
     });
   }
 
   openLostDialog(): void {
+    if (!this.canMarkLost()) return;
     this.lostForm.reset({ reason: '' });
     this.showLostDialog.set(true);
   }
@@ -207,44 +216,48 @@ export class LeadDetailComponent implements OnInit {
       this.lostForm.markAllAsTouched();
       return;
     }
-    const reason = this.lostForm.value.reason!;
-    this.api.markLost(this.leadId, reason).subscribe({
+    this.api.markLost(this.leadId, this.lostForm.value.reason!).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Marked lost', detail: 'Lead marked as lost.' });
-        this.closeLostDialog();
+        this.showLostDialog.set(false);
+        this.messages.add({ severity: 'warn', summary: 'Lost', detail: 'Lead closed as lost.' });
         this.load();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not mark lead as lost.' })
+      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not mark lost.' })
     });
   }
 
   proceedToApplication(): void {
+    if (!this.canProceedToApplication()) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Cannot convert',
+        detail: this.detail()?.applicationId
+          ? 'An application already exists for this lead.'
+          : 'Lost or closed inquiries cannot be converted.'
+      });
+      return;
+    }
     this.confirm.confirm({
-      message: 'Convert this lead to an admission application? You will be taken to the application wizard.',
       header: 'Proceed to Application',
-      icon: 'pi pi-arrow-right',
+      message: `Convert ${this.detail()?.inquiry.name} into an admission application?`,
       accept: () => {
         this.api.convertToApplication(this.leadId).subscribe({
-          next: app => {
-            this.messages.add({ severity: 'success', summary: 'Converted', detail: 'Application created successfully.' });
-            this.router.navigate(['/app/admissions/wizard', app.applicationId]);
-          },
-          error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Conversion failed.' })
+          next: app => this.nav.toApplication(app.applicationId),
+          error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not convert lead.' })
         });
       }
     });
   }
 
   submitAssign(): void {
-    if (this.assignForm.invalid) {
-      this.assignForm.markAllAsTouched();
-      return;
-    }
-    const counselorId = this.assignForm.value.counselorId!;
-    this.api.assignCounselor(this.leadId, counselorId).subscribe({
+    this.counselorPickerOpen.set(true);
+  }
+
+  onCounselorPicked(person: CounselorOption): void {
+    this.counselorPickerOpen.set(false);
+    this.api.assignCounselor(this.leadId, person.staffId).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Assigned', detail: 'Counselor assigned.' });
-        this.assignForm.reset();
+        this.messages.add({ severity: 'success', summary: 'Assigned', detail: `${person.fullName} assigned.` });
         this.load();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Assignment failed.' })
@@ -256,20 +269,19 @@ export class LeadDetailComponent implements OnInit {
       this.followUpForm.markAllAsTouched();
       return;
     }
-    this.saving.set(true);
     const raw = this.followUpForm.getRawValue();
+    this.saving.set(true);
     this.api
       .addFollowUp(this.leadId, {
         followUpType: raw.followUpType as FollowUpRecord['followUpType'],
-        statusAfter: raw.statusAfter,
+        remarks: raw.remarks,
+        statusAfter: raw.statusAfter as LeadStatus,
         followUpDate: raw.followUpDate || null,
-        nextFollowUpDate: raw.nextFollowUpDate || null,
-        remarks: raw.remarks
+        nextFollowUpDate: raw.nextFollowUpDate || null
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Follow-up logged.' });
           this.followUpForm.reset({
             followUpType: 'CALL',
             statusAfter: 'CONTACTED',
@@ -277,10 +289,37 @@ export class LeadDetailComponent implements OnInit {
             nextFollowUpDate: '',
             remarks: ''
           });
+          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Follow-up logged.' });
           this.load();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not log follow-up.' })
       });
+  }
+
+  completeFollowUp(item: FollowUpRecord): void {
+    this.completeOutcome = '';
+    this.completeRemarks = '';
+    this.completeTarget.set(item);
+  }
+
+  closeCompleteDialog(): void {
+    this.completeTarget.set(null);
+  }
+
+  confirmCompleteFollowUp(): void {
+    const item = this.completeTarget();
+    if (!item || !this.completeOutcome.trim()) return;
+    this.api.completeFollowUp(item.followUpId, {
+      outcome: this.completeOutcome.trim(),
+      remarks: this.completeRemarks || null
+    }).subscribe({
+      next: () => {
+        this.completeTarget.set(null);
+        this.messages.add({ severity: 'success', summary: 'Completed', detail: 'Follow-up completed.' });
+        this.load();
+      },
+      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not complete follow-up.' })
+    });
   }
 
   submitCounseling(): void {
@@ -294,23 +333,46 @@ export class LeadDetailComponent implements OnInit {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Counseling note saved.' });
-          this.counselingForm.reset();
+          this.counselingForm.reset({
+            studentRequirements: '',
+            parentConcerns: '',
+            campusVisitInfo: '',
+            recommendations: '',
+            notes: ''
+          });
+          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Counseling note added.' });
           this.load();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not save note.' })
       });
   }
 
-  trackFollow(_: number, item: FollowUpRecord): number {
-    return item.followUpId;
+  trackFollow(_i: number, f: FollowUpRecord): number {
+    return f.followUpId;
   }
 
-  trackNote(_: number, item: CounselingNote): number {
-    return item.noteId ?? 0;
+  trackNote(_i: number, n: CounselingNote): number {
+    return n.noteId ?? _i;
   }
 
-  trackTimeline(_: number, item: LeadTimelineItem): string {
-    return item.performedAt;
+  trackTimeline(_i: number, t: LeadTimelineItem): string {
+    return `${t.performedAt || t.performedOn || _i}-${t.action}`;
+  }
+
+  statusTone(status: LeadStatus): 'info' | 'success' | 'warning' | 'danger' {
+    switch (status) {
+      case 'INTERESTED':
+      case 'CONVERTED':
+      case 'READY_FOR_ADMISSION':
+        return 'success';
+      case 'FOLLOW_UP_REQUIRED':
+      case 'DOCUMENTS_PENDING':
+        return 'warning';
+      case 'LOST':
+      case 'CLOSED':
+        return 'danger';
+      default:
+        return 'info';
+    }
   }
 }

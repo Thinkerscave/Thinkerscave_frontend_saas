@@ -1,6 +1,6 @@
 <div class="saas-page role-workspace">
   <tc-saas-page-header>
-    <a class="tc-btn tc-btn--back" routerLink="/app/access-management/roles"><i class="pi pi-arrow-left"></i> Back to list</a>
+    <app-back-nav fallback="/app/access-management/roles" label="Back to list"></app-back-nav>
     <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
       <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Permissions
     </button>

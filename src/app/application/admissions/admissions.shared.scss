@@ -3,13 +3,118 @@
    Used across Inquiry Center / Admission Center / Settings / Detail / Wizard
    ============================================================ */
 
-.adm-workspace {
+/* Academics-matching page rhythm */
+.adm-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px 28px 48px;
-  min-height: 100%;
-  background: var(--tc-surface-50, #f8fafc);
+  gap: 1rem;
+  padding: 0.85rem 0 1.5rem;
+  min-width: 0;
+}
+
+.adm-page .tc-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+  padding: 0 0 4px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.adm-page .tc-filter-bar .adm-filter-grow {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+.adm-page .tc-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.adm-page .tc-form-field label {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--tc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adm-page .tc-form-field input,
+.adm-page .tc-form-field textarea,
+.adm-page .tc-form-field select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-surface-0);
+  color: var(--tc-text);
+  font: inherit;
+  padding: 8px 12px;
+}
+
+.adm-page .tc-form-field input:focus,
+.adm-page .tc-form-field textarea:focus,
+.adm-page .tc-form-field select:focus {
+  outline: none;
+  border-color: var(--tc-primary-500);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tc-primary-500) 20%, transparent);
+}
+
+.adm-page .p-dropdown,
+.adm-page .att-filter-dropdown {
+  width: 100%;
+}
+
+.adm-counselor-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.8rem;
+  margin-bottom: 0.85rem;
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-surface-50);
+}
+
+.adm-counselor-strip strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.adm-counselor-strip small {
+  color: var(--tc-text-muted);
+}
+
+.adm-settings-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .adm-settings-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .adm-page .tc-filter-bar .adm-filter-grow {
+    grid-column: 1 / -1;
+  }
+}
+
+.adm-field-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--tc-danger-600, #b91c1c);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* ---------- Header ---------- */
@@ -265,9 +370,200 @@
 }
 
 /* ---------- Inquiry / admission cards list ---------- */
+.adm-lead-grid,
+.adm-app-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 1400px) {
+  .adm-lead-grid,
+  .adm-app-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .adm-lead-grid,
+  .adm-app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .adm-lead-grid,
+  .adm-app-grid { grid-template-columns: 1fr; }
+}
+
+.adm-lead-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0.85rem 0.95rem;
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  text-align: left;
+}
+
+.adm-lead-card:hover {
+  border-color: color-mix(in srgb, var(--tc-primary-500) 40%, var(--tc-border));
+}
+
+.adm-lead-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.adm-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--tc-primary-500), var(--tc-primary-700));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.adm-lead-card__head .adm-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.82rem;
+}
+
+.adm-lead-card__title {
+  min-width: 0;
+  flex: 1;
+}
+
+.adm-lead-card__title strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--tc-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adm-lead-card__title small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--tc-text-muted);
+}
+
+.adm-lead-card__meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--tc-text-muted);
+}
+
+.adm-lead-card__meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.adm-lead-card__meta span i { color: var(--tc-primary-600); font-size: 0.72rem; }
+.adm-lead-card__meta em {
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-lead-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--tc-border);
+  flex-wrap: wrap;
+}
+
+.adm-lead-card__foot .tc-btn:not(.tc-btn--icon) {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.adm-lead-card__icons { display: flex; gap: 2px; }
+
+.adm-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 0.85rem;
+}
+
+.adm-form-grid .tc-form-field--full { grid-column: 1 / -1; }
+
+.adm-dialog-form { display: flex; flex-direction: column; gap: 0.85rem; }
+
+.adm-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .adm-detail-grid,
+  .adm-form-grid { grid-template-columns: 1fr; }
+}
+
+.adm-dl--compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 900px) {
+  .adm-dl--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.adm-form-canvas { max-width: none; width: 100%; }
+
+.adm-form-canvas .adm-wizard__body {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .adm-form-canvas .adm-wizard__body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.adm-fieldset {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 0.9rem;
+  padding: 0.85rem 0 0.2rem;
+  border: 0;
+  margin: 0;
+}
+
+.adm-fieldset > legend {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tc-text-muted);
+  padding: 0;
+}
+
+.adm-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
 .adm-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
 }
 
@@ -817,4 +1113,57 @@
 .adm-info-banner__icon {
   color: var(--tc-info);
   margin-right: 6px;
+}
+
+.adm-lost-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+}
+
+.adm-lost-dialog__panel {
+  width: min(480px, 92vw);
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--tc-shadow-lg, 0 20px 40px rgba(15, 23, 42, 0.15));
+}
+
+.adm-counselor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.adm-counselor-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-surface-0);
+  cursor: pointer;
+  text-align: left;
+}
+
+.adm-counselor-row:hover {
+  border-color: var(--tc-primary-500);
+}
+
+.adm-counselor-row small {
+  color: var(--tc-text-muted);
 }

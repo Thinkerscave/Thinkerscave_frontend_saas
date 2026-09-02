@@ -58,14 +58,14 @@
           </tbody>
         </table>
       </div>
-      <footer class="activity-logs__pagination">
-        <span>Showing {{ pageItems.length }} of {{ filtered.length }} logs</span>
-        <div>
-          <button type="button" class="saas-icon-btn" (click)="prev()" [disabled]="page === 0"><i class="pi pi-chevron-left"></i></button>
-          <span>Page {{ page + 1 }} / {{ totalPages }}</span>
-          <button type="button" class="saas-icon-btn" (click)="next()" [disabled]="page >= totalPages - 1"><i class="pi pi-chevron-right"></i></button>
-        </div>
-      </footer>
+      <app-paginator
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="filtered.length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="logs"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>

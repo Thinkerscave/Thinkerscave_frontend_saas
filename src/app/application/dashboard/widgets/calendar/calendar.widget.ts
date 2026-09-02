@@ -10,7 +10,7 @@ import { CalendarData } from '../../models/dashboard.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="w-list">
-      <div class="w-list__row" *ngFor="let item of data.items">
+      <div class="w-list__row" *ngFor="let item of data?.items || []">
         <span class="w-list__icon"><i [class]="iconFor(item.eventType)"></i></span>
         <div class="w-list__main">
           <p class="w-list__title">{{ item.title }}</p>

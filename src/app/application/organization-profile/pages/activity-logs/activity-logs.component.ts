@@ -7,6 +7,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { AdminAuditEvent, AdminControlCenter } from '../../../administration/models/admin-control.model';
 import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
 
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -25,7 +28,7 @@ interface SelectOption {
   selector: 'app-activity-logs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, AppPaginatorComponent, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './activity-logs.component.html',
   styleUrl: './activity-logs.component.scss'
 })
@@ -43,8 +46,9 @@ export class ActivityLogsComponent implements OnInit {
   moduleFilter = 'all';
   userFilter = 'all';
 
-  pageSize = 8;
+  pageSize = UI_PAGINATION.table.defaultSize;
   page = 0;
+  readonly pageSizeOptions = UI_PAGINATION.table.options;
 
   ngOnInit(): void {
     this.adminData.loadWorkspace()
@@ -107,8 +111,10 @@ export class ActivityLogsComponent implements OnInit {
 
   get totalPages(): number { return Math.max(1, Math.ceil(this.filtered.length / this.pageSize)); }
 
-  next(): void { if (this.page < this.totalPages - 1) this.page += 1; }
-  prev(): void { if (this.page > 0) this.page -= 1; }
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    this.pageSize = event.rows;
+  }
 
   reset(): void {
     this.search = '';

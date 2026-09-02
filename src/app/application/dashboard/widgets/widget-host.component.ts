@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { WidgetDTO } from '../models/dashboard.model';
+import { WidgetDTO, WidgetState } from '../models/dashboard.model';
 import { chromeFor } from './widget-registry';
 import { WidgetCardComponent } from './widget-card/widget-card.component';
 import { WelcomeHeaderWidgetComponent } from './welcome-header/welcome-header.widget';
@@ -70,5 +70,14 @@ export class WidgetHostComponent {
 
   get chrome() {
     return chromeFor(this.widget.widgetType);
+  }
+
+  /** SUCCESS/EMPTY with a missing payload would otherwise project a crashing widget body. */
+  get cardState(): WidgetState {
+    const state = this.widget?.state ?? 'LOADING';
+    if (this.widget?.data == null && (state === 'SUCCESS' || state === 'EMPTY')) {
+      return 'EMPTY';
+    }
+    return state;
   }
 }

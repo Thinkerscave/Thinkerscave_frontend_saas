@@ -1,0 +1,319 @@
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { TooltipModule } from 'primeng/tooltip';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { LoginService } from '../../../../core/services/login.service';
+import { PermissionService } from '../../../../core/services/permission.service';
+import { catchError, finalize, of, switchMap } from 'rxjs';
+
+import { AccessResponsibility, AccessResponsibilityRequest } from '../../models/access.model';
+import { AccessManagementService } from '../../services/access-management.service';
+import { formatDate } from '../../utils/access-display.util';
+import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { StaffService } from '../../../staff/services/staff.service';
+import { StaffSummary } from '../../../staff/models/staff.model';
+import {
+  SaasPageHeaderComponent,
+  SaasPanelComponent,
+  SaasPillComponent,
+  SaasStat,
+  SaasStatGridComponent
+} from '../../../../shared/ui/saas';
+
+const LIST_KEY = 'access.responsibilities.view';
+
+@Component({
+  selector: 'app-responsibilities-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    AppToastComponent, DialogModule, MultiSelectModule, TooltipModule,
+    AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
+    CommonModule, FormsModule,
+    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+  ],
+  providers: [MessageService],
+  templateUrl: './responsibilities-list.component.html',
+  styleUrl: './responsibilities-list.component.scss'
+})
+export class ResponsibilitiesListComponent implements OnInit {
+  private readonly api = inject(AccessManagementService);
+  private readonly staffApi = inject(StaffService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly login = inject(LoginService);
+  private readonly messages = inject(MessageService);
+  private readonly permissions = inject(PermissionService);
+  private readonly router = inject(Router);
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
+
+  loading = true;
+  refreshing = false;
+  hasLoaded = false;
+  saving = false;
+  errorMessage = '';
+  search = '';
+  list: AccessResponsibility[] = [];
+  private allItems: AccessResponsibility[] = [];
+  totalRecords = 0;
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
+  view: AppListViewMode = this.viewPrefs.globalDefault();
+  editorOpen = false;
+  form: AccessResponsibilityRequest = this.emptyForm();
+  selectedStaffIds: number[] = [];
+  staffOptions: { label: string; value: number }[] = [];
+  private codeTouched = false;
+  readonly formatDate = formatDate;
+
+  get canManage(): boolean {
+    return accessCanManage(this.permissions, this.login, ACCESS_RESOURCES.responsibilities);
+  }
+
+  ngOnInit(): void {
+    const saved = this.listContext.consume(LIST_KEY);
+    if (saved) {
+      this.page = saved.page ?? this.page;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.search = saved.search ?? this.search;
+      this.view = this.viewPrefs.initialView(saved.view);
+    }
+    this.reload();
+  }
+
+  get stats(): SaasStat[] {
+    const defaults = this.allItems.filter(r => r.systemDefined).length;
+    const custom = this.allItems.filter(r => !r.systemDefined).length;
+    return [
+      { key: 'total', label: 'Responsibilities', value: this.totalRecords, icon: 'pi pi-sitemap', tone: 'primary' },
+      { key: 'default', label: 'Default', value: defaults, icon: 'pi pi-lock', tone: 'info' },
+      { key: 'custom', label: 'Custom', value: custom, icon: 'pi pi-pencil', tone: 'neutral' }
+    ];
+  }
+
+  reload(): void {
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
+    this.errorMessage = '';
+    this.api.getResponsibilities({
+      search: this.search.trim() || undefined,
+      page: 0,
+      size: 500,
+      sort: 'createdOn,desc',
+      includeInactive: true
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: page => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
+        this.allItems = page.content ?? [];
+        this.totalRecords = page.totalElements ?? this.allItems.length;
+        this.applyPage();
+        this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
+        this.allItems = [];
+        this.list = [];
+        this.errorMessage = 'Could not load responsibilities.';
+        this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  typeLabel(item: AccessResponsibility): string {
+    return item.systemDefined ? 'Default' : 'Custom';
+  }
+
+  typeTone(item: AccessResponsibility): 'info' | 'neutral' {
+    return item.systemDefined ? 'info' : 'neutral';
+  }
+
+  onSearchTermChange(value: string): void {
+    this.search = value;
+  }
+
+  applyQuery(): void {
+    this.page = 0;
+    this.reload();
+  }
+
+  resetFilters(): void {
+    this.search = '';
+    this.page = 0;
+    this.reload();
+  }
+
+  onPageChange(event: { page?: number; rows?: number }): void {
+    this.page = event.page ?? 0;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.applyPage();
+    this.cdr.markForCheck();
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.cdr.markForCheck();
+  }
+
+  openCreate(): void {
+    if (!this.canManage) return;
+    this.form = this.emptyForm();
+    this.selectedStaffIds = [];
+    this.codeTouched = false;
+    this.editorOpen = true;
+    this.loadStaffOptions();
+  }
+
+  closeEditor(): void {
+    this.editorOpen = false;
+    this.selectedStaffIds = [];
+  }
+
+  onNameChange(): void {
+    if (this.codeTouched) return;
+    this.form.responsibilityCode = this.toCode(this.form.responsibilityName);
+  }
+
+  onCodeChange(): void {
+    this.codeTouched = true;
+    this.form.responsibilityCode = this.form.responsibilityCode.toUpperCase();
+  }
+
+  save(): void {
+    if (!this.form.responsibilityName.trim() || !this.form.responsibilityCode.trim()) {
+      this.messages.add({ severity: 'warn', summary: 'Missing fields', detail: 'Name and code are required.' });
+      return;
+    }
+    this.saving = true;
+    const payload: AccessResponsibilityRequest = {
+      responsibilityCode: this.form.responsibilityCode.trim().toUpperCase(),
+      responsibilityName: this.form.responsibilityName.trim(),
+      description: this.form.description?.trim() || undefined
+    };
+    const staffIds = [...this.selectedStaffIds];
+    this.api.createResponsibility(payload).pipe(
+      switchMap(created => {
+        const id = created.responsibilityId;
+        if (staffIds.length && id) {
+          return this.api.assignStaffToResponsibility(id, staffIds).pipe(
+            catchError(() => of(created)),
+            switchMap(() => of(created))
+          );
+        }
+        return of(created);
+      }),
+      finalize(() => { this.saving = false; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: created => {
+        this.messages.add({
+          severity: 'success',
+          summary: 'Created',
+          detail: staffIds.length
+            ? `${payload.responsibilityName} saved and assigned to ${staffIds.length} staff.`
+            : `${payload.responsibilityName} saved.`
+        });
+        this.closeEditor();
+        this.reload();
+        if (created.responsibilityId) {
+          this.persistListContext();
+          this.router.navigate(['/app/access-management/responsibilities', created.responsibilityId]);
+        }
+      },
+      error: () => this.messages.add({ severity: 'error', summary: 'Save failed', detail: 'Could not save responsibility.' })
+    });
+  }
+
+  openDetails(item: AccessResponsibility, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.persistListContext();
+    this.router.navigate(['/app/access-management/responsibilities', item.responsibilityId]);
+  }
+
+  trackById(_: number, item: AccessResponsibility): number { return item.responsibilityId; }
+
+  private applyPage(): void {
+    const start = this.page * this.pageSize;
+    this.list = this.allItems.slice(start, start + this.pageSize);
+  }
+
+  private loadStaffOptions(): void {
+    this.staffApi.getStaffList({ employmentStatus: 'ACTIVE', page: 0, size: 200, sort: 'firstName,asc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: page => {
+          this.staffOptions = (page.content ?? [])
+            .filter(s => s.active !== false)
+            .map(s => ({ label: this.staffLabel(s), value: s.staffId }));
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.staffOptions = [];
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private staffLabel(staff: StaffSummary): string {
+    const role = staff.designation ? ` · ${staff.designation}` : '';
+    return `${staff.fullName}${role}`;
+  }
+
+  private toCode(name: string): string {
+    return name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 30);
+  }
+
+  private emptyForm(): AccessResponsibilityRequest {
+    return {
+      responsibilityCode: '',
+      responsibilityName: '',
+      description: ''
+    };
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(LIST_KEY, {
+      page: this.page,
+      size: this.pageSize,
+      search: this.search,
+      view: this.view
+    });
+  }
+}

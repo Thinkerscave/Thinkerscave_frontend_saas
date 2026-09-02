@@ -9,11 +9,12 @@
   <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
   <tc-saas-filter-row>
-    <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search templates..."></label>
+    <label class="saas-search"><i class="pi pi-search"></i><input type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search templates..."></label>
     <label class="saas-field"><span>Category</span>
       <p-dropdown
         [options]="categoryOptions"
-        [(ngModel)]="categoryFilter"
+        [ngModel]="categoryFilter"
+        (ngModelChange)="categoryFilter = $event; onFilterChange()"
         optionLabel="label"
         optionValue="value"
         appendTo="body"
@@ -23,7 +24,8 @@
     <label class="saas-field"><span>Status</span>
       <p-dropdown
         [options]="statusOptions"
-        [(ngModel)]="statusFilter"
+        [ngModel]="statusFilter"
+        (ngModelChange)="statusFilter = $event; onFilterChange()"
         optionLabel="label"
         optionValue="value"
         appendTo="body"
@@ -38,7 +40,7 @@
         <thead><tr><th>Template Name</th><th>Category</th><th>Subject</th><th>Last Updated</th><th>Status</th><th></th></tr></thead>
         <tbody>
           <tr *ngIf="!filtered.length"><td colspan="6"><div class="saas-empty"><i class="pi pi-file-edit"></i><strong>No templates match your filters</strong></div></td></tr>
-          <tr *ngFor="let t of filtered">
+          <tr *ngFor="let t of paged">
             <td><strong>{{ t.name }}</strong></td>
             <td><tc-saas-pill [label]="t.category" tone="info"></tc-saas-pill></td>
             <td>{{ t.subject }}</td>
@@ -52,6 +54,15 @@
         </tbody>
       </table>
     </div>
+    <app-paginator
+      *ngIf="filtered.length"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="filtered.length"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="templates"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </tc-saas-panel>
 </div>
 

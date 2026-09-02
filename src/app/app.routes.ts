@@ -14,11 +14,13 @@ export const routes: Routes = [
         children: [
             {
                 path: 'admission',
-                loadComponent: () => import('./application/admission/student-admission-form/student-admission-form.component').then(m => m.StudentAdmissionFormComponent)
+                redirectTo: 'inquiry',
+                pathMatch: 'full'
             },
             {
                 path: 'admission/review',
-                loadComponent: () => import('./application/admission/staff-application-review/staff-application-review.component').then(m => m.StaffApplicationReviewComponent)
+                redirectTo: 'inquiry',
+                pathMatch: 'full'
             },
             {
                 path: 'inquiry',

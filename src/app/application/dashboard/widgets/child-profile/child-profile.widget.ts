@@ -16,7 +16,7 @@ import { ChildItem, ChildProfileData } from '../../models/dashboard.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="w-children">
-      <button type="button" class="w-children__chip" *ngFor="let child of data.children"
+      <button type="button" class="w-children__chip" *ngFor="let child of data?.children || []"
               [class.is-selected]="child.studentId === selectedId"
               (click)="select(child)">
         <span class="w-avatar">
@@ -37,7 +37,8 @@ export class ChildProfileWidgetComponent implements OnChanges {
 
   ngOnChanges(): void {
     if (this.selectedId === null) {
-      this.selectedId = this.data.children.find(c => c.selected)?.studentId ?? this.data.children[0]?.studentId ?? null;
+      const children = this.data?.children ?? [];
+      this.selectedId = children.find(c => c.selected)?.studentId ?? children[0]?.studentId ?? null;
     }
   }
 

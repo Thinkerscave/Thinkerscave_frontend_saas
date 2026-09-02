@@ -7,36 +7,39 @@
     [title]="widget.title"
     [subtitle]="widget.subtitle"
     [icon]="chrome.icon"
-    [state]="widget.state"
+    [state]="cardState"
     [dataMode]="widget.dataMode"
     [errorMessage]="widget.errorMessage"
     [emptyMessage]="chrome.emptyMessage"
     [emptyIcon]="chrome.emptyIcon"
     (retry)="retry.emit(widget)">
-    <ng-container [ngSwitch]="widget.widgetType">
-      <tc-kpi-grid-widget *ngSwitchCase="'KPI_GRID'" [data]="widget.data"></tc-kpi-grid-widget>
-      <tc-chart-widget *ngSwitchCase="'CHART'" [data]="widget.data"></tc-chart-widget>
-      <tc-stat-list-widget *ngSwitchCase="'STAT_LIST'" [items]="widget.data.items"></tc-stat-list-widget>
-      <tc-recent-activity-widget *ngSwitchCase="'RECENT_ACTIVITY'" [data]="widget.data"></tc-recent-activity-widget>
-      <tc-pending-tasks-widget *ngSwitchCase="'PENDING_TASKS'" [data]="widget.data"></tc-pending-tasks-widget>
-      <tc-notifications-widget *ngSwitchCase="'NOTIFICATIONS'" [data]="widget.data"></tc-notifications-widget>
-      <tc-announcements-widget *ngSwitchCase="'ANNOUNCEMENTS'" [data]="widget.data"></tc-announcements-widget>
-      <tc-calendar-widget *ngSwitchCase="'CALENDAR'" [data]="widget.data"></tc-calendar-widget>
-      <tc-calendar-widget *ngSwitchCase="'EVENTS'" [data]="widget.data"></tc-calendar-widget>
-      <tc-attendance-summary-widget *ngSwitchCase="'ATTENDANCE_SUMMARY'" [data]="widget.data"></tc-attendance-summary-widget>
-      <tc-staff-attendance-toggle-widget *ngSwitchCase="'STAFF_ATTENDANCE_TOGGLE'" [data]="widget.data"></tc-staff-attendance-toggle-widget>
-      <tc-timetable-widget *ngSwitchCase="'TIMETABLE'" [data]="widget.data"></tc-timetable-widget>
-      <tc-profile-summary-widget *ngSwitchCase="'PROFILE_SUMMARY'" [data]="widget.data"></tc-profile-summary-widget>
-      <tc-child-profile-widget *ngSwitchCase="'CHILD_PROFILE'" [data]="widget.data"></tc-child-profile-widget>
-      <tc-quick-actions-widget *ngSwitchCase="'QUICK_ACTIONS'" [data]="widget.data"></tc-quick-actions-widget>
-      <tc-recent-records-widget *ngSwitchCase="'RECENT_RECORDS'" [data]="widget.data"></tc-recent-records-widget>
-      <tc-system-health-widget *ngSwitchCase="'SYSTEM_HEALTH'" [data]="widget.data"></tc-system-health-widget>
-      <tc-top-organizations-widget *ngSwitchCase="'TOP_ORGANIZATIONS'" [data]="widget.data"></tc-top-organizations-widget>
-      <tc-leave-summary-widget *ngSwitchCase="'LEAVE_SUMMARY'" [data]="widget.data"></tc-leave-summary-widget>
-      <tc-stat-list-widget *ngSwitchCase="'EXAMINATION_SUMMARY'" [items]="widget.data.upcoming"></tc-stat-list-widget>
-      <tc-library-summary-widget *ngSwitchCase="'LIBRARY_SUMMARY'" [data]="widget.data"></tc-library-summary-widget>
-      <tc-transport-summary-widget *ngSwitchCase="'TRANSPORT_SUMMARY'" [data]="widget.data"></tc-transport-summary-widget>
-      <tc-support-tickets-widget *ngSwitchCase="'SUPPORT_TICKETS'" [data]="widget.data"></tc-support-tickets-widget>
+    <!-- Projected ng-content is created even when the card hides it. Do not
+         instantiate bodies until a payload exists — null `data.items` was
+         freezing the super-admin dashboard after login. -->
+    <ng-container *ngIf="widget.data as data" [ngSwitch]="widget.widgetType">
+      <tc-kpi-grid-widget *ngSwitchCase="'KPI_GRID'" [data]="data"></tc-kpi-grid-widget>
+      <tc-chart-widget *ngSwitchCase="'CHART'" [data]="data"></tc-chart-widget>
+      <tc-stat-list-widget *ngSwitchCase="'STAT_LIST'" [items]="data.items || []"></tc-stat-list-widget>
+      <tc-recent-activity-widget *ngSwitchCase="'RECENT_ACTIVITY'" [data]="data"></tc-recent-activity-widget>
+      <tc-pending-tasks-widget *ngSwitchCase="'PENDING_TASKS'" [data]="data"></tc-pending-tasks-widget>
+      <tc-notifications-widget *ngSwitchCase="'NOTIFICATIONS'" [data]="data"></tc-notifications-widget>
+      <tc-announcements-widget *ngSwitchCase="'ANNOUNCEMENTS'" [data]="data"></tc-announcements-widget>
+      <tc-calendar-widget *ngSwitchCase="'CALENDAR'" [data]="data"></tc-calendar-widget>
+      <tc-calendar-widget *ngSwitchCase="'EVENTS'" [data]="data"></tc-calendar-widget>
+      <tc-attendance-summary-widget *ngSwitchCase="'ATTENDANCE_SUMMARY'" [data]="data"></tc-attendance-summary-widget>
+      <tc-staff-attendance-toggle-widget *ngSwitchCase="'STAFF_ATTENDANCE_TOGGLE'" [data]="data"></tc-staff-attendance-toggle-widget>
+      <tc-timetable-widget *ngSwitchCase="'TIMETABLE'" [data]="data"></tc-timetable-widget>
+      <tc-profile-summary-widget *ngSwitchCase="'PROFILE_SUMMARY'" [data]="data"></tc-profile-summary-widget>
+      <tc-child-profile-widget *ngSwitchCase="'CHILD_PROFILE'" [data]="data"></tc-child-profile-widget>
+      <tc-quick-actions-widget *ngSwitchCase="'QUICK_ACTIONS'" [data]="data"></tc-quick-actions-widget>
+      <tc-recent-records-widget *ngSwitchCase="'RECENT_RECORDS'" [data]="data"></tc-recent-records-widget>
+      <tc-system-health-widget *ngSwitchCase="'SYSTEM_HEALTH'" [data]="data"></tc-system-health-widget>
+      <tc-top-organizations-widget *ngSwitchCase="'TOP_ORGANIZATIONS'" [data]="data"></tc-top-organizations-widget>
+      <tc-leave-summary-widget *ngSwitchCase="'LEAVE_SUMMARY'" [data]="data"></tc-leave-summary-widget>
+      <tc-stat-list-widget *ngSwitchCase="'EXAMINATION_SUMMARY'" [items]="data.upcoming || []"></tc-stat-list-widget>
+      <tc-library-summary-widget *ngSwitchCase="'LIBRARY_SUMMARY'" [data]="data"></tc-library-summary-widget>
+      <tc-transport-summary-widget *ngSwitchCase="'TRANSPORT_SUMMARY'" [data]="data"></tc-transport-summary-widget>
+      <tc-support-tickets-widget *ngSwitchCase="'SUPPORT_TICKETS'" [data]="data"></tc-support-tickets-widget>
     </ng-container>
   </tc-widget-card>
 </ng-template>

@@ -7,7 +7,7 @@ export const TENANT_MGMT_ROOT = {
 
 export const ACCESS_MGMT_ROOT = {
   breadcrumb: 'Access Management',
-  breadcrumbLink: ['/app/access-management/dashboard']
+  breadcrumbLink: ['/app/access-management/users']
 } as const;
 
 export const ACADEMICS_ROOT = {
@@ -156,8 +156,8 @@ export const TENANT_PAGES = {
 
 export const ACCESS_PAGES = {
   dashboard: {
-    breadcrumb: 'Dashboard',
-    pageSubtitle: 'User permissions and security policy for your organization'
+    breadcrumb: 'Overview',
+    pageSubtitle: 'Users, responsibilities and security for your organization'
   },
   roles: {
     breadcrumb: 'Roles & Responsibilities',
@@ -166,24 +166,34 @@ export const ACCESS_PAGES = {
   roleWorkspace: {
     breadcrumb: 'Role Workspace'
   },
-  menus: {
-    breadcrumb: 'Menu Catalog',
-    pageSubtitle: 'Organization navigation modules and pages'
+  featureCatalog: {
+    breadcrumb: 'Feature Catalog',
+    pageSubtitle: 'Features and menus included in this school’s plan. Assign these to responsibilities.'
+  },
+  responsibilities: {
+    breadcrumb: 'Responsibilities',
+    pageSubtitle: 'Default and custom duties. Click a name to assign staff and menus.'
+  },
+  responsibilityWorkspace: {
+    breadcrumb: 'Responsibility',
+    breadcrumbLink: ['/app/access-management/responsibilities'],
+    pageSubtitle: 'Details, assigned staff, and the menus this responsibility can use.'
   },
   users: {
-    breadcrumb: 'Users & Access',
-    pageSubtitle: 'Manage user accounts, roles and permission overrides'
+    breadcrumb: 'Users',
+    pageSubtitle: 'Click a person to open their account, lock status, assigned menus and sign-in history.'
   },
   userPermissions: {
-    breadcrumb: 'User Permissions',
-    pageSubtitle: 'Custom permissions applied on top of role defaults'
+    breadcrumb: 'User access',
+    breadcrumbLink: ['/app/access-management/users'],
+    pageSubtitle: 'Account, assigned menus and sign-in activity for this person.'
   },
   securityPolicy: {
     breadcrumb: 'Security Policy',
-    pageSubtitle: 'Password complexity, lockout rules and session controls'
+    pageSubtitle: 'Password, lockout and session rules for this organization.'
   },
   loginHistory: {
     breadcrumb: 'Login History',
-    pageSubtitle: 'Sign-in audit trail for your organization'
+    pageSubtitle: 'Sign-ins from the last 7 or 30 days. Older events are not kept.'
   }
 } as const;

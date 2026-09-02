@@ -13,11 +13,12 @@
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
     <tc-saas-filter-row>
-      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search announcement..."></label>
+      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search announcement..."></label>
       <label class="saas-field"><span>Audience</span>
         <p-dropdown
           [options]="audienceOptions"
-          [(ngModel)]="audienceFilter"
+          [ngModel]="audienceFilter"
+          (ngModelChange)="audienceFilter = $event; onFilterChange()"
           optionLabel="label"
           optionValue="value"
           appendTo="body"
@@ -27,7 +28,8 @@
       <label class="saas-field"><span>Priority</span>
         <p-dropdown
           [options]="priorityOptions"
-          [(ngModel)]="priorityFilter"
+          [ngModel]="priorityFilter"
+          (ngModelChange)="priorityFilter = $event; onFilterChange()"
           optionLabel="label"
           optionValue="value"
           appendTo="body"
@@ -37,7 +39,8 @@
       <label class="saas-field"><span>Status</span>
         <p-dropdown
           [options]="statusOptions"
-          [(ngModel)]="statusFilter"
+          [ngModel]="statusFilter"
+          (ngModelChange)="statusFilter = $event; onFilterChange()"
           optionLabel="label"
           optionValue="value"
           appendTo="body"
@@ -52,7 +55,7 @@
           <thead><tr><th>Title</th><th>Audience</th><th>Priority</th><th>Created By</th><th>Created On</th><th>Status</th><th></th></tr></thead>
           <tbody>
             <tr *ngIf="!filtered.length"><td colspan="7"><div class="saas-empty"><i class="pi pi-megaphone"></i><strong>No announcements yet</strong></div></td></tr>
-            <tr *ngFor="let n of filtered; trackBy: trackById">
+            <tr *ngFor="let n of paged; trackBy: trackById">
               <td>
                 <a [routerLink]="['/app/communication/announcements', n.id]" class="cell-main">
                   <strong>{{ n.title }}</strong>
@@ -71,6 +74,15 @@
           </tbody>
         </table>
       </div>
+      <app-paginator
+        *ngIf="filtered.length"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="filtered.length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="announcements"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </tc-saas-panel>
   </ng-container>
 </div>

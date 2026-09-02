@@ -51,6 +51,7 @@ export interface AccessMenu {
   featureId?: number;
   featureCode?: string;
   featureName?: string;
+  featureIcon?: string;
   children?: AccessMenu[];
 }
 
@@ -61,23 +62,67 @@ export interface PermissionMatrixRow {
   menuType?: string;
   parentMenuId?: number;
   parentMenuName?: string;
+  displayOrder?: number;
   canView: boolean;
   canManage: boolean;
   canApprove: boolean;
 }
 
 export interface PermissionMatrix {
-  roleId: number;
-  roleCode: string;
-  roleName: string;
+  roleId?: number;
+  responsibilityId?: number;
+  roleCode?: string;
+  roleName?: string;
+  responsibilityCode?: string;
+  responsibilityName?: string;
   organizationId: number;
   rows: PermissionMatrixRow[];
+}
+
+export interface PasswordResetResult {
+  temporaryPassword?: string;
+  username?: string;
+  message?: string;
+}
+
+export interface AccessResponsibility {
+  responsibilityId: number;
+  responsibilityCode: string;
+  responsibilityName: string;
+  description?: string;
+  displayOrder?: number;
+  systemDefined?: boolean;
+  active: boolean;
+  remarks?: string;
+  createdOn?: string;
+  updatedOn?: string;
+}
+
+export interface AccessResponsibilityRequest {
+  responsibilityCode: string;
+  responsibilityName: string;
+  description?: string;
+  remarks?: string;
+}
+
+export interface ResponsibilityStaffAssignment {
+  assignmentId: number;
+  staffId: number;
+  staffName?: string;
+  staffCode?: string;
+  userId?: number | null;
+  responsibilityId: number;
+  effectiveFrom?: string;
+  active?: boolean;
 }
 
 export interface EffectivePermission {
   menuId: number;
   menuCode: string;
   menuName: string;
+  menuType?: string;
+  parentMenuId?: number;
+  parentMenuName?: string;
   canView: boolean;
   canManage: boolean;
   canApprove: boolean;
@@ -98,6 +143,7 @@ export interface AccessUser {
   firstTimeLogin?: boolean;
   lastLoginAt?: string;
   createdOn?: string;
+  lockedAt?: string;
   roles?: AccessUserRole[];
 }
 
@@ -137,9 +183,37 @@ export interface LoginHistoryEntry {
   loginTime?: string;
   logoutTime?: string;
   ipAddress?: string;
+  logoutIpAddress?: string;
+  deviceName?: string;
   browser?: string;
   operatingSystem?: string;
   failureReason?: string;
+}
+
+export interface RetentionPurgeResult {
+  taskKey?: string;
+  label?: string;
+  retentionDays?: number;
+  cutoffAt?: string;
+  deletedCount?: number;
+  triggerType?: 'SCHEDULED' | 'MANUAL';
+  organizationId?: number;
+  actorUsername?: string;
+  ranAt?: string;
+  summary?: string;
+}
+
+export interface RetentionTaskStatus {
+  taskKey: string;
+  label: string;
+  description?: string;
+  retentionDays: number;
+  enabled?: boolean;
+  scheduleCron?: string;
+  schedule?: string;
+  lastRun?: RetentionPurgeResult | null;
+  recentRuns?: RetentionPurgeResult[];
+  nextScheduledHint?: string;
 }
 
 export interface CreateMenuPayload {
@@ -212,5 +286,8 @@ export interface AccessDashboardSummary {
   totalMenus: number;
   activeMenus: number;
   lockedUsers: number;
+  totalResponsibilities?: number;
+  activeResponsibilities?: number;
   roles?: AccessRole[];
+  responsibilities?: AccessResponsibility[];
 }

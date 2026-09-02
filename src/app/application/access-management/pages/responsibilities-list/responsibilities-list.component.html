@@ -1,0 +1,123 @@
+<div class="saas-page responsibilities-list">
+  <tc-saas-page-header></tc-saas-page-header>
+
+  <app-toast></app-toast>
+  <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
+
+  <div class="responsibilities-list__intro">
+    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+    <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary responsibilities-list__new" (click)="openCreate()">
+      <i class="pi pi-plus"></i> New responsibility
+    </button>
+  </div>
+
+  <tc-saas-panel title="Organization responsibilities" [subtitle]="totalRecords + ' items · click a name to open details'">
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search name or code"
+      [searching]="refreshing"
+      [view]="view"
+      viewAriaLabel="Responsibilities view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyQuery()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewModeChange($event)">
+    </app-list-toolbar>
+
+    <app-list-results [busy]="refreshing">
+      <div class="responsibilities-list__grid" *ngIf="view === 'grid'">
+        <article class="responsibilities-list__card" *ngFor="let r of list; trackBy: trackById" (click)="openDetails(r)">
+          <strong>{{ r.responsibilityName }}</strong>
+          <code>{{ r.responsibilityCode }}</code>
+          <p>{{ r.description || 'No description yet.' }}</p>
+          <div class="responsibilities-list__card-meta">
+            <tc-saas-pill [label]="typeLabel(r)" [tone]="typeTone(r)"></tc-saas-pill>
+            <tc-saas-pill [label]="r.active === false ? 'Inactive' : 'Active'" [tone]="r.active === false ? 'danger' : 'success'"></tc-saas-pill>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!list.length">No responsibilities found.</p>
+      </div>
+
+      <div class="saas-table-wrap" *ngIf="view === 'table'">
+        <table class="saas-data-table">
+          <thead>
+            <tr>
+              <th>Responsibility</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="responsibilities-list__row" *ngFor="let r of list; trackBy: trackById" (click)="openDetails(r)">
+              <td>
+                <a class="responsibilities-list__name" href="#" (click)="openDetails(r, $event)">{{ r.responsibilityName }}</a>
+                <br><code>{{ r.responsibilityCode }}</code>
+              </td>
+              <td>{{ r.description || '—' }}</td>
+              <td><tc-saas-pill [label]="typeLabel(r)" [tone]="typeTone(r)"></tc-saas-pill></td>
+              <td><tc-saas-pill [label]="r.active === false ? 'Inactive' : 'Active'" [tone]="r.active === false ? 'danger' : 'success'"></tc-saas-pill></td>
+              <td>{{ formatDate(r.createdOn) }}</td>
+            </tr>
+            <tr *ngIf="!list.length"><td colspan="5" class="empty">No responsibilities found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </app-list-results>
+
+    <app-paginator
+      *ngIf="totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="responsibilities"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </tc-saas-panel>
+</div>
+
+<p-dialog
+  header="New responsibility"
+  [(visible)]="editorOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  [contentStyle]="{ 'max-height': '72vh', overflow: 'auto' }"
+  (onHide)="closeEditor()">
+  <form class="responsibilities-list__form" (ngSubmit)="save()">
+    <label class="saas-field">
+      <span>Name</span>
+      <input [(ngModel)]="form.responsibilityName" name="name" placeholder="e.g. Class teacher" (ngModelChange)="onNameChange()">
+    </label>
+    <label class="saas-field">
+      <span>Code</span>
+      <input [(ngModel)]="form.responsibilityCode" name="code" placeholder="e.g. CLASS_TEACHER" (ngModelChange)="onCodeChange()">
+    </label>
+    <label class="saas-field saas-field--full">
+      <span>Description</span>
+      <textarea [(ngModel)]="form.description" name="description" rows="3" placeholder="e.g. Coordinates a class section and its daily academic work"></textarea>
+    </label>
+    <label class="saas-field saas-field--full">
+      <span>Assign to staff</span>
+      <p-multiSelect
+        [options]="staffOptions"
+        [(ngModel)]="selectedStaffIds"
+        name="staffIds"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Optional — pick staff who will hold this responsibility"
+        [filter]="true"
+        [showClear]="true"
+        appendTo="body"
+        display="chip">
+      </p-multiSelect>
+    </label>
+    <div class="responsibilities-list__form-actions">
+      <button type="button" class="tc-btn" (click)="closeEditor()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Create' }}</button>
+    </div>
+  </form>
+</p-dialog>

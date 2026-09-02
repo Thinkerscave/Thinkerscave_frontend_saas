@@ -7,6 +7,9 @@ import { finalize } from 'rxjs';
 
 import { AlumniFilters, AlumniResponse } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
 interface SelectOption {
   label: string;
@@ -17,7 +20,7 @@ interface SelectOption {
   selector: 'app-alumni-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, AppPaginatorComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './alumni-directory.component.html'
 })
@@ -32,6 +35,9 @@ export class AlumniDirectoryComponent implements OnInit {
 
   filters: AlumniFilters = {};
   alumni: AlumniResponse[] = [];
+  page = 0;
+  pageSize: number = UI_PAGINATION.table.defaultSize;
+  readonly pageSizeOptions = [...UI_PAGINATION.table.options];
 
   readonly passoutYears = ['2025', '2024', '2023', '2022', '2021', '2020', 'Before 2020'];
   readonly passoutYearOptions: SelectOption[] = [
@@ -41,6 +47,19 @@ export class AlumniDirectoryComponent implements OnInit {
 
   ngOnInit(): void {
     this.runSearch();
+  }
+
+  get paged(): AlumniResponse[] {
+    return slicePage(this.alumni, this.page, this.pageSize);
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   runSearch(): void {
@@ -55,6 +74,7 @@ export class AlumniDirectoryComponent implements OnInit {
       .subscribe({
         next: list => { 
           this.alumni = list ?? []; 
+          this.page = 0;
           this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Could not load alumni directory. Please retry.'; }

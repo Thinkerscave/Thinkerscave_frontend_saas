@@ -38,6 +38,12 @@ export function loginStatusLabel(status?: LoginStatus | string | null): string {
   return LOGIN_STATUS_LABELS[status as LoginStatus] ?? String(status);
 }
 
+export function userEffectiveStatus(user: { status?: UserStatus; accountLocked?: boolean } | null | undefined): UserStatus | undefined {
+  if (!user) return undefined;
+  if (user.accountLocked || user.status === 'LOCKED') return 'LOCKED';
+  return user.status;
+}
+
 export function userStatusTone(status?: UserStatus | string | null): 'success' | 'warning' | 'danger' | 'neutral' {
   switch (status) {
     case 'ACTIVE': return 'success';
@@ -76,4 +82,11 @@ export function formatDateTime(value?: string | null): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+export function formatDate(value?: string | null): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }

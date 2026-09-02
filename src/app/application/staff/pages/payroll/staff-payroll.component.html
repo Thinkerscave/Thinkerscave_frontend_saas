@@ -145,20 +145,14 @@
   </div>
 
   <!-- ───────── PAGINATION ───────── -->
-  <div *ngIf="!loading && payrollPage.totalPages > 1" class="sd-pagination">
-    <button type="button" class="sd-page-btn" [disabled]="payrollPage.number === 0"
-            (click)="goToPage(payrollPage.number - 1)">
-      <i class="pi pi-chevron-left"></i>
-    </button>
-    <button *ngFor="let p of pageNumbers" type="button"
-            class="sd-page-btn" [class.is-active]="p === payrollPage.number"
-            (click)="goToPage(p)">{{ p + 1 }}</button>
-    <button type="button" class="sd-page-btn"
-            [disabled]="payrollPage.number >= payrollPage.totalPages - 1"
-            (click)="goToPage(payrollPage.number + 1)">
-      <i class="pi pi-chevron-right"></i>
-    </button>
-  </div>
+  <app-paginator
+    *ngIf="!loading && payrollPage.totalElements > 0"
+    [page]="payrollPage.number || 0"
+    [rows]="filters.size || 10"
+    [totalRecords]="payrollPage.totalElements"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageChange)="onPageChange($event)">
+  </app-paginator>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════

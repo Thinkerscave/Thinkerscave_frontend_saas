@@ -42,7 +42,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'promotions', data: { ...TENANT_PAGES.promotions }, loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
       { path: 'menus', data: { ...TENANT_PAGES.menuManagement }, loadComponent: () => import('./tenant-management/pages/menu-management/menu-management.component').then(m => m.MenuManagementComponent) },
       { path: 'roles', data: { ...TENANT_PAGES.roleManagement }, loadComponent: () => import('./tenant-management/pages/platform-roles/platform-roles.component').then(m => m.PlatformRolesComponent) },
-      { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
+      { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog, catalogMode: 'platform' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'tenant-health', data: { ...TENANT_PAGES.tenantHealth }, loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
       { path: 'platform-health', pathMatch: 'full', redirectTo: 'tenant-health' },
       { path: 'migration-center', data: { ...TENANT_PAGES.migrationCenter }, loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent) },
@@ -70,13 +70,17 @@ export const APPLICATION_ROUTES: Routes = [
     canActivate: [roleGuard(ACCESS_MANAGEMENT_ROLES)],
     data: { ...ACCESS_MGMT_ROOT },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', data: { ...ACCESS_PAGES.dashboard }, loadComponent: () => import('./access-management/pages/access-dashboard/access-dashboard.component').then(m => m.AccessDashboardComponent) },
-      { path: 'roles', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'menus', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: '', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'roles', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'feature-catalog', data: { ...ACCESS_PAGES.featureCatalog, catalogMode: 'organization' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
+      { path: 'menus', pathMatch: 'full', redirectTo: 'feature-catalog' },
+      { path: 'responsibilities', data: { ...ACCESS_PAGES.responsibilities }, loadComponent: () => import('./access-management/pages/responsibilities-list/responsibilities-list.component').then(m => m.ResponsibilitiesListComponent) },
+      { path: 'responsibilities/:responsibilityId', data: { ...ACCESS_PAGES.responsibilityWorkspace }, loadComponent: () => import('./access-management/pages/responsibility-workspace/responsibility-workspace.component').then(m => m.ResponsibilityWorkspaceComponent) },
       { path: 'users', data: { ...ACCESS_PAGES.users }, loadComponent: () => import('./access-management/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
-      { path: 'users/:userId/permissions', data: { ...ACCESS_PAGES.userPermissions }, loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'users/:userId', data: { ...ACCESS_PAGES.userPermissions }, loadComponent: () => import('./access-management/pages/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent) },
+      { path: 'users/:userId/permissions', pathMatch: 'full', redirectTo: '/app/access-management/users/:userId' },
       { path: 'security-policy', data: { ...ACCESS_PAGES.securityPolicy }, loadComponent: () => import('./access-management/pages/security-policy/security-policy.component').then(m => m.SecurityPolicyComponent) },
       { path: 'login-history', data: { ...ACCESS_PAGES.loginHistory }, loadComponent: () => import('./access-management/pages/login-history/login-history.component').then(m => m.LoginHistoryComponent) }
     ]
@@ -92,7 +96,7 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
       { path: 'profile', loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent) },
-      { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
+      { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/users' },
       { path: 'activity-logs', loadComponent: () => import('./organization-profile/pages/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) }
     ]
   },
@@ -104,7 +108,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
-      { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/dashboard' },
+      { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/users' },
       { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' },
       { path: 'feature-catalog', pathMatch: 'full', redirectTo: '/app/tenant-management/feature-catalog' },
@@ -114,7 +118,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'navigation-access',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'system-settings',
@@ -129,22 +133,22 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'manage-menu',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'manage-sub-menu',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'menu-sequence',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'role-menu-mapping',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'organization-registration',
@@ -174,7 +178,7 @@ export const APPLICATION_ROUTES: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
-          { path: 'responsibilities', data: { workspacePage: 'responsibilities' }, loadComponent: () => import('./staff/pages/responsibilities/staff-responsibilities.component').then(m => m.StaffResponsibilitiesComponent) },
+          { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
           { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
           { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
@@ -213,37 +217,38 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'role/manage',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'role/privilege-mapping',
     pathMatch: 'full',
-    redirectTo: 'access-management/dashboard'
+    redirectTo: 'access-management/users'
   },
   {
     path: 'public/admission',
     pathMatch: 'full',
-    redirectTo: '/public/admission'
+    redirectTo: '/public/inquiry'
   },
   // ━━━ Admissions CRM module (EduReach workspace) ━━━
   {
     path: 'admissions',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'STAFF', 'RECEPTIONIST', 'PARENT'])],
+    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])],
     children: [
       { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
-      { path: 'wizard/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'form/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'wizard/:id', pathMatch: 'full', redirectTo: 'form/:id' },
       {
         path: '',
         loadComponent: () => import('./admissions/components/admissions-workspace/admissions-workspace.component').then(m => m.AdmissionsWorkspaceComponent),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'leads' },
-          { path: 'overview', pathMatch: 'full', redirectTo: 'leads' },
+          { path: '', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'overview', data: { workspacePage: 'overview' }, loadComponent: () => import('./admissions/pages/overview/admissions-overview.component').then(m => m.AdmissionsOverviewComponent) },
           { path: 'leads', data: { workspacePage: 'leads' }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
           { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
           { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
-          { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
           { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
+          { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
+          { path: 'reports', pathMatch: 'full', redirectTo: 'overview' },
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
@@ -265,7 +270,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'applications', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'documents', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'communication', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
-      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/reports' },
+      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
       { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
       { path: 'detail/:id', pathMatch: 'full', redirectTo: '/app/admissions/lead/:id' }
@@ -288,7 +293,7 @@ export const APPLICATION_ROUTES: Routes = [
           // Legacy paths kept as redirects so deep links and bookmarks remain stable.
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'add-student', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'add-student', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
           { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },

@@ -1,4 +1,4 @@
-<section class="tc-page-shell adm-detail">
+<section class="tc-page-shell adm-page adm-detail">
   @if (loading()) {
     <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading lead detail…</div>
   } @else if (error()) {
@@ -7,292 +7,262 @@
       <h3>Could not load lead</h3>
       <p>{{ error() }}</p>
       <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
-      <button type="button" class="tc-btn" (click)="goBack()">Back to Leads</button>
+      <button type="button" class="tc-btn tc-btn--back" (click)="goBack()">Back</button>
     </div>
-  } @else {
-    @if (detail(); as d) {
-    <div class="adm-detail__hero">
-      <div class="adm-detail__hero-left">
-        <button type="button" class="tc-btn tc-btn--back" (click)="goBack()" title="Back to list">
-          <i class="pi pi-arrow-left"></i> Back to list
-        </button>
-        <div class="adm-avatar">{{ (d.inquiry.name || '?').charAt(0) }}</div>
-        <div class="adm-detail__title">
-          <strong>{{ d.inquiry.name }}</strong>
-          <small>LEAD-{{ d.inquiry.inquiryId }} · {{ d.inquiry.classInterestedIn }} · {{ d.inquiry.inquirySource || 'Unknown source' }}</small>
-        </div>
-      </div>
-      <div class="tc-page-header__actions">
-        <tc-saas-pill [label]="d.inquiry.status" [tone]="statusTone(d.inquiry.status)"></tc-saas-pill>
-        <button type="button" class="tc-btn" (click)="markInterested()">
-          <i class="pi pi-thumbs-up"></i> Interested
-        </button>
-        <button type="button" class="tc-btn tc-btn--danger" (click)="openLostDialog()">
-          <i class="pi pi-times-circle"></i> Mark Lost
-        </button>
-        <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()">
-          <i class="pi pi-arrow-right"></i> Proceed to Application
-        </button>
-      </div>
-    </div>
+  } @else if (detail()) {
+    <tc-saas-page-header [subtitle]="(d.inquiry.inquiryNumber || ('LEAD-' + d.inquiry.inquiryId)) + ' · ' + (d.inquiry.classInterestedIn || '')">
+      <button type="button" class="tc-btn tc-btn--back" (click)="goBack()" title="Back to the previous page">
+        <i class="pi pi-arrow-left"></i> Back
+      </button>
+      <tc-saas-pill [label]="d.inquiry.status" [tone]="statusTone(d.inquiry.status)"></tc-saas-pill>
+      <button type="button" class="tc-btn" (click)="markInterested()" [disabled]="!canMarkInterested()" [title]="canMarkInterested() ? 'Mark this family as interested' : 'Already interested, converted, lost, or closed'">
+        Interested
+      </button>
+      <button type="button" class="tc-btn tc-btn--danger" (click)="openLostDialog()" [disabled]="!canMarkLost()" [title]="canMarkLost() ? 'Close this inquiry without creating an application' : 'Already closed or enrolled'">
+        Mark Lost
+      </button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()" [disabled]="!canProceedToApplication()" [title]="canProceedToApplication() ? 'Convert this lead into an admission application' : (d.applicationId ? 'An application already exists' : 'Lost or closed inquiries cannot be converted')">
+        Proceed to Application
+      </button>
+    </tc-saas-page-header>
 
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     @switch (activeTab()) {
       @case ('overview') {
-        <div class="adm-tab-panel">
-          <div class="tc-card tc-card--panel">
-            <div class="tc-card__header"><h2>Lead overview</h2></div>
-            <dl class="adm-dl">
-              <div><dt>Mobile</dt><dd>{{ d.inquiry.mobileNumber || '—' }}</dd></div>
-              <div><dt>Email</dt><dd>{{ d.inquiry.email || '—' }}</dd></div>
-              <div><dt>Class interested</dt><dd>{{ d.inquiry.classInterestedIn }}</dd></div>
-              <div><dt>Source</dt><dd>{{ d.inquiry.inquirySource || '—' }}</dd></div>
-              <div><dt>Referred by</dt><dd>{{ d.inquiry.referredBy || '—' }}</dd></div>
-              <div><dt>Address</dt><dd>{{ d.inquiry.address || '—' }}</dd></div>
-              <div><dt>Assigned counselor</dt><dd>{{ d.inquiry.assignedCounselorId || 'Unassigned' }}</dd></div>
-              <div><dt>Last follow-up</dt><dd>{{ (d.inquiry.lastFollowUpDate | date:'medium') || '—' }} · {{ d.inquiry.lastFollowUpType || '' }}</dd></div>
-              <div><dt>Next follow-up</dt><dd>{{ d.inquiry.nextFollowUpDate || '—' }}</dd></div>
-              <div><dt>Comments</dt><dd>{{ d.inquiry.comments || '—' }}</dd></div>
-            </dl>
-          </div>
-
-          <div class="tc-card tc-card--panel">
-            <div class="tc-card__header"><h2>Assign counselor</h2></div>
-            <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="tc-filter-bar">
-              <div class="tc-form-field">
-                <label>Counselor ID</label>
-                <input type="number" formControlName="counselorId" placeholder="e.g. 12" />
-              </div>
-              <div class="tc-form-field">
-                <label>&nbsp;</label>
-                <button type="submit" class="tc-btn tc-btn--primary" [disabled]="assignForm.invalid">
-                  <i class="pi pi-user-plus"></i> Assign
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      }
-      @case ('activities') {
-        <div class="adm-tab-panel">
-          <div class="adm-grid-2">
-            <div class="tc-card tc-card--panel">
-              <div class="tc-card__header">
-                <h2>Follow-up history</h2>
-                <small class="tc-card tc-card--panel__hint">{{ d.followUps.length }} entries</small>
-              </div>
-              @if (!d.followUps.length) {
-                <div class="tc-empty-state">
-                  <i class="pi pi-history"></i>
-                  <h3>No follow-ups yet</h3>
-                  <p>Log the first interaction using the form.</p>
-                </div>
-              } @else {
-                @for (f of d.followUps; track trackFollow($index, f)) {
-                  <article class="tc-card adm-static-card">
-                    <header class="tc-card__header">
-                      <div class="adm-avatar"><i class="pi pi-phone"></i></div>
-                      <div class="tc-card is-clickable__title">
-                        <strong>{{ f.followUpType }} · {{ f.statusAfter || '—' }}</strong>
-                        <small>{{ f.followUpDate | date:'medium' }} · by {{ f.createdBy || 'system' }}</small>
-                      </div>
-                    </header>
-                    <p class="adm-body-text">{{ f.remarks }}</p>
-                    @if (f.nextFollowUpDate) {
-                      <small class="adm-small-muted">Next: {{ f.nextFollowUpDate }}</small>
-                    }
-                  </article>
+        <div class="tc-card tc-card--panel">
+          <div class="adm-counselor-strip">
+            <div>
+              <small>Counselor</small>
+              <strong>{{ d.inquiry.assignedCounselorName || 'Unassigned' }}</strong>
+            </div>
+            <div class="adm-inline-actions">
+              <button type="button" class="tc-btn tc-btn--primary" (click)="submitAssign()">
+                {{ d.inquiry.assignedCounselorId ? 'Reassign counselor' : 'Assign counselor' }}
+              </button>
+              @if (d.inquiry.mobileNumber) {
+                <a class="tc-btn tc-btn--ghost tc-btn--icon" [href]="'tel:' + d.inquiry.mobileNumber" title="Call"><i class="pi pi-phone"></i></a>
+                <a class="tc-btn tc-btn--ghost tc-btn--icon" [href]="'https://wa.me/' + d.inquiry.mobileNumber" target="_blank" rel="noopener" title="WhatsApp"><i class="pi pi-whatsapp"></i></a>
+                @if (d.inquiry.email) {
+                  <a class="tc-btn tc-btn--ghost tc-btn--icon" [href]="'mailto:' + d.inquiry.email" title="Email"><i class="pi pi-envelope"></i></a>
                 }
               }
             </div>
-
-            <div class="tc-card tc-card--panel">
-              <div class="tc-card__header"><h2>Add follow-up</h2></div>
-              <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-wizard__body">
-                <div class="tc-form-field">
-                  <label>Type</label>
-                  <p-dropdown
-                    [options]="followUpTypeOptions"
-                    formControlName="followUpType"
-                    optionLabel="label"
-                    optionValue="value"
-                    appendTo="body"
-                    styleClass="att-filter-dropdown">
-                  </p-dropdown>
-                </div>
-                <div class="tc-form-field">
-                  <label>Status after</label>
-                  <p-dropdown
-                    [options]="statusAfterOptions"
-                    formControlName="statusAfter"
-                    optionLabel="label"
-                    optionValue="value"
-                    appendTo="body"
-                    styleClass="att-filter-dropdown">
-                  </p-dropdown>
-                </div>
-                <div class="tc-form-field">
-                  <label>Follow-up date</label>
-                  <input type="date" formControlName="followUpDate" />
-                </div>
-                <div class="tc-form-field">
-                  <label>Next follow-up</label>
-                  <input type="date" formControlName="nextFollowUpDate" />
-                </div>
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Remarks *</label>
-                  <textarea formControlName="remarks" rows="3"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full adm-form-actions">
-                  <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">
-                    <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
-                    Save follow-up
-                  </button>
-                </div>
-              </form>
-            </div>
           </div>
-        </div>
-      }
-      @case ('counseling') {
-        <div class="adm-tab-panel">
-          <div class="adm-grid-2">
-            <div class="tc-card tc-card--panel">
-              <div class="tc-card__header">
-                <h2>Counseling notes</h2>
-                <small class="tc-card tc-card--panel__hint">{{ d.counselingNotes.length }} notes</small>
+          <dl class="adm-dl adm-dl--compact">
+            <div><dt>Mobile</dt><dd>{{ d.inquiry.mobileNumber || '—' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ d.inquiry.email || '—' }}</dd></div>
+            <div><dt>Class</dt><dd>{{ d.inquiry.classInterestedIn }}</dd></div>
+            <div><dt>Source</dt><dd>{{ d.inquiry.inquirySource || '—' }}</dd></div>
+            <div><dt>Referred by</dt><dd>{{ d.inquiry.referredBy || '—' }}</dd></div>
+            <div><dt>Address</dt><dd>{{ d.inquiry.address || '—' }}</dd></div>
+            <div><dt>Last follow-up</dt><dd>{{ (d.inquiry.lastFollowUpDate | date:'mediumDate') || '—' }} {{ d.inquiry.lastFollowUpType || '' }}</dd></div>
+            <div><dt>Next follow-up</dt><dd>{{ d.inquiry.nextFollowUpDate || '—' }}</dd></div>
+            <div><dt>Comments</dt><dd>{{ d.inquiry.comments || '—' }}</dd></div>
+            @if (d.applicationId) {
+              <div>
+                <dt>Application</dt>
+                <dd>
+                  <a [routerLink]="['/app/admissions/form', d.applicationId]">{{ d.applicationNumber || ('#' + d.applicationId) }}</a>
+                  · {{ d.applicationStatus || '' }}
+                </dd>
               </div>
-              @if (!d.counselingNotes.length) {
-                <div class="tc-empty-state">
-                  <i class="pi pi-comments"></i>
-                  <h3>No counseling notes</h3>
-                  <p>Capture the first counseling conversation.</p>
-                </div>
-              } @else {
-                @for (n of d.counselingNotes; track trackNote($index, n)) {
-                  <article class="tc-card adm-static-card">
-                    <header class="tc-card__header">
-                      <div class="adm-avatar"><i class="pi pi-comment"></i></div>
-                      <div class="tc-card is-clickable__title">
-                        <strong>{{ n.createdBy || 'Counselor' }}</strong>
-                        <small>{{ n.createdOn | date:'medium' }}</small>
-                      </div>
-                    </header>
-                    <dl class="adm-dl">
-                      @if (n.studentRequirements) {
-                        <div><dt>Requirements</dt><dd>{{ n.studentRequirements }}</dd></div>
-                      }
-                      @if (n.parentConcerns) {
-                        <div><dt>Parent concerns</dt><dd>{{ n.parentConcerns }}</dd></div>
-                      }
-                      @if (n.campusVisitInfo) {
-                        <div><dt>Campus visit</dt><dd>{{ n.campusVisitInfo }}</dd></div>
-                      }
-                      @if (n.recommendations) {
-                        <div><dt>Recommendations</dt><dd>{{ n.recommendations }}</dd></div>
-                      }
-                      @if (n.notes) {
-                        <div><dt>Notes</dt><dd>{{ n.notes }}</dd></div>
-                      }
-                    </dl>
-                  </article>
-                }
-              }
-            </div>
-
-            <div class="tc-card tc-card--panel">
-              <div class="tc-card__header"><h2>Add counseling note</h2></div>
-              <form [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-wizard__body">
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Student requirements</label>
-                  <textarea formControlName="studentRequirements" rows="2"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Parent concerns</label>
-                  <textarea formControlName="parentConcerns" rows="2"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Campus visit info</label>
-                  <textarea formControlName="campusVisitInfo" rows="2"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Recommendations</label>
-                  <textarea formControlName="recommendations" rows="2"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full">
-                  <label>Notes *</label>
-                  <textarea formControlName="notes" rows="3"></textarea>
-                </div>
-                <div class="tc-form-field tc-form-field--full adm-form-actions">
-                  <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">
-                    <i class="pi" [class.pi-save]="!saving()" [class.pi-spin]="saving()" [class.pi-spinner]="saving()"></i>
-                    Save note
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+            }
+            @if (d.studentId) {
+              <div>
+                <dt>Student</dt>
+                <dd>
+                  <a [routerLink]="['/app/students/profile', d.studentId]">{{ d.studentCode || ('Student #' + d.studentId) }}</a>
+                </dd>
+              </div>
+            }
+          </dl>
         </div>
       }
-      @case ('timeline') {
-        <div class="adm-tab-panel">
+      @case ('activity') {
+        <div class="adm-detail-grid">
           <div class="tc-card tc-card--panel">
             <div class="tc-card__header">
-              <h2>Lead timeline</h2>
-              <small class="tc-card tc-card--panel__hint">{{ d.timeline.length }} events</small>
+              <h2>Follow-ups and timeline</h2>
+              <small>{{ d.followUps.length }} follow-ups · {{ d.timeline.length }} events</small>
             </div>
-            @if (!d.timeline.length) {
-              <div class="tc-empty-state">
-                <i class="pi pi-clock"></i>
+            @if (!d.followUps.length && !d.timeline.length) {
+              <div class="tc-empty-state adm-empty-compact">
                 <h3>No activity yet</h3>
-                <p>Every interaction will be tracked here automatically.</p>
+                <p>Log the first call or visit using the form.</p>
               </div>
-            } @else {
+            }
+            @if (d.followUps.length) {
+              @for (f of d.followUps; track trackFollow($index, f)) {
+                <article class="tc-card adm-static-card">
+                  <header class="tc-card__header">
+                    <div>
+                      <strong>{{ f.followUpType }} · {{ f.statusAfter || '—' }}</strong>
+                      <small class="adm-subtle-id">{{ f.followUpDate | date:'medium' }}</small>
+                    </div>
+                    @if (f.lifecycleStatus !== 'COMPLETED' && f.lifecycleStatus !== 'CANCELLED') {
+                      <button type="button" class="tc-btn tc-btn--primary" (click)="completeFollowUp(f)">Complete</button>
+                    }
+                  </header>
+                  <p class="adm-body-text">{{ f.remarks || '—' }}</p>
+                </article>
+              }
+            }
+            @if (d.timeline.length) {
               <div class="adm-timeline">
                 @for (t of d.timeline; track trackTimeline($index, t)) {
                   <div class="adm-timeline__item" [attr.data-tone]="t.tone || 'neutral'">
                     <div class="adm-timeline__dot"><i [class]="t.icon || 'pi pi-circle-fill'"></i></div>
                     <div class="adm-timeline__body">
                       <strong>{{ t.action }}</strong>
-                      @if (t.description) {
-                        <p>{{ t.description }}</p>
-                      }
-                      <small>{{ t.performedAt | date:'medium' }} · {{ t.performedBy }}</small>
+                      @if (t.description) { <p>{{ t.description }}</p> }
+                      <small>{{ (t.performedAt || t.performedOn) | date:'medium' }} · {{ t.performedBy }}</small>
                     </div>
                   </div>
                 }
               </div>
             }
           </div>
+
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header"><h2>Log follow-up</h2></div>
+            <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-form-grid">
+              <div class="tc-form-field">
+                <label>Type</label>
+                <p-dropdown [options]="followUpTypeOptions" formControlName="followUpType" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              </div>
+              <div class="tc-form-field">
+                <label>Status after</label>
+                <p-dropdown [options]="statusAfterOptions" formControlName="statusAfter" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              </div>
+              <div class="tc-form-field">
+                <label>Date</label>
+                <input type="date" formControlName="followUpDate" />
+              </div>
+              <div class="tc-form-field">
+                <label>Next follow-up</label>
+                <input type="date" formControlName="nextFollowUpDate" />
+              </div>
+              <div class="tc-form-field tc-form-field--full">
+                <label>Remarks *</label>
+                <textarea formControlName="remarks" rows="3"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full adm-form-actions">
+                <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">Save follow-up</button>
+              </div>
+            </form>
+          </div>
         </div>
       }
-    }
+      @case ('counseling') {
+        <div class="adm-detail-grid">
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header">
+              <h2>Counseling notes</h2>
+              <small>{{ d.counselingNotes.length }} notes</small>
+            </div>
+            @if (!d.counselingNotes.length) {
+              <div class="tc-empty-state adm-empty-compact">
+                <h3>No counseling notes</h3>
+                <p>Capture campus visit, parent concerns, and seat preference here.</p>
+              </div>
+            } @else {
+              @for (n of d.counselingNotes; track trackNote($index, n)) {
+                <article class="tc-card adm-static-card">
+                  <strong>{{ n.createdBy || 'Counselor' }}</strong>
+                  <small class="adm-subtle-id">{{ n.createdOn | date:'medium' }}</small>
+                  <dl class="adm-dl">
+                    @if (n.studentRequirements) { <div><dt>Requirements</dt><dd>{{ n.studentRequirements }}</dd></div> }
+                    @if (n.parentConcerns) { <div><dt>Parent concerns</dt><dd>{{ n.parentConcerns }}</dd></div> }
+                    @if (n.campusVisitInfo) { <div><dt>Campus visit</dt><dd>{{ n.campusVisitInfo }}</dd></div> }
+                    @if (n.recommendations) { <div><dt>Recommendations</dt><dd>{{ n.recommendations }}</dd></div> }
+                    @if (n.notes) { <div><dt>Notes</dt><dd>{{ n.notes }}</dd></div> }
+                  </dl>
+                </article>
+              }
+            }
+          </div>
+          <div class="tc-card tc-card--panel">
+            <div class="tc-card__header"><h2>Add note</h2></div>
+            <form [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-form-grid">
+              <div class="tc-form-field tc-form-field--full">
+                <label>Student requirements</label>
+                <textarea formControlName="studentRequirements" rows="2"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full">
+                <label>Parent concerns</label>
+                <textarea formControlName="parentConcerns" rows="2"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full">
+                <label>Campus visit</label>
+                <textarea formControlName="campusVisitInfo" rows="2"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full">
+                <label>Recommendations</label>
+                <textarea formControlName="recommendations" rows="2"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full">
+                <label>Notes *</label>
+                <textarea formControlName="notes" rows="3"></textarea>
+              </div>
+              <div class="tc-form-field tc-form-field--full adm-form-actions">
+                <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">Save note</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
     }
   }
 </section>
 
-@if (showLostDialog()) {
-  <div class="adm-lost-dialog" role="dialog" aria-modal="true" aria-labelledby="lost-title">
-    <div class="adm-lost-dialog__panel">
-      <h2 id="lost-title" class="adm-dialog-title">Mark Lead as Lost</h2>
-      <p class="adm-dialog-subtitle">Provide a reason for closing this opportunity.</p>
-      <form [formGroup]="lostForm" (ngSubmit)="confirmMarkLost()" class="adm-wizard__body">
-        <div class="tc-form-field tc-form-field--full">
-          <label>Reason *</label>
-          <textarea formControlName="reason" rows="3" placeholder="e.g. Chose another school"></textarea>
-        </div>
-        <div class="adm-dialog-actions">
-          <button type="button" class="tc-btn" (click)="closeLostDialog()">Cancel</button>
-          <button type="submit" class="tc-btn tc-btn--danger" [disabled]="lostForm.invalid">
-            Confirm Mark Lost
-          </button>
-        </div>
-      </form>
+<p-dialog
+  header="Complete follow-up"
+  [(visible)]="completeVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="closeCompleteDialog()">
+  @if (completeTarget(); as target) {
+    <p class="adm-dialog-subtitle">{{ target.followUpType }} · {{ target.followUpDate | date:'mediumDate' }}</p>
+    <div class="tc-form-field tc-form-field--full">
+      <label>Outcome *</label>
+      <input type="text" [(ngModel)]="completeOutcome" placeholder="Connected / Visit booked / Not reachable" />
     </div>
-  </div>
-}
+    <div class="tc-form-field tc-form-field--full">
+      <label>Remarks</label>
+      <textarea [(ngModel)]="completeRemarks" rows="3"></textarea>
+    </div>
+    <div class="adm-dialog-actions">
+      <button type="button" class="tc-btn" (click)="closeCompleteDialog()">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="confirmCompleteFollowUp()" [disabled]="!completeOutcome.trim()">Complete</button>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog
+  header="Mark lead as lost"
+  [(visible)]="lostVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  (onHide)="closeLostDialog()">
+  <form [formGroup]="lostForm" (ngSubmit)="confirmMarkLost()">
+    <div class="tc-form-field tc-form-field--full">
+      <label>Reason *</label>
+      <textarea formControlName="reason" rows="3" placeholder="e.g. Chose another school"></textarea>
+    </div>
+    <div class="adm-dialog-actions">
+      <button type="button" class="tc-btn" (click)="closeLostDialog()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--danger" [disabled]="lostForm.invalid">Confirm</button>
+    </div>
+  </form>
+</p-dialog>
 
 <app-toast />
 <p-confirmDialog />
-
+<app-counselor-picker
+  [open]="counselorPickerOpen()"
+  (cancel)="counselorPickerOpen.set(false)"
+  (selected)="onCounselorPicked($event)"
+/>

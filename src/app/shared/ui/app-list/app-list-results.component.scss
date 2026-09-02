@@ -1,0 +1,27 @@
+.app-list-results {
+  position: relative;
+  min-height: 8rem;
+
+  &.is-busy {
+    pointer-events: none;
+  }
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    background: color-mix(in srgb, var(--tc-surface-card-solid, #fff) 72%, transparent);
+    color: var(--tc-text);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: inherit;
+  }
+}
+
+.tc-theme-dark .app-list-results__overlay {
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 78%, transparent);
+}

@@ -11,6 +11,9 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { EmploymentStatus, StaffSummary } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
 const ALUMNI_STATUSES: EmploymentStatus[] = ['RESIGNED', 'RETIRED', 'CONTRACT_COMPLETED'];
 
@@ -18,7 +21,7 @@ const ALUMNI_STATUSES: EmploymentStatus[] = ['RESIGNED', 'RETIRED', 'CONTRACT_CO
   selector: 'app-staff-alumni',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppPaginatorComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-alumni.component.html'
 })
@@ -31,6 +34,9 @@ export class StaffAlumniComponent implements OnInit {
   errorMessage = '';
   keyword = '';
   alumni: StaffSummary[] = [];
+  page = 0;
+  pageSize: number = UI_PAGINATION.table.defaultSize;
+  readonly pageSizeOptions = [...UI_PAGINATION.table.options];
 
   readonly statusLabels: Record<string, string> = {
     RESIGNED: 'Resigned',
@@ -49,6 +55,7 @@ export class StaffAlumniComponent implements OnInit {
       .subscribe({
         next: (page) => {
           this.alumni = page.content.filter((s) => ALUMNI_STATUSES.includes(s.employmentStatus));
+          this.page = 0;
           this.errorMessage = '';
         },
         error: () => { this.errorMessage = 'Unable to load alumni staff records.'; }
@@ -65,6 +72,24 @@ export class StaffAlumniComponent implements OnInit {
       s.staffCode.toLowerCase().includes(q) ||
       s.designation.toLowerCase().includes(q)
     );
+  }
+
+  pagedAlumni(): StaffSummary[] {
+    return slicePage(this.filteredAlumni(), this.page, this.pageSize);
+  }
+
+  onKeywordChange(value: string): void {
+    this.keyword = value;
+    this.page = 0;
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   openProfile(staff: StaffSummary): void {

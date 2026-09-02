@@ -2,46 +2,35 @@
   <tc-saas-page-header>
     <button type="button" class="tc-btn" (click)="load()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
     <button type="button" class="tc-btn" (click)="reset()"><i class="pi pi-filter-slash"></i> Reset</button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> Add Feature</button>
+    <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary" (click)="openCreate()"><i class="pi pi-plus"></i> Add Feature</button>
   </tc-saas-page-header>
 
-  <p-confirmDialog></p-confirmDialog>
+  <p-confirmDialog *ngIf="canManage"></p-confirmDialog>
   <div *ngIf="errorMessage" class="cat-empty"><i class="pi pi-exclamation-triangle"></i><h3>{{ errorMessage }}</h3></div>
-  <div *ngIf="loading" class="cat-empty"><i class="pi pi-spin pi-spinner"></i><h3>Loading features…</h3></div>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
+  <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
-    <div class="cat-toolbar">
-      <input
-        class="cat-toolbar__search"
-        type="search"
-        [ngModel]="search()"
-        (ngModelChange)="onSearchChange($event)"
-        placeholder="Search features or menus"
-        aria-label="Search features">
-      <div class="cat-toolbar__filters">
-        <p-dropdown
-          [options]="categoryOptions()"
-          [ngModel]="categoryFilter()"
-          (ngModelChange)="onCategoryChange($event)"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="cat-filter-dd">
-        </p-dropdown>
-      </div>
-      <div class="cat-toolbar__end">
-        <div class="cat-view-toggle" role="group" aria-label="View mode">
-          <button type="button" [class.active]="viewMode() === 'grid'" (click)="onListViewModeChange('grid')" aria-label="Grid view">
-            <i class="pi pi-th-large"></i>
-          </button>
-          <button type="button" [class.active]="viewMode() === 'table'" (click)="onListViewModeChange('table')" aria-label="List view">
-            <i class="pi pi-list"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-list-toolbar
+      [search]="search()"
+      searchPlaceholder="Search features or menus"
+      [view]="viewMode()"
+      viewAriaLabel="View mode"
+      (searchChange)="onSearchChange($event)"
+      (searchDebounced)="applySearch()"
+      (submitted)="applyFilters()"
+      (reset)="reset()"
+      (viewChange)="onListViewModeChange($event)">
+      <p-dropdown
+        *ngIf="canManage"
+        [options]="categoryOptions()"
+        [ngModel]="categoryFilter()"
+        (ngModelChange)="onCategoryChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="cat-filter-dd">
+      </p-dropdown>
+    </app-list-toolbar>
 
     <div class="cat-workspace is-split" *ngIf="viewMode() === 'grid'">
       <div>
@@ -69,7 +58,7 @@
             {{ typeLabel(item.feature) }}
           </span>
         </div>
-        <p class="cat-card__body">{{ blurb(item.feature) }}</p>
+        <p class="cat-card__body" *ngIf="blurb(item.feature)">{{ blurb(item.feature) }}</p>
         <div class="cat-card__tags">
           <span class="cat-tag">{{ item.feature.module || item.feature.category || 'Module' }}</span>
         </div>
@@ -87,7 +76,7 @@
             <span>Order</span>
           </div>
         </div>
-        <div class="cat-card__actions" (click)="$event.stopPropagation()">
+        <div class="cat-card__actions" *ngIf="canManage" (click)="$event.stopPropagation()">
           <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
             <i class="pi pi-pencil"></i>
           </button>
@@ -108,29 +97,25 @@
     </div>
         <div *ngIf="!showcases().length" class="cat-empty">
           <i class="pi pi-search"></i>
-          <h3>No features match your filters</h3>
-          <p>Try another search or category.</p>
+          <h3>{{ emptyTitle }}</h3>
+          <p>{{ emptyHint }}</p>
         </div>
-        <div class="cat-pager" *ngIf="showcases().length">
-          <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ showcases().length }}</span>
-          <div class="cat-pager__controls">
-            <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
-            <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
-            <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
-            <select class="cat-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Features per page">
-              <option [ngValue]="8">8 / page</option>
-              <option [ngValue]="12">12 / page</option>
-              <option [ngValue]="24">24 / page</option>
-            </select>
-          </div>
-        </div>
+        <app-paginator
+          *ngIf="showcases().length"
+          [page]="page"
+          [rows]="pageSize"
+          [totalRecords]="showcases().length"
+          [pageSizeOptions]="pageSizeOptions"
+          noun="features"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
       </div>
       <aside class="cat-detail">
         <ng-container *ngIf="selectedShowcase; else emptyFeatureDetail">
           <ng-container *ngTemplateOutlet="featureDetail"></ng-container>
         </ng-container>
         <ng-template #emptyFeatureDetail>
-          <p class="cat-hint">Select a feature to see the menus and pages it unlocks.</p>
+          <p class="cat-hint">{{ canManage ? 'Select a feature to see the menus and pages it unlocks.' : 'Select a feature to see the menus and submenus you can assign to a responsibility.' }}</p>
         </ng-template>
       </aside>
     </div>
@@ -144,7 +129,7 @@
             <code>{{ selected.feature.featureCode }}</code>
           </div>
         </div>
-        <p class="cat-hint">{{ blurb(selected.feature) }}</p>
+        <p class="cat-hint" *ngIf="blurb(selected.feature)">{{ blurb(selected.feature) }}</p>
         <dl class="cat-facts">
           <div><dt>Module</dt><dd>{{ selected.feature.module || '—' }}</dd></div>
           <div><dt>Category</dt><dd>{{ selected.feature.category || '—' }}</dd></div>
@@ -153,7 +138,7 @@
           <div><dt>Menus</dt><dd>{{ selected.menus.length }}</dd></div>
           <div><dt>Screens</dt><dd>{{ selected.pageCount }}</dd></div>
         </dl>
-        <div class="cat-detail__actions">
+        <div class="cat-detail__actions" *ngIf="canManage">
           <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(selected.feature)">
             <i class="pi pi-pencil"></i>
           </button>
@@ -176,7 +161,7 @@
                 <strong>{{ menu.menuName }}</strong>
                 <small>{{ menuSummary(menu) }}</small>
               </div>
-              <button type="button" class="cat-icon-btn cat-icon-btn--danger" title="Unmap" aria-label="Unmap" (click)="unmapMenu(selected.feature, menu)">
+              <button *ngIf="canManage" type="button" class="cat-icon-btn cat-icon-btn--danger" title="Unmap" aria-label="Unmap" (click)="unmapMenu(selected.feature, menu)">
                 <i class="pi pi-times"></i>
               </button>
             </div>
@@ -189,7 +174,7 @@
             </div>
           </ng-container>
         </div>
-        <p class="cat-hint" *ngIf="!selected.menus.length">No menus mapped yet. Use Edit to map top-level menus.</p>
+        <p class="cat-hint" *ngIf="!selected.menus.length && canManage">No menus mapped yet. Use Edit to map top-level menus.</p>
       </ng-container>
     </ng-template>
 
@@ -201,7 +186,7 @@
             <th>Menus</th>
             <th>Screens</th>
             <th>Type</th>
-            <th></th>
+            <th *ngIf="canManage"></th>
           </tr>
         </thead>
         <tbody>
@@ -220,7 +205,7 @@
                 {{ typeLabel(item.feature) }}
               </span>
             </td>
-            <td>
+            <td *ngIf="canManage">
               <button type="button" class="cat-icon-btn" title="Edit" aria-label="Edit" (click)="openEdit(item.feature)">
                 <i class="pi pi-pencil"></i>
               </button>
@@ -235,22 +220,23 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="!showcases().length"><td colspan="5">No features match your filters.</td></tr>
+          <tr *ngIf="!showcases().length"><td [attr.colspan]="canManage ? 5 : 4">{{ emptyTitle }}</td></tr>
         </tbody>
       </table>
-      <div class="cat-pager" *ngIf="showcases().length">
-        <span class="cat-pager__meta">Showing {{ pageStart }}–{{ pageEnd }} of {{ showcases().length }}</span>
-        <div class="cat-pager__controls">
-          <button type="button" class="cat-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page"><i class="pi pi-angle-left"></i></button>
-          <span class="cat-pager__page">{{ page }} / {{ totalPages }}</span>
-          <button type="button" class="cat-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page"><i class="pi pi-angle-right"></i></button>
-        </div>
-      </div>
+      <app-paginator
+        *ngIf="showcases().length"
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="showcases().length"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="features"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
     </div>
-  </ng-container>
 </div>
 
 <p-dialog
+  *ngIf="canManage"
   [header]="draft.id ? 'Edit feature' : 'Add feature'"
   [(visible)]="editorOpen"
   [modal]="true"

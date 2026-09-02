@@ -6,43 +6,35 @@
   <div class="org-workspace">
 
     <!-- ══ Toolbar ══ -->
-    <div class="org-toolbar">
-
-      <!-- Search — col-4 equivalent -->
-      <label class="org-toolbar__search">
-        <i class="pi pi-search"></i>
-        <input
-          type="text"
-          [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()"
-          placeholder="Search organizations, code, email, domain…">
-      </label>
-
-      <!-- Status -->
+    <app-list-toolbar
+      [search]="search"
+      searchPlaceholder="Search organizations, code, email, domain…"
+      [searching]="refreshing"
+      [view]="viewMode"
+      viewAriaLabel="Organizations view"
+      (searchChange)="onSearchTermChange($event)"
+      (searchDebounced)="applyQuery()"
+      (submitted)="applyFilters()"
+      (reset)="resetFilters()"
+      (viewChange)="onViewModeChange($event)">
       <p-select
         class="org-toolbar__pselect"
         [(ngModel)]="statusFilter"
-        (ngModelChange)="onFilterChange()"
         [options]="statusChips"
         optionLabel="label"
         optionValue="id"
         placeholder="All Status"
         appendTo="body">
       </p-select>
-
-      <!-- Type -->
       <p-select
         class="org-toolbar__pselect org-toolbar__pselect--type"
         [(ngModel)]="typeFilter"
-        (ngModelChange)="onFilterChange()"
         [options]="typeOptions"
         optionLabel="label"
         optionValue="value"
         placeholder="All Types"
         appendTo="body">
       </p-select>
-
-      <!-- Customer (client-side filter) -->
       <p-select
         class="org-toolbar__pselect"
         [(ngModel)]="customerFilter"
@@ -52,29 +44,13 @@
         placeholder="All Customers"
         appendTo="body">
       </p-select>
-
-      <!-- Spacer — pushes view/reset/new-org to the right -->
-      <div class="org-toolbar__spacer"></div>
-
-      <!-- Icon-only grid / table toggle (same pattern as Customers) -->
-      <app-grid-table-toggle
-        [storageKey]="'tc.organizations.viewMode'"
-        [mode]="viewMode"
-        (modeChange)="onViewModeChange($event)">
-      </app-grid-table-toggle>
-
-      <!-- Reset -->
-      <button type="button" class="org-toolbar__btn" (click)="resetFilters()">
-        <i class="pi pi-filter-slash"></i><span> Reset</span>
-      </button>
-
-      <!-- New org -->
-      <a class="org-toolbar__btn org-toolbar__btn--primary"
-         routerLink="/app/tenant-management/organizations/create">
+      <a
+        toolbarExtra
+        class="org-toolbar__btn org-toolbar__btn--primary"
+        routerLink="/app/tenant-management/organizations/create">
         <i class="pi pi-plus"></i><span> New Organization</span>
       </a>
-
-    </div><!-- /org-toolbar -->
+    </app-list-toolbar>
 
 
     <!-- ── Error ── -->
@@ -90,13 +66,13 @@
     </div>
 
     <!-- ── Loading ── -->
-    <div *ngIf="loading" class="org-loading">
+    <app-list-results [busy]="refreshing">
+    <div *ngIf="!hasLoaded && loading" class="org-loading">
       <i class="pi pi-spin pi-spinner"></i>
       <span>Loading organizations…</span>
     </div>
 
-    <!-- ── Empty ── -->
-    <div *ngIf="!loading && !filteredOrganizations.length && !errorMessage" class="org-empty">
+    <div *ngIf="hasLoaded && !filteredOrganizations.length && !errorMessage" class="org-empty">
       <div class="org-empty__icon"><i class="pi pi-building"></i></div>
       <h3>No organizations found</h3>
       <p>Try adjusting your filters or provision a new organization to get started.</p>
@@ -107,7 +83,7 @@
     </div>
 
     <!-- ════════════════ GRID VIEW ════════════════ -->
-    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'grid'" class="org-grid">
+    <div *ngIf="filteredOrganizations.length && viewMode === 'grid'" class="org-grid">
 
       <article class="org-card"
                *ngFor="let org of filteredOrganizations; trackBy: trackById"
@@ -175,7 +151,7 @@
     </div><!-- /org-grid -->
 
     <!-- ════════════════ TABLE VIEW ════════════════ -->
-    <div *ngIf="!loading && filteredOrganizations.length && viewMode === 'table'"
+    <div *ngIf="filteredOrganizations.length && viewMode === 'table'"
          class="org-table-wrap">
       <table class="org-table">
         <thead>
@@ -272,22 +248,17 @@
         </tbody>
       </table>
     </div><!-- /org-table-wrap -->
+    </app-list-results>
 
-    <!-- ── Footer: count (left) + paginator (right) ── -->
-    <div class="org-footer" *ngIf="!loading && totalRecords > 0">
-      <span class="org-footer__count">
-        Showing <strong>{{ filteredOrganizations.length }}</strong> of
-        <strong>{{ totalRecords }}</strong> organizations
-      </span>
-      <p-paginator
-        class="org-footer__paginator"
-        [rows]="pageSize"
-        [totalRecords]="totalRecords"
-        [first]="page * pageSize"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        (onPageChange)="onPageChange($event)">
-      </p-paginator>
-    </div>
+    <app-paginator
+      *ngIf="totalRecords > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="organizations"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
 
   </div><!-- /org-workspace -->
 </div>

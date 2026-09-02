@@ -55,6 +55,21 @@
       </div>
 
       <div class="form-row">
+        <label>{{ 'settings.defaultView' | tcTranslate }}</label>
+        <div class="control control--stack">
+          <div class="control">
+            <button type="button" class="toggle" [class.on]="defaultView() === 'grid'" (click)="defaultView.set('grid')">
+              <i class="pi pi-th-large"></i>{{ 'settings.defaultViewGrid' | tcTranslate }}
+            </button>
+            <button type="button" class="toggle" [class.on]="defaultView() === 'table'" (click)="defaultView.set('table')">
+              <i class="pi pi-list"></i>{{ 'settings.defaultViewTable' | tcTranslate }}
+            </button>
+          </div>
+          <small class="hint">{{ 'settings.defaultViewHint' | tcTranslate }}</small>
+        </div>
+      </div>
+
+      <div class="form-row">
         <label>{{ 'settings.reduceMotion' | tcTranslate }}</label>
         <div class="control control--stack">
           <label class="switch">

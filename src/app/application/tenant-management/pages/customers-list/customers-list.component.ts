@@ -14,26 +14,28 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
-import { PaginatorModule } from 'primeng/paginator';
 import { DropdownModule } from 'primeng/dropdown';
-import { debounceTime, Subject } from 'rxjs';
 
 import { AppButtonComponent } from '../../../../shared/ui/app-form/app-button.component';
 import {
   AppAvatarComponent,
   AppCustomerCardComponent,
   AppCustomerCardData,
-  AppFilterToolbarComponent,
-  AppGridTableToggleComponent,
+  AppListToolbarComponent,
+  AppListResultsComponent,
   AppListEmptyStateComponent,
   AppListViewMode,
-  AppSearchBarComponent,
+  AppPaginatorComponent,
   AppSkeletonGroupComponent,
   AppSkeletonLoaderComponent,
   AppStatCardComponent,
   AppStatusBadgeComponent
 } from '../../../../shared/ui/app-list';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import {
   CustomerCreatedFilter,
   CustomerDashboard,
@@ -48,7 +50,6 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
 type StatusFilter = 'all' | CustomerStatus;
 
 const VIEW_KEY = 'tc-customer-view-mode';
-const PAGE_SIZES = [10, 25, 50, 100];
 
 @Component({
   selector: 'app-customers-list',
@@ -58,14 +59,13 @@ const PAGE_SIZES = [10, 25, 50, 100];
     CommonModule,
     FormsModule,
     DropdownModule,
-    PaginatorModule,
     MenuModule,
     SaasPageHeaderComponent,
     AppButtonComponent,
     AppStatCardComponent,
-    AppSearchBarComponent,
-    AppFilterToolbarComponent,
-    AppGridTableToggleComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
     AppAvatarComponent,
     AppStatusBadgeComponent,
     AppCustomerCardComponent,
@@ -83,11 +83,15 @@ export class CustomersListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly breakpoint = inject(BreakpointObserver);
-  private readonly search$ = new Subject<string>();
+  private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly query = new ListQuerySession();
 
   @ViewChild('rowMenu') rowMenu?: Menu;
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   errorMessage = '';
   dashboard: CustomerDashboard | null = null;
   customers: CustomerListItem[] = [];
@@ -98,17 +102,19 @@ export class CustomersListComponent implements OnInit {
   statusFilter: StatusFilter = 'all';
   sortBy: CustomerSortOption = 'createdDesc';
   createdFilter: CustomerCreatedFilter = 'all';
-  viewMode: AppListViewMode = 'grid';
+  private appliedStatus: StatusFilter = 'all';
+  private appliedSort: CustomerSortOption = 'createdDesc';
+  private appliedCreated: CustomerCreatedFilter = 'all';
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
   isMobile = false;
 
   page = 0;
-  pageSize = 25;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
   totalRecords = 0;
 
   readonly formatDate = formatDate;
   readonly formatCurrency = formatCurrency;
-  readonly pageSizeOptions = PAGE_SIZES;
-  readonly viewStorageKey = VIEW_KEY;
 
   readonly sortOptions: { value: CustomerSortOption; label: string }[] = [
     { value: 'nameAsc', label: 'Name (A–Z)' },
@@ -145,10 +151,25 @@ export class CustomersListComponent implements OnInit {
         this.cdr.markForCheck();
       });
 
-    this.search$.pipe(debounceTime(350), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.page = 0;
-      this.loadCustomers();
-    });
+    const saved = this.listContext.consume(VIEW_KEY);
+    if (saved) {
+      this.page = saved.page ?? this.page;
+      this.pageSize = saved.size ?? this.pageSize;
+      this.search = saved.search ?? this.search;
+      this.viewMode = this.viewPrefs.initialView(saved.view);
+      if (saved.sort) {
+        this.sortBy = saved.sort as CustomerSortOption;
+        this.appliedSort = this.sortBy;
+      }
+      if (saved.filters?.['status']) {
+        this.statusFilter = saved.filters['status'] as StatusFilter;
+        this.appliedStatus = this.statusFilter;
+      }
+      if (saved.filters?.['created']) {
+        this.createdFilter = saved.filters['created'] as CustomerCreatedFilter;
+        this.appliedCreated = this.createdFilter;
+      }
+    }
 
     this.load();
   }
@@ -157,20 +178,12 @@ export class CustomersListComponent implements OnInit {
     return this.isMobile ? 'grid' : this.viewMode;
   }
 
-  get rangeStart(): number {
-    return this.totalRecords === 0 ? 0 : this.page * this.pageSize + 1;
-  }
-
-  get rangeEnd(): number {
-    return Math.min((this.page + 1) * this.pageSize, this.totalRecords);
-  }
-
   load(): void {
-    this.loading = true;
     this.errorMessage = '';
     this.api.getCustomerDashboard().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: d => {
         this.dashboard = d;
+        this.cdr.markForCheck();
         this.loadCustomers();
       },
       error: () => {
@@ -181,27 +194,41 @@ export class CustomersListComponent implements OnInit {
   }
 
   loadCustomers(): void {
-    this.loading = true;
+    const requestId = this.query.beginRequest();
+    this.refreshing = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.errorMessage = '';
     this.api.getCustomers({
-      status: this.statusFilter === 'all' ? undefined : this.statusFilter,
+      status: this.appliedStatus === 'all' ? undefined : this.appliedStatus,
       search: this.search.trim() || undefined,
-      activeOnly: this.statusFilter === 'ARCHIVED' ? false : true,
-      created: this.createdFilter,
-      sort: this.sortBy,
+      activeOnly: this.appliedStatus === 'ARCHIVED' ? false : true,
+      created: this.appliedCreated,
+      sort: this.appliedSort,
       page: this.page,
       size: this.pageSize
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.customers = page.content ?? [];
         this.totalRecords = page.totalElements ?? 0;
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       },
       error: () => {
+        if (!this.query.isCurrent(requestId)) {
+          return;
+        }
         this.errorMessage = "We couldn't load the customer list. Please try again.";
         this.customers = [];
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }
     });
@@ -209,16 +236,36 @@ export class CustomersListComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.search = value;
-    this.search$.next(value);
   }
 
-  onFilterChange(): void {
+  applyQuery(): void {
+    this.page = 0;
+    this.loadCustomers();
+  }
+
+  applyFilters(): void {
+    this.appliedStatus = this.statusFilter;
+    this.appliedSort = this.sortBy;
+    this.appliedCreated = this.createdFilter;
     this.page = 0;
     this.loadCustomers();
   }
 
   onViewModeChange(mode: AppListViewMode): void {
     this.viewMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  resetFilters(): void {
+    this.search = '';
+    this.statusFilter = 'all';
+    this.sortBy = 'createdDesc';
+    this.createdFilter = 'all';
+    this.appliedStatus = 'all';
+    this.appliedSort = 'createdDesc';
+    this.appliedCreated = 'all';
+    this.page = 0;
+    this.loadCustomers();
   }
 
   addCustomer(): void {
@@ -240,6 +287,7 @@ export class CustomersListComponent implements OnInit {
 
   openCustomer(customer: CustomerListItem, event?: Event): void {
     event?.stopPropagation();
+    this.persistListContext();
     void this.router.navigate(['/app/tenant-management/customers', customer.id]);
   }
 
@@ -251,6 +299,7 @@ export class CustomersListComponent implements OnInit {
   }
 
   editCustomer(customer: CustomerListItem): void {
+    this.persistListContext();
     void this.router.navigate(['/app/tenant-management/customers', customer.id, 'edit']);
   }
 
@@ -347,5 +396,16 @@ export class CustomersListComponent implements OnInit {
 
   trackById(_: number, item: CustomerListItem): number {
     return item.id;
+  }
+
+  private persistListContext(): void {
+    this.listContext.save(VIEW_KEY, {
+      page: this.page,
+      size: this.pageSize,
+      search: this.search,
+      sort: this.appliedSort,
+      view: this.viewMode,
+      filters: { status: this.appliedStatus, created: this.appliedCreated }
+    });
   }
 }

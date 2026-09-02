@@ -9,5 +9,7 @@ export const environment = {
     defaultOrganizationId: 1,
     h2ConsoleUrl: 'http://localhost:8080/h2-console',
     requireOrganizationSelection: true,
-    authUseHttpOnlyRefresh: true
+    authUseHttpOnlyRefresh: true,
+    /** TEMPORARY — remove when production email reset is live. */
+    developmentResetPassword: 'Password@123'
 };

@@ -80,14 +80,12 @@
       </p-dropdown>
     </div>
     <div class="acad-toolbar__end">
-      <div class="cs-view-toggle" role="group" aria-label="View mode">
-        <button type="button" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" aria-label="Grid view">
-          <i class="pi pi-th-large"></i>
-        </button>
-        <button type="button" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" aria-label="List view">
-          <i class="pi pi-list"></i>
-        </button>
-      </div>
+      <app-grid-table-toggle
+        pageKey="academics.classes.view"
+        [mode]="viewMode"
+        (modeChange)="onViewModeChange($event)"
+        ariaLabel="View mode">
+      </app-grid-table-toggle>
     </div>
   </div>
 
@@ -209,25 +207,15 @@
       </ng-template>
     </div>
 
-    <div class="cs-pager" *ngIf="totalClasses > pageSize">
-      <span class="cs-pager__meta">
-        Showing {{ pageStart }}–{{ pageEnd }} of {{ totalClasses }} classes
-      </span>
-      <div class="cs-pager__controls">
-        <button type="button" class="cs-pager__btn" [disabled]="page <= 1" (click)="setPage(page - 1)" aria-label="Previous page">
-          <i class="pi pi-angle-left"></i>
-        </button>
-        <span class="cs-pager__page">{{ page }} / {{ totalPages }}</span>
-        <button type="button" class="cs-pager__btn" [disabled]="page >= totalPages" (click)="setPage(page + 1)" aria-label="Next page">
-          <i class="pi pi-angle-right"></i>
-        </button>
-        <select class="cs-pager__size" [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" aria-label="Classes per page">
-          <option [ngValue]="12">12 / page</option>
-          <option [ngValue]="24">24 / page</option>
-          <option [ngValue]="48">48 / page</option>
-        </select>
-      </div>
-    </div>
+    <app-paginator
+      *ngIf="totalClasses > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalClasses"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="classes"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
   </ng-container>
 
   <ng-template #emptyTpl>

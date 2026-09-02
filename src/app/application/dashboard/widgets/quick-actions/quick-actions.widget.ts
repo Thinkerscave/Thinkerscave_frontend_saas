@@ -11,7 +11,7 @@ import { QuickActionsData } from '../../models/dashboard.model';
   template: `
     <div class="w-actions w-actions--bar" role="list">
       <a
-        *ngFor="let action of data.items; let i = index"
+        *ngFor="let action of data?.items || []; let i = index"
         class="w-actions__btn"
         role="listitem"
         [style.animation-delay.ms]="i * 45"

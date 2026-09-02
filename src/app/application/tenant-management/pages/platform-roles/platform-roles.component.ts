@@ -15,8 +15,11 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
-import { AppListViewMode } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 
 @Component({
   selector: 'app-platform-roles',
@@ -24,7 +27,8 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterLink, DropdownModule, DialogModule,
-    SaasPageHeaderComponent, SaasStatGridComponent
+    SaasPageHeaderComponent, SaasStatGridComponent,
+    AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent
   ],
   templateUrl: './platform-roles.component.html',
   styleUrl: './platform-roles.component.scss'
@@ -34,15 +38,18 @@ export class PlatformRolesComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   saving = false;
   errorMessage = '';
   search = '';
+  appliedSearch = '';
   editorOpen = false;
-  viewMode: AppListViewMode = 'grid';
-  page = 1;
-  pageSize = 8;
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
   roles: AccessRole[] = [];
   selectedRole: AccessRole | null = null;
   roleUsers: AccessUser[] = [];
@@ -65,46 +72,46 @@ export class PlatformRolesComponent implements OnInit {
   }
 
   get filtered(): AccessRole[] {
-    const q = this.search.trim().toLowerCase();
+    const q = this.appliedSearch.trim().toLowerCase();
     if (!q) return this.roles;
     return this.roles.filter(r => r.roleName.toLowerCase().includes(q) || r.roleCode.toLowerCase().includes(q));
   }
 
   get paged(): AccessRole[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.filtered.slice(start, start + this.pageSize);
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filtered.length / this.pageSize) || 1);
-  }
-
-  get pageStart(): number {
-    return this.filtered.length ? (this.page - 1) * this.pageSize + 1 : 0;
-  }
-
-  get pageEnd(): number {
-    return Math.min(this.page * this.pageSize, this.filtered.length);
+    return slicePage(this.filtered, this.page, this.pageSize);
   }
 
   onListViewModeChange(mode: AppListViewMode): void {
     this.viewMode = mode;
-    this.page = 1;
+    this.cdr.markForCheck();
   }
 
-  setPage(next: number): void {
-    this.page = Math.min(Math.max(1, next), this.totalPages);
+  resetFilters(): void {
+    this.search = '';
+    this.appliedSearch = '';
+    this.page = 0;
+    this.ensureSelectedRole();
+    this.cdr.markForCheck();
   }
 
-  setPageSize(size: number | string): void {
-    this.pageSize = Number(size);
-    this.page = 1;
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   onSearchChange(value: string): void {
     this.search = value;
-    this.page = 1;
+  }
+
+  applyQuery(): void {
+    this.appliedSearch = this.search;
+    this.page = 0;
     this.ensureSelectedRole();
+    this.cdr.markForCheck();
   }
 
   selectRole(role: AccessRole): void {
@@ -216,7 +223,7 @@ export class PlatformRolesComponent implements OnInit {
     this.selectedRole = list[0];
     this.loadRoleUsers(list[0]);
     const index = list.findIndex(role => role.id === list[0].id);
-    if (index >= 0) this.page = Math.floor(index / this.pageSize) + 1;
+    if (index >= 0) this.page = Math.floor(index / this.pageSize);
   }
 
   private revealExpandedCard(): void {

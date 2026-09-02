@@ -32,70 +32,52 @@
     </div>
   </div>
 
-  <div class="sd-filter-panel">
-    <div class="sd-filter-panel__search">
-      <i class="pi pi-search sd-filter-panel__search-icon"></i>
-      <input id="staff-keyword-input"
-             type="text"
-             [(ngModel)]="filters.keyword"
-             placeholder="Search name, staff ID, mobile, email..."
-             (keyup.enter)="search()"/>
-    </div>
-    <div class="sd-filter-panel__selects">
-      <p-dropdown
-        inputId="filter-staff-type"
-        [options]="staffTypeOptions"
-        [(ngModel)]="filters.staffType"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Types"
-        [showClear]="true"
-        (onChange)="search()">
-      </p-dropdown>
-      <p-dropdown
-        inputId="filter-emp-category"
-        [options]="categoryOptions"
-        [(ngModel)]="filters.employmentCategory"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Categories"
-        [showClear]="true"
-        (onChange)="search()">
-      </p-dropdown>
-      <p-dropdown
-        inputId="filter-emp-status"
-        [options]="statusOptions"
-        [(ngModel)]="filters.employmentStatus"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Status"
-        [showClear]="true"
-        (onChange)="search()">
-      </p-dropdown>
-    </div>
-    <div class="sd-filter-panel__actions">
-      <button id="btn-clear-filters" type="button" class="sd-btn sd-btn--ghost" (click)="clearFilters()">
-        Clear Filters
-      </button>
-      <button id="btn-search-staff" type="button" class="sd-btn sd-btn--primary" (click)="search()" [disabled]="searching">
-        <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
-        Search
-      </button>
-    </div>
-    <div class="sd-filter-panel__view tc-view-switch" role="group" aria-label="View mode">
-      <app-grid-table-toggle
-        storageKey="staff.directory.view"
-        [(mode)]="view"
-        ariaLabel="Staff directory view">
-      </app-grid-table-toggle>
-    </div>
-  </div>
+  <app-list-toolbar
+    [search]="filters.keyword || ''"
+    searchPlaceholder="Search name, staff ID, mobile, email..."
+    [searching]="searching"
+    [view]="view"
+    viewAriaLabel="Staff directory view"
+    (searchChange)="onKeywordChange($event)"
+    (searchDebounced)="applyQuery()"
+    (submitted)="search()"
+    (reset)="clearFilters()"
+    (viewChange)="onViewModeChange($event)">
+    <p-dropdown
+      inputId="filter-staff-type"
+      [options]="staffTypeOptions"
+      [(ngModel)]="filters.staffType"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All Types"
+      [showClear]="true">
+    </p-dropdown>
+    <p-dropdown
+      inputId="filter-emp-category"
+      [options]="categoryOptions"
+      [(ngModel)]="filters.employmentCategory"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All Categories"
+      [showClear]="true">
+    </p-dropdown>
+    <p-dropdown
+      inputId="filter-emp-status"
+      [options]="statusOptions"
+      [(ngModel)]="filters.employmentStatus"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All Status"
+      [showClear]="true">
+    </p-dropdown>
+  </app-list-toolbar>
 
   <div *ngIf="errorMessage" class="sd-error-banner">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <div *ngIf="loading" class="sd-card-grid" aria-busy="true">
+  <app-list-results [busy]="refreshing">
+  <div *ngIf="!hasLoaded && loading" class="sd-card-grid" aria-busy="true">
     <div class="sd-card sd-card--skeleton" *ngFor="let _ of [1,2,3,4,5,6]">
       <app-skeleton shape="circle" size="72px"></app-skeleton>
       <app-skeleton shape="line" height="16px" width="60%"></app-skeleton>
@@ -105,7 +87,7 @@
   </div>
 
   <app-empty-state
-    *ngIf="!loading && staffPage.content.length === 0 && !errorMessage"
+    *ngIf="hasLoaded && staffPage.content.length === 0 && !errorMessage"
     illustration="staff"
     title="No staff found"
     message="Try adjusting your filters or add a new staff member."
@@ -114,7 +96,7 @@
     (action)="addStaff()">
   </app-empty-state>
 
-  <div *ngIf="!loading && view === 'grid' && staffPage.content.length > 0" class="sd-card-grid">
+  <div *ngIf="view === 'grid' && staffPage.content.length > 0" class="sd-card-grid">
     <article *ngFor="let s of staffPage.content; trackBy: trackByStaff"
              class="sd-card"
              (click)="openProfile(s)">
@@ -171,7 +153,7 @@
     </article>
   </div>
 
-  <div *ngIf="!loading && view === 'table' && staffPage.content.length > 0" class="sd-table-wrap">
+  <div *ngIf="view === 'table' && staffPage.content.length > 0" class="sd-table-wrap">
     <table class="sd-table">
       <thead>
         <tr>
@@ -232,14 +214,17 @@
     </table>
   </div>
 
-  <p-paginator
-    *ngIf="!loading && staffPage.totalElements > 0"
-    [rows]="filters.size || 12"
+  </app-list-results>
+
+  <app-paginator
+    *ngIf="staffPage.totalElements > 0"
+    [page]="filters.page || 0"
+    [rows]="filters.size || pageSizeOptions[0]"
     [totalRecords]="staffPage.totalElements"
-    [first]="(filters.page || 0) * (filters.size || 12)"
-    [rowsPerPageOptions]="[12, 24, 48]"
-    (onPageChange)="onPageChange($event)">
-  </p-paginator>
+    [pageSizeOptions]="pageSizeOptions"
+    noun="staff"
+    (pageChange)="onPageChange($event)">
+  </app-paginator>
 
   <ng-container *ngIf="showAddDrawer">
     <div class="sd-drawer-overlay" (click)="closeAddDrawer()"></div>
