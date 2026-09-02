@@ -166,8 +166,8 @@ export const ACCESS_PAGES = {
   roleWorkspace: {
     breadcrumb: 'Role Workspace'
   },
-  menus: {
-    breadcrumb: 'Menu Catalog',
+  featureCatalog: {
+    breadcrumb: 'Feature Catalog',
     pageSubtitle: 'Features and menus included in this school’s plan. Assign these to responsibilities.'
   },
   responsibilities: {

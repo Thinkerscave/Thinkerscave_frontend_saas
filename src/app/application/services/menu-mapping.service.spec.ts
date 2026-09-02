@@ -60,7 +60,7 @@ describe('MenuMappingService', () => {
     expect(access?.items?.map(child => child.routerLink)).toEqual([
       '/app/access-management/users',
       '/app/access-management/responsibilities',
-      '/app/access-management/menus',
+      '/app/access-management/feature-catalog',
       '/app/access-management/login-history',
       '/app/access-management/security-policy'
     ]);

@@ -21,6 +21,8 @@ import {
   PermissionMatrix,
   PermissionUpdateRow,
   ResponsibilityStaffAssignment,
+  RetentionPurgeResult,
+  RetentionTaskStatus,
   RoleType,
   SecurityPolicy,
   SpringPage,
@@ -252,7 +254,7 @@ export class AccessManagementService {
 
   getOrgLoginHistory(
     organizationId = this.organizationId(),
-    query: { status?: LoginStatus; from?: string; to?: string; userId?: number } = {},
+    query: { status?: LoginStatus; from?: string; to?: string; userId?: number; search?: string } = {},
     page = 0,
     size = 20
   ): Observable<SpringPage<LoginHistoryEntry>> {
@@ -266,6 +268,7 @@ export class AccessManagementService {
     if (query.status) params = params.set('status', query.status);
     if (query.from) params = params.set('from', query.from);
     if (query.to) params = params.set('to', query.to);
+    if (query.search) params = params.set('search', query.search);
     return this.http.get<unknown>(accessApi.orgLoginHistory(organizationId), { params }).pipe(
       map(r => this.mapPageResponse<LoginHistoryEntry>(r))
     );
@@ -273,7 +276,7 @@ export class AccessManagementService {
 
   getUserLoginHistory(
     userId: number,
-    query: { status?: LoginStatus; from?: string; to?: string } = {},
+    query: { status?: LoginStatus; from?: string; to?: string; search?: string } = {},
     page = 0,
     size = 20
   ): Observable<SpringPage<LoginHistoryEntry>> {
@@ -283,8 +286,25 @@ export class AccessManagementService {
     if (query.status) params = params.set('status', query.status);
     if (query.from) params = params.set('from', query.from);
     if (query.to) params = params.set('to', query.to);
+    if (query.search) params = params.set('search', query.search);
     return this.http.get<unknown>(accessApi.userLoginHistory(userId), { params }).pipe(
       map(r => this.mapPageResponse<LoginHistoryEntry>(r))
+    );
+  }
+
+  getLoginHistoryRetention(organizationId = this.organizationId()): Observable<RetentionTaskStatus> {
+    return this.http.get<unknown>(accessApi.orgLoginHistoryRetention(organizationId)).pipe(
+      map(r => unwrapApiResponse<RetentionTaskStatus>(r, {
+        taskKey: 'LOGIN_HISTORY',
+        label: 'Login history',
+        retentionDays: 30
+      }))
+    );
+  }
+
+  purgeLoginHistory(organizationId = this.organizationId()): Observable<RetentionPurgeResult> {
+    return this.http.post<unknown>(accessApi.orgLoginHistoryPurge(organizationId), {}).pipe(
+      map(r => unwrapApiResponse<RetentionPurgeResult>(r, {}))
     );
   }
 

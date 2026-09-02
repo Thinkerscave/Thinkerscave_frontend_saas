@@ -33,7 +33,7 @@ const MENU_LABEL_KEYS: Record<string, string> = {
   More: 'menu.more',
   'Access Management': 'menu.accessManagement',
   Roles: 'menu.roles',
-  'Menu Catalog': 'menu.menuCatalog',
+  'Menu Catalog': 'menu.featureCatalog',
   Users: 'menu.users',
   Responsibilities: 'menu.responsibilities',
   'Security Policy': 'menu.securityPolicy',

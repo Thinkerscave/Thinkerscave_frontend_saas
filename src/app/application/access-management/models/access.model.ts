@@ -183,9 +183,37 @@ export interface LoginHistoryEntry {
   loginTime?: string;
   logoutTime?: string;
   ipAddress?: string;
+  logoutIpAddress?: string;
+  deviceName?: string;
   browser?: string;
   operatingSystem?: string;
   failureReason?: string;
+}
+
+export interface RetentionPurgeResult {
+  taskKey?: string;
+  label?: string;
+  retentionDays?: number;
+  cutoffAt?: string;
+  deletedCount?: number;
+  triggerType?: 'SCHEDULED' | 'MANUAL';
+  organizationId?: number;
+  actorUsername?: string;
+  ranAt?: string;
+  summary?: string;
+}
+
+export interface RetentionTaskStatus {
+  taskKey: string;
+  label: string;
+  description?: string;
+  retentionDays: number;
+  enabled?: boolean;
+  scheduleCron?: string;
+  schedule?: string;
+  lastRun?: RetentionPurgeResult | null;
+  recentRuns?: RetentionPurgeResult[];
+  nextScheduledHint?: string;
 }
 
 export interface CreateMenuPayload {

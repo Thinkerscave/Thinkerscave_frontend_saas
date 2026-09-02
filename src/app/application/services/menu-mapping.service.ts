@@ -554,7 +554,7 @@ export class MenuMappingService {
     const pages: Array<{ label: string; route: string; icon: string }> = [
       { label: 'Users', route: '/app/access-management/users', icon: 'pi pi-users' },
       { label: 'Responsibilities', route: '/app/access-management/responsibilities', icon: 'pi pi-sitemap' },
-      { label: 'Menu Catalog', route: '/app/access-management/menus', icon: 'pi pi-th-large' },
+      { label: 'Feature Catalog', route: '/app/access-management/feature-catalog', icon: 'pi pi-th-large' },
       { label: 'Login History', route: '/app/access-management/login-history', icon: 'pi pi-history' },
       { label: 'Security Policy', route: '/app/access-management/security-policy', icon: 'pi pi-shield' }
     ];
@@ -650,6 +650,7 @@ export class MenuMappingService {
       '/app/access-management',
       '/app/access-management/users',
       '/app/access-management/responsibilities',
+      '/app/access-management/feature-catalog',
       '/app/access-management/menus',
       '/app/access-management/login-history',
       '/app/access-management/security-policy'

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { platformApi, auditApi } from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
-import { AccessMenu } from '../../access-management/models/access.model';
+import { AccessMenu, RetentionPurgeResult, RetentionTaskStatus } from '../../access-management/models/access.model';
 import {
   Customer,
   CustomerContact,

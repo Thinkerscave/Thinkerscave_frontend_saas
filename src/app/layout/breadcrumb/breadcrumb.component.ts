@@ -536,7 +536,8 @@ export class BreadcrumbComponent implements OnInit {
 
 
     const pageLabels: Record<string, string> = {
-      menus: 'Menu Catalog',
+      menus: 'Feature Catalog',
+      'feature-catalog': 'Feature Catalog',
       responsibilities: 'Responsibilities',
       users: 'Users',
       'security-policy': 'Security Policy',

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { finalize, forkJoin, of, switchMap } from 'rxjs';
+import { finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AccessMenu } from '../../../access-management/models/access.model';
 import { AccessManagementService } from '../../../access-management/services/access-management.service';
@@ -69,11 +70,15 @@ interface FeatureShowcase {
 export class FeatureCatalogComponent implements OnInit {
   private readonly api = inject(PlatformManagementService);
   private readonly accessApi = inject(AccessManagementService);
+  private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly confirm = inject(ConfirmationService);
   private readonly viewPrefs = inject(ViewPreferenceService);
+
+  /** Super Admin manages the catalog. Organization admins only view entitled features. */
+  readonly canManage = this.route.snapshot.data['catalogMode'] !== 'organization';
 
   loading = true;
   saving = false;
@@ -134,6 +139,18 @@ export class FeatureCatalogComponent implements OnInit {
 
   readonly stats = computed<SaasStat[]>(() => {
     const list = this.modules();
+    if (!this.canManage) {
+      const screens = list.reduce((total, feature) => {
+        const menus = this.menusFor(feature);
+        return total + menus.reduce((count, menu) => count + 1 + this.sortedMenus(menu.children).length, 0);
+      }, 0);
+      return [
+        { key: 'total', label: 'Features', value: list.length, icon: 'pi pi-th-large', tone: 'primary' },
+        { key: 'included', label: 'Included', value: list.filter(m => m.defaultEnabled).length, icon: 'pi pi-check', tone: 'success' },
+        { key: 'plan', label: 'Plan', value: list.filter(m => !m.defaultEnabled).length, icon: 'pi pi-star', tone: 'warning' },
+        { key: 'screens', label: 'Screens', value: screens, icon: 'pi pi-sitemap', tone: 'info' }
+      ];
+    }
     return [
       { key: 'total', label: 'Features', value: list.length, icon: 'pi pi-th-large', tone: 'primary' },
       { key: 'active', label: 'Active', value: list.filter(m => m.active !== false).length, icon: 'pi pi-check', tone: 'success' },
@@ -150,10 +167,18 @@ export class FeatureCatalogComponent implements OnInit {
         const category = m.category || m.module || 'General';
         if (cat !== 'all' && category !== cat) return false;
         if (!q) return true;
-        return (m.featureName?.toLowerCase().includes(q)
+        if (m.featureName?.toLowerCase().includes(q)
           || m.featureCode?.toLowerCase().includes(q)
+          || m.displayName?.toLowerCase().includes(q)
           || m.description?.toLowerCase().includes(q)
-          || this.blurb(m).toLowerCase().includes(q));
+          || this.blurb(m).toLowerCase().includes(q)) {
+          return true;
+        }
+        return this.flattenMenus(this.menusFor(m)).some(menu =>
+          (menu.menuName || '').toLowerCase().includes(q)
+          || (menu.menuCode || '').toLowerCase().includes(q)
+          || (menu.route || '').toLowerCase().includes(q)
+        );
       })
       .sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0)
         || (left.featureName || '').localeCompare(right.featureName || ''));
@@ -201,10 +226,16 @@ export class FeatureCatalogComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.errorMessage = '';
-    forkJoin({
-      features: this.api.getFeatures(),
-      menus: this.accessApi.getMenuTree(true)
-    }).pipe(
+    const request$ = this.canManage
+      ? forkJoin({
+          features: this.api.getFeatures(),
+          menus: this.accessApi.getMenuTree(true)
+        })
+      : this.accessApi.getOrganizationMenuCatalog().pipe(
+          map(tree => this.fromEntitledCatalog(tree ?? []))
+        );
+
+    request$.pipe(
       finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
@@ -214,7 +245,9 @@ export class FeatureCatalogComponent implements OnInit {
         this.ensureSelectedFeature();
       },
       error: () => {
-        this.errorMessage = 'Unable to load feature catalog from platform API.';
+        this.errorMessage = this.canManage
+          ? 'Unable to load feature catalog from platform API.'
+          : 'Could not load the feature catalog for this organization.';
         this.modules.set([]);
         this.menus = [];
       }
@@ -227,11 +260,13 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.canManage) return;
     this.draft = this.emptyDraft();
     this.editorOpen = true;
   }
 
   openEdit(feature: PlatformFeature, event?: Event): void {
+    if (!this.canManage) return;
     event?.stopPropagation();
     this.draft = {
       id: feature.id,
@@ -273,6 +308,7 @@ export class FeatureCatalogComponent implements OnInit {
 
   unmapMenu(feature: PlatformFeature, menu: AccessMenu, event?: Event): void {
     event?.stopPropagation();
+    if (!this.canManage) return;
     const nextIds = this.menusFor(feature).map(m => m.id).filter(id => id !== menu.id);
     this.api.replaceFeatureMenus(feature.id, nextIds).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
@@ -284,6 +320,7 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.canManage) return;
     if (!this.draft.featureName.trim() || (!this.draft.id && !this.draft.featureCode.trim()) || !this.draft.module.trim()) {
       this.feedback.warn('Missing fields', 'Feature code, name and module are required.');
       return;
@@ -312,6 +349,7 @@ export class FeatureCatalogComponent implements OnInit {
 
   confirmArchive(feature: PlatformFeature, event?: Event): void {
     event?.stopPropagation();
+    if (!this.canManage) return;
     this.confirm.confirm({
       header: 'Delete feature?',
       message: `Delete "${feature.featureName}" from the catalog? It will no longer be available for new mappings.`,
@@ -328,7 +366,11 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   blurb(feature: PlatformFeature): string {
-    return feature.description?.trim() || 'No description yet. Add one so customers can see what this feature includes.';
+    const text = feature.description?.trim() || '';
+    if (this.canManage) {
+      return text || 'No description yet. Add one so customers can see what this feature includes.';
+    }
+    return text;
   }
 
   menuNames(item: FeatureShowcase): string {
@@ -336,10 +378,25 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   typeLabel(feature: PlatformFeature): string {
+    if (!this.canManage) {
+      return feature.defaultEnabled ? 'Included' : 'Plan';
+    }
     if (feature.active === false) return 'Archived';
     if (feature.premiumFeature) return 'Premium';
     if (feature.defaultEnabled) return 'Included';
     return 'Optional';
+  }
+
+  get emptyTitle(): string {
+    if (this.modules().length) return 'No features match your filters';
+    return this.canManage ? 'No features yet' : 'No features in this school’s plan';
+  }
+
+  get emptyHint(): string {
+    if (this.modules().length) return 'Try another search or category.';
+    return this.canManage
+      ? 'Add a feature to start mapping menus.'
+      : 'Ask ThinkersCave to entitle features for this organization.';
   }
 
   mappedHint(menu: AccessMenu): string {
@@ -378,7 +435,52 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   private menusFor(feature: PlatformFeature): AccessMenu[] {
-    return (this.menus ?? []).filter(menu => menu.featureId === feature.id);
+    return (this.menus ?? []).filter(menu =>
+      menu.featureId === feature.id || (feature.id < 0 && menu.id === -feature.id)
+    );
+  }
+
+  private flattenMenus(menus: AccessMenu[]): AccessMenu[] {
+    return menus.flatMap(menu => [menu, ...this.flattenMenus(this.sortedMenus(menu.children))]);
+  }
+
+  private fromEntitledCatalog(tree: AccessMenu[]): { features: PlatformFeature[]; menus: AccessMenu[] } {
+    const byFeature = new Map<number, PlatformFeature>();
+    const standalone: PlatformFeature[] = [];
+    for (const menu of this.sortedMenus(tree)) {
+      if (menu.featureId) {
+        const existing = byFeature.get(menu.featureId);
+        if (!existing) {
+          byFeature.set(menu.featureId, this.featureFromEntitledMenu(menu, menu.featureId));
+        } else if (!existing.description && menu.description) {
+          existing.description = menu.description;
+        }
+        continue;
+      }
+      standalone.push(this.featureFromEntitledMenu(menu, -menu.id));
+    }
+    return { features: [...byFeature.values(), ...standalone], menus: tree };
+  }
+
+  private featureFromEntitledMenu(menu: AccessMenu, id: number): PlatformFeature {
+    const included = menu.menuScope === 'CORE';
+    const name = (id > 0 ? menu.featureName : menu.menuName) || menu.menuName;
+    const code = (id > 0 ? menu.featureCode : menu.menuCode) || menu.menuCode;
+    return {
+      id,
+      featureCode: code,
+      featureName: name,
+      displayName: name,
+      module: included ? 'Included' : 'Plan',
+      category: included ? 'Included' : 'Plan',
+      description: menu.description,
+      icon: (id > 0 ? menu.featureIcon : menu.icon) || menu.icon,
+      displayOrder: menu.displayOrder,
+      premiumFeature: !included,
+      defaultEnabled: included,
+      visible: true,
+      active: menu.active !== false
+    };
   }
 
   private sortedMenus(menus: AccessMenu[] | null | undefined): AccessMenu[] {

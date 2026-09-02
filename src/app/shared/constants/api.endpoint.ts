@@ -142,6 +142,8 @@ export const accessApi = {
   resetSecurityPolicy: (orgId: number) => `${ACCESS_BASE}/organizations/${orgId}/security-policy/reset`,
   orgLoginHistory: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}`,
   userLoginHistory: (userId: number) => `${ACCESS_BASE}/login-history/users/${userId}`,
+  orgLoginHistoryRetention: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}/retention`,
+  orgLoginHistoryPurge: (orgId: number) => `${ACCESS_BASE}/login-history/organizations/${orgId}/purge`,
 };
 
 export const loginApi = {
@@ -486,4 +488,7 @@ export const platformApi = {
   provisioningTemplates: `${PLATFORM_BASE}/provisioning-templates`,
   maintenanceSchedules: `${PLATFORM_BASE}/maintenance`,
   orgConfiguration: (orgId: number) => `${PLATFORM_BASE}/organization-configurations/${orgId}`,
+  retention: `${PLATFORM_BASE}/retention`,
+  retentionTask: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}`,
+  runRetention: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}/run`
 };
