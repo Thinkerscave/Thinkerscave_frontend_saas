@@ -67,8 +67,9 @@
         <div class="customer-workspace__grid customer-workspace__grid--single">
           <tc-saas-panel title="Quick Actions">
             <div class="customer-workspace__actions">
-              <button type="button" class="tc-btn" (click)="edit()"><i class="pi pi-pencil"></i> Edit Customer</button>
-              <button type="button" class="tc-btn tc-btn--primary" (click)="addOrganization()"><i class="pi pi-building"></i> Add Organization</button>
+              <button type="button" class="tc-btn" (click)="onTabChange('organizations')">
+                <i class="pi pi-building"></i> View Organizations
+              </button>
             </div>
           </tc-saas-panel>
         </div>
@@ -143,68 +144,6 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <section *ngSwitchCase="'users'" class="customer-workspace__tab">
-        <tc-saas-panel title="Users" subtitle="Owner and invited users for this customer account">
-          <div class="tc-empty-state">
-            <i class="pi pi-users"></i>
-            <strong>Users coming soon</strong>
-            <p>
-              The owner user is created automatically on customer onboarding.
-              Full user management for this account will live here.
-            </p>
-            <p *ngIf="customer.ownerUserId" class="customer-workspace__hint">
-              Linked owner user ID: {{ customer.ownerUserId }}
-            </p>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <section *ngSwitchCase="'subscriptions'" class="customer-workspace__tab">
-        <tc-saas-panel title="Subscriptions" subtitle="Billing and plan assignments live on organizations">
-          <div class="tc-empty-state">
-            <i class="pi pi-credit-card"></i>
-            <strong>Subscriptions belong to organizations</strong>
-            <p>Open an organization under this customer to manage plans and renewals.</p>
-          </div>
-        </tc-saas-panel>
-      </section>
-
-      <section *ngSwitchCase="'audit'" class="customer-workspace__tab">
-        <tc-saas-panel title="Audit Logs" subtitle="Recent actions and lifecycle events">
-          <div *ngIf="auditLoading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading timeline…</div>
-
-          <div *ngIf="!auditLoading && !auditLogs.length" class="tc-empty-state">
-            <i class="pi pi-history"></i>
-            <strong>No audit events found</strong>
-            <p>No customer-scoped events were returned from the platform stream.</p>
-          </div>
-
-          <ul class="audit-list" *ngIf="!auditLoading && auditLogs.length">
-            <li *ngFor="let log of auditLogs; trackBy: trackById">
-              <span class="audit-list__icon"><i class="pi pi-history"></i></span>
-              <div>
-                <strong>{{ log.action }}</strong>
-                <p>{{ log.summary || log.changes || '—' }}</p>
-                <small>
-                  {{ formatDateTime(log.occurredAt) }}
-                  <span *ngIf="log.actorUsername"> · {{ log.actorUsername }}</span>
-                </small>
-              </div>
-            </li>
-          </ul>
-        </tc-saas-panel>
-      </section>
-
-      <section *ngSwitchCase="'settings'" class="customer-workspace__tab">
-        <tc-saas-panel title="Settings" subtitle="Account-level preferences for this customer">
-          <div class="tc-empty-state">
-            <i class="pi pi-cog"></i>
-            <strong>Settings coming soon</strong>
-            <p>Archive, restore, and account preferences will be managed from this tab.</p>
           </div>
         </tc-saas-panel>
       </section>

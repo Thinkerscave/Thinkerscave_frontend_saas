@@ -457,11 +457,11 @@ export class BreadcrumbComponent implements OnInit {
 
     if (page === 'customers') {
 
-      if (child === 'new') labels.push('New Customer');
+      if (child === 'new') labels.push('Create Customer');
 
       else if (child === 'archived') labels.push('Archive');
 
-      else if (child === 'edit') labels.push('Edit Customer');
+      else if (grandchild === 'edit') labels.push('Edit Customer');
 
       else if (child) labels.push('Customer Details');
 
