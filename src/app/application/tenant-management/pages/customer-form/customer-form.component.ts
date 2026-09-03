@@ -25,6 +25,8 @@ import {
   AppSectionHeaderComponent,
   AppTextareaComponent
 } from '../../../../shared/ui/app-form';
+import { AppBackNavComponent } from '../../../../shared/ui/app-list';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 interface ContactFormModel {
@@ -77,7 +79,9 @@ const NOTES_MAX = 500;
     AppPhoneInputComponent,
     AppTextareaComponent,
     AppButtonComponent,
-    AppLoaderComponent
+    AppLoaderComponent,
+    AppBackNavComponent,
+    SaasPageHeaderComponent
   ],
   templateUrl: './customer-form.component.html',
   styleUrl: './customer-form.component.scss'
@@ -113,6 +117,12 @@ export class CustomerFormComponent implements OnInit {
 
   get canSubmit(): boolean {
     return this.isMinimallyValid() && !this.submitting;
+  }
+
+  get backFallback(): string {
+    return this.isEditMode && this.customerId
+      ? `/app/tenant-management/customers/${this.customerId}`
+      : '/app/tenant-management/customers';
   }
 
   fieldError(key: ErrorKey): string {

@@ -418,42 +418,7 @@ export class MenuMappingService {
   }
 
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
-    const roles = this.currentRoleTokens();
-    const isTenantManager = this.hasAnyRole(roles, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
-
-    let menus = this.normalizeTenantRoutes(items);
-    menus = this.pruneNavigationMenus(menus);
-    menus = this.filterNavigationItems(menus, item => this.isOrgCatalogManagementItem(item));
-    menus = this.filterNavigationItems(menus, item => this.isFeeManagementItem(item));
-
-    if (!isTenantManager) {
-      menus = this.filterNavigationItems(menus, item => this.isTenantManagementItem(item));
-    }
-
-    menus = this.filterNavigationItems(menus, item => this.isOrganizationProfileItem(item));
-    if (this.hasAnyRole(roles, ['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])) {
-      menus = this.ensureAdmissionsWorkspace(menus);
-    }
-
-    if (this.hasAnyRole(roles, ['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL'])) {
-      menus = this.ensureAcademicsWorkspace(menus);
-    }
-
-    if (!isTenantManager && this.hasAnyRole(roles, [
-      'ADMIN',
-      'COLLEGE_ADMIN',
-      'INSTITUTION_ADMIN',
-      'ORGANIZATION_ADMIN',
-      'ORGANIZATION_OWNER'
-    ])) {
-      menus = this.ensureAccessManagementWorkspace(menus);
-    }
-
-    if (isTenantManager) {
-      menus = this.filterNavigationItems(menus, item => this.isRedundantTenantMenuStub(item));
-    }
-
-    return menus;
+    return this.normalizeTenantRoutes(items);
   }
 
   /**

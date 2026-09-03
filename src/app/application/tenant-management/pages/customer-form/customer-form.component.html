@@ -1,5 +1,20 @@
 <div class="customer-form-page">
 <div class="customer-form-page__shell">
+    <tc-saas-page-header>
+      <app-back-nav
+        [fallback]="backFallback"
+        [label]="isEditMode ? 'Back to customer' : 'Back to customers'">
+      </app-back-nav>
+      <app-button
+        variant="primary"
+        [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+        [loading]="submitting"
+        [disabled]="!canSubmit"
+        (clicked)="submit()">
+        {{ isEditMode ? 'Save Changes' : 'Create Customer' }}
+      </app-button>
+    </tc-saas-page-header>
+
     <div *ngIf="errorMessage" class="customer-form-page__banner" role="alert">
       <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
       <span>{{ errorMessage }}</span>
