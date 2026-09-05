@@ -34,6 +34,14 @@ export const ADMISSIONS_PAGES: AdmissionsPageConfig[] = [
     route: '/app/admissions/applications'
   },
   {
+    page: 'reports',
+    label: 'Reports',
+    title: 'Reports',
+    description: 'Admissions reporting and conversion visibility.',
+    icon: 'pi pi-chart-line',
+    route: '/app/admissions/reports'
+  },
+  {
     page: 'settings',
     label: 'Settings',
     title: 'Settings',

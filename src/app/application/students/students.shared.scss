@@ -1540,19 +1540,71 @@
   width: 40px;
 }
 
+.stu-directory-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.stu-directory-table th,
+.stu-directory-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.stu-directory-table th {
+  background: var(--tc-surface-50);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--tc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stu-directory-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.stu-directory-table tbody tr:hover {
+  background: color-mix(in srgb, var(--tc-surface-50) 50%, transparent);
+}
+
+.stu-directory-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .stu-table-row {
   cursor: pointer;
+}
+
+.stu-table-row td:first-child {
+  color: var(--tc-text-muted);
+  font-weight: 600;
 }
 
 .stu-table-person {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .stu-table-name {
   display: block;
   font-size: 0.9rem;
+  line-height: 1.2;
+  color: var(--tc-text);
+}
+
+.stu-table-person small,
+.stu-table-row td small {
+  display: block;
+  margin-top: 3px;
+  line-height: 1.35;
+}
+
+.stu-directory-table .tc-badge {
+  white-space: nowrap;
 }
 
 .stu-paginator {

@@ -1,6 +1,5 @@
 export type StaffWorkspacePage =
   | 'directory'
-  | 'payroll'
   | 'leave';
 
 export interface StaffPageConfig {

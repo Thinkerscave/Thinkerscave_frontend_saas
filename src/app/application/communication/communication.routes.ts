@@ -14,7 +14,7 @@ export const COMMUNICATION_ROUTES: Routes = [
       import('./components/communication-workspace/communication-workspace.component')
         .then(m => m.CommunicationWorkspaceComponent),
     children: [
-      { path: '', redirectTo: 'announcements', pathMatch: 'full' },
+      { path: '', redirectTo: 'notices', pathMatch: 'full' },
       {
         path: 'notices',
         loadComponent: () => import('./components/notice-list/notice-list.component').then(m => m.NoticeListComponent),

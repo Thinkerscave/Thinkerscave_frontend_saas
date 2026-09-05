@@ -85,13 +85,13 @@ export class CommunicationWorkspaceComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly pages = COMMUNICATION_PAGES;
-  activePage = 'announcements';
+  activePage = 'notices';
 
   ngOnInit(): void {
     this.route.firstChild?.url
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(segments => {
-        this.activePage = segments[0]?.path ?? 'announcements';
+        this.activePage = segments[0]?.path ?? 'notices';
         this.cdr.markForCheck();
       });
   }

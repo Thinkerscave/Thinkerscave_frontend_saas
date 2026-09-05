@@ -7,7 +7,7 @@ import { roleGuard } from '../core/guard/role.guard';
 
 const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
 const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
-const ACCESS_MANAGEMENT_ROLES = [...ORGANIZATION_PROFILE_ROLES];
+const ACCESS_MANAGEMENT_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES];
 const ACADEMICS_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES, 'PRINCIPAL', 'Principal', 'TEACHER', 'Teacher', 'STAFF', 'Staff', 'PARENT', 'Parent'];
 const ONBOARDING_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
@@ -72,8 +72,8 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'users' },
-      { path: 'roles', pathMatch: 'full', redirectTo: 'users' },
-      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'users' },
+      { path: 'roles', data: { ...ACCESS_PAGES.users }, loadComponent: () => import('./tenant-management/pages/platform-roles/platform-roles.component').then(m => m.PlatformRolesComponent) },
+      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'roles' },
       { path: 'feature-catalog', data: { ...ACCESS_PAGES.featureCatalog, catalogMode: 'organization' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'menus', pathMatch: 'full', redirectTo: 'feature-catalog' },
       { path: 'responsibilities', data: { ...ACCESS_PAGES.responsibilities }, loadComponent: () => import('./access-management/pages/responsibilities-list/responsibilities-list.component').then(m => m.ResponsibilitiesListComponent) },
