@@ -119,8 +119,6 @@ export class DashboardShellComponent implements OnInit {
       return response;
     }
 
-    widgets = this.ensureInsightCharts(widgets);
-
     const priority: Array<WidgetDTO<any>['widgetType']> = ['WELCOME_HEADER', 'KPI_GRID', 'QUICK_ACTIONS', 'CHART'];
     const selectedKeys = new Set<string>();
     const ordered: WidgetDTO<any>[] = [];
@@ -151,68 +149,5 @@ export class DashboardShellComponent implements OnInit {
     }
 
     return { ...response, widgets: ordered };
-  }
-
-  /** Ensure an attendance chart exists even when API omits usable CHART widgets. */
-  private ensureInsightCharts(widgets: WidgetDTO<any>[]): WidgetDTO<any>[] {
-    const chartWidgets = widgets.filter(widget => widget.widgetType === 'CHART');
-    const hasUsableChart = chartWidgets.some(widget => this.hasChartSeries(widget));
-
-    if (hasUsableChart) {
-      return widgets;
-    }
-
-    // Replace empty API chart payloads with readable sample series when present.
-    if (chartWidgets.length) {
-      return widgets.map(widget => {
-        if (widget.widgetType !== 'CHART' || this.hasChartSeries(widget)) {
-          return widget;
-        }
-        if (/fee|collection|payment/i.test(`${widget.widgetKey} ${widget.title ?? ''}`)) {
-          return widget;
-        }
-        return {
-          ...widget,
-          dataMode: 'SAMPLE',
-          state: 'SUCCESS',
-          title: widget.title || 'Attendance trend',
-          subtitle: widget.subtitle || 'Last 7 days',
-          data: {
-            chartType: 'area',
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            series: [{ name: 'Present %', data: [92, 88, 95, 90, 93, 70, 86] }],
-            unit: '%'
-          }
-        };
-      });
-    }
-
-    const extras: WidgetDTO<any>[] = [
-      {
-        widgetKey: 'ATTENDANCE_TREND_CHART',
-        widgetType: 'CHART',
-        title: 'Attendance trend',
-        subtitle: 'Last 7 days',
-        span: 2,
-        dataMode: 'SAMPLE',
-        state: 'SUCCESS',
-        data: {
-          chartType: 'area',
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          series: [{ name: 'Present %', data: [92, 88, 95, 90, 93, 70, 86] }],
-          unit: '%'
-        }
-      }
-    ];
-
-    return [...widgets, extras[0]];
-  }
-
-  private hasChartSeries(widget: WidgetDTO<any>): boolean {
-    const series = widget?.data?.series;
-    if (!Array.isArray(series) || !series.length) {
-      return false;
-    }
-    return series.some((item: any) => Array.isArray(item?.data) && item.data.some((v: number) => Number(v) > 0));
   }
 }

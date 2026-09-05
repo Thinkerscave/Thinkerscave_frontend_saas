@@ -338,7 +338,7 @@ export interface CounselorOption {
 }
 
 export type AdmissionsWorkspacePage =
-  | 'overview' | 'leads' | 'follow-ups' | 'applications' | 'settings';
+  | 'overview' | 'leads' | 'follow-ups' | 'applications' | 'reports' | 'settings';
 
 export interface AdmissionsPageConfig {
   page: AdmissionsWorkspacePage;

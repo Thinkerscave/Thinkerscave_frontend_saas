@@ -3,7 +3,7 @@ import { StudentsPageConfig, StudentsWorkspacePage } from '../models/students-wo
 export const STUDENTS_PAGES: StudentsPageConfig[] = [
   {
     page: 'directory',
-    label: 'Directory',
+    label: 'Student Directory',
     title: 'Student Management',
     description: 'Comprehensive learner management for your institution.',
     icon: 'pi pi-users',
@@ -16,6 +16,14 @@ export const STUDENTS_PAGES: StudentsPageConfig[] = [
     description: 'Past graduates and alumni engagement records.',
     icon: 'pi pi-graduation-cap',
     route: '/app/students/alumni'
+  },
+  {
+    page: 'transfers',
+    label: 'Transfer Requests',
+    title: 'Transfer Requests',
+    description: 'Review and track transfer requests for enrolled students.',
+    icon: 'pi pi-send',
+    route: '/app/transfers'
   }
 ];
 

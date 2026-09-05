@@ -82,9 +82,9 @@ export class MenuMappingService {
         const sidebar = unwrapApiResponse<SidebarMenuNode[]>(response, unwrapApiList<SidebarMenuNode>(response));
         const items = (sidebar ?? []).map(node => this.mapSidebarNode(node));
         const normalized = this.normalizeMenuItems(items);
-        const consolidated = this.isTenantManagerRole() ? normalized : this.consolidateWorkspaceMenu(normalized);
-        const flattened = this.isTenantManagerRole() ? this.flattenGroupedMenus(consolidated) : consolidated;
-        const filtered = this.applyNavigationRules(flattened);
+        // Keep sidebar database-driven: preserve backend hierarchy/order instead of
+        // rebuilding groups from frontend heuristics.
+        const filtered = this.applyNavigationRules(normalized);
 
         // Guardrail: if role filtering/grouping accidentally removes everything,
         // fall back to normalized server sidebar so users still get navigation.
