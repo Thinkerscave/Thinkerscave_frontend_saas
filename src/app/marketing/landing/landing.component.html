@@ -16,6 +16,9 @@
           <a href="#cta" class="tc-btn tc-btn--primary tc-btn--lg">
             <i class="pi pi-calendar"></i> Request Demo
           </a>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--lg" (click)="openEnquiry()">
+            <i class="pi pi-graduation-cap"></i> Admission Enquiry
+          </button>
           <a [routerLink]="loginRoute()" class="tc-btn tc-btn--outline tc-btn--lg">
             <i class="pi pi-play"></i> Explore Platform
           </a>
@@ -269,4 +272,6 @@
   } @placeholder {
     <div class="tc-skeleton" aria-hidden="true"></div>
   }
+
+  <tc-admission-enquiry-modal />
 </div>

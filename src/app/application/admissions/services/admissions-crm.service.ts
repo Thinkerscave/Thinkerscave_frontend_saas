@@ -142,10 +142,16 @@ export class AdmissionsCrmService {
     return this.http.delete<ApiEnvelope<void>>(`${this.leads}/${id}`).pipe(map(() => void 0));
   }
 
-  assignCounselor(leadId: number, counselorId: number): Observable<LeadRecord> {
+  assignCounselor(leadId: number, counselorId: number, reason?: string | null): Observable<LeadRecord> {
     return this.http
-      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/assign-counselor`, { counselorId })
+      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/assign-counselor`, { counselorId, reason: reason || null })
       .pipe(map(r => r.data));
+  }
+
+  exportLeadsCsv(filter: LeadSearchRequest): Observable<Blob> {
+    return this.http.post(`${this.leads}/export/csv`, filter, {
+      responseType: 'blob'
+    });
   }
 
   markLost(leadId: number, reason: string): Observable<LeadRecord> {

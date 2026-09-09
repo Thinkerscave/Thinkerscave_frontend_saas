@@ -1,10 +1,13 @@
 /** Admissions CRM types aligned with backend DTOs under /api/v1/admissions */
 
 export type LeadStatus =
-  | 'NEW' | 'CONTACTED' | 'FOLLOW_UP' | 'INTERESTED' | 'MEETING_SCHEDULED'
-  | 'APPLICATION_STARTED' | 'APPLICATION_SUBMITTED' | 'COUNSELING'
-  | 'DOCUMENTS_PENDING' | 'FOLLOW_UP_REQUIRED' | 'READY_FOR_ADMISSION'
-  | 'CONVERTED' | 'LOST' | 'CLOSED';
+  | 'NEW' | 'CONTACTED' | 'INTERESTED'
+  | 'APPLICATION_STARTED' | 'APPLICATION_SUBMITTED'
+  | 'LOST';
+
+export type LeadSource =
+  | 'WEBSITE' | 'PHONE' | 'WALK_IN' | 'REFERRAL' | 'WHATSAPP'
+  | 'SOCIAL_MEDIA' | 'CAMPAIGN' | 'AFFILIATE' | 'IMPORT' | 'OTHER';
 
 export type ApplicationStatus =
   | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
@@ -54,27 +57,30 @@ export interface LeadSearchRequest {
   keyword?: string | null;
   status?: LeadStatus | null;
   counselorId?: number | null;
-  source?: string | null;
-  inquirySource?: string | null;
+  source?: LeadSource | null;
+  inquirySource?: LeadSource | null;
   classInterestedIn?: string | null;
   classInterested?: string | null;
   academicYearId?: number | null;
   classId?: number | null;
   followUpFrom?: string | null;
   followUpTo?: string | null;
+  scope?: 'MY' | 'ALL' | null;
 }
 
 export interface LeadRecord {
   inquiryId: number;
   inquiryNumber?: string | null;
   name: string;
+  studentName?: string | null;
+  parentContactName?: string | null;
   mobileNumber: string;
   email?: string | null;
   classInterestedIn: string;
   academicYearId?: number | null;
   classId?: number | null;
   address?: string | null;
-  inquirySource?: string | null;
+  inquirySource?: LeadSource | null;
   referredBy?: string | null;
   comments?: string | null;
   assignedCounselorId?: number | null;
@@ -89,17 +95,19 @@ export interface LeadRecord {
 
 export interface LeadCreateRequest {
   name: string;
+  parentContactName: string;
   mobileNumber: string;
   email?: string | null;
   classInterestedIn: string;
   academicYearId?: number | null;
   classId?: number | null;
   address?: string | null;
-  inquirySource?: string | null;
+  inquirySource?: LeadSource | null;
   referredBy?: string | null;
   comments?: string | null;
   assignedCounselorId?: number | null;
   nextFollowUpDate?: string | null;
+  allowPotentialDuplicate?: boolean | null;
 }
 
 export interface FollowUpRecord {

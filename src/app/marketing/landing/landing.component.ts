@@ -8,6 +8,8 @@ import { HeroVisualComponent } from '../components/hero-visual/hero-visual.compo
 import { MarketingNavbarComponent } from '../components/marketing-navbar/marketing-navbar.component';
 import { MarketingFooterComponent } from '../components/marketing-footer/marketing-footer.component';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
+import { AdmissionEnquiryService } from '../../services/admission-enquiry.service';
+import { AdmissionEnquiryModalComponent } from '../components/admission-enquiry-modal/admission-enquiry-modal.component';
 import { publicSubscriptionPlansApi } from '../../shared/constants/api.endpoint';
 import { unwrapApiList, unwrapApiResponse } from '../../shared/utils/api-response.util';
 import {
@@ -49,7 +51,8 @@ interface PublicSubscriptionPlanDto {
     AccordionModule,
     MarketingNavbarComponent,
     MarketingFooterComponent,
-    HeroVisualComponent
+    HeroVisualComponent,
+    AdmissionEnquiryModalComponent
   ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss'
@@ -57,6 +60,7 @@ interface PublicSubscriptionPlanDto {
 export class LandingComponent implements OnInit {
   private readonly orgContext = inject(OrganizationContextService);
   private readonly http = inject(HttpClient);
+  private readonly enquiry = inject(AdmissionEnquiryService);
 
   readonly metrics = TRUST_METRICS;
   readonly logos = INSTITUTION_LOGOS;
@@ -96,6 +100,10 @@ export class LandingComponent implements OnInit {
     return this.orgContext.requiresSelection
       ? ['/auth/select-organization']
       : ['/auth/login'];
+  }
+
+  openEnquiry(): void {
+    this.enquiry.open();
   }
 
   toggleBilling(): void {

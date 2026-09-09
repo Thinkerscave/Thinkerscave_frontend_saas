@@ -73,10 +73,8 @@ export class LeadDetailComponent implements OnInit {
   readonly statusAfterOptions = [
     { label: 'CONTACTED', value: 'CONTACTED' },
     { label: 'INTERESTED', value: 'INTERESTED' },
-    { label: 'COUNSELING', value: 'COUNSELING' },
-    { label: 'DOCUMENTS_PENDING', value: 'DOCUMENTS_PENDING' },
-    { label: 'FOLLOW_UP_REQUIRED', value: 'FOLLOW_UP_REQUIRED' },
-    { label: 'READY_FOR_ADMISSION', value: 'READY_FOR_ADMISSION' },
+    { label: 'APPLICATION_STARTED', value: 'APPLICATION_STARTED' },
+    { label: 'APPLICATION_SUBMITTED', value: 'APPLICATION_SUBMITTED' },
     { label: 'LOST', value: 'LOST' }
   ];
 
@@ -175,19 +173,28 @@ export class LeadDetailComponent implements OnInit {
 
   canMarkInterested(): boolean {
     const status = this.detail()?.inquiry.status;
-    return !!status && !['INTERESTED', 'LOST', 'CLOSED', 'CONVERTED'].includes(status);
+    return !!status && !['INTERESTED', 'LOST', 'APPLICATION_STARTED', 'APPLICATION_SUBMITTED'].includes(status);
   }
 
   canMarkLost(): boolean {
     const d = this.detail();
     const status = d?.inquiry.status;
-    return !!status && !['LOST', 'CLOSED', 'CONVERTED'].includes(status) && !d?.studentId;
+    return !!status && !['LOST', 'APPLICATION_SUBMITTED'].includes(status) && !d?.studentId;
   }
 
   canProceedToApplication(): boolean {
     const d = this.detail();
     const status = d?.inquiry.status;
-    return !!status && !['LOST', 'CLOSED'].includes(status) && !d?.applicationId;
+    return !!status && !['LOST'].includes(status) && !d?.applicationId;
+  }
+
+  applicationActionLabel(): string {
+    const d = this.detail();
+    if (!d) return 'Start Application';
+    if (d.studentId) return 'View Student';
+    if (!d.applicationId) return 'Start Application';
+    if (d.applicationStatus === 'DRAFT') return 'Continue Application';
+    return 'View Application';
   }
 
   markInterested(): void {
@@ -233,7 +240,7 @@ export class LeadDetailComponent implements OnInit {
         summary: 'Cannot convert',
         detail: this.detail()?.applicationId
           ? 'An application already exists for this lead.'
-          : 'Lost or closed inquiries cannot be converted.'
+          : 'Lost leads cannot be converted.'
       });
       return;
     }
@@ -362,14 +369,10 @@ export class LeadDetailComponent implements OnInit {
   statusTone(status: LeadStatus): 'info' | 'success' | 'warning' | 'danger' {
     switch (status) {
       case 'INTERESTED':
-      case 'CONVERTED':
-      case 'READY_FOR_ADMISSION':
+      case 'APPLICATION_STARTED':
+      case 'APPLICATION_SUBMITTED':
         return 'success';
-      case 'FOLLOW_UP_REQUIRED':
-      case 'DOCUMENTS_PENDING':
-        return 'warning';
       case 'LOST':
-      case 'CLOSED':
         return 'danger';
       default:
         return 'info';

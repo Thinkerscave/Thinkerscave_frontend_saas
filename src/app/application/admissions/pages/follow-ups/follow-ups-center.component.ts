@@ -74,9 +74,9 @@ export class FollowUpsCenterComponent implements OnInit {
   readonly statusAfterOptions = [
     { label: 'CONTACTED', value: 'CONTACTED' },
     { label: 'INTERESTED', value: 'INTERESTED' },
-    { label: 'COUNSELING', value: 'COUNSELING' },
-    { label: 'FOLLOW_UP_REQUIRED', value: 'FOLLOW_UP_REQUIRED' },
-    { label: 'READY_FOR_ADMISSION', value: 'READY_FOR_ADMISSION' }
+    { label: 'APPLICATION_STARTED', value: 'APPLICATION_STARTED' },
+    { label: 'APPLICATION_SUBMITTED', value: 'APPLICATION_SUBMITTED' },
+    { label: 'LOST', value: 'LOST' }
   ];
 
   readonly loading = signal(true);

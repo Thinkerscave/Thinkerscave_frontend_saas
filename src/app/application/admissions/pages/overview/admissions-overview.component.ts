@@ -160,12 +160,12 @@ export class AdmissionsOverviewComponent implements OnInit {
     },
     {
       key: 'admissionReady',
-      label: 'Admission Ready',
+      label: 'Interested Leads',
       hint: 'Leads ready for application',
       icon: 'pi pi-check-circle',
       tone: 'success',
       route: '/app/admissions/leads',
-      queryParams: { status: 'READY_FOR_ADMISSION' }
+      queryParams: { status: 'INTERESTED' }
     }
   ];
 
@@ -197,7 +197,7 @@ export class AdmissionsOverviewComponent implements OnInit {
         key: 'interested',
         label: 'Interested Leads',
         value: k.interested,
-        helper: 'Ready for counseling',
+        helper: 'Ready for application progression',
         icon: 'pi pi-heart',
         tone: 'success'
       },
@@ -211,9 +211,9 @@ export class AdmissionsOverviewComponent implements OnInit {
       },
       {
         key: 'admissionReady',
-        label: 'Ready for Admission',
+        label: 'Interested Pipeline',
         value: k.admissionReady,
-        helper: 'Documents collected',
+        helper: 'Counseling outcomes tracked',
         icon: 'pi pi-check-circle',
         tone: 'success'
       },
@@ -301,7 +301,7 @@ export class AdmissionsOverviewComponent implements OnInit {
       todaysFollowUps: { path: '/app/admissions/follow-ups', query: { tab: 'today' } },
       interested: { path: '/app/admissions/leads', query: { status: 'INTERESTED' } },
       applicationsStarted: { path: '/app/admissions/applications' },
-      admissionReady: { path: '/app/admissions/leads', query: { status: 'READY_FOR_ADMISSION' } },
+      admissionReady: { path: '/app/admissions/leads', query: { status: 'INTERESTED' } },
       lostLeads: { path: '/app/admissions/leads', query: { status: 'LOST' } }
     };
     const target = routes[stat.key];

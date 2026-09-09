@@ -15,14 +15,14 @@
         <i class="pi pi-arrow-left"></i> Back
       </button>
       <tc-saas-pill [label]="d.inquiry.status" [tone]="statusTone(d.inquiry.status)"></tc-saas-pill>
-      <button type="button" class="tc-btn" (click)="markInterested()" [disabled]="!canMarkInterested()" [title]="canMarkInterested() ? 'Mark this family as interested' : 'Already interested, converted, lost, or closed'">
+      <button type="button" class="tc-btn" (click)="markInterested()" [disabled]="!canMarkInterested()" [title]="canMarkInterested() ? 'Mark this family as interested' : 'Already interested, progressed, or lost'">
         Interested
       </button>
-      <button type="button" class="tc-btn tc-btn--danger" (click)="openLostDialog()" [disabled]="!canMarkLost()" [title]="canMarkLost() ? 'Close this inquiry without creating an application' : 'Already closed or enrolled'">
+      <button type="button" class="tc-btn tc-btn--danger" (click)="openLostDialog()" [disabled]="!canMarkLost()" [title]="canMarkLost() ? 'Close this inquiry without creating an application' : 'Already lost or submitted'">
         Mark Lost
       </button>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()" [disabled]="!canProceedToApplication()" [title]="canProceedToApplication() ? 'Convert this lead into an admission application' : (d.applicationId ? 'An application already exists' : 'Lost or closed inquiries cannot be converted')">
-        Proceed to Application
+      <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()" [disabled]="!canProceedToApplication()" [title]="canProceedToApplication() ? 'Convert this lead into an admission application' : (d.applicationId ? 'An application already exists' : 'Lost leads cannot be converted')">
+        {{ applicationActionLabel() }}
       </button>
     </tc-saas-page-header>
 
@@ -51,9 +51,11 @@
           </div>
           <dl class="adm-dl adm-dl--compact">
             <div><dt>Mobile</dt><dd>{{ d.inquiry.mobileNumber || '—' }}</dd></div>
+            <div><dt>Student</dt><dd>{{ d.inquiry.studentName || d.inquiry.name || '—' }}</dd></div>
+            <div><dt>Parent / Contact</dt><dd>{{ d.inquiry.parentContactName || '—' }}</dd></div>
             <div><dt>Email</dt><dd>{{ d.inquiry.email || '—' }}</dd></div>
             <div><dt>Class</dt><dd>{{ d.inquiry.classInterestedIn }}</dd></div>
-            <div><dt>Source</dt><dd>{{ d.inquiry.inquirySource || '—' }}</dd></div>
+            <div><dt>Source</dt><dd>{{ d.inquiry.inquirySource ? d.inquiry.inquirySource.replace('_', ' ') : '—' }}</dd></div>
             <div><dt>Referred by</dt><dd>{{ d.inquiry.referredBy || '—' }}</dd></div>
             <div><dt>Address</dt><dd>{{ d.inquiry.address || '—' }}</dd></div>
             <div><dt>Last follow-up</dt><dd>{{ (d.inquiry.lastFollowUpDate | date:'mediumDate') || '—' }} {{ d.inquiry.lastFollowUpType || '' }}</dd></div>

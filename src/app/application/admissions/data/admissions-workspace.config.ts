@@ -56,13 +56,13 @@ export function admissionsPageConfig(page: AdmissionsWorkspacePage): AdmissionsP
 }
 
 export const LEAD_STATUS_OPTIONS = [
-  'NEW', 'CONTACTED', 'INTERESTED', 'COUNSELING', 'DOCUMENTS_PENDING',
-  'FOLLOW_UP_REQUIRED', 'READY_FOR_ADMISSION', 'APPLICATION_STARTED',
-  'APPLICATION_SUBMITTED', 'CONVERTED', 'LOST', 'CLOSED'
+  'NEW', 'CONTACTED', 'INTERESTED', 'APPLICATION_STARTED',
+  'APPLICATION_SUBMITTED', 'LOST'
 ] as const;
 
 export const LEAD_SOURCE_OPTIONS = [
-  'Website', 'Walk-in', 'Referral', 'Social Media', 'Campaign', 'Phone', 'Other'
+  'WEBSITE', 'PHONE', 'WALK_IN', 'REFERRAL', 'WHATSAPP',
+  'SOCIAL_MEDIA', 'CAMPAIGN', 'AFFILIATE', 'IMPORT', 'OTHER'
 ];
 
 export const APPLICATION_STATUS_TABS = [
