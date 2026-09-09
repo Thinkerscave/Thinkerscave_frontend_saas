@@ -91,6 +91,17 @@ export interface LeadRecord {
   nextFollowUpDate?: string | null;
   createdOn?: string | null;
   createdBy?: string | null;
+  // Progressive enrichment — filled in later via Lead 360, never required at creation.
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  currentClass?: string | null;
+  previousSchool?: string | null;
+  alternateMobileNumber?: string | null;
+  contactRelationship?: string | null;
+  campusPreference?: string | null;
+  transportRequired?: string | null;
+  hostelRequired?: string | null;
+  otherRequirements?: string | null;
 }
 
 export interface LeadCreateRequest {
@@ -108,6 +119,16 @@ export interface LeadCreateRequest {
   assignedCounselorId?: number | null;
   nextFollowUpDate?: string | null;
   allowPotentialDuplicate?: boolean | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  currentClass?: string | null;
+  previousSchool?: string | null;
+  alternateMobileNumber?: string | null;
+  contactRelationship?: string | null;
+  campusPreference?: string | null;
+  transportRequired?: string | null;
+  hostelRequired?: string | null;
+  otherRequirements?: string | null;
 }
 
 export interface FollowUpRecord {
@@ -146,6 +167,10 @@ export interface CompleteFollowUpRequest {
 export interface CounselingNote {
   noteId?: number;
   inquiryId?: number;
+  sessionAt?: string | null;
+  mode?: FollowUpType | null;
+  counselorStaffId?: number | null;
+  counselorName?: string | null;
   studentRequirements?: string | null;
   parentConcerns?: string | null;
   campusVisitInfo?: string | null;
@@ -156,16 +181,22 @@ export interface CounselingNote {
 }
 
 export interface CounselingNoteRequest {
+  sessionAt?: string | null;
+  mode: FollowUpType;
+  counselorStaffId?: number | null;
   studentRequirements?: string | null;
   parentConcerns?: string | null;
   campusVisitInfo?: string | null;
   recommendations?: string | null;
-  notes?: string | null;
+  notes: string;
 }
+
+export type LeadActivityCategory = 'LEAD' | 'ASSIGNMENT' | 'FOLLOW_UP' | 'COUNSELING' | 'APPLICATION' | 'STATUS' | 'OTHER';
 
 export interface LeadTimelineItem {
   eventType?: string | null;
   action?: string | null;
+  category?: LeadActivityCategory | string | null;
   title?: string | null;
   description?: string | null;
   performedBy?: string | null;
@@ -173,6 +204,12 @@ export interface LeadTimelineItem {
   performedAt?: string | null;
   icon?: string | null;
   tone?: string | null;
+}
+
+export interface LeadActivityFilter {
+  type?: string | null;
+  from?: string | null;
+  to?: string | null;
 }
 
 export interface LeadFullDetail {

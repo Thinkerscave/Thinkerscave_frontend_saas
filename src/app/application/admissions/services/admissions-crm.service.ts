@@ -18,6 +18,7 @@ import {
   EnrollApplicationRequest,
   FollowUpCreateRequest,
   FollowUpRecord,
+  LeadActivityFilter,
   LeadCreateRequest,
   LeadFullDetail,
   LeadKpi,
@@ -160,6 +161,12 @@ export class AdmissionsCrmService {
       .pipe(map(r => r.data));
   }
 
+  reopenLead(leadId: number): Observable<LeadRecord> {
+    return this.http
+      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/reopen`, {})
+      .pipe(map(r => r.data));
+  }
+
   markInterested(leadId: number): Observable<LeadRecord> {
     return this.http
       .post<ApiEnvelope<LeadRecord>>(`${this.workspace}/inquiries/${leadId}/mark-interested`, {})
@@ -204,9 +211,13 @@ export class AdmissionsCrmService {
     );
   }
 
-  leadTimeline(leadId: number): Observable<LeadTimelineItem[]> {
+  leadTimeline(leadId: number, filter?: LeadActivityFilter): Observable<LeadTimelineItem[]> {
+    let params = new HttpParams();
+    if (filter?.type) params = params.set('type', filter.type);
+    if (filter?.from) params = params.set('from', filter.from);
+    if (filter?.to) params = params.set('to', filter.to);
     return this.http
-      .get<ApiEnvelope<LeadTimelineItem[]>>(`${this.workspace}/inquiries/${leadId}/timeline`)
+      .get<ApiEnvelope<LeadTimelineItem[]>>(`${this.workspace}/inquiries/${leadId}/timeline`, { params })
       .pipe(map(r => r.data ?? []));
   }
 

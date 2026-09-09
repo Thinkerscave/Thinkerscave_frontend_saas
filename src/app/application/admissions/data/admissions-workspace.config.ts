@@ -108,6 +108,22 @@ export const REMINDER_LEAD_OPTIONS = [
   { label: '48 hours', value: '48H' }
 ];
 
+export const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+export const CONTACT_RELATIONSHIP_OPTIONS = ['Father', 'Mother', 'Guardian', 'Other'];
+export const TRISTATE_OPTIONS = [
+  { label: 'Yes', value: 'YES' },
+  { label: 'No', value: 'NO' },
+  { label: 'Not Sure', value: 'NOT_SURE' }
+];
+export const LOST_REASON_OPTIONS = [
+  'Chose another school',
+  'Budget / fee concerns',
+  'Location / distance',
+  'Timeline mismatch',
+  'Non-responsive',
+  'Other'
+];
+
 export const INDIAN_MOBILE_PATTERN = /^(?:\+91[\s-]?)?[6-9]\d{9}$/;
 export const INDIAN_PIN_PATTERN = /^[1-9]\d{5}$/;
 export const AADHAAR_PATTERN = /^\d{12}$/;

@@ -8,24 +8,22 @@
     </button>
   </tc-saas-page-header>
 
-  @if (canShowAllLeadsScope()) {
-    <div class="adm-scope-pills" role="tablist" aria-label="Lead scope">
-      @for (opt of scopeOptions; track opt.value) {
-        <button
-          type="button"
-          class="adm-scope-pill"
-          role="tab"
-          [class.is-active]="leadScope === opt.value"
-          [attr.aria-selected]="leadScope === opt.value"
-          (click)="setLeadScope(opt.value)">
-          {{ opt.label }}
-          @if (leadScope === opt.value && hasLoaded()) {
-            <span class="adm-scope-pill__count">{{ totalElements() }}</span>
-          }
-        </button>
-      }
-    </div>
-  }
+  <div class="adm-scope-pills" role="tablist" aria-label="Lead scope">
+    @for (opt of scopeOptions; track opt.value) {
+      <button
+        type="button"
+        class="adm-scope-pill"
+        role="tab"
+        [class.is-active]="leadScope === opt.value"
+        [attr.aria-selected]="leadScope === opt.value"
+        (click)="setLeadScope(opt.value)">
+        {{ opt.label }}
+        @if (leadScope === opt.value && hasLoaded()) {
+          <span class="adm-scope-pill__count">{{ totalElements() }}</span>
+        }
+      </button>
+    }
+  </div>
 
   <tc-saas-panel [title]="'Leads · ' + totalElements()" [actions]="false">
     <app-list-toolbar

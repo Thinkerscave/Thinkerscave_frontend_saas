@@ -18,7 +18,6 @@ import { DropdownModule } from 'primeng/dropdown';
 import { Menu, MenuModule } from 'primeng/menu';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
-import { PermissionService } from '../../../../core/services/permission.service';
 
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
@@ -85,7 +84,6 @@ export class LeadsListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
-  private readonly permissions = inject(PermissionService);
 
   readonly inquirySourceOptions: SelectOption<LeadSource>[] = LEAD_SOURCE_OPTIONS.map(s => ({
     label: formatAdmissionsLabel(s),
@@ -97,9 +95,10 @@ export class LeadsListComponent implements OnInit {
   readonly sourceSelectOptions: SelectOption[] = [
     ...LEAD_SOURCE_OPTIONS.map(s => ({ label: formatAdmissionsLabel(s), value: s }))
   ];
+  /** Both scopes are available to every Leads-page user — no role/privilege gating. */
   readonly scopeOptions: SelectOption<'MY' | 'ALL'>[] = [
-    { label: 'All Leads', value: 'ALL' },
-    { label: 'My Leads', value: 'MY' }
+    { label: 'My Leads', value: 'MY' },
+    { label: 'All Leads', value: 'ALL' }
   ];
 
   readonly loading = signal(true);
@@ -122,14 +121,21 @@ export class LeadsListComponent implements OnInit {
   readonly filterClasses = signal<LookupOption[]>([]);
   readonly counselorOptions = signal<SelectOption<number | null>[]>([]);
   filterYearId: number | null = null;
+  /** Default tab: My Leads (created by current user). */
   leadScope: 'MY' | 'ALL' = 'MY';
 
   pageIndex = 0;
   pageSize = UI_PAGINATION.defaultSize;
-  readonly sort = 'createdOn,desc';
+
+  /** Hint only — backend enforces scope sort before pagination. */
+  get sort(): string {
+    return this.leadScope === 'ALL'
+      ? 'nextFollowUpDate,asc'
+      : 'createdOn,desc';
+  }
 
   filter: LeadSearchRequest = {};
-  private applied: LeadSearchRequest = {};
+  private applied: LeadSearchRequest = { scope: 'MY' };
 
   readonly leadForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -154,8 +160,6 @@ export class LeadsListComponent implements OnInit {
         this.filter = { ...this.filter, keyword: saved.search };
       }
     }
-
-    this.leadScope = this.permissions.canManage('ADMISSIONS_LEADS') ? 'ALL' : 'MY';
 
     this.api.academicYears().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: years => {
@@ -344,10 +348,6 @@ export class LeadsListComponent implements OnInit {
 
   onListViewModeChange(mode: AppListViewMode): void {
     this.viewMode.set(mode === 'grid' ? 'card' : 'table');
-  }
-
-  canShowAllLeadsScope(): boolean {
-    return this.permissions.canManage('ADMISSIONS_LEADS');
   }
 
   get leadDialogTitle(): string {

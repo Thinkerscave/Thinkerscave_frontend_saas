@@ -182,14 +182,15 @@ export class BreadcrumbComponent implements OnInit {
     this.items = this.resolvedCrumbs.map((crumb, index) => {
 
       const isLast = index === this.resolvedCrumbs.length - 1;
+      const label = isLast && this.pageOverride?.title ? this.pageOverride.title : crumb.label;
 
       if (isLast || !crumb.link) {
 
-        return { label: crumb.label };
+        return { label };
 
       }
 
-      return { label: crumb.label, routerLink: crumb.link };
+      return { label, routerLink: crumb.link };
 
     });
 
@@ -378,6 +379,11 @@ export class BreadcrumbComponent implements OnInit {
     const rootLabel = workspaceLabels[workspace] ?? this.titleCase(workspace);
 
     const page = segments[2] ?? '';
+
+    // Lead 360: Admissions > Leads > {lead number via page header override}
+    if (workspace === 'admissions' && page === 'lead') {
+      return [rootLabel, 'Leads', 'Lead'];
+    }
 
     const pageLabel = this.routePageLabel(workspace, page);
 
@@ -691,6 +697,15 @@ export class BreadcrumbComponent implements OnInit {
 
     if (workspace === 'students' && page === 'add-student' && index === 0) {
       return ['/app/students/directory'];
+    }
+
+    if (workspace === 'admissions' && page === 'lead') {
+      if (index === 0) {
+        return ['/app/admissions/overview'];
+      }
+      if (index === 1) {
+        return ['/app/admissions/leads'];
+      }
     }
 
     if (index === 0) {
