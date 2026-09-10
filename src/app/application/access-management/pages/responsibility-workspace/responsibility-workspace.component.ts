@@ -141,7 +141,11 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
           title: responsibility?.responsibilityName || 'Responsibility'
         });
         this.pageHeader.setPageSubtitle(
-          responsibility?.systemDefined ? 'Default responsibility · seeded with the organization' : 'Custom responsibility'
+          this.definitionLocked()
+            ? 'System responsibility · assign staff only (definition is protected)'
+            : responsibility?.systemDefined
+              ? 'System responsibility · seeded with the organization'
+              : 'Custom responsibility'
         );
       },
       error: () => {
@@ -155,7 +159,20 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
   }
 
   typeLabel(): string {
-    return this.responsibility?.systemDefined ? 'Default' : 'Custom';
+    return this.responsibility?.systemDefined ? 'System' : 'Custom';
+  }
+
+  /** Definition rename/deactivate blocked (COUNSELOR and other non-org-editable rows). */
+  definitionLocked(): boolean {
+    const r = this.responsibility;
+    if (!r) return false;
+    if (r.definitionLocked != null) return !!r.definitionLocked;
+    if (r.organizationEditable === false) return true;
+    return !!r.systemDefined;
+  }
+
+  orgEditableLabel(): string {
+    return this.responsibility?.organizationEditable === false ? 'No' : 'Yes';
   }
 
   startEditMenus(): void {
@@ -231,7 +248,7 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
   }
 
   openEdit(): void {
-    if (!this.canManage || !this.responsibility) return;
+    if (!this.canManage || !this.responsibility || this.definitionLocked()) return;
     this.form = {
       responsibilityCode: this.responsibility.responsibilityCode,
       responsibilityName: this.responsibility.responsibilityName,
@@ -245,7 +262,7 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
   }
 
   saveDetails(): void {
-    if (!this.responsibility || !this.form.responsibilityName.trim()) {
+    if (!this.responsibility || this.definitionLocked() || !this.form.responsibilityName.trim()) {
       this.messages.add({ severity: 'warn', summary: 'Missing fields', detail: 'Name is required.' });
       return;
     }
@@ -268,7 +285,7 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
   }
 
   confirmToggleActive(): void {
-    if (!this.canManage || !this.responsibility) return;
+    if (!this.canManage || !this.responsibility || this.definitionLocked()) return;
     const active = this.responsibility.active !== false;
     this.confirm.confirm({
       header: active ? 'Deactivate responsibility?' : 'Activate responsibility?',

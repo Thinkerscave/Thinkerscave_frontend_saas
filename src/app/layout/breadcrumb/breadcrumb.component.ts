@@ -408,7 +408,7 @@ export class BreadcrumbComponent implements OnInit {
     const root = catalogPages.has(page)
       ? 'Platform Catalog'
       : subscriptionPages.has(page)
-        ? 'Subscriptions'
+        ? 'Subscription Management'
         : tenantOpsPages.has(page)
           ? 'Tenant Management'
           : standalonePages.has(page)
@@ -427,7 +427,7 @@ export class BreadcrumbComponent implements OnInit {
 
       'subscription-plans': 'Subscription Plans',
 
-      promotions: 'Promotions',
+      promotions: 'Promo Codes',
 
       menus: 'Menu Management',
 
@@ -514,6 +514,7 @@ export class BreadcrumbComponent implements OnInit {
   private tenantCrumbLink(label: string): string[] {
     const links: Record<string, string[]> = {
       'Platform Catalog': ['/app/tenant-management/menus'],
+      'Subscription Management': ['/app/tenant-management/subscription-plans'],
       Subscriptions: ['/app/tenant-management/subscription-plans'],
       'Tenant Management': ['/app/tenant-management/tenant-health'],
       Dashboard: ['/app'],
@@ -521,6 +522,7 @@ export class BreadcrumbComponent implements OnInit {
       Organizations: ['/app/tenant-management/organizations'],
       'Subscription Plans': ['/app/tenant-management/subscription-plans'],
       Promotions: ['/app/tenant-management/promotions'],
+      'Promo Codes': ['/app/tenant-management/promotions'],
       'Menu Management': ['/app/tenant-management/menus'],
       'Role Management': ['/app/tenant-management/roles'],
       'Feature Catalog': ['/app/tenant-management/feature-catalog'],

@@ -79,13 +79,13 @@ export class WorkspaceTabsComponent implements OnInit {
     },
     {
       key: 'subscriptions',
-      label: 'Subscriptions',
+      label: 'Subscription Management',
       eyebrow: 'Commercial',
       icon: 'pi pi-credit-card',
       matcher: /^\/app\/tenant-management\/(subscription-plans|promotions)(?:\/|$)/,
       tabs: [
         { label: 'Subscription Plans', icon: 'pi pi-credit-card', route: '/app/tenant-management/subscription-plans' },
-        { label: 'Promotions', icon: 'pi pi-tag', route: '/app/tenant-management/promotions' }
+        { label: 'Promo Codes', icon: 'pi pi-tag', route: '/app/tenant-management/promotions' }
       ]
     },
     {

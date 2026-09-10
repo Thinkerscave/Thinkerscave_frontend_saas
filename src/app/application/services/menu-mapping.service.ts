@@ -211,7 +211,7 @@ export class MenuMappingService {
       { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
       { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
       { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
-      { key: 'subscriptions', label: 'Subscriptions', icon: 'pi pi-credit-card' },
+      { key: 'subscriptions', label: 'Subscription Management', icon: 'pi pi-credit-card' },
       { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-server' },
       { key: 'platform-catalog', label: 'Platform Catalog', icon: 'pi pi-th-large' },
       { key: 'access', label: 'Access Management', icon: 'pi pi-lock' },

@@ -253,6 +253,10 @@ export class AdmissionsCrmService {
     return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/upcoming`).pipe(map(r => r.data ?? []));
   }
 
+  completedFollowUps(): Observable<FollowUpRecord[]> {
+    return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/completed`).pipe(map(r => r.data ?? []));
+  }
+
   completeFollowUp(followUpId: number, payload: CompleteFollowUpRequest = {}): Observable<FollowUpRecord> {
     return this.http
       .post<ApiEnvelope<FollowUpRecord>>(`${this.followUps}/${followUpId}/complete`, payload)

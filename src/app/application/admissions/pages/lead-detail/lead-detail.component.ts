@@ -100,21 +100,12 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
   readonly relationshipOptions = CONTACT_RELATIONSHIP_OPTIONS;
   readonly tristateOptions = TRISTATE_OPTIONS;
   readonly lostReasonOptions = LOST_REASON_OPTIONS;
-  readonly statusAfterOptions = [
+  readonly leadStatusOptions = [
+    { label: 'New', value: 'NEW' },
     { label: 'Contacted', value: 'CONTACTED' },
     { label: 'Interested', value: 'INTERESTED' },
     { label: 'Application Started', value: 'APPLICATION_STARTED' },
-    { label: 'Application Submitted', value: 'APPLICATION_SUBMITTED' },
-    { label: 'Lost', value: 'LOST' }
-  ];
-  readonly activityTypeOptions = [
-    { label: 'All Activities', value: null },
-    { label: 'Lead', value: 'LEAD' },
-    { label: 'Assignment', value: 'ASSIGNMENT' },
-    { label: 'Follow-up', value: 'FOLLOW_UP' },
-    { label: 'Counseling', value: 'COUNSELING' },
-    { label: 'Application', value: 'APPLICATION' },
-    { label: 'Status', value: 'STATUS' }
+    { label: 'Application Submitted', value: 'APPLICATION_SUBMITTED' }
   ];
 
   readonly loading = signal(true);
@@ -125,29 +116,19 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
   readonly showLostDialog = signal(false);
   readonly reopening = signal(false);
   readonly counselorPickerOpen = signal(false);
-  readonly completeTarget = signal<FollowUpRecord | null>(null);
+  readonly scheduleFollowUpOpen = signal(false);
+  readonly scheduleTarget = signal<FollowUpRecord | null>(null);
+  readonly counselingFollowUpId = signal<number | null>(null);
   readonly editLeadOpen = signal(false);
   readonly addCounselingOpen = signal(false);
   readonly years = signal<LookupOption[]>([]);
   readonly classes = signal<LookupOption[]>([]);
   readonly eligibleCounselors = signal<CounselorOption[]>([]);
 
-  readonly activityType = signal<string | null>(null);
-  readonly activityFrom = signal<string | null>(null);
-  readonly activityTo = signal<string | null>(null);
   readonly activityItems = signal<LeadTimelineItem[]>([]);
   readonly activityLoading = signal(false);
 
-  completeOutcome = '';
-  completeRemarks = '';
   leadId = 0;
-
-  get completeVisible(): boolean {
-    return !!this.completeTarget();
-  }
-  set completeVisible(value: boolean) {
-    if (!value) this.completeTarget.set(null);
-  }
 
   get lostVisible(): boolean {
     return this.showLostDialog();
@@ -177,10 +158,8 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
 
   readonly followUpForm = this.fb.group({
     followUpType: ['CALL', Validators.required],
-    statusAfter: ['CONTACTED' as LeadStatus, Validators.required],
-    followUpDate: [''],
-    nextFollowUpDate: [''],
-    remarks: ['', [Validators.required, Validators.minLength(3)]]
+    followUpDate: ['', Validators.required],
+    remarks: ['']
   });
 
   readonly counselingForm = this.fb.group({
@@ -191,7 +170,9 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     parentConcerns: [''],
     campusVisitInfo: [''],
     recommendations: [''],
-    notes: ['', [Validators.required, Validators.minLength(3)]]
+    notes: ['', [Validators.required, Validators.minLength(3)]],
+    leadStatus: [null as LeadStatus | null],
+    nextFollowUpAt: ['']
   });
 
   readonly lostForm = this.fb.group({
@@ -421,7 +402,9 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
   readonly nextFollowUp = computed<FollowUpRecord | null>(() => {
     const d = this.detail();
     if (!d) return null;
-    const scheduled = d.followUps.filter(f => f.lifecycleStatus === 'SCHEDULED' && f.followUpDate);
+    const scheduled = d.followUps.filter(
+      f => (f.lifecycleStatus === 'SCHEDULED' || f.lifecycleStatus === 'RESCHEDULED') && f.followUpDate
+    );
     if (!scheduled.length) return null;
     return scheduled
       .slice()
@@ -494,8 +477,8 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         icon: 'pi pi-exclamation-triangle',
         title: 'Follow-up Overdue',
         message: `This lead was scheduled for a follow-up on ${this.formatDateTime(upcoming.followUpDate)} (${days} day${days === 1 ? '' : 's'} ago). Please take action.`,
-        actionLabel: 'Complete Follow-up',
-        action: () => this.completeFollowUp(upcoming)
+        actionLabel: 'Record Counseling',
+        action: () => this.openAddCounseling(upcoming)
       });
     }
     if (!d.inquiry.assignedCounselorId && d.inquiry.status !== 'LOST' && this.canManage) {
@@ -519,11 +502,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     return items;
   });
 
-  // ─── Recent activity (Overview preview) ─────────────────────────────────
-
-  recentActivity(): LeadTimelineItem[] {
-    return (this.detail()?.timeline ?? []).slice(0, 4);
-  }
+  // ─── Activity tab ───────────────────────────────────────────────────────
 
   activityStats() {
     const items = this.activityItems();
@@ -538,27 +517,12 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
   loadActivity(): void {
     this.activityLoading.set(true);
     this.api
-      .leadTimeline(this.leadId, {
-        type: this.activityType(),
-        from: this.activityFrom(),
-        to: this.activityTo()
-      })
+      .leadTimeline(this.leadId)
       .pipe(finalize(() => this.activityLoading.set(false)))
       .subscribe({
         next: items => this.activityItems.set(items),
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not load activity.' })
       });
-  }
-
-  applyActivityFilters(): void {
-    this.loadActivity();
-  }
-
-  resetActivityFilters(): void {
-    this.activityType.set(null);
-    this.activityFrom.set(null);
-    this.activityTo.set(null);
-    this.loadActivity();
   }
 
   // ─── Status / lost / reopen ──────────────────────────────────────────────
@@ -674,7 +638,25 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Follow-ups ──────────────────────────────────────────────────────────
+  // ─── Follow-ups (planned actions) ────────────────────────────────────────
+
+  openScheduleFollowUp(existing?: FollowUpRecord | null): void {
+    this.scheduleTarget.set(existing ?? null);
+    const seed = existing?.followUpDate
+      ? this.toDateTimeLocal(existing.followUpDate)
+      : this.toDateTimeLocal(new Date().toISOString());
+    this.followUpForm.reset({
+      followUpType: existing?.followUpType || 'CALL',
+      followUpDate: seed,
+      remarks: existing?.remarks || ''
+    });
+    this.scheduleFollowUpOpen.set(true);
+  }
+
+  closeScheduleFollowUp(): void {
+    this.scheduleFollowUpOpen.set(false);
+    this.scheduleTarget.set(null);
+  }
 
   submitFollowUp(): void {
     if (this.followUpForm.invalid) {
@@ -682,90 +664,58 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const raw = this.followUpForm.getRawValue();
+    const followUpDate = raw.followUpDate ? new Date(raw.followUpDate).toISOString() : null;
     this.saving.set(true);
-    this.api
-      .addFollowUp(this.leadId, {
-        followUpType: raw.followUpType as FollowUpRecord['followUpType'],
-        remarks: raw.remarks,
-        statusAfter: raw.statusAfter as LeadStatus,
-        followUpDate: raw.followUpDate || null,
-        nextFollowUpDate: raw.nextFollowUpDate || null
-      })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.followUpForm.reset({
-            followUpType: 'CALL',
-            statusAfter: 'CONTACTED',
-            followUpDate: '',
-            nextFollowUpDate: '',
-            remarks: ''
-          });
-          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Follow-up logged.' });
-          this.load();
-        },
-        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not log follow-up.' })
-      });
-  }
+    const target = this.scheduleTarget();
+    const request$ = target
+      ? this.api.updateFollowUp(target.followUpId, {
+          followUpType: raw.followUpType as FollowUpRecord['followUpType'],
+          remarks: raw.remarks || null,
+          followUpDate
+        })
+      : this.api.addFollowUp(this.leadId, {
+          followUpType: raw.followUpType as FollowUpRecord['followUpType'],
+          remarks: raw.remarks || null,
+          followUpDate
+        });
 
-  completeFollowUp(item: FollowUpRecord): void {
-    this.completeOutcome = '';
-    this.completeRemarks = '';
-    this.completeTarget.set(item);
-  }
-
-  closeCompleteDialog(): void {
-    this.completeTarget.set(null);
-  }
-
-  confirmCompleteFollowUp(): void {
-    const item = this.completeTarget();
-    if (!item || !this.completeOutcome.trim()) return;
-    this.api.completeFollowUp(item.followUpId, {
-      outcome: this.completeOutcome.trim(),
-      remarks: this.completeRemarks || null
-    }).subscribe({
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: () => {
-        this.completeTarget.set(null);
-        this.messages.add({ severity: 'success', summary: 'Completed', detail: 'Follow-up completed.' });
+        this.closeScheduleFollowUp();
+        this.messages.add({
+          severity: 'success',
+          summary: target ? 'Rescheduled' : 'Scheduled',
+          detail: target ? 'Follow-up rescheduled.' : 'Follow-up scheduled.'
+        });
         this.load();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not complete follow-up.' })
+      error: () =>
+        this.messages.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: target ? 'Could not reschedule follow-up.' : 'Could not schedule follow-up.'
+        })
     });
   }
 
-  rescheduleFollowUp(item: FollowUpRecord): void {
-    const nextDate = window.prompt('New follow-up date (YYYY-MM-DD):', item.nextFollowUpDate || '');
-    if (!nextDate) return;
-    this.api.updateFollowUp(item.followUpId, {
-      followUpType: item.followUpType,
-      remarks: item.remarks,
-      statusAfter: item.statusAfter,
-      followUpDate: item.followUpDate,
-      nextFollowUpDate: nextDate
-    }).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: 'Rescheduled', detail: 'Follow-up rescheduled.' });
-        this.load();
-      },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not reschedule follow-up.' })
-    });
-  }
+  // ─── Counseling (actual interaction) ─────────────────────────────────────
 
-  // ─── Counseling ──────────────────────────────────────────────────────────
-
-  openAddCounseling(): void {
+  openAddCounseling(pendingFollowUp?: FollowUpRecord | null): void {
     const now = new Date();
     const iso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    // Only associate when opened from a specific pending follow-up (or overdue attention).
+    this.counselingFollowUpId.set(pendingFollowUp?.followUpId ?? null);
     this.counselingForm.reset({
       sessionAt: iso,
-      mode: 'CALL',
+      mode: pendingFollowUp?.followUpType || 'CALL',
       counselorStaffId: this.detail()?.inquiry.assignedCounselorId ?? null,
       studentRequirements: '',
       parentConcerns: '',
       campusVisitInfo: '',
       recommendations: '',
-      notes: ''
+      notes: '',
+      leadStatus: null,
+      nextFollowUpAt: ''
     });
     if (!this.eligibleCounselors().length) {
       this.api.searchCounselors('', 0, 100).subscribe(page => this.eligibleCounselors.set(page.content));
@@ -775,6 +725,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
 
   closeAddCounseling(): void {
     this.addCounselingOpen.set(false);
+    this.counselingFollowUpId.set(null);
   }
 
   submitCounseling(): void {
@@ -784,6 +735,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     }
     this.saving.set(true);
     const raw = this.counselingForm.getRawValue();
+    const nextFollowUpAt = raw.nextFollowUpAt ? new Date(raw.nextFollowUpAt).toISOString() : null;
     this.api
       .addCounselingNote(this.leadId, {
         sessionAt: raw.sessionAt || null,
@@ -793,17 +745,26 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         parentConcerns: raw.parentConcerns,
         campusVisitInfo: raw.campusVisitInfo,
         recommendations: raw.recommendations,
-        notes: raw.notes!
+        notes: raw.notes!,
+        leadStatus: (raw.leadStatus as LeadStatus | null) || null,
+        nextFollowUpAt,
+        followUpId: this.counselingFollowUpId()
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.addCounselingOpen.set(false);
+          this.closeAddCounseling();
           this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Counseling note added.' });
           this.load();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not save note.' })
       });
+  }
+
+  private toDateTimeLocal(value: string): string {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
 
   // ─── Edit Lead ───────────────────────────────────────────────────────────

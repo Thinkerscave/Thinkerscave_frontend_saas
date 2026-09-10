@@ -189,6 +189,12 @@ export interface CounselingNoteRequest {
   campusVisitInfo?: string | null;
   recommendations?: string | null;
   notes: string;
+  /** Optional lead status update applied with this counseling note. */
+  leadStatus?: LeadStatus | null;
+  /** Optional next planned follow-up datetime; creates a scheduled follow-up. */
+  nextFollowUpAt?: string | null;
+  /** Optional pending follow-up to mark completed with this note. */
+  followUpId?: number | null;
 }
 
 export type LeadActivityCategory = 'LEAD' | 'ASSIGNMENT' | 'FOLLOW_UP' | 'COUNSELING' | 'APPLICATION' | 'STATUS' | 'OTHER';

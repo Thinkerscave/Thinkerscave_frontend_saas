@@ -1,10 +1,7 @@
 <section class="tc-page-shell adm-page">
-  <tc-saas-page-header subtitle="Today's schedule, overdue items, and completion workflow.">
-    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()" title="Reload today's, overdue, and upcoming follow-ups">
+  <tc-saas-page-header subtitle="Your counselor work queue — planned follow-ups for leads assigned to you.">
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading()" title="Reload follow-up queue">
       <i class="pi pi-refresh" [class.pi-spin]="loading()"></i> Refresh
-    </button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="toggleScheduleForm()" title="Schedule a follow-up against a lead">
-      <i class="pi pi-plus"></i> Schedule Follow-up
     </button>
   </tc-saas-page-header>
 
@@ -22,7 +19,7 @@
 
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
-    <tc-saas-panel [title]="panelTitle()" subtitle="Manage and complete scheduled interactions">
+    <tc-saas-panel [title]="panelTitle()" [subtitle]="panelSubtitle()">
       @if (pagedItems.length) {
         <div class="stu-table-wrap">
           <table class="stu-table">
@@ -30,7 +27,7 @@
               <tr>
                 <th>Lead</th>
                 <th>Type</th>
-                <th>Date</th>
+                <th>Scheduled</th>
                 <th>Status</th>
                 <th>Remarks</th>
                 <th>Actions</th>
@@ -38,32 +35,41 @@
             </thead>
             <tbody>
               @for (item of pagedItems; track item.followUpId) {
-                <tr>
+                <tr
+                  class="adm-row-clickable"
+                  (click)="item.inquiryId && openLead(item.inquiryId)"
+                  (keydown.enter)="item.inquiryId && openLead(item.inquiryId)"
+                  tabindex="0"
+                  role="link">
                   <td>
                     @if (item.inquiryId) {
-                      <a [routerLink]="['/app/admissions/lead', item.inquiryId]" [queryParams]="{ from: 'follow-ups' }">{{ item.leadName || ('Lead #' + item.inquiryId) }}</a>
+                      <a
+                        [routerLink]="['/app/admissions/lead', item.inquiryId]"
+                        [queryParams]="{ from: 'follow-ups' }"
+                        (click)="$event.stopPropagation()">
+                        {{ item.leadName || ('Lead #' + item.inquiryId) }}
+                      </a>
                     } @else {
                       —
                     }
                   </td>
                   <td>{{ formatType(item.followUpType) }}</td>
-                  <td>{{ item.followUpDate | date:'mediumDate' }}</td>
+                  <td>{{ item.followUpDate | date:'medium' }}</td>
                   <td>
-                    <span class="adm-badge" [attr.data-tone]="isOverdue(item) ? 'danger' : 'info'">
-                      {{ isOverdue(item) ? 'OVERDUE' : (item.lifecycleStatus || item.statusAfter || 'SCHEDULED') }}
+                    <span class="adm-badge" [attr.data-tone]="statusTone(item)">
+                      {{ statusLabel(item) }}
                     </span>
                   </td>
                   <td>{{ item.remarks || '—' }}</td>
-                  <td>
+                  <td (click)="$event.stopPropagation()">
                     <div class="adm-inline-actions-sm">
                       @if (item.inquiryId) {
-                        <button type="button" class="tc-btn tc-btn--ghost" title="Open lead" (click)="openLead(item.inquiryId)">
-                          <i class="pi pi-eye"></i>
-                        </button>
-                      }
-                      @if (canComplete(item)) {
-                        <button type="button" class="tc-btn tc-btn--primary" title="Record the outcome of this follow-up" (click)="complete(item)">
-                          <i class="pi pi-check"></i> Complete
+                        <button
+                          type="button"
+                          class="tc-btn tc-btn--primary"
+                          title="Open Lead 360 to record counseling or schedule"
+                          (click)="openLead(item.inquiryId)">
+                          <i class="pi pi-external-link"></i> Open Lead
                         </button>
                       }
                     </div>
@@ -85,92 +91,17 @@
         <div class="tc-empty-state">
           <i class="pi pi-calendar"></i>
           <h3>No follow-ups in this view</h3>
-          <p>Schedule a new follow-up or check another tab.</p>
+          <p>
+            @if (activeTab() === 'completed') {
+              Completed follow-ups for your assigned leads will appear here.
+            } @else {
+              Schedule follow-ups from Lead 360 for leads assigned to you.
+            }
+          </p>
         </div>
       }
     </tc-saas-panel>
   }
 </section>
 
-@if (completeTarget(); as target) {
-<p-dialog
-  header="Complete follow-up"
-  [(visible)]="completeVisible"
-  [modal]="true"
-  [draggable]="false"
-  [style]="{ width: 'min(480px, 94vw)' }"
-  (onHide)="closeCompleteDialog()">
-  <p class="adm-small-muted">{{ target.leadName || ('Lead #' + target.inquiryId) }}</p>
-  <div class="tc-form-field">
-    <label>Outcome *</label>
-    <input type="text" [(ngModel)]="completeOutcome" placeholder="Connected / Visit booked / Not reachable" />
-  </div>
-  <div class="tc-form-field">
-    <label>Remarks</label>
-    <textarea [(ngModel)]="completeRemarks" rows="3" placeholder="What happened on this follow-up"></textarea>
-  </div>
-  <div class="adm-dialog-actions">
-    <button type="button" class="tc-btn" (click)="closeCompleteDialog()">Cancel</button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="confirmComplete()" [disabled]="completing() || !completeOutcome.trim()">
-      Complete
-    </button>
-  </div>
-</p-dialog>
-}
-
 <app-toast />
-
-<p-dialog
-  header="Schedule follow-up"
-  [(visible)]="scheduleVisible"
-  [modal]="true"
-  [draggable]="false"
-  [style]="{ width: 'min(560px, 94vw)' }"
-  (onHide)="showScheduleForm.set(false)">
-  <form [formGroup]="scheduleForm" class="adm-form-grid" (ngSubmit)="submitSchedule()">
-    <div class="tc-form-field tc-form-field--full">
-      <label>Lead *</label>
-      <input
-        type="search"
-        [ngModel]="selectedLeadLabel()"
-        [ngModelOptions]="{standalone: true}"
-        placeholder="Search by name, mobile, or lead number"
-        (ngModelChange)="searchLeads($event)" />
-      @if (leadMatches().length) {
-        <div class="adm-counselor-list">
-          @for (lead of leadMatches(); track lead.inquiryId) {
-            <button type="button" class="adm-counselor-row" (click)="pickLead(lead)">
-              <strong>{{ lead.name }}</strong>
-              <small>{{ lead.inquiryNumber || lead.mobileNumber }} · {{ lead.classInterestedIn }}</small>
-            </button>
-          }
-        </div>
-      }
-    </div>
-    <div class="tc-form-field">
-      <label>Type *</label>
-      <p-dropdown [options]="followUpTypeOptions" formControlName="followUpType" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-    </div>
-    <div class="tc-form-field">
-      <label>Follow-up date</label>
-      <input type="date" formControlName="followUpDate" />
-    </div>
-    <div class="tc-form-field">
-      <label>Next follow-up</label>
-      <input type="date" formControlName="nextFollowUpDate" />
-    </div>
-    <div class="tc-form-field">
-      <label>Status after</label>
-      <p-dropdown [options]="statusAfterOptions" formControlName="statusAfter" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-    </div>
-    <div class="tc-form-field tc-form-field--full">
-      <label>Remarks *</label>
-      <textarea formControlName="remarks" rows="3" placeholder="What was discussed or planned"></textarea>
-    </div>
-    <div class="tc-form-field tc-form-field--full adm-form-actions">
-      <button type="button" class="tc-btn" (click)="toggleScheduleForm()">Cancel</button>
-      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || scheduleForm.invalid">Schedule</button>
-    </div>
-  </form>
-</p-dialog>
-

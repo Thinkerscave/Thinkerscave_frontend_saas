@@ -153,6 +153,8 @@ export interface Responsibility {
   description?: string;
   displayOrder?: number;
   systemDefined?: boolean;
+  organizationEditable?: boolean;
+  definitionLocked?: boolean;
   active: boolean;
   remarks?: string;
   createdOn?: string;

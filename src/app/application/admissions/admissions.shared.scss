@@ -1663,13 +1663,103 @@
 /* ---------- Overview 2-column grid ---------- */
 .adm-overview-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
 }
 
 @media (max-width: 900px) {
   .adm-overview-grid { grid-template-columns: 1fr; }
+}
+
+.adm-tab-panel--overview {
+  gap: 12px;
+}
+
+.adm-panel-compact {
+  .tc-card__header {
+    padding: 0.7rem 0.9rem;
+    h2 {
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      i { font-size: 0.9rem; color: var(--tc-text-muted); }
+    }
+  }
+
+  .adm-dl,
+  .adm-timeline,
+  .adm-app-status,
+  .adm-empty-compact,
+  .adm-inline-form-toggle,
+  .adm-quick-stats,
+  .tc-loading,
+  > .tc-btn {
+    margin: 0.7rem 0.9rem;
+  }
+
+  .adm-card-actions,
+  .adm-inline-form-toggle,
+  > .tc-btn {
+    margin-top: 0;
+    margin-bottom: 0.7rem;
+  }
+
+  .adm-inline-form-toggle {
+    margin-top: 0;
+  }
+}
+
+.adm-tab-panel--overview .adm-dl--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  > div {
+    padding: 8px 10px;
+    dt { margin-bottom: 2px; font-size: 0.68rem; }
+    dd { font-size: 0.86rem; }
+  }
+}
+
+.adm-initial-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--tc-radius-md, 12px);
+  border: 1px solid color-mix(in srgb, var(--tc-info) 22%, var(--tc-border));
+  background: color-mix(in srgb, var(--tc-info) 7%, var(--tc-surface-0));
+
+  > i {
+    color: var(--tc-info);
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--tc-text-muted);
+    margin-bottom: 2px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--tc-text);
+    line-height: 1.4;
+  }
+}
+
+.adm-app-status--compact {
+  margin-bottom: 0.55rem;
+  padding: 8px 10px;
+}
+
+.adm-text-danger {
+  color: var(--tc-danger);
 }
 
 .adm-dl__full {
@@ -1720,10 +1810,49 @@
 }
 
 /* ---------- Activity tab ---------- */
+.adm-activity-layout {
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.7fr);
+}
+
 .adm-activity-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+
+.adm-quick-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.adm-quick-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--tc-radius-md, 12px);
+  background: var(--tc-surface-50);
+  border: 1px solid var(--tc-border);
+
+  i {
+    color: var(--tc-primary-600);
+    font-size: 0.95rem;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: var(--tc-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  strong {
+    font-size: 1.15rem;
+    color: var(--tc-text);
+    line-height: 1.1;
+  }
 }
 
 /* ---------- Counseling history ---------- */
@@ -1748,6 +1877,56 @@
   strong { display: block; font-size: 0.92rem; }
 }
 
+:root .adm-schedule-dialog .p-dialog-header {
+  flex: 0 0 auto;
+  padding: 0.85rem 1.1rem;
+}
+
+:root .adm-schedule-dialog .p-dialog-content {
+  padding: 0.85rem 1.1rem;
+}
+
+:root .adm-schedule-dialog .p-dialog-footer {
+  border-top: 1px solid var(--tc-border);
+  padding: 0.7rem 1.1rem;
+}
+
+:root .adm-counseling-dialog.p-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+:root .adm-counseling-dialog .p-dialog-header {
+  flex: 0 0 auto;
+  padding: 0.85rem 1.1rem;
+}
+
+:root .adm-counseling-dialog .p-dialog-content {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 0.75rem 1.1rem;
+}
+
+:root .adm-counseling-dialog .p-dialog-footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--tc-border);
+  padding: 0.7rem 1.1rem;
+  background: var(--tc-surface-0);
+}
+
+.adm-counseling-form {
+  gap: 0.65rem !important;
+}
+
+.adm-counseling-form .tc-form-field {
+  gap: 0.25rem;
+}
+
+.adm-counseling-form textarea {
+  min-height: 56px;
+}
+
 /* ---------- Edit Lead dialog section headers ---------- */
 .adm-dialog-section-title {
   margin: 4px 0 0;
@@ -1756,4 +1935,17 @@
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--tc-text-muted);
+}
+
+.adm-row-clickable {
+  cursor: pointer;
+}
+
+.adm-row-clickable:hover {
+  background: color-mix(in srgb, var(--tc-primary, #2563eb) 6%, transparent);
+}
+
+.adm-row-clickable:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tc-primary, #2563eb) 45%, transparent);
+  outline-offset: -2px;
 }

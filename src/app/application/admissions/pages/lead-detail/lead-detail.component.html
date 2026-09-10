@@ -88,7 +88,7 @@
 
       <!-- ═══════════════════════════ OVERVIEW ═══════════════════════════ -->
       @case ('overview') {
-        <div class="adm-tab-panel">
+        <div class="adm-tab-panel adm-tab-panel--overview">
 
           @if (attentionItems().length) {
             <div class="adm-attention-list">
@@ -109,7 +109,7 @@
 
           <div class="adm-overview-grid">
             <!-- Student Information -->
-            <div class="tc-card tc-card--panel">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-user"></i> Student Information</h2>
                 @if (canManage) {
@@ -127,7 +127,7 @@
             </div>
 
             <!-- Parent / Contact Information -->
-            <div class="tc-card tc-card--panel">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-id-card"></i> Parent / Contact Information</h2>
                 @if (canManage) {
@@ -160,9 +160,11 @@
                 <div><dt>Address</dt><dd>{{ d.inquiry.address || '—' }}</dd></div>
               </dl>
             </div>
+          </div>
 
+          <div class="adm-overview-grid">
             <!-- Admission Interest -->
-            <div class="tc-card tc-card--panel">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-graduation-cap"></i> Admission Interest</h2>
                 @if (canManage) {
@@ -179,7 +181,7 @@
             </div>
 
             <!-- Next Follow-up -->
-            <div class="tc-card tc-card--panel">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-calendar"></i> Next Follow-up</h2>
                 @if (nextFollowUp() && isFollowUpOverdue(nextFollowUp())) {
@@ -188,7 +190,7 @@
               </div>
               @if (nextFollowUp(); as fu) {
                 <dl class="adm-dl adm-dl--compact">
-                  <div><dt>Date &amp; Time</dt><dd>{{ formatDateTime(fu.followUpDate) }}</dd></div>
+                  <div><dt>Date &amp; Time</dt><dd [class.adm-text-danger]="isFollowUpOverdue(fu)">{{ formatDateTime(fu.followUpDate) }}</dd></div>
                   <div><dt>Type</dt><dd>{{ statusLabel(fu.followUpType) }}</dd></div>
                   <div><dt>Assigned To</dt><dd>{{ d.inquiry.assignedCounselorName || 'Unassigned' }}</dd></div>
                   <div><dt>Status</dt><dd>{{ isFollowUpOverdue(fu) ? 'Overdue' : 'Scheduled' }}</dd></div>
@@ -196,8 +198,10 @@
                 </dl>
                 @if (canManage) {
                   <div class="adm-inline-actions adm-card-actions">
-                    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="completeFollowUp(fu)">Complete</button>
-                    <button type="button" class="tc-btn tc-btn--sm" (click)="rescheduleFollowUp(fu)"><i class="pi pi-calendar"></i> Reschedule</button>
+                    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openAddCounseling(fu)">
+                      <i class="pi pi-comments"></i> Record Counseling
+                    </button>
+                    <button type="button" class="tc-btn tc-btn--sm" (click)="openScheduleFollowUp(fu)"><i class="pi pi-calendar"></i> Reschedule</button>
                   </div>
                 }
               } @else {
@@ -206,47 +210,27 @@
                 </div>
               }
               @if (canManage) {
-                <details class="adm-inline-form-toggle">
-                  <summary>Schedule a follow-up</summary>
-                  <form [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-form-grid">
-                    <div class="tc-form-field">
-                      <label>Type</label>
-                      <p-dropdown [options]="followUpTypeOptions" formControlName="followUpType" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-                    </div>
-                    <div class="tc-form-field">
-                      <label>Status after</label>
-                      <p-dropdown [options]="statusAfterOptions" formControlName="statusAfter" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-                    </div>
-                    <div class="tc-form-field">
-                      <label>Date</label>
-                      <input type="date" formControlName="followUpDate" />
-                    </div>
-                    <div class="tc-form-field">
-                      <label>Next follow-up</label>
-                      <input type="date" formControlName="nextFollowUpDate" />
-                    </div>
-                    <div class="tc-form-field tc-form-field--full">
-                      <label>Remarks *</label>
-                      <textarea formControlName="remarks" rows="2"></textarea>
-                    </div>
-                    <div class="tc-form-field tc-form-field--full adm-form-actions">
-                      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">Save follow-up</button>
-                    </div>
-                  </form>
-                </details>
+                <div class="adm-card-actions">
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="openScheduleFollowUp()">
+                    <i class="pi pi-plus"></i> Schedule a follow-up
+                  </button>
+                </div>
               }
             </div>
           </div>
 
-          <!-- Initial Notes -->
-          <div class="tc-card tc-card--panel">
-            <div class="tc-card__header"><h2><i class="pi pi-file"></i> Initial Notes</h2></div>
-            <p class="adm-body-text">{{ d.inquiry.comments || 'No initial notes captured.' }}</p>
+          <!-- Initial Notes (compact single strip) -->
+          <div class="adm-initial-notes">
+            <i class="pi pi-file"></i>
+            <div>
+              <strong>Initial Notes</strong>
+              <p>{{ d.inquiry.comments || 'No initial notes captured.' }}</p>
+            </div>
           </div>
 
           <div class="adm-overview-grid">
             <!-- Lead & Assignment -->
-            <div class="tc-card tc-card--panel">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-briefcase"></i> Lead &amp; Assignment</h2>
                 @if (canManage) {
@@ -266,66 +250,41 @@
               </dl>
             </div>
 
-            <!-- Application -->
-            <div class="tc-card tc-card--panel">
+            <!-- Application (compact status only; primary CTA stays in header) -->
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header"><h2><i class="pi pi-file-edit"></i> Application</h2></div>
               @if (!d.applicationId) {
-                <div class="adm-app-status adm-app-status--pending">
+                <div class="adm-app-status adm-app-status--pending adm-app-status--compact">
                   <i class="pi pi-info-circle"></i>
                   <span>No application started yet</span>
                 </div>
-                @if (canProceedToApplication()) {
-                  <button type="button" class="tc-btn tc-btn--primary" (click)="proceedToApplication()">Start Application</button>
-                }
               } @else {
-                <div class="adm-app-status" [class.adm-app-status--success]="d.applicationStatus === 'APPROVED' || d.applicationStatus === 'ENROLLED'">
+                <div class="adm-app-status adm-app-status--compact" [class.adm-app-status--success]="d.applicationStatus === 'APPROVED' || d.applicationStatus === 'ENROLLED'">
                   <i class="pi pi-check-circle"></i>
                   <span>{{ statusLabel(d.applicationStatus) }} — {{ d.applicationNumber || ('#' + d.applicationId) }}</span>
                 </div>
                 @if (d.studentId) {
-                  <button type="button" class="tc-btn tc-btn--primary" (click)="primaryAction()">View Student</button>
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="primaryAction()">View Student</button>
+                } @else if (d.applicationStatus === 'DRAFT') {
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="continueApplication()">Continue Application</button>
                 } @else {
-                  <button type="button" class="tc-btn tc-btn--primary" (click)="continueApplication()">
-                    {{ d.applicationStatus === 'DRAFT' ? 'Continue Application' : 'View Application' }}
-                  </button>
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="continueApplication()">View Application</button>
                 }
               }
             </div>
-          </div>
-
-          <!-- Recent Activity -->
-          <div class="tc-card tc-card--panel">
-            <div class="tc-card__header">
-              <h2><i class="pi pi-history"></i> Recent Activity</h2>
-              <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="onTabChange('activity')">View All <i class="pi pi-arrow-right"></i></button>
-            </div>
-            @if (!recentActivity().length) {
-              <div class="tc-empty-state adm-empty-compact"><p>No activity recorded yet.</p></div>
-            } @else {
-              <div class="adm-timeline">
-                @for (t of recentActivity(); track trackTimeline($index, t)) {
-                  <div class="adm-timeline__item" [attr.data-tone]="activityTone(t)">
-                    <div class="adm-timeline__dot"><i [class]="activityIcon(t)"></i></div>
-                    <div class="adm-timeline__body">
-                      <strong>{{ t.title || t.action }}</strong>
-                      @if (t.description) { <p>{{ t.description }}</p> }
-                      <small>{{ (t.performedAt || t.performedOn) | date:'medium' }} · {{ t.performedBy }}</small>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
           </div>
         </div>
       }
 
       <!-- ═══════════════════════════ ACTIVITY ═══════════════════════════ -->
       @case ('activity') {
-        <div class="adm-detail-grid">
-          <div class="tc-card tc-card--panel">
+        <div class="adm-detail-grid adm-activity-layout">
+          <div class="tc-card tc-card--panel adm-panel-compact">
             <div class="tc-card__header">
-              <h2>Activity Timeline</h2>
-              <small>Complete history of all important events related to this lead.</small>
+              <div>
+                <h2>Activity Timeline</h2>
+                <small>Complete history of all important events related to this lead.</small>
+              </div>
             </div>
             @if (activityLoading()) {
               <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading activity…</div>
@@ -350,37 +309,33 @@
             }
           </div>
 
-          <div class="adm-activity-side">
-            <div class="tc-card tc-card--panel">
-              <div class="tc-card__header"><h2>Filters</h2></div>
-              <div class="tc-form-field tc-form-field--full">
-                <label>Activity Type</label>
-                <p-dropdown [options]="activityTypeOptions" [ngModel]="activityType()" (ngModelChange)="activityType.set($event)" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-              </div>
-              <div class="tc-form-field tc-form-field--full">
-                <label>From</label>
-                <input type="date" [ngModel]="activityFrom()" (ngModelChange)="activityFrom.set($event)" />
-              </div>
-              <div class="tc-form-field tc-form-field--full">
-                <label>To</label>
-                <input type="date" [ngModel]="activityTo()" (ngModelChange)="activityTo.set($event)" />
-              </div>
-              <div class="adm-form-actions">
-                <button type="button" class="tc-btn tc-btn--primary" (click)="applyActivityFilters()">Apply Filters</button>
-                <button type="button" class="tc-btn" (click)="resetActivityFilters()">Reset</button>
-              </div>
-            </div>
-
-            <div class="tc-card tc-card--panel">
+          <aside class="adm-activity-side">
+            <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header"><h2>Quick Stats</h2></div>
-              <div class="adm-config-grid">
-                <div class="adm-config-row"><span>Total Activities</span><strong>{{ activityStats().total }}</strong></div>
-                <div class="adm-config-row"><span>Follow-ups</span><strong>{{ activityStats().followUps }}</strong></div>
-                <div class="adm-config-row"><span>Counseling Notes</span><strong>{{ activityStats().counseling }}</strong></div>
-                <div class="adm-config-row"><span>Status Changes</span><strong>{{ activityStats().statusChanges }}</strong></div>
+              <div class="adm-quick-stats">
+                <div class="adm-quick-stat">
+                  <i class="pi pi-comments"></i>
+                  <span>Total Activities</span>
+                  <strong>{{ activityStats().total }}</strong>
+                </div>
+                <div class="adm-quick-stat">
+                  <i class="pi pi-calendar"></i>
+                  <span>Follow-ups</span>
+                  <strong>{{ activityStats().followUps }}</strong>
+                </div>
+                <div class="adm-quick-stat">
+                  <i class="pi pi-file"></i>
+                  <span>Counseling Notes</span>
+                  <strong>{{ activityStats().counseling }}</strong>
+                </div>
+                <div class="adm-quick-stat">
+                  <i class="pi pi-arrows-h"></i>
+                  <span>Status Changes</span>
+                  <strong>{{ activityStats().statusChanges }}</strong>
+                </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       }
 
@@ -430,27 +385,36 @@
 <!-- ═══════════════════════════ DIALOGS ═══════════════════════════ -->
 
 <p-dialog
-  header="Complete follow-up"
-  [(visible)]="completeVisible"
+  [header]="scheduleTarget() ? 'Reschedule follow-up' : 'Schedule a follow-up'"
+  [visible]="scheduleFollowUpOpen()"
+  (visibleChange)="scheduleFollowUpOpen.set($event)"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: 'min(480px, 94vw)' }"
-  (onHide)="closeCompleteDialog()">
-  @if (completeTarget(); as target) {
-    <p class="adm-dialog-subtitle">{{ statusLabel(target.followUpType) }} · {{ formatDateTime(target.followUpDate) }}</p>
+  styleClass="adm-schedule-dialog"
+  [style]="{ width: 'min(440px, 94vw)' }"
+  (onHide)="closeScheduleFollowUp()">
+  <form id="adm-schedule-form" [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()" class="adm-dialog-form">
     <div class="tc-form-field tc-form-field--full">
-      <label>Outcome *</label>
-      <input type="text" [(ngModel)]="completeOutcome" placeholder="Connected / Visit booked / Not reachable" />
+      <label>Type *</label>
+      <p-dropdown [options]="followUpTypeOptions" formControlName="followUpType" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+    </div>
+    <div class="tc-form-field tc-form-field--full">
+      <label>Scheduled Date &amp; Time *</label>
+      <input type="datetime-local" formControlName="followUpDate" />
     </div>
     <div class="tc-form-field tc-form-field--full">
       <label>Remarks</label>
-      <textarea [(ngModel)]="completeRemarks" rows="3"></textarea>
+      <textarea formControlName="remarks" rows="2" placeholder="Optional note for the planned follow-up"></textarea>
     </div>
+  </form>
+  <ng-template pTemplate="footer">
     <div class="adm-dialog-actions">
-      <button type="button" class="tc-btn" (click)="closeCompleteDialog()">Cancel</button>
-      <button type="button" class="tc-btn tc-btn--primary" (click)="confirmCompleteFollowUp()" [disabled]="!completeOutcome.trim()">Complete</button>
+      <button type="button" class="tc-btn" (click)="closeScheduleFollowUp()">Cancel</button>
+      <button type="submit" form="adm-schedule-form" class="tc-btn tc-btn--primary" [disabled]="saving() || followUpForm.invalid">
+        {{ scheduleTarget() ? 'Reschedule' : 'Schedule' }}
+      </button>
     </div>
-  }
+  </ng-template>
 </p-dialog>
 
 <p-dialog
@@ -484,9 +448,11 @@
   (visibleChange)="addCounselingOpen.set($event)"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: 'min(640px, 94vw)' }"
+  styleClass="adm-counseling-dialog"
+  [style]="{ width: 'min(640px, 94vw)', height: '68vh' }"
+  [contentStyle]="{ overflow: 'auto', flex: '1 1 auto', paddingBottom: '0.5rem' }"
   (onHide)="closeAddCounseling()">
-  <form [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-dialog-form adm-form-grid">
+  <form id="adm-counseling-form" [formGroup]="counselingForm" (ngSubmit)="submitCounseling()" class="adm-dialog-form adm-form-grid adm-counseling-form">
     <div class="tc-form-field">
       <label>Date &amp; Time *</label>
       <input type="datetime-local" formControlName="sessionAt" />
@@ -527,11 +493,30 @@
       <label>Notes *</label>
       <textarea formControlName="notes" rows="3" placeholder="Enter detailed counseling notes…"></textarea>
     </div>
-    <div class="tc-form-field tc-form-field--full adm-dialog-actions">
-      <button type="button" class="tc-btn" (click)="closeAddCounseling()">Cancel</button>
-      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">Save Note</button>
+    <div class="tc-form-field">
+      <label>Lead Status</label>
+      <p-dropdown
+        [options]="leadStatusOptions"
+        formControlName="leadStatus"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        placeholder="Keep current status"
+        [showClear]="true"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </div>
+    <div class="tc-form-field">
+      <label>Next Follow-up Date &amp; Time</label>
+      <input type="datetime-local" formControlName="nextFollowUpAt" />
     </div>
   </form>
+  <ng-template pTemplate="footer">
+    <div class="adm-dialog-actions">
+      <button type="button" class="tc-btn" (click)="closeAddCounseling()">Cancel</button>
+      <button type="submit" form="adm-counseling-form" class="tc-btn tc-btn--primary" [disabled]="saving() || counselingForm.invalid">Save Note</button>
+    </div>
+  </ng-template>
 </p-dialog>
 
 <p-dialog
