@@ -19,7 +19,7 @@ import { AppSearchBarComponent } from './app-search-bar.component';
   imports: [CommonModule, AppSearchBarComponent, AppButtonComponent, AppGridTableToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="app-list-toolbar">
+    <div class="app-list-toolbar" [class.app-list-toolbar--flat]="flat">
       <div class="app-list-toolbar__cluster">
         <div class="app-list-toolbar__search" *ngIf="showSearch">
           <app-search-bar
@@ -35,7 +35,7 @@ import { AppSearchBarComponent } from './app-search-bar.component';
           <ng-content></ng-content>
         </div>
 
-        <div class="app-list-toolbar__actions" *ngIf="showActions">
+        <div class="app-list-toolbar__actions" *ngIf="showActions && !rightActionGroup">
           <app-button
             variant="primary"
             size="sm"
@@ -51,6 +51,19 @@ import { AppSearchBarComponent } from './app-search-bar.component';
       </div>
 
       <div class="app-list-toolbar__views">
+        <div class="app-list-toolbar__actions app-list-toolbar__actions--right" *ngIf="showActions && rightActionGroup">
+          <app-button
+            variant="primary"
+            size="sm"
+            icon="pi pi-search"
+            [loading]="searching"
+            (clicked)="onSubmit()">
+            Search
+          </app-button>
+          <app-button variant="ghost" size="sm" icon="pi pi-refresh" (clicked)="onReset()">
+            Reset
+          </app-button>
+        </div>
         <app-grid-table-toggle
           *ngIf="showViewToggle"
           [mode]="view"
@@ -76,6 +89,10 @@ export class AppListToolbarComponent implements OnDestroy {
   @Input() view: AppListViewMode = 'table';
   @Input() viewAriaLabel = 'View mode';
   @Input() debounceMs = UI_SEARCH.debounceMs;
+  /** Removes the toolbar's own card border/shadow/background — use when it already sits inside a parent panel/card body. */
+  @Input() flat = false;
+  /** Places Search/Reset next to view toggle as a right-side action group. */
+  @Input() rightActionGroup = false;
 
   /** Immediate value so the parent can keep the input in sync. Does not query. */
   @Output() searchChange = new EventEmitter<string>();

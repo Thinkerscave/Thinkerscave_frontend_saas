@@ -13,7 +13,6 @@ import {
   roleTypeLabel,
   userDisplayName,
   userEffectiveStatus,
-  userInitials,
   userStatusLabel,
   userStatusTone
 } from '../../utils/access-display.util';
@@ -21,13 +20,18 @@ import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppP
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
-import {
-  SaasPageHeaderComponent,
-  SaasPanelComponent,
-  SaasPillComponent,
-  SaasStat,
-  SaasStatGridComponent
-} from '../../../../shared/ui/saas';
+import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+
+interface KpiTile {
+  key: 'total' | 'active' | 'locked';
+  label: string;
+  icon: string;
+  tone: KpiTone;
+}
 
 const LIST_KEY = 'access.users.view';
 
@@ -38,7 +42,8 @@ const LIST_KEY = 'access.users.view';
   imports: [
     CommonModule, FormsModule, DropdownModule, RouterLink,
     AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+    SaasPageHeaderComponent, SaasPillComponent, KpiCardComponent, KpiGroupComponent,
+    SkeletonComponent, EmptyStateComponent, AvatarComponent
   ],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.scss'
@@ -84,10 +89,28 @@ export class UsersListComponent implements OnInit {
   ];
 
   readonly userDisplayName = userDisplayName;
-  readonly userInitials = userInitials;
   readonly roleTypeLabel = roleTypeLabel;
   readonly formatDate = formatDate;
   readonly formatDateTime = formatDateTime;
+
+  get hasContextualQuery(): boolean {
+    return !!(
+      this.search.trim() ||
+      this.appliedStatus !== 'all' ||
+      this.appliedRole !== 'all'
+    );
+  }
+
+  get contextualResultText(): string {
+    if (this.totalRecords <= 0) {
+      return 'No users found';
+    }
+    const visible = this.users.length;
+    if (visible >= this.totalRecords) {
+      return `${this.totalRecords} users found`;
+    }
+    return `Showing ${visible} of ${this.totalRecords} users`;
+  }
 
   ngOnInit(): void {
     const saved = this.listContext.consume(LIST_KEY);
@@ -108,13 +131,13 @@ export class UsersListComponent implements OnInit {
     this.reload();
   }
 
-  get stats(): SaasStat[] {
+  get kpiTiles(): (KpiTile & { value: number })[] {
     const active = this.users.filter(u => userEffectiveStatus(u) === 'ACTIVE').length;
     const locked = this.users.filter(u => userEffectiveStatus(u) === 'LOCKED').length;
     return [
-      { key: 'total', label: 'Users', value: this.totalRecords, icon: 'pi pi-users', tone: 'primary' },
-      { key: 'active', label: 'Active (this page)', value: active, icon: 'pi pi-check-circle', tone: 'success' },
-      { key: 'locked', label: 'Locked (this page)', value: locked, icon: 'pi pi-lock', tone: 'warning' }
+      { key: 'total', label: 'Users', icon: 'pi pi-users', tone: 'primary', value: this.totalRecords },
+      { key: 'active', label: 'Active (this page)', icon: 'pi pi-check-circle', tone: 'success', value: active },
+      { key: 'locked', label: 'Locked (this page)', icon: 'pi pi-lock', tone: 'warning', value: locked }
     ];
   }
 

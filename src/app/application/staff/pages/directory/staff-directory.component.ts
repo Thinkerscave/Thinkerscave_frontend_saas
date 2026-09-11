@@ -30,12 +30,15 @@ import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { CreateStaffComponent } from '../create-staff/create-staff.component';
+import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 interface KpiTile {
   key: keyof StaffDashboard;
   label: string;
   icon: string;
-  color: string;
+  tone: KpiTone;
 }
 
 interface FilterOption<T = string | null> {
@@ -59,7 +62,10 @@ const LIST_KEY = 'staff.directory.view';
     AvatarComponent,
     SkeletonComponent,
     EmptyStateComponent,
-    CreateStaffComponent
+    CreateStaffComponent,
+    KpiCardComponent,
+    KpiGroupComponent,
+    SaasPageHeaderComponent
   ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-directory.component.html'
@@ -70,6 +76,7 @@ export class StaffDirectoryComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly query = new ListQuerySession();
 
   loading = true;
@@ -98,12 +105,12 @@ export class StaffDirectoryComponent implements OnInit {
   actionLoading: number | null = null;
 
   readonly kpiTiles: KpiTile[] = [
-    { key: 'totalStaff',      label: 'Total Staff',        icon: 'pi-users',       color: 'blue' },
-    { key: 'teachingStaff',   label: 'Teaching Staff',     icon: 'pi-graduation-cap', color: 'indigo' },
-    { key: 'nonTeachingStaff',label: 'Non Teaching Staff', icon: 'pi-briefcase',   color: 'violet' },
-    { key: 'contractStaff',   label: 'Contract Staff',     icon: 'pi-file-edit',   color: 'amber' },
-    { key: 'temporaryStaff',  label: 'Temporary Staff',    icon: 'pi-clock',       color: 'orange' },
-    { key: 'activeStaff',     label: 'Active Staff',       icon: 'pi-check-circle',color: 'green' }
+    { key: 'totalStaff',      label: 'Total Staff',        icon: 'pi-users',           tone: 'primary' },
+    { key: 'teachingStaff',   label: 'Teaching Staff',     icon: 'pi-graduation-cap',  tone: 'info' },
+    { key: 'nonTeachingStaff',label: 'Non Teaching Staff', icon: 'pi-briefcase',       tone: 'neutral' },
+    { key: 'contractStaff',   label: 'Contract Staff',     icon: 'pi-file-edit',       tone: 'warning' },
+    { key: 'temporaryStaff',  label: 'Temporary Staff',    icon: 'pi-clock',           tone: 'warning' },
+    { key: 'activeStaff',     label: 'Active Staff',       icon: 'pi-check-circle',    tone: 'success' }
   ];
 
   readonly staffTypeOptions: FilterOption<StaffType | undefined>[] = [
@@ -130,6 +137,27 @@ export class StaffDirectoryComponent implements OnInit {
     { value: 'RETIRED', label: 'Retired' },
     { value: 'CONTRACT_COMPLETED', label: 'Contract Completed' }
   ];
+
+  get hasContextualQuery(): boolean {
+    return !!(
+      this.filters.keyword?.trim() ||
+      this.appliedFilters.staffType ||
+      this.appliedFilters.employmentCategory ||
+      this.appliedFilters.employmentStatus
+    );
+  }
+
+  get contextualResultText(): string {
+    const total = this.staffPage.totalElements ?? 0;
+    const visible = this.staffPage.content.length;
+    if (total <= 0) {
+      return 'No staff found';
+    }
+    if (visible >= total) {
+      return `${total} staff found`;
+    }
+    return `Showing ${visible} of ${total} staff`;
+  }
 
   ngOnInit(): void {
     const saved = this.listContext.consume(LIST_KEY);
@@ -243,6 +271,14 @@ export class StaffDirectoryComponent implements OnInit {
 
   addStaff(): void {
     this.showAddDrawer = true;
+  }
+
+  importStaff(): void {
+    this.feedback.info('Import', 'Staff import will be available soon.');
+  }
+
+  exportStaff(): void {
+    this.feedback.info('Export', 'Staff export will be available soon.');
   }
 
   closeAddDrawer(): void {

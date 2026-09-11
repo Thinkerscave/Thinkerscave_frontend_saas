@@ -1,230 +1,231 @@
-<section class="sd-workspace" (click)="closeMenu()">
+<section class="tc-page-shell tc-directory-page stf-directory-page" (click)="closeMenu()">
 
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Staff</h1>
-      <p class="sd-header__sub">Manage teaching and non-teaching staff across the organization.</p>
-    </div>
-    <div class="sd-header__actions">
-      <button id="btn-import-staff" type="button" class="sd-btn sd-btn--ghost">
-        <i class="pi pi-upload"></i> Import
-      </button>
-      <button id="btn-export-staff" type="button" class="sd-btn sd-btn--ghost">
-        <i class="pi pi-download"></i> Export
-      </button>
-      <button id="btn-add-staff" type="button" class="sd-btn sd-btn--primary" (click)="addStaff()">
-        <i class="pi pi-plus"></i> Add Staff
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header subtitle="Manage teaching and non-teaching staff across the organization.">
+    <button type="button" class="tc-btn" (click)="importStaff()">
+      <i class="pi pi-upload"></i> Import
+    </button>
+    <button type="button" class="tc-btn" (click)="exportStaff()">
+      <i class="pi pi-download"></i> Export
+    </button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="addStaff()">
+      <i class="pi pi-plus"></i> Add Staff
+    </button>
+  </tc-saas-page-header>
 
-  <div class="sd-kpi-row">
-    <div *ngFor="let tile of kpiTiles"
-         class="sd-kpi-card"
-         [attr.data-color]="tile.color">
-      <div class="sd-kpi-card__icon">
-        <i class="pi" [ngClass]="tile.icon"></i>
-      </div>
-      <div class="sd-kpi-card__body">
-        <span class="sd-kpi-card__value">{{ dashboard[tile.key] }}</span>
-        <span class="sd-kpi-card__label">{{ tile.label }}</span>
-      </div>
-    </div>
-  </div>
+  <tc-kpi-group ariaLabel="Staff counts" mode="equal" [columns]="6">
+    <tc-kpi-card *ngFor="let tile of kpiTiles"
+                 [label]="tile.label"
+                 [value]="dashboard[tile.key]"
+                 [icon]="'pi ' + tile.icon"
+                 [tone]="tile.tone">
+    </tc-kpi-card>
+  </tc-kpi-group>
 
-  <app-list-toolbar
-    [search]="filters.keyword || ''"
-    searchPlaceholder="Search name, staff ID, mobile, email..."
-    [searching]="searching"
-    [view]="view"
-    viewAriaLabel="Staff directory view"
-    (searchChange)="onKeywordChange($event)"
-    (searchDebounced)="applyQuery()"
-    (submitted)="search()"
-    (reset)="clearFilters()"
-    (viewChange)="onViewModeChange($event)">
-    <p-dropdown
-      inputId="filter-staff-type"
-      [options]="staffTypeOptions"
-      [(ngModel)]="filters.staffType"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="All Types"
-      [showClear]="true">
-    </p-dropdown>
-    <p-dropdown
-      inputId="filter-emp-category"
-      [options]="categoryOptions"
-      [(ngModel)]="filters.employmentCategory"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="All Categories"
-      [showClear]="true">
-    </p-dropdown>
-    <p-dropdown
-      inputId="filter-emp-status"
-      [options]="statusOptions"
-      [(ngModel)]="filters.employmentStatus"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="All Status"
-      [showClear]="true">
-    </p-dropdown>
-  </app-list-toolbar>
+  <div class="tc-card tc-card--panel">
+    <div class="tc-card__body">
+      <p class="stf-context-summary" *ngIf="hasLoaded && hasContextualQuery">
+        {{ contextualResultText }}
+      </p>
 
-  <div *ngIf="errorMessage" class="sd-error-banner">
-    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-  </div>
+      <app-list-toolbar
+        [flat]="true"
+        [search]="filters.keyword || ''"
+        searchPlaceholder="Search name, staff ID, mobile, email..."
+        [searching]="searching"
+        [view]="view"
+        viewAriaLabel="Staff directory view"
+        (searchChange)="onKeywordChange($event)"
+        (searchDebounced)="applyQuery()"
+        (submitted)="search()"
+        (reset)="clearFilters()"
+        (viewChange)="onViewModeChange($event)">
+        <p-dropdown
+          inputId="filter-staff-type"
+          [options]="staffTypeOptions"
+          [(ngModel)]="filters.staffType"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Types"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="stf-filter-dropdown">
+        </p-dropdown>
+        <p-dropdown
+          inputId="filter-emp-category"
+          [options]="categoryOptions"
+          [(ngModel)]="filters.employmentCategory"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Categories"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="stf-filter-dropdown">
+        </p-dropdown>
+        <p-dropdown
+          inputId="filter-emp-status"
+          [options]="statusOptions"
+          [(ngModel)]="filters.employmentStatus"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Status"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="stf-filter-dropdown">
+        </p-dropdown>
+      </app-list-toolbar>
 
-  <app-list-results [busy]="refreshing">
-  <div *ngIf="!hasLoaded && loading" class="sd-card-grid" aria-busy="true">
-    <div class="sd-card sd-card--skeleton" *ngFor="let _ of [1,2,3,4,5,6]">
-      <app-skeleton shape="circle" size="72px"></app-skeleton>
-      <app-skeleton shape="line" height="16px" width="60%"></app-skeleton>
-      <app-skeleton shape="line" height="12px" width="40%"></app-skeleton>
-      <app-skeleton shape="line" height="12px" width="80%"></app-skeleton>
-    </div>
-  </div>
-
-  <app-empty-state
-    *ngIf="hasLoaded && staffPage.content.length === 0 && !errorMessage"
-    illustration="staff"
-    title="No staff found"
-    message="Try adjusting your filters or add a new staff member."
-    actionLabel="Add Staff"
-    actionIcon="pi pi-plus"
-    (action)="addStaff()">
-  </app-empty-state>
-
-  <div *ngIf="view === 'grid' && staffPage.content.length > 0" class="sd-card-grid">
-    <article *ngFor="let s of staffPage.content; trackBy: trackByStaff"
-             class="sd-card"
-             (click)="openProfile(s)">
-
-      <button id="btn-menu-{{ s.staffId }}" class="sd-card__menu-btn" type="button"
-              (click)="toggleMenu(s.staffId, $event)" title="More actions">
-        <i class="pi pi-ellipsis-v"></i>
-      </button>
-      <div *ngIf="openMenuId === s.staffId" class="sd-dropdown" (click)="$event.stopPropagation()">
-        <button type="button" (click)="openProfile(s)">
-          <i class="pi pi-eye"></i> View Profile
-        </button>
-        <button type="button" (click)="editStaff(s, $event)">
-          <i class="pi pi-pencil"></i> Edit
-        </button>
-        <button type="button" (click)="toggleActive(s, $event)">
-          <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
-          {{ s.active ? 'Deactivate' : 'Activate' }}
-        </button>
-        <button type="button" class="danger" (click)="deleteStaff(s, $event)">
-          <i class="pi pi-trash"></i> Delete
-        </button>
+      <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
+        <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <div class="sd-card__avatar">
-        <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
-        <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
-      </div>
-
-      <div class="sd-card__info">
-        <strong class="sd-card__name">{{ s.fullName }}</strong>
-        <span class="sd-card__code">{{ s.staffCode }}</span>
-        <span class="sd-card__designation">{{ s.designation || '—' }}</span>
-      </div>
-
-      <div class="sd-card__meta">
-        <span class="sd-meta-chip">{{ categoryLabel(s.employmentCategory) }}</span>
-        <span class="sd-meta-chip">Joined {{ s.joiningDate | date:'d MMM yyyy' }}</span>
-      </div>
-
-      <div class="sd-card__footer">
-        <span class="sd-status-pill" [attr.data-status]="s.employmentStatus">
-          {{ s.employmentStatus | titlecase }}
-        </span>
-        <div class="sd-card__contact-icons">
-          <a [href]="'tel:' + s.mobileNumber" (click)="$event.stopPropagation()" title="Call">
-            <i class="pi pi-phone"></i>
-          </a>
-          <a [href]="'mailto:' + s.email" (click)="$event.stopPropagation()" title="Email">
-            <i class="pi pi-envelope"></i>
-          </a>
+      <app-list-results [busy]="refreshing">
+        <div class="stf-directory-skeleton" *ngIf="!hasLoaded && loading">
+          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
         </div>
-      </div>
-    </article>
-  </div>
 
-  <div *ngIf="view === 'table' && staffPage.content.length > 0" class="sd-table-wrap">
-    <table class="sd-table">
-      <thead>
-        <tr>
-          <th>Staff Member</th>
-          <th>Staff ID</th>
-          <th>Designation</th>
-          <th>Type</th>
-          <th>Category</th>
-          <th>Status</th>
-          <th>Joining Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of staffPage.content; trackBy: trackByStaff">
-          <td>
-            <div class="sd-table-staff">
-              <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
-              <div>
+        <app-empty-state
+          *ngIf="hasLoaded && staffPage.content.length === 0 && !errorMessage"
+          illustration="staff"
+          title="No staff found"
+          message="Try adjusting your filters or add a new staff member."
+          actionLabel="Add Staff"
+          actionIcon="pi pi-plus"
+          (action)="addStaff()">
+        </app-empty-state>
+
+        <div class="stf-directory-grid" *ngIf="view === 'grid' && staffPage.content.length > 0">
+          <article *ngFor="let s of staffPage.content; let i = index; trackBy: trackByStaff"
+                   class="tc-card is-clickable stf-staff-card"
+                   [style.animation-delay.ms]="i * 40"
+                   (click)="openProfile(s)">
+            <header class="tc-card__header">
+              <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
+              <div class="tc-card__title">
                 <strong>{{ s.fullName }}</strong>
-                <small>{{ s.email }}</small>
+                <small>{{ s.staffCode }} · {{ s.designation || '—' }}</small>
               </div>
+              <span class="tc-badge" [attr.data-status]="s.employmentStatus">
+                {{ s.employmentStatus | titlecase }}
+              </span>
+            </header>
+
+            <div class="tc-card__body">
+              <span><i class="pi pi-id-card"></i> {{ staffTypeBadge(s.staffType) }}</span>
+              <span><i class="pi pi-briefcase"></i> {{ categoryLabel(s.employmentCategory) }}</span>
+              <span><i class="pi pi-phone"></i> {{ s.mobileNumber || '—' }}</span>
             </div>
-          </td>
-          <td><code>{{ s.staffCode }}</code></td>
-          <td>{{ s.designation || '—' }}</td>
-          <td>
-            <span class="sd-type-badge" [attr.data-type]="s.staffType">{{ staffTypeBadge(s.staffType) }}</span>
-          </td>
-          <td>{{ categoryLabel(s.employmentCategory) }}</td>
-          <td>
-            <span class="sd-status-pill" [attr.data-status]="s.employmentStatus">
-              {{ s.employmentStatus | titlecase }}
-            </span>
-          </td>
-          <td>{{ s.joiningDate | date:'d MMM yyyy' }}</td>
-          <td>
-            <div class="sd-table-actions">
-              <button type="button" class="sd-icon-btn" title="More actions"
-                      (click)="toggleMenu(s.staffId, $event)">
-                <i class="pi pi-ellipsis-v"></i>
-              </button>
-              <div *ngIf="openMenuId === s.staffId" class="sd-dropdown sd-dropdown--table" (click)="$event.stopPropagation()">
-                <button type="button" (click)="openProfile(s)"><i class="pi pi-eye"></i> View</button>
-                <button type="button" (click)="editStaff(s, $event)"><i class="pi pi-pencil"></i> Edit</button>
-                <button type="button" (click)="toggleActive(s, $event)">
-                  <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
-                  {{ s.active ? 'Deactivate' : 'Activate' }}
-                </button>
-                <button type="button" class="danger" (click)="deleteStaff(s, $event)">
-                  <i class="pi pi-trash"></i> Delete
-                </button>
+
+            <footer class="tc-card__footer">
+              <small class="stf-meta-muted">
+                <i class="pi pi-calendar"></i> Joined {{ s.joiningDate | date:'d MMM yyyy' }}
+              </small>
+              <div class="stf-card-actions" (click)="$event.stopPropagation()">
+                <div class="stf-more-menu">
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="More actions"
+                          (click)="toggleMenu(s.staffId, $event)">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                  <div class="stf-more-menu__panel" *ngIf="openMenuId === s.staffId">
+                    <button type="button" class="stf-more-menu__item" (click)="openProfile(s)">
+                      <i class="pi pi-eye"></i> View Profile
+                    </button>
+                    <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
+                      <i class="pi pi-pencil"></i> Edit
+                    </button>
+                    <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
+                      <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+                      {{ s.active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
+                      <i class="pi pi-trash"></i> Delete
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </footer>
+          </article>
+        </div>
+
+        <div class="tc-table-wrap" *ngIf="view === 'table' && staffPage.content.length > 0">
+          <table class="tc-table">
+            <thead>
+              <tr>
+                <th>Staff Member</th>
+                <th>Staff ID</th>
+                <th>Designation</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Joining Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of staffPage.content; trackBy: trackByStaff"
+                  class="is-clickable"
+                  (click)="openProfile(s)">
+                <td>
+                  <div class="tc-table__avatar-cell">
+                    <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
+                    <div class="info">
+                      <strong>{{ s.fullName }}</strong>
+                      <small>{{ s.email }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td><code>{{ s.staffCode }}</code></td>
+                <td>{{ s.designation || '—' }}</td>
+                <td>{{ staffTypeBadge(s.staffType) }}</td>
+                <td>{{ categoryLabel(s.employmentCategory) }}</td>
+                <td>
+                  <span class="tc-badge" [attr.data-status]="s.employmentStatus">
+                    {{ s.employmentStatus | titlecase }}
+                  </span>
+                </td>
+                <td>{{ s.joiningDate | date:'d MMM yyyy' }}</td>
+                <td (click)="$event.stopPropagation()">
+                  <div class="tc-table__actions">
+                    <div class="stf-more-menu">
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="More actions"
+                              (click)="toggleMenu(s.staffId, $event)">
+                        <i class="pi pi-ellipsis-v"></i>
+                      </button>
+                      <div class="stf-more-menu__panel stf-more-menu__panel--table" *ngIf="openMenuId === s.staffId">
+                        <button type="button" class="stf-more-menu__item" (click)="openProfile(s)">
+                          <i class="pi pi-eye"></i> View
+                        </button>
+                        <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
+                          <i class="pi pi-pencil"></i> Edit
+                        </button>
+                        <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
+                          <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+                          {{ s.active ? 'Deactivate' : 'Activate' }}
+                        </button>
+                        <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
+                          <i class="pi pi-trash"></i> Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-list-results>
+
+      <div class="stf-paginator" *ngIf="staffPage.totalElements > 0">
+        <app-paginator
+          [page]="filters.page || 0"
+          [rows]="filters.size || pageSizeOptions[0]"
+          [totalRecords]="staffPage.totalElements"
+          [pageSizeOptions]="pageSizeOptions"
+          noun="staff"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    </div>
   </div>
-
-  </app-list-results>
-
-  <app-paginator
-    *ngIf="staffPage.totalElements > 0"
-    [page]="filters.page || 0"
-    [rows]="filters.size || pageSizeOptions[0]"
-    [totalRecords]="staffPage.totalElements"
-    [pageSizeOptions]="pageSizeOptions"
-    noun="staff"
-    (pageChange)="onPageChange($event)">
-  </app-paginator>
 
   <ng-container *ngIf="showAddDrawer">
     <div class="sd-drawer-overlay" (click)="closeAddDrawer()"></div>
