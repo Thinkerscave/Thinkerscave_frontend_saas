@@ -7,20 +7,39 @@ import { finalize } from 'rxjs';
 
 import { AlumniFilters, AlumniResponse } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
-import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 interface SelectOption {
   label: string;
   value: string | null;
 }
 
+interface KpiTile {
+  key: 'total' | 'thisYear' | 'contactable' | 'linkedIn';
+  label: string;
+  icon: string;
+  tone: KpiTone;
+  value: number;
+}
+
 @Component({
   selector: 'app-alumni-directory',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AppPaginatorComponent],
+  imports: [
+    CommonModule, FormsModule, DropdownModule,
+    AppPaginatorComponent, AppListToolbarComponent, AppListResultsComponent,
+    AvatarComponent, SkeletonComponent, EmptyStateComponent,
+    KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
+  ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './alumni-directory.component.html'
 })
@@ -28,10 +47,12 @@ export class AlumniDirectoryComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
   searching = false;
   errorMessage = '';
+  view: AppListViewMode = this.viewPrefs.initialView();
 
   filters: AlumniFilters = {};
   alumni: AlumniResponse[] = [];
@@ -45,12 +66,59 @@ export class AlumniDirectoryComponent implements OnInit {
     ...this.passoutYears.map(y => ({ label: y, value: y }))
   ];
 
+  get hasContextualQuery(): boolean {
+    return !!(
+      this.filters.keyword?.trim() ||
+      this.filters.passoutYear ||
+      this.filters.course?.trim() ||
+      this.filters.city?.trim()
+    );
+  }
+
+  get contextualResultText(): string {
+    const total = this.alumni.length;
+    if (total <= 0) {
+      return 'No alumni found';
+    }
+    if (this.hasContextualQuery) {
+      const visible = this.paged.length;
+      if (visible >= total) {
+        return `${total} alumni found`;
+      }
+      return `Showing ${visible} of ${total} alumni`;
+    }
+    return 'Stay connected with your past graduates.';
+  }
+
   ngOnInit(): void {
     this.runSearch();
   }
 
   get paged(): AlumniResponse[] {
     return slicePage(this.alumni, this.page, this.pageSize);
+  }
+
+  get kpiTiles(): KpiTile[] {
+    const currentYear = String(new Date().getFullYear());
+    const total = this.alumni.length;
+    const thisYear = this.alumni.filter(a => a.yearPassed === currentYear).length;
+    const contactable = this.alumni.filter(a => a.contact || a.email).length;
+    const linkedIn = this.alumni.filter(a => a.linkedIn).length;
+    return [
+      { key: 'total', label: 'Total Alumni', icon: 'pi pi-users', tone: 'primary', value: total },
+      { key: 'thisYear', label: `Passed Out ${currentYear}`, icon: 'pi pi-calendar', tone: 'info', value: thisYear },
+      { key: 'contactable', label: 'Contactable', icon: 'pi pi-phone', tone: 'success', value: contactable },
+      { key: 'linkedIn', label: 'LinkedIn Linked', icon: 'pi pi-linkedin', tone: 'neutral', value: linkedIn }
+    ];
+  }
+
+  onKeywordChange(value: string): void {
+    this.filters.keyword = value;
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.cdr.markForCheck();
   }
 
   onPageChange(event: AppPageChangeEvent): void {

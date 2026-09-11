@@ -1,104 +1,93 @@
-<section class="tc-page-shell stu-module-page stu-alumni-page">
-  <!-- Header -->
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>Alumni Directory</h1>
-      <p>Stay connected with your past graduates.</p>
-    </div>
-    <div class="tc-page-header__actions">
-      <button type="button" class="tc-btn" (click)="exportAlumni()">
-        <i class="pi pi-download"></i> Export Directory
-      </button>
-    </div>
-  </header>
+<section class="tc-page-shell tc-directory-page stu-alumni-page">
 
-  <!-- Filters -->
+  <tc-saas-page-header subtitle="Stay connected with your past graduates.">
+    <button type="button" class="tc-btn" (click)="exportAlumni()">
+      <i class="pi pi-download"></i> Export Directory
+    </button>
+  </tc-saas-page-header>
+
+  <tc-kpi-group ariaLabel="Alumni counts" mode="equal" [columns]="4">
+    <tc-kpi-card *ngFor="let tile of kpiTiles"
+                 [label]="tile.label"
+                 [value]="tile.value"
+                 [icon]="tile.icon"
+                 [tone]="tile.tone">
+    </tc-kpi-card>
+  </tc-kpi-group>
+
   <div class="tc-card tc-card--panel">
-    <div class="tc-filter-bar">
-      <div class="tc-form-field alumni-filter-grow">
-        <label>Search</label>
-        <input type="text" [(ngModel)]="filters.keyword"
-               placeholder="Name, Company, City…"
-               (keyup.enter)="runSearch()"/>
-      </div>
-      <div class="tc-form-field">
-        <label>Passout Year</label>
+    <div class="tc-card__body">
+      <p class="alm-context-summary" *ngIf="!loading && hasContextualQuery">{{ contextualResultText }}</p>
+
+      <app-list-toolbar
+        [flat]="true"
+        [search]="filters.keyword || ''"
+        searchPlaceholder="Name, Company, City…"
+        [searching]="searching"
+        [view]="view"
+        viewAriaLabel="Alumni directory view"
+        (searchChange)="onKeywordChange($event)"
+        (searchDebounced)="runSearch()"
+        (submitted)="runSearch()"
+        (reset)="clearFilters()"
+        (viewChange)="onViewModeChange($event)">
         <p-dropdown
           [options]="passoutYearOptions"
           [(ngModel)]="filters.passoutYear"
           optionLabel="label"
           optionValue="value"
+          placeholder="Passout Year"
           appendTo="body"
-          styleClass="att-filter-dropdown">
+          styleClass="alm-filter-dropdown">
         </p-dropdown>
-      </div>
-      <div class="tc-form-field">
-        <label>Course</label>
-        <input type="text" [(ngModel)]="filters.course" placeholder="B.Tech, MBA…"/>
-      </div>
-      <div class="tc-form-field">
-        <label>City</label>
-        <input type="text" [(ngModel)]="filters.city" placeholder="Mumbai, Delhi…"/>
-      </div>
-      <div class="tc-form-field alumni-filter-actions">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="runSearch()" [disabled]="searching">
-          <i class="pi" [class.pi-search]="!searching" [class.pi-spin]="searching" [class.pi-spinner]="searching"></i>
-          Search
-        </button>
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="clearFilters()">Reset</button>
-      </div>
-    </div>
-    
-    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline alumni-inline-error">
-      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-    </div>
+        <input type="text" class="alm-filter-input" [(ngModel)]="filters.course" placeholder="Course (B.Tech, MBA…)" (keyup.enter)="runSearch()"/>
+        <input type="text" class="alm-filter-input" [(ngModel)]="filters.city" placeholder="City" (keyup.enter)="runSearch()"/>
+      </app-list-toolbar>
 
-    <!-- Loading -->
-    <div class="tc-loading" *ngIf="loading">
-      <i class="pi pi-spin pi-spinner"></i> Loading alumni directory…
-    </div>
+      <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
+        <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
+      </div>
 
-    <!-- Table -->
-    <div class="tc-table-wrap alumni-table-wrap" *ngIf="!loading && alumni.length">
-      <table class="tc-table">
-        <thead>
-          <tr>
-            <th>Alumni</th>
-            <th>Passout Year</th>
-            <th>Course & Batch</th>
-            <th>Current Occupation</th>
-            <th>Company / Org</th>
-            <th>Location</th>
-            <th>Contact</th>
-            <th class="alumni-actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let a of paged">
-            <td>
-              <div class="alumni-person">
-                <div class="tc-avatar tc-avatar--initials alumni-avatar">
-                  <!-- Mocking photo logic for now -->
-                  <span>{{ initials(a.fullName) }}</span>
-                </div>
+      <app-list-results [busy]="searching">
+        <div class="alm-directory-skeleton" *ngIf="loading">
+          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
+        </div>
+
+        <app-empty-state
+          *ngIf="!loading && !alumni.length && !errorMessage"
+          illustration="students"
+          title="No alumni found"
+          message="Adjust your search filters to find registered alumni.">
+        </app-empty-state>
+
+        <div class="alm-directory-grid" *ngIf="view === 'grid' && !loading && paged.length">
+          <article *ngFor="let a of paged; let i = index"
+                   class="tc-card is-clickable alm-alumni-card"
+                   [style.animation-delay.ms]="i * 40"
+                   (click)="viewProfile(a.studentId)">
+            <header class="tc-card__header">
+              <tc-avatar [name]="a.fullName" size="lg"></tc-avatar>
+              <div class="tc-card__title">
                 <strong>{{ a.fullName }}</strong>
+                <small>{{ a.course || '—' }} · {{ a.batchYear || '—' }}</small>
               </div>
-            </td>
-            <td><strong>{{ a.yearPassed || '—' }}</strong></td>
-            <td>{{ a.course || '—' }}<br><small class="alumni-muted">{{ a.batchYear || '' }}</small></td>
-            <td>{{ a.occupation || '—' }}</td>
-            <td>{{ a.employer || '—' }}</td>
-            <td>{{ a.city || '—' }}</td>
-            <td class="alumni-contact">
-              <div *ngIf="a.contact"><i class="pi pi-phone"></i> {{ a.contact }}</div>
-              <div *ngIf="a.email" class="alumni-contact__email"><i class="pi pi-envelope"></i> {{ a.email }}</div>
-            </td>
-            <td>
-              <div class="alumni-actions">
+              <span class="tc-badge">{{ a.yearPassed || '—' }}</span>
+            </header>
+
+            <div class="tc-card__body">
+              <span><i class="pi pi-briefcase"></i> {{ a.occupation || '—' }}</span>
+              <span><i class="pi pi-building"></i> {{ a.employer || '—' }}</span>
+              <span><i class="pi pi-map-marker"></i> {{ a.city || '—' }}</span>
+            </div>
+
+            <footer class="tc-card__footer">
+              <small class="alm-meta-muted" *ngIf="a.contact"><i class="pi pi-phone"></i> {{ a.contact }}</small>
+              <small class="alm-meta-muted" *ngIf="!a.contact && a.email"><i class="pi pi-envelope"></i> {{ a.email }}</small>
+              <div class="alm-card-actions" (click)="$event.stopPropagation()">
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
                   <i class="pi pi-user"></i>
                 </button>
-                <button class="tc-btn tc-btn--ghost tc-btn--icon alumni-linkedin-btn" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)">
+                <button class="tc-btn tc-btn--ghost tc-btn--icon" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)">
                   <i class="pi pi-linkedin"></i>
                 </button>
                 <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
@@ -108,25 +97,75 @@
                   <i class="pi pi-phone"></i>
                 </button>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <app-paginator
-      *ngIf="!loading && alumni.length"
-      [page]="page"
-      [rows]="pageSize"
-      [totalRecords]="alumni.length"
-      [pageSizeOptions]="pageSizeOptions"
-      noun="alumni"
-      (pageChange)="onPageChange($event)">
-    </app-paginator>
+            </footer>
+          </article>
+        </div>
 
-    <div class="tc-empty-state alumni-empty" *ngIf="!loading && !alumni.length">
-      <i class="pi pi-users"></i>
-      <h3>No alumni found</h3>
-      <p>Adjust your search filters to find registered alumni.</p>
+        <div class="tc-table-wrap" *ngIf="view === 'table' && !loading && paged.length">
+          <table class="tc-table">
+            <thead>
+              <tr>
+                <th>Alumni</th>
+                <th>Passout Year</th>
+                <th>Course & Batch</th>
+                <th>Current Occupation</th>
+                <th>Company / Org</th>
+                <th>Location</th>
+                <th>Contact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of paged" class="is-clickable" (click)="viewProfile(a.studentId)">
+                <td>
+                  <div class="tc-table__avatar-cell">
+                    <tc-avatar [name]="a.fullName" size="sm"></tc-avatar>
+                    <div class="info">
+                      <strong>{{ a.fullName }}</strong>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>{{ a.yearPassed || '—' }}</strong></td>
+                <td>{{ a.course || '—' }}<br><small class="alm-meta-muted">{{ a.batchYear || '' }}</small></td>
+                <td>{{ a.occupation || '—' }}</td>
+                <td>{{ a.employer || '—' }}</td>
+                <td>{{ a.city || '—' }}</td>
+                <td>
+                  <div *ngIf="a.contact"><i class="pi pi-phone"></i> {{ a.contact }}</div>
+                  <div *ngIf="a.email"><i class="pi pi-envelope"></i> {{ a.email }}</div>
+                </td>
+                <td (click)="$event.stopPropagation()">
+                  <div class="tc-table__actions">
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="View Student Profile" *ngIf="a.studentId" (click)="viewProfile(a.studentId)">
+                      <i class="pi pi-user"></i>
+                    </button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="LinkedIn Profile" *ngIf="a.linkedIn" (click)="openLinkedIn(a.linkedIn)">
+                      <i class="pi pi-linkedin"></i>
+                    </button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Send Email" *ngIf="a.email" (click)="emailAlumni(a.email)">
+                      <i class="pi pi-envelope"></i>
+                    </button>
+                    <button class="tc-btn tc-btn--ghost tc-btn--icon" title="Call" *ngIf="a.contact" (click)="callAlumni(a.contact)">
+                      <i class="pi pi-phone"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-list-results>
+
+      <div class="alm-paginator" *ngIf="!loading && alumni.length > 0">
+        <app-paginator
+          [page]="page"
+          [rows]="pageSize"
+          [totalRecords]="alumni.length"
+          [pageSizeOptions]="pageSizeOptions"
+          noun="alumni"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
+      </div>
     </div>
   </div>
 </section>

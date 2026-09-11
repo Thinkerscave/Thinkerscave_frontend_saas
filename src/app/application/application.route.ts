@@ -177,7 +177,7 @@ export const APPLICATION_ROUTES: Routes = [
         loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Staff' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
           { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
           { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
           { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
@@ -286,7 +286,7 @@ export const APPLICATION_ROUTES: Routes = [
         loadComponent: () => import('./students/components/students-workspace/students-workspace.component').then(m => m.StudentsWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Students' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
           { path: 'transfers', pathMatch: 'full', redirectTo: '/app/transfers' },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },

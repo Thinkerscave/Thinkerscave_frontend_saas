@@ -28,11 +28,11 @@ export class StatusBadgeComponent {
         ACTIVE: 'success', APPROVED: 'success', PUBLISHED: 'success', PAID: 'success',
         COMPLETED: 'success', SUCCESS: 'success', ENABLED: 'success', DELIVERED: 'success',
         PENDING: 'warning', DRAFT: 'warning', SCHEDULED: 'warning', PARTIALLY_PAID: 'warning',
-        UNDER_REVIEW: 'warning', IN_PROGRESS: 'warning', ON_HOLD: 'warning',
+        UNDER_REVIEW: 'warning', IN_PROGRESS: 'warning', ON_HOLD: 'warning', TRIAL: 'warning',
         REJECTED: 'danger', FAILED: 'danger', CANCELLED: 'danger', OVERDUE: 'danger',
-        EXPELLED: 'danger', BLOCKED: 'danger', ERROR: 'danger',
+        EXPELLED: 'danger', BLOCKED: 'danger', ERROR: 'danger', SUSPENDED: 'danger',
         INACTIVE: 'neutral', ARCHIVED: 'neutral', CLOSED: 'neutral', DISABLED: 'neutral',
-        READ: 'info', SENT: 'info', ISSUED: 'info', NOTIFIED: 'info'
+        READ: 'info', SENT: 'info', ISSUED: 'info', NOTIFIED: 'info', LEAD: 'info'
     };
 
     get resolvedTone(): StatusTone {

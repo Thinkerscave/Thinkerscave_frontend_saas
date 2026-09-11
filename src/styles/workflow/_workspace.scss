@@ -503,33 +503,7 @@
   align-items: center;
 }
 
-.tc-table {
-  display: grid;
-  overflow: auto;
-}
 
-.tc-table-row {
-  min-width: 760px;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(130px, 1fr));
-  gap: 12px;
-  align-items: center;
-  padding: 12px;
-  border-bottom: 1px solid var(--wf-line);
-  color: var(--wf-muted);
-  background: transparent;
-}
-
-.tc-table-row span:first-child {
-  color: var(--wf-text);
-  font-weight: 700;
-}
-
-.tc-table-head {
-  color: var(--wf-text);
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px 8px 0 0;
-}
 
 .tc-doc-list span {
   display: flex;

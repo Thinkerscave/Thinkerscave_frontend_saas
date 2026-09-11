@@ -371,70 +371,135 @@
   justify-content: flex-end;
 }
 
-.alumni-filter-grow {
-  flex: 2;
-  min-width: 200px;
+/* ════════════════════════════════════════════════════════════════════════════
+   ALUMNI DIRECTORY (golden-page structure — mirrors Student Directory exactly)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.alm-context-summary {
+  margin: 0;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
 }
 
-.alumni-filter-actions {
-  justify-content: flex-end;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 8px;
+.alm-filter-dropdown {
+  min-width: 150px;
 }
 
-.alumni-inline-error {
-  margin-top: 12px;
+.alm-filter-input {
+  min-width: 150px;
+  height: 2.35rem;
+  padding: 0 var(--tc-space-3);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md, 8px);
+  font-size: 0.85rem;
+  color: var(--tc-text);
+  background: var(--tc-surface-0);
+
+  &:focus {
+    outline: none;
+    border-color: var(--tc-accent);
+  }
 }
 
-.alumni-table-wrap {
-  margin-top: 16px;
+.alm-directory-skeleton {
+  padding: 0 0 var(--tc-space-2);
 }
 
-.alumni-actions-col {
-  width: 120px;
+.alm-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--tc-space-4);
 }
 
-.alumni-person {
-  display: flex;
+.alm-directory-grid .alm-alumni-card {
+  animation: alm-fade-in-up 320ms ease both;
+  min-height: 208px;
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__header {
   align-items: center;
-  gap: 10px;
+  gap: var(--tc-space-3);
+  padding-bottom: var(--tc-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--tc-border) 88%, transparent);
 }
 
-.alumni-avatar {
-  width: 36px;
-  height: 36px;
+.alm-directory-grid .alm-alumni-card .tc-card__title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__title strong {
+  font-size: 0.97rem;
+  line-height: 1.2;
+  color: var(--tc-text);
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__title small {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--tc-text-muted);
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__body {
+  display: grid;
+  gap: var(--tc-space-2);
+  padding: var(--tc-space-3) 0 var(--tc-space-2);
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__body > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tc-space-2);
+  color: var(--tc-text-muted);
+  font-size: 0.83rem;
+}
+
+.alm-directory-grid .alm-alumni-card .tc-card__body i {
+  color: var(--tc-accent);
   font-size: 0.78rem;
 }
 
-.alumni-muted {
+.alm-directory-grid .alm-alumni-card .tc-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tc-space-2);
+  padding-top: var(--tc-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--tc-border) 86%, transparent);
+}
+
+@keyframes alm-fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.alm-meta-muted {
   color: var(--tc-text-muted);
+  font-size: 0.74rem;
 }
 
-.alumni-contact {
-  color: var(--tc-text-muted);
-  font-size: 0.8rem;
-}
-
-.alumni-contact i {
-  margin-right: 4px;
-}
-
-.alumni-contact__email {
-  margin-top: 2px;
-}
-
-.alumni-actions {
+.alm-card-actions {
   display: flex;
   gap: 4px;
 }
 
-.alumni-linkedin-btn {
-  color: #0a66c2;
+.alm-paginator {
+  margin-top: 0;
+  padding-top: var(--tc-space-4);
 }
 
-.alumni-empty {
-  padding: 48px 0;
+@media (max-width: 1280px) {
+  .alm-directory-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+
+@media (max-width: 1024px) {
+  .alm-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .alm-directory-grid { grid-template-columns: 1fr; }
 }
 
 .stu-alert {
@@ -1220,9 +1285,9 @@
 /* ============================================================
    DIRECTORY LAYOUT HELPERS (no inline styles)
    ============================================================ */
-.stu-directory-page {
-  gap: 14px;
-  padding-bottom: 8px;
+/* Layout spacing (header -> KPI -> panel gaps) comes from the shared .tc-directory-page class */
+.stu-directory-page > .tc-card--panel {
+  border-color: color-mix(in srgb, var(--tc-border) 88%, var(--tc-accent) 12%);
 }
 
 .stu-module-page .tc-card--panel {
@@ -1290,59 +1355,6 @@
   width: 100%;
 }
 
-.stu-directory-page .stu-directory-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.stu-directory-toolbar__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.stu-kpi-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.stu-kpi-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  border: 1px solid var(--tc-border);
-  background: var(--tc-surface-0, #fff);
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
-  color: inherit;
-}
-
-.stu-kpi-chip strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.stu-kpi-chip span {
-  font-size: 0.7rem;
-  color: var(--tc-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-}
-
-.stu-kpi-chip.is-active {
-  border-color: var(--tc-accent);
-  background: color-mix(in srgb, var(--tc-accent) 10%, transparent);
-}
-
 .stu-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -1408,7 +1420,7 @@
 }
 
 .stu-panel-title {
-  margin: 0 0 2px;
+  margin: 0;
 }
 
 .stu-panel-tools {
@@ -1423,27 +1435,13 @@
 }
 
 .stu-directory-page .tc-card--panel > .tc-card__header {
-  padding: 16px 16px 12px;
+  padding: var(--tc-space-4) var(--tc-space-4) var(--tc-space-3);
 }
 
-.stu-directory-page .tc-filter-bar {
-  display: grid;
-  grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(150px, 1fr)) auto;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 0;
-  border-top: 1px solid var(--tc-border);
-  border-bottom: 1px solid var(--tc-border);
-  border-radius: 0;
-  background: var(--tc-surface-0);
-  box-shadow: none;
-}
-
-.stu-filter-actions {
-  justify-content: flex-end;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 8px;
+.stu-context-summary {
+  margin: 0;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
 }
 
 .stu-filter-dropdown {
@@ -1451,24 +1449,24 @@
 }
 
 .stu-directory-skeleton {
-  padding: 8px 0 16px;
+  padding: 0 0 var(--tc-space-2);
 }
 
 .stu-directory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--tc-space-4);
 }
 
 .stu-directory-grid .stu-student-card {
   animation: stu-fade-in-up 320ms ease both;
-  min-height: 210px;
+  min-height: 208px;
 }
 
 .stu-directory-grid .stu-student-card .tc-card__header {
   align-items: center;
-  gap: 10px;
-  padding-bottom: 10px;
+  gap: var(--tc-space-3);
+  padding-bottom: var(--tc-space-3);
   border-bottom: 1px solid color-mix(in srgb, var(--tc-border) 88%, transparent);
 }
 
@@ -1487,19 +1485,20 @@
 
 .stu-directory-grid .stu-student-card .tc-card__title small {
   font-size: 0.78rem;
+  line-height: 1.25;
   color: var(--tc-text-muted);
 }
 
 .stu-directory-grid .stu-student-card .tc-card__body {
   display: grid;
-  gap: 6px;
-  padding: 12px 0 8px;
+  gap: var(--tc-space-2);
+  padding: var(--tc-space-3) 0 var(--tc-space-2);
 }
 
 .stu-directory-grid .stu-student-card .tc-card__body > span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--tc-space-2);
   color: var(--tc-text-muted);
   font-size: 0.83rem;
 }
@@ -1510,8 +1509,8 @@
 }
 
 .stu-directory-grid .stu-student-card .tc-card__footer {
-  padding-top: 8px;
-  border-top: 1px dashed var(--tc-border);
+  padding-top: var(--tc-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--tc-border) 86%, transparent);
 }
 
 @keyframes stu-fade-in-up {
@@ -1608,41 +1607,23 @@
 }
 
 .stu-paginator {
-  margin-top: 8px;
+  margin-top: 0;
+  padding-top: var(--tc-space-4);
 }
 
-@media (max-width: 1180px) {
-  .stu-directory-page .tc-filter-bar {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
+@media (max-width: 1280px) {
+  .stu-directory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
+}
 
-  .stu-filter-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
+@media (max-width: 1024px) {
+  .stu-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .stu-directory-toolbar__actions {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-left: 0;
-  }
-
-  .stu-directory-toolbar__actions .tc-btn:first-child {
-    grid-column: 1 / -1;
-  }
-
-  .stu-directory-page .tc-filter-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .stu-filter-actions {
-    justify-content: flex-start;
-  }
-
   .stu-directory-grid {
     grid-template-columns: 1fr;
   }

@@ -1,67 +1,120 @@
-.users-list {
-  &__toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    align-items: center;
+.usr-context-summary {
+  margin: 0;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
+}
 
-    .app-grid-table-toggle,
-    .app-list-view-bar {
-      margin-left: auto;
-    }
-  }
-  &__avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: var(--saas-primary-soft, #dbeafe);
-    color: var(--saas-primary, #2563eb);
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-right: 0.5rem;
-    vertical-align: middle;
-    &--lg { width: 3rem; height: 3rem; font-size: 1rem; margin: 0 0 0.5rem; }
-  }
-  &__row {
-    cursor: pointer;
-    &:hover { background: var(--saas-surface-muted, #f8fafc); }
-  }
-  &__name {
-    color: var(--saas-primary, #2563eb);
-    font-weight: 600;
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
-  }
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.85rem;
-  }
-  &__card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.2rem;
-    padding: 1rem;
-    border: 1px solid var(--saas-border, #e2e8f0);
-    border-radius: 12px;
-    background: var(--tc-surface-card-solid);
-    cursor: pointer;
-    text-align: left;
-    small, p { color: var(--saas-text-soft, #64748b); margin: 0; font-size: 0.82rem; }
-    &:hover { border-color: var(--saas-primary, #2563eb); }
-  }
-  &__card-meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
-    color: var(--saas-text-soft, #64748b);
-  }
+.usr-filter-dropdown {
+  min-width: 150px;
+}
+
+.usr-directory-skeleton {
+  padding: 0 0 var(--tc-space-2);
+}
+
+.usr-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--tc-space-4);
+}
+
+.usr-directory-grid .usr-user-card {
+  animation: usr-fade-in-up 320ms ease both;
+  min-height: 176px;
+}
+
+.usr-directory-grid .usr-user-card .tc-card__header {
+  align-items: center;
+  gap: var(--tc-space-3);
+  padding-bottom: var(--tc-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--tc-border) 88%, transparent);
+}
+
+.usr-directory-grid .usr-user-card .tc-card__title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.usr-directory-grid .usr-user-card .tc-card__title strong {
+  font-size: 0.97rem;
+  line-height: 1.2;
+  color: var(--tc-text);
+}
+
+.usr-directory-grid .usr-user-card .tc-card__title small {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--tc-text-muted);
+}
+
+.usr-directory-grid .usr-user-card .tc-card__body {
+  display: grid;
+  gap: var(--tc-space-2);
+  padding: var(--tc-space-3) 0 var(--tc-space-2);
+}
+
+.usr-directory-grid .usr-user-card .tc-card__body > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tc-space-2);
+  color: var(--tc-text-muted);
+  font-size: 0.83rem;
+}
+
+.usr-directory-grid .usr-user-card .tc-card__body i {
+  color: var(--tc-accent);
+  font-size: 0.78rem;
+}
+
+.usr-directory-grid .usr-user-card .tc-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--tc-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--tc-border) 86%, transparent);
+}
+
+@keyframes usr-fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.usr-meta-muted {
+  color: var(--tc-text-muted);
+  font-size: 0.74rem;
+}
+
+.usr-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--tc-accent);
+}
+
+.usr-table-name {
+  color: var(--tc-accent);
+  font-weight: 600;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.usr-paginator {
+  margin-top: 0;
+  padding-top: var(--tc-space-4);
+}
+
+@media (max-width: 1280px) {
+  .usr-directory-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+
+@media (max-width: 1024px) {
+  .usr-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .usr-directory-grid { grid-template-columns: 1fr; }
 }

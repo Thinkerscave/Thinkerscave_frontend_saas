@@ -1,53 +1,48 @@
 /* ============================================================
    ThinkersCave SaaS premium primitives — global styles
    Matches inspired image: light bg, white cards, blue primary
+
+   NOTE (Global UI Standardization, 2026-09-11): `saas-*` custom
+   properties are a legacy naming layer kept for backward
+   compatibility with existing markup (`.saas-*`, `tc-saas-*`
+   components). They now ALIAS the canonical `tc-*` tokens defined
+   in `src/styles/theme/_tokens.scss` instead of redefining their
+   own hex values, so there is a single source of truth for color/
+   radius/shadow across the app. Do not reintroduce hardcoded hex
+   values here — add/adjust tokens in `_tokens.scss` instead.
    ============================================================ */
 
 :root {
-  --saas-bg: #F4F6FB;
-  --saas-surface: #FFFFFF;
-  --saas-surface-muted: #F8FAFC;
-  --saas-border: #E5E9F2;
-  --saas-border-strong: #D5DBE8;
-  --saas-text: #1A2238;
-  --saas-text-muted: #5A6479;
-  --saas-text-soft: #8993A8;
+  --saas-bg: var(--tc-bg);
+  --saas-surface: var(--tc-surface-0);
+  --saas-surface-muted: var(--tc-surface-50);
+  --saas-border: var(--tc-border);
+  --saas-border-strong: var(--tc-border-strong);
+  --saas-text: var(--tc-text);
+  --saas-text-muted: var(--tc-text-muted);
+  --saas-text-soft: var(--tc-text-soft);
   --saas-primary: var(--tc-accent);
-  --saas-primary-soft: color-mix(in srgb, var(--tc-accent) 16%, transparent);
-  --saas-primary-dark: color-mix(in srgb, var(--tc-accent) 78%, black);
-  --saas-success: #16A34A;
-  --saas-success-soft: #DCFCE7;
-  --saas-warning: #F59E0B;
-  --saas-warning-soft: #FEF3C7;
-  --saas-danger: #EF4444;
-  --saas-danger-soft: #FEE2E2;
-  --saas-info: #0EA5E9;
-  --saas-info-soft: #E0F2FE;
-  --saas-purple: #A855F7;
-  --saas-purple-soft: #F3E8FF;
-  --saas-radius: 14px;
-  --saas-radius-sm: 10px;
-  --saas-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
-  --saas-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-  --saas-shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+  --saas-primary-soft: var(--tc-accent-soft);
+  --saas-primary-dark: var(--tc-accent-strong);
+  --saas-success: var(--tc-success);
+  --saas-success-soft: var(--tc-success-soft);
+  --saas-warning: var(--tc-warning);
+  --saas-warning-soft: var(--tc-warning-soft);
+  --saas-danger: var(--tc-danger);
+  --saas-danger-soft: var(--tc-danger-soft);
+  --saas-info: var(--tc-info);
+  --saas-info-soft: var(--tc-info-soft);
+  --saas-purple: var(--tc-purple);
+  --saas-purple-soft: var(--tc-purple-soft);
+  --saas-radius: var(--tc-radius-lg);
+  --saas-radius-sm: var(--tc-radius-sm);
+  --saas-shadow-sm: var(--tc-shadow-xs);
+  --saas-shadow: var(--tc-shadow-sm);
+  --saas-shadow-lg: var(--tc-shadow-lg);
 }
 
-.tc-theme-dark {
-  --saas-bg: #0B1220;
-  --saas-surface: #131C2F;
-  --saas-surface-muted: #1A2540;
-  --saas-border: #1F2A44;
-  --saas-border-strong: #2A3656;
-  --saas-text: #E6EBF7;
-  --saas-text-muted: #A5AEC5;
-  --saas-text-soft: #7B8AA5;
-  --saas-primary-soft: color-mix(in srgb, var(--tc-accent) 22%, transparent);
-  --saas-success-soft: rgba(22, 163, 74, 0.18);
-  --saas-warning-soft: rgba(245, 158, 11, 0.18);
-  --saas-danger-soft: rgba(239, 68, 68, 0.18);
-  --saas-info-soft: rgba(14, 165, 233, 0.18);
-  --saas-purple-soft: rgba(168, 85, 247, 0.18);
-}
+/* Dark-mode values now come for free via the tc-* aliases above,
+   since _tokens.scss redefines those under :root.tc-theme-dark. */
 
 /* ---------------- Page wrapper ---------------- */
 .saas-page,

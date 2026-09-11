@@ -28,6 +28,7 @@ export interface SaasStep { key: string; label: string; }
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { style: 'display: block;' },
   template: `
     <header class="saas-page-header" [class.saas-page-header--actions-only]="!showTitle">
       <div class="saas-page-header__main" *ngIf="showTitle">

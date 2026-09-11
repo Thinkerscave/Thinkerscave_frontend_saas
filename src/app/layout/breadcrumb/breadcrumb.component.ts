@@ -67,6 +67,8 @@ export class BreadcrumbComponent implements OnInit {
 
   private pageOverride: AppPageHeader | null = null;
 
+  private routeTitle: string | null = null;
+
   private routeSubtitle: string | null = null;
 
   private resolvedCrumbs: ResolvedCrumb[] = [];
@@ -173,7 +175,7 @@ export class BreadcrumbComponent implements OnInit {
 
     const labels = this.resolvedCrumbs.map(crumb => crumb.label);
 
-    this.title = this.pageOverride?.title ?? labels.at(-1) ?? 'Dashboard';
+    this.title = this.pageOverride?.title ?? this.routeTitle ?? labels.at(-1) ?? 'Dashboard';
 
     this.subtitle = this.pageOverride?.subtitle ?? this.routeSubtitle ?? null;
 
@@ -205,6 +207,8 @@ export class BreadcrumbComponent implements OnInit {
     const crumbs: ResolvedCrumb[] = [];
 
     const pathParts: string[] = [];
+
+    this.routeTitle = null;
 
     this.routeSubtitle = null;
 
@@ -245,6 +249,14 @@ export class BreadcrumbComponent implements OnInit {
       if (subtitle) {
 
         this.routeSubtitle = subtitle;
+
+      }
+
+      const pageTitle = snap.data['pageTitle'] as string | undefined;
+
+      if (pageTitle) {
+
+        this.routeTitle = pageTitle;
 
       }
 
