@@ -28,7 +28,8 @@ import {
   LeadTimelineItem,
   LookupOption,
   PageResponse,
-  RecordFeeRequest
+  RecordFeeRequest,
+  FamilyMatchResult
 } from '../models/admissions-crm.model';
 
 interface ApiEnvelope<T> {
@@ -310,6 +311,22 @@ export class AdmissionsCrmService {
       .pipe(map(r => r.data));
   }
 
+  requestCorrection(id: number, reason: string): Observable<ApplicationRecord> {
+    const params = new HttpParams().set('reason', reason);
+    return this.http
+      .post<ApiEnvelope<ApplicationRecord>>(`${this.applications}/${id}/request-correction`, {}, { params })
+      .pipe(map(r => r.data));
+  }
+
+  findFamilyMatch(mobile?: string | null, email?: string | null): Observable<FamilyMatchResult> {
+    let params = new HttpParams();
+    if (mobile) params = params.set('mobile', mobile);
+    if (email) params = params.set('email', email);
+    return this.http
+      .get<ApiEnvelope<FamilyMatchResult>>(`${this.applications}/family-match`, { params })
+      .pipe(map(r => r.data));
+  }
+
   rejectApplication(id: number, remarks?: string): Observable<ApplicationRecord> {
     let params = new HttpParams();
     if (remarks) params = params.set('remarks', remarks);
@@ -373,6 +390,12 @@ export class AdmissionsCrmService {
 
   documentDownloadUrl(documentId: number): string {
     return `${this.applications}/documents/${documentId}/download`;
+  }
+
+  downloadDocumentBlob(documentId: number): Observable<Blob> {
+    return this.http.get(`${this.applications}/documents/${documentId}/download`, {
+      responseType: 'blob'
+    });
   }
 
   applicationProgress(id: number): Observable<ApplicationProgress> {

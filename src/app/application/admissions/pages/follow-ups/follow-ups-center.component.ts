@@ -12,7 +12,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import {
   SaasPageHeaderComponent,
@@ -146,11 +147,12 @@ export class FollowUpsCenterComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
+    const empty: FollowUpRecord[] = [];
     forkJoin({
-      today: this.api.todayFollowUps(),
-      overdue: this.api.overdueFollowUps(),
-      upcoming: this.api.upcomingFollowUps(),
-      completed: this.api.completedFollowUps()
+      today: this.api.todayFollowUps().pipe(catchError(() => of(empty))),
+      overdue: this.api.overdueFollowUps().pipe(catchError(() => of(empty))),
+      upcoming: this.api.upcomingFollowUps().pipe(catchError(() => of(empty))),
+      completed: this.api.completedFollowUps().pipe(catchError(() => of(empty)))
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -162,6 +164,16 @@ export class FollowUpsCenterComponent implements OnInit {
           this.overdueItems.set(overdue);
           this.upcomingItems.set(upcoming);
           this.completedItems.set(completed);
+
+          // If Today is empty but Overdue has work, land on Overdue so the queue isn't blank.
+          if (
+            this.activeTab() === 'today' &&
+            today.length === 0 &&
+            overdue.length > 0 &&
+            !this.route.snapshot.queryParamMap.get('tab')
+          ) {
+            this.onTabChange('overdue');
+          }
         },
         error: () => {
           const msg = 'Unable to load follow-ups. Please retry.';

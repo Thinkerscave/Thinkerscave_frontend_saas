@@ -1,12 +1,13 @@
 <app-toast />
 
-<section class="tc-page-shell adm-page adm-wizard adm-form-canvas">
+<section class="tc-page-shell adm-page adm-wizard adm-app-form">
   <tc-saas-page-header
-    [title]="applicationId ? 'Edit application' : 'Application form'"
-    subtitle="Capture student, family, previous school, documents, and fee received at the counter."
+    [title]="applicationId ? 'Edit application' : 'Application Form'"
+    [subtitle]="stepSubtitle"
   >
     <button type="button" class="tc-btn tc-btn--back" (click)="cancel()">
-      <i class="pi pi-arrow-left"></i> Back
+      <i class="pi pi-arrow-left"></i>
+      {{ inquiryId ? 'Back to Lead' : 'Back' }}
     </button>
   </tc-saas-page-header>
 
@@ -16,247 +17,817 @@
   <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading application…</div>
 
   <ng-container *ngIf="!loading">
-    <tc-saas-stepper [steps]="steps" [activeIndex]="activeStep" />
-    <div class="adm-wizard__progress" *ngIf="progress">
-      <div class="adm-wizard__bar"><span [style.width.%]="progress.completionPercent"></span></div>
-      <span class="adm-wizard__pct">{{ progress.completionPercent }}%</span>
+    <div class="adm-app-form__meta">
+      <span class="adm-app-form__step-tag">Step {{ activeStep + 1 }} of {{ steps.length }}</span>
+      <h2 class="adm-app-form__step-title">{{ stepTitle }}</h2>
     </div>
 
-    <tc-saas-panel [title]="steps[activeStep].label">
-      <form [formGroup]="form">
-        <div class="adm-wizard__body" *ngIf="activeStep === 0">
-          <fieldset class="adm-fieldset" formGroupName="student">
-            <legend>Student</legend>
-            <div class="tc-form-field">
-              <label>Full name *</label>
-              <input type="text" formControlName="applicantName" />
-              <small class="adm-field-error" *ngIf="showError('student.applicantName')">Required</small>
+    <div class="adm-banner adm-banner--warning" *ngIf="currentStatus === 'ACTION_REQUIRED' && correctionReason">
+      <strong>Action required</strong>
+      <p>{{ correctionReason }}</p>
+    </div>
+
+    <tc-saas-stepper [steps]="steps" [activeIndex]="activeStep" (stepSelect)="goToStep($event)" />
+
+    <form [formGroup]="form" class="adm-app-form__canvas" novalidate>
+      <!-- Step 1: Student & Family -->
+      <div class="adm-app-form__steps" *ngIf="activeStep === 0">
+        <article class="adm-section-card" formGroupName="student">
+          <header class="adm-section-card__head">
+            <i class="pi pi-user"></i>
+            <div>
+              <h3>Student Information</h3>
+              <p>Basic identity and contact details for the applicant.</p>
             </div>
-            <div class="tc-form-field">
-              <label>Date of birth *</label>
+          </header>
+          <div class="adm-form-grid">
+            <div class="tc-form-field" [class.is-invalid]="showError('student.applicantName')">
+              <label>Full Name *</label>
+              <input type="text" formControlName="applicantName" placeholder="Enter full name" />
+              <small class="adm-field-error" *ngIf="showError('student.applicantName')">{{ fieldError('student.applicantName', 'Full name') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('student.dateOfBirth')">
+              <label>Date of Birth *</label>
               <input type="date" formControlName="dateOfBirth" [max]="today" />
+              <small class="adm-field-error" *ngIf="showError('student.dateOfBirth')">{{ fieldError('student.dateOfBirth', 'Date of birth') }}</small>
             </div>
-            <div class="tc-form-field">
+            <div class="tc-form-field" [class.is-invalid]="showError('student.gender')">
               <label>Gender *</label>
-              <p-dropdown [options]="genderOptions" formControlName="gender" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <p-dropdown
+                [options]="genderOptions"
+                formControlName="gender"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+              ></p-dropdown>
+              <small class="adm-field-error" *ngIf="showError('student.gender')">{{ fieldError('student.gender', 'Gender') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Blood group</label>
-              <p-dropdown [options]="bloodGroups" formControlName="bloodGroup" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <label>Blood Group</label>
+              <p-dropdown
+                [options]="bloodGroups"
+                formControlName="bloodGroup"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select"
+              ></p-dropdown>
             </div>
-            <div class="tc-form-field">
-              <label>Category</label>
-              <p-dropdown [options]="categoryOptions" formControlName="category" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-            </div>
-            <div class="tc-form-field">
-              <label>Aadhaar</label>
-              <input type="text" formControlName="aadhaarNumber" maxlength="12" placeholder="12 digits" />
-            </div>
-            <div class="tc-form-field">
-              <label>Nationality</label>
+            <div class="tc-form-field" [class.is-invalid]="showError('student.nationality')">
+              <label>Nationality *</label>
               <input type="text" formControlName="nationality" />
+              <small class="adm-field-error" *ngIf="showError('student.nationality')">{{ fieldError('student.nationality', 'Nationality') }}</small>
+            </div>
+            <div class="tc-form-field">
+              <label>Identity Document</label>
+              <p-dropdown
+                [options]="identityTypes"
+                formControlName="identityDocumentType"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select type"
+              ></p-dropdown>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('student.identityDocumentNumber')">
+              <label>Document Number{{ form.get('student.identityDocumentType')?.value === 'AADHAAR' ? ' *' : '' }}</label>
+              <input type="text" formControlName="identityDocumentNumber" [attr.maxlength]="form.get('student.identityDocumentType')?.value === 'AADHAAR' ? 12 : null" placeholder="Enter number" />
+              <small class="adm-field-error" *ngIf="showError('student.identityDocumentNumber')">{{ fieldError('student.identityDocumentNumber', 'Document number') }}</small>
             </div>
             <div class="tc-form-field">
               <label>Religion</label>
-              <p-dropdown [options]="religionOptions" formControlName="religion" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <p-dropdown
+                [options]="religionOptions"
+                formControlName="religion"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select"
+              ></p-dropdown>
             </div>
             <div class="tc-form-field">
-              <label>Place of birth</label>
-              <input type="text" formControlName="placeOfBirth" />
+              <label>Category</label>
+              <p-dropdown
+                [options]="categoryOptions"
+                formControlName="category"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select"
+              ></p-dropdown>
             </div>
             <div class="tc-form-field">
-              <label>Mother tongue</label>
+              <label>Mother Tongue</label>
               <input type="text" formControlName="motherTongue" />
             </div>
             <div class="tc-form-field">
-              <label>Contact *</label>
-              <input type="tel" formControlName="contactNumber" />
+              <label>Place of Birth</label>
+              <input type="text" formControlName="placeOfBirth" />
             </div>
-            <div class="tc-form-field">
+            <div class="tc-form-field" [class.is-invalid]="showError('student.contactNumber')">
+              <label>Mobile Number *</label>
+              <input type="tel" formControlName="contactNumber" placeholder="10-digit mobile" />
+              <small class="adm-field-error" *ngIf="showError('student.contactNumber')">{{ fieldError('student.contactNumber', 'Mobile number') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('student.email')">
               <label>Email</label>
-              <input type="email" formControlName="email" />
+              <input type="email" formControlName="email" placeholder="optional@" />
+              <small class="adm-field-error" *ngIf="showError('student.email')">{{ fieldError('student.email', 'Email') }}</small>
             </div>
-          </fieldset>
-          <fieldset class="adm-fieldset" formGroupName="parents">
-            <legend>Parents / guardian</legend>
-            <div class="tc-form-field">
-              <label>Father / guardian *</label>
+          </div>
+        </article>
+
+        <article class="adm-section-card" formGroupName="parents">
+          <header class="adm-section-card__head">
+            <i class="pi pi-users"></i>
+            <div>
+              <h3>Parent / Guardian Information</h3>
+              <p>Primary contact for admission communication.</p>
+            </div>
+          </header>
+          <div class="adm-form-grid">
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.parentName')">
+              <label>Full Name *</label>
               <input type="text" formControlName="parentName" />
+              <small class="adm-field-error" *ngIf="showError('parents.parentName')">{{ fieldError('parents.parentName', 'Full name') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.parentRelationship')">
+              <label>Relationship *</label>
+              <p-dropdown
+                [options]="relationshipOptions"
+                formControlName="parentRelationship"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+              ></p-dropdown>
+              <small class="adm-field-error" *ngIf="showError('parents.parentRelationship')">{{ fieldError('parents.parentRelationship', 'Relationship') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.parentContact')">
+              <label>Mobile Number *</label>
+              <input type="tel" formControlName="parentContact" />
+              <small class="adm-field-error" *ngIf="showError('parents.parentContact')">{{ fieldError('parents.parentContact', 'Mobile number') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.parentEmail')">
+              <label>Email</label>
+              <input type="email" formControlName="parentEmail" />
+              <small class="adm-field-error" *ngIf="showError('parents.parentEmail')">{{ fieldError('parents.parentEmail', 'Email') }}</small>
             </div>
             <div class="tc-form-field">
               <label>Occupation</label>
               <input type="text" formControlName="fatherOccupation" />
             </div>
+          </div>
+
+          <div class="adm-form-grid" *ngIf="showSecondaryGuardian">
+            <div class="adm-form-grid__full adm-section-card__sub">Secondary parent / guardian</div>
             <div class="tc-form-field">
-              <label>Mobile *</label>
-              <input type="tel" formControlName="parentContact" />
+              <label>Full Name</label>
+              <input type="text" formControlName="secondaryGuardianName" />
             </div>
             <div class="tc-form-field">
-              <label>Mother name</label>
-              <input type="text" formControlName="motherName" />
+              <label>Relationship</label>
+              <p-dropdown
+                [options]="relationshipOptions"
+                formControlName="secondaryGuardianRelationship"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+              ></p-dropdown>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.secondaryGuardianMobile')">
+              <label>Mobile Number</label>
+              <input type="tel" formControlName="secondaryGuardianMobile" />
+              <small class="adm-field-error" *ngIf="showError('parents.secondaryGuardianMobile')">{{ fieldError('parents.secondaryGuardianMobile', 'Mobile number') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('parents.secondaryGuardianEmail')">
+              <label>Email</label>
+              <input type="email" formControlName="secondaryGuardianEmail" />
+              <small class="adm-field-error" *ngIf="showError('parents.secondaryGuardianEmail')">{{ fieldError('parents.secondaryGuardianEmail', 'Email') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Mother occupation</label>
-              <input type="text" formControlName="motherOccupation" />
+              <label>Occupation</label>
+              <input type="text" formControlName="secondaryGuardianOccupation" />
+            </div>
+          </div>
+
+          <button
+            *ngIf="!showSecondaryGuardian"
+            type="button"
+            class="adm-link-btn"
+            (click)="showSecondaryGuardian = true"
+          >
+            + Add another parent or guardian
+          </button>
+        </article>
+
+        <article class="adm-section-card" formGroupName="address">
+          <header class="adm-section-card__head">
+            <i class="pi pi-map-marker"></i>
+            <div>
+              <h3>Present Address</h3>
+              <p>Current residential address of the family.</p>
+            </div>
+          </header>
+          <div class="adm-form-grid">
+            <div class="tc-form-field adm-form-grid__span-2" [class.is-invalid]="showError('address.addressLine1')">
+              <label>Address Line 1 *</label>
+              <input type="text" formControlName="addressLine1" />
+              <small class="adm-field-error" *ngIf="showError('address.addressLine1')">{{ fieldError('address.addressLine1', 'Address') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Parent email</label>
-              <input type="email" formControlName="parentEmail" />
+              <label>Address Line 2</label>
+              <input type="text" formControlName="addressLine2" />
             </div>
-          </fieldset>
-          <fieldset class="adm-fieldset" formGroupName="address">
-            <legend>Address</legend>
-            <div class="tc-form-field" style="grid-column: 1 / -1;">
-              <label>Address line *</label>
-              <input type="text" formControlName="line1" />
-            </div>
-            <div class="tc-form-field">
+            <div class="tc-form-field" [class.is-invalid]="showError('address.city')">
               <label>City *</label>
               <input type="text" formControlName="city" />
+              <small class="adm-field-error" *ngIf="showError('address.city')">{{ fieldError('address.city', 'City') }}</small>
             </div>
             <div class="tc-form-field">
               <label>State</label>
               <input type="text" formControlName="state" placeholder="Odisha" />
             </div>
-            <div class="tc-form-field">
-              <label>PIN *</label>
+            <div class="tc-form-field" [class.is-invalid]="showError('address.pinCode')">
+              <label>PIN Code *</label>
               <input type="text" formControlName="pinCode" maxlength="6" />
+              <small class="adm-field-error" *ngIf="showError('address.pinCode')">{{ fieldError('address.pinCode', 'PIN code') }}</small>
             </div>
-          </fieldset>
-        </div>
+            <div class="tc-form-field">
+              <label>Country</label>
+              <input type="text" formControlName="country" />
+            </div>
+          </div>
 
-        <div class="adm-wizard__body" *ngIf="activeStep === 1">
-          <fieldset class="adm-fieldset" formGroupName="student">
-            <legend>Applying for</legend>
-            <div class="tc-form-field">
-              <label>Academic year *</label>
-              <p-dropdown [options]="years" formControlName="academicYearId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+          <label class="adm-check-row">
+            <input type="checkbox" formControlName="sameAsPresentAddress" />
+            <span>Permanent address is same as present address</span>
+          </label>
+
+          <div class="adm-form-grid" *ngIf="!form.get('address.sameAsPresentAddress')?.value">
+            <div class="adm-form-grid__full adm-section-card__sub">Permanent Address</div>
+            <div class="tc-form-field adm-form-grid__span-2" [class.is-invalid]="showError('address.permanentAddressLine1')">
+              <label>Address Line 1 *</label>
+              <input type="text" formControlName="permanentAddressLine1" />
+              <small class="adm-field-error" *ngIf="showError('address.permanentAddressLine1')">{{ fieldError('address.permanentAddressLine1', 'Permanent address') }}</small>
             </div>
             <div class="tc-form-field">
+              <label>Address Line 2</label>
+              <input type="text" formControlName="permanentAddressLine2" />
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('address.permanentCity')">
+              <label>City *</label>
+              <input type="text" formControlName="permanentCity" />
+              <small class="adm-field-error" *ngIf="showError('address.permanentCity')">{{ fieldError('address.permanentCity', 'City') }}</small>
+            </div>
+            <div class="tc-form-field">
+              <label>State</label>
+              <input type="text" formControlName="permanentState" />
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('address.permanentPinCode')">
+              <label>PIN Code *</label>
+              <input type="text" formControlName="permanentPinCode" maxlength="6" />
+              <small class="adm-field-error" *ngIf="showError('address.permanentPinCode')">{{ fieldError('address.permanentPinCode', 'PIN code') }}</small>
+            </div>
+            <div class="tc-form-field">
+              <label>Country</label>
+              <input type="text" formControlName="permanentCountry" />
+            </div>
+          </div>
+        </article>
+
+        <article class="adm-section-card" formGroupName="emergency">
+          <header class="adm-section-card__head">
+            <i class="pi pi-phone"></i>
+            <div>
+              <h3>Emergency Contact</h3>
+              <p>Optional contact for urgent situations.</p>
+            </div>
+          </header>
+
+          <button
+            *ngIf="!showEmergencyContact"
+            type="button"
+            class="adm-link-btn"
+            (click)="showEmergencyContact = true"
+          >
+            + Add emergency contact
+          </button>
+
+          <div class="adm-form-grid" *ngIf="showEmergencyContact">
+            <div class="tc-form-field">
+              <label>Full Name</label>
+              <input type="text" formControlName="emergencyContactName" />
+            </div>
+            <div class="tc-form-field">
+              <label>Relationship</label>
+              <input type="text" formControlName="emergencyContactRelationship" />
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('emergency.emergencyContactMobile')">
+              <label>Mobile Number</label>
+              <input type="tel" formControlName="emergencyContactMobile" />
+              <small class="adm-field-error" *ngIf="showError('emergency.emergencyContactMobile')">{{ fieldError('emergency.emergencyContactMobile', 'Mobile number') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('emergency.emergencyContactAlternateMobile')">
+              <label>Alternate Mobile</label>
+              <input type="tel" formControlName="emergencyContactAlternateMobile" />
+              <small class="adm-field-error" *ngIf="showError('emergency.emergencyContactAlternateMobile')">{{ fieldError('emergency.emergencyContactAlternateMobile', 'Mobile number') }}</small>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Step 2: Academic & Admission -->
+      <div class="adm-app-form__steps" *ngIf="activeStep === 1" formGroupName="academic">
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-book"></i>
+            <div>
+              <h3>Applying For</h3>
+              <p>Select the academic year and class for this admission.</p>
+            </div>
+          </header>
+          <div class="adm-form-grid">
+            <div class="tc-form-field" [class.is-invalid]="showError('academic.academicYearId')">
+              <label>Academic Year *</label>
+              <p-dropdown
+                [options]="years"
+                formControlName="academicYearId"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select year"
+              ></p-dropdown>
+              <small class="adm-field-error" *ngIf="showError('academic.academicYearId')">{{ fieldError('academic.academicYearId', 'Academic year') }}</small>
+            </div>
+            <div class="tc-form-field" [class.is-invalid]="showError('academic.classId')">
               <label>Class *</label>
-              <p-dropdown [options]="classes" formControlName="classId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <p-dropdown
+                [options]="classes"
+                formControlName="classId"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Select class"
+              ></p-dropdown>
+              <small class="adm-field-error" *ngIf="showError('academic.classId')">{{ fieldError('academic.classId', 'Class') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Preferred section</label>
-              <p-dropdown [options]="sections" formControlName="sectionId" optionLabel="name" optionValue="id" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <label>Preferred Section</label>
+              <p-dropdown
+                [options]="sections"
+                formControlName="sectionId"
+                optionLabel="name"
+                optionValue="id"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+                placeholder="Optional"
+              ></p-dropdown>
             </div>
-          </fieldset>
-          <fieldset class="adm-fieldset" formGroupName="academic">
-            <legend>Previous school</legend>
-            <div class="tc-form-field">
-              <label>School / college name</label>
+          </div>
+        </article>
+
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-building"></i>
+            <div>
+              <h3>Previous Schooling</h3>
+              <p>Has the student attended another school?</p>
+            </div>
+          </header>
+
+          <div class="adm-radio-row">
+            <label>
+              <input type="radio" [checked]="form.get('academic.hasPreviousSchooling')?.value === true" (change)="form.get('academic.hasPreviousSchooling')?.setValue(true)" />
+              Yes
+            </label>
+            <label>
+              <input type="radio" [checked]="form.get('academic.hasPreviousSchooling')?.value === false" (change)="form.get('academic.hasPreviousSchooling')?.setValue(false)" />
+              No
+            </label>
+          </div>
+
+          <div class="adm-info-banner" *ngIf="!form.get('academic.hasPreviousSchooling')?.value">
+            <i class="pi pi-info-circle"></i>
+            <span>No previous school information is required{{ selectedClassName ? ' for ' + selectedClassName : '' }}.</span>
+          </div>
+
+          <div class="adm-form-grid" *ngIf="form.get('academic.hasPreviousSchooling')?.value">
+            <div class="tc-form-field" [class.is-invalid]="showError('academic.previousSchoolName')">
+              <label>School Name *</label>
               <input type="text" formControlName="previousSchoolName" />
+              <small class="adm-field-error" *ngIf="showError('academic.previousSchoolName')">{{ fieldError('academic.previousSchoolName', 'School name') }}</small>
             </div>
             <div class="tc-form-field">
               <label>Board</label>
-              <p-dropdown [options]="boardOptions" formControlName="previousBoard" optionLabel="label" optionValue="value" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <p-dropdown
+                [options]="boardOptions"
+                formControlName="previousBoard"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+              ></p-dropdown>
             </div>
-            <div class="tc-form-field">
-              <label>Last class attended</label>
+            <div class="tc-form-field" [class.is-invalid]="showError('academic.previousClass')">
+              <label>Last Class Attended *</label>
               <input type="text" formControlName="previousClass" />
+              <small class="adm-field-error" *ngIf="showError('academic.previousClass')">{{ fieldError('academic.previousClass', 'Last class') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Last % / grade</label>
+              <label>Last Academic Year</label>
+              <input type="text" formControlName="previousAcademicYear" />
+            </div>
+            <div class="tc-form-field">
+              <label>Last % / Grade</label>
               <input type="text" formControlName="lastPercentage" />
             </div>
             <div class="tc-form-field">
-              <label>TC number</label>
+              <label>Medium of Instruction</label>
+              <p-dropdown
+                [options]="mediumOptions"
+                formControlName="mediumOfInstruction"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="adm-app-form-dd"
+                panelStyleClass="adm-app-form-dd-panel"
+              ></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>TC Number</label>
               <input type="text" formControlName="tcNumber" />
             </div>
             <div class="tc-form-field">
-              <label>Medium</label>
-              <p-dropdown [options]="mediumOptions" formControlName="mediumOfInstruction" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+              <label>TC Issue Date</label>
+              <input type="date" formControlName="tcDate" [max]="today" />
             </div>
+          </div>
+        </article>
+
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-language"></i>
+            <div>
+              <h3>Languages</h3>
+              <p>Optional language preferences for the applicant.</p>
+            </div>
+          </header>
+          <div class="adm-form-grid">
             <div class="tc-form-field">
-              <label>First language</label>
+              <label>First Language</label>
               <input type="text" formControlName="firstLanguage" />
             </div>
             <div class="tc-form-field">
-              <label>Sibling in this school</label>
-              <input type="text" formControlName="siblingName" placeholder="Name if any" />
+              <label>Second Language</label>
+              <input type="text" formControlName="secondLanguage" />
             </div>
-            <div class="tc-form-field" style="grid-column: 1 / -1;">
+            <div class="tc-form-field adm-form-grid__span-2">
               <label>Notes</label>
-              <textarea formControlName="academicNotes" rows="2"></textarea>
+              <textarea formControlName="academicNotes" rows="3"></textarea>
             </div>
-          </fieldset>
-        </div>
+          </div>
+        </article>
 
-        <div class="adm-wizard__body" *ngIf="activeStep === 2">
-          <div class="tc-form-field">
-            <label>Document type</label>
-            <p-dropdown [options]="documentTypes" [(ngModel)]="selectedDocumentType" [ngModelOptions]="{ standalone: true }" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-users"></i>
+            <div>
+              <h3>Existing Family Relationship</h3>
+              <p>Link an existing parent if this mobile or email already belongs to a family in the school.</p>
+            </div>
+          </header>
+          <div class="adm-family-match" *ngIf="familyMatchLoading">
+            <i class="pi pi-spin pi-spinner"></i> Checking for existing family…
           </div>
-          <div class="tc-form-field">
-            <label>Upload</label>
-            <input type="file" (change)="onFileSelected($event)" />
+          <div class="adm-family-match adm-family-match--found" *ngIf="!familyMatchLoading && familyMatch?.matched">
+            <strong>Existing family found</strong>
+            <p>{{ familyMatch?.parentName }} · {{ familyMatch?.students?.length || 0 }} student{{ (familyMatch?.students?.length || 0) === 1 ? '' : 's' }} currently enrolled</p>
+            <ul *ngIf="familyMatch?.students?.length">
+              <li *ngFor="let s of familyMatch?.students">{{ s.studentName }}{{ s.className ? (' — ' + s.className) : '' }}</li>
+            </ul>
+            <button
+              *ngIf="linkedParentId !== familyMatch?.parentId"
+              type="button"
+              class="tc-btn tc-btn--primary"
+              (click)="linkExistingFamily()">
+              Link Existing Family
+            </button>
+            <button
+              *ngIf="linkedParentId === familyMatch?.parentId"
+              type="button"
+              class="tc-btn"
+              (click)="unlinkFamily()">
+              Linked · Unlink
+            </button>
           </div>
-          <div class="tc-form-field" style="grid-column: 1 / -1;" *ngIf="documents.length">
-            <article *ngFor="let doc of documents" class="tc-card adm-static-card">
-              <strong>{{ doc.documentType }}</strong>
-              <small>{{ doc.originalName }} · {{ doc.status }}</small>
-              <div class="adm-inline-actions-sm">
-                <button type="button" class="tc-btn" (click)="verifyDoc(doc, 'VERIFIED')">Verify</button>
-                <button type="button" class="tc-btn tc-btn--danger" (click)="verifyDoc(doc, 'REJECTED')">Reject</button>
-                <button type="button" class="tc-btn tc-btn--ghost" (click)="removeUploaded(doc)">Delete</button>
+          <div class="adm-family-match adm-family-match--empty" *ngIf="!familyMatchLoading && familyMatchChecked && !familyMatch?.matched">
+            <p>No existing family record found.</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Step 3: Documents -->
+      <div class="adm-app-form__steps" *ngIf="activeStep === 2">
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-folder-open"></i>
+            <div>
+              <h3>Required Documents</h3>
+              <p>{{ uploadedRequiredCount }} of {{ requiredDocCount }} required uploaded</p>
+            </div>
+          </header>
+
+          <div class="adm-docs-progress" *ngIf="requiredDocCount">
+            <div class="adm-docs-progress__bar">
+              <span [style.width.%]="requiredDocCount ? (uploadedRequiredCount / requiredDocCount) * 100 : 0"></span>
+            </div>
+          </div>
+
+          <div class="adm-docs-grid">
+            <article
+              class="adm-doc-card"
+              *ngFor="let item of checklist"
+              [class.adm-doc-card--missing]="docsMissingHighlight && item.required && !item.document"
+              [class.adm-doc-card--done]="!!item.document"
+            >
+              <div class="adm-doc-card__top">
+                <strong>{{ item.label }}</strong>
+                <span class="adm-doc-badge" [attr.data-tone]="item.document ? docStatusTone(item.document.status) : (item.required ? 'warning' : 'neutral')">
+                  {{ item.document ? (item.document.status || 'UPLOADED') : (item.required ? 'Pending' : 'Optional') }}
+                </span>
               </div>
+
+              <ng-container *ngIf="item.document; else uploadSlot">
+                <div class="adm-doc-card__preview">
+                  <img *ngIf="isImageDocument(item.document) && previewUrl(item.document)" [src]="previewUrl(item.document)!" alt="" />
+                  <div class="adm-doc-card__pdf" *ngIf="!isImageDocument(item.document)">
+                    <i class="pi pi-file-pdf"></i>
+                  </div>
+                </div>
+                <p class="adm-doc-card__file">{{ item.document.originalName || item.label }}</p>
+                <p class="adm-doc-card__reject" *ngIf="item.document.status === 'REJECTED' && item.document.remarks">
+                  Document rejected — {{ item.document.remarks }}
+                </p>
+                <div class="adm-doc-card__actions">
+                  <button type="button" class="tc-btn tc-btn--ghost" (click)="previewDocument(item.document!)">Preview</button>
+                  <label class="tc-btn" *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'">
+                    Replace
+                    <input type="file" hidden (change)="onFileSelected($event, item.documentType)" accept=".pdf,.jpg,.jpeg,.png" />
+                  </label>
+                  <button
+                    type="button"
+                    class="tc-btn tc-btn--danger"
+                    *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'"
+                    (click)="removeUploaded(item.document!)">Delete</button>
+                  <ng-container *tcHasPerm="applicationsResource; action: 'approve'">
+                    <button
+                      *ngIf="item.document.status !== 'VERIFIED'"
+                      type="button"
+                      class="tc-btn tc-btn--primary"
+                      (click)="verifyUploaded(item.document!, 'VERIFIED')">Verify</button>
+                    <button
+                      *ngIf="item.document.status !== 'REJECTED'"
+                      type="button"
+                      class="tc-btn"
+                      (click)="verifyUploaded(item.document!, 'REJECTED')">Reject</button>
+                  </ng-container>
+                </div>
+              </ng-container>
+              <ng-template #uploadSlot>
+                <p class="adm-doc-card__hint">PDF, JPG or PNG (Max 5 MB)</p>
+                <label class="tc-btn tc-btn--primary adm-doc-upload">
+                  Upload
+                  <input type="file" hidden (change)="onFileSelected($event, item.documentType)" accept=".pdf,.jpg,.jpeg,.png" />
+                </label>
+              </ng-template>
             </article>
           </div>
-          <fieldset class="adm-fieldset" formGroupName="fee">
-            <legend>Fee received at counter (no online payment)</legend>
-            <div class="tc-form-field">
-              <label>Amount</label>
-              <input type="number" formControlName="amount" />
-            </div>
-            <div class="tc-form-field">
-              <label>Receipt number</label>
-              <input type="text" formControlName="receiptNumber" />
-            </div>
-            <div class="tc-form-field">
-              <label>Mode</label>
-              <p-dropdown [options]="paymentModes" formControlName="paymentMode" optionLabel="label" optionValue="value" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
-            </div>
-            <div class="tc-form-field">
-              <label>Date</label>
-              <input type="date" formControlName="paidOn" />
-            </div>
-            <div class="tc-form-field">
-              <label>Received by</label>
-              <input type="text" formControlName="receivedBy" />
-            </div>
-            <div class="tc-form-field">
-              <label>Remarks</label>
-              <input type="text" formControlName="remarks" />
-            </div>
-            <div class="tc-form-field">
-              <label>&nbsp;</label>
-              <button type="button" class="tc-btn tc-btn--primary" (click)="saveFee()" [disabled]="saving">Record fee</button>
-            </div>
-          </fieldset>
+
+          <button type="button" class="adm-link-btn" (click)="openAdditionalDoc()">+ Add Additional Document</button>
+        </article>
+      </div>
+
+      <!-- Step 4: Fee Summary -->
+      <div class="adm-app-form__steps" *ngIf="activeStep === 3">
+        <div class="adm-info-banner">
+          <i class="pi pi-info-circle"></i>
+          <span>Fee structure is determined by the Finance module. The amount shown here is for reference only. Actual payment is collected after approval during enrollment.</span>
         </div>
 
-        <div class="adm-review-grid" *ngIf="activeStep === 3">
-          <div class="tc-card tc-card--panel">
-            <h2>Review</h2>
-            <dl class="adm-dl adm-dl--compact">
-              <div *ngFor="let entry of reviewSummary() | keyvalue">
-                <dt>{{ entry.key }}</dt>
-                <dd>{{ entry.value }}</dd>
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-wallet"></i>
+            <div>
+              <h3>Applicable Fee Structure</h3>
+              <p>Read-only summary for the selected class.</p>
+            </div>
+          </header>
+
+          <div class="tc-empty-state adm-fee-empty">
+            <i class="pi pi-inbox"></i>
+            <p>Fee structure will appear once Finance configures fees for the selected class</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Step 5: Review & Submit -->
+      <div class="adm-app-form__steps" *ngIf="activeStep === 4">
+        <div class="adm-ready-banner" [class.adm-ready-banner--ok]="allReady">
+          <i class="pi" [ngClass]="allReady ? 'pi-check-circle' : 'pi-exclamation-circle'"></i>
+          <span>
+            {{ allReady
+              ? 'Ready to submit. All required information has been provided.'
+              : 'Please review the information below. You can go back and edit if needed.' }}
+          </span>
+        </div>
+
+        <article class="adm-section-card">
+          <header class="adm-section-card__head">
+            <i class="pi pi-list-check"></i>
+            <div>
+              <h3>Readiness checklist</h3>
+              <p>Everything that must be complete before submit.</p>
+            </div>
+          </header>
+          <ul class="adm-ready-list">
+            <li *ngFor="let item of readinessItems()" [class.is-ok]="item.ok">
+              <i class="pi" [ngClass]="item.ok ? 'pi-check-circle' : 'pi-circle'"></i>
+              {{ item.label }}
+            </li>
+          </ul>
+        </article>
+
+        <div class="adm-review-cards">
+          <article class="adm-section-card">
+            <header class="adm-section-card__head adm-section-card__head--row">
+              <div class="adm-section-card__title-wrap">
+                <i class="pi pi-user"></i>
+                <h3>Student Information</h3>
+              </div>
+              <button type="button" class="adm-link-btn" (click)="goToStep(0)">Edit</button>
+            </header>
+            <dl class="adm-summary-dl">
+              <div *ngFor="let row of summaryStudent()">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
               </div>
             </dl>
-          </div>
-        </div>
-      </form>
+          </article>
 
-      <div class="adm-wizard__footer">
-        <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0">Back</button>
-        <div class="adm-wizard-actions">
-          <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving">Save draft</button>
-          <button *ngIf="activeStep < steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="next()">Next</button>
-          <button *ngIf="activeStep === steps.length - 1" type="button" class="tc-btn tc-btn--primary" (click)="submit()" [disabled]="saving">Submit application</button>
-          <button *ngIf="activeStep === steps.length - 1 && applicationId" type="button" class="tc-btn" (click)="approve()" [disabled]="saving || !canApprove()">Approve</button>
+          <article class="adm-section-card">
+            <header class="adm-section-card__head adm-section-card__head--row">
+              <div class="adm-section-card__title-wrap">
+                <i class="pi pi-users"></i>
+                <h3>Parent / Address</h3>
+              </div>
+              <button type="button" class="adm-link-btn" (click)="goToStep(0)">Edit</button>
+            </header>
+            <dl class="adm-summary-dl">
+              <div *ngFor="let row of summaryFamily()">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="adm-section-card">
+            <header class="adm-section-card__head adm-section-card__head--row">
+              <div class="adm-section-card__title-wrap">
+                <i class="pi pi-book"></i>
+                <h3>Academic Details</h3>
+              </div>
+              <button type="button" class="adm-link-btn" (click)="goToStep(1)">Edit</button>
+            </header>
+            <dl class="adm-summary-dl">
+              <div *ngFor="let row of summaryAcademic()">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="adm-section-card">
+            <header class="adm-section-card__head adm-section-card__head--row">
+              <div class="adm-section-card__title-wrap">
+                <i class="pi pi-folder-open"></i>
+                <h3>Documents</h3>
+              </div>
+              <button type="button" class="adm-link-btn" (click)="goToStep(2)">Edit</button>
+            </header>
+            <p class="adm-body-text">{{ uploadedRequiredCount }} of {{ requiredDocCount }} required · {{ documents.length }} uploaded</p>
+          </article>
+
+          <article class="adm-section-card">
+            <header class="adm-section-card__head adm-section-card__head--row">
+              <div class="adm-section-card__title-wrap">
+                <i class="pi pi-wallet"></i>
+                <h3>Fee Summary</h3>
+              </div>
+              <button type="button" class="adm-link-btn" (click)="goToStep(3)">Edit</button>
+            </header>
+            <p class="adm-body-text">Fee structure will be confirmed by Finance after approval.</p>
+          </article>
         </div>
+
+        <label class="adm-check-row adm-check-row--confirm" [class.is-invalid]="showError('confirmation.confirmAccurate')">
+          <input type="checkbox" [(ngModel)]="confirmAccurate" [ngModelOptions]="{ standalone: true }" (ngModelChange)="form.get('confirmation.confirmAccurate')?.setValue($event)" />
+          <span>I confirm that the information provided is accurate and complete. *</span>
+        </label>
+        <small class="adm-field-error" *ngIf="showError('confirmation.confirmAccurate')">{{ fieldError('confirmation.confirmAccurate', 'Confirmation') }}</small>
       </div>
-    </tc-saas-panel>
+    </form>
+
+    <div class="adm-app-form__sticky-bar">
+      <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0 || saving || submitting">Back</button>
+      <div class="adm-app-form__sticky-actions">
+        <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving || submitting">
+          {{ saving && !submitting ? 'Saving…' : 'Save Draft' }}
+        </button>
+        <button
+          *ngIf="activeStep < steps.length - 1"
+          type="button"
+          class="tc-btn tc-btn--primary"
+          (click)="continue()"
+          [disabled]="saving || submitting"
+        >
+          Continue <i class="pi pi-arrow-right"></i>
+        </button>
+        <button
+          *ngIf="activeStep === steps.length - 1"
+          type="button"
+          class="tc-btn tc-btn--primary"
+          (click)="submit()"
+          [disabled]="saving || submitting"
+        >
+          {{ submitting ? 'Submitting…' : 'Submit Application' }}
+        </button>
+      </div>
+    </div>
   </ng-container>
 </section>
+
+<p-dialog
+  header="Add Additional Document"
+  [(visible)]="additionalDocVisible"
+  [modal]="true"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  styleClass="adm-app-form-dialog"
+  (onHide)="closeAdditionalDoc()"
+>
+  <div class="adm-form-grid adm-form-grid--dialog">
+    <div class="tc-form-field">
+      <label>Document Name</label>
+      <input type="text" [(ngModel)]="additionalDocName" placeholder="Optional label" />
+    </div>
+    <div class="tc-form-field">
+      <label>Document Type *</label>
+      <p-dropdown
+        [options]="documentTypeOptions"
+        [(ngModel)]="additionalDocType"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="adm-app-form-dd"
+        panelStyleClass="adm-app-form-dd-panel"
+      ></p-dropdown>
+    </div>
+    <div class="tc-form-field adm-form-grid__full">
+      <label class="adm-dropzone">
+        <i class="pi pi-cloud-upload"></i>
+        <span>{{ additionalUploading ? 'Uploading…' : 'Click to upload or drag and drop' }}</span>
+        <small>PDF, JPG or PNG</small>
+        <input type="file" hidden (change)="onAdditionalFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png" [disabled]="additionalUploading" />
+      </label>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button type="button" class="tc-btn tc-btn--ghost" (click)="closeAdditionalDoc()">Cancel</button>
+  </ng-template>
+</p-dialog>

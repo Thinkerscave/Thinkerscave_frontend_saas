@@ -24,10 +24,13 @@ export class AdmissionsNavService {
     void this.router.navigate(['/app/admissions/lead', inquiryId], { queryParams: { from } });
   }
 
-  toApplication(applicationId: number | 'new', from?: string): void {
+  toApplication(applicationId: number | 'new', from?: string, inquiryId?: number | null): void {
+    const queryParams: Record<string, string | number> = {};
+    if (from) queryParams['from'] = from;
+    if (inquiryId) queryParams['inquiryId'] = inquiryId;
     void this.router.navigate(
       ['/app/admissions/form', applicationId],
-      from ? { queryParams: { from } } : {}
+      Object.keys(queryParams).length ? { queryParams } : {}
     );
   }
 }

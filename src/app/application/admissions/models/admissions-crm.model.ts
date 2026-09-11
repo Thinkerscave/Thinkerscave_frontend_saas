@@ -10,7 +10,8 @@ export type LeadSource =
   | 'SOCIAL_MEDIA' | 'CAMPAIGN' | 'AFFILIATE' | 'IMPORT' | 'OTHER';
 
 export type ApplicationStatus =
-  | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
+  | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'ACTION_REQUIRED'
+  | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
   | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'ENROLLED';
 
 export type FollowUpType = 'CALL' | 'WHATSAPP' | 'EMAIL' | 'WALK_IN' | 'SMS' | 'OTHER';
@@ -236,22 +237,59 @@ export interface ApplicationProfileDetails {
   religion?: string | null;
   category?: string | null;
   nationality?: string | null;
+  identityDocumentType?: string | null;
+  identityDocumentNumber?: string | null;
+  /** @deprecated prefer identityDocumentNumber */
   aadhaarNumber?: string | null;
   motherTongue?: string | null;
   placeOfBirth?: string | null;
+
+  parentRelationship?: string | null;
   fatherOccupation?: string | null;
   motherName?: string | null;
   motherOccupation?: string | null;
+  motherContact?: string | null;
+  motherEmail?: string | null;
+  motherRelationship?: string | null;
+  secondaryGuardianName?: string | null;
+  secondaryGuardianRelationship?: string | null;
+  secondaryGuardianMobile?: string | null;
+  secondaryGuardianEmail?: string | null;
+  secondaryGuardianOccupation?: string | null;
+  secondaryIdentityDocumentType?: string | null;
+  secondaryIdentityDocumentNumber?: string | null;
+
+  addressLine1?: string | null;
+  addressLine2?: string | null;
   city?: string | null;
   state?: string | null;
+  country?: string | null;
   pinCode?: string | null;
+  sameAsPresentAddress?: boolean | null;
+  permanentAddressLine1?: string | null;
+  permanentAddressLine2?: string | null;
+  permanentCity?: string | null;
+  permanentState?: string | null;
+  permanentCountry?: string | null;
+  permanentPinCode?: string | null;
+
+  emergencyContactName?: string | null;
+  emergencyContactRelationship?: string | null;
+  emergencyContactMobile?: string | null;
+  emergencyContactAlternateMobile?: string | null;
+
+  hasPreviousSchooling?: boolean | null;
   previousSchoolName?: string | null;
   previousBoard?: string | null;
   previousClass?: string | null;
+  previousAcademicYear?: string | null;
   lastPercentage?: string | null;
   tcNumber?: string | null;
+  tcDate?: string | null;
   mediumOfInstruction?: string | null;
   firstLanguage?: string | null;
+  secondLanguage?: string | null;
+  linkedParentId?: number | null;
   siblingName?: string | null;
 }
 
@@ -369,6 +407,20 @@ export interface ApplicationProgress {
   totalSteps: number;
   completedSteps: number;
   completionPercent: number;
+}
+
+export interface FamilyMatchResult {
+  matched: boolean;
+  parentId?: number | null;
+  parentName?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
+  students?: Array<{
+    studentId: number;
+    studentName: string;
+    className?: string | null;
+    studentCode?: string | null;
+  }>;
 }
 
 export interface AdmissionsSettings {

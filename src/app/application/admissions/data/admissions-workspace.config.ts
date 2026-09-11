@@ -67,15 +67,21 @@ export const LEAD_SOURCE_OPTIONS = [
 
 export const APPLICATION_STATUS_TABS = [
   { key: 'ALL', label: 'All' },
-  { key: 'IN_PROGRESS', label: 'In progress' },
-  { key: 'READY', label: 'Ready to enroll' },
-  { key: 'CLOSED', label: 'Closed' }
+  { key: 'DRAFT', label: 'Draft' },
+  { key: 'SUBMITTED', label: 'Submitted' },
+  { key: 'UNDER_REVIEW', label: 'Under Review' },
+  { key: 'ACTION_REQUIRED', label: 'Action Required' },
+  { key: 'APPROVED', label: 'Approved' },
+  { key: 'ENROLLED', label: 'Enrolled' }
 ] as const;
 
 export const APPLICATION_STATUS_GROUPS: Record<string, string[]> = {
-  IN_PROGRESS: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'],
-  READY: ['APPROVED'],
-  CLOSED: ['REJECTED', 'CANCELLED', 'ENROLLED']
+  DRAFT: ['DRAFT'],
+  SUBMITTED: ['SUBMITTED'],
+  UNDER_REVIEW: ['UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'],
+  ACTION_REQUIRED: ['ACTION_REQUIRED'],
+  APPROVED: ['APPROVED'],
+  ENROLLED: ['ENROLLED']
 };
 
 export const FOLLOW_UP_TYPES = ['CALL', 'WHATSAPP', 'EMAIL', 'WALK_IN', 'SMS', 'OTHER'] as const;
@@ -87,6 +93,13 @@ export const DOCUMENT_TYPES = [
   'PHOTO',
   'MARKSHEET',
   'OTHER'
+] as const;
+
+export const IDENTITY_TYPES = [
+  { label: 'Aadhaar', value: 'AADHAAR' },
+  { label: 'Passport', value: 'PASSPORT' },
+  { label: 'Voter ID', value: 'VOTER_ID' },
+  { label: 'Other', value: 'OTHER' }
 ] as const;
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];

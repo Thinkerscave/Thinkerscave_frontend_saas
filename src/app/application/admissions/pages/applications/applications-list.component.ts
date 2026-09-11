@@ -33,8 +33,10 @@ import {
 import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 
 const LIST_KEY = 'tc.applications.list';
+const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
 
 @Component({
   selector: 'app-applications-list',
@@ -46,6 +48,7 @@ const LIST_KEY = 'tc.applications.list';
     ConfirmDialogModule,
     DialogModule,
     DropdownModule,
+    HasPermissionDirective,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasPillComponent,
@@ -80,6 +83,9 @@ export class ApplicationsListComponent implements OnInit {
   rejectDialogOpen = false;
   rejectRemarks = '';
   rejectTarget: ApplicationRecord | null = null;
+  correctionDialogOpen = false;
+  correctionReason = '';
+  correctionTarget: ApplicationRecord | null = null;
   enrollVisible = false;
   enrolling = false;
   selected: ApplicationRecord | null = null;
@@ -92,6 +98,7 @@ export class ApplicationsListComponent implements OnInit {
     key: t.key,
     label: t.label
   }));
+  readonly applicationsResource = APPLICATIONS_RESOURCE;
 
   get pageSizeOptions(): number[] {
     return pageSizeOptionsForView('grid');
@@ -105,7 +112,8 @@ export class ApplicationsListComponent implements OnInit {
       }
     });
     const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'READY' || tab === 'IN_PROGRESS' || tab === 'CLOSED' || tab === 'ALL') {
+    const knownTabs = new Set(APPLICATION_STATUS_TABS.map(t => t.key));
+    if (tab && knownTabs.has(tab as typeof APPLICATION_STATUS_TABS[number]['key'])) {
       this.activeStatusTab = tab;
     }
     const saved = this.listContext.consume(LIST_KEY);
@@ -115,7 +123,7 @@ export class ApplicationsListComponent implements OnInit {
       if (saved.search) {
         this.filter = { ...this.filter, keyword: saved.search };
       }
-      if (!tab && saved.tab && (saved.tab === 'READY' || saved.tab === 'IN_PROGRESS' || saved.tab === 'CLOSED' || saved.tab === 'ALL')) {
+      if (!tab && saved.tab && knownTabs.has(saved.tab as typeof APPLICATION_STATUS_TABS[number]['key'])) {
         this.activeStatusTab = saved.tab;
       }
     }
@@ -268,6 +276,51 @@ export class ApplicationsListComponent implements OnInit {
 
   canReview(record: ApplicationRecord): boolean {
     return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'].includes(record.status);
+  }
+
+  requestCorrection(record: ApplicationRecord, event: Event): void {
+    event.stopPropagation();
+    this.correctionTarget = record;
+    this.correctionReason = '';
+    this.correctionDialogOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeCorrectionDialog(): void {
+    this.correctionDialogOpen = false;
+    this.correctionTarget = null;
+    this.cdr.markForCheck();
+  }
+
+  confirmCorrection(): void {
+    if (!this.correctionTarget) return;
+    const reason = this.correctionReason.trim();
+    if (!reason) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Reason required',
+        detail: 'Enter what needs to be corrected.'
+      });
+      return;
+    }
+    const record = this.correctionTarget;
+    this.api.requestCorrection(record.applicationId, reason).subscribe({
+      next: () => {
+        this.messages.add({
+          severity: 'success',
+          summary: 'Sent for correction',
+          detail: `${record.applicantName} was returned for updates.`
+        });
+        this.closeCorrectionDialog();
+        this.loadApplications();
+      },
+      error: () =>
+        this.messages.add({
+          severity: 'error',
+          summary: 'Request failed',
+          detail: 'Could not send this application back for correction.'
+        })
+    });
   }
 
   openEnroll(record: ApplicationRecord, event: Event): void {

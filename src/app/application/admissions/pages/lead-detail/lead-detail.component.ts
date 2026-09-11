@@ -361,14 +361,24 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     if (!d) return 'Start Application';
     if (d.studentId) return 'View Student';
     if (!d.applicationId) return 'Start Application';
-    if (d.applicationStatus === 'DRAFT') return 'Continue Application';
+    if (
+      d.applicationStatus === 'DRAFT'
+      || d.applicationStatus === 'ACTION_REQUIRED'
+      || d.applicationStatus === 'DOCUMENTS_PENDING'
+    ) {
+      return 'Continue Application';
+    }
     return 'View Application';
+  }
+
+  get canManageApplications(): boolean {
+    return this.permissions.canManage('ADMISSIONS_APPLICATIONS');
   }
 
   canProceedToApplication(): boolean {
     const d = this.detail();
     const status = d?.inquiry.status;
-    return !!status && status !== 'LOST' && !d?.applicationId;
+    return !!status && status !== 'LOST' && !d?.applicationId && this.canManageApplications;
   }
 
   primaryAction(): void {
@@ -379,15 +389,24 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
       return;
     }
     if (d.applicationId) {
-      this.nav.toApplication(d.applicationId);
+      this.nav.toApplication(d.applicationId, 'lead', d.inquiry.inquiryId);
+      return;
+    }
+    if (!this.canManageApplications) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Permission required',
+        detail: 'You need Application Manage permission to start an application.'
+      });
       return;
     }
     this.proceedToApplication();
   }
 
   continueApplication(): void {
-    const id = this.detail()?.applicationId;
-    if (id) this.nav.toApplication(id);
+    const d = this.detail();
+    const id = d?.applicationId;
+    if (id) this.nav.toApplication(id, 'lead', d?.inquiry.inquiryId);
   }
 
   get contactMobile(): string | null {
@@ -496,7 +515,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         title: 'Application Incomplete',
         message: 'An application has been started but not yet submitted.',
         actionLabel: 'Continue Application',
-        action: () => this.nav.toApplication(d.applicationId!)
+        action: () => this.nav.toApplication(d.applicationId!, 'lead', d.inquiry.inquiryId)
       });
     }
     return items;
@@ -614,7 +633,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
       message: `Convert ${this.detail()?.inquiry.name} into an admission application?`,
       accept: () => {
         this.api.convertToApplication(this.leadId).subscribe({
-          next: app => this.nav.toApplication(app.applicationId),
+          next: app => this.nav.toApplication(app.applicationId, 'lead', this.leadId),
           error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not convert lead.' })
         });
       }
