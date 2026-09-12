@@ -14,10 +14,12 @@ import { finalize } from 'rxjs';
 
 import {
   ASSIGNMENT_MODE_OPTIONS,
+  DOCUMENT_TYPES,
+  DocumentConfigMode,
+  DURATION_DAY_OPTIONS,
   LEAD_STATUS_OPTIONS,
-  REMINDER_LEAD_OPTIONS,
-  REMINDER_MODE_OPTIONS,
-  formatAdmissionsLabel
+  formatAdmissionsLabel,
+  normalizeDocumentType
 } from '../../data/admissions-workspace.config';
 import { AdmissionsSettings } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
@@ -25,6 +27,12 @@ import {
   SaasPageHeaderComponent,
   SaasPanelComponent
 } from '../../../../shared/ui/saas';
+
+interface DocumentSettingRow {
+  value: string;
+  label: string;
+  mode: DocumentConfigMode;
+}
 
 @Component({
   selector: 'app-admissions-crm-settings',
@@ -44,21 +52,33 @@ export class AdmissionsSettingsComponent implements OnInit {
   saving = false;
   errorMessage = '';
   settings: AdmissionsSettings | null = null;
-  sourcesText = '';
-  documentsText = '';
+  documentRows: DocumentSettingRow[] = [];
   leadPrefix = 'LD';
   applicationPrefix = 'APP';
   admissionPrefix = 'ADM';
-  reminderMode = 'AUTO';
-  reminderLeadTime = '24H';
+  leadIdleDays = '3';
+  missedFollowUpDays = '2';
   assignmentMode = 'MANUAL';
   readonly assignmentOptions = ASSIGNMENT_MODE_OPTIONS;
-  readonly reminderModeOptions = REMINDER_MODE_OPTIONS;
-  readonly reminderLeadOptions = REMINDER_LEAD_OPTIONS;
-  readonly pipelineStatuses = LEAD_STATUS_OPTIONS.map(s => formatAdmissionsLabel(s));
+  readonly durationOptions = DURATION_DAY_OPTIONS;
+  readonly modeOptions: { value: DocumentConfigMode; label: string }[] = [
+    { value: 'OFF', label: 'Off' },
+    { value: 'OPTIONAL', label: 'Optional' },
+    { value: 'MANDATORY', label: 'Mandatory' }
+  ];
 
   ngOnInit(): void {
     this.load();
+  }
+
+  setDocMode(row: DocumentSettingRow, mode: DocumentConfigMode): void {
+    row.mode = mode;
+    this.cdr.markForCheck();
+  }
+
+  setAssignmentMode(mode: string): void {
+    this.assignmentMode = mode;
+    this.cdr.markForCheck();
   }
 
   load(): void {
@@ -71,13 +91,24 @@ export class AdmissionsSettingsComponent implements OnInit {
       .subscribe({
         next: s => {
           this.settings = s;
-          this.sourcesText = (s.inquirySources ?? []).join('\n');
-          this.documentsText = (s.requiredDocuments ?? []).join('\n');
+          const mandatory = new Set(
+            (s.requiredDocuments ?? []).map(normalizeDocumentType).filter(Boolean)
+          );
+          const optional = new Set(
+            (s.optionalDocuments ?? []).map(normalizeDocumentType).filter(Boolean)
+          );
+          this.documentRows = DOCUMENT_TYPES.filter(t => t !== 'OTHER').map(t => {
+            const value = normalizeDocumentType(t);
+            let mode: DocumentConfigMode = 'OFF';
+            if (mandatory.has(value)) mode = 'MANDATORY';
+            else if (optional.has(value)) mode = 'OPTIONAL';
+            return { value, label: formatAdmissionsLabel(value), mode };
+          });
           this.leadPrefix = s.numbering?.['leadPrefix'] ?? 'LD';
           this.applicationPrefix = s.numbering?.['applicationPrefix'] ?? 'APP';
           this.admissionPrefix = s.numbering?.['admissionPrefix'] ?? 'ADM';
-          this.reminderMode = s.reminderRules?.['defaultMode'] ?? 'AUTO';
-          this.reminderLeadTime = s.reminderRules?.['defaultLeadTime'] ?? '24H';
+          this.leadIdleDays = s.reminderRules?.['leadIdleDays'] ?? '3';
+          this.missedFollowUpDays = s.reminderRules?.['missedFollowUpDays'] ?? '2';
           this.assignmentMode = s.assignmentMode ?? 'MANUAL';
           this.errorMessage = '';
         },
@@ -91,17 +122,20 @@ export class AdmissionsSettingsComponent implements OnInit {
   save(): void {
     this.saving = true;
     const payload: AdmissionsSettings = {
-      inquirySources: this.splitLines(this.sourcesText),
-      inquiryStatuses: [...LEAD_STATUS_OPTIONS],
-      requiredDocuments: this.splitLines(this.documentsText),
+      inquirySources: this.settings?.inquirySources ?? [],
+      inquiryStatuses: this.settings?.inquiryStatuses?.length
+        ? this.settings.inquiryStatuses
+        : [...LEAD_STATUS_OPTIONS],
+      requiredDocuments: this.documentRows.filter(r => r.mode === 'MANDATORY').map(r => r.value),
+      optionalDocuments: this.documentRows.filter(r => r.mode === 'OPTIONAL').map(r => r.value),
       numbering: {
         leadPrefix: this.leadPrefix,
         applicationPrefix: this.applicationPrefix,
         admissionPrefix: this.admissionPrefix
       },
       reminderRules: {
-        defaultMode: this.reminderMode,
-        defaultLeadTime: this.reminderLeadTime
+        leadIdleDays: this.leadIdleDays,
+        missedFollowUpDays: this.missedFollowUpDays
       },
       assignmentMode: this.assignmentMode
     };
@@ -117,9 +151,5 @@ export class AdmissionsSettingsComponent implements OnInit {
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Save failed', detail: 'Could not save settings.' })
       });
-  }
-
-  private splitLines(value: string): string[] {
-    return value.split(/\r?\n|,/).map(item => item.trim()).filter(Boolean);
   }
 }

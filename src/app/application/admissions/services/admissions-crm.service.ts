@@ -1,10 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
   AdmissionsSettings,
+  AdmissionReportDashboard,
+  AdmissionReportFilter,
   ApplicationCreateRequest,
   ApplicationDocument,
   ApplicationProgress,
@@ -36,6 +38,12 @@ interface ApiEnvelope<T> {
   success: boolean;
   message?: string;
   data: T;
+}
+
+export interface DocumentBlobResult {
+  blob: Blob;
+  contentType: string;
+  fileName: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -90,6 +98,33 @@ export class AdmissionsCrmService {
 
   reportsCounselorPerformance(): Observable<Record<string, unknown>[]> {
     return this.http.get<ApiEnvelope<Record<string, unknown>[]>>(`${this.reports}/counselor-performance`).pipe(map(r => r.data ?? []));
+  }
+
+  reportsDashboard(filter: AdmissionReportFilter = {}): Observable<AdmissionReportDashboard> {
+    return this.http
+      .post<ApiEnvelope<AdmissionReportDashboard>>(`${this.reports}/dashboard`, this.cleanReportFilter(filter))
+      .pipe(map(r => r.data));
+  }
+
+  exportReportsCsv(filter: AdmissionReportFilter = {}): Observable<Blob> {
+    return this.http.post(`${this.reports}/export`, this.cleanReportFilter(filter), {
+      responseType: 'blob'
+    });
+  }
+
+  private cleanReportFilter(filter: AdmissionReportFilter): AdmissionReportFilter {
+    const out: AdmissionReportFilter = {};
+    if (filter.academicYearId != null) out.academicYearId = filter.academicYearId;
+    if (filter.classId != null) out.classId = filter.classId;
+    if (filter.source) out.source = filter.source;
+    if (filter.counselorId != null) out.counselorId = filter.counselorId;
+    if (filter.leadStatus) out.leadStatus = filter.leadStatus;
+    if (filter.applicationStatus) out.applicationStatus = filter.applicationStatus;
+    if (filter.dateFrom) out.dateFrom = filter.dateFrom;
+    if (filter.dateTo) out.dateTo = filter.dateTo;
+    if (filter.trendGranularity) out.trendGranularity = filter.trendGranularity;
+    if (filter.recentLimit != null) out.recentLimit = filter.recentLimit;
+    return out;
   }
 
   settings(): Observable<AdmissionsSettings> {
@@ -365,10 +400,18 @@ export class AdmissionsCrmService {
       .pipe(map(r => r.data ?? []));
   }
 
-  uploadDocument(applicationId: number, file: File, documentType: string): Observable<ApplicationDocument> {
+  uploadDocument(
+    applicationId: number,
+    file: File,
+    documentType: string,
+    label?: string | null
+  ): Observable<ApplicationDocument> {
     const body = new FormData();
     body.append('file', file);
-    const params = new HttpParams().set('documentType', documentType);
+    let params = new HttpParams().set('documentType', documentType);
+    if (label?.trim()) {
+      params = params.set('remarks', label.trim());
+    }
     return this.http
       .post<ApiEnvelope<ApplicationDocument>>(`${this.applications}/${applicationId}/documents`, body, { params })
       .pipe(map(r => r.data));
@@ -392,10 +435,39 @@ export class AdmissionsCrmService {
     return `${this.applications}/documents/${documentId}/download`;
   }
 
-  downloadDocumentBlob(documentId: number): Observable<Blob> {
-    return this.http.get(`${this.applications}/documents/${documentId}/download`, {
-      responseType: 'blob'
-    });
+  downloadDocumentBlob(documentId: number): Observable<DocumentBlobResult> {
+    return this.http
+      .get(`${this.applications}/documents/${documentId}/download`, {
+        observe: 'response',
+        responseType: 'blob'
+      })
+      .pipe(
+        switchMap(res => {
+          const body = res.body;
+          if (!body) {
+            return throwError(() => new Error('Empty document response'));
+          }
+          const contentType = res.headers.get('Content-Type') || body.type || 'application/octet-stream';
+          if (contentType.includes('application/json')) {
+            return throwError(() => new Error('Document download failed'));
+          }
+          const disposition = res.headers.get('Content-Disposition') || '';
+          const utfMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+          const plainMatch = /filename="?([^";]+)"?/i.exec(disposition);
+          let fileName: string | null = null;
+          if (utfMatch?.[1]) {
+            try {
+              fileName = decodeURIComponent(utfMatch[1]);
+            } catch {
+              fileName = utfMatch[1];
+            }
+          } else if (plainMatch?.[1]) {
+            fileName = plainMatch[1];
+          }
+          const typedBlob = body.type ? body : new Blob([body], { type: contentType });
+          return of({ blob: typedBlob, contentType, fileName });
+        })
+      );
   }
 
   applicationProgress(id: number): Observable<ApplicationProgress> {

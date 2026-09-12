@@ -26,14 +26,20 @@ import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 import { AdmissionsNavService } from '../../services/admissions-nav.service';
 import {
   SaasPageHeaderComponent,
-  SaasPanelComponent,
   SaasPillComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
-import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import {
+  AppListResultsComponent,
+  AppListToolbarComponent,
+  AppListViewMode,
+  AppPaginatorComponent
+} from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
+import { PermissionService } from '../../../../core/services/permission.service';
 
 const LIST_KEY = 'tc.applications.list';
 const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
@@ -42,7 +48,8 @@ const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
   selector: 'app-applications-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, 
+  imports: [
+    AppToastComponent,
     CommonModule,
     FormsModule,
     ConfirmDialogModule,
@@ -50,9 +57,10 @@ const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
     DropdownModule,
     HasPermissionDirective,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
     SaasPillComponent,
     SaasTabsComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
     AppPaginatorComponent
   ],
   providers: [ConfirmationService, MessageService],
@@ -65,27 +73,25 @@ export class ApplicationsListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly nav = inject(AdmissionsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly confirmation = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly permissions = inject(PermissionService);
 
   loading = false;
   searching = false;
   errorMessage = '';
+  view: AppListViewMode = this.viewPrefs.globalDefault();
 
   applications: ApplicationRecord[] = [];
   filter: ApplicationSearchRequest = {};
   activeStatusTab = 'ALL';
+  selectedClassName: string | null = null;
+  classOptions: { label: string; value: string }[] = [];
 
   pageIndex = 0;
-  pageSize = defaultPageSizeForView('grid');
+  pageSize = defaultPageSizeForView(this.view);
   totalElements = 0;
-  rejectDialogOpen = false;
-  rejectRemarks = '';
-  rejectTarget: ApplicationRecord | null = null;
-  correctionDialogOpen = false;
-  correctionReason = '';
-  correctionTarget: ApplicationRecord | null = null;
   enrollVisible = false;
   enrolling = false;
   selected: ApplicationRecord | null = null;
@@ -101,21 +107,43 @@ export class ApplicationsListComponent implements OnInit {
   readonly applicationsResource = APPLICATIONS_RESOURCE;
 
   get pageSizeOptions(): number[] {
-    return pageSizeOptionsForView('grid');
+    return pageSizeOptionsForView(this.view);
+  }
+
+  get canApprove(): boolean {
+    return this.permissions.canApprove(APPLICATIONS_RESOURCE);
   }
 
   ngOnInit(): void {
     this.api.academicYears().subscribe({
       next: years => {
         this.years = years;
+        const current = years[years.length - 1] ?? years[0];
+        if (current?.id) {
+          this.api.academicClasses(current.id).subscribe({
+            next: classes => {
+              this.classOptions = classes.map(c => ({ label: c.name, value: c.name }));
+              this.cdr.markForCheck();
+            }
+          });
+        }
         this.cdr.markForCheck();
       }
     });
+
     const tab = this.route.snapshot.queryParamMap.get('tab');
     const knownTabs = new Set(APPLICATION_STATUS_TABS.map(t => t.key));
+    // Map legacy tab keys
+    const legacyMap: Record<string, string> = {
+      SUBMITTED: 'IN_REVIEW',
+      UNDER_REVIEW: 'IN_REVIEW'
+    };
     if (tab && knownTabs.has(tab as typeof APPLICATION_STATUS_TABS[number]['key'])) {
       this.activeStatusTab = tab;
+    } else if (tab && legacyMap[tab]) {
+      this.activeStatusTab = legacyMap[tab];
     }
+
     const saved = this.listContext.consume(LIST_KEY);
     if (saved) {
       this.pageIndex = saved.page ?? this.pageIndex;
@@ -123,11 +151,34 @@ export class ApplicationsListComponent implements OnInit {
       if (saved.search) {
         this.filter = { ...this.filter, keyword: saved.search };
       }
-      if (!tab && saved.tab && knownTabs.has(saved.tab as typeof APPLICATION_STATUS_TABS[number]['key'])) {
-        this.activeStatusTab = saved.tab;
+      if (!tab && saved.tab) {
+        const mapped = legacyMap[saved.tab] || saved.tab;
+        if (knownTabs.has(mapped as typeof APPLICATION_STATUS_TABS[number]['key'])) {
+          this.activeStatusTab = mapped;
+        }
       }
     }
     this.applyStatusFilter();
+    this.loadApplications();
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.pageSize = defaultPageSizeForView(mode);
+    this.pageIndex = 0;
+    this.loadApplications();
+  }
+
+  onSearchTermChange(term: string): void {
+    this.filter = { ...this.filter, keyword: term };
+  }
+
+  onClassFilterChange(): void {
+    this.filter = {
+      ...this.filter,
+      applyingForClass: this.selectedClassName || null
+    };
+    this.pageIndex = 0;
     this.loadApplications();
   }
 
@@ -154,6 +205,7 @@ export class ApplicationsListComponent implements OnInit {
 
   clearFilters(): void {
     this.filter = {};
+    this.selectedClassName = null;
     this.activeStatusTab = 'ALL';
     this.pageIndex = 0;
     this.loadApplications();
@@ -197,130 +249,39 @@ export class ApplicationsListComponent implements OnInit {
       });
   }
 
-  openApplication(record: ApplicationRecord): void {
+  canEditForm(record: ApplicationRecord): boolean {
+    return ['DRAFT', 'ACTION_REQUIRED'].includes(record.status);
+  }
+
+  canOpenReview(record: ApplicationRecord): boolean {
+    return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING', 'APPROVED', 'ENROLLED', 'REJECTED', 'ACTION_REQUIRED'].includes(record.status);
+  }
+
+  openPrimary(record: ApplicationRecord): void {
+    if (this.canEditForm(record) && !this.canApprove) {
+      this.openForm(record);
+      return;
+    }
+    if (this.canOpenReview(record)) {
+      this.openReview(record);
+      return;
+    }
+    this.openForm(record);
+  }
+
+  openForm(record: ApplicationRecord): void {
     this.persistListContext();
     this.nav.toApplication(record.applicationId, 'applications');
   }
 
+  openReview(record: ApplicationRecord, event?: Event): void {
+    event?.stopPropagation();
+    this.persistListContext();
+    this.nav.toApplicationReview(record.applicationId, 'applications');
+  }
+
   newApplication(): void {
     this.nav.toApplication('new', 'applications');
-  }
-
-  approve(record: ApplicationRecord, event: Event): void {
-    event.stopPropagation();
-    this.confirmation.confirm({
-      message: `Approve application for ${record.applicantName}?`,
-      header: 'Confirm Approval',
-      icon: 'pi pi-check-circle',
-      accept: () => {
-        this.api.approveApplication(record.applicationId).subscribe({
-          next: () => {
-            this.messages.add({
-              severity: 'success',
-              summary: 'Approved',
-              detail: `${record.applicantName} has been approved.`
-            });
-            this.loadApplications();
-          },
-          error: () =>
-            this.messages.add({
-              severity: 'error',
-              summary: 'Approval failed',
-              detail: 'Could not approve this application.'
-            })
-        });
-      }
-    });
-  }
-
-  reject(record: ApplicationRecord, event: Event): void {
-    event.stopPropagation();
-    this.rejectTarget = record;
-    this.rejectRemarks = '';
-    this.rejectDialogOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeRejectDialog(): void {
-    this.rejectDialogOpen = false;
-    this.rejectTarget = null;
-    this.cdr.markForCheck();
-  }
-
-  confirmReject(): void {
-    if (!this.rejectTarget) return;
-    const remarks = this.rejectRemarks.trim();
-    if (!remarks) {
-      this.messages.add({ severity: 'warn', summary: 'Reason required', detail: 'Enter a rejection reason.' });
-      return;
-    }
-    const record = this.rejectTarget;
-    this.api.rejectApplication(record.applicationId, remarks).subscribe({
-      next: () => {
-        this.messages.add({
-          severity: 'warn',
-          summary: 'Rejected',
-          detail: `${record.applicantName} has been rejected.`
-        });
-        this.closeRejectDialog();
-        this.loadApplications();
-      },
-      error: () =>
-        this.messages.add({
-          severity: 'error',
-          summary: 'Rejection failed',
-          detail: 'Could not reject this application.'
-        })
-    });
-  }
-
-  canReview(record: ApplicationRecord): boolean {
-    return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'].includes(record.status);
-  }
-
-  requestCorrection(record: ApplicationRecord, event: Event): void {
-    event.stopPropagation();
-    this.correctionTarget = record;
-    this.correctionReason = '';
-    this.correctionDialogOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeCorrectionDialog(): void {
-    this.correctionDialogOpen = false;
-    this.correctionTarget = null;
-    this.cdr.markForCheck();
-  }
-
-  confirmCorrection(): void {
-    if (!this.correctionTarget) return;
-    const reason = this.correctionReason.trim();
-    if (!reason) {
-      this.messages.add({
-        severity: 'warn',
-        summary: 'Reason required',
-        detail: 'Enter what needs to be corrected.'
-      });
-      return;
-    }
-    const record = this.correctionTarget;
-    this.api.requestCorrection(record.applicationId, reason).subscribe({
-      next: () => {
-        this.messages.add({
-          severity: 'success',
-          summary: 'Sent for correction',
-          detail: `${record.applicantName} was returned for updates.`
-        });
-        this.closeCorrectionDialog();
-        this.loadApplications();
-      },
-      error: () =>
-        this.messages.add({
-          severity: 'error',
-          summary: 'Request failed',
-          detail: 'Could not send this application back for correction.'
-        })
-    });
   }
 
   openEnroll(record: ApplicationRecord, event: Event): void {
@@ -357,13 +318,26 @@ export class ApplicationsListComponent implements OnInit {
       }))
       .subscribe({
         next: result => {
+          const enrolledId = this.selected!.applicationId;
+          const enrolledName = result.studentName || this.selected?.applicantName;
           this.messages.add({
             severity: 'success',
             summary: 'Enrolled',
-            detail: `${result.studentName || this.selected?.applicantName} is now in Students.`
+            detail: `${enrolledName} is now in Students.`
           });
+          this.applications = this.applications.map(app =>
+            app.applicationId === enrolledId
+              ? {
+                  ...app,
+                  status: 'ENROLLED',
+                  studentId: result.studentId,
+                  studentCode: result.studentCode,
+                  admissionNumber: result.admissionNumber
+                }
+              : app
+          );
           this.closeEnroll();
-          this.loadApplications();
+          this.cdr.markForCheck();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Enrollment failed', detail: 'Could not create the student.' })
       });
@@ -459,6 +433,7 @@ export class ApplicationsListComponent implements OnInit {
         return 'info';
       case 'DOCUMENTS_PENDING':
       case 'FEE_PENDING':
+      case 'ACTION_REQUIRED':
         return 'warning';
       case 'APPROVED':
       case 'ENROLLED':

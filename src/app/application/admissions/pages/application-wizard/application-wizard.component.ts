@@ -5,6 +5,7 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  ViewChild,
   inject
 } from '@angular/core';
 import {
@@ -18,12 +19,10 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { Subject, finalize, forkJoin, takeUntil } from 'rxjs';
 import { PermissionService } from '../../../../core/services/permission.service';
-import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 
 import {
   ApplicationCreateRequest,
@@ -47,13 +46,17 @@ import {
   INDIAN_PIN_PATTERN,
   MEDIUM_OPTIONS,
   RELIGION_OPTIONS,
-  formatAdmissionsLabel
+  formatAdmissionsLabel,
+  isAdditionalDocumentType,
+  normalizeDocumentType,
+  resolveRequiredDocuments
 } from '../../data/admissions-workspace.config';
 import {
   SaasPageHeaderComponent,
   SaasStep,
   SaasStepperComponent
 } from '../../../../shared/ui/saas';
+import { DocumentPreviewDialogComponent } from '../../components/document-preview-dialog/document-preview-dialog.component';
 
 function notFutureDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
@@ -71,9 +74,11 @@ function optionalPattern(pattern: RegExp) {
 }
 
 interface DocChecklistItem {
+  key: string;
   documentType: string;
   label: string;
   required: boolean;
+  additional: boolean;
   document: ApplicationDocument | null;
 }
 
@@ -86,12 +91,12 @@ interface DocChecklistItem {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    DialogModule,
     DropdownModule,
-    HasPermissionDirective,
+    DocumentPreviewDialogComponent,
     SaasPageHeaderComponent,
     SaasStepperComponent
   ],
+  providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss'],
   templateUrl: './application-wizard.component.html'
 })
@@ -108,6 +113,8 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   readonly applicationsResource = 'ADMISSIONS_APPLICATIONS';
   previewUrls = new Map<number, string>();
 
+  @ViewChild(DocumentPreviewDialogComponent) private previewDialog?: DocumentPreviewDialogComponent;
+
   readonly genderOptions = [
     { label: 'Select gender', value: '' },
     { label: 'Male', value: 'MALE' },
@@ -121,10 +128,6 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   readonly mediumOptions = MEDIUM_OPTIONS.map(v => ({ label: v, value: v }));
   readonly identityTypes = IDENTITY_TYPES.map(t => ({ label: t.label, value: t.value }));
   readonly relationshipOptions = CONTACT_RELATIONSHIP_OPTIONS.map(v => ({ label: v, value: v }));
-  readonly documentTypeOptions = DOCUMENT_TYPES.map(t => ({
-    label: formatAdmissionsLabel(t),
-    value: t
-  }));
   readonly today = new Date().toISOString().slice(0, 10);
 
   applicationId: number | null = null;
@@ -139,8 +142,12 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   classes: LookupOption[] = [];
   sections: LookupOption[] = [];
   documents: ApplicationDocument[] = [];
-  requiredDocumentTypes: string[] = [...DOCUMENT_TYPES.filter(t => t !== 'OTHER')];
+  /** Mandatory docs from Admissions Settings (before conditional overrides). */
+  configuredRequiredTypes: string[] = [...DOCUMENT_TYPES.filter(t => t !== 'OTHER')];
+  /** Optional docs from Admissions Settings. */
+  configuredOptionalTypes: string[] = [];
   checklist: DocChecklistItem[] = [];
+  additionalDocs: DocChecklistItem[] = [];
   progress: ApplicationProgress | null = null;
   activeStep = 0;
   showSecondaryGuardian = false;
@@ -153,10 +160,9 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   linkedParentId: number | null = null;
   familyMatchLoading = false;
 
-  additionalDocVisible = false;
-  additionalDocType = 'OTHER';
   additionalDocName = '';
   additionalUploading = false;
+  showAdditionalComposer = false;
 
   readonly steps: SaasStep[] = [
     { key: 'family', label: 'Student & Family' },
@@ -251,8 +257,15 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     this.api.settings().subscribe({
       next: s => {
         if (s?.requiredDocuments?.length) {
-          this.requiredDocumentTypes = s.requiredDocuments;
+          this.configuredRequiredTypes = s.requiredDocuments
+            .map(normalizeDocumentType)
+            .filter(t => !!t && t !== 'OTHER');
+        } else {
+          this.configuredRequiredTypes = [];
         }
+        this.configuredOptionalTypes = (s?.optionalDocuments ?? [])
+          .map(normalizeDocumentType)
+          .filter(t => !!t && t !== 'OTHER');
         this.rebuildChecklist();
         this.cdr.markForCheck();
       },
@@ -264,13 +277,25 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       .subscribe(yearId => this.onYearChange(yearId));
     this.form.get('academic.classId')?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(classId => this.onClassChange(classId));
+      .subscribe(classId => {
+        this.onClassChange(classId);
+        this.rebuildChecklist();
+      });
     this.form.get('address.sameAsPresentAddress')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(same => this.applyPermanentValidators(!!same));
     this.form.get('academic.hasPreviousSchooling')?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(has => this.applyPreviousSchoolValidators(!!has));
+      .subscribe(has => {
+        this.applyPreviousSchoolValidators(!!has);
+        this.rebuildChecklist();
+      });
+    this.form.get('academic.tcNumber')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.rebuildChecklist());
+    this.form.get('academic.previousSchoolName')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.rebuildChecklist());
     this.form.get('student.identityDocumentType')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(type => this.applyIdentityValidators(type));
@@ -317,6 +342,13 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     return this.permissions.canApprove(this.applicationsResource);
   }
 
+  /** Verify/Reject belongs to approvers after the form is in review — not counselors while filling. */
+  get showDocumentReviewActions(): boolean {
+    if (!this.canApproveDocuments) return false;
+    const status = (this.currentStatus || '').toUpperCase();
+    return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING', 'ACTION_REQUIRED'].includes(status);
+  }
+
   get canManageApplication(): boolean {
     return this.permissions.canManage(this.applicationsResource);
   }
@@ -347,7 +379,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   }
 
   get uploadedRequiredCount(): number {
-    return this.checklist.filter(c => c.required && !!c.document).length;
+    return this.checklist.filter(c => c.required && !!c.document && c.document.status !== 'REJECTED').length;
   }
 
   get requiredDocCount(): number {
@@ -355,7 +387,18 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   }
 
   get missingRequiredDocs(): DocChecklistItem[] {
-    return this.checklist.filter(c => c.required && !c.document);
+    return this.checklist.filter(c => c.required && (!c.document || c.document.status === 'REJECTED'));
+  }
+
+  get effectiveRequiredTypes(): string[] {
+    const academic = this.form.get('academic')?.value ?? {};
+    return resolveRequiredDocuments({
+      configured: this.configuredRequiredTypes,
+      className: this.selectedClassName || academic.applyingForClass || '',
+      hasPreviousSchooling: !!academic.hasPreviousSchooling,
+      tcNumber: academic.tcNumber,
+      previousSchoolName: academic.previousSchoolName
+    });
   }
 
   get selectedClassName(): string {
@@ -779,7 +822,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       const root = document.querySelector('.adm-app-form');
       const invalid = root?.querySelector(
-        '.ng-invalid.ng-touched, .adm-doc-card--missing, .adm-field-error'
+        '.ng-invalid.ng-touched, .adm-docs-table__row.is-missing, .adm-doc-row--missing, .adm-doc-card--missing, .adm-field-error'
       ) as HTMLElement | null;
       if (invalid) {
         invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -910,11 +953,16 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       this.applicationId
         ? this.api.submitExistingApplication(this.applicationId, payload)
         : this.api.submitApplication(payload),
-      'Submitted'
+      'Submitted',
+      () => {
+        void this.router.navigate(['/app/admissions/applications'], {
+          queryParams: { tab: 'IN_REVIEW' }
+        });
+      }
     );
   }
 
-  onFileSelected(event: Event, documentType: string): void {
+  onFileSelected(event: Event, documentType: string, replaceDocumentId?: number, label?: string | null): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -928,34 +976,62 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       return;
     }
     this.saving = true;
-    this.api.uploadDocument(this.applicationId, file, documentType)
-      .pipe(finalize(() => {
-        this.saving = false;
-        this.cdr.markForCheck();
-        input.value = '';
-      }))
-      .subscribe({
+    const existing = this.documents.find(d =>
+      !isAdditionalDocumentType(d.documentType)
+      && normalizeDocumentType(d.documentType) === normalizeDocumentType(documentType)
+    );
+    const toReplaceId = replaceDocumentId ?? existing?.documentId;
+    const replaceDoc = toReplaceId ? this.documents.find(d => d.documentId === toReplaceId) : null;
+    const uploadLabel = label
+      ?? (isAdditionalDocumentType(documentType) ? (replaceDoc?.remarks || undefined) : undefined);
+
+    const runUpload = () => {
+      this.api.uploadDocument(this.applicationId!, file, documentType, uploadLabel)
+        .pipe(finalize(() => {
+          this.saving = false;
+          this.cdr.markForCheck();
+          input.value = '';
+        }))
+        .subscribe({
+          next: uploaded => {
+            this.messages.add({ severity: 'success', summary: 'Uploaded', detail: 'Document uploaded.' });
+            this.applyDocumentsLocally(docs => {
+              const withoutReplaced = toReplaceId
+                ? docs.filter(d => d.documentId !== toReplaceId)
+                : docs;
+              return [uploaded, ...withoutReplaced];
+            });
+          },
+          error: () => this.messages.add({
+            severity: 'error',
+            summary: 'Upload failed',
+            detail: 'Could not upload document.'
+          })
+        });
+    };
+
+    if (toReplaceId) {
+      this.api.deleteDocument(toReplaceId).subscribe({
         next: () => {
-          this.messages.add({ severity: 'success', summary: 'Uploaded', detail: 'Document uploaded.' });
-          this.loadDocuments(this.applicationId!);
+          this.revokePreview(toReplaceId);
+          runUpload();
         },
-        error: () => this.messages.add({
-          severity: 'error',
-          summary: 'Upload failed',
-          detail: 'Could not upload document.'
-        })
+        error: () => runUpload()
       });
+      return;
+    }
+    runUpload();
   }
 
   openAdditionalDoc(): void {
-    this.additionalDocType = 'OTHER';
     this.additionalDocName = '';
-    this.additionalDocVisible = true;
+    this.showAdditionalComposer = true;
     this.cdr.markForCheck();
   }
 
   closeAdditionalDoc(): void {
-    this.additionalDocVisible = false;
+    this.showAdditionalComposer = false;
+    this.additionalDocName = '';
     this.cdr.markForCheck();
   }
 
@@ -971,17 +1047,19 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       return;
     }
     this.additionalUploading = true;
-    this.api.uploadDocument(this.applicationId, file, this.additionalDocType || 'OTHER')
+    const label = this.additionalDocName.trim() || undefined;
+    this.api.uploadDocument(this.applicationId, file, 'OTHER', label)
       .pipe(finalize(() => {
         this.additionalUploading = false;
         this.cdr.markForCheck();
         input.value = '';
       }))
       .subscribe({
-        next: () => {
+        next: uploaded => {
           this.messages.add({ severity: 'success', summary: 'Uploaded', detail: 'Additional document uploaded.' });
-          this.additionalDocVisible = false;
-          this.loadDocuments(this.applicationId!);
+          this.additionalDocName = '';
+          this.showAdditionalComposer = false;
+          this.applyDocumentsLocally(docs => [uploaded, ...docs]);
         },
         error: () => this.messages.add({
           severity: 'error',
@@ -992,8 +1070,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   }
 
   previewDocument(doc: ApplicationDocument): void {
-    const url = this.api.documentDownloadUrl(doc.documentId);
-    window.open(url, '_blank', 'noopener');
+    this.previewDialog?.open(doc);
   }
 
   isImageDocument(doc: ApplicationDocument | null | undefined): boolean {
@@ -1019,13 +1096,15 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       }
     }
     this.api.verifyDocument(doc.documentId, status, remarks).subscribe({
-      next: () => {
+      next: updated => {
+        this.applyDocumentsLocally(docs =>
+          docs.map(d => (d.documentId === updated.documentId ? { ...d, ...updated } : d))
+        );
         this.messages.add({
           severity: 'success',
           summary: status === 'VERIFIED' ? 'Verified' : 'Rejected',
           detail: status === 'VERIFIED' ? 'Document verified.' : 'Document rejected.'
         });
-        this.loadDocuments(this.applicationId!);
       },
       error: () => this.messages.add({
         severity: 'error',
@@ -1037,7 +1116,10 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
 
   removeUploaded(doc: ApplicationDocument): void {
     this.api.deleteDocument(doc.documentId).subscribe({
-      next: () => this.loadDocuments(this.applicationId!),
+      next: () => {
+        this.revokePreview(doc.documentId);
+        this.applyDocumentsLocally(docs => docs.filter(d => d.documentId !== doc.documentId));
+      },
       error: () => this.messages.add({
         severity: 'error',
         summary: 'Delete failed',
@@ -1048,21 +1130,31 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
 
   loadDocuments(applicationId: number): void {
     this.api.listDocuments(applicationId).subscribe({
-      next: docs => {
-        this.documents = docs;
-        this.rebuildChecklist();
-        this.warmPreviewUrls(docs);
-        this.cdr.markForCheck();
-      }
+      next: docs => this.applyDocumentsLocally(() => docs)
     });
+  }
+
+  private applyDocumentsLocally(mutator: (docs: ApplicationDocument[]) => ApplicationDocument[]): void {
+    this.documents = mutator(this.documents);
+    this.rebuildChecklist();
+    this.warmPreviewUrls(this.documents);
+    this.cdr.markForCheck();
+  }
+
+  private revokePreview(documentId: number): void {
+    const url = this.previewUrls.get(documentId);
+    if (url) {
+      URL.revokeObjectURL(url);
+      this.previewUrls.delete(documentId);
+    }
   }
 
   private warmPreviewUrls(docs: ApplicationDocument[]): void {
     for (const doc of docs) {
       if (!this.isImageDocument(doc) || this.previewUrls.has(doc.documentId)) continue;
       this.api.downloadDocumentBlob(doc.documentId).subscribe({
-        next: blob => {
-          const url = URL.createObjectURL(blob);
+        next: result => {
+          const url = URL.createObjectURL(result.blob);
           this.previewUrls.set(doc.documentId, url);
           this.cdr.markForCheck();
         }
@@ -1071,27 +1163,75 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   }
 
   private rebuildChecklist(): void {
+    const requiredTypes = this.effectiveRequiredTypes;
+    const requiredSet = new Set(requiredTypes);
+    const optionalTypes = this.configuredOptionalTypes.filter(t => !requiredSet.has(t));
+    const optionalSet = new Set(optionalTypes);
+    const configuredSet = new Set([...requiredSet, ...optionalSet]);
+
     const byType = new Map<string, ApplicationDocument>();
+    const additional: ApplicationDocument[] = [];
     for (const doc of this.documents) {
-      if (!byType.has(doc.documentType)) byType.set(doc.documentType, doc);
+      if (isAdditionalDocumentType(doc.documentType)) {
+        additional.push(doc);
+        continue;
+      }
+      const key = normalizeDocumentType(doc.documentType);
+      if (!byType.has(key)) {
+        byType.set(key, doc);
+      }
     }
-    const requiredSet = new Set(this.requiredDocumentTypes.map(t => t.toUpperCase().replace(/\s+/g, '_')));
-    const types = new Set<string>([
-      ...this.requiredDocumentTypes,
-      ...DOCUMENT_TYPES,
-      ...this.documents.map(d => d.documentType)
-    ]);
-    this.checklist = Array.from(types).map(documentType => {
-      const key = documentType.toUpperCase().replace(/\s+/g, '_');
+
+    const rows: DocChecklistItem[] = requiredTypes.map(documentType => {
+      const key = normalizeDocumentType(documentType);
       return {
-        documentType,
-        label: formatAdmissionsLabel(documentType),
-        required: requiredSet.has(key) || requiredSet.has(documentType),
-        document: byType.get(documentType) ?? byType.get(key) ?? null
+        key,
+        documentType: key,
+        label: formatAdmissionsLabel(key),
+        required: true,
+        additional: false,
+        document: byType.get(key) ?? null
       };
-    }).filter((item, idx, arr) =>
-      arr.findIndex(x => x.documentType.toUpperCase() === item.documentType.toUpperCase()) === idx
-    );
+    });
+
+    for (const documentType of optionalTypes) {
+      const key = normalizeDocumentType(documentType);
+      rows.push({
+        key,
+        documentType: key,
+        label: formatAdmissionsLabel(key),
+        required: false,
+        additional: false,
+        document: byType.get(key) ?? null
+      });
+    }
+
+    // Uploaded types that are no longer configured stay visible so counselors can delete them.
+    for (const [key, doc] of byType.entries()) {
+      if (configuredSet.has(key)) continue;
+      rows.push({
+        key,
+        documentType: key,
+        label: formatAdmissionsLabel(key),
+        required: false,
+        additional: false,
+        document: doc
+      });
+    }
+
+    this.checklist = rows;
+    this.additionalDocs = additional.map(doc => ({
+      key: `additional-${doc.documentId}`,
+      documentType: 'OTHER',
+      label: doc.status === 'REJECTED'
+        ? (doc.originalName || 'Additional document')
+        : ((doc.remarks || '').trim() || doc.originalName || 'Additional document'),
+      required: false,
+      additional: true,
+      document: doc
+    }));
+
+    this.cdr.markForCheck();
   }
 
   docStatusTone(status: string | null | undefined): string {
@@ -1100,6 +1240,10 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     if (s === 'REJECTED') return 'danger';
     if (s === 'PENDING') return 'warning';
     return 'neutral';
+  }
+
+  docLabel(type: string): string {
+    return formatAdmissionsLabel(type);
   }
 
   onYearChange(yearId: number | null, keepClassId: number | null = null, keepSectionId: number | null = null): void {
@@ -1111,6 +1255,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
         this.classes = classes;
         if (keepClassId) this.form.get('academic.classId')?.setValue(keepClassId, { emitEvent: false });
         if (keepClassId) this.onClassChange(keepClassId, keepSectionId);
+        this.rebuildChecklist();
         this.cdr.markForCheck();
       }
     });
@@ -1197,9 +1342,16 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       { label: 'Full name', value: v.applicantName || '—' },
       { label: 'Date of birth', value: v.dateOfBirth || '—' },
       { label: 'Gender', value: v.gender || '—' },
-      { label: 'Mobile', value: v.contactNumber || '—' },
+      { label: 'Blood group', value: v.bloodGroup || '—' },
       { label: 'Nationality', value: v.nationality || '—' },
-      { label: 'Email', value: v.email || '—' }
+      { label: 'Religion', value: v.religion || '—' },
+      { label: 'Category', value: v.category || '—' },
+      { label: 'Mother tongue', value: v.motherTongue || '—' },
+      { label: 'Place of birth', value: v.placeOfBirth || '—' },
+      { label: 'ID type', value: v.identityDocumentType || '—' },
+      { label: 'ID number', value: v.identityDocumentNumber || '—' },
+      { label: 'Email', value: v.email || '—' },
+      { label: 'Mobile', value: v.contactNumber || '—' }
     ];
   }
 
@@ -1207,22 +1359,48 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     const v = this.form.getRawValue().academic;
     const year = this.years.find(y => y.id === v.academicYearId)?.name ?? '—';
     const cls = this.classes.find(c => c.id === v.classId)?.name ?? (v.applyingForClass || '—');
+    const section = this.sections.find(s => s.id === v.sectionId)?.name ?? '—';
     return [
       { label: 'Academic year', value: year },
       { label: 'Class', value: cls },
-      { label: 'Previous school', value: v.hasPreviousSchooling ? (v.previousSchoolName || '—') : 'None' },
-      { label: 'First language', value: v.firstLanguage || '—' }
+      { label: 'Section', value: section },
+      { label: 'Previous schooling', value: v.hasPreviousSchooling ? 'Yes' : 'No' },
+      { label: 'Previous school', value: v.hasPreviousSchooling ? (v.previousSchoolName || '—') : '—' },
+      { label: 'Previous board', value: v.hasPreviousSchooling ? (v.previousBoard || '—') : '—' },
+      { label: 'Previous class', value: v.hasPreviousSchooling ? (v.previousClass || '—') : '—' },
+      { label: 'Previous year', value: v.hasPreviousSchooling ? (v.previousAcademicYear || '—') : '—' },
+      { label: 'Last percentage', value: v.hasPreviousSchooling ? (v.lastPercentage || '—') : '—' },
+      { label: 'TC number', value: v.hasPreviousSchooling ? (v.tcNumber || '—') : '—' },
+      { label: 'TC date', value: v.hasPreviousSchooling ? (v.tcDate || '—') : '—' },
+      { label: 'Medium', value: v.mediumOfInstruction || '—' },
+      { label: 'First language', value: v.firstLanguage || '—' },
+      { label: 'Second language', value: v.secondLanguage || '—' }
     ];
   }
 
   summaryFamily(): { label: string; value: string }[] {
     const p = this.form.getRawValue().parents;
     const a = this.form.getRawValue().address;
+    const e = this.form.getRawValue().emergency;
+    const present = [a.addressLine1, a.addressLine2, a.city, a.state, a.pinCode, a.country]
+      .filter(Boolean).join(', ') || '—';
+    const permanent = a.sameAsPresentAddress
+      ? 'Same as present address'
+      : ([a.permanentAddressLine1, a.permanentAddressLine2, a.permanentCity, a.permanentState, a.permanentPinCode, a.permanentCountry]
+        .filter(Boolean).join(', ') || '—');
     return [
-      { label: 'Guardian', value: p.parentName || '—' },
+      { label: 'Primary guardian', value: p.parentName || '—' },
       { label: 'Relationship', value: p.parentRelationship || '—' },
       { label: 'Mobile', value: p.parentContact || '—' },
-      { label: 'Address', value: [a.addressLine1, a.city, a.pinCode].filter(Boolean).join(', ') || '—' }
+      { label: 'Email', value: p.parentEmail || '—' },
+      { label: 'Occupation', value: p.fatherOccupation || '—' },
+      { label: 'Secondary guardian', value: p.secondaryGuardianName || '—' },
+      { label: 'Secondary relationship', value: p.secondaryGuardianRelationship || '—' },
+      { label: 'Secondary mobile', value: p.secondaryGuardianMobile || '—' },
+      { label: 'Present address', value: present },
+      { label: 'Permanent address', value: permanent },
+      { label: 'Emergency contact', value: e.emergencyContactName || '—' },
+      { label: 'Emergency mobile', value: e.emergencyContactMobile || '—' }
     ];
   }
 }

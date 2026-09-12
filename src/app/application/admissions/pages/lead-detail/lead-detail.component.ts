@@ -221,14 +221,20 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     this.pageHeader.clearPageHeader();
   }
 
-  load(): void {
-    this.loading.set(true);
+  load(showSpinner = true): void {
+    if (showSpinner) {
+      this.loading.set(true);
+    }
     this.error.set(null);
     this.api
       .leadFullDetail(this.leadId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
+        finalize(() => {
+          if (showSpinner) {
+            this.loading.set(false);
+          }
+        })
       )
       .subscribe({
         next: d => {
@@ -248,6 +254,11 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
           this.messages.add({ severity: 'error', summary: 'Load failed', detail: msg });
         }
       });
+  }
+
+  /** Soft refresh — updates data without blanking the page. */
+  private refreshQuietly(): void {
+    this.load(false);
   }
 
   onTabChange(key: string): void {
@@ -666,7 +677,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         next: () => {
           this.showLostDialog.set(false);
           this.messages.add({ severity: 'warn', summary: 'Lost', detail: 'Lead closed as lost.' });
-          this.load();
+          this.refreshQuietly();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not mark lost.' })
       });
@@ -684,7 +695,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
           .subscribe({
             next: () => {
               this.messages.add({ severity: 'success', summary: 'Reopened', detail: 'Lead reopened.' });
-              this.load();
+              this.refreshQuietly();
             },
             error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not reopen lead.' })
           });
@@ -742,7 +753,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     this.api.assignCounselor(this.leadId, person.staffId).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Assigned', detail: `${person.fullName} assigned.` });
-        this.load();
+        this.refreshQuietly();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Assignment failed.' })
     });
@@ -797,7 +808,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
           summary: target ? 'Rescheduled' : 'Scheduled',
           detail: target ? 'Follow-up rescheduled.' : 'Follow-up scheduled.'
         });
-        this.load();
+        this.refreshQuietly();
       },
       error: () =>
         this.messages.add({
@@ -865,7 +876,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         next: () => {
           this.closeAddCounseling();
           this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Counseling note added.' });
-          this.load();
+          this.refreshQuietly();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not save note.' })
       });
@@ -958,7 +969,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
         next: () => {
           this.editLeadOpen.set(false);
           this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Lead updated.' });
-          this.load();
+          this.refreshQuietly();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not update lead.' })
       });

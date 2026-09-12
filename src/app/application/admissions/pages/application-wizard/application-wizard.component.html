@@ -555,12 +555,17 @@
 
       <!-- Step 3: Documents -->
       <div class="adm-app-form__steps" *ngIf="activeStep === 2">
-        <article class="adm-section-card">
+        <article class="adm-section-card adm-docs-panel">
           <header class="adm-section-card__head">
             <i class="pi pi-folder-open"></i>
             <div>
-              <h3>Required Documents</h3>
-              <p>{{ uploadedRequiredCount }} of {{ requiredDocCount }} required uploaded</p>
+              <h3>Documents</h3>
+              <p>
+                <ng-container *ngIf="requiredDocCount; else noRequiredCopy">
+                  {{ uploadedRequiredCount }} of {{ requiredDocCount }} mandatory uploaded
+                </ng-container>
+                <ng-template #noRequiredCopy>Upload supporting documents for this application</ng-template>
+              </p>
             </div>
           </header>
 
@@ -570,43 +575,126 @@
             </div>
           </div>
 
-          <div class="adm-docs-grid">
-            <article
-              class="adm-doc-card"
+          <div class="adm-docs-table" *ngIf="checklist.length; else emptyDocs">
+            <div class="adm-docs-table__head" aria-hidden="true">
+              <span>Document</span>
+              <span>File</span>
+              <span>Actions</span>
+            </div>
+
+            <div
+              class="adm-docs-table__row"
               *ngFor="let item of checklist"
-              [class.adm-doc-card--missing]="docsMissingHighlight && item.required && !item.document"
-              [class.adm-doc-card--done]="!!item.document"
+              [class.is-missing]="docsMissingHighlight && item.required && (!item.document || item.document.status === 'REJECTED')"
+              [class.is-done]="!!item.document && item.document.status !== 'REJECTED'"
+              [class.is-rejected]="item.document?.status === 'REJECTED'"
             >
-              <div class="adm-doc-card__top">
-                <strong>{{ item.label }}</strong>
-                <span class="adm-doc-badge" [attr.data-tone]="item.document ? docStatusTone(item.document.status) : (item.required ? 'warning' : 'neutral')">
-                  {{ item.document ? (item.document.status || 'UPLOADED') : (item.required ? 'Pending' : 'Optional') }}
-                </span>
+              <div class="adm-docs-table__name">
+                <strong>{{ item.label }}<span class="adm-req-star" *ngIf="item.required">*</span></strong>
+                <small *ngIf="!item.required">Optional</small>
+                <span
+                  class="adm-doc-badge"
+                  *ngIf="item.document"
+                  [attr.data-tone]="docStatusTone(item.document.status)"
+                >{{ item.document.status || 'UPLOADED' }}</span>
               </div>
 
-              <ng-container *ngIf="item.document; else uploadSlot">
-                <div class="adm-doc-card__preview">
-                  <img *ngIf="isImageDocument(item.document) && previewUrl(item.document)" [src]="previewUrl(item.document)!" alt="" />
-                  <div class="adm-doc-card__pdf" *ngIf="!isImageDocument(item.document)">
-                    <i class="pi pi-file-pdf"></i>
-                  </div>
+              <div class="adm-docs-table__file" *ngIf="item.document; else emptyFile">
+                <i class="pi" [ngClass]="isImageDocument(item.document) ? 'pi-image' : 'pi-file'"></i>
+                <div>
+                  <span>{{ item.document.originalName || item.label }}</span>
+                  <small *ngIf="item.document.status === 'REJECTED' && item.document.remarks">
+                    {{ item.document.remarks }}
+                  </small>
                 </div>
-                <p class="adm-doc-card__file">{{ item.document.originalName || item.label }}</p>
-                <p class="adm-doc-card__reject" *ngIf="item.document.status === 'REJECTED' && item.document.remarks">
-                  Document rejected — {{ item.document.remarks }}
-                </p>
-                <div class="adm-doc-card__actions">
+              </div>
+              <ng-template #emptyFile>
+                <div class="adm-docs-table__file adm-docs-table__file--empty">
+                  <span>PDF, JPG or PNG</span>
+                </div>
+              </ng-template>
+
+              <div class="adm-docs-table__actions">
+                <ng-container *ngIf="item.document; else uploadAction">
                   <button type="button" class="tc-btn tc-btn--ghost" (click)="previewDocument(item.document!)">Preview</button>
                   <label class="tc-btn" *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'">
                     Replace
-                    <input type="file" hidden (change)="onFileSelected($event, item.documentType)" accept=".pdf,.jpg,.jpeg,.png" />
+                    <input type="file" hidden (change)="onFileSelected($event, item.documentType, item.document!.documentId)" accept=".pdf,.jpg,.jpeg,.png" />
                   </label>
                   <button
                     type="button"
                     class="tc-btn tc-btn--danger"
                     *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'"
                     (click)="removeUploaded(item.document!)">Delete</button>
-                  <ng-container *tcHasPerm="applicationsResource; action: 'approve'">
+                  <ng-container *ngIf="showDocumentReviewActions">
+                    <button
+                      *ngIf="item.document.status !== 'VERIFIED'"
+                      type="button"
+                      class="tc-btn tc-btn--primary"
+                      (click)="verifyUploaded(item.document!, 'VERIFIED')">Verify</button>
+                    <button
+                      *ngIf="item.document.status !== 'REJECTED'"
+                      type="button"
+                      class="tc-btn"
+                      (click)="verifyUploaded(item.document!, 'REJECTED')">Reject</button>
+                  </ng-container>
+                </ng-container>
+                <ng-template #uploadAction>
+                  <label class="tc-btn tc-btn--primary" *ngIf="canManageApplication">
+                    Upload
+                    <input type="file" hidden (change)="onFileSelected($event, item.documentType)" accept=".pdf,.jpg,.jpeg,.png" />
+                  </label>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+          <ng-template #emptyDocs>
+            <p class="adm-docs-hint">No documents are configured yet. Set mandatory / optional documents in Admissions Settings.</p>
+          </ng-template>
+
+          <div class="adm-docs-extra">
+            <div class="adm-docs-extra__head">
+              <h4>Additional documents</h4>
+              <button
+                type="button"
+                class="adm-link-btn"
+                *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED' && !showAdditionalComposer"
+                (click)="openAdditionalDoc()"
+              >+ Add document</button>
+            </div>
+
+            <div class="adm-docs-table" *ngIf="additionalDocs.length || showAdditionalComposer">
+              <div class="adm-docs-table__row" *ngFor="let item of additionalDocs" [class.is-rejected]="item.document?.status === 'REJECTED'">
+                <div class="adm-docs-table__name">
+                  <strong>{{ item.label }}</strong>
+                  <small>Optional</small>
+                  <span
+                    class="adm-doc-badge"
+                    *ngIf="item.document"
+                    [attr.data-tone]="docStatusTone(item.document.status)"
+                  >{{ item.document.status || 'UPLOADED' }}</span>
+                </div>
+                <div class="adm-docs-table__file" *ngIf="item.document">
+                  <i class="pi" [ngClass]="isImageDocument(item.document) ? 'pi-image' : 'pi-file'"></i>
+                  <div>
+                    <span>{{ item.document.originalName || item.label }}</span>
+                    <small *ngIf="item.document.status === 'REJECTED' && item.document.remarks">
+                      {{ item.document.remarks }}
+                    </small>
+                  </div>
+                </div>
+                <div class="adm-docs-table__actions" *ngIf="item.document">
+                  <button type="button" class="tc-btn tc-btn--ghost" (click)="previewDocument(item.document!)">Preview</button>
+                  <label class="tc-btn" *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'">
+                    Replace
+                    <input type="file" hidden (change)="onFileSelected($event, 'OTHER', item.document!.documentId, item.document!.remarks)" accept=".pdf,.jpg,.jpeg,.png" />
+                  </label>
+                  <button
+                    type="button"
+                    class="tc-btn tc-btn--danger"
+                    *ngIf="canManageApplication && currentStatus !== 'ENROLLED' && currentStatus !== 'APPROVED'"
+                    (click)="removeUploaded(item.document!)">Delete</button>
+                  <ng-container *ngIf="showDocumentReviewActions">
                     <button
                       *ngIf="item.document.status !== 'VERIFIED'"
                       type="button"
@@ -619,18 +707,30 @@
                       (click)="verifyUploaded(item.document!, 'REJECTED')">Reject</button>
                   </ng-container>
                 </div>
-              </ng-container>
-              <ng-template #uploadSlot>
-                <p class="adm-doc-card__hint">PDF, JPG or PNG (Max 5 MB)</p>
-                <label class="tc-btn tc-btn--primary adm-doc-upload">
-                  Upload
-                  <input type="file" hidden (change)="onFileSelected($event, item.documentType)" accept=".pdf,.jpg,.jpeg,.png" />
-                </label>
-              </ng-template>
-            </article>
-          </div>
+              </div>
 
-          <button type="button" class="adm-link-btn" (click)="openAdditionalDoc()">+ Add Additional Document</button>
+              <div class="adm-docs-table__row adm-docs-table__row--composer" *ngIf="showAdditionalComposer">
+                <div class="adm-docs-table__name">
+                  <input
+                    type="text"
+                    class="adm-docs-inline-input"
+                    [(ngModel)]="additionalDocName"
+                    placeholder="Document name (optional)"
+                  />
+                </div>
+                <div class="adm-docs-table__file adm-docs-table__file--empty">
+                  <span>PDF, JPG or PNG</span>
+                </div>
+                <div class="adm-docs-table__actions">
+                  <label class="tc-btn tc-btn--primary" [class.is-disabled]="additionalUploading">
+                    {{ additionalUploading ? 'Uploading…' : 'Upload' }}
+                    <input type="file" hidden (change)="onAdditionalFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png" [disabled]="additionalUploading" />
+                  </label>
+                  <button type="button" class="tc-btn tc-btn--ghost" (click)="closeAdditionalDoc()">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </article>
       </div>
 
@@ -693,8 +793,8 @@
               </div>
               <button type="button" class="adm-link-btn" (click)="goToStep(0)">Edit</button>
             </header>
-            <dl class="adm-summary-dl">
-              <div *ngFor="let row of summaryStudent()">
+            <dl class="adm-summary-grid">
+              <div class="adm-summary-field" *ngFor="let row of summaryStudent()" [class.is-empty]="row.value === '—'">
                 <dt>{{ row.label }}</dt>
                 <dd>{{ row.value }}</dd>
               </div>
@@ -709,8 +809,8 @@
               </div>
               <button type="button" class="adm-link-btn" (click)="goToStep(0)">Edit</button>
             </header>
-            <dl class="adm-summary-dl">
-              <div *ngFor="let row of summaryFamily()">
+            <dl class="adm-summary-grid">
+              <div class="adm-summary-field" *ngFor="let row of summaryFamily()" [class.is-empty]="row.value === '—'">
                 <dt>{{ row.label }}</dt>
                 <dd>{{ row.value }}</dd>
               </div>
@@ -725,8 +825,8 @@
               </div>
               <button type="button" class="adm-link-btn" (click)="goToStep(1)">Edit</button>
             </header>
-            <dl class="adm-summary-dl">
-              <div *ngFor="let row of summaryAcademic()">
+            <dl class="adm-summary-grid">
+              <div class="adm-summary-field" *ngFor="let row of summaryAcademic()" [class.is-empty]="row.value === '—'">
                 <dt>{{ row.label }}</dt>
                 <dd>{{ row.value }}</dd>
               </div>
@@ -742,6 +842,12 @@
               <button type="button" class="adm-link-btn" (click)="goToStep(2)">Edit</button>
             </header>
             <p class="adm-body-text">{{ uploadedRequiredCount }} of {{ requiredDocCount }} required · {{ documents.length }} uploaded</p>
+            <ul class="adm-review-doc-list" *ngIf="documents.length">
+              <li *ngFor="let doc of documents">
+                <span>{{ docLabel(doc.documentType) }} · {{ doc.originalName || 'File' }}</span>
+                <button type="button" class="adm-link-btn" (click)="previewDocument(doc)">Preview</button>
+              </li>
+            </ul>
           </article>
 
           <article class="adm-section-card">
@@ -793,41 +899,4 @@
   </ng-container>
 </section>
 
-<p-dialog
-  header="Add Additional Document"
-  [(visible)]="additionalDocVisible"
-  [modal]="true"
-  [style]="{ width: 'min(480px, 94vw)' }"
-  styleClass="adm-app-form-dialog"
-  (onHide)="closeAdditionalDoc()"
->
-  <div class="adm-form-grid adm-form-grid--dialog">
-    <div class="tc-form-field">
-      <label>Document Name</label>
-      <input type="text" [(ngModel)]="additionalDocName" placeholder="Optional label" />
-    </div>
-    <div class="tc-form-field">
-      <label>Document Type *</label>
-      <p-dropdown
-        [options]="documentTypeOptions"
-        [(ngModel)]="additionalDocType"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body"
-        styleClass="adm-app-form-dd"
-        panelStyleClass="adm-app-form-dd-panel"
-      ></p-dropdown>
-    </div>
-    <div class="tc-form-field adm-form-grid__full">
-      <label class="adm-dropzone">
-        <i class="pi pi-cloud-upload"></i>
-        <span>{{ additionalUploading ? 'Uploading…' : 'Click to upload or drag and drop' }}</span>
-        <small>PDF, JPG or PNG</small>
-        <input type="file" hidden (change)="onAdditionalFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png" [disabled]="additionalUploading" />
-      </label>
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <button type="button" class="tc-btn tc-btn--ghost" (click)="closeAdditionalDoc()">Cancel</button>
-  </ng-template>
-</p-dialog>
+<app-document-preview-dialog />

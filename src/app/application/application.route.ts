@@ -236,6 +236,7 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
       { path: 'form/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'application/:id', loadComponent: () => import('./admissions/pages/application-review/application-review.component').then(m => m.ApplicationReviewComponent) },
       { path: 'wizard/:id', pathMatch: 'full', redirectTo: 'form/:id' },
       {
         path: '',
@@ -248,7 +249,7 @@ export const APPLICATION_ROUTES: Routes = [
           { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
           { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
           { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'reports', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },

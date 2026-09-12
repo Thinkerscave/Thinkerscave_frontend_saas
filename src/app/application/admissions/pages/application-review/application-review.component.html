@@ -1,0 +1,149 @@
+<app-toast />
+<p-confirmDialog />
+
+<section class="tc-page-shell adm-page adm-review-page" *ngIf="!loading && app; else loadingTpl">
+  <tc-saas-page-header [subtitle]="(app.applicationNumber || '#' + app.applicationId) + ' · ' + (app.applyingForClass || 'Class TBD')">
+    <button type="button" class="tc-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back</button>
+    <button type="button" class="tc-btn" *ngIf="canManage" (click)="editForm()"><i class="pi pi-pencil"></i> Edit form</button>
+    <ng-container *tcHasPerm="applicationsResource; action: 'approve'">
+      <button type="button" class="tc-btn" *ngIf="canDecide" (click)="openCorrection()">Request correction</button>
+      <button type="button" class="tc-btn tc-btn--danger" *ngIf="canDecide" (click)="openReject()">Reject</button>
+      <button type="button" class="tc-btn tc-btn--primary" *ngIf="canDecide" (click)="approve()">Approve</button>
+      <button type="button" class="tc-btn tc-btn--primary" *ngIf="canEnroll" (click)="openEnroll()">Enroll student</button>
+    </ng-container>
+  </tc-saas-page-header>
+
+  <div class="adm-review-hero">
+    <div>
+      <h2>{{ app.applicantName }}</h2>
+      <p>{{ app.parentName || '—' }} · {{ app.contactNumber || '—' }}</p>
+    </div>
+    <tc-saas-pill [label]="statusLabel(app.status)" [tone]="statusTone(app.status)" />
+  </div>
+
+  <div class="adm-review-layout">
+    <div class="adm-review-main">
+      <article class="adm-section-card" *ngFor="let section of reviewSections">
+        <header class="adm-section-card__head">
+          <i [class]="section.icon"></i>
+          <div>
+            <h3>{{ section.title }}</h3>
+            <p>Blank fields show as —</p>
+          </div>
+        </header>
+        <dl class="adm-summary-grid">
+          <div class="adm-summary-field" *ngFor="let field of section.fields" [class.is-empty]="field.empty">
+            <dt>{{ field.label }}</dt>
+            <dd>{{ field.value }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-folder-open"></i>
+          <div>
+            <h3>Documents</h3>
+            <p>{{ verifiedDocs }} verified · {{ pendingDocs }} pending · {{ documents.length }} total</p>
+          </div>
+        </header>
+
+        <div class="adm-docs-table" *ngIf="documents.length; else noDocs">
+          <div class="adm-docs-table__row" *ngFor="let doc of documents">
+            <div class="adm-docs-table__name">
+              <strong>{{ docLabel(doc.documentType) }}</strong>
+              <tc-saas-pill [label]="doc.status" [tone]="docTone(doc.status)" />
+            </div>
+            <div class="adm-docs-table__file">
+              <i class="pi pi-file"></i>
+              <div>
+                <span>{{ doc.originalName || docLabel(doc.documentType) }}</span>
+                <small *ngIf="doc.status === 'REJECTED' && doc.remarks">{{ doc.remarks }}</small>
+              </div>
+            </div>
+            <div class="adm-docs-table__actions">
+              <button type="button" class="tc-btn tc-btn--ghost" (click)="previewDocument(doc)">Preview</button>
+              <ng-container *tcHasPerm="applicationsResource; action: 'approve'">
+                <button type="button" class="tc-btn tc-btn--primary" *ngIf="doc.status !== 'VERIFIED' && canDecide" (click)="verifyDoc(doc, 'VERIFIED')">Verify</button>
+                <button type="button" class="tc-btn" *ngIf="doc.status !== 'REJECTED' && canDecide" (click)="verifyDoc(doc, 'REJECTED')">Reject</button>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+        <ng-template #noDocs>
+          <p class="adm-docs-hint">No documents uploaded yet.</p>
+        </ng-template>
+      </article>
+    </div>
+
+    <aside class="adm-review-side">
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-info-circle"></i>
+          <div><h3>Process</h3><p>What happens next</p></div>
+        </header>
+        <ol class="adm-process-list">
+          <li><strong>Review</strong> — check details and verify documents</li>
+          <li><strong>Approve</strong> — accept the seat (or send for correction / reject)</li>
+          <li><strong>Enroll</strong> — create the student in the Students directory</li>
+        </ol>
+        <p class="adm-help-text" *ngIf="app.internalComments">Note: {{ app.internalComments }}</p>
+      </article>
+    </aside>
+  </div>
+</section>
+
+<ng-template #loadingTpl>
+  <section class="tc-page-shell adm-page">
+    <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading application…</div>
+    <div class="tc-empty-state" *ngIf="!loading && errorMessage">
+      <h3>{{ errorMessage }}</h3>
+      <button type="button" class="tc-btn" (click)="back()">Back to applications</button>
+    </div>
+  </section>
+</ng-template>
+
+<app-document-preview-dialog />
+
+<p-dialog header="Reject application" [(visible)]="rejectDialogOpen" [modal]="true" [style]="{ width: 'min(480px, 94vw)' }">
+  <div class="tc-form-field">
+    <label>Reason *</label>
+    <textarea [(ngModel)]="rejectRemarks" rows="4"></textarea>
+  </div>
+  <div class="adm-dialog-actions">
+    <button type="button" class="tc-btn" (click)="rejectDialogOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--danger" (click)="confirmReject()">Reject</button>
+  </div>
+</p-dialog>
+
+<p-dialog header="Request correction" [(visible)]="correctionDialogOpen" [modal]="true" [style]="{ width: 'min(480px, 94vw)' }">
+  <div class="tc-form-field">
+    <label>What needs to be corrected? *</label>
+    <textarea [(ngModel)]="correctionReason" rows="4"></textarea>
+  </div>
+  <div class="adm-dialog-actions">
+    <button type="button" class="tc-btn" (click)="correctionDialogOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="confirmCorrection()">Send for correction</button>
+  </div>
+</p-dialog>
+
+<p-dialog header="Enroll student" [(visible)]="enrollVisible" [modal]="true" [style]="{ width: 'min(480px, 94vw)' }">
+  <div class="adm-form-grid">
+    <div class="tc-form-field">
+      <label>Academic year *</label>
+      <p-dropdown [options]="years" [(ngModel)]="enrollmentForm.academicYearId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown" (onChange)="onYearChange(enrollmentForm.academicYearId)"></p-dropdown>
+    </div>
+    <div class="tc-form-field">
+      <label>Class *</label>
+      <p-dropdown [options]="classes" [(ngModel)]="enrollmentForm.classId" optionLabel="name" optionValue="id" appendTo="body" styleClass="att-filter-dropdown" (onChange)="onClassChange(enrollmentForm.classId)"></p-dropdown>
+    </div>
+    <div class="tc-form-field tc-form-field--full">
+      <label>Section</label>
+      <p-dropdown [options]="sections" [(ngModel)]="enrollmentForm.sectionId" optionLabel="name" optionValue="id" [showClear]="true" appendTo="body" styleClass="att-filter-dropdown"></p-dropdown>
+    </div>
+  </div>
+  <div class="adm-dialog-actions">
+    <button type="button" class="tc-btn" (click)="enrollVisible = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="enroll()" [disabled]="enrolling || !enrollmentForm.academicYearId || !enrollmentForm.classId">Confirm enrollment</button>
+  </div>
+</p-dialog>

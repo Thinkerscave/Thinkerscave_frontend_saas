@@ -33,4 +33,11 @@ export class AdmissionsNavService {
       Object.keys(queryParams).length ? { queryParams } : {}
     );
   }
+
+  /** Approver overview — summary, documents, approve / correction / reject. */
+  toApplicationReview(applicationId: number, from = 'applications'): void {
+    void this.router.navigate(['/app/admissions/application', applicationId], {
+      queryParams: { from }
+    });
+  }
 }

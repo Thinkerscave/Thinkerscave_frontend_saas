@@ -302,7 +302,8 @@ export interface ApplicationSearchRequest {
   parentName?: string | null;
   status?: ApplicationStatus | null;
   statuses?: ApplicationStatus[] | null;
-  classApplied?: string | null;
+  /** Matches backend ApplicationSearchRequest.applyingForClass */
+  applyingForClass?: string | null;
 }
 
 export interface ApplicationDocument {
@@ -428,6 +429,7 @@ export interface AdmissionsSettings {
   inquirySources: string[];
   inquiryStatuses: string[];
   requiredDocuments: string[];
+  optionalDocuments?: string[] | null;
   numbering: Record<string, string>;
   reminderRules: Record<string, string>;
   assignmentMode?: string | null;
@@ -451,4 +453,111 @@ export interface AdmissionsPageConfig {
   description: string;
   icon: string;
   route: string;
+}
+
+export interface AdmissionReportFilter {
+  academicYearId?: number | null;
+  classId?: number | null;
+  source?: string | null;
+  counselorId?: number | null;
+  leadStatus?: string | null;
+  applicationStatus?: string | null;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+  trendGranularity?: 'WEEKLY' | 'MONTHLY' | null;
+  recentLimit?: number | null;
+}
+
+export interface AdmissionReportNamedCount {
+  key: string;
+  label: string;
+  count: number;
+  percentOfTotal?: number | null;
+}
+
+export interface AdmissionReportKpis {
+  totalInquiries: number;
+  totalLeads: number;
+  applicationsStarted: number;
+  applicationsSubmitted: number;
+  applicationsApproved: number;
+  enrolledStudents: number;
+  leadToEnrollmentConversionRate: number;
+  pendingActions: number;
+  totalInquiriesDeltaPct?: number | null;
+  totalLeadsDeltaPct?: number | null;
+  applicationsStartedDeltaPct?: number | null;
+  applicationsSubmittedDeltaPct?: number | null;
+  applicationsApprovedDeltaPct?: number | null;
+  enrolledStudentsDeltaPct?: number | null;
+  conversionDeltaPts?: number | null;
+  pendingActionsDeltaPct?: number | null;
+}
+
+export interface AdmissionReportSourceRow {
+  key: string;
+  label: string;
+  leads: number;
+  applications: number;
+  enrolled: number;
+  conversionRate: number;
+  percentOfLeads?: number | null;
+}
+
+export interface AdmissionReportCounselorRow {
+  counselorId?: number | null;
+  counselorName: string;
+  leads: number;
+  applications: number;
+  enrolled: number;
+  conversionRate: number;
+  overdueFollowUps: number;
+  dueTodayFollowUps: number;
+}
+
+export interface AdmissionReportFollowUpHealth {
+  dueToday: number;
+  overdue: number;
+  upcoming: number;
+  completed: number;
+  noFollowUp: number;
+}
+
+export interface AdmissionReportTrend {
+  granularity: string;
+  labels: string[];
+  inquiries: number[];
+  leads: number[];
+  applications: number[];
+  approved: number[];
+  enrolled: number[];
+}
+
+export interface AdmissionReportRecentRow {
+  applicationId: number;
+  applicantName: string;
+  applyingForClass?: string | null;
+  source?: string | null;
+  counselorName?: string | null;
+  applicationDate?: string | null;
+  status: string;
+  documentsUploaded: number;
+  documentsVerified: number;
+  inquiryId?: number | null;
+}
+
+export interface AdmissionReportDashboard {
+  generatedAt?: string | null;
+  kpis: AdmissionReportKpis;
+  funnel: AdmissionReportNamedCount[];
+  trend: AdmissionReportTrend;
+  leadsBySource: AdmissionReportSourceRow[];
+  leadsByStatus: AdmissionReportNamedCount[];
+  applicationsByClass: AdmissionReportNamedCount[];
+  counselorPerformance: AdmissionReportCounselorRow[];
+  followUpHealth: AdmissionReportFollowUpHealth;
+  applicationStatus: AdmissionReportNamedCount[];
+  documentVerification: AdmissionReportNamedCount[];
+  lostReasonAnalysisSupported: boolean;
+  recentApplications: AdmissionReportRecentRow[];
 }
