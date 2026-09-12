@@ -1,0 +1,159 @@
+/* ============================================================
+   DETAIL PAGE STANDARD — reusable entity detail-page primitives.
+   Approved pilot: Staff Profile (profile-360). Apply to other
+   entity detail pages (Student, Admission, Class, etc.) only
+   after explicit sign-off — do not roll out unattended.
+   ============================================================ */
+
+/* ---- Compact identity hero -------------------------------------------- */
+.tc-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-space-4);
+  flex-wrap: wrap;
+  padding: var(--tc-space-4) var(--tc-space-5);
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+}
+
+.tc-detail-hero__back {
+  order: -1;
+}
+
+.tc-detail-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-space-4);
+  flex: 1;
+  min-width: 260px;
+}
+
+.tc-detail-hero__meta {
+  min-width: 0;
+}
+
+.tc-detail-hero__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-space-2);
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--tc-text);
+    line-height: 1.25;
+  }
+}
+
+.tc-detail-hero__code {
+  margin: 2px 0 var(--tc-space-2);
+  color: var(--tc-text-muted);
+  font-size: 0.85rem;
+}
+
+.tc-detail-hero__chips {
+  display: flex;
+  gap: var(--tc-space-2);
+  flex-wrap: wrap;
+}
+
+.tc-detail-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: var(--tc-surface-50);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--tc-text);
+
+  i {
+    color: var(--tc-text-muted);
+    font-size: 0.72rem;
+  }
+}
+
+.tc-detail-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-space-2);
+}
+
+@media (max-width: 640px) {
+  .tc-detail-hero {
+    padding: var(--tc-space-4);
+  }
+  .tc-detail-hero__identity {
+    min-width: 100%;
+  }
+  .tc-detail-hero__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ---- Workspace layout: main content + optional contextual sidebar ----- */
+.tc-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--tc-space-5);
+
+  &--full {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (max-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tc-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-4);
+}
+
+.tc-detail-sidebar-card {
+  background: var(--tc-surface-0);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  padding: var(--tc-space-4);
+
+  &__title {
+    margin: 0 0 var(--tc-space-3);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tc-text-muted);
+  }
+}
+
+/* ---- Right-aligned action bar inside a tab's content header ---------- */
+.tc-detail-tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tc-space-3);
+  margin-bottom: var(--tc-space-5);
+  flex-wrap: wrap;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--tc-text);
+  }
+}
+
+/* ---- Responsive information grid (Overview-style sections) ----------- */
+.tc-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--tc-space-5);
+}

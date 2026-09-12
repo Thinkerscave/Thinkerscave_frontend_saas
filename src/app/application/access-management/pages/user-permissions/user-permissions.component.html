@@ -1,4 +1,4 @@
-<div class="saas-page user-permissions">
+<div class="saas-page tc-detail-page user-permissions">
   <tc-saas-page-header>
     <app-back-nav fallback="/app/access-management/users" label="Back to users"></app-back-nav>
     <ng-container *ngIf="canManage && user">
@@ -17,6 +17,7 @@
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading user...</div>
 
   <ng-container *ngIf="!loading && user">
+    <section class="tc-detail-page__content">
     <div *ngIf="resetBanner" class="user-permissions__banner" role="status">
       {{ resetBanner }}
       <button type="button" class="tc-btn tc-btn--ghost" (click)="resetBanner = null">Dismiss</button>
@@ -74,5 +75,6 @@
       </div>
       <p *ngIf="!modules.length" class="empty">No menus are assigned to this user yet.</p>
     </tc-saas-panel>
+    </section>
   </ng-container>
 </div>
