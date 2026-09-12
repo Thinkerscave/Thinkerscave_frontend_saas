@@ -1559,10 +1559,10 @@
   align-items: flex-start;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 4px 0 2px;
   gap: 0;
   width: 100%;
-  overflow-x: auto;
+  overflow: visible;
 
   &.is-lost { opacity: 0.55; }
 }
@@ -1572,7 +1572,7 @@
   flex-direction: column;
   align-items: center;
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
   gap: 6px;
   min-width: 0;
   text-align: center;
@@ -1590,7 +1590,8 @@
   background: var(--tc-surface-0);
   border: 2px solid var(--tc-border);
   color: var(--tc-text-muted);
-  z-index: 1;
+  position: relative;
+  z-index: 2;
 }
 
 .adm-lifecycle__label {
@@ -1602,22 +1603,37 @@
 .adm-lifecycle__date {
   font-size: 0.7rem;
   color: var(--tc-text-muted);
+  line-height: 1.2;
 }
 
+/* Connector from this step's center to the next step's center */
 .adm-lifecycle__line {
   position: absolute;
-  top: 15px;
-  left: 50%;
-  width: 100%;
-  height: 2px;
-  background: var(--tc-border);
-  z-index: 0;
+  top: 14px;
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tc-border) 85%, var(--tc-text-muted));
+  z-index: 1;
+  pointer-events: none;
+
+  &.is-done {
+    background: var(--tc-success, #16a34a);
+  }
+
+  &.is-active {
+    background: linear-gradient(
+      90deg,
+      var(--tc-success, #16a34a) 0%,
+      var(--tc-primary-500, #3b82f6) 100%
+    );
+  }
 }
 
 .adm-lifecycle__step[data-state="done"] {
   .adm-lifecycle__dot { background: var(--tc-success); border-color: var(--tc-success); color: #fff; }
   .adm-lifecycle__label { color: var(--tc-text); }
-  .adm-lifecycle__line { background: var(--tc-success); }
 }
 
 .adm-lifecycle__step[data-state="active"] {
@@ -1626,9 +1642,16 @@
 }
 
 @media (max-width: 720px) {
-  .adm-lifecycle { flex-wrap: wrap; gap: 14px; }
-  .adm-lifecycle__step { flex: 0 0 auto; min-width: 90px; }
-  .adm-lifecycle__line { display: none; }
+  .adm-lifecycle {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .adm-lifecycle__step { flex: 0 0 108px; }
+  .adm-lifecycle__line {
+    left: calc(50% + 16px);
+    right: calc(-50% + 16px);
+  }
 }
 
 /* ---------- Attention Required ---------- */
@@ -1694,6 +1717,7 @@
   .adm-empty-compact,
   .adm-inline-form-toggle,
   .adm-quick-stats,
+  .adm-card-actions,
   .tc-loading,
   > .tc-btn {
     margin: 0.7rem 0.9rem;
@@ -1703,7 +1727,14 @@
   .adm-inline-form-toggle,
   > .tc-btn {
     margin-top: 0;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .adm-card-actions.adm-inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
   }
 
   .adm-inline-form-toggle {

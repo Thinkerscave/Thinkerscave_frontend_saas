@@ -86,6 +86,7 @@ export interface LeadRecord {
   comments?: string | null;
   assignedCounselorId?: number | null;
   assignedCounselorName?: string | null;
+  assignedOn?: string | null;
   status: LeadStatus;
   lastFollowUpDate?: string | null;
   lastFollowUpType?: FollowUpType | null;

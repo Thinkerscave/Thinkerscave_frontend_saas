@@ -46,6 +46,11 @@
             <i class="pi pi-ellipsis-v"></i>
           </button>
         }
+        @if (canManage) {
+          <button type="button" class="tc-btn" (click)="openEditLead()" title="Edit lead details">
+            <i class="pi pi-pencil"></i> Edit Lead
+          </button>
+        }
         <button type="button" class="tc-btn tc-btn--primary" (click)="primaryAction()" [disabled]="reopening()">
           {{ applicationActionLabel() }}
         </button>
@@ -72,10 +77,16 @@
               @if (stepState(i) === 'done') { <i class="pi pi-check"></i> } @else { {{ i + 1 }} }
             </span>
             <span class="adm-lifecycle__label">{{ step.label }}</span>
-            @if (i === currentLifecycleIndex() && !isLost) {
-              <span class="adm-lifecycle__date">{{ d.inquiry.createdOn | date:'mediumDate' }}</span>
+            @if (lifecycleStageDates()[i]; as stageDate) {
+              <span class="adm-lifecycle__date">{{ stageDate | date:'mediumDate' }}</span>
             }
-            @if (!isLast(i, lifecycleOrder.length)) { <span class="adm-lifecycle__line"></span> }
+            @if (!isLast(i, lifecycleOrder.length)) {
+              <span
+                class="adm-lifecycle__line"
+                [class.is-done]="stepState(i) === 'done'"
+                [class.is-active]="stepState(i) === 'active'"
+                aria-hidden="true"></span>
+            }
           </li>
         }
       </ol>
@@ -112,9 +123,6 @@
             <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-user"></i> Student Information</h2>
-                @if (canManage) {
-                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="openEditLead()"><i class="pi pi-pencil"></i> Edit</button>
-                }
               </div>
               <dl class="adm-dl adm-dl--compact">
                 <div><dt>Student Name</dt><dd>{{ d.inquiry.studentName || d.inquiry.name || '—' }}</dd></div>
@@ -130,9 +138,6 @@
             <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-id-card"></i> Parent / Contact Information</h2>
-                @if (canManage) {
-                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="openEditLead()"><i class="pi pi-pencil"></i> Edit</button>
-                }
               </div>
               <dl class="adm-dl adm-dl--compact">
                 <div><dt>Parent Name</dt><dd>{{ d.inquiry.parentContactName || '—' }}</dd></div>
@@ -167,9 +172,6 @@
             <div class="tc-card tc-card--panel adm-panel-compact">
               <div class="tc-card__header">
                 <h2><i class="pi pi-graduation-cap"></i> Admission Interest</h2>
-                @if (canManage) {
-                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="openEditLead()"><i class="pi pi-pencil"></i> Edit</button>
-                }
               </div>
               <dl class="adm-dl adm-dl--compact">
                 <div><dt>Class Interested</dt><dd>{{ d.inquiry.classInterestedIn || '—' }}</dd></div>
@@ -234,7 +236,10 @@
               <div class="tc-card__header">
                 <h2><i class="pi pi-briefcase"></i> Lead &amp; Assignment</h2>
                 @if (canManage) {
-                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="submitAssign()"><i class="pi pi-user-edit"></i> Edit</button>
+                  <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="submitAssign()">
+                    <i class="pi pi-user-edit"></i>
+                    {{ d.inquiry.assignedCounselorId ? 'Reassign' : 'Assign' }}
+                  </button>
                 }
               </div>
               <dl class="adm-dl adm-dl--compact">

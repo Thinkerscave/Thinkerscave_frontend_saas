@@ -252,7 +252,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
 
   onTabChange(key: string): void {
     this.activeTab.set(key as DetailTab);
-    if (key === 'activity' && !this.activityItems().length) {
+    if (key === 'activity') {
       this.loadActivity();
     }
   }
@@ -441,11 +441,98 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
     return Math.max(0, Math.round(diff / 86400000));
   }
 
-  // ─── Assignment date (derived from the audit trail — no dedicated column needed) ────────
+  /** Precomputed dates for the lifecycle bar (avoids method calls inside @for template context). */
+  readonly lifecycleStageDates = computed<(string | null)[]>(() => {
+    // Depend on detail + activity so dates refresh after counseling / status changes.
+    this.detail();
+    this.activityItems();
+    return this.lifecycleOrder.map(step => this.resolveLifecycleDate(step.key));
+  });
+
+  // ─── Assignment date (prefer durable assignment history, fall back to timeline) ────────
 
   assignmentDate(): string | null {
-    const item = this.detail()?.timeline?.find(t => t.category === 'ASSIGNMENT');
+    const d = this.detail();
+    if (!d) return null;
+    if (d.inquiry.assignedOn) return d.inquiry.assignedOn;
+    const item = d.timeline?.find(t => t.category === 'ASSIGNMENT');
     return item?.performedAt || item?.performedOn || null;
+  }
+
+  /** Per-stage date for the lifecycle bar (created / contacted / interested / …). */
+  private resolveLifecycleDate(stepKey: string): string | null {
+    const d = this.detail();
+    if (!d) return null;
+    const items = this.activityItems().length ? this.activityItems() : (d.timeline ?? []);
+    const currentIdx = this.currentLifecycleIndex();
+    const stepIdx = this.lifecycleOrder.findIndex(s => s.key === stepKey);
+    if (stepIdx < 0) return null;
+    // Only show dates for reached stages (done or active), not future ones.
+    if (!this.isLost && currentIdx >= 0 && stepIdx > currentIdx) return null;
+    if (this.isLost && stepIdx > this.maxReachedLifecycleIndex()) return null;
+
+    if (stepKey === 'NEW') {
+      return d.inquiry.createdOn || null;
+    }
+    if (stepKey === 'ENROLLED') {
+      return this.firstActivityDate(items, ['ENROLLMENT_COMPLETED', 'STUDENT_ENROLLED']);
+    }
+    if (stepKey === 'APPLICATION_SUBMITTED') {
+      return this.firstActivityDate(items, ['APPLICATION_SUBMITTED', 'APPLICATION_APPROVED', 'LEAD_STATUS_CHANGED'], 'APPLICATION_SUBMITTED');
+    }
+    if (stepKey === 'APPLICATION_STARTED') {
+      return this.firstActivityDate(items, ['APPLICATION_STARTED'])
+        || (d.applicationId ? d.inquiry.createdOn || null : null);
+    }
+    if (stepKey === 'INTERESTED') {
+      return this.firstStatusDate(items, 'INTERESTED');
+    }
+    if (stepKey === 'CONTACTED') {
+      return this.firstStatusDate(items, 'CONTACTED')
+        || this.firstActivityDate(items, ['COUNSELING_ADDED', 'FOLLOW_UP_COMPLETED', 'COUNSELOR_ASSIGNED']);
+    }
+    return null;
+  }
+
+  private maxReachedLifecycleIndex(): number {
+    const idx = this.currentLifecycleIndex();
+    return idx < 0 ? 0 : idx;
+  }
+
+  private firstActivityDate(
+    items: LeadTimelineItem[],
+    actions: string[],
+    summaryContains?: string
+  ): string | null {
+    const matches = items.filter(i => {
+      const action = (i.action || '').toUpperCase();
+      if (!actions.some(a => action === a || action.includes(a))) return false;
+      if (summaryContains) {
+        return (i.description || '').toUpperCase().includes(summaryContains);
+      }
+      return true;
+    });
+    matches.sort((a, b) => {
+      const ta = new Date(a.performedAt || a.performedOn || 0).getTime();
+      const tb = new Date(b.performedAt || b.performedOn || 0).getTime();
+      return ta - tb;
+    });
+    return matches[0]?.performedAt || matches[0]?.performedOn || null;
+  }
+
+  private firstStatusDate(items: LeadTimelineItem[], status: string): string | null {
+    const matches = items.filter(i => {
+      const action = (i.action || '').toUpperCase();
+      const desc = (i.description || '').toUpperCase();
+      return (action.includes('STATUS') || action.includes('LOST') || action.includes('REOPENED'))
+        && desc.includes(status);
+    });
+    matches.sort((a, b) => {
+      const ta = new Date(a.performedAt || a.performedOn || 0).getTime();
+      const tb = new Date(b.performedAt || b.performedOn || 0).getTime();
+      return ta - tb;
+    });
+    return matches[0]?.performedAt || matches[0]?.performedOn || null;
   }
 
   // ─── More menu ───────────────────────────────────────────────────────────
@@ -525,11 +612,15 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
 
   activityStats() {
     const items = this.activityItems();
+    const d = this.detail();
+    const followUpsFromTimeline = items.filter(i => i.category === 'FOLLOW_UP').length;
+    const counselingFromTimeline = items.filter(i => i.category === 'COUNSELING').length;
+    const statusFromTimeline = items.filter(i => i.category === 'STATUS').length;
     return {
       total: items.length,
-      followUps: items.filter(i => i.category === 'FOLLOW_UP').length,
-      counseling: items.filter(i => i.category === 'COUNSELING').length,
-      statusChanges: items.filter(i => i.category === 'STATUS').length
+      followUps: Math.max(followUpsFromTimeline, d?.followUps?.length ?? 0),
+      counseling: Math.max(counselingFromTimeline, d?.counselingNotes?.length ?? 0),
+      statusChanges: statusFromTimeline
     };
   }
 
