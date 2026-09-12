@@ -152,9 +152,39 @@
   }
 }
 
+/* Shared detail-page layout used by Student/Staff/User detail screens. */
+.tc-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-4);
+  padding-bottom: var(--tc-space-3);
+
+  > .tc-detail-page__crumb {
+    margin-bottom: calc(var(--tc-space-2) * -1);
+  }
+
+  > .tc-detail-page__hero {
+    margin-bottom: var(--tc-space-1);
+  }
+
+  > .tc-detail-page__tabs {
+    margin-top: calc(var(--tc-space-1) * -1);
+  }
+
+  .tc-detail-page__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tc-space-4);
+  }
+}
+
 @media (max-width: 768px) {
   .tc-directory-page > tc-kpi-group {
     margin-bottom: var(--tc-space-5);
+  }
+
+  .tc-detail-page {
+    gap: var(--tc-space-3);
   }
 }
 

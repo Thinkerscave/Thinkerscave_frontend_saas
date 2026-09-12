@@ -1,7 +1,7 @@
-<section class="tc-page-shell stu-profile-page" (click)="closeMenus()">
+<section class="tc-page-shell tc-detail-page stu-profile-page" (click)="closeMenus()">
 
   <!-- Breadcrumb -->
-  <div class="stu-profile-crumb">
+  <div class="stu-profile-crumb tc-detail-page__crumb">
     <app-back-nav fallback="/app/students/directory" label="Back to list"></app-back-nav>
   </div>
 
@@ -18,7 +18,7 @@
   <ng-container *ngIf="!loading && profile">
     
     <!-- ════════════════════════ HERO HEADER ════════════════════════ -->
-    <header class="stu-hero">
+    <header class="stu-hero tc-detail-page__hero">
       <tc-avatar
         [name]="profile.overview.fullName"
         [imageUrl]="profile.overview.photoUrl ?? null"
@@ -85,7 +85,7 @@
     </header>
 
     <!-- ════════════════════════ TABS ════════════════════════ -->
-    <nav class="adm-tabs" aria-label="Profile sections">
+    <nav class="adm-tabs tc-detail-page__tabs" aria-label="Profile sections">
       <button *ngFor="let tab of tabs" 
               type="button"
               [class.is-active]="activeTab === tab.key"
@@ -95,7 +95,7 @@
     </nav>
 
     <!-- ════════════════════════ MAIN CONTENT ════════════════════════ -->
-    <div class="adm-tab-panel">
+    <div class="adm-tab-panel tc-detail-page__content">
 
       <!-- ================= OVERVIEW TAB ================= -->
       <ng-container *ngIf="activeTab === 'OVERVIEW'">
