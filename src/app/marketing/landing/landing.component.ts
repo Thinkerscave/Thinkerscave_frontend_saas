@@ -97,7 +97,7 @@ export class LandingComponent implements OnInit {
   }
 
   loginRoute(): string[] {
-    return this.orgContext.requiresSelection
+    return this.orgContext.requiresSelection && !this.orgContext.hasLoginTarget()
       ? ['/auth/select-organization']
       : ['/auth/login'];
   }

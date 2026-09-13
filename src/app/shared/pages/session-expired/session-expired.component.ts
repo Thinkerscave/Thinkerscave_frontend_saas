@@ -24,7 +24,7 @@ export class SessionExpiredComponent {
     this.loginService.clearTokens();
     this.orgContext.clearSelectedOrganization();
 
-    const target = this.orgContext.requiresSelection
+    const target = this.orgContext.requiresSelection && !this.orgContext.hasLoginTarget()
       ? ['/auth/select-organization']
       : ['/auth/login'];
     this.router.navigate(target);

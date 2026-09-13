@@ -110,6 +110,12 @@ export class ApplicationReviewComponent implements OnInit {
     return this.permissions.canManage(APPLICATIONS_RESOURCE);
   }
 
+  /** Edit form only while backend EDITABLE statuses — never after APPROVED. */
+  get canEditForm(): boolean {
+    if (!this.app || !this.canManage) return false;
+    return ['DRAFT', 'ACTION_REQUIRED', 'DOCUMENTS_PENDING'].includes(this.app.status);
+  }
+
   get canDecide(): boolean {
     if (!this.app || !this.canApprove) return false;
     return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'].includes(this.app.status);

@@ -9,10 +9,10 @@ export class AdmissionsNavService {
   private readonly nav = inject(BackNavigationService);
 
   readonly fallbacks: Record<string, string> = {
-    overview: '/app/admissions/overview',
     leads: '/app/admissions/leads',
     'follow-ups': '/app/admissions/follow-ups',
     applications: '/app/admissions/applications',
+    reports: '/app/admissions/reports',
     settings: '/app/admissions/settings'
   };
 

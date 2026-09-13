@@ -2,14 +2,6 @@ import { AdmissionsPageConfig, AdmissionsWorkspacePage } from '../models/admissi
 
 export const ADMISSIONS_PAGES: AdmissionsPageConfig[] = [
   {
-    page: 'overview',
-    label: 'Overview',
-    title: 'Overview',
-    description: 'Pipeline health, today\'s queue, sources, and counselor load.',
-    icon: 'pi pi-chart-bar',
-    route: '/app/admissions/overview'
-  },
-  {
     page: 'leads',
     label: 'Leads',
     title: 'Leads',
@@ -74,10 +66,20 @@ export const APPLICATION_STATUS_TABS = [
   { key: 'ENROLLED', label: 'Enrolled' }
 ] as const;
 
+/** Counselor / VIEW-MANAGE tabs — own applications only; no org-wide approve queue. */
+export const APPLICATION_STATUS_TABS_COUNSELOR = [
+  { key: 'ALL', label: 'All' },
+  { key: 'DRAFT', label: 'Draft' },
+  { key: 'SUBMITTED', label: 'Submitted' },
+  { key: 'ACTION_REQUIRED', label: 'Needs Correction' }
+] as const;
+
 export const APPLICATION_STATUS_GROUPS: Record<string, string[]> = {
   DRAFT: ['DRAFT'],
   /** Submitted applications waiting for document checks / decision */
   IN_REVIEW: ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'],
+  /** Counselor view of apps they have submitted (not org-wide review queue) */
+  SUBMITTED: ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'],
   ACTION_REQUIRED: ['ACTION_REQUIRED'],
   APPROVED: ['APPROVED'],
   ENROLLED: ['ENROLLED']

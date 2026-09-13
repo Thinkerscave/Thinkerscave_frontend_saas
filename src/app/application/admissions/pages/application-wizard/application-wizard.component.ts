@@ -132,6 +132,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
 
   applicationId: number | null = null;
   inquiryId: number | null = null;
+  linkedStudentId: number | null = null;
   currentStatus: string | null = null;
   existingApplicantName = '';
   loading = false;
@@ -359,6 +360,40 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Approved / enrolled / closed applications cannot be edited in Admissions. */
+  get isAdmissionLocked(): boolean {
+    return ['APPROVED', 'ENROLLED', 'REJECTED', 'CANCELLED'].includes(this.currentStatus || '');
+  }
+
+  /** Enrolled applications are owned by the Student module — no admission edits. */
+  get isEnrolledLocked(): boolean {
+    return this.currentStatus === 'ENROLLED';
+  }
+
+  get isApprovedLocked(): boolean {
+    return this.currentStatus === 'APPROVED';
+  }
+
+  get canEditApplication(): boolean {
+    if (this.isAdmissionLocked) return false;
+    if (!this.canManageApplication) return false;
+    if (!this.currentStatus) return true;
+    return ['DRAFT', 'ACTION_REQUIRED', 'DOCUMENTS_PENDING'].includes(this.currentStatus);
+  }
+
+  openStudentProfile(): void {
+    if (!this.linkedStudentId) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Student link missing',
+        detail: 'Open the student from the Students directory.'
+      });
+      void this.router.navigate(['/app/students/directory']);
+      return;
+    }
+    void this.router.navigate(['/app/students/profile', this.linkedStudentId]);
+  }
+
   get stepTitle(): string {
     return this.steps[this.activeStep]?.label ?? '';
   }
@@ -462,6 +497,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   private hydrate(record: ApplicationRecord): void {
     this.inquiryId = record.inquiryId ?? this.inquiryId;
     this.currentStatus = record.status;
+    this.linkedStudentId = record.studentId ?? null;
     this.existingApplicantName = record.applicantName || '';
     this.correctionReason = record.status === 'ACTION_REQUIRED' ? (record.internalComments || null) : null;
     const p = record.profile ?? {};
@@ -910,6 +946,18 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   }
 
   saveDraft(): void {
+    if (!this.canEditApplication) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Read only',
+        detail: this.isEnrolledLocked
+          ? 'This application is enrolled. Update the student from the Students module.'
+          : this.isApprovedLocked
+            ? 'This application is approved. Admissions edits are closed.'
+            : 'This application cannot be edited in its current status.'
+      });
+      return;
+    }
     const payload = this.buildPayload();
     if (!payload.applicantName?.trim()) {
       payload.applicantName = this.existingApplicantName || 'Draft applicant';

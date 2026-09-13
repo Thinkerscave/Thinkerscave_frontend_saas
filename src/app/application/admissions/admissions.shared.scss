@@ -2799,9 +2799,23 @@
   button { margin-top: 0.35rem; }
 }
 
-.saas-stepper li.is-clickable {
-  cursor: pointer;
+.adm-app-form__canvas.is-readonly {
+  pointer-events: none;
+  opacity: 0.92;
 }
+
+.adm-banner--info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+
+  strong { display: block; margin-bottom: 0.2rem; }
+  p { margin: 0; font-size: 0.88rem; }
+}
+
 
 .adm-doc-card__preview {
   width: 72px;

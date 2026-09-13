@@ -15,7 +15,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
-import { APPLICATION_STATUS_GROUPS, APPLICATION_STATUS_TABS } from '../../data/admissions-workspace.config';
+import { APPLICATION_STATUS_GROUPS, APPLICATION_STATUS_TABS, APPLICATION_STATUS_TABS_COUNSELOR } from '../../data/admissions-workspace.config';
 import {
   ApplicationRecord,
   ApplicationSearchRequest,
@@ -40,6 +40,7 @@ import { ListContextService } from '../../../../core/services/list-context.servi
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../core/services/permission.service';
+import { LoginService } from '../../../../core/services/login.service';
 
 const LIST_KEY = 'tc.applications.list';
 const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
@@ -77,6 +78,7 @@ export class ApplicationsListComponent implements OnInit {
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly permissions = inject(PermissionService);
+  private readonly loginService = inject(LoginService);
 
   loading = false;
   searching = false;
@@ -100,11 +102,29 @@ export class ApplicationsListComponent implements OnInit {
   classes: LookupOption[] = [];
   sections: LookupOption[] = [];
 
-  readonly statusTabs = APPLICATION_STATUS_TABS.map(t => ({
-    key: t.key,
-    label: t.label
-  }));
   readonly applicationsResource = APPLICATIONS_RESOURCE;
+
+  /** Approvers / org admins see full org tabs; counselors see limited own-app tabs. */
+  get canSeeOrgApplications(): boolean {
+    if (this.permissions.canApprove(APPLICATIONS_RESOURCE)) {
+      return true;
+    }
+    const roles = this.loginService.getUserRole() ?? [];
+    return roles.some(role => {
+      const token = String(role).toUpperCase().replace(/^ROLE_/, '');
+      return token === 'ORGANIZATION_ADMIN'
+        || token === 'ORGANIZATION_OWNER'
+        || token === 'SUPER_ADMIN'
+        || token === 'PLATFORM_ADMIN';
+    });
+  }
+
+  get statusTabs(): { key: string; label: string }[] {
+    const source = this.canSeeOrgApplications
+      ? APPLICATION_STATUS_TABS
+      : APPLICATION_STATUS_TABS_COUNSELOR;
+    return source.map(t => ({ key: t.key, label: t.label }));
+  }
 
   get pageSizeOptions(): number[] {
     return pageSizeOptionsForView(this.view);
@@ -118,7 +138,8 @@ export class ApplicationsListComponent implements OnInit {
     this.api.academicYears().subscribe({
       next: years => {
         this.years = years;
-        const current = years[years.length - 1] ?? years[0];
+        const current = years.find(y => (y.status || '').toUpperCase() === 'CURRENT')
+          ?? years[0];
         if (current?.id) {
           this.api.academicClasses(current.id).subscribe({
             next: classes => {
@@ -132,15 +153,18 @@ export class ApplicationsListComponent implements OnInit {
     });
 
     const tab = this.route.snapshot.queryParamMap.get('tab');
-    const knownTabs = new Set(APPLICATION_STATUS_TABS.map(t => t.key));
+    const knownTabs = new Set(this.statusTabs.map(t => t.key));
     // Map legacy tab keys
     const legacyMap: Record<string, string> = {
-      SUBMITTED: 'IN_REVIEW',
-      UNDER_REVIEW: 'IN_REVIEW'
+      SUBMITTED: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      UNDER_REVIEW: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      IN_REVIEW: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      APPROVED: this.canSeeOrgApplications ? 'APPROVED' : 'ALL',
+      ENROLLED: this.canSeeOrgApplications ? 'ENROLLED' : 'ALL'
     };
-    if (tab && knownTabs.has(tab as typeof APPLICATION_STATUS_TABS[number]['key'])) {
+    if (tab && knownTabs.has(tab)) {
       this.activeStatusTab = tab;
-    } else if (tab && legacyMap[tab]) {
+    } else if (tab && legacyMap[tab] && knownTabs.has(legacyMap[tab])) {
       this.activeStatusTab = legacyMap[tab];
     }
 
@@ -153,8 +177,10 @@ export class ApplicationsListComponent implements OnInit {
       }
       if (!tab && saved.tab) {
         const mapped = legacyMap[saved.tab] || saved.tab;
-        if (knownTabs.has(mapped as typeof APPLICATION_STATUS_TABS[number]['key'])) {
+        if (knownTabs.has(mapped)) {
           this.activeStatusTab = mapped;
+        } else {
+          this.activeStatusTab = 'ALL';
         }
       }
     }
@@ -194,19 +220,27 @@ export class ApplicationsListComponent implements OnInit {
     this.filter = {
       ...this.filter,
       status: null,
-      statuses: group ? (group as ApplicationStatus[]) : null
+      statuses: group ? (group as ApplicationStatus[]) : null,
+      scope: this.canSeeOrgApplications ? 'ALL' : 'MY'
     };
   }
 
-  onSearch(): void {
+  clearFilters(): void {
+    this.filter = { scope: this.canSeeOrgApplications ? 'ALL' : 'MY' };
+    this.selectedClassName = null;
+    this.activeStatusTab = 'ALL';
     this.pageIndex = 0;
+    this.applyStatusFilter();
     this.loadApplications();
   }
 
-  clearFilters(): void {
-    this.filter = {};
-    this.selectedClassName = null;
-    this.activeStatusTab = 'ALL';
+  canEditForm(record: ApplicationRecord): boolean {
+    // Align with backend EDITABLE — never after APPROVED / ENROLLED / closed.
+    return this.permissions.canManage(APPLICATIONS_RESOURCE)
+      && ['DRAFT', 'ACTION_REQUIRED', 'DOCUMENTS_PENDING'].includes(record.status);
+  }
+
+  onSearch(): void {
     this.pageIndex = 0;
     this.loadApplications();
   }
@@ -223,6 +257,10 @@ export class ApplicationsListComponent implements OnInit {
   loadApplications(): void {
     this.loading = this.applications.length === 0;
     this.searching = true;
+    this.filter = {
+      ...this.filter,
+      scope: this.canSeeOrgApplications ? 'ALL' : 'MY'
+    };
     this.api
       .searchApplications(this.filter, this.pageIndex, this.pageSize)
       .pipe(
@@ -247,10 +285,6 @@ export class ApplicationsListComponent implements OnInit {
           });
         }
       });
-  }
-
-  canEditForm(record: ApplicationRecord): boolean {
-    return ['DRAFT', 'ACTION_REQUIRED'].includes(record.status);
   }
 
   canOpenReview(record: ApplicationRecord): boolean {

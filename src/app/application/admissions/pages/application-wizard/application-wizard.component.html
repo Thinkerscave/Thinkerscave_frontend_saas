@@ -26,10 +26,18 @@
       <strong>Action required</strong>
       <p>{{ correctionReason }}</p>
     </div>
+    <div class="adm-banner adm-banner--info" *ngIf="isApprovedLocked">
+      <strong>Approved</strong>
+      <p>This application is approved. Admissions edits are closed — enroll to create the student, then update details in the Students module.</p>
+    </div>
+    <div class="adm-banner adm-banner--info" *ngIf="isEnrolledLocked">
+      <strong>Enrolled</strong>
+      <p>This candidate is now a student. Profile updates happen in the Students module.</p>
+    </div>
 
     <tc-saas-stepper [steps]="steps" [activeIndex]="activeStep" (stepSelect)="goToStep($event)" />
 
-    <form [formGroup]="form" class="adm-app-form__canvas" novalidate>
+    <form [formGroup]="form" class="adm-app-form__canvas" [class.is-readonly]="!canEditApplication" novalidate>
       <!-- Step 1: Student & Family -->
       <div class="adm-app-form__steps" *ngIf="activeStep === 0">
         <article class="adm-section-card" formGroupName="student">
@@ -873,7 +881,13 @@
     <div class="adm-app-form__sticky-bar">
       <button type="button" class="tc-btn tc-btn--ghost" (click)="back()" [disabled]="activeStep === 0 || saving || submitting">Back</button>
       <div class="adm-app-form__sticky-actions">
-        <button type="button" class="tc-btn" (click)="saveDraft()" [disabled]="saving || submitting">
+        <button
+          type="button"
+          class="tc-btn"
+          *ngIf="canEditApplication"
+          (click)="saveDraft()"
+          [disabled]="saving || submitting"
+        >
           {{ saving && !submitting ? 'Saving…' : 'Save Draft' }}
         </button>
         <button
@@ -886,13 +900,21 @@
           Continue <i class="pi pi-arrow-right"></i>
         </button>
         <button
-          *ngIf="activeStep === steps.length - 1"
+          *ngIf="activeStep === steps.length - 1 && canEditApplication"
           type="button"
           class="tc-btn tc-btn--primary"
           (click)="submit()"
           [disabled]="saving || submitting"
         >
           {{ submitting ? 'Submitting…' : 'Submit Application' }}
+        </button>
+        <button
+          *ngIf="isEnrolledLocked"
+          type="button"
+          class="tc-btn tc-btn--primary"
+          (click)="openStudentProfile()"
+        >
+          Open Student Profile
         </button>
       </div>
     </div>

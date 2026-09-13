@@ -74,6 +74,10 @@ export class AddStudentComponent implements OnInit {
 
   readonly today = new Date().toISOString().slice(0, 10);
 
+  asString(value: number | null | undefined): string | null {
+    return value != null ? String(value) : null;
+  }
+
   readonly tabs: SaasTab[] = [
     { key: 'basic', label: 'Basic Details', icon: 'pi pi-user' },
     { key: 'additional', label: 'Additional Details', icon: 'pi pi-list' }
@@ -84,17 +88,17 @@ export class AddStudentComponent implements OnInit {
   academicYearOptions: AppSelectOption[] = [];
 
   readonly genderOptions: AppSelectOption[] = [
-    { label: 'Male', value: 'Male' },
-    { label: 'Female', value: 'Female' },
-    { label: 'Other', value: 'Other' }
+    { label: 'Male', value: 'MALE' },
+    { label: 'Female', value: 'FEMALE' },
+    { label: 'Other', value: 'OTHER' }
   ];
   readonly religionOptions: AppSelectOption[] = [
     { label: 'Hindu', value: 'Hindu' },
     { label: 'Muslim', value: 'Muslim' },
     { label: 'Christian', value: 'Christian' },
     { label: 'Sikh', value: 'Sikh' },
-    { label: 'Jain', value: 'Jain' },
     { label: 'Buddhist', value: 'Buddhist' },
+    { label: 'Jain', value: 'Jain' },
     { label: 'Other', value: 'Other' }
   ];
   readonly bloodGroupOptions: AppSelectOption[] = [
@@ -108,21 +112,37 @@ export class AddStudentComponent implements OnInit {
     { label: 'O-', value: 'O-' }
   ];
   readonly relationshipOptions: AppSelectOption[] = [
-    { label: 'Father', value: 'Father' },
-    { label: 'Mother', value: 'Mother' },
-    { label: 'Guardian', value: 'Guardian' }
+    { label: 'Father', value: 'FATHER' },
+    { label: 'Mother', value: 'MOTHER' },
+    { label: 'Guardian', value: 'GUARDIAN' },
+    { label: 'Other', value: 'OTHER' }
+  ];
+  readonly categoryOptions: AppSelectOption[] = [
+    { label: 'GEN', value: 'GEN' },
+    { label: 'OBC', value: 'OBC' },
+    { label: 'SC', value: 'SC' },
+    { label: 'ST', value: 'ST' },
+    { label: 'EWS', value: 'EWS' },
+    { label: 'Other', value: 'OTHER' }
+  ];
+  readonly identityTypeOptions: AppSelectOption[] = [
+    { label: 'Aadhaar', value: 'AADHAAR' },
+    { label: 'Passport', value: 'PASSPORT' },
+    { label: 'Birth Certificate', value: 'BIRTH_CERTIFICATE' },
+    { label: 'Other', value: 'OTHER' }
   ];
   readonly enrollmentStatusOptions: AppSelectOption[] = [
-    { label: 'Active', value: 'Active' },
-    { label: 'Inactive', value: 'Inactive' },
-    { label: 'Pending', value: 'Pending' }
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' }
   ];
 
   form: StudentWizardRequest = {
     firstName: '',
     lastName: '',
-    parents: [this.emptyParent('Father')],
-    enrollmentStatus: 'Active',
+    gender: 'MALE',
+    nationality: 'Indian',
+    parents: [this.emptyParent('FATHER')],
+    enrollmentStatus: 'ACTIVE',
     sameAsCurrentAddress: false
   };
 
@@ -150,13 +170,13 @@ export class AddStudentComponent implements OnInit {
     this.router.navigate(['/app/students/directory']);
   }
 
-  emptyParent(relationship = 'Father'): ParentInfo {
+  emptyParent(relationship = 'FATHER'): ParentInfo {
     return {
       relationship,
       firstName: '',
       lastName: '',
       mobile: '',
-      isPrimaryContact: relationship === 'Father',
+      isPrimaryContact: relationship === 'FATHER',
       receiveSms: true,
       receiveEmail: true,
       isPickupAuthorized: false
@@ -231,8 +251,12 @@ export class AddStudentComponent implements OnInit {
         if (!this.form.dateOfBirth) return 'Date of birth is required.';
         if (this.form.dateOfBirth > this.today) return 'Date of birth cannot be in the future.';
         return '';
+      case 'gender':
+        return this.form.gender?.trim() ? '' : 'Gender is required.';
       case 'classId':
-        return this.form.classId ? '' : 'Class is required.';
+        // Enrollment is optional for onboarding; if year is chosen, class becomes required.
+        if (this.form.academicYearId && !this.form.classId) return 'Class is required when academic year is selected.';
+        return '';
       case 'parentFirstName':
         return parent?.firstName?.trim() ? '' : 'Parent first name is required.';
       case 'parentMobile':
@@ -243,9 +267,18 @@ export class AddStudentComponent implements OnInit {
         return this.optionalEmailError(this.form.email);
       case 'parentEmail':
         return this.optionalEmailError(parent?.email);
+      case 'currentPincode':
+        return this.optionalPinError(this.form.currentPincode);
+      case 'permanentPincode':
+        return this.form.sameAsCurrentAddress ? '' : this.optionalPinError(this.form.permanentPincode);
       default:
         return '';
     }
+  }
+
+  private optionalPinError(value: string | null | undefined): string {
+    if (!value?.trim()) return '';
+    return /^[1-9]\d{5}$/.test(value.trim()) ? '' : 'Enter a valid 6-digit PIN code.';
   }
 
   next(): void {
@@ -274,7 +307,7 @@ export class AddStudentComponent implements OnInit {
     const previous = this.attempted;
     this.attempted = true;
     const invalid = [
-      'firstName', 'lastName', 'dateOfBirth', 'classId',
+      'firstName', 'lastName', 'dateOfBirth', 'gender', 'classId',
       'parentFirstName', 'parentMobile', 'mobile', 'email', 'parentEmail'
     ].some(key => !!this.fieldError(key));
     this.attempted = previous;
@@ -329,7 +362,31 @@ export class AddStudentComponent implements OnInit {
         return of([]);
       }))
       .subscribe(years => {
-        this.academicYearOptions = years.map(y => ({ label: y.label, value: y.label }));
+        this.academicYearOptions = years.map(y => ({ label: y.label, value: String(y.id) }));
+        this.cdr.markForCheck();
+      });
+  }
+
+  onAcademicYearChange(value: string | null): void {
+    this.form.academicYearId = value ? Number(value) : null;
+    this.form.academicYear = null;
+    this.classIdValue = null;
+    this.form.classId = null;
+    this.sectionIdValue = null;
+    this.form.sectionId = null;
+    this.sectionOptions = [];
+    this.classOptions = [];
+    if (!this.form.academicYearId) {
+      this.loadClasses();
+      return;
+    }
+    this.api.listClasses(this.form.academicYearId)
+      .pipe(catchError(() => {
+        this.lookupWarning = 'Class options could not be loaded for the selected year.';
+        return of([]);
+      }))
+      .subscribe(classes => {
+        this.classOptions = classes.map(c => ({ label: c.label, value: String(c.id) }));
         this.cdr.markForCheck();
       });
   }

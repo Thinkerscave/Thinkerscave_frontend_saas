@@ -39,6 +39,8 @@ interface PublicOrgDto {
 const PENDING_ORG_KEY = 'pendingOrg';
 const LOGIN_MODE_KEY = 'loginMode';
 const RECENT_ORGS_KEY = 'recentOrganizations';
+const REMEMBERED_ORG_KEY = 'rememberedOrg';
+const LAST_SELECTED_ORG_ID_KEY = 'lastSelectedOrganizationId';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationContextService {
@@ -107,12 +109,16 @@ export class OrganizationContextService {
   }
 
   getSelectedOrganization(): LoginOrganization | null {
-    const raw = sessionStorage.getItem(PENDING_ORG_KEY);
+    const raw = sessionStorage.getItem(PENDING_ORG_KEY) ?? localStorage.getItem(REMEMBERED_ORG_KEY);
     if (!raw) {
       return null;
     }
     try {
-      return JSON.parse(raw) as LoginOrganization;
+      const parsed = JSON.parse(raw) as LoginOrganization;
+      if (!parsed || parsed.id == null || !parsed.tenantId) {
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -128,6 +134,8 @@ export class OrganizationContextService {
   setSelectedOrganization(org: LoginOrganization): void {
     sessionStorage.removeItem(LOGIN_MODE_KEY);
     sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(org));
+    localStorage.setItem(REMEMBERED_ORG_KEY, JSON.stringify(org));
+    localStorage.setItem(LAST_SELECTED_ORG_ID_KEY, String(org.id));
     this.trackRecentOrganization(org);
   }
 
@@ -159,9 +167,13 @@ export class OrganizationContextService {
     sessionStorage.setItem(RECENT_ORGS_KEY, JSON.stringify(next.map((o) => o.id)));
   }
 
-  clearSelectedOrganization(): void {
+  clearSelectedOrganization(clearRemembered = false): void {
     sessionStorage.removeItem(PENDING_ORG_KEY);
     sessionStorage.removeItem(LOGIN_MODE_KEY);
+    if (clearRemembered) {
+      localStorage.removeItem(REMEMBERED_ORG_KEY);
+      localStorage.removeItem(LAST_SELECTED_ORG_ID_KEY);
+    }
   }
 
   resolveLoginContext(): 'PLATFORM' | 'TENANT' {

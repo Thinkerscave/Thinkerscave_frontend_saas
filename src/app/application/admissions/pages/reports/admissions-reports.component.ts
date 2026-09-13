@@ -121,10 +121,21 @@ export class AdmissionsReportsComponent implements OnInit {
       next: ({ years, counselors }) => {
         this.years = years;
         this.counselors = counselors.content ?? [];
+        this.applyDefaultAcademicYear();
         this.cdr.markForCheck();
-      }
+        this.load();
+      },
+      error: () => this.load()
     });
-    this.load();
+  }
+
+  private applyDefaultAcademicYear(): void {
+    if (this.filter.academicYearId != null) return;
+    const current = this.years.find(y => (y.status || '').toUpperCase() === 'CURRENT')
+      ?? this.years[0];
+    if (!current?.id) return;
+    this.filter.academicYearId = current.id;
+    this.onYearChange();
   }
 
   onYearChange(): void {
@@ -157,6 +168,7 @@ export class AdmissionsReportsComponent implements OnInit {
       recentLimit: 15
     };
     this.classes = [];
+    this.applyDefaultAcademicYear();
     this.load();
   }
 

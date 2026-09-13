@@ -45,6 +45,11 @@ export class OrgSelectComponent implements OnInit {
   readonly resultCount = computed(() => this.organizations().length);
 
   ngOnInit(): void {
+    const remembered = this.orgContext.getSelectedOrganization();
+    if (remembered && !this.orgContext.isPlatformLogin()) {
+      this.selected.set(remembered);
+    }
+
     // Initial load of all organizations
     this.orgContext.loadOrganizations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
 

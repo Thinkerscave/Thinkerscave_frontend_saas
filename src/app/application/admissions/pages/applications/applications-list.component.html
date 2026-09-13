@@ -2,7 +2,9 @@
 <p-confirmDialog />
 
 <section class="tc-page-shell adm-page adm-applications-page">
-  <tc-saas-page-header subtitle="Approve seats first, then enroll to create the student record in the directory.">
+  <tc-saas-page-header [subtitle]="canSeeOrgApplications
+    ? 'Approve seats first, then enroll to create the student record in the directory.'
+    : 'Track and submit your applications. Approved applications are edited in Students after enrollment.'">
     <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="applicationsResource; action: 'manage'" (click)="newApplication()" title="Start a new admission application">
       <i class="pi pi-plus"></i> New Application
     </button>

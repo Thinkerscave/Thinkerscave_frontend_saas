@@ -609,10 +609,10 @@ export class BreadcrumbComponent implements OnInit {
       students: { dashboard: 'Dashboard', directory: 'Directory', 'add-student': 'Add Student' },
 
       admissions: {
-        overview: 'Overview',
         leads: 'Leads',
         'follow-ups': 'Follow-ups',
         applications: 'Applications',
+        reports: 'Reports',
         settings: 'Settings',
         lead: 'Lead',
         form: 'Application form',
@@ -715,7 +715,7 @@ export class BreadcrumbComponent implements OnInit {
 
     if (workspace === 'admissions' && page === 'lead') {
       if (index === 0) {
-        return ['/app/admissions/overview'];
+        return ['/app/admissions/leads'];
       }
       if (index === 1) {
         return ['/app/admissions/leads'];

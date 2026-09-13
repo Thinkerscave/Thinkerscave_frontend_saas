@@ -4,7 +4,7 @@
 <section class="tc-page-shell adm-page adm-review-page" *ngIf="!loading && app; else loadingTpl">
   <tc-saas-page-header [subtitle]="(app.applicationNumber || '#' + app.applicationId) + ' · ' + (app.applyingForClass || 'Class TBD')">
     <button type="button" class="tc-btn" (click)="back()"><i class="pi pi-arrow-left"></i> Back</button>
-    <button type="button" class="tc-btn" *ngIf="canManage" (click)="editForm()"><i class="pi pi-pencil"></i> Edit form</button>
+    <button type="button" class="tc-btn" *ngIf="canEditForm" (click)="editForm()"><i class="pi pi-pencil"></i> Edit form</button>
     <ng-container *tcHasPerm="applicationsResource; action: 'approve'">
       <button type="button" class="tc-btn" *ngIf="canDecide" (click)="openCorrection()">Request correction</button>
       <button type="button" class="tc-btn tc-btn--danger" *ngIf="canDecide" (click)="openReject()">Reject</button>

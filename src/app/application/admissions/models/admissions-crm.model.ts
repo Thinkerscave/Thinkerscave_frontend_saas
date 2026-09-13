@@ -22,6 +22,8 @@ export type FeePaymentStatus = 'PENDING' | 'PAID' | 'WAIVED';
 export interface LookupOption {
   id: number;
   name: string;
+  /** Academic year status when present (e.g. CURRENT). */
+  status?: string | null;
 }
 
 export interface PageResponse<T> {
@@ -304,6 +306,8 @@ export interface ApplicationSearchRequest {
   statuses?: ApplicationStatus[] | null;
   /** Matches backend ApplicationSearchRequest.applyingForClass */
   applyingForClass?: string | null;
+  /** MY = own apps; ALL = org-wide (approvers). Server may force MY. */
+  scope?: 'MY' | 'ALL' | null;
 }
 
 export interface ApplicationDocument {
@@ -444,7 +448,7 @@ export interface CounselorOption {
 }
 
 export type AdmissionsWorkspacePage =
-  | 'overview' | 'leads' | 'follow-ups' | 'applications' | 'reports' | 'settings';
+  | 'leads' | 'follow-ups' | 'applications' | 'reports' | 'settings';
 
 export interface AdmissionsPageConfig {
   page: AdmissionsWorkspacePage;

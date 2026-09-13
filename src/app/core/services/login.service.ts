@@ -14,7 +14,7 @@ import { MenuMappingService } from '../../application/services/menu-mapping.serv
 /** Keys persisted across sessions (access token is memory-only; refresh token is HttpOnly cookie). */
 const STORAGE_KEYS = [
   'tenantId', 'loginContext', 'user', 'orgType', 'sideMenu', 'app-breadcrumb',
-  'organizations', 'currentOrgId', 'tenantConfig', 'lastSelectedOrganizationId'
+  'organizations', 'currentOrgId', 'tenantConfig'
 ] as const;
 
 @Injectable({
