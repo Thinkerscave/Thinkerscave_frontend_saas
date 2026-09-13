@@ -3,40 +3,63 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
+  computed,
   inject,
   signal
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { Menu, MenuModule } from 'primeng/menu';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
 import {
-  SaasPageHeaderComponent,
   SaasPillComponent,
   SaasTab,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { CounselorPickerComponent } from '../../components/counselor-picker/counselor-picker.component';
-import { FOLLOW_UP_TYPES, formatAdmissionsLabel } from '../../data/admissions-workspace.config';
+import {
+  CONTACT_RELATIONSHIP_OPTIONS,
+  FOLLOW_UP_TYPES,
+  GENDER_OPTIONS,
+  LOST_REASON_OPTIONS,
+  TRISTATE_OPTIONS,
+  formatAdmissionsLabel
+} from '../../data/admissions-workspace.config';
 import {
   CounselingNote,
   CounselorOption,
   FollowUpRecord,
+  FollowUpType,
   LeadFullDetail,
+  LeadRecord,
   LeadStatus,
-  LeadTimelineItem
+  LeadTimelineItem,
+  LookupOption
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 import { AdmissionsNavService } from '../../services/admissions-nav.service';
 
 type DetailTab = 'overview' | 'activity' | 'counseling';
+const PERMISSION_RESOURCE = 'ADMISSIONS_LEADS';
+
+interface AttentionItem {
+  icon: string;
+  title: string;
+  message: string;
+  actionLabel?: string;
+  action?: () => void;
+}
 
 @Component({
   selector: 'app-lead-detail',
@@ -45,13 +68,12 @@ type DetailTab = 'overview' | 'activity' | 'counseling';
   imports: [
     AppToastComponent,
     CommonModule,
-    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     DropdownModule,
     ConfirmDialogModule,
     DialogModule,
-    SaasPageHeaderComponent,
+    MenuModule,
     SaasTabsComponent,
     SaasPillComponent,
     CounselorPickerComponent
@@ -60,24 +82,30 @@ type DetailTab = 'overview' | 'activity' | 'counseling';
   styleUrls: ['../../admissions.shared.scss'],
   templateUrl: './lead-detail.component.html'
 })
-export class LeadDetailComponent implements OnInit {
+export class LeadDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly api = inject(AdmissionsCrmService);
   private readonly nav = inject(AdmissionsNavService);
   private readonly fb = inject(FormBuilder);
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly pageHeader = inject(BreadCrumbService);
+  readonly permissions = inject(PermissionService);
 
   readonly followUpTypeOptions = FOLLOW_UP_TYPES.map(t => ({ label: formatAdmissionsLabel(t), value: t }));
-  readonly statusAfterOptions = [
-    { label: 'CONTACTED', value: 'CONTACTED' },
-    { label: 'INTERESTED', value: 'INTERESTED' },
-    { label: 'COUNSELING', value: 'COUNSELING' },
-    { label: 'DOCUMENTS_PENDING', value: 'DOCUMENTS_PENDING' },
-    { label: 'FOLLOW_UP_REQUIRED', value: 'FOLLOW_UP_REQUIRED' },
-    { label: 'READY_FOR_ADMISSION', value: 'READY_FOR_ADMISSION' },
-    { label: 'LOST', value: 'LOST' }
+  readonly counselingModeOptions = this.followUpTypeOptions;
+  readonly genderOptions = GENDER_OPTIONS;
+  readonly relationshipOptions = CONTACT_RELATIONSHIP_OPTIONS;
+  readonly tristateOptions = TRISTATE_OPTIONS;
+  readonly lostReasonOptions = LOST_REASON_OPTIONS;
+  readonly leadStatusOptions = [
+    { label: 'New', value: 'NEW' },
+    { label: 'Contacted', value: 'CONTACTED' },
+    { label: 'Interested', value: 'INTERESTED' },
+    { label: 'Application Started', value: 'APPLICATION_STARTED' },
+    { label: 'Application Submitted', value: 'APPLICATION_SUBMITTED' }
   ];
 
   readonly loading = signal(true);
@@ -86,17 +114,21 @@ export class LeadDetailComponent implements OnInit {
   readonly detail = signal<LeadFullDetail | null>(null);
   readonly activeTab = signal<DetailTab>('overview');
   readonly showLostDialog = signal(false);
+  readonly reopening = signal(false);
   readonly counselorPickerOpen = signal(false);
-  readonly completeTarget = signal<FollowUpRecord | null>(null);
-  completeOutcome = '';
-  completeRemarks = '';
+  readonly scheduleFollowUpOpen = signal(false);
+  readonly scheduleTarget = signal<FollowUpRecord | null>(null);
+  readonly counselingFollowUpId = signal<number | null>(null);
+  readonly editLeadOpen = signal(false);
+  readonly addCounselingOpen = signal(false);
+  readonly years = signal<LookupOption[]>([]);
+  readonly classes = signal<LookupOption[]>([]);
+  readonly eligibleCounselors = signal<CounselorOption[]>([]);
 
-  get completeVisible(): boolean {
-    return !!this.completeTarget();
-  }
-  set completeVisible(value: boolean) {
-    if (!value) this.completeTarget.set(null);
-  }
+  readonly activityItems = signal<LeadTimelineItem[]>([]);
+  readonly activityLoading = signal(false);
+
+  leadId = 0;
 
   get lostVisible(): boolean {
     return this.showLostDialog();
@@ -104,8 +136,6 @@ export class LeadDetailComponent implements OnInit {
   set lostVisible(value: boolean) {
     this.showLostDialog.set(value);
   }
-
-  leadId = 0;
 
   get d(): LeadFullDetail {
     return this.detail()!;
@@ -117,24 +147,58 @@ export class LeadDetailComponent implements OnInit {
     { key: 'counseling', label: 'Counseling', icon: 'pi pi-comments' }
   ];
 
+  readonly lifecycleOrder: { key: LeadStatus | 'ENROLLED'; label: string }[] = [
+    { key: 'NEW', label: 'Lead Created' },
+    { key: 'CONTACTED', label: 'Contacted' },
+    { key: 'INTERESTED', label: 'Interested' },
+    { key: 'APPLICATION_STARTED', label: 'Application' },
+    { key: 'APPLICATION_SUBMITTED', label: 'Approved' },
+    { key: 'ENROLLED', label: 'Enrolled' }
+  ];
+
   readonly followUpForm = this.fb.group({
     followUpType: ['CALL', Validators.required],
-    statusAfter: ['CONTACTED' as LeadStatus, Validators.required],
-    followUpDate: [''],
-    nextFollowUpDate: [''],
-    remarks: ['', [Validators.required, Validators.minLength(3)]]
+    followUpDate: ['', Validators.required],
+    remarks: ['']
   });
 
   readonly counselingForm = this.fb.group({
+    sessionAt: ['', Validators.required],
+    mode: ['CALL', Validators.required],
+    counselorStaffId: [null as number | null, Validators.required],
     studentRequirements: [''],
     parentConcerns: [''],
     campusVisitInfo: [''],
     recommendations: [''],
-    notes: ['', [Validators.required, Validators.minLength(3)]]
+    notes: ['', [Validators.required, Validators.minLength(3)]],
+    leadStatus: [null as LeadStatus | null],
+    nextFollowUpAt: ['']
   });
 
   readonly lostForm = this.fb.group({
-    reason: ['', [Validators.required, Validators.minLength(3)]]
+    reasonCategory: ['', Validators.required],
+    reasonDetail: ['']
+  });
+
+  readonly editLeadForm = this.fb.group({
+    name: ['', Validators.required],
+    dateOfBirth: [''],
+    gender: [''],
+    currentClass: [''],
+    classId: [null as number | null, Validators.required],
+    academicYearId: [null as number | null, Validators.required],
+    previousSchool: [''],
+    parentContactName: ['', Validators.required],
+    contactRelationship: [''],
+    mobileNumber: ['', Validators.required],
+    alternateMobileNumber: [''],
+    email: [''],
+    address: [''],
+    campusPreference: [''],
+    transportRequired: [''],
+    hostelRequired: [''],
+    otherRequirements: [''],
+    comments: ['']
   });
 
   ngOnInit(): void {
@@ -144,19 +208,46 @@ export class LeadDetailComponent implements OnInit {
       return;
     }
     this.load();
+    // Permissions can arrive after the lead payload; rebuild overflow actions when ready.
+    if (!this.permissions.isLoaded()) {
+      this.permissions
+        .loadPermissions()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.rebuildMoreMenu());
+    }
   }
 
-  load(): void {
-    this.loading.set(true);
+  ngOnDestroy(): void {
+    this.pageHeader.clearPageHeader();
+  }
+
+  load(showSpinner = true): void {
+    if (showSpinner) {
+      this.loading.set(true);
+    }
     this.error.set(null);
     this.api
       .leadFullDetail(this.leadId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
+        finalize(() => {
+          if (showSpinner) {
+            this.loading.set(false);
+          }
+        })
       )
       .subscribe({
-        next: d => this.detail.set(d),
+        next: d => {
+          this.detail.set(d);
+          this.activityItems.set(d.timeline ?? []);
+          this.rebuildMoreMenu();
+          const leadNo = d.inquiry.inquiryNumber || `LEAD-${d.inquiry.inquiryId}`;
+          const student = d.inquiry.studentName || d.inquiry.name || 'Lead';
+          this.pageHeader.setPageHeader({
+            title: leadNo,
+            subtitle: `${student} · ${this.headerStatusLabel()}`
+          });
+        },
         error: () => {
           const msg = 'Unable to load lead detail.';
           this.error.set(msg);
@@ -165,45 +256,400 @@ export class LeadDetailComponent implements OnInit {
       });
   }
 
+  /** Soft refresh — updates data without blanking the page. */
+  private refreshQuietly(): void {
+    this.load(false);
+  }
+
   onTabChange(key: string): void {
     this.activeTab.set(key as DetailTab);
+    if (key === 'activity') {
+      this.loadActivity();
+    }
   }
 
   goBack(): void {
     this.nav.back(this.route, '/app/admissions/leads');
   }
 
-  canMarkInterested(): boolean {
-    const status = this.detail()?.inquiry.status;
-    return !!status && !['INTERESTED', 'LOST', 'CLOSED', 'CONVERTED'].includes(status);
+  // ─── Identity / header helpers ──────────────────────────────────────────
+
+  initials(name: string | null | undefined): string {
+    if (!name) return '—';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '—';
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
   }
 
-  canMarkLost(): boolean {
+  statusTone(status: LeadStatus): 'info' | 'success' | 'warning' | 'danger' {
+    switch (status) {
+      case 'INTERESTED':
+      case 'APPLICATION_STARTED':
+      case 'APPLICATION_SUBMITTED':
+        return 'success';
+      case 'LOST':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  }
+
+  statusLabel(status: LeadStatus | string | null | undefined): string {
+    return formatAdmissionsLabel(status);
+  }
+
+  /** Header pill reflects enrollment/application progress, not only raw inquiry.status. */
+  headerStatusLabel(): string {
     const d = this.detail();
-    const status = d?.inquiry.status;
-    return !!status && !['LOST', 'CLOSED', 'CONVERTED'].includes(status) && !d?.studentId;
+    if (!d) return '—';
+    if (d.studentId) return 'Enrolled';
+    if (d.applicationStatus === 'APPROVED') return 'Approved';
+    if (d.applicationStatus === 'SUBMITTED' || d.applicationStatus === 'UNDER_REVIEW') return 'Submitted';
+    if (d.applicationStatus === 'DRAFT' || d.inquiry.status === 'APPLICATION_STARTED') return 'Application';
+    return this.statusLabel(d.inquiry.status);
+  }
+
+  headerStatusTone(): 'info' | 'success' | 'warning' | 'danger' {
+    const d = this.detail();
+    if (!d) return 'info';
+    if (d.studentId || d.applicationStatus === 'APPROVED') return 'success';
+    if (d.inquiry.status === 'LOST') return 'danger';
+    if (d.applicationStatus === 'DRAFT' || d.inquiry.status === 'APPLICATION_STARTED') return 'warning';
+    return this.statusTone(d.inquiry.status);
+  }
+
+  formatDateTime(value: string | null | undefined): string {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  // ─── Permissions ─────────────────────────────────────────────────────────
+
+  get canManage(): boolean {
+    return this.permissions.canManage(PERMISSION_RESOURCE);
+  }
+
+  // ─── Lifecycle indicator ────────────────────────────────────────────────
+
+  get isLost(): boolean {
+    return this.detail()?.inquiry.status === 'LOST';
+  }
+
+  currentLifecycleIndex(): number {
+    const status = this.detail()?.inquiry.status;
+    if (!status) return 0;
+    const map: Record<string, number> = {
+      NEW: 0,
+      CONTACTED: 1,
+      INTERESTED: 2,
+      APPLICATION_STARTED: 3,
+      APPLICATION_SUBMITTED: 4,
+      LOST: -1
+    };
+    const enrolled = this.detail()?.studentId;
+    if (enrolled) return 5;
+    return map[status] ?? 0;
+  }
+
+  stepState(index: number): 'done' | 'active' | 'pending' {
+    const current = this.currentLifecycleIndex();
+    if (current < 0) return 'pending';
+    if (index < current) return 'done';
+    if (index === current) return 'active';
+    return 'pending';
+  }
+
+  isLast(index: number, total: number): boolean {
+    return index >= total - 1;
+  }
+
+  // ─── Header contextual actions ──────────────────────────────────────────
+
+  applicationActionLabel(): string {
+    const d = this.detail();
+    if (!d) return 'Start Application';
+    if (d.studentId) return 'View Student';
+    if (!d.applicationId) return 'Start Application';
+    if (
+      d.applicationStatus === 'DRAFT'
+      || d.applicationStatus === 'ACTION_REQUIRED'
+      || d.applicationStatus === 'DOCUMENTS_PENDING'
+    ) {
+      return 'Continue Application';
+    }
+    return 'View Application';
+  }
+
+  get canManageApplications(): boolean {
+    return this.permissions.canManage('ADMISSIONS_APPLICATIONS');
   }
 
   canProceedToApplication(): boolean {
     const d = this.detail();
     const status = d?.inquiry.status;
-    return !!status && !['LOST', 'CLOSED'].includes(status) && !d?.applicationId;
+    return !!status && status !== 'LOST' && !d?.applicationId && this.canManageApplications;
   }
 
-  markInterested(): void {
-    if (!this.canMarkInterested()) return;
-    this.api.markInterested(this.leadId).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: 'Updated', detail: 'Lead marked interested.' });
-        this.load();
-      },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not update lead.' })
-    });
+  primaryAction(): void {
+    const d = this.detail();
+    if (!d) return;
+    if (d.studentId) {
+      void this.router.navigate(['/app/students/profile', d.studentId]);
+      return;
+    }
+    if (d.applicationId) {
+      this.nav.toApplication(d.applicationId, 'lead', d.inquiry.inquiryId);
+      return;
+    }
+    if (!this.canManageApplications) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Permission required',
+        detail: 'You need Application Manage permission to start an application.'
+      });
+      return;
+    }
+    this.proceedToApplication();
   }
+
+  continueApplication(): void {
+    const d = this.detail();
+    const id = d?.applicationId;
+    if (id) this.nav.toApplication(id, 'lead', d?.inquiry.inquiryId);
+  }
+
+  get contactMobile(): string | null {
+    return this.detail()?.inquiry.mobileNumber || null;
+  }
+  get contactEmail(): string | null {
+    return this.detail()?.inquiry.email || null;
+  }
+
+  // ─── Next follow-up (authoritative Follow-up entity, not the denormalized Lead date) ────
+
+  readonly nextFollowUp = computed<FollowUpRecord | null>(() => {
+    const d = this.detail();
+    if (!d) return null;
+    const scheduled = d.followUps.filter(
+      f => (f.lifecycleStatus === 'SCHEDULED' || f.lifecycleStatus === 'RESCHEDULED') && f.followUpDate
+    );
+    if (!scheduled.length) return null;
+    return scheduled
+      .slice()
+      .sort((a, b) => new Date(a.followUpDate!).getTime() - new Date(b.followUpDate!).getTime())[0];
+  });
+
+  isFollowUpOverdue(f: FollowUpRecord | null): boolean {
+    if (!f?.followUpDate) return false;
+    return new Date(f.followUpDate).getTime() < Date.now();
+  }
+
+  overdueDays(f: FollowUpRecord | null): number {
+    if (!f?.followUpDate) return 0;
+    const diff = Date.now() - new Date(f.followUpDate).getTime();
+    return Math.max(0, Math.round(diff / 86400000));
+  }
+
+  /** Precomputed dates for the lifecycle bar (avoids method calls inside @for template context). */
+  readonly lifecycleStageDates = computed<(string | null)[]>(() => {
+    // Depend on detail + activity so dates refresh after counseling / status changes.
+    this.detail();
+    this.activityItems();
+    return this.lifecycleOrder.map(step => this.resolveLifecycleDate(step.key));
+  });
+
+  // ─── Assignment date (prefer durable assignment history, fall back to timeline) ────────
+
+  assignmentDate(): string | null {
+    const d = this.detail();
+    if (!d) return null;
+    if (d.inquiry.assignedOn) return d.inquiry.assignedOn;
+    const item = d.timeline?.find(t => t.category === 'ASSIGNMENT');
+    return item?.performedAt || item?.performedOn || null;
+  }
+
+  /** Per-stage date for the lifecycle bar (created / contacted / interested / …). */
+  private resolveLifecycleDate(stepKey: string): string | null {
+    const d = this.detail();
+    if (!d) return null;
+    const items = this.activityItems().length ? this.activityItems() : (d.timeline ?? []);
+    const currentIdx = this.currentLifecycleIndex();
+    const stepIdx = this.lifecycleOrder.findIndex(s => s.key === stepKey);
+    if (stepIdx < 0) return null;
+    // Only show dates for reached stages (done or active), not future ones.
+    if (!this.isLost && currentIdx >= 0 && stepIdx > currentIdx) return null;
+    if (this.isLost && stepIdx > this.maxReachedLifecycleIndex()) return null;
+
+    if (stepKey === 'NEW') {
+      return d.inquiry.createdOn || null;
+    }
+    if (stepKey === 'ENROLLED') {
+      return this.firstActivityDate(items, ['ENROLLMENT_COMPLETED', 'STUDENT_ENROLLED']);
+    }
+    if (stepKey === 'APPLICATION_SUBMITTED') {
+      return this.firstActivityDate(items, ['APPLICATION_SUBMITTED', 'APPLICATION_APPROVED', 'LEAD_STATUS_CHANGED'], 'APPLICATION_SUBMITTED');
+    }
+    if (stepKey === 'APPLICATION_STARTED') {
+      return this.firstActivityDate(items, ['APPLICATION_STARTED'])
+        || (d.applicationId ? d.inquiry.createdOn || null : null);
+    }
+    if (stepKey === 'INTERESTED') {
+      return this.firstStatusDate(items, 'INTERESTED');
+    }
+    if (stepKey === 'CONTACTED') {
+      return this.firstStatusDate(items, 'CONTACTED')
+        || this.firstActivityDate(items, ['COUNSELING_ADDED', 'FOLLOW_UP_COMPLETED', 'COUNSELOR_ASSIGNED']);
+    }
+    return null;
+  }
+
+  private maxReachedLifecycleIndex(): number {
+    const idx = this.currentLifecycleIndex();
+    return idx < 0 ? 0 : idx;
+  }
+
+  private firstActivityDate(
+    items: LeadTimelineItem[],
+    actions: string[],
+    summaryContains?: string
+  ): string | null {
+    const matches = items.filter(i => {
+      const action = (i.action || '').toUpperCase();
+      if (!actions.some(a => action === a || action.includes(a))) return false;
+      if (summaryContains) {
+        return (i.description || '').toUpperCase().includes(summaryContains);
+      }
+      return true;
+    });
+    matches.sort((a, b) => {
+      const ta = new Date(a.performedAt || a.performedOn || 0).getTime();
+      const tb = new Date(b.performedAt || b.performedOn || 0).getTime();
+      return ta - tb;
+    });
+    return matches[0]?.performedAt || matches[0]?.performedOn || null;
+  }
+
+  private firstStatusDate(items: LeadTimelineItem[], status: string): string | null {
+    const matches = items.filter(i => {
+      const action = (i.action || '').toUpperCase();
+      const desc = (i.description || '').toUpperCase();
+      return (action.includes('STATUS') || action.includes('LOST') || action.includes('REOPENED'))
+        && desc.includes(status);
+    });
+    matches.sort((a, b) => {
+      const ta = new Date(a.performedAt || a.performedOn || 0).getTime();
+      const tb = new Date(b.performedAt || b.performedOn || 0).getTime();
+      return ta - tb;
+    });
+    return matches[0]?.performedAt || matches[0]?.performedOn || null;
+  }
+
+  // ─── More menu ───────────────────────────────────────────────────────────
+
+  readonly moreMenuItems = signal<MenuItem[]>([]);
+
+  private rebuildMoreMenu(): void {
+    const d = this.detail();
+    if (!d || !this.permissions.canManage(PERMISSION_RESOURCE)) {
+      this.moreMenuItems.set([]);
+      return;
+    }
+    const items: MenuItem[] = [
+      { label: 'Edit Lead', icon: 'pi pi-pencil', command: () => this.openEditLead() },
+      {
+        label: d.inquiry.assignedCounselorId ? 'Reassign Counselor' : 'Assign Counselor',
+        icon: 'pi pi-user-edit',
+        command: () => this.submitAssign()
+      }
+    ];
+    if (d.inquiry.status !== 'LOST') {
+      items.push({ label: 'Mark Lost', icon: 'pi pi-times-circle', command: () => this.openLostDialog() });
+    } else {
+      items.push({ label: 'Reopen Lead', icon: 'pi pi-refresh', command: () => this.reopenLead() });
+    }
+    items.push({
+      label: 'Archive Lead',
+      icon: 'pi pi-trash',
+      command: () => this.archiveLead()
+    });
+    this.moreMenuItems.set(items);
+  }
+
+  openRowMenu(event: Event, menu: Menu): void {
+    menu.toggle(event);
+  }
+
+  // ─── Attention Required ─────────────────────────────────────────────────
+
+  readonly attentionItems = computed<AttentionItem[]>(() => {
+    const d = this.detail();
+    if (!d) return [];
+    const items: AttentionItem[] = [];
+    const upcoming = this.nextFollowUp();
+    if (upcoming && d.inquiry.status !== 'LOST' && this.isFollowUpOverdue(upcoming)) {
+      const days = this.overdueDays(upcoming);
+      items.push({
+        icon: 'pi pi-exclamation-triangle',
+        title: 'Follow-up Overdue',
+        message: `This lead was scheduled for a follow-up on ${this.formatDateTime(upcoming.followUpDate)} (${days} day${days === 1 ? '' : 's'} ago). Please take action.`,
+        actionLabel: 'Record Counseling',
+        action: () => this.openAddCounseling(upcoming)
+      });
+    }
+    if (!d.inquiry.assignedCounselorId && d.inquiry.status !== 'LOST' && this.canManage) {
+      items.push({
+        icon: 'pi pi-user-plus',
+        title: 'No Counselor Assigned',
+        message: 'This lead has no counselor yet. Assign one so follow-up ownership is clear.',
+        actionLabel: 'Assign Counselor',
+        action: () => this.submitAssign()
+      });
+    }
+    if (d.applicationId && d.applicationStatus === 'DRAFT') {
+      items.push({
+        icon: 'pi pi-file-edit',
+        title: 'Application Incomplete',
+        message: 'An application has been started but not yet submitted.',
+        actionLabel: 'Continue Application',
+        action: () => this.nav.toApplication(d.applicationId!, 'lead', d.inquiry.inquiryId)
+      });
+    }
+    return items;
+  });
+
+  // ─── Activity tab ───────────────────────────────────────────────────────
+
+  activityStats() {
+    const items = this.activityItems();
+    const d = this.detail();
+    const followUpsFromTimeline = items.filter(i => i.category === 'FOLLOW_UP').length;
+    const counselingFromTimeline = items.filter(i => i.category === 'COUNSELING').length;
+    const statusFromTimeline = items.filter(i => i.category === 'STATUS').length;
+    return {
+      total: items.length,
+      followUps: Math.max(followUpsFromTimeline, d?.followUps?.length ?? 0),
+      counseling: Math.max(counselingFromTimeline, d?.counselingNotes?.length ?? 0),
+      statusChanges: statusFromTimeline
+    };
+  }
+
+  loadActivity(): void {
+    this.activityLoading.set(true);
+    this.api
+      .leadTimeline(this.leadId)
+      .pipe(finalize(() => this.activityLoading.set(false)))
+      .subscribe({
+        next: items => this.activityItems.set(items),
+        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not load activity.' })
+      });
+  }
+
+  // ─── Status / lost / reopen ──────────────────────────────────────────────
 
   openLostDialog(): void {
-    if (!this.canMarkLost()) return;
-    this.lostForm.reset({ reason: '' });
+    this.lostForm.reset({ reasonCategory: '', reasonDetail: '' });
     this.showLostDialog.set(true);
   }
 
@@ -211,18 +657,65 @@ export class LeadDetailComponent implements OnInit {
     this.showLostDialog.set(false);
   }
 
+  get lostReasonNeedsDetail(): boolean {
+    return this.lostForm.value.reasonCategory === 'Other';
+  }
+
   confirmMarkLost(): void {
-    if (this.lostForm.invalid) {
+    const category = (this.lostForm.value.reasonCategory || '').trim();
+    const detail = (this.lostForm.value.reasonDetail || '').trim();
+    if (!category || (category === 'Other' && !detail)) {
       this.lostForm.markAllAsTouched();
       return;
     }
-    this.api.markLost(this.leadId, this.lostForm.value.reason!).subscribe({
-      next: () => {
-        this.showLostDialog.set(false);
-        this.messages.add({ severity: 'warn', summary: 'Lost', detail: 'Lead closed as lost.' });
-        this.load();
-      },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not mark lost.' })
+    const reason = category === 'Other' ? detail : (detail ? `${category} — ${detail}` : category);
+    this.saving.set(true);
+    this.api
+      .markLost(this.leadId, reason)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.showLostDialog.set(false);
+          this.messages.add({ severity: 'warn', summary: 'Lost', detail: 'Lead closed as lost.' });
+          this.refreshQuietly();
+        },
+        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not mark lost.' })
+      });
+  }
+
+  reopenLead(): void {
+    this.confirm.confirm({
+      header: 'Reopen Lead',
+      message: 'Reopen this lost lead and resume follow-up? The lost history will be preserved.',
+      accept: () => {
+        this.reopening.set(true);
+        this.api
+          .reopenLead(this.leadId)
+          .pipe(finalize(() => this.reopening.set(false)))
+          .subscribe({
+            next: () => {
+              this.messages.add({ severity: 'success', summary: 'Reopened', detail: 'Lead reopened.' });
+              this.refreshQuietly();
+            },
+            error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not reopen lead.' })
+          });
+      }
+    });
+  }
+
+  archiveLead(): void {
+    this.confirm.confirm({
+      header: 'Archive Lead',
+      message: 'Archive this lead? It will be hidden from active lead lists.',
+      accept: () => {
+        this.api.archiveLead(this.leadId).subscribe({
+          next: () => {
+            this.messages.add({ severity: 'success', summary: 'Archived', detail: 'Lead archived.' });
+            this.goBack();
+          },
+          error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not archive lead.' })
+        });
+      }
     });
   }
 
@@ -233,7 +726,7 @@ export class LeadDetailComponent implements OnInit {
         summary: 'Cannot convert',
         detail: this.detail()?.applicationId
           ? 'An application already exists for this lead.'
-          : 'Lost or closed inquiries cannot be converted.'
+          : 'Lost leads cannot be converted.'
       });
       return;
     }
@@ -242,12 +735,14 @@ export class LeadDetailComponent implements OnInit {
       message: `Convert ${this.detail()?.inquiry.name} into an admission application?`,
       accept: () => {
         this.api.convertToApplication(this.leadId).subscribe({
-          next: app => this.nav.toApplication(app.applicationId),
+          next: app => this.nav.toApplication(app.applicationId, 'lead', this.leadId),
           error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not convert lead.' })
         });
       }
     });
   }
+
+  // ─── Counselor assignment ───────────────────────────────────────────────
 
   submitAssign(): void {
     this.counselorPickerOpen.set(true);
@@ -258,10 +753,30 @@ export class LeadDetailComponent implements OnInit {
     this.api.assignCounselor(this.leadId, person.staffId).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Assigned', detail: `${person.fullName} assigned.` });
-        this.load();
+        this.refreshQuietly();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Assignment failed.' })
     });
+  }
+
+  // ─── Follow-ups (planned actions) ────────────────────────────────────────
+
+  openScheduleFollowUp(existing?: FollowUpRecord | null): void {
+    this.scheduleTarget.set(existing ?? null);
+    const seed = existing?.followUpDate
+      ? this.toDateTimeLocal(existing.followUpDate)
+      : this.toDateTimeLocal(new Date().toISOString());
+    this.followUpForm.reset({
+      followUpType: existing?.followUpType || 'CALL',
+      followUpDate: seed,
+      remarks: existing?.remarks || ''
+    });
+    this.scheduleFollowUpOpen.set(true);
+  }
+
+  closeScheduleFollowUp(): void {
+    this.scheduleFollowUpOpen.set(false);
+    this.scheduleTarget.set(null);
   }
 
   submitFollowUp(): void {
@@ -270,56 +785,68 @@ export class LeadDetailComponent implements OnInit {
       return;
     }
     const raw = this.followUpForm.getRawValue();
+    const followUpDate = raw.followUpDate ? new Date(raw.followUpDate).toISOString() : null;
     this.saving.set(true);
-    this.api
-      .addFollowUp(this.leadId, {
-        followUpType: raw.followUpType as FollowUpRecord['followUpType'],
-        remarks: raw.remarks,
-        statusAfter: raw.statusAfter as LeadStatus,
-        followUpDate: raw.followUpDate || null,
-        nextFollowUpDate: raw.nextFollowUpDate || null
-      })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.followUpForm.reset({
-            followUpType: 'CALL',
-            statusAfter: 'CONTACTED',
-            followUpDate: '',
-            nextFollowUpDate: '',
-            remarks: ''
-          });
-          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Follow-up logged.' });
-          this.load();
-        },
-        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not log follow-up.' })
-      });
-  }
+    const target = this.scheduleTarget();
+    const request$ = target
+      ? this.api.updateFollowUp(target.followUpId, {
+          followUpType: raw.followUpType as FollowUpRecord['followUpType'],
+          remarks: raw.remarks || null,
+          followUpDate
+        })
+      : this.api.addFollowUp(this.leadId, {
+          followUpType: raw.followUpType as FollowUpRecord['followUpType'],
+          remarks: raw.remarks || null,
+          followUpDate
+        });
 
-  completeFollowUp(item: FollowUpRecord): void {
-    this.completeOutcome = '';
-    this.completeRemarks = '';
-    this.completeTarget.set(item);
-  }
-
-  closeCompleteDialog(): void {
-    this.completeTarget.set(null);
-  }
-
-  confirmCompleteFollowUp(): void {
-    const item = this.completeTarget();
-    if (!item || !this.completeOutcome.trim()) return;
-    this.api.completeFollowUp(item.followUpId, {
-      outcome: this.completeOutcome.trim(),
-      remarks: this.completeRemarks || null
-    }).subscribe({
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: () => {
-        this.completeTarget.set(null);
-        this.messages.add({ severity: 'success', summary: 'Completed', detail: 'Follow-up completed.' });
-        this.load();
+        this.closeScheduleFollowUp();
+        this.messages.add({
+          severity: 'success',
+          summary: target ? 'Rescheduled' : 'Scheduled',
+          detail: target ? 'Follow-up rescheduled.' : 'Follow-up scheduled.'
+        });
+        this.refreshQuietly();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not complete follow-up.' })
+      error: () =>
+        this.messages.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: target ? 'Could not reschedule follow-up.' : 'Could not schedule follow-up.'
+        })
     });
+  }
+
+  // ─── Counseling (actual interaction) ─────────────────────────────────────
+
+  openAddCounseling(pendingFollowUp?: FollowUpRecord | null): void {
+    const now = new Date();
+    const iso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    // Only associate when opened from a specific pending follow-up (or overdue attention).
+    this.counselingFollowUpId.set(pendingFollowUp?.followUpId ?? null);
+    this.counselingForm.reset({
+      sessionAt: iso,
+      mode: pendingFollowUp?.followUpType || 'CALL',
+      counselorStaffId: this.detail()?.inquiry.assignedCounselorId ?? null,
+      studentRequirements: '',
+      parentConcerns: '',
+      campusVisitInfo: '',
+      recommendations: '',
+      notes: '',
+      leadStatus: null,
+      nextFollowUpAt: ''
+    });
+    if (!this.eligibleCounselors().length) {
+      this.api.searchCounselors('', 0, 100).subscribe(page => this.eligibleCounselors.set(page.content));
+    }
+    this.addCounselingOpen.set(true);
+  }
+
+  closeAddCounseling(): void {
+    this.addCounselingOpen.set(false);
+    this.counselingFollowUpId.set(null);
   }
 
   submitCounseling(): void {
@@ -328,24 +855,127 @@ export class LeadDetailComponent implements OnInit {
       return;
     }
     this.saving.set(true);
+    const raw = this.counselingForm.getRawValue();
+    const nextFollowUpAt = raw.nextFollowUpAt ? new Date(raw.nextFollowUpAt).toISOString() : null;
     this.api
-      .addCounselingNote(this.leadId, this.counselingForm.getRawValue())
+      .addCounselingNote(this.leadId, {
+        sessionAt: raw.sessionAt || null,
+        mode: raw.mode as FollowUpType,
+        counselorStaffId: raw.counselorStaffId,
+        studentRequirements: raw.studentRequirements,
+        parentConcerns: raw.parentConcerns,
+        campusVisitInfo: raw.campusVisitInfo,
+        recommendations: raw.recommendations,
+        notes: raw.notes!,
+        leadStatus: (raw.leadStatus as LeadStatus | null) || null,
+        nextFollowUpAt,
+        followUpId: this.counselingFollowUpId()
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.counselingForm.reset({
-            studentRequirements: '',
-            parentConcerns: '',
-            campusVisitInfo: '',
-            recommendations: '',
-            notes: ''
-          });
+          this.closeAddCounseling();
           this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Counseling note added.' });
-          this.load();
+          this.refreshQuietly();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not save note.' })
       });
   }
+
+  private toDateTimeLocal(value: string): string {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  // ─── Edit Lead ───────────────────────────────────────────────────────────
+
+  openEditLead(): void {
+    const lead = this.detail()?.inquiry;
+    if (!lead) return;
+    this.editLeadForm.reset({
+      name: lead.studentName || lead.name,
+      dateOfBirth: lead.dateOfBirth ?? '',
+      gender: lead.gender ?? '',
+      currentClass: lead.currentClass ?? '',
+      classId: lead.classId ?? null,
+      academicYearId: lead.academicYearId ?? null,
+      previousSchool: lead.previousSchool ?? '',
+      parentContactName: lead.parentContactName ?? '',
+      contactRelationship: lead.contactRelationship ?? '',
+      mobileNumber: lead.mobileNumber ?? '',
+      alternateMobileNumber: lead.alternateMobileNumber ?? '',
+      email: lead.email ?? '',
+      address: lead.address ?? '',
+      campusPreference: lead.campusPreference ?? '',
+      transportRequired: lead.transportRequired ?? '',
+      hostelRequired: lead.hostelRequired ?? '',
+      otherRequirements: lead.otherRequirements ?? '',
+      comments: lead.comments ?? ''
+    });
+    if (!this.years().length) {
+      this.api.academicYears().subscribe(years => this.years.set(years));
+    }
+    if (lead.academicYearId) {
+      this.api.academicClasses(lead.academicYearId).subscribe(classes => this.classes.set(classes));
+    }
+    this.editLeadOpen.set(true);
+  }
+
+  onEditYearChange(yearId: number): void {
+    this.editLeadForm.patchValue({ classId: null });
+    this.api.academicClasses(yearId).subscribe(classes => this.classes.set(classes));
+  }
+
+  closeEditLead(): void {
+    this.editLeadOpen.set(false);
+  }
+
+  saveEditLead(): void {
+    if (this.editLeadForm.invalid) {
+      this.editLeadForm.markAllAsTouched();
+      return;
+    }
+    const lead = this.detail()?.inquiry as LeadRecord;
+    const raw = this.editLeadForm.getRawValue();
+    const className = this.classes().find(c => c.id === raw.classId)?.name ?? lead.classInterestedIn;
+    this.saving.set(true);
+    this.api
+      .updateLead(this.leadId, {
+        name: (raw.name || '').trim(),
+        parentContactName: (raw.parentContactName || '').trim(),
+        mobileNumber: (raw.mobileNumber || '').trim(),
+        classInterestedIn: className,
+        academicYearId: raw.academicYearId,
+        classId: raw.classId,
+        inquirySource: lead.inquirySource,
+        referredBy: lead.referredBy,
+        comments: (raw.comments || '').trim() || null,
+        email: raw.email || null,
+        address: raw.address || null,
+        dateOfBirth: raw.dateOfBirth || null,
+        gender: raw.gender || null,
+        currentClass: raw.currentClass || null,
+        previousSchool: raw.previousSchool || null,
+        alternateMobileNumber: raw.alternateMobileNumber || null,
+        contactRelationship: raw.contactRelationship || null,
+        campusPreference: raw.campusPreference || null,
+        transportRequired: raw.transportRequired || null,
+        hostelRequired: raw.hostelRequired || null,
+        otherRequirements: raw.otherRequirements || null
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.editLeadOpen.set(false);
+          this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Lead updated.' });
+          this.refreshQuietly();
+        },
+        error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Could not update lead.' })
+      });
+  }
+
+  // ─── Track-by ────────────────────────────────────────────────────────────
 
   trackFollow(_i: number, f: FollowUpRecord): number {
     return f.followUpId;
@@ -359,20 +989,31 @@ export class LeadDetailComponent implements OnInit {
     return `${t.performedAt || t.performedOn || _i}-${t.action}`;
   }
 
-  statusTone(status: LeadStatus): 'info' | 'success' | 'warning' | 'danger' {
-    switch (status) {
-      case 'INTERESTED':
-      case 'CONVERTED':
-      case 'READY_FOR_ADMISSION':
-        return 'success';
-      case 'FOLLOW_UP_REQUIRED':
-      case 'DOCUMENTS_PENDING':
-        return 'warning';
-      case 'LOST':
-      case 'CLOSED':
-        return 'danger';
-      default:
-        return 'info';
+  activityIcon(item: LeadTimelineItem): string {
+    if (item.icon) return item.icon;
+    const category = (item.category || '').toUpperCase();
+    switch (category) {
+      case 'FOLLOW_UP': return 'pi pi-phone';
+      case 'ASSIGNMENT': return 'pi pi-user-edit';
+      case 'COUNSELING': return 'pi pi-comments';
+      case 'APPLICATION': return 'pi pi-file-edit';
+      case 'STATUS': return 'pi pi-flag';
+      case 'LEAD': return 'pi pi-user-plus';
+      default: return 'pi pi-circle-fill';
+    }
+  }
+
+  activityTone(item: LeadTimelineItem): string {
+    if (item.tone) return item.tone;
+    const action = (item.action || '').toUpperCase();
+    if (action.includes('LOST')) return 'danger';
+    if (action.includes('COMPLETED') || action.includes('APPROVED') || action.includes('ENROLLMENT')) return 'success';
+    if (action.includes('OVERDUE') || action.includes('CANCELLED')) return 'warning';
+    const category = (item.category || '').toUpperCase();
+    switch (category) {
+      case 'ASSIGNMENT': return 'info';
+      case 'COUNSELING': return 'info';
+      default: return 'neutral';
     }
   }
 }

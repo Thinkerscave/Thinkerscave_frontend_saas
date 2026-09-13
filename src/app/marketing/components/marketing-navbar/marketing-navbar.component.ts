@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, HostListener, signal, inject } from
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { OrganizationContextService } from '../../../core/services/organization-context.service';
+import { AdmissionEnquiryService } from '../../../services/admission-enquiry.service';
 
 @Component({
   selector: 'tc-marketing-navbar',
@@ -12,6 +13,7 @@ import { OrganizationContextService } from '../../../core/services/organization-
 })
 export class MarketingNavbarComponent {
   private readonly orgContext = inject(OrganizationContextService);
+  private readonly enquiry = inject(AdmissionEnquiryService);
 
   readonly scrolled = signal(false);
   readonly mobileOpen = signal(false);
@@ -41,9 +43,14 @@ export class MarketingNavbarComponent {
   }
 
   loginRoute(): string[] {
-    return this.orgContext.requiresSelection
+    return this.orgContext.requiresSelection && !this.orgContext.hasLoginTarget()
       ? ['/auth/select-organization']
       : ['/auth/login'];
+  }
+
+  openEnquiry(): void {
+    this.closeMobile();
+    this.enquiry.open();
   }
 
   toggleMobile(): void {

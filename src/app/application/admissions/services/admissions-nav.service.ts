@@ -9,10 +9,10 @@ export class AdmissionsNavService {
   private readonly nav = inject(BackNavigationService);
 
   readonly fallbacks: Record<string, string> = {
-    overview: '/app/admissions/overview',
     leads: '/app/admissions/leads',
     'follow-ups': '/app/admissions/follow-ups',
     applications: '/app/admissions/applications',
+    reports: '/app/admissions/reports',
     settings: '/app/admissions/settings'
   };
 
@@ -24,10 +24,20 @@ export class AdmissionsNavService {
     void this.router.navigate(['/app/admissions/lead', inquiryId], { queryParams: { from } });
   }
 
-  toApplication(applicationId: number | 'new', from?: string): void {
+  toApplication(applicationId: number | 'new', from?: string, inquiryId?: number | null): void {
+    const queryParams: Record<string, string | number> = {};
+    if (from) queryParams['from'] = from;
+    if (inquiryId) queryParams['inquiryId'] = inquiryId;
     void this.router.navigate(
       ['/app/admissions/form', applicationId],
-      from ? { queryParams: { from } } : {}
+      Object.keys(queryParams).length ? { queryParams } : {}
     );
+  }
+
+  /** Approver overview — summary, documents, approve / correction / reject. */
+  toApplicationReview(applicationId: number, from = 'applications'): void {
+    void this.router.navigate(['/app/admissions/application', applicationId], {
+      queryParams: { from }
+    });
   }
 }

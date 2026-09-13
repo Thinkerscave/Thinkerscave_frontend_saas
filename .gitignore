@@ -63,6 +63,10 @@ desktop.ini
 /_scratch/
 /.agent-tmp/
 /tmp-agent/
+/.migrate-tmp/
+/.menu-fix-tmp/
+**/.migrate-tmp/
+**/.menu-fix-tmp/
 fe-run.log
 *-run.log
 playwright-report/

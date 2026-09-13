@@ -2,10 +2,17 @@
   <tc-saas-page-header>
     <app-back-nav fallback="/app/access-management/responsibilities" label="Back to list"></app-back-nav>
     <ng-container *ngIf="canManage && responsibility">
-      <button type="button" class="tc-btn" (click)="openEdit()" pTooltip="Change name or description" tooltipPosition="bottom">
+      <button
+        *ngIf="!definitionLocked()"
+        type="button"
+        class="tc-btn"
+        (click)="openEdit()"
+        pTooltip="Change name or description"
+        tooltipPosition="bottom">
         Edit
       </button>
       <button
+        *ngIf="!definitionLocked()"
         type="button"
         class="tc-btn"
         (click)="confirmToggleActive()"
@@ -28,6 +35,7 @@
         <div><dt>Name</dt><dd>{{ responsibility.responsibilityName }}</dd></div>
         <div><dt>Code</dt><dd><code>{{ responsibility.responsibilityCode }}</code></dd></div>
         <div><dt>Type</dt><dd><tc-saas-pill [label]="typeLabel()" [tone]="responsibility.systemDefined ? 'info' : 'neutral'"></tc-saas-pill></dd></div>
+        <div><dt>Editable by organization</dt><dd><tc-saas-pill [label]="orgEditableLabel()" [tone]="responsibility.organizationEditable === false ? 'warning' : 'success'"></tc-saas-pill></dd></div>
         <div><dt>Status</dt><dd><tc-saas-pill [label]="responsibility.active === false ? 'Inactive' : 'Active'" [tone]="responsibility.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
         <div><dt>Created</dt><dd>{{ formatDate(responsibility.createdOn) }}</dd></div>
         <div class="responsibility-workspace__desc"><dt>Description</dt><dd>{{ responsibility.description || '—' }}</dd></div>

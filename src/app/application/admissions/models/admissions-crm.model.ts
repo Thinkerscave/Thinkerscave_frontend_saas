@@ -1,13 +1,17 @@
 /** Admissions CRM types aligned with backend DTOs under /api/v1/admissions */
 
 export type LeadStatus =
-  | 'NEW' | 'CONTACTED' | 'FOLLOW_UP' | 'INTERESTED' | 'MEETING_SCHEDULED'
-  | 'APPLICATION_STARTED' | 'APPLICATION_SUBMITTED' | 'COUNSELING'
-  | 'DOCUMENTS_PENDING' | 'FOLLOW_UP_REQUIRED' | 'READY_FOR_ADMISSION'
-  | 'CONVERTED' | 'LOST' | 'CLOSED';
+  | 'NEW' | 'CONTACTED' | 'INTERESTED'
+  | 'APPLICATION_STARTED' | 'APPLICATION_SUBMITTED'
+  | 'LOST';
+
+export type LeadSource =
+  | 'WEBSITE' | 'PHONE' | 'WALK_IN' | 'REFERRAL' | 'WHATSAPP'
+  | 'SOCIAL_MEDIA' | 'CAMPAIGN' | 'AFFILIATE' | 'IMPORT' | 'OTHER';
 
 export type ApplicationStatus =
-  | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
+  | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'ACTION_REQUIRED'
+  | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
   | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'ENROLLED';
 
 export type FollowUpType = 'CALL' | 'WHATSAPP' | 'EMAIL' | 'WALK_IN' | 'SMS' | 'OTHER';
@@ -18,6 +22,8 @@ export type FeePaymentStatus = 'PENDING' | 'PAID' | 'WAIVED';
 export interface LookupOption {
   id: number;
   name: string;
+  /** Academic year status when present (e.g. CURRENT). */
+  status?: string | null;
 }
 
 export interface PageResponse<T> {
@@ -54,52 +60,79 @@ export interface LeadSearchRequest {
   keyword?: string | null;
   status?: LeadStatus | null;
   counselorId?: number | null;
-  source?: string | null;
-  inquirySource?: string | null;
+  source?: LeadSource | null;
+  inquirySource?: LeadSource | null;
   classInterestedIn?: string | null;
   classInterested?: string | null;
   academicYearId?: number | null;
   classId?: number | null;
   followUpFrom?: string | null;
   followUpTo?: string | null;
+  scope?: 'MY' | 'ALL' | null;
 }
 
 export interface LeadRecord {
   inquiryId: number;
   inquiryNumber?: string | null;
   name: string;
+  studentName?: string | null;
+  parentContactName?: string | null;
   mobileNumber: string;
   email?: string | null;
   classInterestedIn: string;
   academicYearId?: number | null;
   classId?: number | null;
   address?: string | null;
-  inquirySource?: string | null;
+  inquirySource?: LeadSource | null;
   referredBy?: string | null;
   comments?: string | null;
   assignedCounselorId?: number | null;
   assignedCounselorName?: string | null;
+  assignedOn?: string | null;
   status: LeadStatus;
   lastFollowUpDate?: string | null;
   lastFollowUpType?: FollowUpType | null;
   nextFollowUpDate?: string | null;
   createdOn?: string | null;
   createdBy?: string | null;
+  // Progressive enrichment — filled in later via Lead 360, never required at creation.
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  currentClass?: string | null;
+  previousSchool?: string | null;
+  alternateMobileNumber?: string | null;
+  contactRelationship?: string | null;
+  campusPreference?: string | null;
+  transportRequired?: string | null;
+  hostelRequired?: string | null;
+  otherRequirements?: string | null;
 }
 
 export interface LeadCreateRequest {
   name: string;
+  parentContactName: string;
   mobileNumber: string;
   email?: string | null;
   classInterestedIn: string;
   academicYearId?: number | null;
   classId?: number | null;
   address?: string | null;
-  inquirySource?: string | null;
+  inquirySource?: LeadSource | null;
   referredBy?: string | null;
   comments?: string | null;
   assignedCounselorId?: number | null;
   nextFollowUpDate?: string | null;
+  allowPotentialDuplicate?: boolean | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  currentClass?: string | null;
+  previousSchool?: string | null;
+  alternateMobileNumber?: string | null;
+  contactRelationship?: string | null;
+  campusPreference?: string | null;
+  transportRequired?: string | null;
+  hostelRequired?: string | null;
+  otherRequirements?: string | null;
 }
 
 export interface FollowUpRecord {
@@ -138,6 +171,10 @@ export interface CompleteFollowUpRequest {
 export interface CounselingNote {
   noteId?: number;
   inquiryId?: number;
+  sessionAt?: string | null;
+  mode?: FollowUpType | null;
+  counselorStaffId?: number | null;
+  counselorName?: string | null;
   studentRequirements?: string | null;
   parentConcerns?: string | null;
   campusVisitInfo?: string | null;
@@ -148,16 +185,28 @@ export interface CounselingNote {
 }
 
 export interface CounselingNoteRequest {
+  sessionAt?: string | null;
+  mode: FollowUpType;
+  counselorStaffId?: number | null;
   studentRequirements?: string | null;
   parentConcerns?: string | null;
   campusVisitInfo?: string | null;
   recommendations?: string | null;
-  notes?: string | null;
+  notes: string;
+  /** Optional lead status update applied with this counseling note. */
+  leadStatus?: LeadStatus | null;
+  /** Optional next planned follow-up datetime; creates a scheduled follow-up. */
+  nextFollowUpAt?: string | null;
+  /** Optional pending follow-up to mark completed with this note. */
+  followUpId?: number | null;
 }
+
+export type LeadActivityCategory = 'LEAD' | 'ASSIGNMENT' | 'FOLLOW_UP' | 'COUNSELING' | 'APPLICATION' | 'STATUS' | 'OTHER';
 
 export interface LeadTimelineItem {
   eventType?: string | null;
   action?: string | null;
+  category?: LeadActivityCategory | string | null;
   title?: string | null;
   description?: string | null;
   performedBy?: string | null;
@@ -165,6 +214,12 @@ export interface LeadTimelineItem {
   performedAt?: string | null;
   icon?: string | null;
   tone?: string | null;
+}
+
+export interface LeadActivityFilter {
+  type?: string | null;
+  from?: string | null;
+  to?: string | null;
 }
 
 export interface LeadFullDetail {
@@ -185,22 +240,59 @@ export interface ApplicationProfileDetails {
   religion?: string | null;
   category?: string | null;
   nationality?: string | null;
+  identityDocumentType?: string | null;
+  identityDocumentNumber?: string | null;
+  /** @deprecated prefer identityDocumentNumber */
   aadhaarNumber?: string | null;
   motherTongue?: string | null;
   placeOfBirth?: string | null;
+
+  parentRelationship?: string | null;
   fatherOccupation?: string | null;
   motherName?: string | null;
   motherOccupation?: string | null;
+  motherContact?: string | null;
+  motherEmail?: string | null;
+  motherRelationship?: string | null;
+  secondaryGuardianName?: string | null;
+  secondaryGuardianRelationship?: string | null;
+  secondaryGuardianMobile?: string | null;
+  secondaryGuardianEmail?: string | null;
+  secondaryGuardianOccupation?: string | null;
+  secondaryIdentityDocumentType?: string | null;
+  secondaryIdentityDocumentNumber?: string | null;
+
+  addressLine1?: string | null;
+  addressLine2?: string | null;
   city?: string | null;
   state?: string | null;
+  country?: string | null;
   pinCode?: string | null;
+  sameAsPresentAddress?: boolean | null;
+  permanentAddressLine1?: string | null;
+  permanentAddressLine2?: string | null;
+  permanentCity?: string | null;
+  permanentState?: string | null;
+  permanentCountry?: string | null;
+  permanentPinCode?: string | null;
+
+  emergencyContactName?: string | null;
+  emergencyContactRelationship?: string | null;
+  emergencyContactMobile?: string | null;
+  emergencyContactAlternateMobile?: string | null;
+
+  hasPreviousSchooling?: boolean | null;
   previousSchoolName?: string | null;
   previousBoard?: string | null;
   previousClass?: string | null;
+  previousAcademicYear?: string | null;
   lastPercentage?: string | null;
   tcNumber?: string | null;
+  tcDate?: string | null;
   mediumOfInstruction?: string | null;
   firstLanguage?: string | null;
+  secondLanguage?: string | null;
+  linkedParentId?: number | null;
   siblingName?: string | null;
 }
 
@@ -212,7 +304,10 @@ export interface ApplicationSearchRequest {
   parentName?: string | null;
   status?: ApplicationStatus | null;
   statuses?: ApplicationStatus[] | null;
-  classApplied?: string | null;
+  /** Matches backend ApplicationSearchRequest.applyingForClass */
+  applyingForClass?: string | null;
+  /** MY = own apps; ALL = org-wide (approvers). Server may force MY. */
+  scope?: 'MY' | 'ALL' | null;
 }
 
 export interface ApplicationDocument {
@@ -320,10 +415,25 @@ export interface ApplicationProgress {
   completionPercent: number;
 }
 
+export interface FamilyMatchResult {
+  matched: boolean;
+  parentId?: number | null;
+  parentName?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
+  students?: Array<{
+    studentId: number;
+    studentName: string;
+    className?: string | null;
+    studentCode?: string | null;
+  }>;
+}
+
 export interface AdmissionsSettings {
   inquirySources: string[];
   inquiryStatuses: string[];
   requiredDocuments: string[];
+  optionalDocuments?: string[] | null;
   numbering: Record<string, string>;
   reminderRules: Record<string, string>;
   assignmentMode?: string | null;
@@ -338,7 +448,7 @@ export interface CounselorOption {
 }
 
 export type AdmissionsWorkspacePage =
-  | 'overview' | 'leads' | 'follow-ups' | 'applications' | 'reports' | 'settings';
+  | 'leads' | 'follow-ups' | 'applications' | 'reports' | 'settings';
 
 export interface AdmissionsPageConfig {
   page: AdmissionsWorkspacePage;
@@ -347,4 +457,111 @@ export interface AdmissionsPageConfig {
   description: string;
   icon: string;
   route: string;
+}
+
+export interface AdmissionReportFilter {
+  academicYearId?: number | null;
+  classId?: number | null;
+  source?: string | null;
+  counselorId?: number | null;
+  leadStatus?: string | null;
+  applicationStatus?: string | null;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+  trendGranularity?: 'WEEKLY' | 'MONTHLY' | null;
+  recentLimit?: number | null;
+}
+
+export interface AdmissionReportNamedCount {
+  key: string;
+  label: string;
+  count: number;
+  percentOfTotal?: number | null;
+}
+
+export interface AdmissionReportKpis {
+  totalInquiries: number;
+  totalLeads: number;
+  applicationsStarted: number;
+  applicationsSubmitted: number;
+  applicationsApproved: number;
+  enrolledStudents: number;
+  leadToEnrollmentConversionRate: number;
+  pendingActions: number;
+  totalInquiriesDeltaPct?: number | null;
+  totalLeadsDeltaPct?: number | null;
+  applicationsStartedDeltaPct?: number | null;
+  applicationsSubmittedDeltaPct?: number | null;
+  applicationsApprovedDeltaPct?: number | null;
+  enrolledStudentsDeltaPct?: number | null;
+  conversionDeltaPts?: number | null;
+  pendingActionsDeltaPct?: number | null;
+}
+
+export interface AdmissionReportSourceRow {
+  key: string;
+  label: string;
+  leads: number;
+  applications: number;
+  enrolled: number;
+  conversionRate: number;
+  percentOfLeads?: number | null;
+}
+
+export interface AdmissionReportCounselorRow {
+  counselorId?: number | null;
+  counselorName: string;
+  leads: number;
+  applications: number;
+  enrolled: number;
+  conversionRate: number;
+  overdueFollowUps: number;
+  dueTodayFollowUps: number;
+}
+
+export interface AdmissionReportFollowUpHealth {
+  dueToday: number;
+  overdue: number;
+  upcoming: number;
+  completed: number;
+  noFollowUp: number;
+}
+
+export interface AdmissionReportTrend {
+  granularity: string;
+  labels: string[];
+  inquiries: number[];
+  leads: number[];
+  applications: number[];
+  approved: number[];
+  enrolled: number[];
+}
+
+export interface AdmissionReportRecentRow {
+  applicationId: number;
+  applicantName: string;
+  applyingForClass?: string | null;
+  source?: string | null;
+  counselorName?: string | null;
+  applicationDate?: string | null;
+  status: string;
+  documentsUploaded: number;
+  documentsVerified: number;
+  inquiryId?: number | null;
+}
+
+export interface AdmissionReportDashboard {
+  generatedAt?: string | null;
+  kpis: AdmissionReportKpis;
+  funnel: AdmissionReportNamedCount[];
+  trend: AdmissionReportTrend;
+  leadsBySource: AdmissionReportSourceRow[];
+  leadsByStatus: AdmissionReportNamedCount[];
+  applicationsByClass: AdmissionReportNamedCount[];
+  counselorPerformance: AdmissionReportCounselorRow[];
+  followUpHealth: AdmissionReportFollowUpHealth;
+  applicationStatus: AdmissionReportNamedCount[];
+  documentVerification: AdmissionReportNamedCount[];
+  lostReasonAnalysisSupported: boolean;
+  recentApplications: AdmissionReportRecentRow[];
 }

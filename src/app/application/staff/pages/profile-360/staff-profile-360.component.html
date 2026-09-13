@@ -1,61 +1,60 @@
-<div class="sp-page" *ngIf="!loading && profile">
+<div class="sp-page tc-detail-page" *ngIf="!loading && profile">
 
-  <!-- ───────── BREADCRUMB ───────── -->
-  <nav class="sp-breadcrumb">
-    <app-back-nav fallback="/app/staff/directory" label="Back to list"></app-back-nav>
-  </nav>
+  <!-- ───────── COMPACT IDENTITY HEADER ───────── -->
+  <header class="tc-detail-hero tc-detail-page__hero">
+    <app-back-nav class="tc-detail-hero__back" fallback="/app/staff/directory" label="Back to list"></app-back-nav>
 
-  <!-- ───────── HERO ───────── -->
-  <div class="sp-hero">
-    <div class="sp-hero__avatar-wrap">
-      <img *ngIf="profile.photoUrl" [src]="profile.photoUrl" [alt]="profile.fullName" class="sp-avatar sp-avatar--xl"/>
-      <div *ngIf="!profile.photoUrl" class="sp-avatar sp-avatar--xl sp-avatar--initials">
-        {{ initials(profile.fullName) }}
-      </div>
-    </div>
-    <div class="sp-hero__meta">
-      <div class="sp-hero__name-row">
-        <h1>{{ profile.fullName }}</h1>
-        <span class="sp-active-badge" [class.is-active]="profile.active" [class.is-inactive]="!profile.active">
-          {{ profile.active ? 'ACTIVE' : 'INACTIVE' }}
-        </span>
-      </div>
-      <p class="sp-hero__code">{{ profile.staffCode }} · {{ profile.designation }}</p>
-      <div class="sp-hero__chips">
-        <span class="sp-chip">
-          <i class="pi" [class.pi-graduation-cap]="profile.staffType === 'TEACHING'"
-             [class.pi-briefcase]="profile.staffType !== 'TEACHING'"></i>
-          {{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}
-        </span>
-        <span class="sp-chip">
-          <i class="pi pi-id-card"></i> {{ profile.employmentCategory | titlecase }}
-        </span>
-        <span class="sp-chip">
-          <i class="pi pi-calendar"></i>
-          Joined {{ profile.joiningDate | date:'d MMM yyyy' }}
-        </span>
+    <div class="tc-detail-hero__identity">
+      <tc-avatar [name]="profile.fullName" [imageUrl]="profile.photoUrl" size="xl"></tc-avatar>
+      <div class="tc-detail-hero__meta">
+        <div class="tc-detail-hero__title-row">
+          <h1>{{ profile.fullName }}</h1>
+          <span class="tc-badge" [attr.data-status]="profile.active ? 'ACTIVE' : 'INACTIVE'">
+            {{ profile.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="tc-detail-hero__code">{{ profile.staffCode }} · {{ profile.designation }}</p>
+        <div class="tc-detail-hero__chips">
+          <span class="tc-detail-hero__chip">
+            <i class="pi" [class.pi-graduation-cap]="profile.staffType === 'TEACHING'"
+               [class.pi-briefcase]="profile.staffType !== 'TEACHING'"></i>
+            {{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}
+          </span>
+          <span class="tc-detail-hero__chip">
+            <i class="pi pi-id-card"></i> {{ profile.employmentCategory | titlecase }}
+          </span>
+          <span class="tc-detail-hero__chip">
+            <i class="pi pi-calendar"></i>
+            Joined {{ profile.joiningDate | date:'d MMM yyyy' }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <div class="sp-hero__actions">
-      <button id="btn-edit-profile" type="button" class="sp-action-btn" (click)="editProfile()">
+    <div class="tc-detail-hero__actions">
+      <button id="btn-edit-profile" type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="editProfile()">
         <i class="pi pi-pencil"></i> Edit Profile
       </button>
-      <button id="btn-more-actions" type="button" class="sp-action-btn sp-action-btn--outline"
-              (click)="openAssignModal()">
-        <i class="pi pi-plus"></i> Assign Responsibility
+      <button type="button" class="tc-btn tc-btn--sm"
+              [class.tc-btn--danger]="profile.active"
+              [class.tc-btn--outline]="!profile.active"
+              (click)="toggleActive()" [disabled]="actionLoading">
+        <i class="pi" [class.pi-spin]="actionLoading" [class.pi-spinner]="actionLoading"
+           [class.pi-ban]="!actionLoading && profile.active"
+           [class.pi-check-circle]="!actionLoading && !profile.active"></i>
+        {{ profile.active ? 'Deactivate' : 'Activate' }}
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- ───────── LAYOUT ───────── -->
-  <div class="sp-layout">
+  <!-- ───────── WORKSPACE ───────── -->
+  <div class="tc-detail-layout" [class.tc-detail-layout--full]="!hasContextualSidebar">
 
     <!-- Main content -->
     <div class="sp-main">
 
       <!-- Tabs -->
-      <div class="sp-tabs">
+      <div class="sp-tabs tc-detail-page__tabs">
         <button *ngFor="let tab of tabs"
                 type="button"
                 class="sp-tab-btn"
@@ -67,8 +66,8 @@
       </div>
 
       <!-- ══════ OVERVIEW TAB ══════ -->
-      <div *ngIf="activeTab === 'overview'" class="sp-tab-content">
-        <div class="sp-info-grid">
+      <div *ngIf="activeTab === 'overview'" class="sp-tab-content tc-detail-page__content">
+        <div class="tc-detail-info-grid">
 
           <!-- Personal Information -->
           <div class="sp-info-card">
@@ -179,10 +178,10 @@
       </div>
 
       <!-- ══════ RESPONSIBILITIES TAB ══════ -->
-      <div *ngIf="activeTab === 'responsibilities'" class="sp-tab-content">
-        <div class="sp-tab-header">
+      <div *ngIf="activeTab === 'responsibilities'" class="sp-tab-content tc-detail-page__content">
+        <div class="tc-detail-tab-bar">
           <h3>Assigned Responsibilities</h3>
-          <button type="button" class="sd-btn sd-btn--primary" (click)="openAssignModal()">
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openAssignModal()">
             <i class="pi pi-plus"></i> Assign Responsibility
           </button>
         </div>
@@ -227,10 +226,10 @@
       </div>
 
       <!-- ══════ SALARY TAB ══════ -->
-      <div *ngIf="activeTab === 'salary'" class="sp-tab-content">
-        <div class="sp-tab-header">
+      <div *ngIf="activeTab === 'salary'" class="sp-tab-content tc-detail-page__content">
+        <div class="tc-detail-tab-bar">
           <h3>Salary Structure</h3>
-          <button type="button" class="sd-btn sd-btn--primary" (click)="openSalaryModal()">
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openSalaryModal()">
             <i class="pi pi-plus"></i> Update Salary
           </button>
         </div>
@@ -266,8 +265,8 @@
       </div>
 
       <!-- ══════ PAYROLL TAB ══════ -->
-      <div *ngIf="activeTab === 'payroll'" class="sp-tab-content">
-        <div class="sp-tab-header">
+      <div *ngIf="activeTab === 'payroll'" class="sp-tab-content tc-detail-page__content">
+        <div class="tc-detail-tab-bar">
           <h3>Payroll History</h3>
         </div>
 
@@ -322,7 +321,7 @@
       </div>
 
       <!-- ══════ DOCUMENTS TAB ══════ -->
-      <div *ngIf="activeTab === 'documents'" class="sp-tab-content">
+      <div *ngIf="activeTab === 'documents'" class="sp-tab-content tc-detail-page__content">
         <div class="sp-empty-state">
           <i class="pi pi-folder-open"></i>
           <h3>Documents</h3>
@@ -331,7 +330,7 @@
       </div>
 
       <!-- ══════ ACTIVITY TAB ══════ -->
-      <div *ngIf="activeTab === 'activity'" class="sp-tab-content">
+      <div *ngIf="activeTab === 'activity'" class="sp-tab-content tc-detail-page__content">
         <div class="sp-empty-state">
           <i class="pi pi-history"></i>
           <h3>Activity Log</h3>
@@ -341,49 +340,55 @@
 
     </div>
 
-    <!-- ───────── SIDEBAR ───────── -->
-    <aside class="sp-sidebar">
+    <!-- ───────── CONTEXTUAL SIDEBAR ───────── -->
+    <aside class="tc-detail-sidebar" *ngIf="hasContextualSidebar">
 
-      <!-- Quick Actions -->
-      <div class="sp-sidebar-card">
-        <h4 class="sp-sidebar-card__title">Quick Actions</h4>
-        <button type="button" class="sp-quick-btn" (click)="editProfile()">
-          <i class="pi pi-pencil"></i> Edit Profile
-        </button>
-        <button type="button" class="sp-quick-btn" (click)="openAssignModal()">
-          <i class="pi pi-sitemap"></i> Assign Responsibility
-        </button>
-        <button type="button" class="sp-quick-btn" (click)="openSalaryModal(); setTab('salary')">
-          <i class="pi pi-money-bill"></i> Update Salary
-        </button>
-        <button type="button" class="sp-quick-btn" (click)="setTab('payroll')">
-          <i class="pi pi-wallet"></i> View Payslip
-        </button>
-        <button type="button" class="sp-quick-btn" [class.danger]="profile.active"
-                (click)="toggleActive()" [disabled]="actionLoading">
-          <i class="pi" [class.pi-ban]="profile.active" [class.pi-check]="!profile.active"></i>
-          {{ profile.active ? 'Deactivate Staff' : 'Activate Staff' }}
-        </button>
-      </div>
-
-      <!-- Summary -->
-      <div class="sp-sidebar-card">
-        <h4 class="sp-sidebar-card__title">Summary</h4>
+      <!-- Responsibilities tab context -->
+      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'responsibilities'">
+        <h4 class="tc-detail-sidebar-card__title">Responsibility Summary</h4>
         <div class="sp-sidebar-stat">
-          <span>Total Responsibilities</span>
+          <span>Total Assigned</span>
           <strong>{{ profile.responsibilities?.length ?? 0 }}</strong>
         </div>
-        <div class="sp-sidebar-stat" *ngIf="profile.salarySummary">
+        <div class="sp-sidebar-stat">
+          <span>Currently Active</span>
+          <strong>{{ activeResponsibilityCount }}</strong>
+        </div>
+      </div>
+
+      <!-- Salary tab context -->
+      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'salary' && profile.salarySummary">
+        <h4 class="tc-detail-sidebar-card__title">Current Salary</h4>
+        <div class="sp-sidebar-stat">
           <span>Gross Salary</span>
           <strong>₹ {{ profile.salarySummary.grossSalary | number }}</strong>
         </div>
-        <div class="sp-sidebar-stat" *ngIf="profile.payrollSummary">
-          <span>Last Net Pay</span>
+        <div class="sp-sidebar-stat">
+          <span>Salary Type</span>
+          <strong>{{ profile.salarySummary.salaryType | titlecase }}</strong>
+        </div>
+        <div class="sp-sidebar-stat">
+          <span>Effective From</span>
+          <strong>{{ profile.salarySummary.effectiveFrom | date:'d MMM yyyy' }}</strong>
+        </div>
+      </div>
+
+      <!-- Payroll tab context -->
+      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'payroll' && profile.payrollSummary">
+        <h4 class="tc-detail-sidebar-card__title">Latest Payroll</h4>
+        <div class="sp-sidebar-stat">
+          <span>Month</span>
+          <strong>{{ profile.payrollSummary.lastPayrollMonth }}</strong>
+        </div>
+        <div class="sp-sidebar-stat">
+          <span>Net Pay</span>
           <strong>₹ {{ profile.payrollSummary.lastNetSalary | number }}</strong>
         </div>
-        <div class="sp-sidebar-stat" *ngIf="profile.payrollSummary">
-          <span>Last Payroll</span>
-          <strong>{{ profile.payrollSummary.lastPayrollMonth }}</strong>
+        <div class="sp-sidebar-stat">
+          <span>Status</span>
+          <span class="sd-status-pill" [attr.data-payroll]="profile.payrollSummary.lastPayrollStatus">
+            {{ profile.payrollSummary.lastPayrollStatus | titlecase }}
+          </span>
         </div>
       </div>
     </aside>

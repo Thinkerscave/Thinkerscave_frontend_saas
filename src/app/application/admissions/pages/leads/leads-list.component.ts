@@ -9,11 +9,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { Menu, MenuModule } from 'primeng/menu';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
@@ -26,7 +28,6 @@ import { CounselorPickerComponent } from '../../components/counselor-picker/coun
 import {
   LEAD_SOURCE_OPTIONS,
   LEAD_STATUS_OPTIONS,
-  admissionsPageConfig,
   formatAdmissionsLabel
 } from '../../data/admissions-workspace.config';
 import {
@@ -34,6 +35,7 @@ import {
   LeadCreateRequest,
   LeadRecord,
   LeadSearchRequest,
+  LeadSource,
   LeadStatus,
   LookupOption
 } from '../../models/admissions-crm.model';
@@ -51,13 +53,15 @@ const LIST_KEY = 'tc.leads.view.v2';
   selector: 'app-leads-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, 
+  imports: [
+    AppToastComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     DropdownModule,
     ConfirmDialogModule,
     DialogModule,
+    MenuModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
     AppListToolbarComponent,
@@ -81,20 +85,20 @@ export class LeadsListComponent implements OnInit {
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
 
-  readonly pageConfig = admissionsPageConfig('leads');
-  readonly statusOptions = LEAD_STATUS_OPTIONS;
-  readonly sourceOptions = LEAD_SOURCE_OPTIONS;
+  readonly inquirySourceOptions: SelectOption<LeadSource>[] = LEAD_SOURCE_OPTIONS.map(s => ({
+    label: formatAdmissionsLabel(s),
+    value: s as LeadSource
+  }));
   readonly statusSelectOptions: SelectOption[] = [
-    { label: 'All', value: null },
     ...LEAD_STATUS_OPTIONS.map(s => ({ label: formatAdmissionsLabel(s), value: s }))
   ];
   readonly sourceSelectOptions: SelectOption[] = [
-    { label: 'All', value: null },
-    ...LEAD_SOURCE_OPTIONS.map(s => ({ label: s, value: s }))
+    ...LEAD_SOURCE_OPTIONS.map(s => ({ label: formatAdmissionsLabel(s), value: s }))
   ];
-  readonly inquirySourceOptions: SelectOption[] = [
-    { label: 'Select source', value: '' },
-    ...LEAD_SOURCE_OPTIONS.map(s => ({ label: s, value: s }))
+  /** Both scopes are available to every Leads-page user — no role/privilege gating. */
+  readonly scopeOptions: SelectOption<'MY' | 'ALL'>[] = [
+    { label: 'My Leads', value: 'MY' },
+    { label: 'All Leads', value: 'ALL' }
   ];
 
   readonly loading = signal(true);
@@ -105,7 +109,9 @@ export class LeadsListComponent implements OnInit {
   readonly leads = signal<LeadRecord[]>([]);
   readonly totalElements = signal(0);
   readonly viewMode = signal<'table' | 'card'>(this.viewPrefs.globalDefault() === 'grid' ? 'card' : 'table');
-  dialogVisible = false;
+  leadDialogVisible = false;
+  moreFiltersVisible = false;
+  rowMenuItems: MenuItem[] = [];
   readonly saving = signal(false);
   readonly editingLead = signal<LeadRecord | null>(null);
   readonly counselorPickerOpen = signal(false);
@@ -113,29 +119,35 @@ export class LeadsListComponent implements OnInit {
   readonly years = signal<LookupOption[]>([]);
   readonly classes = signal<LookupOption[]>([]);
   readonly filterClasses = signal<LookupOption[]>([]);
-  readonly counselorOptions = signal<SelectOption<number | null>[]>([{ label: 'All counselors', value: null }]);
+  readonly counselorOptions = signal<SelectOption<number | null>[]>([]);
   filterYearId: number | null = null;
+  /** Default tab: My Leads (created by current user). */
+  leadScope: 'MY' | 'ALL' = 'MY';
 
   pageIndex = 0;
   pageSize = UI_PAGINATION.defaultSize;
-  readonly sort = 'createdOn,desc';
+
+  /** Hint only — backend enforces scope sort before pagination. */
+  get sort(): string {
+    return this.leadScope === 'ALL'
+      ? 'nextFollowUpDate,asc'
+      : 'createdOn,desc';
+  }
 
   filter: LeadSearchRequest = {};
-  private applied: LeadSearchRequest = {};
+  private applied: LeadSearchRequest = { scope: 'MY' };
 
   readonly leadForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    parentContactName: ['', [Validators.required, Validators.minLength(2)]],
     mobileNumber: ['', [Validators.required, Validators.pattern(/^(?:\+91[\s-]?)?[6-9]\d{9}$/)]],
-    email: ['', [Validators.email]],
     classInterestedIn: [''],
     academicYearId: [null as number | null, Validators.required],
     classId: [null as number | null, Validators.required],
-    address: [''],
-    inquirySource: [''],
+    inquirySource: [null as LeadSource | null, Validators.required],
     referredBy: [''],
     comments: [''],
-    assignedCounselorId: [null as number | null],
-    nextFollowUpDate: ['']
+    allowPotentialDuplicate: [false]
   });
 
   ngOnInit(): void {
@@ -143,24 +155,38 @@ export class LeadsListComponent implements OnInit {
     if (saved) {
       this.pageIndex = saved.page ?? this.pageIndex;
       this.pageSize = saved.size ?? this.pageSize;
+      this.viewMode.set(saved.view === 'grid' ? 'card' : 'table');
       if (saved.search) {
         this.filter = { ...this.filter, keyword: saved.search };
       }
     }
 
     this.api.academicYears().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: years => this.years.set(years)
+      next: years => {
+        this.years.set(years);
+        if (this.leadDialogVisible && !this.editingLead() && !this.leadForm.value.academicYearId) {
+          this.applyDefaultAcademicYear(years);
+        }
+      }
     });
     this.api.searchCounselors('', 0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: page => this.counselorOptions.set([
-        { label: 'All counselors', value: null },
-        ...(page.content ?? []).map(c => ({ label: c.fullName, value: c.staffId }))
-      ])
+      next: page => this.counselorOptions.set(
+        (page.content ?? []).map(c => ({ label: c.fullName, value: c.staffId }))
+      )
     });
 
-    this.leadForm.controls.academicYearId.valueChanges
+    this.leadForm.controls.inquirySource.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(yearId => this.onYearChange(yearId));
+      .subscribe(source => {
+        const referred = this.leadForm.controls.referredBy;
+        if (source === 'REFERRAL') {
+          referred.setValidators([Validators.required, Validators.minLength(2)]);
+        } else {
+          referred.clearValidators();
+          referred.setValue('');
+        }
+        referred.updateValueAndValidity({ emitEvent: false });
+      });
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const status = params.get('status');
@@ -170,7 +196,7 @@ export class LeadsListComponent implements OnInit {
         this.applied = { ...this.applied, status: status as LeadStatus };
       }
       if (openCreate === '1') {
-        this.openDialog();
+        this.openLeadDialog();
       }
       this.loadInitial();
     });
@@ -181,14 +207,51 @@ export class LeadsListComponent implements OnInit {
   }
 
   runSearch(): void {
-    this.applied = { ...this.filter, academicYearId: this.filterYearId };
+    this.applied = { ...this.filter, academicYearId: this.filterYearId, scope: this.leadScope };
     this.pageIndex = 0;
     this.reloadLeads(false);
   }
 
   applyQuery(): void {
     this.pageIndex = 0;
+    this.applied = { ...this.filter, academicYearId: this.filterYearId, scope: this.leadScope };
     this.reloadLeads(false);
+  }
+
+  setLeadScope(scope: 'MY' | 'ALL'): void {
+    if (this.leadScope === scope) return;
+    this.leadScope = scope;
+    this.applyQuery();
+  }
+
+  openMoreFilters(): void {
+    this.moreFiltersVisible = true;
+  }
+
+  applyMoreFilters(): void {
+    this.moreFiltersVisible = false;
+    this.runSearch();
+  }
+
+  clearMoreFilters(): void {
+    this.filterYearId = null;
+    this.filterClasses.set([]);
+    this.filter = {
+      ...this.filter,
+      academicYearId: null,
+      classId: null,
+      followUpFrom: null,
+      followUpTo: null
+    };
+  }
+
+  get moreFiltersActiveCount(): number {
+    let count = 0;
+    if (this.filterYearId) count += 1;
+    if (this.filter.classId) count += 1;
+    if (this.filter.followUpFrom) count += 1;
+    if (this.filter.followUpTo) count += 1;
+    return count;
   }
 
   private reloadLeads(first: boolean): void {
@@ -238,7 +301,7 @@ export class LeadsListComponent implements OnInit {
 
   clearFilters(): void {
     this.filter = {};
-    this.applied = {};
+    this.applied = { scope: this.leadScope };
     this.filterYearId = null;
     this.filterClasses.set([]);
     this.pageIndex = 0;
@@ -270,7 +333,8 @@ export class LeadsListComponent implements OnInit {
       academicYearId: this.applied.academicYearId ?? this.filterYearId,
       classId: this.applied.classId,
       followUpFrom: this.applied.followUpFrom,
-      followUpTo: this.applied.followUpTo
+      followUpTo: this.applied.followUpTo,
+      scope: this.applied.scope ?? this.leadScope
     };
   }
 
@@ -286,51 +350,66 @@ export class LeadsListComponent implements OnInit {
     this.viewMode.set(mode === 'grid' ? 'card' : 'table');
   }
 
-  setView(mode: 'table' | 'card'): void {
-    this.viewMode.set(mode);
+  get leadDialogTitle(): string {
+    return this.editingLead() ? 'Edit Lead' : 'Create Lead';
+  }
+
+  get showReferredBy(): boolean {
+    return this.leadForm.controls.inquirySource.value === 'REFERRAL';
   }
 
   openDialog(lead?: LeadRecord): void {
+    this.openLeadDialog(lead);
+  }
+
+  openLeadDialog(lead?: LeadRecord): void {
     this.editingLead.set(lead ?? null);
+    this.leadForm.markAsUntouched();
+    this.leadForm.markAsPristine();
+
     if (lead) {
-      this.leadForm.patchValue({
-        name: lead.name,
+      this.leadForm.reset({
+        name: lead.studentName || lead.name,
+        parentContactName: lead.parentContactName || '',
         mobileNumber: lead.mobileNumber,
-        email: lead.email ?? '',
         classInterestedIn: lead.classInterestedIn,
         academicYearId: lead.academicYearId ?? null,
         classId: lead.classId ?? null,
-        address: lead.address ?? '',
-        inquirySource: lead.inquirySource ?? '',
+        inquirySource: lead.inquirySource ?? null,
         referredBy: lead.referredBy ?? '',
         comments: lead.comments ?? '',
-        assignedCounselorId: lead.assignedCounselorId ?? null,
-        nextFollowUpDate: lead.nextFollowUpDate ?? ''
+        allowPotentialDuplicate: false
       });
+      if (lead.academicYearId) {
+        this.onYearChange(lead.academicYearId, lead.classId ?? null);
+      } else {
+        this.classes.set([]);
+      }
     } else {
       this.leadForm.reset({
         name: '',
+        parentContactName: '',
         mobileNumber: '',
-        email: '',
         classInterestedIn: '',
         academicYearId: null,
         classId: null,
-        address: '',
-        inquirySource: '',
+        inquirySource: null,
         referredBy: '',
         comments: '',
-        assignedCounselorId: null,
-        nextFollowUpDate: ''
+        allowPotentialDuplicate: false
       });
+      this.classes.set([]);
+      this.applyDefaultAcademicYear();
     }
-    this.dialogVisible = true;
-    if (lead?.academicYearId) {
-      this.onYearChange(lead.academicYearId, lead.classId ?? null);
-    }
+
+    this.leadDialogVisible = true;
   }
 
-  closeDialog(): void {
-    this.dialogVisible = false;
+  closeLeadDialog(): void {
+    if (!this.leadDialogVisible && !this.editingLead()) {
+      return;
+    }
+    this.leadDialogVisible = false;
     this.editingLead.set(null);
     this.router.navigate([], {
       relativeTo: this.route,
@@ -340,6 +419,9 @@ export class LeadsListComponent implements OnInit {
   }
 
   saveLead(): void {
+    if (this.saving()) {
+      return;
+    }
     if (this.leadForm.invalid) {
       this.leadForm.markAllAsTouched();
       return;
@@ -347,10 +429,19 @@ export class LeadsListComponent implements OnInit {
     const className = this.classes().find(c => c.id === this.leadForm.value.classId)?.name
       ?? this.leadForm.value.classInterestedIn
       ?? '';
-    const payload = {
-      ...this.leadForm.getRawValue(),
-      classInterestedIn: className
-    } as LeadCreateRequest;
+    const raw = this.leadForm.getRawValue();
+    const payload: LeadCreateRequest = {
+      name: (raw.name || '').trim(),
+      parentContactName: (raw.parentContactName || '').trim(),
+      mobileNumber: (raw.mobileNumber || '').trim(),
+      classInterestedIn: className,
+      academicYearId: raw.academicYearId,
+      classId: raw.classId,
+      inquirySource: raw.inquirySource,
+      referredBy: raw.inquirySource === 'REFERRAL' ? (raw.referredBy || '').trim() : null,
+      comments: (raw.comments || '').trim() || null,
+      allowPotentialDuplicate: !!raw.allowPotentialDuplicate
+    };
     const editing = this.editingLead();
     this.saving.set(true);
 
@@ -367,11 +458,28 @@ export class LeadsListComponent implements OnInit {
             ? 'Changes saved successfully.'
             : `Lead created${created.inquiryNumber ? ` as ${created.inquiryNumber}` : ''}.`
         });
-        this.closeDialog();
+        this.closeLeadDialog();
         this.runSearch();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Save failed', detail: 'Could not save lead.' })
+      error: (err: unknown) => {
+        if (!editing && this.isDuplicateLeadError(err) && !payload.allowPotentialDuplicate) {
+          this.confirmDuplicateOverride(payload);
+          return;
+        }
+        this.messages.add({
+          severity: 'error',
+          summary: 'Save failed',
+          detail: this.errorDetail(err, 'Could not save lead.')
+        });
+      }
     });
+  }
+
+  private applyDefaultAcademicYear(years: LookupOption[] = this.years()): void {
+    const defaultYear = years[0];
+    if (!defaultYear) return;
+    this.leadForm.patchValue({ academicYearId: defaultYear.id }, { emitEvent: false });
+    this.onYearChange(defaultYear.id);
   }
 
   openLead(lead: LeadRecord): void {
@@ -394,11 +502,6 @@ export class LeadsListComponent implements OnInit {
   emailContact(lead: LeadRecord, event: Event): void {
     event.stopPropagation();
     if (lead.email) window.open(`mailto:${lead.email}`, '_self');
-  }
-
-  editLead(lead: LeadRecord, event: Event): void {
-    event.stopPropagation();
-    this.openDialog(lead);
   }
 
   deleteLead(lead: LeadRecord, event: Event): void {
@@ -430,16 +533,42 @@ export class LeadsListComponent implements OnInit {
     const lead = this.counselorTarget();
     this.counselorPickerOpen.set(false);
     if (!lead) return;
-    this.api.assignCounselor(lead.inquiryId, person.staffId).subscribe({
+    if (lead.assignedCounselorId === person.staffId) {
+      this.messages.add({
+        severity: 'info',
+        summary: 'No change',
+        detail: `${person.fullName} is already assigned to this lead.`
+      });
+      return;
+    }
+
+    const wasAssigned = !!lead.assignedCounselorId;
+    let reason: string | null = null;
+    if (wasAssigned) {
+      const promptValue = window.prompt('Reason for reassignment (optional):', '');
+      if (promptValue === null) {
+        this.messages.add({ severity: 'info', summary: 'Cancelled', detail: 'Counselor reassignment cancelled.' });
+        return;
+      }
+      reason = promptValue.trim() || null;
+    }
+
+    this.api.assignCounselor(lead.inquiryId, person.staffId, reason).subscribe({
       next: () => {
         this.messages.add({
           severity: 'success',
-          summary: 'Assigned',
-          detail: `${person.fullName} assigned as counselor.`
+          summary: wasAssigned ? 'Reassigned' : 'Assigned',
+          detail: wasAssigned
+            ? `${person.fullName} reassigned as counselor.`
+            : `${person.fullName} assigned as counselor.`
         });
         this.runSearch();
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'Error', detail: 'Assignment failed.' })
+      error: (err: unknown) => this.messages.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: this.errorDetail(err, 'Assignment failed.')
+      })
     });
   }
 
@@ -458,32 +587,21 @@ export class LeadsListComponent implements OnInit {
   }
 
   exportCsv(): void {
-    const rows = this.leads();
-    if (!rows.length) {
-      this.messages.add({ severity: 'info', summary: 'Nothing to export', detail: 'No leads on current page.' });
-      return;
-    }
-    const headers = ['ID', 'Name', 'Mobile', 'Email', 'Class', 'Source', 'Status', 'Next Follow-up'];
-    const csvRows = rows.map(l => [
-      l.inquiryId,
-      this.csvEscape(l.name),
-      this.csvEscape(l.mobileNumber),
-      this.csvEscape(l.email ?? ''),
-      this.csvEscape(l.classInterestedIn),
-      this.csvEscape(l.inquirySource ?? ''),
-      l.status,
-      this.csvEscape(l.nextFollowUpDate ?? '')
-    ].join(','));
-    const blob = new Blob([[headers.join(','), ...csvRows].join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `leads-page-${this.pageIndex + 1}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const payload = this.searchPayload();
+    this.api.exportLeadsCsv(payload).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `admissions-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.messages.add({ severity: 'error', summary: 'Export failed', detail: 'Could not export leads.' })
+    });
   }
 
-  formatStatus(status: LeadStatus): string {
+  formatStatus(status: string): string {
     return formatAdmissionsLabel(status);
   }
 
@@ -493,31 +611,164 @@ export class LeadsListComponent implements OnInit {
       case 'CONTACTED':
         return 'info';
       case 'INTERESTED':
-      case 'COUNSELING':
-      case 'READY_FOR_ADMISSION':
-      case 'CONVERTED':
+      case 'APPLICATION_STARTED':
+      case 'APPLICATION_SUBMITTED':
         return 'success';
-      case 'FOLLOW_UP_REQUIRED':
-      case 'DOCUMENTS_PENDING':
-        return 'warning';
       case 'LOST':
-      case 'CLOSED':
         return 'danger';
       default:
         return 'neutral';
     }
   }
 
-  private csvEscape(value: string): string {
-    if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-    return value;
+  sourceTone(source: LeadSource | string | null | undefined): 'info' | 'success' | 'warning' | 'danger' | 'neutral' {
+    switch (source) {
+      case 'WEBSITE':
+      case 'SOCIAL_MEDIA':
+        return 'info';
+      case 'WALK_IN':
+      case 'WHATSAPP':
+        return 'success';
+      case 'PHONE':
+      case 'CAMPAIGN':
+        return 'warning';
+      case 'REFERRAL':
+        return 'danger';
+      default:
+        return 'neutral';
+    }
+  }
+
+  initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  isFollowUpOverdue(lead: LeadRecord): boolean {
+    if (!lead.nextFollowUpDate) return false;
+    const next = new Date(lead.nextFollowUpDate);
+    if (Number.isNaN(next.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    next.setHours(0, 0, 0, 0);
+    return next < today;
+  }
+
+  followUpLabel(lead: LeadRecord): string {
+    if (!lead.nextFollowUpDate) return 'No follow-up';
+    const next = new Date(lead.nextFollowUpDate);
+    if (Number.isNaN(next.getTime())) return lead.nextFollowUpDate;
+    const formatted = next.toLocaleString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    if (!this.isFollowUpOverdue(lead)) return formatted;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    next.setHours(0, 0, 0, 0);
+    const days = Math.max(1, Math.round((today.getTime() - next.getTime()) / 86_400_000));
+    return `Overdue · ${days}d · ${formatted}`;
+  }
+
+  openRowMenu(event: Event, lead: LeadRecord, menu: Menu): void {
+    event.stopPropagation();
+    this.rowMenuItems = [
+      {
+        label: 'Open Lead 360',
+        icon: 'pi pi-eye',
+        command: () => this.openLead(lead)
+      },
+      {
+        label: 'Edit',
+        icon: 'pi pi-pencil',
+        command: () => this.openDialog(lead)
+      },
+      {
+        label: lead.assignedCounselorId ? 'Reassign counselor' : 'Assign counselor',
+        icon: 'pi pi-user-plus',
+        command: () => this.assignCounselor(lead, event)
+      },
+      {
+        label: 'Email',
+        icon: 'pi pi-envelope',
+        disabled: !lead.email,
+        command: () => this.emailContact(lead, event)
+      },
+      { separator: true },
+      {
+        label: 'Archive',
+        icon: 'pi pi-trash',
+        styleClass: 'adm-row-menu__danger',
+        command: () => this.deleteLead(lead, event)
+      }
+    ];
+    menu.toggle(event);
   }
 
   private persistListContext(): void {
     this.listContext.save(LIST_KEY, {
       page: this.pageIndex,
       size: this.pageSize,
-      search: this.filter.keyword ?? ''
+      search: this.filter.keyword ?? '',
+      view: this.listViewMode
     });
+  }
+
+  private confirmDuplicateOverride(payload: LeadCreateRequest): void {
+    this.confirm.confirm({
+      header: 'Possible duplicate found',
+      message: 'A lead with this mobile number already exists. Do you want to continue and create this lead anyway? Use this when the same parent is enquiring for another child.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Create anyway',
+      rejectLabel: 'Review',
+      accept: () => {
+        this.saving.set(true);
+        this.api.createLead({ ...payload, allowPotentialDuplicate: true })
+          .pipe(finalize(() => this.saving.set(false)))
+          .subscribe({
+            next: created => {
+              this.messages.add({
+                severity: 'warn',
+                summary: 'Created with duplicate override',
+                detail: `Lead created${created.inquiryNumber ? ` as ${created.inquiryNumber}` : ''}.`
+              });
+              this.closeLeadDialog();
+              this.runSearch();
+            },
+            error: (err: unknown) => this.messages.add({
+              severity: 'error',
+              summary: 'Save failed',
+              detail: this.errorDetail(err, 'Could not save lead.')
+            })
+          });
+      }
+    });
+  }
+
+  private isDuplicateLeadError(err: unknown): boolean {
+    const message = this.errorMessage(err);
+    return message.includes('already exists') || message.includes('duplicate');
+  }
+
+  private errorDetail(err: unknown, fallback: string): string {
+    const message = this.errorMessage(err);
+    return message || fallback;
+  }
+
+  private errorMessage(err: unknown): string {
+    if (!(err instanceof HttpErrorResponse)) {
+      return '';
+    }
+    const payload = err.error as { message?: string } | string | null;
+    if (typeof payload === 'string' && payload.trim()) {
+      return payload.trim();
+    }
+    if (payload && typeof payload === 'object' && typeof payload.message === 'string') {
+      return payload.message.trim();
+    }
+    return typeof err.message === 'string' ? err.message.trim() : '';
   }
 }

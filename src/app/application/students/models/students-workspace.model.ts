@@ -85,11 +85,17 @@ export interface StudentWizardRequest {
 
   // Step 3: Academic Information
   academicYear?: string | null;
+  academicYearId?: number | null;
   classId?: number | null;
   sectionId?: number | null;
   rollNumber?: string | null;
   enrollmentDate?: string | null;
   enrollmentStatus?: string | null;
+
+  category?: string | null;
+  placeOfBirth?: string | null;
+  identityDocumentType?: string | null;
+  identityDocumentNumber?: string | null;
 
   // Step 4: Medical Information
   bloodGroup?: string | null;
@@ -158,6 +164,7 @@ export interface StudentOverview {
   mobile?: string | null;
   email?: string | null;
   photoUrl?: string | null;
+  photoDocumentId?: number | null;
   academicYear?: string | null;
   admissionDate?: string | null;
   enrollmentDate?: string | null;
@@ -180,19 +187,26 @@ export interface StudentPersonal {
   lastName?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
+  ageYears?: number | null;
   nationality?: string | null;
   religion?: string | null;
   bloodGroup?: string | null;
   motherTongue?: string | null;
+  category?: string | null;
+  placeOfBirth?: string | null;
+  identityDocumentType?: string | null;
+  identityDocumentNumber?: string | null;
   mobile?: string | null;
   email?: string | null;
   permanentAddress?: string | null;
   currentAddress?: string | null;
   permanentAddressLine1?: string | null;
+  permanentAddressLine2?: string | null;
   permanentCity?: string | null;
   permanentState?: string | null;
   permanentPincode?: string | null;
   currentAddressLine1?: string | null;
+  currentAddressLine2?: string | null;
   currentCity?: string | null;
   currentState?: string | null;
   currentPincode?: string | null;
@@ -243,6 +257,12 @@ export interface AcademicsSnapshot {
   admissionAgeYears?: number | null;
   courseCount: number;
   subjectCount: number;
+  previousSchoolName?: string | null;
+  previousBoard?: string | null;
+  previousClass?: string | null;
+  previousAcademicYear?: string | null;
+  previousPercentage?: string | null;
+  previousTcNumber?: string | null;
 }
 
 export interface AcademicHistoryRow {
@@ -278,6 +298,9 @@ export interface MedicalSnapshot {
   doctorContact?: string | null;
   emergencyNotes?: string | null;
   emergencyContact?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
   notes?: string | null;
 }
 
@@ -286,9 +309,12 @@ export interface StudentDocumentEntry {
   studentId: number;
   documentName: string;
   documentType: string;
+  /** Admission/custom label shown in UI (prefer over raw type). */
+  displayLabel?: string | null;
+  remarks?: string | null;
   fileName?: string | null;
   fileUrl?: string | null;
-  status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'MISSING';
+  status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'MISSING';
   uploadedDate?: string | null;
   category?: string | null;
 }
@@ -299,7 +325,6 @@ export interface StudentProfile360 {
   family: FamilySnapshot;
   academics: AcademicsSnapshot;
   attendance: AttendanceSnapshot;
-  fees: FeeSnapshot;
   medical: MedicalSnapshot;
 }
 

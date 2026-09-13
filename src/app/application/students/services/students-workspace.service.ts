@@ -52,6 +52,19 @@ interface BackendStudentDto {
   studentCode?: string | null;
   admissionNumber?: string | null;
   fullName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  ageYears?: number | null;
+  religion?: string | null;
+  nationality?: string | null;
+  motherTongue?: string | null;
+  category?: string | null;
+  placeOfBirth?: string | null;
+  identityDocumentType?: string | null;
+  identityDocumentNumber?: string | null;
   mobileNumber?: string | null;
   email?: string | null;
   status?: string | null;
@@ -60,17 +73,38 @@ interface BackendStudentDto {
   parentName?: string | null;
   parentMobileNumber?: string | null;
   photoUrl?: string | null;
+  rollNumber?: string | null;
+  admissionDate?: string | null;
+  remarks?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
+  currentAddressLine1?: string | null;
+  currentAddressLine2?: string | null;
+  currentCity?: string | null;
+  currentState?: string | null;
+  currentPostalCode?: string | null;
+  permanentAddressLine1?: string | null;
+  permanentAddressLine2?: string | null;
+  permanentCity?: string | null;
+  permanentState?: string | null;
+  permanentPostalCode?: string | null;
+}
+
+interface BackendParentDto {
+  parentId?: number;
+  fullName?: string;
+  mobileNumber?: string;
+  email?: string;
+  occupation?: string;
+  relationship?: string;
+  primaryContact?: boolean;
 }
 
 interface BackendProfileDto {
   student: BackendStudentDto;
-  parent?: {
-    parentId?: number;
-    fullName?: string;
-    mobileNumber?: string;
-    email?: string;
-    occupation?: string;
-  };
+  parent?: BackendParentDto;
+  parents?: BackendParentDto[];
   enrollment?: {
     enrollmentId?: number;
     academicYear?: string;
@@ -78,8 +112,20 @@ interface BackendProfileDto {
     sectionName?: string;
     rollNumber?: string;
     status?: string;
+    enrollmentDate?: string;
   };
   medical?: MedicalSnapshot;
+  previousSchooling?: {
+    hasPreviousSchooling?: boolean;
+    schoolName?: string;
+    board?: string;
+    className?: string;
+    academicYear?: string;
+    percentage?: string;
+    tcNumber?: string;
+    tcDate?: string;
+  };
+  photoDocumentId?: number;
   timeline?: BackendTimelineDto[];
 }
 
@@ -230,56 +276,68 @@ export class StudentsWorkspaceService {
   }
 
   createStudentWizard(payload: StudentWizardRequest): Observable<void> {
-    return this.resolveAcademicYearId(payload.academicYear).pipe(
-      switchMap(academicYearId => {
-        const primary = payload.parents?.[0];
-        const body = {
-          admissionNumber: payload.admissionNumber?.trim() || `ADM-${Date.now()}`,
-          rollNumber: payload.rollNumber ?? null,
-          firstName: payload.firstName,
-          middleName: payload.middleName ?? null,
-          lastName: payload.lastName,
-          gender: payload.gender || 'Other',
-          dateOfBirth: payload.dateOfBirth || new Date().toISOString().substring(0, 10),
-          religion: payload.religion ?? null,
-          nationality: payload.nationality ?? null,
-          motherTongue: payload.motherTongue ?? null,
-          mobileNumber: payload.mobile ?? primary?.mobile ?? '0000000000',
-          email: payload.email ?? primary?.email ?? null,
-          parentFirstName: primary?.firstName ?? 'Guardian',
-          parentMiddleName: null,
-          parentLastName: primary?.lastName ?? 'NA',
-          parentMobileNumber: primary?.mobile ?? '0000000000',
-          parentEmail: primary?.email ?? null,
-          parentOccupation: primary?.occupation ?? null,
-          parentOrganizationName: primary?.organization ?? null,
-          parentQualification: primary?.qualification ?? null,
-          annualIncome: primary?.annualIncome ? Number(primary.annualIncome) : null,
-          academicYearId,
-          classId: payload.classId,
-          sectionId: payload.sectionId ?? null,
-          enrollmentDate: payload.enrollmentDate ?? null,
-          isSameAddress: payload.sameAsCurrentAddress ?? false,
-          currentAddressLine: payload.currentAddressLine1 ?? null,
-          currentCity: payload.currentCity ?? null,
-          currentState: payload.currentState ?? null,
-          currentZipCode: payload.currentPincode ?? null,
-          permanentAddressLine: payload.permanentAddressLine1 ?? null,
-          permanentCity: payload.permanentCity ?? null,
-          permanentState: payload.permanentState ?? null,
-          permanentZipCode: payload.permanentPincode ?? null,
-          bloodGroup: payload.bloodGroup ?? null,
-          allergies: payload.allergies ?? null,
-          medicalConditions: payload.medicalConditions ?? null,
-          medications: payload.medications ?? null,
-          doctorName: payload.doctorName ?? null,
-          doctorContact: payload.doctorContact ?? null,
-          emergencyNotes: payload.emergencyNotes ?? null
-        };
-        return this.http.post<ApiEnvelope<unknown>>(this.studentsBase, body);
-      }),
-      map(() => void 0)
-    );
+    const primary = payload.parents?.[0];
+    const secondary = payload.parents?.[1];
+    const body: Record<string, unknown> = {
+      admissionNumber: payload.admissionNumber?.trim() || null,
+      rollNumber: payload.rollNumber ?? null,
+      firstName: payload.firstName,
+      middleName: payload.middleName ?? null,
+      lastName: payload.lastName,
+      gender: payload.gender || 'OTHER',
+      dateOfBirth: payload.dateOfBirth || new Date().toISOString().substring(0, 10),
+      religion: payload.religion ?? null,
+      nationality: payload.nationality ?? null,
+      motherTongue: payload.motherTongue ?? null,
+      category: payload.category ?? null,
+      placeOfBirth: payload.placeOfBirth ?? null,
+      identityDocumentType: payload.identityDocumentType ?? null,
+      identityDocumentNumber: payload.identityDocumentNumber ?? null,
+      mobileNumber: payload.mobile ?? null,
+      email: payload.email ?? null,
+      parentRelationship: primary?.relationship ?? 'FATHER',
+      parentFirstName: primary?.firstName ?? 'Guardian',
+      parentMiddleName: null,
+      parentLastName: primary?.lastName || 'NA',
+      parentMobileNumber: primary?.mobile ?? '',
+      parentEmail: primary?.email ?? null,
+      parentOccupation: primary?.occupation ?? null,
+      parentOrganizationName: primary?.organization ?? null,
+      parentQualification: primary?.qualification ?? null,
+      annualIncome: primary?.annualIncome ? Number(primary.annualIncome) : null,
+      academicYearId: payload.academicYearId ?? null,
+      classId: payload.classId ?? null,
+      sectionId: payload.sectionId ?? null,
+      enrollmentDate: payload.enrollmentDate ?? null,
+      enrollmentStatus: payload.enrollmentStatus ?? 'ACTIVE',
+      sameAddress: payload.sameAsCurrentAddress ?? false,
+      currentAddressLine1: payload.currentAddressLine1 ?? null,
+      currentAddressLine2: payload.currentAddressLine2 ?? null,
+      currentCity: payload.currentCity ?? null,
+      currentState: payload.currentState ?? null,
+      currentPostalCode: payload.currentPincode ?? null,
+      permanentAddressLine1: payload.permanentAddressLine1 ?? null,
+      permanentAddressLine2: payload.permanentAddressLine2 ?? null,
+      permanentCity: payload.permanentCity ?? null,
+      permanentState: payload.permanentState ?? null,
+      permanentPostalCode: payload.permanentPincode ?? null,
+      bloodGroup: payload.bloodGroup ?? null,
+      allergies: payload.allergies ?? null,
+      medicalConditions: payload.medicalConditions ?? null,
+      medications: payload.medications ?? null,
+      doctorName: payload.doctorName ?? null,
+      doctorContact: payload.doctorContact ?? null,
+      emergencyNotes: payload.emergencyNotes ?? null
+    };
+    if (secondary?.firstName?.trim() && secondary?.mobile?.trim()) {
+      body['secondaryParentRelationship'] = secondary.relationship || 'MOTHER';
+      body['secondaryParentFirstName'] = secondary.firstName;
+      body['secondaryParentLastName'] = secondary.lastName || 'NA';
+      body['secondaryParentMobileNumber'] = secondary.mobile;
+      body['secondaryParentEmail'] = secondary.email ?? null;
+      body['secondaryParentOccupation'] = secondary.occupation ?? null;
+    }
+    return this.http.post<ApiEnvelope<unknown>>(this.studentsBase, body).pipe(map(() => void 0));
   }
 
   updateStudentStatus(studentId: number, status: StudentStatus): Observable<void> {
@@ -341,28 +399,85 @@ export class StudentsWorkspaceService {
   }
 
   // ---------- Academic History ----------
-  academicHistory(_studentId: number): Observable<AcademicHistoryRow[]> {
-    return of([]);
+  academicHistory(studentId: number): Observable<AcademicHistoryRow[]> {
+    return forkJoin({
+      enrollments: this.http.get<ApiEnvelope<Array<{
+        academicYear?: string;
+        className?: string;
+        sectionName?: string;
+        rollNumber?: string;
+        status?: string;
+        enrollmentDate?: string;
+      }>>>(`${this.studentsBase}/${studentId}/enrollment`),
+      profile: this.http.get<ApiEnvelope<BackendProfileDto>>(`${this.studentsBase}/${studentId}/profile-360`)
+    }).pipe(
+      map(({ enrollments, profile }) => {
+        const rows: AcademicHistoryRow[] = (enrollments.data ?? []).map(row => ({
+          academicYear: row.academicYear || '—',
+          className: row.className || '—',
+          sectionName: row.sectionName || '—',
+          rollNumber: row.rollNumber ?? null,
+          result: row.status === 'ACTIVE' ? 'Current' : (row.status ?? null),
+          remarks: row.enrollmentDate ? `Enrolled ${row.enrollmentDate}` : null
+        }));
+        const prev = profile.data?.previousSchooling;
+        if (prev && (prev.hasPreviousSchooling || prev.schoolName)) {
+          rows.push({
+            academicYear: prev.academicYear || 'Previous',
+            className: prev.className || '—',
+            sectionName: prev.board || '—',
+            rollNumber: null,
+            result: 'Previous school',
+            remarks: [prev.schoolName, prev.percentage ? `${prev.percentage}%` : null, prev.tcNumber ? `TC ${prev.tcNumber}` : null]
+              .filter(Boolean)
+              .join(' · ') || null
+          });
+        }
+        return rows;
+      })
+    );
   }
 
   // ---------- Student Documents ----------
   studentDocuments(studentId: number): Observable<StudentDocumentEntry[]> {
     return this.http
-      .get<ApiEnvelope<Array<{ documentId?: number; documentName?: string; documentType?: string }>>>(
-        `${this.studentsBase}/${studentId}/documents`
-      )
+      .get<ApiEnvelope<Array<{
+        documentId?: number;
+        documentName?: string;
+        documentType?: string;
+        displayLabel?: string;
+        remarks?: string;
+        status?: string;
+      }>>>(`${this.studentsBase}/${studentId}/documents`)
       .pipe(
-        map(r =>
-          (r.data ?? []).map(doc => ({
-            documentId: doc.documentId ?? null,
-            studentId,
-            documentName: doc.documentName ?? doc.documentType ?? 'Document',
-            documentType: doc.documentType ?? 'OTHER',
-            status: 'UPLOADED' as const,
-            uploadedDate: null,
-            category: 'PERSONAL'
-          }))
-        )
+        map(r => {
+          let otherIndex = 0;
+          return (r.data ?? []).map(doc => {
+            const rawStatus = (doc.status ?? 'PENDING').toUpperCase();
+            const status =
+              rawStatus === 'VERIFIED' ? 'VERIFIED' as const
+              : rawStatus === 'REJECTED' ? 'REJECTED' as const
+              : rawStatus === 'PENDING' ? 'PENDING' as const
+              : 'UPLOADED' as const;
+            let label = (doc.displayLabel || doc.remarks || '').trim();
+            const type = (doc.documentType ?? 'OTHER').toUpperCase();
+            if (!label && type === 'OTHER') {
+              otherIndex += 1;
+              label = `Additional document ${otherIndex}`;
+            }
+            return {
+              documentId: doc.documentId ?? null,
+              studentId,
+              documentName: doc.documentName ?? 'Document',
+              documentType: doc.documentType ?? 'OTHER',
+              displayLabel: label || this.formatDocumentType(doc.documentType),
+              remarks: doc.remarks ?? null,
+              status,
+              uploadedDate: null,
+              category: 'PERSONAL'
+            };
+          });
+        })
       );
   }
 
@@ -605,68 +720,185 @@ export class StudentsWorkspaceService {
   private mapProfile360(raw: BackendProfileDto): StudentProfile360 {
     const s = raw.student;
     const en = raw.enrollment;
-    const p = raw.parent;
     const med = raw.medical ?? {};
+    const parents = (raw.parents?.length ? raw.parents : (raw.parent ? [raw.parent] : []))
+      .map(p => ({
+        guardianId: p.parentId ?? null,
+        name: p.fullName ?? '',
+        mobile: p.mobileNumber,
+        email: p.email,
+        occupation: p.occupation,
+        relation: this.formatRelation(p.relationship),
+        isPrimaryContact: !!p.primaryContact
+      }));
+    const primary = parents.find(g => g.isPrimaryContact) ?? parents[0] ?? null;
+    const rollNumber = en?.rollNumber || s.rollNumber || null;
+    const ageYears = s.ageYears ?? this.ageFromDob(s.dateOfBirth);
+
+    const personal = {
+      fullName: s.fullName ?? '',
+      firstName: s.firstName,
+      middleName: s.middleName,
+      lastName: s.lastName,
+      gender: this.formatGender(s.gender),
+      dateOfBirth: this.formatDateOnly(s.dateOfBirth),
+      ageYears,
+      nationality: s.nationality,
+      religion: s.religion,
+      motherTongue: s.motherTongue,
+      category: s.category,
+      placeOfBirth: s.placeOfBirth,
+      identityDocumentType: s.identityDocumentType,
+      identityDocumentNumber: s.identityDocumentNumber,
+      mobile: s.mobileNumber,
+      email: s.email,
+      bloodGroup: med.bloodGroup,
+      currentAddressLine1: s.currentAddressLine1,
+      currentAddressLine2: s.currentAddressLine2,
+      currentCity: s.currentCity,
+      currentState: s.currentState,
+      currentPincode: s.currentPostalCode,
+      permanentAddressLine1: s.permanentAddressLine1,
+      permanentAddressLine2: s.permanentAddressLine2,
+      permanentCity: s.permanentCity,
+      permanentState: s.permanentState,
+      permanentPincode: s.permanentPostalCode,
+      remarks: s.remarks,
+      ...med
+    };
+
+    const prev = raw.previousSchooling;
 
     return {
       overview: {
         studentId: s.studentId,
         admissionNumber: s.admissionNumber ?? '',
         studentCode: s.studentCode,
-        rollNumber: en?.rollNumber,
+        rollNumber,
         fullName: s.fullName ?? '',
         className: en?.className ?? s.className,
         sectionName: en?.sectionName ?? s.sectionName,
+        gender: this.formatGender(s.gender),
+        dateOfBirth: this.formatDateOnly(s.dateOfBirth),
+        ageYears,
         mobile: s.mobileNumber,
         email: s.email,
         status: (s.status as StudentStatus) ?? 'ACTIVE',
         active: s.status === 'ACTIVE',
         academicYear: en?.academicYear,
+        admissionDate: this.formatDateOnly(s.admissionDate),
+        enrollmentDate: this.formatDateOnly(en?.enrollmentDate),
         enrollmentStatus: en?.status,
         bloodGroup: med.bloodGroup,
-        photoUrl: resolveStudentPhotoUrl(s.studentId, s.photoUrl)
+        motherTongue: s.motherTongue,
+        nationality: s.nationality,
+        religion: s.religion,
+        photoUrl: null,
+        photoDocumentId: raw.photoDocumentId ?? null,
+        profileCompletion: this.computeProfileCompletion(personal, parents.length > 0, !!en)
       },
-      personal: {
-        fullName: s.fullName ?? '',
-        mobile: s.mobileNumber,
-        email: s.email,
-        bloodGroup: med.bloodGroup,
-        ...med
-      },
+      personal,
       family: {
-        primary: p
-          ? {
-              name: p.fullName ?? '',
-              mobile: p.mobileNumber,
-              email: p.email,
-              occupation: p.occupation,
-              relation: 'Parent'
-            }
-          : null,
-        guardians: p
-          ? [{
-              name: p.fullName ?? '',
-              mobile: p.mobileNumber,
-              email: p.email,
-              occupation: p.occupation,
-              relation: 'Parent'
-            }]
-          : [],
+        primary,
+        guardians: parents,
         siblings: []
       },
       academics: {
         currentClass: en?.className ?? s.className,
         currentSection: en?.sectionName ?? s.sectionName,
-        rollNumber: en?.rollNumber,
+        rollNumber,
         academicYear: en?.academicYear,
+        admissionDate: this.formatDateOnly(s.admissionDate),
+        enrollmentDate: this.formatDateOnly(en?.enrollmentDate),
         enrollmentStatus: en?.status,
         courseCount: 0,
-        subjectCount: 0
+        subjectCount: 0,
+        previousSchoolName: prev?.schoolName ?? null,
+        previousBoard: prev?.board ?? null,
+        previousClass: prev?.className ?? null,
+        previousAcademicYear: prev?.academicYear ?? null,
+        previousPercentage: prev?.percentage ?? null,
+        previousTcNumber: prev?.tcNumber ?? null
       },
       attendance: { totalWorkingDays: 0, present: 0, absent: 0, late: 0, percent: 0 },
-      fees: { totalFee: 0, paid: 0, pending: 0, status: 'N/A' },
-      medical: med
+      medical: {
+        ...med,
+        emergencyContactName: s.emergencyContactName,
+        emergencyContactPhone: s.emergencyContactPhone,
+        emergencyContactRelation: s.emergencyContactRelation,
+        emergencyContact: s.emergencyContactName
+          ? [s.emergencyContactName, s.emergencyContactRelation, s.emergencyContactPhone]
+              .filter(Boolean)
+              .join(' · ')
+          : null
+      }
     };
+  }
+
+  private formatGender(gender?: string | null): string | null {
+    if (!gender?.trim()) return null;
+    return gender.trim()
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private formatDateOnly(value?: string | null): string | null {
+    if (!value?.trim()) return null;
+    return value.trim().substring(0, 10);
+  }
+
+  private formatRelation(relationship?: string | null): string {
+    if (!relationship) return 'Parent';
+    return relationship
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private formatDocumentType(documentType?: string | null): string {
+    if (!documentType) return 'Document';
+    if (documentType.toUpperCase() === 'OTHER') return 'Additional document';
+    return documentType
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private ageFromDob(dateOfBirth?: string | null): number | null {
+    if (!dateOfBirth) return null;
+    const dob = new Date(dateOfBirth);
+    if (Number.isNaN(dob.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age -= 1;
+    }
+    return age >= 0 ? age : null;
+  }
+
+  private computeProfileCompletion(
+    personal: StudentPersonal,
+    hasFamily: boolean,
+    hasEnrollment: boolean
+  ): number {
+    const checks = [
+      !!personal.fullName,
+      !!personal.gender,
+      !!personal.dateOfBirth,
+      !!personal.mobile,
+      !!personal.email,
+      !!personal.religion || !!personal.nationality || !!personal.motherTongue,
+      !!personal.currentAddressLine1 || !!personal.currentCity,
+      hasFamily,
+      hasEnrollment
+    ];
+    const filled = checks.filter(Boolean).length;
+    return Math.round((filled / checks.length) * 100);
   }
 
   private mapPersonalFromStudent(dto: BackendStudentDto, payload: Partial<StudentPersonal>): StudentPersonal {

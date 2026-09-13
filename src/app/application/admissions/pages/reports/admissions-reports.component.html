@@ -1,0 +1,457 @@
+<app-toast />
+
+<section class="tc-page-shell adm-page adm-reports-page">
+  <tc-saas-page-header subtitle="Complete overview of your admission process from inquiries to enrollment.">
+    <span class="adm-report-updated" *ngIf="lastUpdated">Last updated {{ lastUpdated | date:'medium' }}</span>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      [disabled]="exporting || loading"
+      (click)="exportReport()"
+    >
+      <i class="pi pi-download"></i> {{ exporting ? 'Exporting…' : 'Export Report' }}
+    </button>
+  </tc-saas-page-header>
+
+  <div class="adm-report-filters tc-card tc-card--panel">
+    <div class="tc-card__body">
+      <div class="adm-report-filters__grid">
+        <div class="tc-form-field">
+          <label>Academic Year</label>
+          <p-dropdown
+            [options]="years"
+            [(ngModel)]="filter.academicYearId"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Current / all years"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+            (onChange)="onYearChange()"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label>Date from</label>
+          <input type="date" [(ngModel)]="filter.dateFrom" />
+        </div>
+        <div class="tc-form-field">
+          <label>Date to</label>
+          <input type="date" [(ngModel)]="filter.dateTo" />
+        </div>
+        <div class="tc-form-field">
+          <label>Class</label>
+          <p-dropdown
+            [options]="classes"
+            [(ngModel)]="filter.classId"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="All classes"
+            [showClear]="true"
+            [disabled]="!filter.academicYearId"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label>Lead Source</label>
+          <p-dropdown
+            [options]="sourceOptions"
+            [(ngModel)]="filter.source"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label>Counselor</label>
+          <p-dropdown
+            [options]="counselors"
+            [(ngModel)]="filter.counselorId"
+            optionLabel="fullName"
+            optionValue="staffId"
+            placeholder="All counselors"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="fullName"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label>Lead Status</label>
+          <p-dropdown
+            [options]="leadStatusOptions"
+            [(ngModel)]="filter.leadStatus"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label>Application Status</label>
+          <p-dropdown
+            [options]="applicationStatusOptions"
+            [(ngModel)]="filter.applicationStatus"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+      </div>
+      <div class="adm-report-filters__actions">
+        <button type="button" class="tc-btn" (click)="resetFilters()" [disabled]="loading">Reset</button>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="applyFilters()" [disabled]="loading">Apply Filters</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc-loading" *ngIf="loading && !dashboard"><i class="pi pi-spin pi-spinner"></i> Loading report…</div>
+  <div class="tc-empty-state" *ngIf="!loading && errorMessage && !dashboard">
+    <h3>{{ errorMessage }}</h3>
+    <button type="button" class="tc-btn" (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="dashboard as dash">
+    <div class="adm-report-kpis" [class.is-refreshing]="loading">
+      <article class="adm-report-kpi">
+        <i class="pi pi-inbox adm-report-kpi__icon tone-blue"></i>
+        <strong>{{ dash.kpis.totalInquiries | number }}</strong>
+        <span>Total Inquiries</span>
+        <small *ngIf="dash.kpis.totalInquiriesDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.totalInquiriesDeltaPct)">
+          {{ deltaText(dash.kpis.totalInquiriesDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-users adm-report-kpi__icon tone-green"></i>
+        <strong>{{ dash.kpis.totalLeads | number }}</strong>
+        <span>Total Leads</span>
+        <small *ngIf="dash.kpis.totalLeadsDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.totalLeadsDeltaPct)">
+          {{ deltaText(dash.kpis.totalLeadsDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-file adm-report-kpi__icon tone-purple"></i>
+        <strong>{{ dash.kpis.applicationsStarted | number }}</strong>
+        <span>Applications Started</span>
+        <small *ngIf="dash.kpis.applicationsStartedDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.applicationsStartedDeltaPct)">
+          {{ deltaText(dash.kpis.applicationsStartedDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-send adm-report-kpi__icon tone-orange"></i>
+        <strong>{{ dash.kpis.applicationsSubmitted | number }}</strong>
+        <span>Applications Submitted</span>
+        <small *ngIf="dash.kpis.applicationsSubmittedDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.applicationsSubmittedDeltaPct)">
+          {{ deltaText(dash.kpis.applicationsSubmittedDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-check-circle adm-report-kpi__icon tone-red"></i>
+        <strong>{{ dash.kpis.applicationsApproved | number }}</strong>
+        <span>Applications Approved</span>
+        <small *ngIf="dash.kpis.applicationsApprovedDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.applicationsApprovedDeltaPct)">
+          {{ deltaText(dash.kpis.applicationsApprovedDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-id-card adm-report-kpi__icon tone-teal"></i>
+        <strong>{{ dash.kpis.enrolledStudents | number }}</strong>
+        <span>Enrolled Students</span>
+        <small *ngIf="dash.kpis.enrolledStudentsDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.enrolledStudentsDeltaPct)">
+          {{ deltaText(dash.kpis.enrolledStudentsDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-percentage adm-report-kpi__icon tone-indigo"></i>
+        <strong>{{ dash.kpis.leadToEnrollmentConversionRate | number:'1.1-1' }}%</strong>
+        <span>Lead → Enrollment Conversion</span>
+        <small *ngIf="dash.kpis.conversionDeltaPts != null" [class]="'delta-' + deltaTone(dash.kpis.conversionDeltaPts)">
+          {{ deltaText(dash.kpis.conversionDeltaPts, true) }} <em>vs previous period</em>
+        </small>
+      </article>
+      <article class="adm-report-kpi">
+        <i class="pi pi-clock adm-report-kpi__icon tone-slate"></i>
+        <strong>{{ dash.kpis.pendingActions | number }}</strong>
+        <span>Pending Actions</span>
+        <small *ngIf="dash.kpis.pendingActionsDeltaPct != null" [class]="'delta-' + deltaTone(dash.kpis.pendingActionsDeltaPct)">
+          {{ deltaText(dash.kpis.pendingActionsDeltaPct) }} <em>vs previous period</em>
+        </small>
+      </article>
+    </div>
+
+    <div class="adm-report-row adm-report-row--2">
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-filter"></i>
+          <div>
+            <h3>Admission Funnel</h3>
+            <p>Inquiry through enrollment using live pipeline counts</p>
+          </div>
+        </header>
+        <div class="adm-funnel-visual">
+          <div class="adm-funnel-visual__row" *ngFor="let stage of dash.funnel; let i = index">
+            <div class="adm-funnel-visual__bar" [style.width]="funnelWidth(stage.count)" [style.opacity]="1 - i * 0.08">
+              <span>{{ stage.label }}</span>
+              <strong>{{ stage.count | number }} · {{ stage.percentOfTotal || 0 }}%</strong>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head adm-section-card__head--row">
+          <div class="adm-section-card__title-wrap">
+            <i class="pi pi-chart-line"></i>
+            <div>
+              <h3>Admission Trend</h3>
+              <p>Activity across major admission stages</p>
+            </div>
+          </div>
+          <div class="adm-segmented">
+            <button type="button" [class.is-active]="filter.trendGranularity === 'WEEKLY'" (click)="setTrendGranularity('WEEKLY')">Weekly</button>
+            <button type="button" [class.is-active]="filter.trendGranularity !== 'WEEKLY'" (click)="setTrendGranularity('MONTHLY')">Monthly</button>
+          </div>
+        </header>
+        <div class="adm-chart-box adm-chart-box--lg">
+          <p-chart type="line" [data]="trendData" [options]="trendOptions" height="280px"></p-chart>
+        </div>
+      </article>
+    </div>
+
+    <div class="adm-report-row adm-report-row--2">
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-sitemap"></i>
+          <div>
+            <h3>Leads by Source</h3>
+            <p>Source mix with applications and enrollment conversion</p>
+          </div>
+        </header>
+        <div class="adm-donut-split">
+          <div class="adm-chart-box">
+            <p-chart type="doughnut" [data]="sourceDonutData" [options]="doughnutOptions" height="220px"></p-chart>
+          </div>
+          <div class="adm-source-table-wrap">
+            <table class="adm-mini-table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Leads</th>
+                  <th>Apps</th>
+                  <th>Enrolled</th>
+                  <th>Conv.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of dash.leadsBySource">
+                  <td>{{ row.label }}</td>
+                  <td>{{ row.leads }}</td>
+                  <td>{{ row.applications }}</td>
+                  <td>{{ row.enrolled }}</td>
+                  <td>{{ row.conversionRate | number:'1.1-1' }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-flag"></i>
+          <div>
+            <h3>Leads by Status</h3>
+            <p>Current inquiry status distribution</p>
+          </div>
+        </header>
+        <div class="adm-donut-split">
+          <div class="adm-chart-box">
+            <p-chart type="doughnut" [data]="leadStatusDonutData" [options]="doughnutOptions" height="220px"></p-chart>
+          </div>
+          <ul class="adm-legend-list">
+            <li *ngFor="let row of dash.leadsByStatus; let i = index">
+              <i [style.background]="['#2563eb','#10b981','#8b5cf6','#f59e0b','#ef4444','#14b8a6'][i % 6]"></i>
+              <span>{{ row.label }}</span>
+              <strong>{{ row.count }} · {{ row.percentOfTotal || 0 }}%</strong>
+            </li>
+          </ul>
+        </div>
+      </article>
+    </div>
+
+    <div class="adm-report-row adm-report-row--3">
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-building"></i>
+          <div>
+            <h3>Applications by Class</h3>
+            <p>Class-wise demand</p>
+          </div>
+        </header>
+        <div class="adm-chart-box adm-chart-box--md" *ngIf="dash.applicationsByClass.length; else noClass">
+          <p-chart type="bar" [data]="classBarData" [options]="barOptions" height="260px"></p-chart>
+        </div>
+        <ng-template #noClass><p class="adm-docs-hint">No applications in this filter.</p></ng-template>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-user"></i>
+          <div>
+            <h3>Counselor Performance</h3>
+            <p>Leads, applications, enrollment, follow-up load</p>
+          </div>
+        </header>
+        <div class="adm-source-table-wrap">
+          <table class="adm-mini-table">
+            <thead>
+              <tr>
+                <th>Counselor</th>
+                <th>Leads</th>
+                <th>Apps</th>
+                <th>Enrolled</th>
+                <th>Conv.</th>
+                <th>FU</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of dash.counselorPerformance | slice:0:8">
+                <td>{{ row.counselorName }}</td>
+                <td>{{ row.leads }}</td>
+                <td>{{ row.applications }}</td>
+                <td>{{ row.enrolled }}</td>
+                <td>{{ row.conversionRate | number:'1.1-1' }}%</td>
+                <td>
+                  <span class="adm-fu-chip" title="Due today / Overdue">{{ row.dueTodayFollowUps }}/{{ row.overdueFollowUps }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-calendar"></i>
+          <div>
+            <h3>Follow-up Health</h3>
+            <p>Work queue within the selected lead set</p>
+          </div>
+        </header>
+        <ul class="adm-health-list">
+          <li><i class="pi pi-bell tone-blue"></i><span>Due Today</span><strong>{{ dash.followUpHealth.dueToday }}</strong></li>
+          <li><i class="pi pi-exclamation-triangle tone-red"></i><span>Overdue</span><strong>{{ dash.followUpHealth.overdue }}</strong></li>
+          <li><i class="pi pi-arrow-right tone-indigo"></i><span>Upcoming</span><strong>{{ dash.followUpHealth.upcoming }}</strong></li>
+          <li><i class="pi pi-check tone-green"></i><span>Completed</span><strong>{{ dash.followUpHealth.completed }}</strong></li>
+          <li><i class="pi pi-minus-circle tone-slate"></i><span>No Follow-up</span><strong>{{ dash.followUpHealth.noFollowUp }}</strong></li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="adm-report-row adm-report-row--2">
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-list"></i>
+          <div>
+            <h3>Application Status</h3>
+            <p>Distribution of application statuses</p>
+          </div>
+        </header>
+        <div class="adm-donut-split">
+          <div class="adm-chart-box">
+            <p-chart type="doughnut" [data]="appStatusDonutData" [options]="doughnutOptions" height="200px"></p-chart>
+          </div>
+          <ul class="adm-legend-list">
+            <li *ngFor="let row of dash.applicationStatus; let i = index">
+              <i [style.background]="['#2563eb','#10b981','#8b5cf6','#f59e0b','#ef4444','#14b8a6','#6366f1','#ec4899'][i % 8]"></i>
+              <span>{{ row.label }}</span>
+              <strong>{{ row.count }}</strong>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="adm-section-card">
+        <header class="adm-section-card__head">
+          <i class="pi pi-folder-open"></i>
+          <div>
+            <h3>Document Verification</h3>
+            <p>Document check status across filtered applications</p>
+          </div>
+        </header>
+        <div class="adm-donut-split">
+          <div class="adm-chart-box">
+            <p-chart type="doughnut" [data]="docDonutData" [options]="doughnutOptions" height="200px"></p-chart>
+          </div>
+          <ul class="adm-legend-list">
+            <li *ngFor="let row of dash.documentVerification; let i = index">
+              <i [style.background]="['#f59e0b','#10b981','#ef4444','#64748b'][i % 4]"></i>
+              <span>{{ row.label }}</span>
+              <strong>{{ row.count }} · {{ row.percentOfTotal || 0 }}%</strong>
+            </li>
+          </ul>
+        </div>
+      </article>
+    </div>
+
+    <p class="adm-docs-hint" *ngIf="!dash.lostReasonAnalysisSupported">
+      Lost lead reason analysis is unavailable — lost reasons are stored as free text, not a structured field.
+    </p>
+
+    <article class="adm-section-card">
+      <header class="adm-section-card__head adm-section-card__head--row">
+        <div class="adm-section-card__title-wrap">
+          <i class="pi pi-table"></i>
+          <div>
+            <h3>Recent Applications</h3>
+            <p>Latest applications matching the current filters</p>
+          </div>
+        </div>
+        <button type="button" class="adm-link-btn" (click)="viewAllApplications()">View all</button>
+      </header>
+
+      <div class="adm-apps-table-wrap" *ngIf="dash.recentApplications.length; else noRecent">
+        <table class="adm-apps-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              <th>Class</th>
+              <th>Source</th>
+              <th>Counselor</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Documents</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of dash.recentApplications; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ row.applicantName }}</strong></td>
+              <td>{{ row.applyingForClass || '—' }}</td>
+              <td>{{ row.source || '—' }}</td>
+              <td>{{ row.counselorName || '—' }}</td>
+              <td>{{ row.applicationDate || '—' }}</td>
+              <td><tc-saas-pill [label]="formatLabel(row.status)" [tone]="statusTone(row.status)" /></td>
+              <td>
+                <span class="adm-doc-progress" [class.is-complete]="row.documentsVerified > 0 && row.documentsVerified === row.documentsUploaded">
+                  {{ row.documentsVerified }}/{{ row.documentsUploaded }}
+                </span>
+              </td>
+              <td>
+                <button type="button" class="tc-btn tc-btn--ghost" (click)="openApplication(row)">Open</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noRecent>
+        <p class="adm-docs-hint">No applications match the selected filters.</p>
+      </ng-template>
+    </article>
+  </ng-container>
+</section>

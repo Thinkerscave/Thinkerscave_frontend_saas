@@ -15,7 +15,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
-import { APPLICATION_STATUS_GROUPS, APPLICATION_STATUS_TABS } from '../../data/admissions-workspace.config';
+import { APPLICATION_STATUS_GROUPS, APPLICATION_STATUS_TABS, APPLICATION_STATUS_TABS_COUNSELOR } from '../../data/admissions-workspace.config';
 import {
   ApplicationRecord,
   ApplicationSearchRequest,
@@ -26,30 +26,42 @@ import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 import { AdmissionsNavService } from '../../services/admissions-nav.service';
 import {
   SaasPageHeaderComponent,
-  SaasPanelComponent,
   SaasPillComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
-import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import {
+  AppListResultsComponent,
+  AppListToolbarComponent,
+  AppListViewMode,
+  AppPaginatorComponent
+} from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
+import { PermissionService } from '../../../../core/services/permission.service';
+import { LoginService } from '../../../../core/services/login.service';
 
 const LIST_KEY = 'tc.applications.list';
+const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
 
 @Component({
   selector: 'app-applications-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, 
+  imports: [
+    AppToastComponent,
     CommonModule,
     FormsModule,
     ConfirmDialogModule,
     DialogModule,
     DropdownModule,
+    HasPermissionDirective,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
     SaasPillComponent,
     SaasTabsComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
     AppPaginatorComponent
   ],
   providers: [ConfirmationService, MessageService],
@@ -62,24 +74,26 @@ export class ApplicationsListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly nav = inject(AdmissionsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly confirmation = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly listContext = inject(ListContextService);
+  private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly permissions = inject(PermissionService);
+  private readonly loginService = inject(LoginService);
 
   loading = false;
   searching = false;
   errorMessage = '';
+  view: AppListViewMode = this.viewPrefs.globalDefault();
 
   applications: ApplicationRecord[] = [];
   filter: ApplicationSearchRequest = {};
   activeStatusTab = 'ALL';
+  selectedClassName: string | null = null;
+  classOptions: { label: string; value: string }[] = [];
 
   pageIndex = 0;
-  pageSize = defaultPageSizeForView('grid');
+  pageSize = defaultPageSizeForView(this.view);
   totalElements = 0;
-  rejectDialogOpen = false;
-  rejectRemarks = '';
-  rejectTarget: ApplicationRecord | null = null;
   enrollVisible = false;
   enrolling = false;
   selected: ApplicationRecord | null = null;
@@ -88,26 +102,72 @@ export class ApplicationsListComponent implements OnInit {
   classes: LookupOption[] = [];
   sections: LookupOption[] = [];
 
-  readonly statusTabs = APPLICATION_STATUS_TABS.map(t => ({
-    key: t.key,
-    label: t.label
-  }));
+  readonly applicationsResource = APPLICATIONS_RESOURCE;
+
+  /** Approvers / org admins see full org tabs; counselors see limited own-app tabs. */
+  get canSeeOrgApplications(): boolean {
+    if (this.permissions.canApprove(APPLICATIONS_RESOURCE)) {
+      return true;
+    }
+    const roles = this.loginService.getUserRole() ?? [];
+    return roles.some(role => {
+      const token = String(role).toUpperCase().replace(/^ROLE_/, '');
+      return token === 'ORGANIZATION_ADMIN'
+        || token === 'ORGANIZATION_OWNER'
+        || token === 'SUPER_ADMIN'
+        || token === 'PLATFORM_ADMIN';
+    });
+  }
+
+  get statusTabs(): { key: string; label: string }[] {
+    const source = this.canSeeOrgApplications
+      ? APPLICATION_STATUS_TABS
+      : APPLICATION_STATUS_TABS_COUNSELOR;
+    return source.map(t => ({ key: t.key, label: t.label }));
+  }
 
   get pageSizeOptions(): number[] {
-    return pageSizeOptionsForView('grid');
+    return pageSizeOptionsForView(this.view);
+  }
+
+  get canApprove(): boolean {
+    return this.permissions.canApprove(APPLICATIONS_RESOURCE);
   }
 
   ngOnInit(): void {
     this.api.academicYears().subscribe({
       next: years => {
         this.years = years;
+        const current = years.find(y => (y.status || '').toUpperCase() === 'CURRENT')
+          ?? years[0];
+        if (current?.id) {
+          this.api.academicClasses(current.id).subscribe({
+            next: classes => {
+              this.classOptions = classes.map(c => ({ label: c.name, value: c.name }));
+              this.cdr.markForCheck();
+            }
+          });
+        }
         this.cdr.markForCheck();
       }
     });
+
     const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'READY' || tab === 'IN_PROGRESS' || tab === 'CLOSED' || tab === 'ALL') {
+    const knownTabs = new Set(this.statusTabs.map(t => t.key));
+    // Map legacy tab keys
+    const legacyMap: Record<string, string> = {
+      SUBMITTED: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      UNDER_REVIEW: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      IN_REVIEW: this.canSeeOrgApplications ? 'IN_REVIEW' : 'SUBMITTED',
+      APPROVED: this.canSeeOrgApplications ? 'APPROVED' : 'ALL',
+      ENROLLED: this.canSeeOrgApplications ? 'ENROLLED' : 'ALL'
+    };
+    if (tab && knownTabs.has(tab)) {
       this.activeStatusTab = tab;
+    } else if (tab && legacyMap[tab] && knownTabs.has(legacyMap[tab])) {
+      this.activeStatusTab = legacyMap[tab];
     }
+
     const saved = this.listContext.consume(LIST_KEY);
     if (saved) {
       this.pageIndex = saved.page ?? this.pageIndex;
@@ -115,11 +175,36 @@ export class ApplicationsListComponent implements OnInit {
       if (saved.search) {
         this.filter = { ...this.filter, keyword: saved.search };
       }
-      if (!tab && saved.tab && (saved.tab === 'READY' || saved.tab === 'IN_PROGRESS' || saved.tab === 'CLOSED' || saved.tab === 'ALL')) {
-        this.activeStatusTab = saved.tab;
+      if (!tab && saved.tab) {
+        const mapped = legacyMap[saved.tab] || saved.tab;
+        if (knownTabs.has(mapped)) {
+          this.activeStatusTab = mapped;
+        } else {
+          this.activeStatusTab = 'ALL';
+        }
       }
     }
     this.applyStatusFilter();
+    this.loadApplications();
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.view = mode;
+    this.pageSize = defaultPageSizeForView(mode);
+    this.pageIndex = 0;
+    this.loadApplications();
+  }
+
+  onSearchTermChange(term: string): void {
+    this.filter = { ...this.filter, keyword: term };
+  }
+
+  onClassFilterChange(): void {
+    this.filter = {
+      ...this.filter,
+      applyingForClass: this.selectedClassName || null
+    };
+    this.pageIndex = 0;
     this.loadApplications();
   }
 
@@ -135,18 +220,27 @@ export class ApplicationsListComponent implements OnInit {
     this.filter = {
       ...this.filter,
       status: null,
-      statuses: group ? (group as ApplicationStatus[]) : null
+      statuses: group ? (group as ApplicationStatus[]) : null,
+      scope: this.canSeeOrgApplications ? 'ALL' : 'MY'
     };
   }
 
-  onSearch(): void {
+  clearFilters(): void {
+    this.filter = { scope: this.canSeeOrgApplications ? 'ALL' : 'MY' };
+    this.selectedClassName = null;
+    this.activeStatusTab = 'ALL';
     this.pageIndex = 0;
+    this.applyStatusFilter();
     this.loadApplications();
   }
 
-  clearFilters(): void {
-    this.filter = {};
-    this.activeStatusTab = 'ALL';
+  canEditForm(record: ApplicationRecord): boolean {
+    // Align with backend EDITABLE — never after APPROVED / ENROLLED / closed.
+    return this.permissions.canManage(APPLICATIONS_RESOURCE)
+      && ['DRAFT', 'ACTION_REQUIRED', 'DOCUMENTS_PENDING'].includes(record.status);
+  }
+
+  onSearch(): void {
     this.pageIndex = 0;
     this.loadApplications();
   }
@@ -163,6 +257,10 @@ export class ApplicationsListComponent implements OnInit {
   loadApplications(): void {
     this.loading = this.applications.length === 0;
     this.searching = true;
+    this.filter = {
+      ...this.filter,
+      scope: this.canSeeOrgApplications ? 'ALL' : 'MY'
+    };
     this.api
       .searchApplications(this.filter, this.pageIndex, this.pageSize)
       .pipe(
@@ -189,85 +287,35 @@ export class ApplicationsListComponent implements OnInit {
       });
   }
 
-  openApplication(record: ApplicationRecord): void {
+  canOpenReview(record: ApplicationRecord): boolean {
+    return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING', 'APPROVED', 'ENROLLED', 'REJECTED', 'ACTION_REQUIRED'].includes(record.status);
+  }
+
+  openPrimary(record: ApplicationRecord): void {
+    if (this.canEditForm(record) && !this.canApprove) {
+      this.openForm(record);
+      return;
+    }
+    if (this.canOpenReview(record)) {
+      this.openReview(record);
+      return;
+    }
+    this.openForm(record);
+  }
+
+  openForm(record: ApplicationRecord): void {
     this.persistListContext();
     this.nav.toApplication(record.applicationId, 'applications');
   }
 
+  openReview(record: ApplicationRecord, event?: Event): void {
+    event?.stopPropagation();
+    this.persistListContext();
+    this.nav.toApplicationReview(record.applicationId, 'applications');
+  }
+
   newApplication(): void {
     this.nav.toApplication('new', 'applications');
-  }
-
-  approve(record: ApplicationRecord, event: Event): void {
-    event.stopPropagation();
-    this.confirmation.confirm({
-      message: `Approve application for ${record.applicantName}?`,
-      header: 'Confirm Approval',
-      icon: 'pi pi-check-circle',
-      accept: () => {
-        this.api.approveApplication(record.applicationId).subscribe({
-          next: () => {
-            this.messages.add({
-              severity: 'success',
-              summary: 'Approved',
-              detail: `${record.applicantName} has been approved.`
-            });
-            this.loadApplications();
-          },
-          error: () =>
-            this.messages.add({
-              severity: 'error',
-              summary: 'Approval failed',
-              detail: 'Could not approve this application.'
-            })
-        });
-      }
-    });
-  }
-
-  reject(record: ApplicationRecord, event: Event): void {
-    event.stopPropagation();
-    this.rejectTarget = record;
-    this.rejectRemarks = '';
-    this.rejectDialogOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeRejectDialog(): void {
-    this.rejectDialogOpen = false;
-    this.rejectTarget = null;
-    this.cdr.markForCheck();
-  }
-
-  confirmReject(): void {
-    if (!this.rejectTarget) return;
-    const remarks = this.rejectRemarks.trim();
-    if (!remarks) {
-      this.messages.add({ severity: 'warn', summary: 'Reason required', detail: 'Enter a rejection reason.' });
-      return;
-    }
-    const record = this.rejectTarget;
-    this.api.rejectApplication(record.applicationId, remarks).subscribe({
-      next: () => {
-        this.messages.add({
-          severity: 'warn',
-          summary: 'Rejected',
-          detail: `${record.applicantName} has been rejected.`
-        });
-        this.closeRejectDialog();
-        this.loadApplications();
-      },
-      error: () =>
-        this.messages.add({
-          severity: 'error',
-          summary: 'Rejection failed',
-          detail: 'Could not reject this application.'
-        })
-    });
-  }
-
-  canReview(record: ApplicationRecord): boolean {
-    return ['SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_PENDING', 'FEE_PENDING'].includes(record.status);
   }
 
   openEnroll(record: ApplicationRecord, event: Event): void {
@@ -304,13 +352,26 @@ export class ApplicationsListComponent implements OnInit {
       }))
       .subscribe({
         next: result => {
+          const enrolledId = this.selected!.applicationId;
+          const enrolledName = result.studentName || this.selected?.applicantName;
           this.messages.add({
             severity: 'success',
             summary: 'Enrolled',
-            detail: `${result.studentName || this.selected?.applicantName} is now in Students.`
+            detail: `${enrolledName} is now in Students.`
           });
+          this.applications = this.applications.map(app =>
+            app.applicationId === enrolledId
+              ? {
+                  ...app,
+                  status: 'ENROLLED',
+                  studentId: result.studentId,
+                  studentCode: result.studentCode,
+                  admissionNumber: result.admissionNumber
+                }
+              : app
+          );
           this.closeEnroll();
-          this.loadApplications();
+          this.cdr.markForCheck();
         },
         error: () => this.messages.add({ severity: 'error', summary: 'Enrollment failed', detail: 'Could not create the student.' })
       });
@@ -406,6 +467,7 @@ export class ApplicationsListComponent implements OnInit {
         return 'info';
       case 'DOCUMENTS_PENDING':
       case 'FEE_PENDING':
+      case 'ACTION_REQUIRED':
         return 'warning';
       case 'APPROVED':
       case 'ENROLLED':

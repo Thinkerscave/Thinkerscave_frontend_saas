@@ -2,15 +2,22 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 
-export interface PublicInquiryRequest {
-  name: string;
+export interface PublicInquirySubmitRequest {
+  studentName?: string;
   mobileNumber: string;
-  email: string;
-  classInterestedIn: string;
-  academicYearId?: number | null;
+  classId: number;
+  consent: boolean;
+}
+
+export interface PublicInquiryResponse {
+  inquiryId: number;
+  inquiryNumber?: string;
+  name?: string;
+  mobileNumber?: string;
   classId?: number | null;
-  address: string;
+  classInterestedIn?: string;
   inquirySource?: string;
+  status?: string;
 }
 
 interface ApiEnvelope<T> {
@@ -31,8 +38,11 @@ export class PublicInquiryService {
 
   constructor(private http: HttpClient) { }
 
-  submitInquiry(payload: PublicInquiryRequest) {
-    return this.http.post(`${environment.baseUrl}/public/admissions/inquiry`, payload);
+  submitInquiry(payload: PublicInquirySubmitRequest) {
+    return this.http.post<ApiEnvelope<PublicInquiryResponse>>(
+      `${environment.baseUrl}/public/admissions/inquiries`,
+      payload
+    );
   }
 
   loadFormConfig() {

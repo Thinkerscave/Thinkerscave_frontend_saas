@@ -28,6 +28,7 @@ export interface SaasStep { key: string; label: string; }
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { style: 'display: block;' },
   template: `
     <header class="saas-page-header" [class.saas-page-header--actions-only]="!showTitle">
       <div class="saas-page-header__main" *ngIf="showTitle">
@@ -129,8 +130,10 @@ export class SaasTabsComponent {
     <ol class="saas-stepper">
       <li *ngFor="let step of steps; let i = index"
           [class.is-active]="i === activeIndex"
-          [class.is-done]="i < activeIndex">
-        <span class="saas-stepper__bullet">{{ i + 1 }}</span>
+          [class.is-done]="i < activeIndex"
+          [class.is-clickable]="i <= activeIndex || allowFuture"
+          (click)="onStepClick(i)">
+        <span class="saas-stepper__bullet">{{ i < activeIndex ? '✓' : (i + 1) }}</span>
         <span class="saas-stepper__label">{{ step.label }}</span>
         <i *ngIf="!isLast(i)" class="pi pi-minus saas-stepper__line"></i>
       </li>
@@ -140,7 +143,15 @@ export class SaasTabsComponent {
 export class SaasStepperComponent {
   @Input() steps: SaasStep[] = [];
   @Input() activeIndex = 0;
+  /** When true, future steps are also clickable (caller decides). Default: completed + current only. */
+  @Input() allowFuture = false;
+  @Output() stepSelect = new EventEmitter<number>();
   isLast(i: number): boolean { return i === this.steps.length - 1; }
+  onStepClick(i: number): void {
+    if (i <= this.activeIndex || this.allowFuture) {
+      this.stepSelect.emit(i);
+    }
+  }
 }
 
 /* -------- Status pill -------- */

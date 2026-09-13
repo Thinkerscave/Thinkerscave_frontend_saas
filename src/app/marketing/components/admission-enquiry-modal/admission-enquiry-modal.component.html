@@ -1,0 +1,132 @@
+@if (enquiry.visible()) {
+  <div
+    class="tc-modal-backdrop"
+    (click)="onBackdrop($event)"
+    (keydown)="onKeydown($event)"
+    tabindex="-1"
+  >
+    <div
+      class="tc-modal-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="enquiry-title"
+    >
+      <div class="tc-modal-card__head">
+        <span class="tc-modal-card__icon"><i class="pi pi-graduation-cap"></i></span>
+        <div class="tc-modal-card__head-text">
+          <h3 id="enquiry-title">Admission Enquiry</h3>
+          <p>Share your details and our admissions team will reach out.</p>
+        </div>
+        <button type="button" class="tc-modal-card__close" (click)="close()" aria-label="Close">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      @if (success()) {
+        <div class="tc-modal-card__success">
+          <span class="tc-modal-card__success-icon"><i class="pi pi-check"></i></span>
+          <h3>Enquiry Submitted Successfully!</h3>
+          <p class="tc-modal-card__success-text">
+            Thank you for your interest. Our admissions team will contact you shortly.
+          </p>
+          @if (result()?.inquiryNumber) {
+            <p class="tc-modal-card__ref">
+              Reference: <strong>{{ result()?.inquiryNumber }}</strong>
+            </p>
+          }
+          <button type="button" class="tc-modal-card__btn tc-modal-card__btn--primary" (click)="close()">
+            Close
+          </button>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="tc-modal-card__form" novalidate>
+          <label class="tc-field">
+            <span class="tc-field__label">Student/Child Name <em>(Optional)</em></span>
+            <input
+              formControlName="studentName"
+              type="text"
+              maxlength="100"
+              placeholder="e.g. Aanya Sharma"
+              autocomplete="name"
+            />
+          </label>
+
+          <label class="tc-field">
+            <span class="tc-field__label">Mobile Number <b>*</b></span>
+            <input
+              formControlName="mobileNumber"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              placeholder="10-digit mobile number"
+              autocomplete="tel-national"
+              (input)="onMobileInput($event)"
+            />
+            @if (mobileNumber?.invalid && mobileNumber?.touched) {
+              <span class="tc-field__error">Enter a valid 10-digit mobile number</span>
+            }
+          </label>
+
+          <label class="tc-field">
+            <span class="tc-field__label">Class Interested In <b>*</b></span>
+            @if (classesLoading()) {
+              <select disabled>
+                <option>Loading classes…</option>
+              </select>
+            } @else {
+              <select formControlName="classId">
+                <option [ngValue]="null" disabled>Select a class</option>
+                @for (cls of classes(); track cls.id) {
+                  <option [ngValue]="cls.id">{{ cls.name }}</option>
+                }
+              </select>
+            }
+            @if (classId?.invalid && classId?.touched) {
+              <span class="tc-field__error">Please select a class</span>
+            }
+          </label>
+
+          <label class="tc-consent">
+            <input type="checkbox" formControlName="consent" />
+            <span>I consent to being contacted by ThinkersCave regarding admission.</span>
+          </label>
+          @if (consent?.invalid && consent?.touched) {
+            <span class="tc-field__error">Please accept the consent to proceed</span>
+          }
+
+          @if (formError()) {
+            <div class="tc-modal-card__alert" role="alert">
+              {{ formError() }}
+              <button type="button" class="tc-modal-card__alert-action" (click)="retryLoadClasses()">Try again</button>
+            </div>
+          }
+          @if (submitError()) {
+            <div class="tc-modal-card__alert" role="alert">{{ submitError() }}</div>
+          }
+
+          <div class="tc-modal-card__actions">
+            <button
+              type="button"
+              class="tc-modal-card__btn tc-modal-card__btn--ghost"
+              (click)="close()"
+              [disabled]="submitting()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="tc-modal-card__btn tc-modal-card__btn--primary"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Submitting…
+              } @else {
+                <i class="pi pi-send" aria-hidden="true"></i> Submit Enquiry
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}

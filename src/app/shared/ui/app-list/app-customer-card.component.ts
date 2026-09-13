@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { AppAvatarComponent } from './app-avatar.component';
-import { AppStatusBadgeComponent } from './app-status-badge.component';
+import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 
 export interface AppCustomerCardData {
   id: number;
@@ -20,7 +20,7 @@ export interface AppCustomerCardData {
 @Component({
   selector: 'app-customer-card',
   standalone: true,
-  imports: [CommonModule, AppAvatarComponent, AppStatusBadgeComponent],
+  imports: [CommonModule, AppAvatarComponent, StatusBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article

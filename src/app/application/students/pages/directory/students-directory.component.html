@@ -1,105 +1,105 @@
-<section class="tc-page-shell stu-directory-page" (click)="closeMoreMenu()">
+<section class="tc-page-shell tc-directory-page stu-directory-page" (click)="closeMoreMenu()">
 
-  <header class="stu-directory-toolbar">
-    <div class="stu-kpi-strip" role="group" aria-label="Student counts">
-      <button type="button" *ngFor="let tile of kpiTiles"
-              class="stu-kpi-chip"
-              [class.is-active]="activeKpi === tile.key"
-              [attr.data-tone]="tile.tone"
-              (click)="toggleKpiFilter(tile)">
-        <strong>{{ kpi[tile.key] }}</strong>
-        <span>{{ tile.label }}</span>
-      </button>
-    </div>
-    <div class="stu-directory-toolbar__actions">
-      <button type="button" class="tc-btn tc-btn--primary" (click)="openAddStudent()">
-        <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
-      </button>
-      <button type="button" class="tc-btn" (click)="openImport()">
-        <i class="pi pi-upload"></i> Bulk Import
-      </button>
-      <button type="button" class="tc-btn" (click)="exportStudents()">
-        <i class="pi pi-download"></i> Export
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header subtitle="Manage student records, enrollment status and academic placement.">
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openAddStudent()">
+      <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
+    </button>
+    <button type="button" class="tc-btn" (click)="openImport()">
+      <i class="pi pi-upload"></i> Bulk Import
+    </button>
+    <button type="button" class="tc-btn" (click)="exportStudents()">
+      <i class="pi pi-download"></i> Export
+    </button>
+  </tc-saas-page-header>
+
+  <tc-kpi-group ariaLabel="Student counts" mode="equal" [columns]="4">
+    <tc-kpi-card *ngFor="let tile of kpiTiles"
+                 [label]="tile.label"
+                 [value]="kpi[tile.key]"
+                 [icon]="'pi ' + tile.icon"
+                 [hint]="tile.hint"
+                 [tone]="tile.tone"
+                 [clickable]="true"
+                 [active]="activeKpi === tile.key"
+                 (select)="toggleKpiFilter(tile)">
+    </tc-kpi-card>
+  </tc-kpi-group>
 
   <div class="tc-card tc-card--panel">
-    <div class="tc-card__header">
-      <div>
-        <h2 class="stu-panel-title">{{ 'students.directory' | tcTranslate }}</h2>
-        <small class="tc-card__hint">{{ totalElements }} total result(s)</small>
+    <div class="tc-card__body">
+      <p class="stu-context-summary" *ngIf="hasLoaded && hasContextualQuery">
+        {{ contextualResultText }}
+      </p>
+
+      <app-list-toolbar
+        [flat]="true"
+        [search]="filter.keyword || ''"
+        searchPlaceholder="Name, Admission No., Roll No., Mobile…"
+        [searching]="searching"
+        [view]="view"
+        viewAriaLabel="Student directory view"
+        (searchChange)="onSearchTermChange($event)"
+        (searchDebounced)="applyQuery()"
+        (submitted)="applyFilters()"
+        (reset)="clearFilters()"
+        (viewChange)="onViewModeChange($event)">
+        <p-dropdown
+          [options]="classSelectOptions"
+          [(ngModel)]="filter.classId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Classes"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="stu-filter-dropdown"
+          (onChange)="onClassChanged()">
+        </p-dropdown>
+        <p-dropdown
+          [options]="sectionSelectOptions"
+          [(ngModel)]="filter.sectionId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Sections"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          [disabled]="!filter.classId"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="filter.status"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Status"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="sortField"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="false"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
+      </app-list-toolbar>
+
+      <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
+        <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
-    </div>
 
-    <app-list-toolbar
-      [search]="filter.keyword || ''"
-      searchPlaceholder="Name, Admission No., Roll No., Mobile…"
-      [searching]="searching"
-      [view]="view"
-      viewAriaLabel="Student directory view"
-      (searchChange)="onSearchTermChange($event)"
-      (searchDebounced)="applyQuery()"
-      (submitted)="applyFilters()"
-      (reset)="clearFilters()"
-      (viewChange)="onViewModeChange($event)">
-      <p-dropdown
-        [options]="classSelectOptions"
-        [(ngModel)]="filter.classId"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Classes"
-        [showClear]="true"
-        [filter]="true"
-        filterBy="label"
-        appendTo="body"
-        styleClass="stu-filter-dropdown"
-        (onChange)="onClassChanged()">
-      </p-dropdown>
-      <p-dropdown
-        [options]="sectionSelectOptions"
-        [(ngModel)]="filter.sectionId"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Sections"
-        [showClear]="true"
-        [filter]="true"
-        filterBy="label"
-        [disabled]="!filter.classId"
-        appendTo="body"
-        styleClass="stu-filter-dropdown">
-      </p-dropdown>
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="filter.status"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="All Status"
-        [showClear]="true"
-        appendTo="body"
-        styleClass="stu-filter-dropdown">
-      </p-dropdown>
-      <p-dropdown
-        [options]="sortOptions"
-        [(ngModel)]="sortField"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="false"
-        appendTo="body"
-        styleClass="stu-filter-dropdown">
-      </p-dropdown>
-    </app-list-toolbar>
+      <app-list-results [busy]="refreshing">
+        <div class="stu-directory-skeleton" *ngIf="!hasLoaded && loading">
+          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
+        </div>
 
-    <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
-      <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-    </div>
-
-    <app-list-results [busy]="refreshing">
-    <div class="stu-directory-skeleton" *ngIf="!hasLoaded && loading">
-      <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
-    </div>
-
-    <div class="stu-directory-grid" *ngIf="students.length && view === 'grid'">
+        <div class="stu-directory-grid" *ngIf="students.length && view === 'grid'">
       <article *ngFor="let s of students; let i = index"
                class="tc-card is-clickable stu-student-card"
                [style.animation-delay.ms]="i * 40"
@@ -255,6 +255,7 @@
         noun="students"
         (pageChange)="onPageChange($event)">
       </app-paginator>
+    </div>
     </div>
   </div>
 

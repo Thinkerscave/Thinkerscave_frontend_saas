@@ -67,6 +67,8 @@ export class BreadcrumbComponent implements OnInit {
 
   private pageOverride: AppPageHeader | null = null;
 
+  private routeTitle: string | null = null;
+
   private routeSubtitle: string | null = null;
 
   private resolvedCrumbs: ResolvedCrumb[] = [];
@@ -173,7 +175,7 @@ export class BreadcrumbComponent implements OnInit {
 
     const labels = this.resolvedCrumbs.map(crumb => crumb.label);
 
-    this.title = this.pageOverride?.title ?? labels.at(-1) ?? 'Dashboard';
+    this.title = this.pageOverride?.title ?? this.routeTitle ?? labels.at(-1) ?? 'Dashboard';
 
     this.subtitle = this.pageOverride?.subtitle ?? this.routeSubtitle ?? null;
 
@@ -182,14 +184,15 @@ export class BreadcrumbComponent implements OnInit {
     this.items = this.resolvedCrumbs.map((crumb, index) => {
 
       const isLast = index === this.resolvedCrumbs.length - 1;
+      const label = isLast && this.pageOverride?.title ? this.pageOverride.title : crumb.label;
 
       if (isLast || !crumb.link) {
 
-        return { label: crumb.label };
+        return { label };
 
       }
 
-      return { label: crumb.label, routerLink: crumb.link };
+      return { label, routerLink: crumb.link };
 
     });
 
@@ -204,6 +207,8 @@ export class BreadcrumbComponent implements OnInit {
     const crumbs: ResolvedCrumb[] = [];
 
     const pathParts: string[] = [];
+
+    this.routeTitle = null;
 
     this.routeSubtitle = null;
 
@@ -244,6 +249,14 @@ export class BreadcrumbComponent implements OnInit {
       if (subtitle) {
 
         this.routeSubtitle = subtitle;
+
+      }
+
+      const pageTitle = snap.data['pageTitle'] as string | undefined;
+
+      if (pageTitle) {
+
+        this.routeTitle = pageTitle;
 
       }
 
@@ -379,6 +392,11 @@ export class BreadcrumbComponent implements OnInit {
 
     const page = segments[2] ?? '';
 
+    // Lead 360: Admissions > Leads > {lead number via page header override}
+    if (workspace === 'admissions' && page === 'lead') {
+      return [rootLabel, 'Leads', 'Lead'];
+    }
+
     const pageLabel = this.routePageLabel(workspace, page);
 
     return pageLabel ? [rootLabel, pageLabel] : [rootLabel];
@@ -402,7 +420,7 @@ export class BreadcrumbComponent implements OnInit {
     const root = catalogPages.has(page)
       ? 'Platform Catalog'
       : subscriptionPages.has(page)
-        ? 'Subscriptions'
+        ? 'Subscription Management'
         : tenantOpsPages.has(page)
           ? 'Tenant Management'
           : standalonePages.has(page)
@@ -421,7 +439,7 @@ export class BreadcrumbComponent implements OnInit {
 
       'subscription-plans': 'Subscription Plans',
 
-      promotions: 'Promotions',
+      promotions: 'Promo Codes',
 
       menus: 'Menu Management',
 
@@ -508,6 +526,7 @@ export class BreadcrumbComponent implements OnInit {
   private tenantCrumbLink(label: string): string[] {
     const links: Record<string, string[]> = {
       'Platform Catalog': ['/app/tenant-management/menus'],
+      'Subscription Management': ['/app/tenant-management/subscription-plans'],
       Subscriptions: ['/app/tenant-management/subscription-plans'],
       'Tenant Management': ['/app/tenant-management/tenant-health'],
       Dashboard: ['/app'],
@@ -515,6 +534,7 @@ export class BreadcrumbComponent implements OnInit {
       Organizations: ['/app/tenant-management/organizations'],
       'Subscription Plans': ['/app/tenant-management/subscription-plans'],
       Promotions: ['/app/tenant-management/promotions'],
+      'Promo Codes': ['/app/tenant-management/promotions'],
       'Menu Management': ['/app/tenant-management/menus'],
       'Role Management': ['/app/tenant-management/roles'],
       'Feature Catalog': ['/app/tenant-management/feature-catalog'],
@@ -589,10 +609,10 @@ export class BreadcrumbComponent implements OnInit {
       students: { dashboard: 'Dashboard', directory: 'Directory', 'add-student': 'Add Student' },
 
       admissions: {
-        overview: 'Overview',
         leads: 'Leads',
         'follow-ups': 'Follow-ups',
         applications: 'Applications',
+        reports: 'Reports',
         settings: 'Settings',
         lead: 'Lead',
         form: 'Application form',
@@ -691,6 +711,15 @@ export class BreadcrumbComponent implements OnInit {
 
     if (workspace === 'students' && page === 'add-student' && index === 0) {
       return ['/app/students/directory'];
+    }
+
+    if (workspace === 'admissions' && page === 'lead') {
+      if (index === 0) {
+        return ['/app/admissions/leads'];
+      }
+      if (index === 1) {
+        return ['/app/admissions/leads'];
+      }
     }
 
     if (index === 0) {

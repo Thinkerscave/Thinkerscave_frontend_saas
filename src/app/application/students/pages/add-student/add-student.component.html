@@ -61,9 +61,12 @@
             <app-select
               label="Gender"
               placeholder="Select gender"
+              [required]="true"
               [options]="genderOptions"
               [(ngModel)]="form.gender"
-              name="gender">
+              name="gender"
+              [error]="fieldError('gender')"
+              (ngModelChange)="clearField('gender')">
             </app-select>
             <div class="app-field">
               <label class="app-field__label" for="stu-dob">
@@ -160,21 +163,22 @@
         <section class="stu-add-form__section">
           <app-section-header
             title="Academic placement"
-            description="Class, section, and enrolment for the current year."
+            description="Optional for onboarding. Leave blank to create the student without enrollment."
             icon="pi pi-book">
           </app-section-header>
           <div class="stu-add-form__grid">
             <app-select
               label="Academic Year"
-              placeholder="Select year"
+              placeholder="Select year (optional)"
               [options]="academicYearOptions"
-              [(ngModel)]="form.academicYear"
-              name="academicYear">
+              [ngModel]="asString(form.academicYearId)"
+              name="academicYear"
+              (ngModelChange)="onAcademicYearChange($event)">
             </app-select>
             <app-select
               label="Class"
               placeholder="Select class"
-              [required]="true"
+              [required]="!!form.academicYearId"
               [options]="classOptions"
               [(ngModel)]="classIdValue"
               name="classId"
@@ -217,6 +221,68 @@
       </ng-container>
 
       <ng-container *ngIf="currentStep === 2">
+        <section class="stu-add-form__section">
+          <app-section-header
+            title="Demographics"
+            description="Long-term student identity details."
+            icon="pi pi-id-card">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-select
+              label="Blood Group"
+              placeholder="Select blood group"
+              [options]="bloodGroupOptions"
+              [(ngModel)]="form.bloodGroup"
+              name="bloodGroup">
+            </app-select>
+            <app-select
+              label="Religion"
+              placeholder="Select religion"
+              [options]="religionOptions"
+              [(ngModel)]="form.religion"
+              name="religion">
+            </app-select>
+            <app-select
+              label="Category"
+              placeholder="Select category"
+              [options]="categoryOptions"
+              [(ngModel)]="form.category"
+              name="category">
+            </app-select>
+            <app-input
+              label="Nationality"
+              placeholder="e.g. Indian"
+              [(ngModel)]="form.nationality"
+              name="nationality">
+            </app-input>
+            <app-input
+              label="Mother Tongue"
+              placeholder="Enter mother tongue"
+              [(ngModel)]="form.motherTongue"
+              name="motherTongue">
+            </app-input>
+            <app-input
+              label="Place of Birth"
+              placeholder="Enter place of birth"
+              [(ngModel)]="form.placeOfBirth"
+              name="placeOfBirth">
+            </app-input>
+            <app-select
+              label="National ID Type"
+              placeholder="Select ID type"
+              [options]="identityTypeOptions"
+              [(ngModel)]="form.identityDocumentType"
+              name="identityDocumentType">
+            </app-select>
+            <app-input
+              label="National ID Number"
+              placeholder="Enter ID number"
+              [(ngModel)]="form.identityDocumentNumber"
+              name="identityDocumentNumber">
+            </app-input>
+          </div>
+        </section>
+
         <section class="stu-add-form__section">
           <app-section-header
             title="Current address"
@@ -301,20 +367,6 @@
             icon="pi pi-heart">
           </app-section-header>
           <div class="stu-add-form__grid">
-            <app-select
-              label="Blood Group"
-              placeholder="Select blood group"
-              [options]="bloodGroupOptions"
-              [(ngModel)]="form.bloodGroup"
-              name="bloodGroup">
-            </app-select>
-            <app-select
-              label="Religion"
-              placeholder="Select religion"
-              [options]="religionOptions"
-              [(ngModel)]="form.religion"
-              name="religion">
-            </app-select>
             <app-input
               label="Doctor Name"
               placeholder="Enter doctor name"

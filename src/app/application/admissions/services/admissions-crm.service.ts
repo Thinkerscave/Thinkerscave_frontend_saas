@@ -1,10 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
   AdmissionsSettings,
+  AdmissionReportDashboard,
+  AdmissionReportFilter,
   ApplicationCreateRequest,
   ApplicationDocument,
   ApplicationProgress,
@@ -18,6 +20,7 @@ import {
   EnrollApplicationRequest,
   FollowUpCreateRequest,
   FollowUpRecord,
+  LeadActivityFilter,
   LeadCreateRequest,
   LeadFullDetail,
   LeadKpi,
@@ -27,13 +30,20 @@ import {
   LeadTimelineItem,
   LookupOption,
   PageResponse,
-  RecordFeeRequest
+  RecordFeeRequest,
+  FamilyMatchResult
 } from '../models/admissions-crm.model';
 
 interface ApiEnvelope<T> {
   success: boolean;
   message?: string;
   data: T;
+}
+
+export interface DocumentBlobResult {
+  blob: Blob;
+  contentType: string;
+  fileName: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -90,6 +100,33 @@ export class AdmissionsCrmService {
     return this.http.get<ApiEnvelope<Record<string, unknown>[]>>(`${this.reports}/counselor-performance`).pipe(map(r => r.data ?? []));
   }
 
+  reportsDashboard(filter: AdmissionReportFilter = {}): Observable<AdmissionReportDashboard> {
+    return this.http
+      .post<ApiEnvelope<AdmissionReportDashboard>>(`${this.reports}/dashboard`, this.cleanReportFilter(filter))
+      .pipe(map(r => r.data));
+  }
+
+  exportReportsCsv(filter: AdmissionReportFilter = {}): Observable<Blob> {
+    return this.http.post(`${this.reports}/export`, this.cleanReportFilter(filter), {
+      responseType: 'blob'
+    });
+  }
+
+  private cleanReportFilter(filter: AdmissionReportFilter): AdmissionReportFilter {
+    const out: AdmissionReportFilter = {};
+    if (filter.academicYearId != null) out.academicYearId = filter.academicYearId;
+    if (filter.classId != null) out.classId = filter.classId;
+    if (filter.source) out.source = filter.source;
+    if (filter.counselorId != null) out.counselorId = filter.counselorId;
+    if (filter.leadStatus) out.leadStatus = filter.leadStatus;
+    if (filter.applicationStatus) out.applicationStatus = filter.applicationStatus;
+    if (filter.dateFrom) out.dateFrom = filter.dateFrom;
+    if (filter.dateTo) out.dateTo = filter.dateTo;
+    if (filter.trendGranularity) out.trendGranularity = filter.trendGranularity;
+    if (filter.recentLimit != null) out.recentLimit = filter.recentLimit;
+    return out;
+  }
+
   settings(): Observable<AdmissionsSettings> {
     return this.http.get<ApiEnvelope<AdmissionsSettings>>(`${this.workspace}/settings`).pipe(map(r => r.data));
   }
@@ -142,15 +179,27 @@ export class AdmissionsCrmService {
     return this.http.delete<ApiEnvelope<void>>(`${this.leads}/${id}`).pipe(map(() => void 0));
   }
 
-  assignCounselor(leadId: number, counselorId: number): Observable<LeadRecord> {
+  assignCounselor(leadId: number, counselorId: number, reason?: string | null): Observable<LeadRecord> {
     return this.http
-      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/assign-counselor`, { counselorId })
+      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/assign-counselor`, { counselorId, reason: reason || null })
       .pipe(map(r => r.data));
+  }
+
+  exportLeadsCsv(filter: LeadSearchRequest): Observable<Blob> {
+    return this.http.post(`${this.leads}/export/csv`, filter, {
+      responseType: 'blob'
+    });
   }
 
   markLost(leadId: number, reason: string): Observable<LeadRecord> {
     return this.http
       .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/mark-lost`, { reason })
+      .pipe(map(r => r.data));
+  }
+
+  reopenLead(leadId: number): Observable<LeadRecord> {
+    return this.http
+      .post<ApiEnvelope<LeadRecord>>(`${this.leads}/${leadId}/reopen`, {})
       .pipe(map(r => r.data));
   }
 
@@ -198,9 +247,13 @@ export class AdmissionsCrmService {
     );
   }
 
-  leadTimeline(leadId: number): Observable<LeadTimelineItem[]> {
+  leadTimeline(leadId: number, filter?: LeadActivityFilter): Observable<LeadTimelineItem[]> {
+    let params = new HttpParams();
+    if (filter?.type) params = params.set('type', filter.type);
+    if (filter?.from) params = params.set('from', filter.from);
+    if (filter?.to) params = params.set('to', filter.to);
     return this.http
-      .get<ApiEnvelope<LeadTimelineItem[]>>(`${this.workspace}/inquiries/${leadId}/timeline`)
+      .get<ApiEnvelope<LeadTimelineItem[]>>(`${this.workspace}/inquiries/${leadId}/timeline`, { params })
       .pipe(map(r => r.data ?? []));
   }
 
@@ -234,6 +287,10 @@ export class AdmissionsCrmService {
 
   upcomingFollowUps(): Observable<FollowUpRecord[]> {
     return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/upcoming`).pipe(map(r => r.data ?? []));
+  }
+
+  completedFollowUps(): Observable<FollowUpRecord[]> {
+    return this.http.get<ApiEnvelope<FollowUpRecord[]>>(`${this.followUps}/completed`).pipe(map(r => r.data ?? []));
   }
 
   completeFollowUp(followUpId: number, payload: CompleteFollowUpRequest = {}): Observable<FollowUpRecord> {
@@ -289,6 +346,22 @@ export class AdmissionsCrmService {
       .pipe(map(r => r.data));
   }
 
+  requestCorrection(id: number, reason: string): Observable<ApplicationRecord> {
+    const params = new HttpParams().set('reason', reason);
+    return this.http
+      .post<ApiEnvelope<ApplicationRecord>>(`${this.applications}/${id}/request-correction`, {}, { params })
+      .pipe(map(r => r.data));
+  }
+
+  findFamilyMatch(mobile?: string | null, email?: string | null): Observable<FamilyMatchResult> {
+    let params = new HttpParams();
+    if (mobile) params = params.set('mobile', mobile);
+    if (email) params = params.set('email', email);
+    return this.http
+      .get<ApiEnvelope<FamilyMatchResult>>(`${this.applications}/family-match`, { params })
+      .pipe(map(r => r.data));
+  }
+
   rejectApplication(id: number, remarks?: string): Observable<ApplicationRecord> {
     let params = new HttpParams();
     if (remarks) params = params.set('remarks', remarks);
@@ -327,10 +400,18 @@ export class AdmissionsCrmService {
       .pipe(map(r => r.data ?? []));
   }
 
-  uploadDocument(applicationId: number, file: File, documentType: string): Observable<ApplicationDocument> {
+  uploadDocument(
+    applicationId: number,
+    file: File,
+    documentType: string,
+    label?: string | null
+  ): Observable<ApplicationDocument> {
     const body = new FormData();
     body.append('file', file);
-    const params = new HttpParams().set('documentType', documentType);
+    let params = new HttpParams().set('documentType', documentType);
+    if (label?.trim()) {
+      params = params.set('remarks', label.trim());
+    }
     return this.http
       .post<ApiEnvelope<ApplicationDocument>>(`${this.applications}/${applicationId}/documents`, body, { params })
       .pipe(map(r => r.data));
@@ -352,6 +433,41 @@ export class AdmissionsCrmService {
 
   documentDownloadUrl(documentId: number): string {
     return `${this.applications}/documents/${documentId}/download`;
+  }
+
+  downloadDocumentBlob(documentId: number): Observable<DocumentBlobResult> {
+    return this.http
+      .get(`${this.applications}/documents/${documentId}/download`, {
+        observe: 'response',
+        responseType: 'blob'
+      })
+      .pipe(
+        switchMap(res => {
+          const body = res.body;
+          if (!body) {
+            return throwError(() => new Error('Empty document response'));
+          }
+          const contentType = res.headers.get('Content-Type') || body.type || 'application/octet-stream';
+          if (contentType.includes('application/json')) {
+            return throwError(() => new Error('Document download failed'));
+          }
+          const disposition = res.headers.get('Content-Disposition') || '';
+          const utfMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+          const plainMatch = /filename="?([^";]+)"?/i.exec(disposition);
+          let fileName: string | null = null;
+          if (utfMatch?.[1]) {
+            try {
+              fileName = decodeURIComponent(utfMatch[1]);
+            } catch {
+              fileName = utfMatch[1];
+            }
+          } else if (plainMatch?.[1]) {
+            fileName = plainMatch[1];
+          }
+          const typedBlob = body.type ? body : new Blob([body], { type: contentType });
+          return of({ blob: typedBlob, contentType, fileName });
+        })
+      );
   }
 
   applicationProgress(id: number): Observable<ApplicationProgress> {

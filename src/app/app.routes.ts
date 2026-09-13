@@ -9,26 +9,6 @@ export const routes: Routes = [
         pathMatch: 'full'
     },
     {
-        path: 'public',
-        loadComponent: () => import('./layout/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
-        children: [
-            {
-                path: 'admission',
-                redirectTo: 'inquiry',
-                pathMatch: 'full'
-            },
-            {
-                path: 'admission/review',
-                redirectTo: 'inquiry',
-                pathMatch: 'full'
-            },
-            {
-                path: 'inquiry',
-                loadComponent: () => import('./common/public-inquiry/public-inquiry.component').then(m => m.PublicInquiryComponent)
-            }
-        ]
-    },
-    {
         path: 'session-expired',
         loadComponent: () => import('./shared/pages/session-expired/session-expired.component').then(m => m.SessionExpiredComponent),
         pathMatch: 'full'

@@ -120,6 +120,74 @@
   }
 }
 
+/*
+ * Shared "golden" directory page layout: page header -> KPI group -> panel.
+ * Any directory-style page (Student, Staff, Users, Alumni, etc.) should add
+ * this class to its root section so spacing between sections stays
+ * consistent everywhere, instead of re-declaring the same gaps per module.
+ */
+.tc-directory-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: var(--tc-space-2);
+
+  > tc-saas-page-header {
+    margin-bottom: var(--tc-space-3);
+  }
+
+  > tc-kpi-group {
+    margin-bottom: var(--tc-space-6);
+  }
+
+  > tc-kpi-group:has(.tc-kpi-group:empty) {
+    display: none;
+    margin-bottom: 0;
+  }
+
+  > .tc-card--panel > .tc-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tc-space-5);
+  }
+}
+
+/* Shared detail-page layout used by Student/Staff/User detail screens. */
+.tc-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-space-4);
+  padding-bottom: var(--tc-space-3);
+
+  > .tc-detail-page__crumb {
+    margin-bottom: calc(var(--tc-space-2) * -1);
+  }
+
+  > .tc-detail-page__hero {
+    margin-bottom: var(--tc-space-1);
+  }
+
+  > .tc-detail-page__tabs {
+    margin-top: calc(var(--tc-space-1) * -1);
+  }
+
+  .tc-detail-page__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tc-space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .tc-directory-page > tc-kpi-group {
+    margin-bottom: var(--tc-space-5);
+  }
+
+  .tc-detail-page {
+    gap: var(--tc-space-3);
+  }
+}
+
 /* Inline KPI card used in dashboard grid (dash-kpi-card compat) */
 .tc-card.tc-card--kpi,
 .dash-kpi-card {

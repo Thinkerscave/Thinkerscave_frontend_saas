@@ -11,6 +11,8 @@ import { ListContextService } from '../../../../core/services/list-context.servi
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 import {
   StudentDirectoryCard,
@@ -56,7 +58,10 @@ const LIST_KEY = 'students.directory.view';
     AvatarComponent,
     SkeletonComponent,
     TcTranslatePipe,
-    EmptyStateComponent
+    EmptyStateComponent,
+    KpiCardComponent,
+    KpiGroupComponent,
+    SaasPageHeaderComponent
   ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './students-directory.component.html'
@@ -138,6 +143,27 @@ export class StudentsDirectoryComponent implements OnInit {
 
   get sectionSelectOptions(): FilterOption<string>[] {
     return this.sectionOptions.map(option => ({ label: option.label, value: String(option.id) }));
+  }
+
+  get hasContextualQuery(): boolean {
+    return !!(
+      this.filter.keyword?.trim() ||
+      this.appliedFilter.classId ||
+      this.appliedFilter.sectionId ||
+      this.appliedFilter.status ||
+      this.activeKpi
+    );
+  }
+
+  get contextualResultText(): string {
+    if (this.totalElements <= 0) {
+      return 'No students found';
+    }
+    const suffix = this.totalElements === 1 ? 'student' : 'students';
+    if (this.students.length >= this.totalElements) {
+      return `${this.totalElements} ${suffix} found`;
+    }
+    return `Showing ${this.students.length} of ${this.totalElements} ${suffix}`;
   }
 
   ngOnInit(): void {

@@ -92,6 +92,10 @@ export interface AccessResponsibility {
   description?: string;
   displayOrder?: number;
   systemDefined?: boolean;
+  /** When true, org admins may rename/deactivate the definition. */
+  organizationEditable?: boolean;
+  /** Server-computed: rename/deactivate of definition is blocked. */
+  definitionLocked?: boolean;
   active: boolean;
   remarks?: string;
   createdOn?: string;

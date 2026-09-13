@@ -177,7 +177,7 @@ export const APPLICATION_ROUTES: Routes = [
         loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Staff' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
           { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
           { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
           { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
@@ -236,19 +236,20 @@ export const APPLICATION_ROUTES: Routes = [
     children: [
       { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
       { path: 'form/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'application/:id', loadComponent: () => import('./admissions/pages/application-review/application-review.component').then(m => m.ApplicationReviewComponent) },
       { path: 'wizard/:id', pathMatch: 'full', redirectTo: 'form/:id' },
       {
         path: '',
         loadComponent: () => import('./admissions/components/admissions-workspace/admissions-workspace.component').then(m => m.AdmissionsWorkspaceComponent),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'overview' },
-          { path: 'overview', data: { workspacePage: 'overview' }, loadComponent: () => import('./admissions/pages/overview/admissions-overview.component').then(m => m.AdmissionsOverviewComponent) },
+          { path: '', pathMatch: 'full', redirectTo: 'leads' },
+          { path: 'overview', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'leads', data: { workspacePage: 'leads' }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
           { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
           { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
           { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
           { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'reports', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
@@ -261,8 +262,8 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'inquiry',
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
+      { path: '', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'pipeline', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'management', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'follow-ups', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
@@ -270,7 +271,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'applications', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'documents', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
       { path: 'communication', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
-      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/overview' },
+      { path: 'analytics', pathMatch: 'full', redirectTo: '/app/admissions/reports' },
       { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
       { path: 'detail/:id', pathMatch: 'full', redirectTo: '/app/admissions/lead/:id' }
@@ -286,7 +287,7 @@ export const APPLICATION_ROUTES: Routes = [
         loadComponent: () => import('./students/components/students-workspace/students-workspace.component').then(m => m.StudentsWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Students' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
           { path: 'transfers', pathMatch: 'full', redirectTo: '/app/transfers' },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },

@@ -7,7 +7,6 @@ export * from './app-grid-table-toggle.component';
 export * from './app-paginator.component';
 export * from './app-back-nav.component';
 export * from './app-avatar.component';
-export * from './app-status-badge.component';
 export * from './app-customer-card.component';
 export * from './app-empty-state.component';
 export * from './app-skeleton-loader.component';

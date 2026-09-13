@@ -24,6 +24,7 @@ import {
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
 import { AppBackNavComponent } from '../../../../shared/ui/app-list';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
 type ProfileTab = 'overview' | 'responsibilities' | 'salary' | 'payroll' | 'documents' | 'activity';
 
@@ -33,7 +34,7 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent, AvatarComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
@@ -134,6 +135,23 @@ export class StaffProfile360Component implements OnInit {
   loadSalaryHistory(): void {
     this.api.getSalaryHistory(this.staffId)
       .subscribe({ next: h => { this.salaryHistory = h; this.cdr.markForCheck(); } });
+  }
+
+  // ── Detail-page contextual sidebar (presentational only) ───────────────────────
+
+  get activeResponsibilityCount(): number {
+    return (this.profile?.responsibilities ?? []).filter(r => r.active).length;
+  }
+
+  /** Whether the tab-contextual sidebar has anything meaningful to show for the active tab. */
+  get hasContextualSidebar(): boolean {
+    if (!this.profile) { return false; }
+    switch (this.activeTab) {
+      case 'responsibilities': return true;
+      case 'salary': return !!this.profile.salarySummary;
+      case 'payroll': return !!this.profile.payrollSummary;
+      default: return false;
+    }
   }
 
   // ── Quick Actions ────────────────────────────────────────────────────────────

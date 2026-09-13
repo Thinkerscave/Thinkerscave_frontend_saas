@@ -211,7 +211,7 @@ export class MenuMappingService {
       { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
       { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
       { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
-      { key: 'subscriptions', label: 'Subscriptions', icon: 'pi pi-credit-card' },
+      { key: 'subscriptions', label: 'Subscription Management', icon: 'pi pi-credit-card' },
       { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-server' },
       { key: 'platform-catalog', label: 'Platform Catalog', icon: 'pi pi-th-large' },
       { key: 'access', label: 'Access Management', icon: 'pi pi-lock' },
@@ -360,10 +360,10 @@ export class MenuMappingService {
 
   private ensureAdmissionsWorkspace(items: MenuItem[]): MenuItem[] {
     const pages: Array<{ label: string; route: string; icon: string }> = [
-      { label: 'Overview', route: '/app/admissions/overview', icon: 'pi pi-chart-bar' },
       { label: 'Leads', route: '/app/admissions/leads', icon: 'pi pi-users' },
       { label: 'Follow-ups', route: '/app/admissions/follow-ups', icon: 'pi pi-calendar' },
       { label: 'Applications', route: '/app/admissions/applications', icon: 'pi pi-file-edit' },
+      { label: 'Reports', route: '/app/admissions/reports', icon: 'pi pi-chart-line' },
       { label: 'Settings', route: '/app/admissions/settings', icon: 'pi pi-cog' }
     ];
 
@@ -585,7 +585,7 @@ export class MenuMappingService {
       if (routeText === '/app/students/directory') return '/app/students';
       if (routeText === '/app/staff/directory') return '/app/staff';
       if (routeText === '/app/attendance/students') return '/app/attendance';
-      if (routeText === '/app/admissions/overview') return '/app/admissions';
+      if (routeText === '/app/admissions/leads') return '/app/admissions';
       if (routeText === '/app/academics/overview') return '/app/academics';
       if (routeText === '/app/access-management/users') return '/app/access-management';
       return routeText;
@@ -599,10 +599,10 @@ export class MenuMappingService {
       '/app/attendance',
       '/app/attendance/students',
       '/app/admissions',
-      '/app/admissions/overview',
       '/app/admissions/leads',
       '/app/admissions/follow-ups',
       '/app/admissions/applications',
+      '/app/admissions/reports',
       '/app/admissions/settings',
       '/app/academics',
       '/app/academics/overview',

@@ -96,11 +96,11 @@ export class ResponsibilitiesListComponent implements OnInit {
   }
 
   get stats(): SaasStat[] {
-    const defaults = this.allItems.filter(r => r.systemDefined).length;
+    const system = this.allItems.filter(r => r.systemDefined).length;
     const custom = this.allItems.filter(r => !r.systemDefined).length;
     return [
       { key: 'total', label: 'Responsibilities', value: this.totalRecords, icon: 'pi pi-sitemap', tone: 'primary' },
-      { key: 'default', label: 'Default', value: defaults, icon: 'pi pi-lock', tone: 'info' },
+      { key: 'system', label: 'System', value: system, icon: 'pi pi-lock', tone: 'info' },
       { key: 'custom', label: 'Custom', value: custom, icon: 'pi pi-pencil', tone: 'neutral' }
     ];
   }
@@ -149,11 +149,19 @@ export class ResponsibilitiesListComponent implements OnInit {
   }
 
   typeLabel(item: AccessResponsibility): string {
-    return item.systemDefined ? 'Default' : 'Custom';
+    return item.systemDefined ? 'System' : 'Custom';
   }
 
   typeTone(item: AccessResponsibility): 'info' | 'neutral' {
     return item.systemDefined ? 'info' : 'neutral';
+  }
+
+  orgEditableLabel(item: AccessResponsibility): string {
+    return item.organizationEditable === false ? 'No' : 'Yes';
+  }
+
+  orgEditableTone(item: AccessResponsibility): 'warning' | 'success' {
+    return item.organizationEditable === false ? 'warning' : 'success';
   }
 
   onSearchTermChange(value: string): void {
@@ -215,9 +223,18 @@ export class ResponsibilitiesListComponent implements OnInit {
       this.messages.add({ severity: 'warn', summary: 'Missing fields', detail: 'Name and code are required.' });
       return;
     }
+    const code = this.form.responsibilityCode.trim().toUpperCase();
+    if (code === 'COUNSELOR') {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Reserved code',
+        detail: 'COUNSELOR is a system responsibility and cannot be created manually.'
+      });
+      return;
+    }
     this.saving = true;
     const payload: AccessResponsibilityRequest = {
-      responsibilityCode: this.form.responsibilityCode.trim().toUpperCase(),
+      responsibilityCode: code,
       responsibilityName: this.form.responsibilityName.trim(),
       description: this.form.description?.trim() || undefined
     };
