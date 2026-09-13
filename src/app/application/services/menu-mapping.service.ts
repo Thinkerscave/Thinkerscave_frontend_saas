@@ -839,21 +839,6 @@ export class MenuMappingService {
     return route.includes('/app/organization') || route.includes('/app/organization-profile');
   }
 
-  private isFeeManagementItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    if (route.includes('/app/admissions')) {
-      return false;
-    }
-    const label = (item.label ?? '').toLowerCase();
-    const id = String(item.id ?? '').toLowerCase();
-    return route.includes('/app/fees')
-      || route.includes('/app/reports')
-      || id.includes('fee')
-      || label.includes('fee')
-      || label.includes('finance')
-      || label.includes('payment collection');
-  }
-
   private filterNavigationItems(items: MenuItem[], shouldRemove: (item: MenuItem) => boolean): MenuItem[] {
     const filteredItems: MenuItem[] = [];
 

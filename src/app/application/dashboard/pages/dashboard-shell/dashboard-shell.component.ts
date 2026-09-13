@@ -108,7 +108,7 @@ export class DashboardShellComponent implements OnInit {
     }
     return {
       ...response,
-      widgets: response.widgets.filter(widget => widget.widgetType !== 'FEE_SUMMARY' && widget.widgetKey !== 'FEE_SUMMARY')
+      widgets: response.widgets
     };
   }
 

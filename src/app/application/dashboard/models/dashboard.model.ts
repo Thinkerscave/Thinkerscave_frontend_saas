@@ -27,7 +27,6 @@ export type WidgetType =
   | 'EVENTS'
   | 'ATTENDANCE_SUMMARY'
   | 'STAFF_ATTENDANCE_TOGGLE'
-  | 'FEE_SUMMARY'
   | 'ACADEMIC_SUMMARY'
   | 'TIMETABLE'
   | 'PROFILE_SUMMARY'
@@ -215,15 +214,6 @@ export interface StaffAttendanceToggleData {
   signOutTime?: string;
   workingMinutesSoFar?: number;
   status?: string;
-}
-
-export interface FeeSummaryData {
-  totalDue: number;
-  totalPaid: number;
-  pendingAmount: number;
-  nextDueDate?: string;
-  pendingInvoices: number;
-  currency?: string;
 }
 
 export interface TimetableSlotItem {

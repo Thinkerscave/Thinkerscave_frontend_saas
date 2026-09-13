@@ -282,13 +282,6 @@ export interface AttendanceSnapshot {
   percent: number;
 }
 
-export interface FeeSnapshot {
-  totalFee: number;
-  paid: number;
-  pending: number;
-  status: string;
-}
-
 export interface MedicalSnapshot {
   bloodGroup?: string | null;
   allergies?: string | null;

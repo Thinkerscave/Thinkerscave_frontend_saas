@@ -32,7 +32,6 @@ export const WIDGET_CHROME: Record<WidgetType, WidgetChrome> = {
   EVENTS: { icon: 'pi pi-calendar-plus', emptyIcon: 'pi pi-calendar-plus', emptyMessage: 'No upcoming events.' },
   ATTENDANCE_SUMMARY: { icon: 'pi pi-calendar-check', emptyIcon: 'pi pi-calendar-check', emptyMessage: 'No attendance recorded yet.' },
   STAFF_ATTENDANCE_TOGGLE: { icon: 'pi pi-id-card', emptyIcon: 'pi pi-id-card', emptyMessage: 'Attendance is unavailable right now.' },
-  FEE_SUMMARY: { icon: 'pi pi-wallet', emptyIcon: 'pi pi-wallet', emptyMessage: 'No fee records found.' },
   ACADEMIC_SUMMARY: { icon: 'pi pi-graduation-cap', emptyIcon: 'pi pi-graduation-cap', emptyMessage: 'No academic summary available.' },
   TIMETABLE: { icon: 'pi pi-clock', emptyIcon: 'pi pi-clock', emptyMessage: 'No classes scheduled.' },
   PROFILE_SUMMARY: { icon: 'pi pi-user', emptyIcon: 'pi pi-user', emptyMessage: 'Profile unavailable.' },
