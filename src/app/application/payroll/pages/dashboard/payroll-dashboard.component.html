@@ -26,7 +26,7 @@
   </tc-saas-page-header>
 
   @if (loading && !kpis) {
-    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+    <tc-page-skeleton layout="dashboard" [kpis]="5" [charts]="0" [rows]="8" [columns]="10"></tc-page-skeleton>
   } @else if (error && !kpis) {
     <div class="tc-empty-state">
       <i class="pi pi-exclamation-circle"></i>
@@ -89,7 +89,7 @@
         </div>
 
         @if (tableLoading && !rows.length) {
-          <tc-page-skeleton variant="table"></tc-page-skeleton>
+          <tc-page-skeleton layout="table-only" [rows]="8" [columns]="10"></tc-page-skeleton>
         } @else if (!rows.length) {
           <div class="tc-empty-state">
             <i class="pi pi-users"></i>

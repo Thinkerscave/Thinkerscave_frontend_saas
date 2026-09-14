@@ -53,9 +53,9 @@
     </div>
   }
 
-  @if (loading) {
-    <tc-page-skeleton variant="dashboard" [kpis]="4"></tc-page-skeleton>
-  } @else {
+  @if (loading && !report) {
+    <tc-page-skeleton layout="dashboard" [kpis]="0" [showKpis]="false" [charts]="2" [rows]="6" [columns]="5"></tc-page-skeleton>
+  } @else if (report || !loading) {
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 
     <ng-container [ngSwitch]="activeTab">

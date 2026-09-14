@@ -21,7 +21,7 @@
   </tc-saas-page-header>
 
   @if (loading && !kpis) {
-    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+    <tc-page-skeleton layout="dashboard" [kpis]="4" [charts]="2" [rows]="6" [columns]="4"></tc-page-skeleton>
   } @else if (error && !kpis) {
     <div class="tc-empty-state tc-empty-state--inline">
       <p>{{ error }}</p>

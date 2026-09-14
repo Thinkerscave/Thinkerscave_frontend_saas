@@ -271,3 +271,9 @@
     align-items: flex-start;
   }
 }
+
+.ta-results--refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}

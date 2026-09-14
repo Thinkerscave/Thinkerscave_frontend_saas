@@ -85,7 +85,7 @@ export class FeesDashboardComponent implements OnInit {
       this.loading = false;
       return;
     }
-    this.loading = true;
+    this.loading = !this.kpis;
     this.error = null;
     const yearId = this.academicYearId;
 

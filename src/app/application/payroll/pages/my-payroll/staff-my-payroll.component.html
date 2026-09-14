@@ -13,7 +13,7 @@
   </div>
 
   @if (loading && !summary) {
-    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+    <tc-page-skeleton layout="dashboard" [kpis]="3" [charts]="1" [rows]="6" [columns]="4"></tc-page-skeleton>
   } @else if (error) {
     <div class="tc-empty-state">
       <i class="pi pi-exclamation-circle"></i>
@@ -252,7 +252,7 @@
     [draggable]="false"
     [style]="{ width: '640px', maxWidth: '95vw' }">
     @if (detailLoading) {
-      <tc-page-skeleton variant="detail"></tc-page-skeleton>
+      <tc-page-skeleton layout="detail-section" [sections]="2"></tc-page-skeleton>
     } @else if (detail) {
       <div class="payroll-meta-row">
         <span>{{ monthLabel(detail.payrollYear, detail.payrollMonth) }}</span>

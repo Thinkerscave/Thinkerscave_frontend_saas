@@ -3093,6 +3093,12 @@
 
 .adm-report-kpis.is-refreshing { opacity: 0.72; }
 
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 .adm-report-kpi {
   background: var(--tc-surface, #fff);
   border: 1px solid var(--tc-border, #e5e7eb);

@@ -50,6 +50,7 @@ export class AdmissionsSettingsComponent implements OnInit {
   private readonly messages = inject(MessageService);
 
   loading = false;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
   settings: AdmissionsSettings | null = null;
@@ -87,6 +88,7 @@ export class AdmissionsSettingsComponent implements OnInit {
     this.api.settings()
       .pipe(finalize(() => {
         this.loading = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }))
       .subscribe({

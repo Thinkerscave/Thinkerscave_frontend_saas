@@ -52,6 +52,7 @@ export class AlumniDirectoryComponent implements OnInit {
 
   loading = true;
   searching = false;
+  hasLoaded = false;
   errorMessage = '';
   view: AppListViewMode = this.viewPrefs.initialView();
 
@@ -132,17 +133,21 @@ export class AlumniDirectoryComponent implements OnInit {
   }
 
   runSearch(): void {
-    this.loading = true;
+    const initial = !this.hasLoaded;
+    if (initial) {
+      this.loading = true;
+    }
     this.searching = true;
     this.api.alumni(this.filters)
-      .pipe(finalize(() => { 
-        this.loading = false; 
-        this.searching = false; 
-        this.cdr.markForCheck(); 
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.searching = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
       }))
       .subscribe({
-        next: list => { 
-          this.alumni = list ?? []; 
+        next: list => {
+          this.alumni = list ?? [];
           this.page = 0;
           this.errorMessage = '';
         },

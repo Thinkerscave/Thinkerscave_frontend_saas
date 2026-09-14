@@ -1,9 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit } from '@angular/core';
+import {
+  LOADING_LAYOUT_PRESETS,
+  LoadingLayout,
+  LoadingLayoutPreset
+} from './loading-state';
 
 /**
- * Structural page skeletons for initial data loads.
- * Variants mirror real layouts so content does not jump when data arrives.
+ * Structural skeleton that mirrors a page/section layout.
+ * Prefer [layout] presets over ad-hoc variant + arbitrary counts.
+ *
+ * @deprecated Prefer `layout` input. Legacy `variant` still maps for compatibility.
  */
 export type TcPageSkeletonVariant =
   | 'list'
@@ -14,7 +21,26 @@ export type TcPageSkeletonVariant =
   | 'tabs'
   | 'chart'
   | 'form'
-  | 'dashboard';
+  | 'dashboard'
+  | LoadingLayout;
+
+const VARIANT_TO_LAYOUT: Record<string, LoadingLayout> = {
+  list: 'directory-table',
+  kpi: 'directory-table',
+  table: 'table-only',
+  cards: 'cards-only',
+  detail: 'detail',
+  tabs: 'detail-section',
+  chart: 'dashboard',
+  form: 'form',
+  dashboard: 'dashboard',
+  'directory-table': 'directory-table',
+  'directory-cards': 'directory-cards',
+  'table-only': 'table-only',
+  'cards-only': 'cards-only',
+  'detail-section': 'detail-section',
+  modal: 'modal'
+};
 
 @Component({
   selector: 'tc-page-skeleton',
@@ -24,69 +50,74 @@ export type TcPageSkeletonVariant =
   template: `
     <div
       class="tc-page-skeleton"
-      [attr.data-variant]="variant"
+      [attr.data-layout]="resolved.layout"
       role="status"
       aria-live="polite"
       aria-busy="true">
-      <span class="tc-sr-only">Loading…</span>
+      <span class="tc-sr-only">Loading content…</span>
 
-      <!-- Directory / list page: KPI strip + toolbar + table -->
-      <ng-container *ngIf="variant === 'list' || variant === 'dashboard'">
-        <div class="tc-page-skeleton__kpis" *ngIf="showKpis">
-          <div class="tc-page-skeleton__kpi" *ngFor="let _ of kpiSlots">
-            <span class="tc-sk tc-sk--icon"></span>
-            <span class="tc-sk tc-sk--line tc-sk--w40"></span>
-            <span class="tc-sk tc-sk--line tc-sk--w70 tc-sk--lg"></span>
-          </div>
-        </div>
-        <div class="tc-page-skeleton__panel">
-          <div class="tc-page-skeleton__toolbar">
-            <span class="tc-sk tc-sk--search"></span>
-            <span class="tc-sk tc-sk--chip"></span>
-            <span class="tc-sk tc-sk--chip"></span>
-            <span class="tc-sk tc-sk--chip"></span>
-          </div>
-          <div class="tc-page-skeleton__table" *ngIf="variant === 'list'">
-            <div class="tc-page-skeleton__tr tc-page-skeleton__tr--head">
-              <span class="tc-sk tc-sk--line" *ngFor="let _ of colSlots"></span>
-            </div>
-            <div class="tc-page-skeleton__tr" *ngFor="let _ of rowSlots">
-              <span class="tc-sk tc-sk--line" *ngFor="let __ of colSlots"></span>
-            </div>
-          </div>
-          <div class="tc-page-skeleton__charts" *ngIf="variant === 'dashboard'">
-            <div class="tc-page-skeleton__chart" *ngFor="let _ of chartSlots">
-              <span class="tc-sk tc-sk--line tc-sk--w50"></span>
-              <span class="tc-sk tc-sk--block tc-sk--chart"></span>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-
-      <!-- KPI only -->
-      <div class="tc-page-skeleton__kpis" *ngIf="variant === 'kpi'">
-        <div class="tc-page-skeleton__kpi" *ngFor="let _ of kpiSlots">
+      <!-- KPI strip -->
+      <div class="tc-page-skeleton__kpis" *ngIf="resolved.showKpis && resolved.kpis > 0">
+        <div class="tc-page-skeleton__kpi" *ngFor="let _ of slots(resolved.kpis)">
           <span class="tc-sk tc-sk--icon"></span>
           <span class="tc-sk tc-sk--line tc-sk--w40"></span>
           <span class="tc-sk tc-sk--line tc-sk--w70 tc-sk--lg"></span>
         </div>
       </div>
 
-      <!-- Table only -->
-      <div class="tc-page-skeleton__panel" *ngIf="variant === 'table'">
-        <div class="tc-page-skeleton__table">
-          <div class="tc-page-skeleton__tr tc-page-skeleton__tr--head">
-            <span class="tc-sk tc-sk--line" *ngFor="let _ of colSlots"></span>
+      <!-- Directory / dashboard panel -->
+      <div
+        class="tc-page-skeleton__panel"
+        *ngIf="isDirectory || resolved.layout === 'dashboard' || resolved.layout === 'table-only' || resolved.layout === 'form' || resolved.layout === 'modal' || resolved.layout === 'detail-section'">
+
+        <div class="tc-page-skeleton__toolbar" *ngIf="resolved.showFilter">
+          <span class="tc-sk tc-sk--search"></span>
+          <span class="tc-sk tc-sk--chip"></span>
+          <span class="tc-sk tc-sk--chip"></span>
+          <span class="tc-sk tc-sk--chip"></span>
+        </div>
+
+        <!-- Charts (dashboard) -->
+        <div class="tc-page-skeleton__charts" *ngIf="resolved.layout === 'dashboard' && resolved.charts > 0">
+          <div class="tc-page-skeleton__chart" *ngFor="let _ of slots(resolved.charts)">
+            <span class="tc-sk tc-sk--line tc-sk--w50"></span>
+            <span class="tc-sk tc-sk--block tc-sk--chart"></span>
           </div>
-          <div class="tc-page-skeleton__tr" *ngFor="let _ of rowSlots">
-            <span class="tc-sk tc-sk--line" *ngFor="let __ of colSlots"></span>
+        </div>
+
+        <!-- Table rows -->
+        <div
+          class="tc-page-skeleton__table"
+          *ngIf="showTable">
+          <div class="tc-page-skeleton__tr tc-page-skeleton__tr--head">
+            <span class="tc-sk tc-sk--line" *ngFor="let _ of slots(resolved.columns)"></span>
+          </div>
+          <div class="tc-page-skeleton__tr" *ngFor="let _ of slots(resolved.rows)">
+            <span class="tc-sk tc-sk--avatar" *ngIf="resolved.layout === 'directory-table'"></span>
+            <span class="tc-sk tc-sk--line" *ngFor="let __ of slots(resolved.columns)"></span>
+          </div>
+        </div>
+
+        <!-- Form fields -->
+        <div class="tc-page-skeleton__form-grid" *ngIf="resolved.layout === 'form' || resolved.layout === 'modal'">
+          <div class="tc-page-skeleton__stack" *ngFor="let _ of slots(resolved.sections || 6)">
+            <span class="tc-sk tc-sk--line tc-sk--w30"></span>
+            <span class="tc-sk tc-sk--input"></span>
+          </div>
+        </div>
+
+        <!-- Detail section blocks -->
+        <div class="tc-page-skeleton__sections" *ngIf="resolved.layout === 'detail-section'">
+          <div class="tc-page-skeleton__section" *ngFor="let _ of slots(resolved.sections || 2)">
+            <span class="tc-sk tc-sk--line tc-sk--w40 tc-sk--lg"></span>
+            <span class="tc-sk tc-sk--block" style="height: 5.5rem; margin-top: 0.55rem;"></span>
           </div>
         </div>
       </div>
 
-      <!-- Card grid -->
-      <div class="tc-page-skeleton__grid" *ngIf="variant === 'cards'">
-        <div class="tc-page-skeleton__card" *ngFor="let _ of cardSlots">
+      <!-- Card grid (outside panel so it matches real grid pages) -->
+      <div class="tc-page-skeleton__grid" *ngIf="showCards">
+        <div class="tc-page-skeleton__card" *ngFor="let _ of slots(resolved.cards)">
           <div class="tc-page-skeleton__card-head">
             <span class="tc-sk tc-sk--avatar"></span>
             <div class="tc-page-skeleton__stack">
@@ -96,11 +127,12 @@ export type TcPageSkeletonVariant =
           </div>
           <span class="tc-sk tc-sk--line tc-sk--w90"></span>
           <span class="tc-sk tc-sk--line tc-sk--w60"></span>
+          <span class="tc-sk tc-sk--line tc-sk--w50"></span>
         </div>
       </div>
 
-      <!-- Detail / profile -->
-      <ng-container *ngIf="variant === 'detail'">
+      <!-- Full detail profile -->
+      <ng-container *ngIf="resolved.layout === 'detail'">
         <div class="tc-page-skeleton__hero">
           <span class="tc-sk tc-sk--avatar tc-sk--avatar-xl"></span>
           <div class="tc-page-skeleton__stack">
@@ -114,312 +146,92 @@ export type TcPageSkeletonVariant =
           </div>
         </div>
         <div class="tc-page-skeleton__tabs">
-          <span class="tc-sk tc-sk--tab" *ngFor="let _ of tabSlots"></span>
+          <span class="tc-sk tc-sk--tab" *ngFor="let _ of slots(resolved.tabs)"></span>
         </div>
         <div class="tc-page-skeleton__panel">
           <div class="tc-page-skeleton__detail-grid">
-            <div class="tc-page-skeleton__stack" *ngFor="let _ of detailSlots">
+            <div class="tc-page-skeleton__stack" *ngFor="let _ of slots(resolved.sections || 3)">
               <span class="tc-sk tc-sk--line tc-sk--w30"></span>
               <span class="tc-sk tc-sk--line tc-sk--w80"></span>
+              <span class="tc-sk tc-sk--block" style="height: 4.5rem;"></span>
             </div>
           </div>
         </div>
       </ng-container>
-
-      <!-- Tabs / section body -->
-      <ng-container *ngIf="variant === 'tabs'">
-        <div class="tc-page-skeleton__tabs">
-          <span class="tc-sk tc-sk--tab" *ngFor="let _ of tabSlots"></span>
-        </div>
-        <div class="tc-page-skeleton__panel">
-          <span class="tc-sk tc-sk--line tc-sk--w50 tc-sk--lg"></span>
-          <span class="tc-sk tc-sk--block" style="height: 9rem; margin-top: 0.75rem;"></span>
-        </div>
-      </ng-container>
-
-      <!-- Chart -->
-      <div class="tc-page-skeleton__panel" *ngIf="variant === 'chart'">
-        <span class="tc-sk tc-sk--line tc-sk--w40"></span>
-        <span class="tc-sk tc-sk--block tc-sk--chart" style="margin-top: 0.75rem;"></span>
-      </div>
-
-      <!-- Form / modal -->
-      <div class="tc-page-skeleton__panel" *ngIf="variant === 'form'">
-        <div class="tc-page-skeleton__form-grid">
-          <div class="tc-page-skeleton__stack" *ngFor="let _ of formSlots">
-            <span class="tc-sk tc-sk--line tc-sk--w30"></span>
-            <span class="tc-sk tc-sk--input"></span>
-          </div>
-        </div>
-        <div class="tc-page-skeleton__form-actions">
-          <span class="tc-sk tc-sk--btn"></span>
-          <span class="tc-sk tc-sk--btn tc-sk--btn-primary"></span>
-        </div>
-      </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; width: 100%; }
-
-    .tc-sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      border: 0;
-    }
-
-    .tc-page-skeleton {
-      display: flex;
-      flex-direction: column;
-      gap: var(--tc-page-row-gap, 0.75rem);
-      width: 100%;
-      min-width: 0;
-    }
-
-    .tc-sk {
-      display: block;
-      border-radius: var(--tc-radius-sm, 6px);
-      background: linear-gradient(
-        90deg,
-        var(--tc-surface-100, #f1f5f9) 0%,
-        var(--tc-surface-50, #f8fafc) 45%,
-        var(--tc-surface-100, #f1f5f9) 90%
-      );
-      background-size: 200% 100%;
-      animation: tc-page-skel-shimmer 1.35s ease-in-out infinite;
-    }
-
-    .tc-sk--line { height: 0.7rem; width: 100%; }
-    .tc-sk--lg { height: 1.05rem; }
-    .tc-sk--w30 { width: 30%; }
-    .tc-sk--w40 { width: 40%; }
-    .tc-sk--w50 { width: 50%; }
-    .tc-sk--w60 { width: 60%; }
-    .tc-sk--w70 { width: 70%; }
-    .tc-sk--w80 { width: 80%; }
-    .tc-sk--w90 { width: 90%; }
-    .tc-sk--icon {
-      width: 2rem;
-      height: 2rem;
-      border-radius: var(--tc-radius-md, 8px);
-    }
-    .tc-sk--avatar {
-      width: 2.5rem;
-      height: 2.5rem;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .tc-sk--avatar-xl {
-      width: 4.5rem;
-      height: 4.5rem;
-    }
-    .tc-sk--search {
-      flex: 1 1 14rem;
-      height: 2.25rem;
-      border-radius: var(--tc-radius-md, 8px);
-      min-width: 10rem;
-    }
-    .tc-sk--chip {
-      width: 5.5rem;
-      height: 2rem;
-      border-radius: 999px;
-      flex-shrink: 0;
-    }
-    .tc-sk--tab {
-      width: 5rem;
-      height: 2rem;
-      border-radius: var(--tc-radius-md, 8px);
-    }
-    .tc-sk--block {
-      width: 100%;
-      height: 6rem;
-      border-radius: var(--tc-radius-md, 8px);
-    }
-    .tc-sk--chart { height: 14rem; }
-    .tc-sk--input {
-      width: 100%;
-      height: 2.35rem;
-      border-radius: var(--tc-radius-md, 8px);
-    }
-    .tc-sk--btn {
-      width: 6rem;
-      height: 2.25rem;
-      border-radius: var(--tc-radius-md, 8px);
-    }
-    .tc-sk--btn-primary { width: 7.5rem; }
-
-    .tc-page-skeleton__kpis {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-      gap: 0.65rem;
-    }
-
-    .tc-page-skeleton__kpi {
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      min-height: 4.5rem;
-      padding: 0.75rem 0.9rem;
-      border: 1px solid var(--tc-border, #e2e8f0);
-      border-radius: var(--tc-radius-lg, 12px);
-      background: var(--tc-surface-card, #fff);
-    }
-
-    .tc-page-skeleton__panel {
-      padding: 0.9rem 1rem;
-      border: 1px solid var(--tc-border, #e2e8f0);
-      border-radius: var(--tc-radius-lg, 12px);
-      background: var(--tc-surface-card, #fff);
-      min-width: 0;
-    }
-
-    .tc-page-skeleton__toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem 0.65rem;
-      margin-bottom: 0.85rem;
-    }
-
-    .tc-page-skeleton__table { display: flex; flex-direction: column; gap: 0.65rem; }
-    .tc-page-skeleton__tr {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
-      gap: 0.75rem;
-      align-items: center;
-    }
-    .tc-page-skeleton__tr--head .tc-sk { height: 0.55rem; opacity: 0.7; }
-
-    .tc-page-skeleton__grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-      gap: 0.75rem;
-    }
-
-    .tc-page-skeleton__card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      padding: 0.9rem;
-      border: 1px solid var(--tc-border, #e2e8f0);
-      border-radius: var(--tc-radius-lg, 12px);
-      background: var(--tc-surface-card, #fff);
-    }
-
-    .tc-page-skeleton__card-head,
-    .tc-page-skeleton__hero {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .tc-page-skeleton__hero {
-      padding: 1rem 1.1rem;
-      border: 1px solid var(--tc-border, #e2e8f0);
-      border-radius: var(--tc-radius-lg, 12px);
-      background: var(--tc-surface-card, #fff);
-    }
-
-    .tc-page-skeleton__stack {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .tc-page-skeleton__chips,
-    .tc-page-skeleton__tabs,
-    .tc-page-skeleton__form-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem;
-    }
-
-    .tc-page-skeleton__detail-grid,
-    .tc-page-skeleton__form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-      gap: 0.85rem 1rem;
-    }
-
-    .tc-page-skeleton__charts {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-      gap: 0.85rem;
-    }
-
-    .tc-page-skeleton__chart {
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-    }
-
-    .tc-page-skeleton__form-actions {
-      justify-content: flex-end;
-      margin-top: 1rem;
-    }
-
-    @keyframes tc-page-skel-shimmer {
-      0% { background-position: 100% 0; }
-      100% { background-position: -100% 0; }
-    }
-
-    :host-context(.tc-theme-dark) .tc-sk {
-      background: linear-gradient(
-        90deg,
-        rgba(148, 163, 184, 0.12) 0%,
-        rgba(148, 163, 184, 0.22) 45%,
-        rgba(148, 163, 184, 0.12) 90%
-      );
-      background-size: 200% 100%;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .tc-sk { animation: tc-page-skel-pulse 1.6s ease-in-out infinite; }
-    }
-
-    @keyframes tc-page-skel-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.55; }
-    }
-  `]
+  styleUrl: './tc-page-skeleton.component.scss'
 })
-export class TcPageSkeletonComponent {
-  @Input() variant: TcPageSkeletonVariant = 'list';
-  @Input() rows = 6;
-  @Input() columns = 5;
-  @Input() kpis = 4;
-  @Input() cards = 6;
-  @Input() tabs = 5;
-  @Input() showKpis = true;
+export class TcPageSkeletonComponent implements OnInit, OnChanges {
+  /** Preferred: layout preset that mirrors the final UI. */
+  @Input() layout: LoadingLayout | null = null;
 
-  get rowSlots(): number[] {
-    return Array.from({ length: Math.max(1, this.rows) });
+  /** @deprecated Use `layout`. Mapped for backward compatibility. */
+  @Input() variant: TcPageSkeletonVariant = 'directory-table';
+
+  @Input() rows?: number;
+  @Input() columns?: number;
+  @Input() kpis?: number;
+  @Input() cards?: number;
+  @Input() tabs?: number;
+  @Input() charts?: number;
+  @Input() sections?: number;
+  @Input() showKpis?: boolean;
+  @Input() showFilter?: boolean;
+
+  resolved: LoadingLayoutPreset = { ...LOADING_LAYOUT_PRESETS['directory-table'] };
+
+  ngOnInit(): void {
+    this.resolved = this.buildPreset();
   }
-  get colSlots(): number[] {
-    return Array.from({ length: Math.max(2, this.columns) });
+
+  ngOnChanges(): void {
+    this.resolved = this.buildPreset();
   }
-  get kpiSlots(): number[] {
-    return Array.from({ length: Math.max(1, this.kpis) });
+
+  get isDirectory(): boolean {
+    return this.resolved.layout === 'directory-table' || this.resolved.layout === 'directory-cards';
   }
-  get cardSlots(): number[] {
-    return Array.from({ length: Math.max(1, this.cards) });
+
+  get showTable(): boolean {
+    return (
+      this.resolved.layout === 'directory-table' ||
+      this.resolved.layout === 'table-only' ||
+      (this.resolved.layout === 'dashboard' && this.resolved.rows > 0)
+    );
   }
-  get tabSlots(): number[] {
-    return Array.from({ length: Math.max(2, this.tabs) });
+
+  get showCards(): boolean {
+    return (
+      this.resolved.layout === 'directory-cards' ||
+      this.resolved.layout === 'cards-only'
+    );
   }
-  get detailSlots(): number[] {
-    return Array.from({ length: 6 });
+
+  slots(count: number): number[] {
+    return Array.from({ length: Math.max(0, count) });
   }
-  get formSlots(): number[] {
-    return Array.from({ length: 6 });
-  }
-  get chartSlots(): number[] {
-    return Array.from({ length: 2 });
+
+  private buildPreset(): LoadingLayoutPreset {
+    const key = this.layout ?? VARIANT_TO_LAYOUT[this.variant] ?? 'directory-table';
+    const base = { ...LOADING_LAYOUT_PRESETS[key] };
+    if (this.kpis != null) base.kpis = this.kpis;
+    if (this.showKpis != null) base.showKpis = this.showKpis;
+    if (this.showFilter != null) base.showFilter = this.showFilter;
+    if (this.rows != null) base.rows = this.rows;
+    if (this.columns != null) base.columns = this.columns;
+    if (this.cards != null) base.cards = this.cards;
+    if (this.tabs != null) base.tabs = this.tabs;
+    if (this.charts != null) base.charts = this.charts;
+    if (this.sections != null) base.sections = this.sections;
+    // When KPIs forced off for results-only, also hide filter unless asked.
+    if (base.showKpis === false && this.showFilter == null && (key === 'directory-table' || key === 'directory-cards')) {
+      // results-only under already-visible chrome
+      if (this.layout == null && (this.variant === 'list' || this.variant === 'table' || this.variant === 'cards')) {
+        // keep explicit overrides from callers using showKpis=false
+        if (this.showKpis === false) base.showFilter = false;
+      }
+    }
+    return base;
   }
 }

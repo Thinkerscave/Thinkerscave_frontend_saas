@@ -6,9 +6,18 @@
   <app-toast></app-toast>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
 
-  <ng-container *ngIf="!loading">
+  <tc-page-skeleton
+    *ngIf="loading && !hasLoaded"
+    layout="directory-table"
+    [kpis]="4"
+    [showKpis]="true"
+    [showFilter]="true"
+    [rows]="8"
+    [columns]="5">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="hasLoaded">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
     <tc-saas-panel *ngIf="createOpen" title="Create Role" subtitle="Use ROLE_ prefix for role codes">
@@ -39,7 +48,7 @@
       <div class="roles-list__toolbar">
         <input type="search" class="saas-search" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search roles...">
       </div>
-      <div class="saas-table-wrap">
+      <div class="saas-table-wrap" [class.is-refreshing]="refreshing">
         <table class="saas-data-table">
           <thead>
             <tr><th>Role</th><th>Type</th><th>Users</th><th>Status</th><th></th></tr>
@@ -74,5 +83,3 @@
     </tc-saas-panel>
   </ng-container>
 </div>
-
-

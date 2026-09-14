@@ -14,9 +14,18 @@
     </button>
   </tc-saas-page-header>
 
-    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="4"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
-<section class="cs-context" *ngIf="dashboard as dash" aria-label="Academic year context">
+  <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="6">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="dashboard">
+<section class="cs-context" aria-label="Academic year context">
     <div class="cs-context__primary">
       <div class="cs-context__label">Academic Year</div>
       <div class="cs-context__controls">
@@ -32,19 +41,19 @@
         </p-dropdown>
         <span
           class="cs-badge"
-          [class.cs-badge--success]="dash.academicYearStatus === 'CURRENT'"
-          [class.cs-badge--neutral]="dash.academicYearStatus !== 'CURRENT'">
-          {{ dash.academicYearStatus }}
+          [class.cs-badge--success]="dashboard.academicYearStatus === 'CURRENT'"
+          [class.cs-badge--neutral]="dashboard.academicYearStatus !== 'CURRENT'">
+          {{ dashboard.academicYearStatus }}
         </span>
-        <span class="cs-readonly" *ngIf="dash.yearReadOnly">Historical · Read only</span>
+        <span class="cs-readonly" *ngIf="dashboard.yearReadOnly">Historical · Read only</span>
       </div>
     </div>
     <div class="cs-context__summary">
-      <span>{{ dash.classCount }} Classes</span>
+      <span>{{ dashboard.classCount }} Classes</span>
       <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dash.sectionCount }} Sections</span>
+      <span>{{ dashboard.sectionCount }} Sections</span>
       <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dash.studentCount }} Students</span>
+      <span>{{ dashboard.studentCount }} Students</span>
     </div>
   </section>
 

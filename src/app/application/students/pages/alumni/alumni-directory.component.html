@@ -17,7 +17,7 @@
 
   <div class="tc-card tc-card--panel">
     <div class="tc-card__body">
-      <p class="alm-context-summary" *ngIf="!loading && hasContextualQuery">{{ contextualResultText }}</p>
+      <p class="alm-context-summary" *ngIf="hasLoaded && hasContextualQuery">{{ contextualResultText }}</p>
 
       <app-list-toolbar
         [flat]="true"
@@ -48,26 +48,24 @@
         <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <app-list-results [busy]="searching">
-        <div class="alm-directory-skeleton" *ngIf="loading">
+      <app-list-results [busy]="searching && hasLoaded">
+        <div class="alm-directory-skeleton" *ngIf="loading && !hasLoaded">
           <tc-page-skeleton
-            [variant]="view === 'grid' ? 'cards' : 'list'"
+            [layout]="view === 'grid' ? 'cards-only' : 'table-only'"
             [rows]="8"
             [columns]="6"
-            [kpis]="0"
-            [showKpis]="false"
-            [cards]="6">
+            [cards]="8">
           </tc-page-skeleton>
         </div>
 
         <app-empty-state
-          *ngIf="!loading && !alumni.length && !errorMessage"
+          *ngIf="hasLoaded && !loading && !alumni.length && !errorMessage"
           illustration="students"
           title="No alumni found"
           message="Adjust your search filters to find registered alumni.">
         </app-empty-state>
 
-        <div class="alm-directory-grid" *ngIf="view === 'grid' && !loading && paged.length">
+        <div class="alm-directory-grid" *ngIf="view === 'grid' && hasLoaded && paged.length">
           <article *ngFor="let a of paged; let i = index"
                    class="tc-card is-clickable alm-alumni-card"
                    [style.animation-delay.ms]="i * 40"
@@ -108,7 +106,7 @@
           </article>
         </div>
 
-        <div class="tc-table-wrap" *ngIf="view === 'table' && !loading && paged.length">
+        <div class="tc-table-wrap" *ngIf="view === 'table' && hasLoaded && paged.length">
           <table class="tc-table">
             <thead>
               <tr>
@@ -163,7 +161,7 @@
         </div>
       </app-list-results>
 
-      <div class="alm-paginator" *ngIf="!loading && alumni.length > 0">
+      <div class="alm-paginator" *ngIf="hasLoaded && alumni.length > 0">
         <app-paginator
           [page]="page"
           [rows]="pageSize"

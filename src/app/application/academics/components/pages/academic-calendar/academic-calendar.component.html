@@ -5,8 +5,15 @@
 <tc-saas-page-header>
   </tc-saas-page-header>
 
-    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="4"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
+    <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    layout="detail-section"
+    [sections]="2"
+    [showKpis]="false"
+    [showFilter]="false">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="dashboard">
 <!-- Top controls: year + Calendar/List + Add Event -->
   <section class="ac-topbar" aria-label="Calendar controls">
     <div class="ac-topbar__left">

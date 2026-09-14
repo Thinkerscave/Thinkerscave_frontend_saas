@@ -94,15 +94,13 @@
         <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <app-list-results [busy]="refreshing">
+      <app-list-results [busy]="refreshing && hasLoaded">
         <div class="stu-directory-skeleton" *ngIf="!hasLoaded && loading">
           <tc-page-skeleton
-            [variant]="view === 'grid' ? 'cards' : 'list'"
+            [layout]="view === 'grid' ? 'cards-only' : 'table-only'"
             [rows]="8"
             [columns]="6"
-            [kpis]="0"
-            [showKpis]="false"
-            [cards]="6">
+            [cards]="8">
           </tc-page-skeleton>
         </div>
 

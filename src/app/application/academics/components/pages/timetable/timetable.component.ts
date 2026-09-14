@@ -81,6 +81,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   readonly resource = ACADEMICS_TIMETABLE_RESOURCE;
 
   loading = true;
+  refreshing = false;
   saving = false;
   generating = false;
   savingConfig = false;
@@ -168,9 +169,18 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   reload(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
+    const initial = !this.dashboard;
+    if (initial) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
     this.api.getDashboard(this.selectedYearId)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;

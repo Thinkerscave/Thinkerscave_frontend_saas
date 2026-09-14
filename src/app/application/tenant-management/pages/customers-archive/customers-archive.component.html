@@ -35,8 +35,8 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="loadCustomers()">Retry</button>
     </div>
 
-    <div *ngIf="loading" class="customers-archive__skeleton">
-      <tc-page-skeleton variant="list" [rows]="6" [columns]="4" [showKpis]="false"></tc-page-skeleton>
+    <div *ngIf="loading && !customers.length" class="customers-archive__skeleton">
+      <tc-page-skeleton layout="cards-only" [cards]="6"></tc-page-skeleton>
     </div>
 
     <div *ngIf="!loading && !customers.length && !errorMessage" class="tc-empty-state">
@@ -46,7 +46,7 @@
       <a class="tc-btn tc-btn--primary" routerLink="/app/tenant-management/customers">Back to Customers</a>
     </div>
 
-    <div *ngIf="!loading && customers.length" class="customers-archive__list">
+    <div *ngIf="customers.length" class="customers-archive__list">
       <article
         class="archive-card"
         *ngFor="let c of customers; trackBy: trackById"
@@ -86,7 +86,7 @@
     </div>
 
     <app-paginator
-      *ngIf="!loading && !errorMessage && totalRecords > 0"
+      *ngIf="!errorMessage && totalRecords > 0"
       [page]="page"
       [rows]="pageSize"
       [totalRecords]="totalRecords"

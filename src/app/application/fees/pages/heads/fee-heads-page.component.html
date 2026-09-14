@@ -39,7 +39,7 @@
       </div>
 
       @if (loading && !rows.length) {
-        <tc-page-skeleton variant="list"></tc-page-skeleton>
+        <tc-page-skeleton layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
       } @else if (error) {
         <div class="tc-empty-state tc-empty-state--inline">
           <p>{{ error }}</p>

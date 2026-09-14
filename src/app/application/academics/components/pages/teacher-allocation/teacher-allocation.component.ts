@@ -72,6 +72,7 @@ export class TeacherAllocationPageComponent implements OnInit {
   ];
 
   loading = true;
+  refreshing = false;
   saving = false;
   years: AcademicYearDto[] = [];
   classes: AcademicClassDto[] = [];
@@ -138,7 +139,12 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   reload(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
+    const initial = !this.dashboard;
+    if (initial) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
     this.api
       .getDashboard(this.selectedYearId, {
         classId: this.classFilter,
@@ -148,6 +154,7 @@ export class TeacherAllocationPageComponent implements OnInit {
       })
       .pipe(finalize(() => {
         this.loading = false;
+        this.refreshing = false;
         this.cdr.markForCheck();
       }))
       .subscribe({

@@ -32,6 +32,8 @@ export class StudentMovementComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = false;
+  refreshing = false;
+  hasLoaded = false;
   saving = false;
   showNewTransferDrawer = false;
   errorMessage = '';
@@ -70,19 +72,31 @@ export class StudentMovementComponent implements OnInit {
   }
 
   loadTransfers(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     forkJoin({
       transfers: this.api.listTransfers(),
       students: this.api.search({ status: 'ACTIVE' }, 0, 200)
     })
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: ({ transfers, students }) => {
           this.transfers = transfers ?? [];
           this.students = students.content ?? [];
+          this.hasLoaded = true;
           this.errorMessage = '';
         },
-        error: () => { this.errorMessage = 'Could not load transfer requests.'; }
+        error: () => {
+          this.hasLoaded = true;
+          this.errorMessage = 'Could not load transfer requests.';
+        }
       });
   }
 

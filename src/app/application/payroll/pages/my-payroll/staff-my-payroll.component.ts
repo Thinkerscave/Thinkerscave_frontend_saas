@@ -46,6 +46,7 @@ export class StaffMyPayrollComponent implements OnInit {
   yearOptions: number[] = [];
   statusFilterOptions: EmployeePayrollStatus[] = [];
   loading = true;
+  hasLoaded = false;
   error: string | null = null;
 
   filterYear = '';
@@ -71,14 +72,24 @@ export class StaffMyPayrollComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (!this.summary) {
+      this.loading = true;
+    }
     this.error = null;
-    this.api.mySummary().pipe(finalizeBusy(v => (this.loading = v))).subscribe({
+    this.api.mySummary().pipe(finalizeBusy(v => {
+      if (!this.summary) {
+        this.loading = v;
+      } else {
+        this.loading = false;
+      }
+    })).subscribe({
       next: summary => {
         this.summary = summary;
+        this.hasLoaded = true;
         this.loadHistory();
       },
       error: err => {
+        this.hasLoaded = true;
         const message = extractApiError(err, 'Request failed').message || 'Unable to load My Payroll';
         this.error = /no staff profile/i.test(message)
           ? 'Your login is not linked to a staff profile yet. Ask an administrator to link your user to a staff record.'

@@ -21,6 +21,14 @@
       <p>You do not have permission to view this student's financial information.</p>
       <button type="button" class="tc-btn tc-btn--outline" (click)="goBack()">Back</button>
     </div>
+  } @else if (pageBooting) {
+    <tc-page-skeleton
+      [layout]="selectedStudentId ? 'detail' : 'table-only'"
+      [rows]="8"
+      [columns]="3"
+      [sections]="3"
+      [tabs]="4">
+    </tc-page-skeleton>
   } @else {
     @if (!canSearch && linked.length > 1) {
       <div class="tc-card tc-card--panel fees-surface-panel">
@@ -76,7 +84,7 @@
           </div>
 
           @if (listLoading && !rows.length) {
-            <tc-page-skeleton variant="list"></tc-page-skeleton>
+            <tc-page-skeleton layout="table-only" [rows]="8" [columns]="3"></tc-page-skeleton>
           } @else if (listError) {
             <div class="tc-empty-state tc-empty-state--inline"><p>{{ listError }}</p></div>
           } @else {
@@ -127,7 +135,7 @@
 
   <ng-template #detailPanel>
     @if (detailLoading && !detail) {
-      <tc-page-skeleton variant="detail"></tc-page-skeleton>
+      <tc-page-skeleton layout="detail" [sections]="3" [tabs]="4"></tc-page-skeleton>
     } @else if (detailError) {
       <div class="tc-empty-state tc-empty-state--inline"><p>{{ detailError }}</p></div>
     } @else if (!detail) {
@@ -177,7 +185,7 @@
         </div>
 
         @if (tabLoading && activeTab !== 'overview') {
-          <tc-page-skeleton variant="table"></tc-page-skeleton>
+          <tc-page-skeleton layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
         } @else if (activeTab === 'overview') {
           <div class="fees-table-wrap">
             <table class="fees-table fees-table--compact">
@@ -321,7 +329,7 @@
     [draggable]="false"
     [style]="{ width: '640px', maxWidth: '95vw' }">
     @if (previewLoading) {
-      <tc-page-skeleton variant="detail"></tc-page-skeleton>
+      <tc-page-skeleton layout="detail-section" [sections]="2"></tc-page-skeleton>
     } @else if (preview) {
       <div class="fees-receipt-preview">
         <div class="fees-receipt-preview__meta">

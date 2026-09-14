@@ -46,6 +46,8 @@ export class RolesListComponent implements OnInit {
   private readonly router = inject(Router);
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
   search = '';
@@ -109,15 +111,27 @@ export class RolesListComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.errorMessage = '';
     this.api.getRoles().pipe(
-      finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
+      finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: roles => this.roles = roles ?? [],
+      next: roles => {
+        this.roles = roles ?? [];
+        this.hasLoaded = true;
+      },
       error: () => {
         this.roles = [];
+        this.hasLoaded = true;
         this.errorMessage = 'Could not load roles. Verify access permissions.';
       }
     });

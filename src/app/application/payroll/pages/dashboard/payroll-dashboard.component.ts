@@ -72,6 +72,7 @@ export class PayrollDashboardComponent implements OnInit {
   rows: PayrollEmployeeListItem[] = [];
   activities: PayrollActivityItem[] = [];
   loading = true;
+  hasLoaded = false;
   tableLoading = false;
   error: string | null = null;
   page = 0;
@@ -99,21 +100,29 @@ export class PayrollDashboardComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loading = true;
+    if (!this.kpis) {
+      this.loading = true;
+    }
     this.error = null;
     this.api.overview(this.year, this.month)
       .pipe(finalizeBusy(v => {
-        this.loading = v;
+        if (!this.kpis) {
+          this.loading = v;
+        } else {
+          this.loading = false;
+        }
         this.cdr.detectChanges();
       }))
       .subscribe({
       next: kpis => {
         this.kpis = kpis;
+        this.hasLoaded = true;
         this.loadEmployees();
         this.loadActivities();
         this.cdr.detectChanges();
       },
       error: err => {
+        this.hasLoaded = true;
         this.error = extractApiError(err, 'Failed to load payroll overview').message;
         this.feedback.error('Payroll', this.error);
         this.cdr.detectChanges();

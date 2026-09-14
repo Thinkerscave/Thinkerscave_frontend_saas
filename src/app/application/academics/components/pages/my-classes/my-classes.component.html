@@ -3,8 +3,15 @@
     <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
   </tc-saas-page-header>
 
-    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="6"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
+  <tc-page-skeleton
+    *ngIf="loading && !hasLoaded"
+    layout="cards-only"
+    [cards]="8"
+    [showKpis]="false"
+    [showFilter]="true">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="hasLoaded">
 <div class="mc-summary" *ngIf="data as d">
     <div><strong>{{ d.summary.classCount }}</strong><span>Total Classes</span></div>
     <div><strong>{{ d.summary.sectionCount }}</strong><span>Total Sections</span></div>
@@ -22,7 +29,7 @@
     <a routerLink="/app/academics/my-timetable" class="mc-link">Open My Timetable →</a>
   </div>
 
-  <div class="mc-list" [class.mc-list--grid]="viewMode === 'grid'">
+  <div class="mc-list" [class.mc-list--grid]="viewMode === 'grid'" [class.mc-list--refreshing]="refreshing">
     <article class="mc-card" *ngFor="let c of filteredClasses">
       <div class="mc-badge">{{ shortCode(c) }}</div>
       <div class="mc-card__body">

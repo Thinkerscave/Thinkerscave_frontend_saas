@@ -104,3 +104,9 @@
   font-size: 0.9rem;
   color: var(--saas-muted, #64748b);
 }
+
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}

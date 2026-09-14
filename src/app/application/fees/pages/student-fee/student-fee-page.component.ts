@@ -61,7 +61,9 @@ export class StudentFeePageComponent implements OnInit {
 
   canSearch = true;
   accessRestricted = false;
-  listLoading = false;
+  /** True until first year+scope bootstrap finishes — prevents empty content flash. */
+  pageBooting = true;
+  listLoading = true;
   detailLoading = false;
   tabLoading = false;
   listError: string | null = null;
@@ -97,14 +99,23 @@ export class StudentFeePageComponent implements OnInit {
   ngOnInit(): void {
     this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
       .pipe(map(r => r.data ?? []))
-      .subscribe(years => {
-        this.years = years;
-        const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
-          ?? years.find(y => /2026-27/i.test(y.name))
-          ?? years[0];
-        this.academicYearId = current?.id ?? null;
-        this.bootstrapScope();
-        this.cdr.detectChanges();
+      .subscribe({
+        next: years => {
+          this.years = years;
+          const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
+            ?? years.find(y => /2026-27/i.test(y.name))
+            ?? years[0];
+          this.academicYearId = current?.id ?? null;
+          this.bootstrapScope();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.pageBooting = false;
+          this.listLoading = false;
+          this.detailLoading = false;
+          this.listError = 'Failed to load academic years';
+          this.cdr.detectChanges();
+        }
       });
     this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/classes`)
       .pipe(map(r => r.data ?? []))
@@ -116,6 +127,7 @@ export class StudentFeePageComponent implements OnInit {
     const routeStudentId = this.route.snapshot.paramMap.get('studentId');
     if (routeStudentId) {
       this.selectedStudentId = Number(routeStudentId);
+      this.detailLoading = true;
     }
   }
 
@@ -129,17 +141,24 @@ export class StudentFeePageComponent implements OnInit {
     this.api.listStudents({ academicYearId: this.academicYearId ?? undefined }, 0, 1).subscribe({
       next: () => {
         this.canSearch = true;
-        this.listLoading = false;
+        this.pageBooting = false;
         this.cdr.detectChanges();
-        if (this.selectedStudentId) this.loadDetail();
-        else this.search();
+        if (this.selectedStudentId) {
+          this.loadDetail();
+          this.search();
+        } else {
+          this.search();
+        }
       },
       error: err => {
         this.listLoading = false;
+        this.pageBooting = false;
+        this.detailLoading = false;
         if (err?.status === 403) {
           this.canSearch = false;
           if (this.linked.length >= 1) {
             this.selectedStudentId = this.linked[0].studentId;
+            this.detailLoading = true;
             this.loadDetail();
           } else {
             this.detailError = 'No fee records available.';

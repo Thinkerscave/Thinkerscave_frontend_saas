@@ -1,7 +1,7 @@
 <div class="saas-page announcement-detail">
   <tc-saas-page-header [title]="notice?.title || 'Announcement'"></tc-saas-page-header>
 
-  <tc-page-skeleton *ngIf="loading" variant="detail"></tc-page-skeleton>
+  <tc-page-skeleton *ngIf="loading" layout="detail-section" [sections]="2"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && notice">
     <div class="detail-grid">

@@ -55,6 +55,8 @@ export class LoginHistoryComponent implements OnInit {
   private readonly confirm = inject(ConfirmationService);
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   errorMessage = '';
   statusFilter: 'all' | LoginStatus = 'all';
   rangeDays = 7;
@@ -128,7 +130,11 @@ export class LoginHistoryComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.errorMessage = '';
     this.api.getOrgLoginHistory(
       this.api.organizationId(),
@@ -151,6 +157,8 @@ export class LoginHistoryComponent implements OnInit {
         this.entries = rows;
         this.totalRecords = page.totalElements ?? rows.length;
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       },
       error: () => {
@@ -158,6 +166,8 @@ export class LoginHistoryComponent implements OnInit {
         this.totalRecords = 0;
         this.errorMessage = 'Could not load login history.';
         this.loading = false;
+        this.refreshing = false;
+        this.hasLoaded = true;
         this.cdr.markForCheck();
       }
     });

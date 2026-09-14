@@ -32,7 +32,15 @@
       </p-dropdown>
     </app-list-toolbar>
 
-    <div class="cat-workspace is-split" *ngIf="viewMode() === 'grid'">
+    <tc-page-skeleton
+      *ngIf="loading && !hasLoaded"
+      [layout]="viewMode() === 'grid' ? 'cards-only' : 'table-only'"
+      [rows]="10"
+      [columns]="5"
+      [cards]="8">
+    </tc-page-skeleton>
+
+    <div class="cat-workspace is-split" *ngIf="hasLoaded && viewMode() === 'grid'">
       <div>
         <div class="cat-grid">
       <article
@@ -178,7 +186,7 @@
       </ng-container>
     </ng-template>
 
-    <div *ngIf="viewMode() === 'table'" class="cat-table-wrap">
+    <div *ngIf="hasLoaded && viewMode() === 'table'" class="cat-table-wrap">
       <table class="cat-table">
         <thead>
           <tr>

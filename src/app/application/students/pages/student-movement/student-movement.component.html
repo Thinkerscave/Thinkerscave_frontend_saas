@@ -30,10 +30,10 @@
     <i class="pi pi-check-circle"></i> {{ successMessage }}
   </div>
 
-  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4" [showKpis]="false"></tc-page-skeleton>
+  <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="table-only" [rows]="8" [columns]="7" [showKpis]="false"></tc-page-skeleton>
 
   <!-- Table -->
-  <div class="tc-table-wrap" *ngIf="!loading && filteredTransfers.length">
+  <div class="tc-table-wrap" *ngIf="hasLoaded && filteredTransfers.length" [class.is-refreshing]="refreshing">
     <table class="tc-table">
       <thead>
         <tr>
@@ -92,7 +92,7 @@
     </table>
   </div>
 
-  <div class="tc-empty-state" *ngIf="!loading && !filteredTransfers.length">
+  <div class="tc-empty-state" *ngIf="hasLoaded && !filteredTransfers.length">
     <i class="pi pi-arrow-right-arrow-left"></i>
     <h3>No transfers found</h3>
     <p>No transfer requests match the selected status.</p>

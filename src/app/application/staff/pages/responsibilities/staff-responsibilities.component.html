@@ -48,9 +48,9 @@
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
+  <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="table-only" [rows]="8" [columns]="6" [showKpis]="false"></tc-page-skeleton>
 
-  <div class="sd-table-wrap" *ngIf="!loading && filtered.length > 0">
+  <div class="sd-table-wrap" *ngIf="hasLoaded && filtered.length > 0" [class.is-refreshing]="refreshing">
     <table class="sd-table">
       <thead>
         <tr>
@@ -93,7 +93,7 @@
     </table>
   </div>
   
-  <div *ngIf="!loading && filtered.length === 0 && !errorMessage" class="sd-empty">
+  <div *ngIf="hasLoaded && filtered.length === 0 && !errorMessage" class="sd-empty">
     <i class="pi pi-sitemap"></i>
     <p>No responsibilities match your search.</p>
   </div>

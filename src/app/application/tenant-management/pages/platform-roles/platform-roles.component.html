@@ -20,7 +20,15 @@
     (viewChange)="onListViewModeChange($event)">
   </app-list-toolbar>
 
-  <app-list-results [busy]="loading">
+  <tc-page-skeleton
+    *ngIf="loading && !hasLoaded"
+    [layout]="viewMode === 'grid' ? 'cards-only' : 'table-only'"
+    [rows]="10"
+    [columns]="5"
+    [cards]="8">
+  </tc-page-skeleton>
+
+  <app-list-results *ngIf="hasLoaded">
     <div class="cat-workspace is-split" *ngIf="viewMode === 'grid'">
       <div>
         <div class="cat-grid">

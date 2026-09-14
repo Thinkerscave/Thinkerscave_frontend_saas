@@ -35,9 +35,9 @@
       <i class="pi pi-check-circle"></i> {{ successMessage }}
     </div>
 
-    <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
+    <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
 
-    <div class="tc-table-wrap" *ngIf="!loading && entries.length">
+    <div class="tc-table-wrap" *ngIf="hasLoaded && entries.length" [class.is-refreshing]="refreshing">
       <table class="tc-table">
         <thead>
           <tr><th>Student</th><th>Document Type</th><th>File Name</th><th>Category</th><th>Status</th><th>Uploaded On</th><th></th></tr>
@@ -69,7 +69,7 @@
       </table>
     </div>
 
-    <div class="tc-empty-state" *ngIf="!loading && !entries.length">
+    <div class="tc-empty-state" *ngIf="hasLoaded && !entries.length">
       <i class="pi pi-folder-open"></i>
       <h3>No documents found</h3>
       <p>Upload documents from individual student profiles or via bulk upload.</p>

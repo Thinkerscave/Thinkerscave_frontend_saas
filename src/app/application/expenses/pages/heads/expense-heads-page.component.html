@@ -54,7 +54,7 @@
   <div class="tc-card tc-card--panel expenses-panel">
     <div class="tc-card__body">
       @if (loading && !rows.length) {
-        <tc-page-skeleton variant="list"></tc-page-skeleton>
+        <tc-page-skeleton layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
       } @else if (!filtered.length) {
         <div class="tc-empty-state expenses-empty">
           <i class="pi pi-sitemap"></i>

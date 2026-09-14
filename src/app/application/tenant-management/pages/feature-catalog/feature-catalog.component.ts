@@ -19,6 +19,7 @@ import {
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
 import { AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -61,7 +62,8 @@ interface FeatureShowcase {
     SaasPageHeaderComponent,
     SaasStatGridComponent,
     AppListToolbarComponent,
-    AppPaginatorComponent
+    AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './feature-catalog.component.html',
@@ -81,6 +83,7 @@ export class FeatureCatalogComponent implements OnInit {
   readonly canManage = this.route.snapshot.data['catalogMode'] !== 'organization';
 
   loading = true;
+  hasLoaded = false;
   saving = false;
   editorOpen = false;
   errorMessage = '';
@@ -224,7 +227,9 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.errorMessage = '';
     const request$ = this.canManage
       ? forkJoin({
@@ -236,7 +241,11 @@ export class FeatureCatalogComponent implements OnInit {
         );
 
     request$.pipe(
-      finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
+      finalize(() => {
+        this.loading = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: ({ features, menus }) => {

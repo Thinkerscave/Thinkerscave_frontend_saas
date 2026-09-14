@@ -31,6 +31,8 @@ export class MyClassesPageComponent implements OnInit {
 
   readonly resource = ACADEMICS_MY_CLASSES_RESOURCE;
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   data: TeacherMyClasses | null = null;
@@ -49,12 +51,26 @@ export class MyClassesPageComponent implements OnInit {
   }
 
   reload(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.api.myClasses(this.selectedYearId)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: (d) => this.data = d,
-        error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load classes', detail: err?.error?.message })
+        next: (d) => {
+          this.data = d;
+          this.hasLoaded = true;
+        },
+        error: (err) => {
+          this.hasLoaded = true;
+          this.messages.add({ severity: 'error', summary: 'Unable to load classes', detail: err?.error?.message });
+        }
       });
   }
 

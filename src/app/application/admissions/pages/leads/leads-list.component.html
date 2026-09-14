@@ -88,14 +88,12 @@
       </div>
     }
 
-    <app-list-results [busy]="refreshing()">
+    <app-list-results [busy]="refreshing() && hasLoaded()">
       @if (!hasLoaded() && loading()) {
         <tc-page-skeleton
-          [variant]="viewMode() === 'card' ? 'cards' : 'list'"
+          [layout]="viewMode() === 'card' ? 'cards-only' : 'table-only'"
           [rows]="8"
           [columns]="6"
-          [kpis]="0"
-          [showKpis]="false"
           [cards]="6">
         </tc-page-skeleton>
       } @else if (hasLoaded() && !leads().length) {

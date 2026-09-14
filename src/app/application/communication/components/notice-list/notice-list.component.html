@@ -13,8 +13,8 @@
 </section>
 
 <section class="tc-card">
-    <ng-container *ngIf="loading(); else loaded">
-        <tc-page-skeleton variant="table" [rows]="6" [columns]="5"></tc-page-skeleton>
+    <ng-container *ngIf="loading() && !notices().length; else loaded">
+        <tc-page-skeleton layout="table-only" [rows]="6" [columns]="5"></tc-page-skeleton>
     </ng-container>
 
     <ng-template #loaded>

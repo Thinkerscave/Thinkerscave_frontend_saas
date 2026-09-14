@@ -66,14 +66,13 @@
     </div>
 
     <!-- ── Loading ── -->
-    <app-list-results [busy]="refreshing">
+    <app-list-results [busy]="refreshing && hasLoaded">
     <div *ngIf="!hasLoaded && loading" class="org-loading">
       <tc-page-skeleton
-        [variant]="viewMode === 'grid' ? 'cards' : 'list'"
+        [layout]="viewMode === 'grid' ? 'cards-only' : 'table-only'"
         [rows]="8"
         [columns]="6"
-        [cards]="6"
-        [showKpis]="false">
+        [cards]="6">
       </tc-page-skeleton>
     </div>
 

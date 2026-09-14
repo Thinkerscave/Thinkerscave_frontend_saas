@@ -7,38 +7,38 @@
     <button type="button" class="tc-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
-  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-filter-row>
+    <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search subject..."></label>
+    <label class="saas-field"><span>Channel</span>
+      <p-dropdown
+        [options]="channelOptions"
+        [(ngModel)]="channelFilter"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </label>
+    <label class="saas-field"><span>Status</span>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="statusFilter"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </label>
+    <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
+    <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
+  </tc-saas-filter-row>
 
-    <tc-saas-filter-row>
-      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [(ngModel)]="search" placeholder="Search subject..."></label>
-      <label class="saas-field"><span>Channel</span>
-        <p-dropdown
-          [options]="channelOptions"
-          [(ngModel)]="channelFilter"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-      <label class="saas-field"><span>Status</span>
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="statusFilter"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-      <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
-      <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
-    </tc-saas-filter-row>
+  <tc-saas-panel [title]="'Delivery Activity (' + filtered.length + ')'">
+    <tc-page-skeleton *ngIf="loading && !filtered.length" layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
 
-    <tc-saas-panel [title]="'Delivery Activity (' + filtered.length + ')'">
+    <ng-container *ngIf="!loading || filtered.length">
       <div class="saas-table-wrap">
         <table class="saas-data-table">
           <thead><tr><th>Message ID</th><th>Subject</th><th>Recipient</th><th>Channel</th><th>Sent On</th><th>Status</th></tr></thead>
@@ -55,8 +55,6 @@
           </tbody>
         </table>
       </div>
-    </tc-saas-panel>
-  </ng-container>
+    </ng-container>
+  </tc-saas-panel>
 </div>
-
-

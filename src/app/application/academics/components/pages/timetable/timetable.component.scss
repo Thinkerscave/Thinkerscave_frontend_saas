@@ -138,6 +138,12 @@
 .tt-empty p { margin: 0; font-size: 0.85rem; }
 .tt-muted { color: var(--tc-text-muted); font-size: 0.78rem; }
 
+.tt-results--refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 /* Resource dialog form */
 .tt-dialog-form { display: flex; flex-direction: column; gap: 0.65rem; }
 .tt-dialog-form .tt-form-group { margin: 0; }

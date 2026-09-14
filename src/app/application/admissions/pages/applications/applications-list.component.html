@@ -51,11 +51,9 @@
       <app-list-results [busy]="searching && !!applications.length">
         <tc-page-skeleton
           *ngIf="loading"
-          [variant]="view === 'grid' ? 'cards' : 'list'"
+          [layout]="view === 'grid' ? 'cards-only' : 'table-only'"
           [rows]="8"
           [columns]="6"
-          [kpis]="0"
-          [showKpis]="false"
           [cards]="6">
         </tc-page-skeleton>
 

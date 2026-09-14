@@ -4,49 +4,49 @@
     <a class="tc-btn tc-btn--primary" routerLink="/app/communication/announcements/new"><i class="pi pi-plus"></i>Create Announcement</a>
   </tc-saas-page-header>
 
-  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
+  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-  <ng-container *ngIf="!loading">
-    <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-filter-row>
+    <label class="saas-search"><i class="pi pi-search"></i><input type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search announcement..."></label>
+    <label class="saas-field"><span>Audience</span>
+      <p-dropdown
+        [options]="audienceOptions"
+        [ngModel]="audienceFilter"
+        (ngModelChange)="audienceFilter = $event; onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </label>
+    <label class="saas-field"><span>Priority</span>
+      <p-dropdown
+        [options]="priorityOptions"
+        [ngModel]="priorityFilter"
+        (ngModelChange)="priorityFilter = $event; onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </label>
+    <label class="saas-field"><span>Status</span>
+      <p-dropdown
+        [options]="statusOptions"
+        [ngModel]="statusFilter"
+        (ngModelChange)="statusFilter = $event; onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="att-filter-dropdown">
+      </p-dropdown>
+    </label>
+  </tc-saas-filter-row>
 
-    <tc-saas-filter-row>
-      <label class="saas-search"><i class="pi pi-search"></i><input type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Search announcement..."></label>
-      <label class="saas-field"><span>Audience</span>
-        <p-dropdown
-          [options]="audienceOptions"
-          [ngModel]="audienceFilter"
-          (ngModelChange)="audienceFilter = $event; onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-      <label class="saas-field"><span>Priority</span>
-        <p-dropdown
-          [options]="priorityOptions"
-          [ngModel]="priorityFilter"
-          (ngModelChange)="priorityFilter = $event; onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-      <label class="saas-field"><span>Status</span>
-        <p-dropdown
-          [options]="statusOptions"
-          [ngModel]="statusFilter"
-          (ngModelChange)="statusFilter = $event; onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-    </tc-saas-filter-row>
+  <tc-saas-panel [title]="'All Announcements (' + filtered.length + ')'">
+    <tc-page-skeleton *ngIf="loading && !filtered.length" layout="table-only" [rows]="8" [columns]="7"></tc-page-skeleton>
 
-    <tc-saas-panel [title]="'All Announcements (' + filtered.length + ')'">
+    <ng-container *ngIf="!loading || filtered.length">
       <div class="saas-table-wrap">
         <table class="saas-data-table">
           <thead><tr><th>Title</th><th>Audience</th><th>Priority</th><th>Created By</th><th>Created On</th><th>Status</th><th></th></tr></thead>
@@ -80,8 +80,6 @@
         noun="announcements"
         (pageChange)="onPageChange($event)">
       </app-paginator>
-    </tc-saas-panel>
-  </ng-container>
+    </ng-container>
+  </tc-saas-panel>
 </div>
-
-

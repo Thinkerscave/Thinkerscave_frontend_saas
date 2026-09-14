@@ -14,8 +14,17 @@
     </button>
   </tc-saas-page-header>
 
-    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="4"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
+  <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="6">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="dashboard">
 <section class="sm-context" *ngIf="dashboard as dash" aria-label="Academic year context">
     <div class="sm-context__primary">
       <div class="sm-context__label">Academic Year</div>

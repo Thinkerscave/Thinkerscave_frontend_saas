@@ -67,6 +67,7 @@ export class FollowUpsCenterComponent implements OnInit {
   readonly pageConfig = admissionsPageConfig('follow-ups');
 
   readonly loading = signal(true);
+  readonly hasLoaded = signal(false);
   readonly error = signal<string | null>(null);
   readonly activeTab = signal<FollowUpTab>('today');
   readonly todayItems = signal<FollowUpRecord[]>([]);
@@ -158,7 +159,10 @@ export class FollowUpsCenterComponent implements OnInit {
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
+        finalize(() => {
+          this.loading.set(false);
+          this.hasLoaded.set(true);
+        })
       )
       .subscribe({
         next: ({ today, overdue, upcoming, completed }) => {

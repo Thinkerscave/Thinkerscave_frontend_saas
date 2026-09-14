@@ -19,11 +19,11 @@
     <div class="sd-error-banner"><i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}</div>
   }
 
-  @if (loading) {
-    <tc-page-skeleton variant="table" [rows]="8" [columns]="5"></tc-page-skeleton>
+  @if (loading && !staff.length) {
+    <tc-page-skeleton layout="table-only" [rows]="8" [columns]="5"></tc-page-skeleton>
   }
 
-  @if (!loading && filteredStaff().length > 0) {
+  @if ((!loading || staff.length) && filteredStaff().length > 0) {
     <div class="sd-table-wrap">
       <table class="sd-table">
         <thead>

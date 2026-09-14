@@ -2175,3 +2175,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}

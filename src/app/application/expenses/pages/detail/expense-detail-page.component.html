@@ -81,7 +81,7 @@
   </tc-saas-page-header>
 
   @if (loading && !expense) {
-    <tc-page-skeleton variant="detail"></tc-page-skeleton>
+    <tc-page-skeleton layout="detail" [tabs]="5" [sections]="3"></tc-page-skeleton>
   } @else if (expense) {
     <div class="expense-summary">
       <div class="expense-summary__card">

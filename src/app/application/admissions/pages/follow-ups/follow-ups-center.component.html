@@ -5,101 +5,110 @@
     </button>
   </tc-saas-page-header>
 
-  @if (error()) {
+  @if (error() && !hasLoaded()) {
     <div class="tc-empty-state" role="alert">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>Could not load follow-ups</h3>
       <p>{{ error() }}</p>
       <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
-  } @else if (loading()) {
-    <tc-page-skeleton variant="list" [rows]="8" [columns]="6" [kpis]="4"></tc-page-skeleton>
+  } @else if (loading() && !hasLoaded()) {
+    <tc-page-skeleton
+      layout="directory-table"
+      [rows]="8"
+      [columns]="6"
+      [kpis]="3"
+      [showKpis]="true"
+      [showFilter]="false">
+    </tc-page-skeleton>
   } @else {
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab()" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     <tc-saas-panel [title]="panelTitle()" [subtitle]="panelSubtitle()">
-      @if (pagedItems.length) {
-        <div class="stu-table-wrap">
-          <table class="stu-table">
-            <thead>
-              <tr>
-                <th>Lead</th>
-                <th>Type</th>
-                <th>Scheduled</th>
-                <th>Status</th>
-                <th>Remarks</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of pagedItems; track item.followUpId) {
-                <tr
-                  class="adm-row-clickable"
-                  (click)="item.inquiryId && openLead(item.inquiryId)"
-                  (keydown.enter)="item.inquiryId && openLead(item.inquiryId)"
-                  tabindex="0"
-                  role="link">
-                  <td>
-                    @if (item.inquiryId) {
-                      <a
-                        [routerLink]="['/app/admissions/lead', item.inquiryId]"
-                        [queryParams]="{ from: 'follow-ups' }"
-                        (click)="$event.stopPropagation()">
-                        {{ item.leadName || ('Lead #' + item.inquiryId) }}
-                      </a>
-                    } @else {
-                      —
-                    }
-                  </td>
-                  <td>{{ formatType(item.followUpType) }}</td>
-                  <td>{{ item.followUpDate | date:'medium' }}</td>
-                  <td>
-                    <span class="adm-badge" [attr.data-tone]="statusTone(item)">
-                      {{ statusLabel(item) }}
-                    </span>
-                  </td>
-                  <td>{{ item.remarks || '—' }}</td>
-                  <td (click)="$event.stopPropagation()">
-                    <div class="adm-inline-actions-sm">
-                      @if (item.inquiryId) {
-                        <button
-                          type="button"
-                          class="tc-btn tc-btn--primary"
-                          title="Open Lead 360 to record counseling or schedule"
-                          (click)="openLead(item.inquiryId)">
-                          <i class="pi pi-external-link"></i> Open Lead
-                        </button>
-                      }
-                    </div>
-                  </td>
+      <div [class.is-refreshing]="loading() && hasLoaded()">
+        @if (pagedItems.length) {
+          <div class="stu-table-wrap">
+            <table class="stu-table">
+              <thead>
+                <tr>
+                  <th>Lead</th>
+                  <th>Type</th>
+                  <th>Scheduled</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                  <th>Actions</th>
                 </tr>
+              </thead>
+              <tbody>
+                @for (item of pagedItems; track item.followUpId) {
+                  <tr
+                    class="adm-row-clickable"
+                    (click)="item.inquiryId && openLead(item.inquiryId)"
+                    (keydown.enter)="item.inquiryId && openLead(item.inquiryId)"
+                    tabindex="0"
+                    role="link">
+                    <td>
+                      @if (item.inquiryId) {
+                        <a
+                          [routerLink]="['/app/admissions/lead', item.inquiryId]"
+                          [queryParams]="{ from: 'follow-ups' }"
+                          (click)="$event.stopPropagation()">
+                          {{ item.leadName || ('Lead #' + item.inquiryId) }}
+                        </a>
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td>{{ formatType(item.followUpType) }}</td>
+                    <td>{{ item.followUpDate | date:'medium' }}</td>
+                    <td>
+                      <span class="adm-badge" [attr.data-tone]="statusTone(item)">
+                        {{ statusLabel(item) }}
+                      </span>
+                    </td>
+                    <td>{{ item.remarks || '—' }}</td>
+                    <td (click)="$event.stopPropagation()">
+                      <div class="adm-inline-actions-sm">
+                        @if (item.inquiryId) {
+                          <button
+                            type="button"
+                            class="tc-btn tc-btn--primary"
+                            title="Open Lead 360 to record counseling or schedule"
+                            (click)="openLead(item.inquiryId)">
+                            <i class="pi pi-external-link"></i> Open Lead
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <app-paginator
+            [page]="pageIndex"
+            [rows]="pageSize"
+            [totalRecords]="visibleItems().length"
+            [pageSizeOptions]="pageSizeOptions"
+            noun="follow-ups"
+            (pageChange)="onPageChange($event)">
+          </app-paginator>
+        } @else {
+          <div class="tc-empty-state">
+            <i class="pi pi-calendar"></i>
+            <h3>No follow-ups in this view</h3>
+            <p>
+              @if (activeTab() === 'completed') {
+                Completed follow-ups for your assigned leads will appear here.
+              } @else {
+                Schedule follow-ups from Lead 360 for leads assigned to you.
               }
-            </tbody>
-          </table>
-        </div>
-        <app-paginator
-          [page]="pageIndex"
-          [rows]="pageSize"
-          [totalRecords]="visibleItems().length"
-          [pageSizeOptions]="pageSizeOptions"
-          noun="follow-ups"
-          (pageChange)="onPageChange($event)">
-        </app-paginator>
-      } @else {
-        <div class="tc-empty-state">
-          <i class="pi pi-calendar"></i>
-          <h3>No follow-ups in this view</h3>
-          <p>
-            @if (activeTab() === 'completed') {
-              Completed follow-ups for your assigned leads will appear here.
-            } @else {
-              Schedule follow-ups from Lead 360 for leads assigned to you.
-            }
-          </p>
-        </div>
-      }
+            </p>
+          </div>
+        }
+      </div>
     </tc-saas-panel>
   }
 </section>

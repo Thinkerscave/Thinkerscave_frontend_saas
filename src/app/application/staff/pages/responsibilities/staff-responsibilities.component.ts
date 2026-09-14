@@ -32,6 +32,8 @@ export class StaffResponsibilitiesComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
 
@@ -49,12 +51,26 @@ export class StaffResponsibilitiesComponent implements OnInit {
   ngOnInit(): void { this.load(); }
 
   load(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.api.getResponsibilities()
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: list => { this.list = list; },
-        error: () => { this.errorMessage = 'Unable to load responsibilities.'; }
+        next: list => {
+          this.list = list;
+          this.hasLoaded = true;
+        },
+        error: () => {
+          this.hasLoaded = true;
+          this.errorMessage = 'Unable to load responsibilities.';
+        }
       });
   }
 

@@ -13,7 +13,7 @@
     <i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}
   </div>
 
-  <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
+  <tc-page-skeleton *ngIf="loading" layout="form" [sections]="6"></tc-page-skeleton>
 
   <div class="attendance-settings__grid" *ngIf="!loading">
     <tc-saas-panel title="Attendance Mode" subtitle="Choose how attendance is captured">

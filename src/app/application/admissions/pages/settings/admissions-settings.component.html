@@ -14,9 +14,9 @@
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
+  <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="form" [sections]="6"></tc-page-skeleton>
 
-  <div class="adm-settings-stack" *ngIf="!loading && settings">
+  <div class="adm-settings-stack" *ngIf="settings" [class.is-refreshing]="loading && hasLoaded">
     <tc-saas-panel title="Application documents">
       <p class="adm-settings-intro">
         Choose what appears on the application form. Mandatory documents need a star (*) and must be uploaded before submit.
