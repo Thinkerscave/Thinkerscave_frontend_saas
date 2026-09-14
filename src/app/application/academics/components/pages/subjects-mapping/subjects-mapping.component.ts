@@ -25,7 +25,6 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { ViewPreferenceService } from '../../../../services/view-preference.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
@@ -65,7 +64,6 @@ export class SubjectsMappingPageComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -90,7 +88,6 @@ export class SubjectsMappingPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  showBack = false;
   years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: SubjectsMappingDashboard | null = null;
@@ -153,7 +150,6 @@ export class SubjectsMappingPageComponent implements OnInit {
 
   ngOnInit(): void {
     const from = this.route.snapshot.queryParamMap.get('from');
-    this.showBack = from === 'overview';
 
     // Legacy deep-link from Class Detail: send users to the class-scoped mapping page.
     const classId = Number(this.route.snapshot.queryParamMap.get('classId'));
@@ -190,10 +186,6 @@ export class SubjectsMappingPageComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  goBack(): void {
-    this.nav.back(this.route);
   }
 
   onSearchChange(value: string): void {

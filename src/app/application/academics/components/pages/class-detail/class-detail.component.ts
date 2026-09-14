@@ -150,10 +150,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     })).subscribe({
       next: (cls) => {
         this.cls = cls;
-        this.pageHeader.setPageHeader({
-          title: cls.name,
-          subtitle: cls.academicYearName || 'Class details'
-        });
+        this.pageHeader.setPageSubtitle(cls.academicYearName || null);
       },
       error: () => {
         this.cls = null;

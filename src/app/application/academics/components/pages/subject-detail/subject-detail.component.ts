@@ -157,7 +157,6 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
       next: (subject) => {
         this.subject = subject;
         this.pageHeader.setPageHeader({
-          title: subject.name,
           subtitle: subject.academicYearName || 'Subject details'
         });
         this.loadClasses(subject.academicYearId);

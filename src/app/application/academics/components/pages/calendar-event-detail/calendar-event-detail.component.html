@@ -3,9 +3,6 @@
 
 <div class="ced-page acad-page" *ngIf="!loading && !loadError && event as e; else bootTpl">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
     <button
       type="button"
       class="tc-btn"
@@ -176,7 +173,7 @@
       <p>We couldn't load this calendar event right now.</p>
       <div class="ced-error__actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
-        <button type="button" class="tc-btn" (click)="back()">Back to Calendar</button>
+        <button type="button" class="tc-btn" (click)="back()">Go back</button>
       </div>
     </div>
   </div>

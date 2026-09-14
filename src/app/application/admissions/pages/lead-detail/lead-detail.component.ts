@@ -21,6 +21,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { finalize } from 'rxjs';
 
 import {
+  SaasPageHeaderComponent,
   SaasPillComponent,
   SaasTab,
   SaasTabsComponent
@@ -76,6 +77,7 @@ interface AttentionItem {
     MenuModule,
     SaasTabsComponent,
     SaasPillComponent,
+    SaasPageHeaderComponent,
     CounselorPickerComponent
   ],
   providers: [MessageService, ConfirmationService],
@@ -244,8 +246,7 @@ export class LeadDetailComponent implements OnInit, OnDestroy {
           const leadNo = d.inquiry.inquiryNumber || `LEAD-${d.inquiry.inquiryId}`;
           const student = d.inquiry.studentName || d.inquiry.name || 'Lead';
           this.pageHeader.setPageHeader({
-            title: leadNo,
-            subtitle: `${student} · ${this.headerStatusLabel()}`
+            subtitle: `${leadNo} · ${student} · ${this.headerStatusLabel()}`
           });
         },
         error: () => {

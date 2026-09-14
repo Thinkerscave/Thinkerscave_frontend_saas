@@ -24,7 +24,6 @@ import { AcademicYearApiService } from '../../../services/academic-year-api.serv
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_TIMETABLE_RESOURCE,
@@ -70,7 +69,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly workloadsApi = inject(TeacherAllocationApiService);
   private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
@@ -81,7 +79,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   loading = true;
   saving = false;
-  showBack = false;
   generating = false;
   savingConfig = false;
   savingResource = false;
@@ -138,7 +135,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
-    this.showBack = !!qp.get('from');
     const qpYear = qp.get('academicYearId');
 
     this.yearApi.search().subscribe({
@@ -160,10 +156,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  goBack(): void {
-    this.nav.back(this.route);
   }
 
   ngOnDestroy(): void {

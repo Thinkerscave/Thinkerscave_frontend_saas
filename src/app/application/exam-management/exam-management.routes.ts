@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { EXAM_PAGES } from '../../core/config/page-route-meta';
 
 export const EXAM_MANAGEMENT_ROUTES: Routes = [
   {
@@ -8,7 +9,7 @@ export const EXAM_MANAGEMENT_ROUTES: Routes = [
         path: '',
         loadComponent: () =>
           import('./components/exam-list/exam-list.component').then(m => m.ExamListComponent),
-        data: { breadcrumb: 'Exams' }
+        data: { ...EXAM_PAGES.list }
       }
     ]
   }

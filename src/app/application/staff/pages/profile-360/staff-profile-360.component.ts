@@ -18,8 +18,9 @@ import {
   StaffDetail
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 
 type ProfileTab = 'overview' | 'responsibilities' | 'documents' | 'activity';
 
@@ -29,7 +30,7 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent, AvatarComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
@@ -38,6 +39,7 @@ export class StaffProfile360Component implements OnInit {
   readonly router = inject(Router);
   private readonly api = inject(StaffService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   errorMessage = '';
@@ -88,7 +90,12 @@ export class StaffProfile360Component implements OnInit {
     this.api.getStaffDetail(this.staffId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: profile => { this.profile = profile; },
+        next: profile => {
+          this.profile = profile;
+          this.pageHeader.setPageHeader({
+            subtitle: [profile.staffCode, profile.designation].filter(Boolean).join(' · ')
+          });
+        },
         error: () => { this.errorMessage = 'Unable to load profile.'; }
       });
   }

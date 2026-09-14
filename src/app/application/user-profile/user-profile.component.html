@@ -1,8 +1,4 @@
-<tc-saas-page-header
-  title="My Profile"
-  subtitle="Personal information, security and quick links"
-  [breadcrumbs]="[{ label: 'Dashboard', route: '/app' }, { label: 'My Profile' }]">
-  <button type="button" class="btn-ghost" (click)="goDashboard()"><i class="pi pi-arrow-left"></i>Back to Dashboard</button>
+<tc-saas-page-header>
   <a routerLink="/app/settings" class="btn-ghost"><i class="pi pi-cog"></i>{{ 'nav.settings' | tcTranslate }}</a>
 </tc-saas-page-header>
 

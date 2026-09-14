@@ -17,7 +17,6 @@ import {
   SaasPanelComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 interface MenuAssignNode {
   row: PermissionMatrixRow;
@@ -32,8 +31,7 @@ type Privilege = 'canView' | 'canManage' | 'canApprove';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppToastComponent, 
     CommonModule, FormsModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent,
-    AppBackNavComponent
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],
   templateUrl: './role-workspace.component.html',
@@ -108,9 +106,6 @@ export class RoleWorkspaceComponent implements OnInit {
         this.role = role;
         this.rows = (matrix.rows ?? []).map(r => ({ ...r }));
         this.modules = this.buildTree(this.rows);
-        this.pageHeader.setPageHeader({
-          title: role?.roleName || 'Role Workspace'
-        });
         this.pageHeader.setPageSubtitle(role?.roleCode || 'Role menu assignment');
       },
       error: () => {

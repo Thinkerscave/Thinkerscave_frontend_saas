@@ -3,9 +3,6 @@
 
 <div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
     <button
       type="button"
       class="tc-btn"
@@ -174,7 +171,7 @@
       <p>We couldn't load this class information right now.</p>
       <div class="cd-error__actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
-        <button type="button" class="tc-btn" (click)="back()">Back to Classes</button>
+        <button type="button" class="tc-btn" (click)="back()">Go back</button>
       </div>
     </div>
   </div>

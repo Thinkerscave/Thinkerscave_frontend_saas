@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 @Component({
   selector: 'app-staff-leave-availability',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SaasPageHeaderComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-leave-availability.component.html'
 })

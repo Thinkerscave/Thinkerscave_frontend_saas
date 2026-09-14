@@ -1,7 +1,7 @@
 <section class="tc-page-shell tc-directory-page payroll-page my-payroll-page" *tcHasPerm="resources.MY; action: 'view'">
   <app-toast />
 
-  <tc-saas-page-header subtitle="Your salary summary, payslips, and payment history — amounts stay private until you reveal them.">
+  <tc-saas-page-header>
     <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()" [disabled]="loading">
       <i class="pi" [ngClass]="loading ? 'pi-spin pi-spinner' : 'pi-refresh'"></i> Refresh
     </button>

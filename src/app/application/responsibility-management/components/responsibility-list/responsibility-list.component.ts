@@ -7,7 +7,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { WorkspaceHeaderComponent } from '../../../../shared/components/workspace-header/workspace-header.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { KpiCardComponent } from '../../../../shared/components/kpi-card/kpi-card.component';
@@ -28,7 +28,7 @@ import { Responsibility, ResponsibilityService } from '../../services/responsibi
         TooltipModule,
         TagModule,
         ConfirmDialogModule,
-        WorkspaceHeaderComponent,
+        SaasPageHeaderComponent,
         EmptyStateComponent,
         SkeletonComponent,
         KpiCardComponent

@@ -1,14 +1,4 @@
-<app-workspace-header
-    title="New promotion batch"
-    subtitle="Academic year transition"
-    description="Create a draft batch, then preview and execute from the list."
-    icon="pi pi-arrow-up-right"
-    [breadcrumbs]="[
-      { label: 'Students' },
-      { label: 'Promotions', routerLink: '/app/promotions' },
-      { label: 'New' }
-    ]">
-</app-workspace-header>
+<tc-saas-page-header></tc-saas-page-header>
 
 <section class="tc-card form-card">
   @if (loadingYears) {

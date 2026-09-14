@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
@@ -17,7 +16,6 @@ import { ExpensesApiService } from '../../services/expenses-api.service';
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     AppToastComponent,
     HasPermissionDirective,
     SaasPageHeaderComponent,

@@ -11,17 +11,8 @@
     </button>
   </div>
 
-  <!-- Page header -->
+  <!-- Page actions -->
   <div *ngIf="!drawerMode" class="sw-wizard-header">
-    <div class="sw-wizard-header__left">
-      <button type="button" class="sw-back-btn" (click)="cancel()">
-        <i class="pi pi-arrow-left"></i>
-      </button>
-      <div>
-        <h1>{{ isEditMode ? 'Edit Staff Profile' : 'Create Staff Profile' }}</h1>
-        <p>{{ isEditMode ? 'Update staff member details.' : 'Add a new staff member to the organization.' }}</p>
-      </div>
-    </div>
     <div class="sw-wizard-header__actions">
       <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
       <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">

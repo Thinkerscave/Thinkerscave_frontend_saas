@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { finalize } from 'rxjs';
@@ -22,7 +21,6 @@ import { PayrollApiService } from '../../services/payroll-api.service';
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     ConfirmDialogModule,
     HasPermissionDirective,
     AppToastComponent,

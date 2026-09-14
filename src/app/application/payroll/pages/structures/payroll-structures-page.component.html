@@ -2,10 +2,7 @@
   <app-toast />
   <p-confirmDialog />
 
-  <tc-saas-page-header subtitle="Reusable salary templates applied to employees.">
-    <a class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back" routerLink="/app/payroll">
-      <i class="pi pi-arrow-left"></i> Back to Payroll
-    </a>
+  <tc-saas-page-header>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openCreate()">
       <i class="pi pi-plus"></i> Add Structure
     </button>

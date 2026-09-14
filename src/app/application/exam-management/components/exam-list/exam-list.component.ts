@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { WorkspaceHeaderComponent } from '../../../../shared/components/workspace-header/workspace-header.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
@@ -27,7 +27,7 @@ import { Exam, ExamService } from '../../services/exam.service';
         TableModule,
         TagModule,
         TooltipModule,
-        WorkspaceHeaderComponent,
+        SaasPageHeaderComponent,
         StatusBadgeComponent,
         EmptyStateComponent,
         SkeletonComponent,

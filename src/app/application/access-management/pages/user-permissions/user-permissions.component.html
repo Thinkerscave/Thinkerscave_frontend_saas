@@ -1,6 +1,5 @@
 <div class="saas-page tc-detail-page user-permissions">
   <tc-saas-page-header>
-    <app-back-nav fallback="/app/access-management/users" label="Back to users"></app-back-nav>
     <ng-container *ngIf="canManage && user">
       <button type="button" class="tc-btn" (click)="toggleLock()" [pTooltip]="lockTooltip()" tooltipPosition="bottom">
         {{ isLocked() ? 'Unlock account' : 'Lock account' }}

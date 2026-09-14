@@ -1,18 +1,11 @@
 <section class="sd-workspace">
-  <!-- ───────── HEADER ───────── -->
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Responsibilities</h1>
-      <p class="sd-header__sub">Manage organizational roles and responsibilities.</p>
-    </div>
-    <div class="sd-header__actions">
-      <button type="button" class="sd-btn sd-btn--primary" (click)="openAdd()">
-        <i class="pi pi-plus"></i> Create Responsibility
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <button type="button" class="sd-btn sd-btn--primary" (click)="openAdd()">
+      <i class="pi pi-plus"></i> Create Responsibility
+    </button>
+  </tc-saas-page-header>
 
-  <!-- ───────── KPI TILES ───────── -->
+  <!-- KPI TILES -->
   <div class="sd-kpi-row">
     <div class="sd-kpi-card" data-color="blue">
       <div class="sd-kpi-card__icon"><i class="pi pi-sitemap"></i></div>

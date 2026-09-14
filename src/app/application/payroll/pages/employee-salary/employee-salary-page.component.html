@@ -1,10 +1,7 @@
 <section class="tc-page-shell tc-directory-page payroll-page">
   <app-toast />
 
-  <tc-saas-page-header [subtitle]="salary?.employeeName ? ('Salary for ' + salary!.employeeName) : 'Employee salary configuration and history.'">
-    <a class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back" routerLink="/app/payroll">
-      <i class="pi pi-arrow-left"></i> Back to Payroll
-    </a>
+  <tc-saas-page-header>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.EMPLOYEE_SALARY; action: 'manage'" (click)="openEdit()">
       <i class="pi pi-pencil"></i> {{ salary ? 'Change Salary' : 'Configure Salary' }}
     </button>

@@ -1,19 +1,12 @@
 <section class="tc-page-shell stu-module-page stu-transfer-page">
-  <!-- Header -->
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>Student Transfer</h1>
-      <p>Manage transfer certificates and exit workflows.</p>
-    </div>
-    <div class="tc-page-header__actions">
+  <tc-saas-page-header>
       <button type="button" class="tc-btn tc-btn--primary" (click)="openNewTransfer()">
         <i class="pi pi-plus"></i> New Transfer Request
       </button>
       <button type="button" class="tc-btn" (click)="exportTransfers()">
         <i class="pi pi-download"></i> Export
       </button>
-    </div>
-  </header>
+  </tc-saas-page-header>
 
   <!-- KPI Tiles -->
   <div class="stu-kpi-grid">

@@ -1,15 +1,9 @@
 <section class="tc-page-shell stu-module-page stu-document-page">
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>Document Vault</h1>
-      <p>Centralised repository for every student document — uploads, verification, and missing tracking.</p>
+  <tc-saas-page-header>
       <span class="adm-count"><i class="pi pi-file"></i> {{ kpi.totalDocuments }} on file</span>
-    </div>
-    <div class="tc-page-header__actions">
       <button type="button" class="tc-btn" (click)="openBulk()"><i class="pi pi-upload"></i> Bulk Upload</button>
       <button type="button" class="tc-btn tc-btn--primary" (click)="openUpload()"><i class="pi pi-plus"></i> Upload Document</button>
-    </div>
-  </header>
+  </tc-saas-page-header>
 
   <div class="stu-kpi-grid">
     <div *ngFor="let tile of kpiTiles" class="tc-card tc-card--kpi" [attr.data-tone]="tile.tone">

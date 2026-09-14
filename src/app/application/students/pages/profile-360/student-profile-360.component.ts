@@ -15,7 +15,7 @@ import {
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 type ProfileTab = 'OVERVIEW' | 'PERSONAL' | 'FAMILY' | 'ACADEMICS' | 'DOCUMENTS' | 'MEDICAL' | 'TIMELINE';
 type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
@@ -24,7 +24,7 @@ type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
   selector: 'app-student-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, AppBackNavComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-profile-360.component.html'
 })
@@ -152,8 +152,6 @@ export class StudentProfile360Component implements OnInit, OnDestroy {
     this.editingPersonal = false;
     this.editingMedical = false;
   }
-
-  back(): void { this.router.navigate(['/app/students/directory']); }
 
   toggleMoreActions(event: Event): void {
     event.stopPropagation();

@@ -25,7 +25,6 @@ import {
   AppSectionHeaderComponent,
   AppTextareaComponent
 } from '../../../../shared/ui/app-form';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
@@ -80,7 +79,6 @@ const NOTES_MAX = 500;
     AppTextareaComponent,
     AppButtonComponent,
     AppLoaderComponent,
-    AppBackNavComponent,
     SaasPageHeaderComponent
   ],
   templateUrl: './customer-form.component.html',

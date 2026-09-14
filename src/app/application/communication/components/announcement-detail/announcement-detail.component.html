@@ -1,10 +1,5 @@
 <div class="saas-page announcement-detail">
-  <tc-saas-page-header
-    [title]="notice?.title || 'Announcement'"
-    subtitle="Delivery report and recipient breakdown"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Communication'},{label:'Announcements',route:'/app/communication/announcements'},{label:notice?.title || 'Detail'}]">
-    <app-back-nav fallback="/app/communication/announcements" label="Back to list"></app-back-nav>
-  </tc-saas-page-header>
+  <tc-saas-page-header [title]="notice?.title || 'Announcement'"></tc-saas-page-header>
 
   <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading announcement...</div>
 

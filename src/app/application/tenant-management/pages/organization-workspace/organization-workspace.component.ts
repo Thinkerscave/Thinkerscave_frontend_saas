@@ -139,7 +139,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.org = null;
         } else {
           this.org = org;
-          this.pageHeader.setPageHeader({ title: org.organizationName || 'Organization Details' });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.features = (features ?? []).filter(f => f.active !== false);

@@ -14,12 +14,13 @@ import {
   ResponsibilityRequest
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 @Component({
   selector: 'app-staff-responsibilities',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SaasPageHeaderComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-responsibilities.component.html'
 })

@@ -6,6 +6,7 @@ import { finalize, forkJoin } from 'rxjs';
 
 import { DocumentVaultEntry, StudentDirectoryCard, TransferRequest, TransferStatus } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 interface KpiTile {
   label: string;
@@ -19,7 +20,7 @@ interface KpiTile {
   selector: 'app-student-movement',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-movement.component.html'
 })

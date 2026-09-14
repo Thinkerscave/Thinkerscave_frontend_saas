@@ -22,6 +22,7 @@ import {
   StaffType
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 
 type WizardStep = 'personal' | 'employment';
 
@@ -50,6 +51,7 @@ export class CreateStaffComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly backNav = inject(BackNavigationService);
 
   /** When true, renders as a right-side drawer (directory Add Staff flow). */
   @Input() drawerMode = false;
@@ -241,7 +243,7 @@ export class CreateStaffComponent implements OnInit {
       this.closed.emit();
       return;
     }
-    this.router.navigate(['/app/staff/directory']);
+    this.backNav.back({ fallback: '/app/staff/directory' });
   }
 
   submit(): void {

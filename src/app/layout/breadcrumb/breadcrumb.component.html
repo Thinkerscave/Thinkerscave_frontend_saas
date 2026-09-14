@@ -1,10 +1,9 @@
-<nav class="tc-breadcrumb" aria-label="Breadcrumb">
-  <div class="tc-breadcrumb__row">
-    <div class="tc-breadcrumb__lead">
-      <h1 class="tc-breadcrumb__title">{{ title }}</h1>
-      <p *ngIf="subtitle" class="tc-breadcrumb__subtitle">{{ subtitle }}</p>
-    </div>
-    <p-breadcrumb class="tc-breadcrumb__trail" [home]="home" [model]="items"></p-breadcrumb>
-  </div>
-</nav>
-
+<header class="tc-page-header">
+  <div class="tc-page-header__top">
+    <div class="tc-page-header__lead">
+      <h1 class="tc-page-header__title">{{ title }}</h1>
+      <p *ngIf="subtitle" class="tc-page-header__subtitle">{{ subtitle }}</p>
+    </div>
+    <p-breadcrumb class="tc-page-header__trail" [home]="home" [model]="items"></p-breadcrumb>
+  </div>
+</header>

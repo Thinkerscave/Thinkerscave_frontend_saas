@@ -9,7 +9,6 @@
     <strong>{{ errorMessage }}</strong>
     <div class="ow-error__actions">
       <button type="button" class="ow-btn" (click)="load(orgId)"><i class="pi pi-refresh"></i> Retry</button>
-      <button type="button" class="ow-btn ow-btn--primary" (click)="back()">Back to Organizations</button>
     </div>
   </div>
 
@@ -17,9 +16,6 @@
     <p-confirmDialog></p-confirmDialog>
 
     <tc-saas-page-header>
-      <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-        <i class="pi pi-arrow-left"></i> Back
-      </button>
       <button type="button" class="tc-btn" (click)="openEdit()"
               pTooltip="Open the organization form to change profile, logo, and admin contact."
               tooltipPosition="bottom">

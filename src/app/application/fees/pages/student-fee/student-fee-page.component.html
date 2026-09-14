@@ -1,7 +1,7 @@
 <section class="tc-page-shell tc-directory-page fees-page student-fee-page">
   <app-toast />
 
-  <tc-saas-page-header subtitle="View fee status, payment history and receipts for your access scope.">
+  <tc-saas-page-header>
     <div class="tc-form-field fees-year-field">
       <label>Academic Year</label>
       <select class="p-inputtext p-component fees-year-select"
@@ -19,7 +19,7 @@
       <i class="pi pi-lock"></i>
       <h3>Access Restricted</h3>
       <p>You do not have permission to view this student's financial information.</p>
-      <a routerLink="/app/fees/students" class="tc-btn tc-btn--outline">Back</a>
+      <button type="button" class="tc-btn tc-btn--outline" (click)="goBack()">Back</button>
     </div>
   } @else {
     @if (!canSearch && linked.length > 1) {

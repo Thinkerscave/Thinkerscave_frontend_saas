@@ -12,6 +12,8 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
 import { CollectFeeDialogComponent } from '../../components/collect-fee-dialog/collect-fee-dialog.component';
@@ -44,6 +46,8 @@ export class StudentFeePageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(UiFeedbackService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly pageHeader = inject(BreadCrumbService);
+  private readonly backNav = inject(BackNavigationService);
 
   readonly resources = FEES_RESOURCES;
 
@@ -83,6 +87,10 @@ export class StudentFeePageComponent implements OnInit {
   previewLoading = false;
   preview: FeeReceipt | null = null;
   downloadingId: number | null = null;
+
+  goBack(): void {
+    this.backNav.back({ fallback: '/app/fees/students' });
+  }
 
   ngOnInit(): void {
     this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
@@ -206,6 +214,9 @@ export class StudentFeePageComponent implements OnInit {
       next: detail => {
         this.detail = detail;
         this.detailLoading = false;
+        this.pageHeader.setPageHeader({
+          subtitle: [detail.admissionNumber, detail.className, detail.sectionName].filter(Boolean).join(' · ')
+        });
         this.api.studentPeriods(this.selectedStudentId!, this.academicYearId!).subscribe({
           next: periods => this.periods = periods,
           error: () => this.periods = []

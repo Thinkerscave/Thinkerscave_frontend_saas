@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -27,7 +27,6 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicCalendarApiService } from '../../../services/academic-calendar-api.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_CALENDAR_RESOURCE,
@@ -80,8 +79,6 @@ export class AcademicCalendarPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -108,7 +105,6 @@ export class AcademicCalendarPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  showBack = false;
   years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: AcademicCalendarDashboard | null = null;
@@ -212,8 +208,6 @@ export class AcademicCalendarPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.showBack = this.route.snapshot.queryParamMap.get('from') === 'overview';
-
     this.search$
       .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -248,10 +242,6 @@ export class AcademicCalendarPageComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  goBack(): void {
-    this.nav.back(this.route);
   }
 
   onSearchChange(value: string): void {

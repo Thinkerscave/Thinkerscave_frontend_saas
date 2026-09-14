@@ -9,7 +9,7 @@ import { InputTextarea } from 'primeng/inputtextarea';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 
-import { WorkspaceHeaderComponent } from '../../../../shared/components/workspace-header/workspace-header.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { StudentsWorkspaceService } from '../../../students/services/students-workspace.service';
 import { PromotionService } from '../../services/promotion.service';
 
@@ -24,7 +24,7 @@ import { PromotionService } from '../../services/promotion.service';
     DropdownModule,
     InputTextModule,
     InputTextarea,
-    WorkspaceHeaderComponent
+    SaasPageHeaderComponent
   ],
   templateUrl: './promotion-batch-create.component.html',
   styleUrl: './promotion-batch-create.component.scss'

@@ -132,6 +132,66 @@ export class MenuMappingService {
     this.menuRefreshSubject.next();
   }
 
+  /** Sidebar trail for the current URL: parent group + matching leaf when present. */
+  trailForUrl(url: string): { label: string; link: string[] | null }[] {
+    const path = this.normalizePath(url);
+    if (!path || !this.menuCache.length) {
+      return [];
+    }
+
+    type Node = { item: MenuItem; ancestors: MenuItem[] };
+    const nodes: Node[] = [];
+    const walk = (items: MenuItem[] | undefined, ancestors: MenuItem[]): void => {
+      for (const item of items ?? []) {
+        nodes.push({ item, ancestors });
+        if (item.items?.length) {
+          walk(item.items, [...ancestors, item]);
+        }
+      }
+    };
+    walk(this.menuCache, []);
+
+    let best: Node | null = null;
+    let bestLen = -1;
+    for (const node of nodes) {
+      const link = this.normalizePath(this.routerLinkText(node.item.routerLink));
+      if (!link) {
+        continue;
+      }
+      if (path === link || path.startsWith(`${link}/`)) {
+        if (link.length > bestLen) {
+          best = node;
+          bestLen = link.length;
+        }
+      }
+    }
+
+    if (!best) {
+      const workspace = this.workspacePrefix(path);
+      if (workspace) {
+        const group = nodes.find(node =>
+          (node.item.items ?? []).some(child => {
+            const link = this.normalizePath(this.routerLinkText(child.routerLink));
+            return link === workspace || link.startsWith(`${workspace}/`);
+          })
+        );
+        if (group?.item.label) {
+          const groupLink = this.normalizePath(this.routerLinkText(group.item.routerLink))
+            || this.firstChildLink(group.item);
+          return [{ label: group.item.label, link: groupLink ? [groupLink] : null }];
+        }
+      }
+      return [];
+    }
+
+    return [...best.ancestors, best.item]
+      .filter(item => !!item.label)
+      .map(item => {
+        const link = this.normalizePath(this.routerLinkText(item.routerLink));
+        return { label: item.label as string, link: link ? [link] : null };
+      });
+  }
+
   private normalizeMenuItems(items: MenuItem[]): MenuItem[] {
     return (items ?? []).map(item => ({
       ...item,
@@ -224,6 +284,33 @@ export class MenuMappingService {
       return '';
     }
     return Array.isArray(routerLink) ? routerLink.join('/') : String(routerLink);
+  }
+
+  private normalizePath(url: string): string {
+    const path = (url || '').split('?')[0].split('#')[0].trim();
+    if (!path) {
+      return '';
+    }
+    const withSlash = path.startsWith('/') ? path : `/${path}`;
+    return withSlash.length > 1 ? withSlash.replace(/\/+$/, '') : withSlash;
+  }
+
+  private workspacePrefix(path: string): string {
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length >= 2 && parts[0] === 'app') {
+      return `/app/${parts[1]}`;
+    }
+    return '';
+  }
+
+  private firstChildLink(item: MenuItem): string {
+    for (const child of item.items ?? []) {
+      const link = this.normalizePath(this.routerLinkText(child.routerLink));
+      if (link) {
+        return link;
+      }
+    }
+    return '';
   }
 
 }

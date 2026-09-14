@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
-import { WorkspaceHeaderComponent } from '../../../../shared/components/workspace-header/workspace-header.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
@@ -24,7 +24,7 @@ import { AcademicEnrollment, EnrollmentService, EnrollmentStatus } from '../../s
         ButtonModule,
         TableModule,
         TooltipModule,
-        WorkspaceHeaderComponent,
+        SaasPageHeaderComponent,
         StatusBadgeComponent,
         EmptyStateComponent,
         SkeletonComponent,

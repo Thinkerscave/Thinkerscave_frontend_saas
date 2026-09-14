@@ -23,7 +23,7 @@ import {
   SaasStatGridComponent,
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
-import { AppGridTableToggleComponent, AppListViewMode, AppBackNavComponent } from '../../../../shared/ui/app-list';
+import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -38,8 +38,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
     SaasTabsComponent,
     SaasPillComponent,
     SaasStatGridComponent,
-    AppGridTableToggleComponent,
-    AppBackNavComponent
+    AppGridTableToggleComponent
   ],
   templateUrl: './customer-workspace.component.html',
   styleUrl: './customer-workspace.component.scss'
@@ -93,9 +92,6 @@ export class CustomerWorkspaceComponent implements OnInit {
           this.customer = null;
         } else {
           this.customer = customer;
-          this.pageHeader.setPageHeader({
-            title: customer.customerName || 'Customer Details'
-          });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.loading = false;

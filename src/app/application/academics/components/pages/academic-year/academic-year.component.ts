@@ -7,7 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
@@ -21,7 +21,6 @@ import { HasPermissionDirective } from '../../../../../shared/directives/has-per
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicYearTransitionApiService } from '../../../services/academic-year-transition-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
 import {
   ACADEMIC_YEAR_RESOURCE,
   AcademicYearDashboard,
@@ -61,8 +60,6 @@ export class AcademicYearPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   readonly permissions = inject(PermissionService);
@@ -73,7 +70,6 @@ export class AcademicYearPageComponent implements OnInit {
 
   loading = true;
   saving = false;
-  showBack = false;
   dashboard: AcademicYearDashboard | null = null;
   history: AcademicYearDto[] = [];
   searchTerm = '';
@@ -122,12 +118,7 @@ export class AcademicYearPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.showBack = !!this.route.snapshot.queryParamMap.get('from');
     this.reload();
-  }
-
-  goBack(): void {
-    this.nav.back(this.route);
   }
 
   reload(): void {

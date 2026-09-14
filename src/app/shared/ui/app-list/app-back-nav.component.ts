@@ -20,7 +20,7 @@ export class AppBackNavComponent {
   private readonly route = inject(ActivatedRoute);
 
   @Input() label = 'Back';
-  @Input({ required: true }) fallback!: string | string[];
+  @Input() fallback: string | string[] | undefined;
   @Input() fromMap: Record<string, string> | null = null;
 
   goBack(): void {

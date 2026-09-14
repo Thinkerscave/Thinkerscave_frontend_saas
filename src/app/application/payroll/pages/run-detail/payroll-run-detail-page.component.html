@@ -2,9 +2,6 @@
   <app-toast />
 
   <tc-saas-page-header [subtitle]="run ? ('Payroll run · ' + monthLabel(run.payrollYear, run.payrollMonth)) : 'Payroll run detail'">
-    <a class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back" routerLink="/app/payroll">
-      <i class="pi pi-arrow-left"></i> Back to Payroll
-    </a>
     @if (run && canRecalculate && !hasAnyPayment) {
       <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
               *tcHasPerm="resources.RUN; action: 'manage'"

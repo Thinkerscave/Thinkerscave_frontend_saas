@@ -1,7 +1,7 @@
 <section class="tc-page-shell tc-directory-page fees-page fin-reports-page" *tcHasPerm="resource; action: 'view'">
   <app-toast />
 
-  <tc-saas-page-header subtitle="Complete financial overview of your organization">
+  <tc-saas-page-header>
     @if (lastUpdated) {
       <span class="fin-report-updated">Last updated {{ lastUpdated | date:'medium' }}</span>
     }

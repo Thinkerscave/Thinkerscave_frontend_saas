@@ -1,14 +1,9 @@
-<app-workspace-header
-    title="Transfer requests"
-    subtitle="Student movement"
-    description="Approve transfers, reject requests and issue transfer certificates."
-    icon="pi pi-send"
-    [breadcrumbs]="[{ label: 'Students' }, { label: 'Transfers' }]">
-    <ng-container actions>
+<tc-saas-page-header>
+    <ng-container>
         <p-button label="New request" icon="pi pi-plus"
                   (onClick)="router.navigate(['/app/transfers/new'])"></p-button>
     </ng-container>
-</app-workspace-header>
+</tc-saas-page-header>
 
 <section class="tc-kpi-strip">
     <app-kpi-card label="Pending"   [value]="countBy('REQUESTED')"           icon="pi pi-clock"        tone="warning"></app-kpi-card>

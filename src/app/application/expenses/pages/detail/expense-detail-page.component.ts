@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
@@ -24,7 +24,6 @@ type Tab = 'details' | 'payments' | 'approvals' | 'attachments' | 'activity';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     AppToastComponent,
     HasPermissionDirective,
     SaasPageHeaderComponent,

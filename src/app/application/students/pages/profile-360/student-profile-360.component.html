@@ -1,8 +1,6 @@
 <section class="tc-page-shell tc-detail-page stu-profile-page" (click)="closeMenus()">
 
-  <div class="stu-profile-crumb tc-detail-page__crumb">
-    <app-back-nav fallback="/app/students/directory" label="Back to list"></app-back-nav>
-  </div>
+  <tc-saas-page-header></tc-saas-page-header>
 
   <div class="tc-loading" *ngIf="loading">
     <i class="pi pi-spin pi-spinner"></i> Loading profile…

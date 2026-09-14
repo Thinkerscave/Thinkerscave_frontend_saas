@@ -12,6 +12,7 @@ import {
   StudentDirectoryCard
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
 interface KpiTile {
   key: keyof DocumentVaultKpi;
@@ -24,7 +25,7 @@ interface KpiTile {
   selector: 'app-document-vault',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './document-vault.component.html'
 })

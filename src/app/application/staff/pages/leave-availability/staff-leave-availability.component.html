@@ -1,15 +1,9 @@
 <section class="sd-workspace">
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Leave & Availability</h1>
-      <p class="sd-header__sub">Manage leave requests, approvals, and staff availability.</p>
-    </div>
-    <div class="sd-header__actions">
-      <button type="button" class="sd-btn sd-btn--primary" disabled title="Coming soon">
-        <i class="pi pi-plus"></i> New Leave Request
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <button type="button" class="sd-btn sd-btn--primary" disabled title="Coming soon">
+      <i class="pi pi-plus"></i> New Leave Request
+    </button>
+  </tc-saas-page-header>
 
   <div class="sd-kpi-row">
     @for (kpi of kpis; track kpi.label) {

@@ -182,7 +182,6 @@ export class ProvisionOrganizationComponent implements OnInit {
       this.isEditMode = true;
       this.editingOrgId = orgId;
       this.pageHeader.setPageHeader({
-        title: 'Edit Organization',
         subtitle: 'Update profile, location, logo, and organization admin contact.'
       });
     }
@@ -605,7 +604,6 @@ export class ProvisionOrganizationComponent implements OnInit {
           this.ensureCustomerOption(org);
           this.patchFormFromOrg(org);
           this.pageHeader.setPageHeader({
-            title: 'Edit Organization',
             subtitle: org.organizationName
           });
         },

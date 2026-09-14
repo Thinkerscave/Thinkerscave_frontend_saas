@@ -1,9 +1,10 @@
-﻿<div class="sp-page tc-detail-page" *ngIf="!loading && profile">
+﻿<section class="sp-page tc-detail-page">
+  <tc-saas-page-header></tc-saas-page-header>
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ COMPACT IDENTITY HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <ng-container *ngIf="!loading && profile">
+
+  <!-- Compact identity header -->
   <header class="tc-detail-hero tc-detail-page__hero">
-    <app-back-nav class="tc-detail-hero__back" fallback="/app/staff/directory" label="Back to list"></app-back-nav>
-
     <div class="tc-detail-hero__identity">
       <tc-avatar [name]="profile.fullName" [imageUrl]="profile.photoUrl" size="xl"></tc-avatar>
       <div class="tc-detail-hero__meta">
@@ -13,7 +14,7 @@
             {{ profile.active ? 'Active' : 'Inactive' }}
           </span>
         </div>
-        <p class="tc-detail-hero__code">{{ profile.staffCode }} Â· {{ profile.designation }}</p>
+        <p class="tc-detail-hero__code">{{ profile.staffCode }} · {{ profile.designation }}</p>
         <div class="tc-detail-hero__chips">
           <span class="tc-detail-hero__chip">
             <i class="pi" [class.pi-graduation-cap]="profile.staffType === 'TEACHING'"
@@ -245,7 +246,7 @@
 
     </aside>
   </div>
-</div>
+  </ng-container>
 
 <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ LOADING â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div *ngIf="loading" class="sd-loading sd-loading--profile">
@@ -307,4 +308,6 @@
     </div>
   </div>
 </div>
+
+</section>
 
