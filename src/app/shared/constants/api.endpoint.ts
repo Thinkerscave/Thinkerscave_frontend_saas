@@ -110,6 +110,8 @@ export const accessApi = {
   deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
   rolePermissions: (roleId: number, organizationId: number) =>
     `${ACCESS_BASE}/roles/${roleId}/permissions?organizationId=${organizationId}`,
+  rolePermissionByMenu: (roleId: number, menuId: number, organizationId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}?organizationId=${organizationId}`,
   menus: `${ACCESS_BASE}/menus`,
   menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
   menuTree: `${ACCESS_BASE}/menus/tree`,
@@ -197,11 +199,41 @@ export const leaveApi = {
   cancel: (id: number) => `${BASE}/leave/${id}`,
 };
 
+/** @deprecated Legacy school-ops payroll endpoints — use financePayrollApi */
 export const payrollApi = {
   all: `${BASE}/payroll`,
   byStaff: (staffId: number) => `${BASE}/payroll/${staffId}`,
   saveOrUpdate: `${BASE}/payroll`,
   run: `${BASE}/payroll/run`,
+};
+
+/** Finance → Payroll (admin) */
+export const financePayrollApi = {
+  base: `${BASE}/payroll`,
+  overview: `${BASE}/payroll/overview`,
+  employees: `${BASE}/payroll/employees`,
+  components: `${BASE}/payroll/components`,
+  componentById: (id: number) => `${BASE}/payroll/components/${id}`,
+  structures: `${BASE}/payroll/structures`,
+  structureById: (id: number) => `${BASE}/payroll/structures/${id}`,
+  employeeSalary: (staffId: number) => `${BASE}/payroll/employees/${staffId}/salary`,
+  employeeSalaryHistory: (staffId: number) => `${BASE}/payroll/employees/${staffId}/salary/history`,
+  runsGenerate: `${BASE}/payroll/runs/generate`,
+  runById: (runId: number) => `${BASE}/payroll/runs/${runId}`,
+  runRecalculate: (runId: number) => `${BASE}/payroll/runs/${runId}/recalculate`,
+  runApprove: (runId: number) => `${BASE}/payroll/runs/${runId}/approve`,
+  runReturn: (runId: number) => `${BASE}/payroll/runs/${runId}/return`,
+  employeePayrollPayments: (id: number) => `${BASE}/payroll/employee-payrolls/${id}/payments`,
+  employeePayrollPayslip: (id: number) => `${BASE}/payroll/employee-payrolls/${id}/payslip`,
+  settings: `${BASE}/payroll/settings`,
+};
+
+/** Finance → Payroll (staff self-service) */
+export const payrollMeApi = {
+  summary: `${BASE}/payroll/me/summary`,
+  history: `${BASE}/payroll/me/history`,
+  employeePayroll: (id: number) => `${BASE}/payroll/me/employee-payrolls/${id}`,
+  payslip: (id: number) => `${BASE}/payroll/me/employee-payrolls/${id}/payslip`,
 };
 
 export const tenantApi = {
@@ -224,9 +256,13 @@ export const staffApi = {
   responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
   staffResponsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
   staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
+  /** @deprecated Legacy Staff salary structure APIs — use Finance payroll structures / employee salary */
   salaryStructures: `${BASE}/staff/salary-structures`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryStructureForStaff: (staffId: number) => `${BASE}/staff/${staffId}/salary-structure`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryHistory: (staffId: number) => `${BASE}/staff/${staffId}/salary-history`,
   /** @deprecated legacy endpoints — do not use */
   saveOrUpdate: `${BASE}/staff/saveOrUpdateStaff`,
@@ -235,14 +271,18 @@ export const staffApi = {
   toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
 };
 
+/**
+ * @deprecated Legacy Staff payroll API — retired (410). Use financePayrollApi / payrollMeApi.
+ * Do not call these endpoints from application code.
+ */
 export const staffPayrollApi = {
-  dashboard: `${BASE}/payroll/dashboard`,
-  generate: `${BASE}/payroll/generate`,
-  list: `${BASE}/payroll`,
-  byId: (id: number) => `${BASE}/payroll/${id}`,
-  markPaid: (id: number) => `${BASE}/payroll/${id}/mark-paid`,
-  bulkMarkPaid: `${BASE}/payroll/mark-paid`,
-  payslip: (id: number) => `${BASE}/payroll/${id}/payslip`,
+  dashboard: `${BASE}/staff/payroll/dashboard`,
+  generate: `${BASE}/staff/payroll/generate`,
+  list: `${BASE}/staff/payroll`,
+  byId: (id: number) => `${BASE}/staff/payroll/${id}`,
+  markPaid: (id: number) => `${BASE}/staff/payroll/${id}/mark-paid`,
+  bulkMarkPaid: `${BASE}/staff/payroll/mark-paid`,
+  payslip: (id: number) => `${BASE}/staff/payroll/${id}/payslip`,
 };
 
 export const branchApi = {

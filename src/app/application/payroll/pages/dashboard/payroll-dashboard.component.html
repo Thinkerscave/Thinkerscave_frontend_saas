@@ -1,0 +1,219 @@
+<section class="tc-page-shell tc-directory-page payroll-page">
+  <app-toast />
+
+  <tc-saas-page-header subtitle="Generate payroll, manage employee salaries, and record payments.">
+    <input class="p-inputtext p-component payroll-year-select"
+           type="month"
+           [ngModel]="periodValue"
+           (ngModelChange)="periodValue = $event; onPeriodChange()" />
+    <a class="p-button p-button-outlined p-button-sm"
+       routerLink="/app/payroll/components"
+       *tcHasPerm="resources.COMPONENTS; action: 'view'">
+      <i class="pi pi-list mr-1"></i> Manage Salary Components
+    </a>
+    <a class="p-button p-button-outlined p-button-sm"
+       routerLink="/app/payroll/structures"
+       *tcHasPerm="resources.STRUCTURES; action: 'view'">
+      <i class="pi pi-sitemap mr-1"></i> Manage Salary Structures
+    </a>
+    <button type="button" class="p-button p-button-sm"
+            *tcHasPerm="resources.RUN; action: 'manage'"
+            (click)="openGenerate()">
+      <i class="pi pi-play mr-1"></i> Generate Payroll
+    </button>
+  </tc-saas-page-header>
+
+  @if (loading) {
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading payroll…</div>
+  } @else if (error) {
+    <div class="tc-empty-state tc-empty-state--inline">
+      <p>{{ error }}</p>
+      <button type="button" class="p-button p-button-outlined p-button-sm" (click)="loadAll()">Retry</button>
+    </div>
+  } @else {
+    @if (kpis) {
+      <tc-kpi-group ariaLabel="Payroll KPIs" mode="equal" [columns]="5">
+        <tc-kpi-card label="Total Employees" [value]="'' + (kpis.totalStaff ?? kpis.totalEmployees ?? 0)" icon="pi pi-users" tone="primary"></tc-kpi-card>
+        <tc-kpi-card label="Generated" [value]="'' + (kpis.generatedCount ?? kpis.generated ?? 0)" icon="pi pi-file" tone="info"></tc-kpi-card>
+        <tc-kpi-card label="Pending Approval" [value]="'' + (kpis.pendingApprovalCount ?? kpis.pendingApproval ?? 0)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Payment Pending" [value]="'' + paymentPendingCount(kpis)" icon="pi pi-wallet" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Paid" [value]="'' + (kpis.paidCount ?? kpis.paid ?? 0)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
+      </tc-kpi-group>
+    }
+
+    <div class="tc-card tc-card--panel payroll-surface-panel">
+      <div class="tc-card__body">
+        <div class="payroll-toolbar">
+          <input class="p-inputtext p-component payroll-toolbar__search"
+                 placeholder="Search name or employee ID"
+                 [(ngModel)]="draftQ"
+                 (keyup.enter)="search()" />
+          <select class="p-inputtext p-component" [(ngModel)]="draftEmploymentCategory">
+            <option value="">All Employment Types</option>
+            @for (o of employmentOptions; track o.value) {
+              <option [value]="o.value">{{ o.label }}</option>
+            }
+          </select>
+          <select class="p-inputtext p-component" [(ngModel)]="draftPaymentType">
+            <option value="">All Payment Types</option>
+            @for (o of paymentTypes; track o.value) {
+              <option [value]="o.value">{{ o.label }}</option>
+            }
+          </select>
+          <select class="p-inputtext p-component" [(ngModel)]="draftStatus">
+            <option value="">All Status</option>
+            @for (s of statusOptions; track s) {
+              <option [value]="s">{{ statusLabel(s) }}</option>
+            }
+          </select>
+          <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="resetFilters()">Reset</button>
+        </div>
+
+        @if (tableLoading) {
+          <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading employees…</div>
+        } @else if (!rows.length) {
+          <div class="tc-empty-state">
+            <p>{{ q || employmentCategory || paymentType || status ? 'No employees match your filters.' : 'No employees found for this period.' }}</p>
+          </div>
+        } @else {
+          <div class="payroll-table-wrap">
+            <table class="payroll-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Employee ID</th>
+                  <th>Designation</th>
+                  <th>Employment Type</th>
+                  <th>Payment Type</th>
+                  <th class="text-right">Gross</th>
+                  <th class="text-right">Deductions</th>
+                  <th class="text-right">Net</th>
+                  <th>Status</th>
+                  <th class="payroll-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row.staffId) {
+                  <tr>
+                    <td class="font-medium">
+                      <a [routerLink]="['/app/payroll/employees', row.staffId]">{{ row.staffName || row.employeeName || ('#' + row.staffId) }}</a>
+                    </td>
+                    <td>{{ row.staffCode || row.employeeCode || ('#' + row.staffId) }}</td>
+                    <td>{{ row.designation || '—' }}</td>
+                    <td>{{ row.employmentCategory || '—' }}</td>
+                    <td>{{ row.paymentType || '—' }}</td>
+                    <td class="text-right">{{ formatMoney(row.grossAmount) }}</td>
+                    <td class="text-right">{{ formatMoney(row.totalDeductions) }}</td>
+                    <td class="text-right">{{ formatMoney(row.netAmount) }}</td>
+                    <td>
+                      <span class="tc-saas-pill" [attr.data-tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</span>
+                    </td>
+                    <td class="payroll-table__actions">
+                      @if (row.payrollRunId) {
+                        <a class="p-button p-button-text p-button-sm"
+                           [routerLink]="['/app/payroll/runs', row.payrollRunId]"
+                           title="View run">
+                          <i class="pi pi-eye"></i>
+                        </a>
+                      }
+                      <a class="p-button p-button-text p-button-sm"
+                         [routerLink]="['/app/payroll/employees', row.staffId]"
+                         *tcHasPerm="resources.EMPLOYEE_SALARY; action: 'manage'"
+                         title="Manage Salary">
+                        <i class="pi pi-pencil"></i>
+                      </a>
+                      @if (canRecordPayment(row)) {
+                        <button type="button" class="p-button p-button-text p-button-sm"
+                                *tcHasPerm="resources.PAYMENT; action: 'manage'"
+                                (click)="openPayment(row)"
+                                title="Record Payment">
+                          <i class="pi pi-credit-card"></i>
+                        </button>
+                      }
+                      @if (row.payslipDocumentId) {
+                        <button type="button" class="p-button p-button-text p-button-sm"
+                                *tcHasPerm="resources.PAYSLIP; action: 'view'"
+                                (click)="downloadPayslip(row)"
+                                title="Download Payslip">
+                          <i class="pi pi-download"></i>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="payroll-pager">
+            <span>Showing {{ rows.length }} of {{ total }} entries</span>
+            <div class="payroll-pager__btns">
+              <button type="button" class="p-button p-button-outlined p-button-sm" (click)="prevPage()" [disabled]="page === 0">Prev</button>
+              <button type="button" class="p-button p-button-outlined p-button-sm" (click)="nextPage()" [disabled]="(page + 1) * size >= total">Next</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="payroll-dash-grid payroll-dash-grid--tables">
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Activity</span>
+            <h3>Recent Activities</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          @if (!activities.length) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>No recent payroll activities.</p></div>
+          } @else {
+            <ul class="list-none p-0 m-0">
+              @for (a of activities; track a.activityId || a.occurredOn) {
+                <li class="flex justify-content-between py-2 border-bottom-1 surface-border">
+                  <div>
+                    <div class="font-medium">{{ a.action || a.description }}</div>
+                    <div class="text-sm text-color-secondary">{{ a.actorName || 'System' }}</div>
+                  </div>
+                  <span class="text-sm text-color-secondary">{{ a.occurredOn | date:'mediumDate' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Shortcuts</span>
+            <h3>Quick Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="payroll-quick-actions">
+            <a class="p-button p-button-outlined p-button-sm" routerLink="/app/payroll">Employee Salaries</a>
+            <a class="p-button p-button-outlined p-button-sm" routerLink="/app/fees/settings">Payroll Settings</a>
+            <a class="p-button p-button-outlined p-button-sm" routerLink="/app/fees">Finance</a>
+          </div>
+          <p class="payroll-helper m-0 mt-3">
+            Salary components, structures and employee salary are managed from Payroll — not from Staff create.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-generate-payroll-dialog
+    [(visible)]="generateVisible"
+    (generated)="onGenerated()">
+  </app-generate-payroll-dialog>
+
+  <app-record-payment-dialog
+    [(visible)]="paymentVisible"
+    [employee]="paymentEmployee"
+    [employeePayrollId]="paymentEmployee?.employeePayrollId ?? null"
+    [remaining]="paymentEmployee?.netAmount ?? null"
+    (paid)="onPaid()">
+  </app-record-payment-dialog>
+</section>

@@ -1,0 +1,206 @@
+<section class="tc-page-shell tc-directory-page payroll-page">
+  <app-toast />
+
+  <tc-saas-page-header [subtitle]="run ? ('Payroll run · ' + monthLabel(run.payrollYear, run.payrollMonth)) : 'Payroll run detail'">
+    <a class="p-button p-button-outlined p-button-sm" routerLink="/app/payroll">
+      <i class="pi pi-arrow-left mr-1"></i> Back to Payroll
+    </a>
+    @if (run && canRecalculate && !hasAnyPayment) {
+      <button type="button" class="p-button p-button-outlined p-button-sm"
+              *tcHasPerm="resources.RUN; action: 'manage'"
+              [disabled]="saving"
+              (click)="recalculate()">
+        Recalculate
+      </button>
+    }
+    @if (run && canApprove) {
+      <button type="button" class="p-button p-button-outlined p-button-sm"
+              *tcHasPerm="resources.RUN; action: 'approve'"
+              [disabled]="saving"
+              (click)="returnRun()">
+        Return
+      </button>
+      <button type="button" class="p-button p-button-sm"
+              *tcHasPerm="resources.RUN; action: 'approve'"
+              [disabled]="saving"
+              (click)="approve()">
+        Approve
+      </button>
+    }
+  </tc-saas-page-header>
+
+  @if (loading) {
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+  } @else if (error) {
+    <div class="tc-empty-state tc-empty-state--inline">
+      <p>{{ error }}</p>
+      <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+    </div>
+  } @else if (run) {
+    <div class="mb-3 flex align-items-center gap-2 flex-wrap">
+      <span class="tc-saas-pill" [attr.data-tone]="statusTone(run.status)">{{ statusLabel(run.status) }}</span>
+      @if (run.generatedOn) {
+        <span class="text-sm text-color-secondary">Generated {{ run.generatedOn | date:'medium' }}</span>
+      }
+      @if (run.notes) {
+        <span class="text-sm text-color-secondary">· {{ run.notes }}</span>
+      }
+    </div>
+
+    @if (canApprove) {
+      <div class="payroll-toolbar mb-3">
+        <input class="p-inputtext p-component payroll-toolbar__search"
+               placeholder="Return remarks (optional)"
+               [(ngModel)]="returnRemarks" />
+      </div>
+    }
+
+    <div class="payroll-tabs">
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'employees'" (click)="activeTab = 'employees'">Employee List</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'summary'" (click)="activeTab = 'summary'">Summary</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'approval'" (click)="activeTab = 'approval'">Approval History</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'payments'" (click)="activeTab = 'payments'">Payment History</button>
+    </div>
+
+    @if (activeTab === 'employees') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          <div class="payroll-table-wrap">
+            <table class="payroll-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>ID</th>
+                  <th class="text-right">Gross</th>
+                  <th class="text-right">Deductions</th>
+                  <th class="text-right">Net</th>
+                  <th>Status</th>
+                  <th class="payroll-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of run.employees || []; track row.employeePayrollId) {
+                  <tr>
+                    <td>
+                      <a [routerLink]="['/app/payroll/employees', row.staffId]">{{ row.employeeName || ('#' + row.staffId) }}</a>
+                    </td>
+                    <td>{{ row.employeeCode || row.staffId }}</td>
+                    <td class="text-right">{{ formatMoney(row.grossAmount) }}</td>
+                    <td class="text-right">{{ formatMoney(row.totalDeductions) }}</td>
+                    <td class="text-right">{{ formatMoney(row.netAmount) }}</td>
+                    <td><span class="tc-saas-pill" [attr.data-tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</span></td>
+                    <td class="payroll-table__actions">
+                      @if (canPay(row)) {
+                        <button type="button" class="p-button p-button-text p-button-sm"
+                                *tcHasPerm="resources.PAYMENT; action: 'manage'"
+                                (click)="openPayment(row)"
+                                title="Record Payment">
+                          <i class="pi pi-credit-card"></i>
+                        </button>
+                      }
+                      @if (row.payslipDocumentId) {
+                        <button type="button" class="p-button p-button-text p-button-sm"
+                                *tcHasPerm="resources.PAYSLIP; action: 'view'"
+                                (click)="downloadPayslip(row)"
+                                title="Download Payslip">
+                          <i class="pi pi-download"></i>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7">No employees in this run.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'summary') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          <div class="grid">
+            <div class="col-6 md:col-3"><span class="text-sm text-color-secondary">Employees</span><div class="font-medium">{{ run.summary?.totalEmployees ?? (run.employees?.length || 0) }}</div></div>
+            <div class="col-6 md:col-3"><span class="text-sm text-color-secondary">Gross</span><div class="font-medium">{{ formatMoney(run.summary?.totalGross) }}</div></div>
+            <div class="col-6 md:col-3"><span class="text-sm text-color-secondary">Deductions</span><div class="font-medium">{{ formatMoney(run.summary?.totalDeductions) }}</div></div>
+            <div class="col-6 md:col-3"><span class="text-sm text-color-secondary">Net</span><div class="font-medium">{{ formatMoney(run.summary?.totalNet) }}</div></div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'approval') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          <div class="payroll-table-wrap">
+            <table class="payroll-table payroll-table--compact">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>By</th>
+                  <th>When</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ev of run.approvalHistory || []; track ev.eventId || ev.occurredOn) {
+                  <tr>
+                    <td>{{ ev.action }}</td>
+                    <td>{{ ev.actorName || '—' }}</td>
+                    <td>{{ ev.occurredOn | date:'medium' }}</td>
+                    <td>{{ ev.remarks || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4">No approval history yet.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'payments') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          <div class="payroll-table-wrap">
+            <table class="payroll-table payroll-table--compact">
+              <thead>
+                <tr>
+                  <th>Payroll</th>
+                  <th class="text-right">Amount</th>
+                  <th>Paid On</th>
+                  <th>Method</th>
+                  <th>Reference</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of run.paymentHistory || []; track p.payrollPaymentId) {
+                  <tr>
+                    <td>#{{ p.employeePayrollId }}</td>
+                    <td class="text-right">{{ formatMoney(p.amount) }}</td>
+                    <td>{{ p.paidOn | date:'medium' }}</td>
+                    <td>{{ p.paymentMethodName || p.paymentMethodCode || '—' }}</td>
+                    <td>{{ p.reference || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5">No payments recorded.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <app-record-payment-dialog
+    [(visible)]="paymentVisible"
+    [employee]="paymentEmployee"
+    [employeePayrollId]="paymentEmployee?.employeePayrollId ?? null"
+    [remaining]="paymentRemaining"
+    (paid)="load()">
+  </app-record-payment-dialog>
+</section>

@@ -164,7 +164,9 @@ export const ACCESS_PAGES = {
     pageSubtitle: 'Define organizational roles and assign menu permissions'
   },
   roleWorkspace: {
-    breadcrumb: 'Role Workspace'
+    breadcrumb: 'Role Workspace',
+    breadcrumbLink: ['/app/access-management/roles'],
+    pageSubtitle: 'Role details and menu/submenu assignment for this organization.'
   },
   featureCatalog: {
     breadcrumb: 'Feature Catalog',

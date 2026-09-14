@@ -623,7 +623,15 @@ export class BreadcrumbComponent implements OnInit {
 
       attendance: { dashboard: 'Dashboard', students: 'Student Attendance', staff: 'Staff Attendance' },
 
-      fees: { dashboard: 'Dashboard' },
+      fees: {
+        dashboard: 'Fees',
+        heads: 'Fee Heads',
+        structures: 'Fee Structures',
+        students: 'Student Fee',
+        receipts: 'Receipts',
+        outstanding: 'Outstanding',
+        settings: 'Settings'
+      },
 
       communication: { announcements: 'Announcements', templates: 'Templates', conversations: 'Conversations', notices: 'Notices' }
 

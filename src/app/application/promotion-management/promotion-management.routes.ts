@@ -1,20 +1,8 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/guard/role.guard';
-
-const PROMOTION_ROLES = [
-  'SUPER_ADMIN',
-  'ADMIN',
-  'ORGANIZATION_ADMIN',
-  'ORGANIZATION_OWNER',
-  'SCHOOL_ADMIN',
-  'PRINCIPAL',
-  'STAFF'
-];
 
 export const PROMOTION_MANAGEMENT_ROUTES: Routes = [
   {
     path: 'promotions',
-    canActivate: [roleGuard(PROMOTION_ROLES)],
     children: [
       {
         path: '',
@@ -32,7 +20,6 @@ export const PROMOTION_MANAGEMENT_ROUTES: Routes = [
   },
   {
     path: 'transfers',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])],
     children: [
       {
         path: '',

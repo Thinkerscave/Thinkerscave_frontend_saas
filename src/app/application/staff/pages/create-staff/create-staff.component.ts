@@ -17,8 +17,6 @@ import { finalize } from 'rxjs';
 import {
   EmploymentCategory,
   EmploymentStatus,
-  SalaryStructureRequest,
-  SalaryType,
   StaffCreateRequest,
   StaffDetail,
   StaffType
@@ -97,19 +95,11 @@ export class CreateStaffComponent implements OnInit {
   contractStartDate = '';
   contractEndDate = '';
 
-  // ── Salary ────────────────────────────────────────────────────────────────
-  salaryType: SalaryType = 'MONTHLY';
-  basicPay: number | null = null;
-  hra: number | null = null;
-  da: number | null = null;
-  specialAllowance: number | null = null;
-  transportAllowance: number | null = null;
-  otherAllowance: number | null = null;
+  // ── Bank (optional on create; salary configured in Finance → Payroll) ─────
   bankName = '';
   accountHolderName = '';
   accountNumber = '';
   ifscCode = '';
-  salaryEffectiveFrom = '';
 
   // ── Emergency ─────────────────────────────────────────────────────────────
   emergencyContactName = '';
@@ -177,17 +167,6 @@ export class CreateStaffComponent implements OnInit {
     { value: 'CONTRACT_COMPLETED', label: 'Contract Completed' }
   ];
 
-  readonly salaryTypeOptions: SelectOption<SalaryType>[] = [
-    { value: 'MONTHLY',    label: 'Monthly' },
-    { value: 'DAILY_WAGE', label: 'Daily Wage' }
-  ];
-
-  get grossSalary(): number {
-    return (this.basicPay ?? 0) + (this.hra ?? 0) + (this.da ?? 0)
-         + (this.specialAllowance ?? 0) + (this.transportAllowance ?? 0)
-         + (this.otherAllowance ?? 0);
-  }
-
   get activeStepIndex(): number {
     return this.steps.findIndex(s => s.id === this.activeStep);
   }
@@ -201,7 +180,6 @@ export class CreateStaffComponent implements OnInit {
     } else {
       // Set today as default joining date
       this.joiningDate = new Date().toISOString().substring(0, 10);
-      this.salaryEffectiveFrom = new Date().toISOString().substring(0, 10);
     }
   }
 
@@ -240,11 +218,6 @@ export class CreateStaffComponent implements OnInit {
     this.emergencyContactName     = s.emergencyContactName ?? '';
     this.emergencyContactRelation = s.emergencyContactRelation ?? '';
     this.emergencyContactNumber   = s.emergencyContactNumber ?? '';
-
-    if (s.salarySummary) {
-      this.salaryType          = s.salarySummary.salaryType;
-      this.salaryEffectiveFrom = s.salarySummary.effectiveFrom;
-    }
   }
 
   setStep(step: WizardStep): void { this.activeStep = step; }
@@ -339,26 +312,7 @@ export class CreateStaffComponent implements OnInit {
         .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
         .subscribe({
           next: (res: any) => {
-            // If create, also set salary structure if filled in
             const newId = res?.staffId ?? 0;
-            if (this.salaryEffectiveFrom && newId > 0) {
-              const salReq: SalaryStructureRequest = {
-                staffId: newId,
-                salaryType: this.salaryType,
-                basicPay: this.basicPay ?? undefined,
-                hra: this.hra ?? undefined,
-                da: this.da ?? undefined,
-                specialAllowance: this.specialAllowance ?? undefined,
-                transportAllowance: this.transportAllowance ?? undefined,
-                otherAllowance: this.otherAllowance ?? undefined,
-                bankName: this.bankName || undefined,
-                accountHolderName: this.accountHolderName || undefined,
-                accountNumber: this.accountNumber || undefined,
-                ifscCode: this.ifscCode || undefined,
-                effectiveFrom: this.salaryEffectiveFrom
-              };
-              this.api.createSalaryStructure(salReq).subscribe();
-            }
             if (this.drawerMode) {
               this.saved.emit(newId || undefined);
               return;

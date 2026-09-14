@@ -1,0 +1,85 @@
+<section class="tc-page-shell tc-directory-page payroll-page">
+  <app-toast />
+  <p-confirmDialog />
+
+  <tc-saas-page-header subtitle="Reusable salary templates applied to employees.">
+    <a class="p-button p-button-outlined p-button-sm" routerLink="/app/payroll">
+      <i class="pi pi-arrow-left mr-1"></i> Back to Payroll
+    </a>
+    <button type="button" class="p-button p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openCreate()">
+      <i class="pi pi-plus mr-1"></i> Add Structure
+    </button>
+  </tc-saas-page-header>
+
+  <div class="payroll-banner payroll-banner--info">
+    Salary structures are managed in Payroll — not in Finance Settings.
+  </div>
+
+  <div class="tc-card tc-card--panel payroll-surface-panel">
+    <div class="tc-card__body">
+      <div class="payroll-toolbar">
+        <input class="p-inputtext p-component payroll-toolbar__search" placeholder="Search by name" [(ngModel)]="q" (keyup.enter)="search()" />
+        <select class="p-inputtext p-component" [(ngModel)]="status">
+          <option value="">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+        <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
+        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+      </div>
+
+      @if (loading) {
+        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      } @else if (error) {
+        <div class="tc-empty-state tc-empty-state--inline">
+          <p>{{ error }}</p>
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+        </div>
+      } @else if (!rows.length) {
+        <div class="tc-empty-state"><p>No salary structures found.</p></div>
+      } @else {
+        <div class="payroll-table-wrap">
+          <table class="payroll-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Staff type</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th class="payroll-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.salaryStructureId) {
+                <tr>
+                  <td class="font-medium">{{ row.name }}</td>
+                  <td>{{ row.applicableStaffType || 'All' }}</td>
+                  <td>{{ row.description || '—' }}</td>
+                  <td><span class="tc-saas-pill" [class]="row.status === 'ACTIVE' ? 'success' : 'danger'">{{ row.status }}</span></td>
+                  <td class="payroll-table__actions">
+                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openEdit(row)" title="Edit">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="toggleStatus(row)" title="Activate / Deactivate">
+                      <i class="pi" [ngClass]="row.status === 'ACTIVE' ? 'pi-eye-slash' : 'pi-eye'"></i>
+                    </button>
+                    <button type="button" class="p-button p-button-text p-button-sm p-button-danger" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="remove(row)" title="Delete">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="payroll-pager"><span>Showing {{ rows.length }} of {{ total }} entries</span></div>
+      }
+    </div>
+  </div>
+
+  <app-salary-structure-dialog
+    [(visible)]="dialogVisible"
+    [editing]="editing"
+    (saved)="load()">
+  </app-salary-structure-dialog>
+</section>

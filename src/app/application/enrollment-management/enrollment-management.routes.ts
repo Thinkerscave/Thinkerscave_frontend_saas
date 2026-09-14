@@ -1,10 +1,8 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/guard/role.guard';
 
 export const ENROLLMENT_MANAGEMENT_ROUTES: Routes = [
   {
     path: 'enrollments',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'STAFF'])],
     children: [
       {
         path: '',

@@ -1,0 +1,188 @@
+<section class="tc-page-shell tc-directory-page fees-page">
+  <app-toast />
+
+  <tc-saas-page-header subtitle="Search, preview and download immutable fee receipts.">
+    <select class="p-inputtext p-component fees-year-select"
+            [(ngModel)]="academicYearId"
+            (ngModelChange)="onYearChange()"
+            *tcHasPerm="resources.RECEIPTS; action: 'view'">
+      <option [ngValue]="null">All years</option>
+      @for (y of years; track y.id) {
+        <option [ngValue]="y.id">{{ y.name }}</option>
+      }
+    </select>
+  </tc-saas-page-header>
+
+  <div class="tc-card tc-card--panel fees-surface-panel" *tcHasPerm="resources.RECEIPTS; action: 'view'">
+    <div class="tc-card__body">
+      <div class="fees-toolbar">
+        <input class="p-inputtext p-component fees-toolbar__search"
+               placeholder="Search receipt no., student or admission no."
+               [(ngModel)]="q"
+               (keyup.enter)="search()" />
+        <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
+        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+      </div>
+
+      @if (loading) {
+        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading receipts…</div>
+      } @else if (error) {
+        <div class="tc-empty-state tc-empty-state--inline">
+          <p>{{ error }}</p>
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+        </div>
+      } @else if (!rows.length) {
+        <div class="tc-empty-state">
+          <p>{{ q ? 'No receipts match your search.' : 'No receipts found for this academic year.' }}</p>
+        </div>
+      } @else {
+        <div class="fees-table-wrap">
+          <table class="fees-table fees-table--compact">
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Student</th>
+                <th>Class</th>
+                <th class="text-right">Amount</th>
+                <th>Method</th>
+                <th>Issued On</th>
+                <th class="fees-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.feeReceiptId) {
+                <tr>
+                  <td class="font-medium">{{ row.receiptNumber }}</td>
+                  <td>
+                    <div>{{ row.studentName }}</div>
+                    @if (row.admissionNumber) {
+                      <div class="fees-muted">{{ row.admissionNumber }}</div>
+                    }
+                  </td>
+                  <td>{{ classLabel(row) }}</td>
+                  <td class="text-right">{{ row.amount | number:'1.2-2' }}</td>
+                  <td>{{ row.paymentMethodName || '—' }}</td>
+                  <td>{{ row.issuedOn | date:'mediumDate' }}</td>
+                  <td class="fees-table__actions">
+                    <button type="button"
+                            class="p-button p-button-text p-button-sm"
+                            title="Preview"
+                            *tcHasPerm="resources.RECEIPTS; action: 'view'"
+                            (click)="openPreview(row)">
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    <button type="button"
+                            class="p-button p-button-text p-button-sm"
+                            title="Download PDF"
+                            *tcHasPerm="resources.RECEIPTS; action: 'view'"
+                            [disabled]="downloadingId === row.feeReceiptId"
+                            (click)="download(row)">
+                      @if (downloadingId === row.feeReceiptId) {
+                        <i class="pi pi-spin pi-spinner"></i>
+                      } @else {
+                        <i class="pi pi-download"></i>
+                      }
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="fees-pager">
+          <span>Showing {{ rows.length }} of {{ total }}</span>
+          <div class="fees-pager__btns">
+            <button type="button" class="p-button p-button-outlined p-button-sm"
+                    [disabled]="page === 0" (click)="prevPage()">Prev</button>
+            <button type="button" class="p-button p-button-outlined p-button-sm"
+                    [disabled]="(page + 1) * size >= total" (click)="nextPage()">Next</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <p-dialog
+    header="Receipt preview"
+    [(visible)]="previewVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '640px', maxWidth: '95vw' }"
+    styleClass="fees-receipt-preview-dialog">
+    @if (previewLoading) {
+      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading preview…</div>
+    } @else if (preview) {
+      <div class="fees-receipt-preview">
+        <div class="fees-receipt-preview__school">
+          <strong>{{ preview.schoolName || 'School' }}</strong>
+          @if (preview.schoolAddress) {
+            <div class="fees-muted">{{ preview.schoolAddress }}</div>
+          }
+          @if (preview.schoolContact) {
+            <div class="fees-muted">{{ preview.schoolContact }}</div>
+          }
+        </div>
+        <div class="fees-receipt-preview__meta">
+          <div><span>Receipt</span><strong>{{ preview.receiptNumber }}</strong></div>
+          <div><span>Issued</span><strong>{{ preview.issuedOn | date:'medium' }}</strong></div>
+          <div><span>Status</span><strong>{{ preview.status }}</strong></div>
+        </div>
+        <div class="fees-receipt-preview__student">
+          <div><span>Student</span><strong>{{ preview.studentName }}</strong></div>
+          <div><span>Admission</span><strong>{{ preview.admissionNumber }}</strong></div>
+          <div>
+            <span>Class</span>
+            <strong>{{ classLabel(preview) }}</strong>
+          </div>
+          <div><span>Year</span><strong>{{ preview.academicYearName || '—' }}</strong></div>
+          <div><span>Method</span><strong>{{ preview.paymentMethodName || '—' }}</strong></div>
+          <div><span>Reference</span><strong>{{ preview.referenceNumber || '—' }}</strong></div>
+        </div>
+        <table class="fees-table fees-table--compact">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of preview.lines || []; track line.feeReceiptLineId) {
+              <tr>
+                <td>{{ line.periodLabel }}</td>
+                <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2">No line items</td></tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td><strong>Total</strong></td>
+              <td class="text-right">
+                <strong>{{ preview.amount | number:'1.2-2' }} {{ preview.currencyCode || '' }}</strong>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+        @if (preview.remarks) {
+          <p class="fees-receipt-preview__remarks">{{ preview.remarks }}</p>
+        }
+        <div class="flex justify-content-end gap-2 mt-3">
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="previewVisible = false">Close</button>
+          <button type="button"
+                  class="p-button p-button-sm"
+                  *tcHasPerm="resources.RECEIPTS; action: 'view'"
+                  [disabled]="downloadingId === preview.feeReceiptId"
+                  (click)="download(preview)">
+            @if (downloadingId === preview.feeReceiptId) {
+              <i class="pi pi-spin pi-spinner mr-1"></i>
+            } @else {
+              <i class="pi pi-download mr-1"></i>
+            }
+            Download PDF
+          </button>
+        </div>
+      </div>
+    }
+  </p-dialog>
+</section>

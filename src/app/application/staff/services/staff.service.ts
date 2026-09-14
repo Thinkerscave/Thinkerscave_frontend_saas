@@ -6,19 +6,11 @@ import { environment } from '../../../../environments/environment';
 import { resolveStaffPhotoUrl } from '../../../shared/utils/profile-assets';
 import {
   ApiResponse,
-  BulkMarkPaidRequest,
   PageResponse,
-  Payroll,
-  PayrollDashboard,
-  PayrollFilterParams,
-  PayrollGenerateRequest,
-  PayrollGenerateResult,
   Responsibility,
   ResponsibilityAssignment,
   ResponsibilityAssignmentRequest,
   ResponsibilityRequest,
-  SalaryStructure,
-  SalaryStructureRequest,
   StaffCreateRequest,
   StaffCreateResponse,
   StaffDashboard,
@@ -163,96 +155,5 @@ export class StaffService {
     return this.http
       .patch<ApiResponse<void>>(`${this.base}/staff/responsibility-assignments/${assignmentId}/deactivate`, {})
       .pipe(map(() => void 0));
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Salary Structure
-  // ──────────────────────────────────────────────────────────────────────────
-
-  getSalaryStructure(staffId: number): Observable<SalaryStructure> {
-    return this.http
-      .get<ApiResponse<SalaryStructure>>(`${this.base}/staff/${staffId}/salary-structure`)
-      .pipe(map(r => r.data));
-  }
-
-  getSalaryHistory(staffId: number): Observable<SalaryStructure[]> {
-    return this.http
-      .get<ApiResponse<SalaryStructure[]>>(`${this.base}/staff/${staffId}/salary-history`)
-      .pipe(map(r => r.data ?? []));
-  }
-
-  createSalaryStructure(request: SalaryStructureRequest): Observable<{ salaryStructureId: number; grossSalary: number }> {
-    return this.http
-      .post<ApiResponse<{ salaryStructureId: number; grossSalary: number }>>(`${this.base}/staff/salary-structures`, request)
-      .pipe(map(r => r.data));
-  }
-
-  updateSalaryStructure(id: number, request: SalaryStructureRequest): Observable<void> {
-    return this.http
-      .put<ApiResponse<void>>(`${this.base}/staff/salary-structures/${id}`, request)
-      .pipe(map(() => void 0));
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Payroll
-  // ──────────────────────────────────────────────────────────────────────────
-
-  getPayrollDashboard(): Observable<PayrollDashboard> {
-    return this.http
-      .get<ApiResponse<PayrollDashboard>>(`${this.base}/payroll/dashboard`)
-      .pipe(map(r => r.data));
-  }
-
-  generatePayroll(request: PayrollGenerateRequest): Observable<PayrollGenerateResult> {
-    return this.http
-      .post<ApiResponse<PayrollGenerateResult>>(`${this.base}/payroll/generate`, request)
-      .pipe(map(r => r.data));
-  }
-
-  getPayrollList(filters: PayrollFilterParams = {}): Observable<PageResponse<Payroll>> {
-    let params = new HttpParams();
-    if (filters.year !== undefined)  { params = params.set('year',    String(filters.year)); }
-    if (filters.month !== undefined) { params = params.set('month',   String(filters.month)); }
-    if (filters.status)              { params = params.set('status',  filters.status); }
-    if (filters.staffId !== undefined){ params = params.set('staffId', String(filters.staffId)); }
-    if (filters.page !== undefined)  { params = params.set('page',    String(filters.page)); }
-    if (filters.size !== undefined)  { params = params.set('size',    String(filters.size)); }
-    return this.http
-      .get<ApiResponse<PageResponse<Payroll>>>(`${this.base}/payroll`, { params })
-      .pipe(map(r => r.data));
-  }
-
-  getPayrollDetail(payrollId: number): Observable<Payroll> {
-    return this.http
-      .get<ApiResponse<Payroll>>(`${this.base}/payroll/${payrollId}`)
-      .pipe(map(r => r.data));
-  }
-
-  markPaid(payrollId: number): Observable<void> {
-    return this.http
-      .patch<ApiResponse<void>>(`${this.base}/payroll/${payrollId}/mark-paid`, {})
-      .pipe(map(() => void 0));
-  }
-
-  bulkMarkPaid(request: BulkMarkPaidRequest): Observable<void> {
-    return this.http
-      .patch<ApiResponse<void>>(`${this.base}/payroll/mark-paid`, request)
-      .pipe(map(() => void 0));
-  }
-
-  downloadPayslip(payrollId: number): Observable<Blob> {
-    return this.http.get(`${this.base}/payroll/${payrollId}/payslip`, {
-      responseType: 'blob'
-    });
-  }
-
-  exportPayrollReport(year: number, month: number): Observable<Blob> {
-    const params = new HttpParams()
-      .set('year', String(year))
-      .set('month', String(month));
-    return this.http.get(`${this.base}/payroll/report/export`, {
-      params,
-      responseType: 'blob'
-    });
   }
 }

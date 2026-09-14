@@ -1,0 +1,337 @@
+<section class="tc-page-shell tc-directory-page fees-page">
+  <app-toast />
+
+  <tc-saas-page-header subtitle="View fee status, payment history and receipts for your access scope.">
+    <select class="p-inputtext p-component fees-year-select"
+            [(ngModel)]="academicYearId"
+            (ngModelChange)="onYearChange()">
+      @for (y of years; track y.id) {
+        <option [ngValue]="y.id">{{ y.name }}</option>
+      }
+    </select>
+  </tc-saas-page-header>
+
+  @if (accessRestricted) {
+    <div class="tc-empty-state">
+      <h2 class="text-xl">Access Restricted</h2>
+      <p>You do not have permission to view this student's financial information.</p>
+      <a routerLink="/app/fees/students" class="p-button p-button-outlined">Back</a>
+    </div>
+  } @else {
+    @if (!canSearch && linked.length > 1) {
+      <div class="fees-toolbar mb-0">
+        <label class="fees-toolbar__label">Select Child</label>
+        <select class="p-inputtext p-component" [(ngModel)]="selectedStudentId" (ngModelChange)="onChildChange()">
+          @for (c of linked; track c.studentId) {
+            <option [ngValue]="c.studentId">{{ c.studentName }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    @if (canSearch) {
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__body">
+          <div class="fees-toolbar">
+            <input class="p-inputtext p-component fees-toolbar__search"
+                   placeholder="Search by name or admission no..."
+                   [(ngModel)]="q"
+                   (keyup.enter)="search()" />
+            <select class="p-inputtext p-component" [(ngModel)]="classId">
+              <option [ngValue]="null">All Classes</option>
+              @for (c of classes; track c.id) {
+                <option [ngValue]="c.id">{{ c.name }}</option>
+              }
+            </select>
+            <select class="p-inputtext p-component" [(ngModel)]="status">
+              <option value="">All Status</option>
+              <option value="DUE">Due</option>
+              <option value="PARTIALLY_PAID">Partially Paid</option>
+              <option value="OVERDUE">Overdue</option>
+              <option value="PAID">Paid</option>
+            </select>
+            <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
+            <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+          </div>
+
+          @if (listLoading) {
+            <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+          } @else if (listError) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>{{ listError }}</p></div>
+          } @else {
+            <div class="fees-split">
+              <div class="fees-split__list">
+                <div class="fees-table-wrap">
+                  <table class="fees-table fees-table--compact fees-table--selectable">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Admission</th>
+                        <th class="text-right">Outstanding</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of rows; track row.studentId) {
+                        <tr [class.is-selected]="selectedStudentId === row.studentId"
+                            (click)="selectStudent(row.studentId)">
+                          <td>{{ row.studentName }}</td>
+                          <td>{{ row.admissionNumber }}</td>
+                          <td class="text-right">{{ row.outstanding | number:'1.2-2' }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="3">No students found.</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="fees-pager">
+                  <span>Showing {{ rows.length }} of {{ total }}</span>
+                </div>
+              </div>
+              <div class="fees-split__detail">
+                <ng-container *ngTemplateOutlet="detailPanel"></ng-container>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__body">
+          <ng-container *ngTemplateOutlet="detailPanel"></ng-container>
+        </div>
+      </div>
+    }
+  }
+
+  <ng-template #detailPanel>
+    @if (detailLoading) {
+      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading details…</div>
+    } @else if (detailError) {
+      <div class="tc-empty-state tc-empty-state--inline"><p>{{ detailError }}</p></div>
+    } @else if (!detail) {
+      <div class="tc-empty-state"><p>Select a student to view fee details.</p></div>
+    } @else {
+      <div class="fees-student-detail">
+        <div class="fees-student-detail__head">
+          <div>
+            <h2>{{ detail.studentName }}</h2>
+            <p>
+              {{ detail.admissionNumber }} · {{ detail.className }}
+              @if (detail.sectionName) { · {{ detail.sectionName }} }
+            </p>
+          </div>
+          @if (detail.canCollectFee) {
+            <button type="button" class="p-button p-button-sm"
+                    *tcHasPerm="resources.COLLECTION; action: 'manage'"
+                    (click)="openCollect()">
+              Collect Fee
+            </button>
+          }
+        </div>
+
+        <tc-kpi-group ariaLabel="Student fee KPIs" mode="equal" [columns]="4">
+          <tc-kpi-card label="Total Fee" [value]="formatMoney(detail.kpis.totalFee)" icon="pi pi-wallet" tone="primary"></tc-kpi-card>
+          <tc-kpi-card label="Paid" [value]="formatMoney(detail.kpis.paid)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
+          <tc-kpi-card label="Outstanding" [value]="formatMoney(detail.kpis.outstanding)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+          <tc-kpi-card label="Advance" [value]="formatMoney(detail.kpis.advance)" icon="pi pi-arrow-up" tone="info"></tc-kpi-card>
+        </tc-kpi-group>
+
+        <div class="fees-tabs" role="tablist">
+          <button type="button" role="tab" class="fees-tabs__btn"
+                  [class.is-active]="activeTab === 'overview'"
+                  (click)="setTab('overview')">Fee Overview</button>
+          <button type="button" role="tab" class="fees-tabs__btn"
+                  [class.is-active]="activeTab === 'payments'"
+                  (click)="setTab('payments')">Payment History</button>
+          <button type="button" role="tab" class="fees-tabs__btn"
+                  [class.is-active]="activeTab === 'receipts'"
+                  (click)="setTab('receipts')">Receipts</button>
+          <button type="button" role="tab" class="fees-tabs__btn"
+                  [class.is-active]="activeTab === 'years'"
+                  (click)="setTab('years')">Academic Year History</button>
+        </div>
+
+        @if (tabLoading && activeTab !== 'overview') {
+          <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+        } @else if (activeTab === 'overview') {
+          <div class="fees-table-wrap">
+            <table class="fees-table fees-table--compact">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Due Date</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Paid</th>
+                  <th class="text-right">Balance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of periods; track p.studentBillingPeriodId) {
+                  <tr>
+                    <td>{{ p.periodLabel }}</td>
+                    <td>{{ p.dueDate | date:'mediumDate' }}</td>
+                    <td class="text-right">{{ p.totalAmount | number:'1.2-2' }}</td>
+                    <td class="text-right">{{ p.paidAmount | number:'1.2-2' }}</td>
+                    <td class="text-right">{{ p.balanceAmount | number:'1.2-2' }}</td>
+                    <td><span class="tc-saas-pill" [attr.data-status]="p.status">{{ p.status }}</span></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="6">No fee records available for this academic year.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="fees-helper">Payments are automatically allocated to the oldest outstanding dues first.</p>
+        } @else if (activeTab === 'payments') {
+          <div class="fees-table-wrap">
+            <table class="fees-table fees-table--compact">
+              <thead>
+                <tr>
+                  <th>Paid On</th>
+                  <th>Method</th>
+                  <th>Reference</th>
+                  <th>Receipt</th>
+                  <th class="text-right">Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of payments; track p.feePaymentId) {
+                  <tr>
+                    <td>{{ p.paidOn | date:'medium' }}</td>
+                    <td>{{ p.paymentMethodName || '—' }}</td>
+                    <td>{{ p.referenceNumber || '—' }}</td>
+                    <td>
+                      @if (p.receiptId) {
+                        <a [routerLink]="['/app/fees/receipts']" [queryParams]="{ q: p.receiptNumber }">{{ p.receiptNumber }}</a>
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td class="text-right">{{ p.amount | number:'1.2-2' }}</td>
+                    <td><span class="tc-saas-pill success">{{ p.status }}</span></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="6">No payments recorded for this academic year.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else if (activeTab === 'receipts') {
+          <div class="fees-table-wrap">
+            <table class="fees-table fees-table--compact">
+              <thead>
+                <tr>
+                  <th>Receipt No.</th>
+                  <th>Issued On</th>
+                  <th class="text-right">Amount</th>
+                  <th>Method</th>
+                  <th class="fees-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of receipts; track r.feeReceiptId) {
+                  <tr>
+                    <td class="font-medium">{{ r.receiptNumber }}</td>
+                    <td>{{ r.issuedOn | date:'medium' }}</td>
+                    <td class="text-right">{{ r.amount | number:'1.2-2' }}</td>
+                    <td>{{ r.paymentMethodName || '—' }}</td>
+                    <td class="fees-table__actions">
+                      <button type="button" class="p-button p-button-text p-button-sm" title="Preview"
+                              (click)="openPreview(r)"><i class="pi pi-eye"></i></button>
+                      <button type="button" class="p-button p-button-text p-button-sm" title="Download"
+                              [disabled]="downloadingId === r.feeReceiptId"
+                              (click)="downloadReceipt(r)">
+                        @if (downloadingId === r.feeReceiptId) {
+                          <i class="pi pi-spin pi-spinner"></i>
+                        } @else {
+                          <i class="pi pi-download"></i>
+                        }
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5">No receipts for this academic year.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else if (activeTab === 'years') {
+          <div class="fees-table-wrap">
+            <table class="fees-table fees-table--compact">
+              <thead>
+                <tr>
+                  <th>Academic Year</th>
+                  <th class="fees-table__actions">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (y of yearHistory; track y.academicYearId) {
+                  <tr [class.is-selected]="academicYearId === y.academicYearId">
+                    <td>{{ y.name }}</td>
+                    <td class="fees-table__actions">
+                      <button type="button" class="p-button p-button-text p-button-sm"
+                              [disabled]="academicYearId === y.academicYearId"
+                              (click)="switchToYear(y.academicYearId)">
+                        {{ academicYearId === y.academicYearId ? 'Current' : 'View' }}
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="2">No academic year history available.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  </ng-template>
+
+  <p-dialog
+    header="Receipt preview"
+    [(visible)]="previewVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '640px', maxWidth: '95vw' }">
+    @if (previewLoading) {
+      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading preview…</div>
+    } @else if (preview) {
+      <div class="fees-receipt-preview">
+        <div class="fees-receipt-preview__meta">
+          <div><span>Receipt</span><strong>{{ preview.receiptNumber }}</strong></div>
+          <div><span>Issued</span><strong>{{ preview.issuedOn | date:'medium' }}</strong></div>
+          <div><span>Amount</span><strong>{{ preview.amount | number:'1.2-2' }}</strong></div>
+        </div>
+        <table class="fees-table fees-table--compact">
+          <thead>
+            <tr><th>Period</th><th class="text-right">Amount</th></tr>
+          </thead>
+          <tbody>
+            @for (line of preview.lines || []; track line.feeReceiptLineId) {
+              <tr>
+                <td>{{ line.periodLabel }}</td>
+                <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2">No line items</td></tr>
+            }
+          </tbody>
+        </table>
+        <div class="flex justify-content-end gap-2 mt-3">
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="previewVisible = false">Close</button>
+          <button type="button" class="p-button p-button-sm" (click)="downloadReceipt(preview)">Download PDF</button>
+        </div>
+      </div>
+    }
+  </p-dialog>
+
+  <app-collect-fee-dialog
+    [(visible)]="collectVisible"
+    [academicYearId]="academicYearId"
+    [lockedStudent]="collectStudent"
+    (collected)="onCollected()">
+  </app-collect-fee-dialog>
+</section>

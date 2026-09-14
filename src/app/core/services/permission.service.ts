@@ -1,6 +1,6 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subscription, catchError, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap } from 'rxjs';
 import { accessApi } from '../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../shared/models/auth.model';
 import { LoginService } from './login.service';
@@ -22,6 +22,9 @@ export class PermissionService implements OnDestroy {
 
   private permissionCache = new Map<string, EffectivePermission>();
   private loaded = false;
+  private readonly loadedSubject = new BehaviorSubject<boolean>(false);
+  /** Emits whenever effective permissions are (re)loaded or cleared. */
+  readonly permissionsLoaded$ = this.loadedSubject.asObservable();
   private readonly loginSub: Subscription;
 
   constructor() {
@@ -43,6 +46,7 @@ export class PermissionService implements OnDestroy {
   loadPermissions(): Observable<void> {
     if (this.isPlatformSuperAdmin()) {
       this.loaded = true;
+      this.loadedSubject.next(true);
       return of(void 0);
     }
 
@@ -71,6 +75,7 @@ export class PermissionService implements OnDestroy {
               }
             });
             this.loaded = true;
+            this.loadedSubject.next(true);
           }
         }),
         map(() => void 0),
@@ -84,6 +89,7 @@ export class PermissionService implements OnDestroy {
   clearPermissions(): void {
     this.permissionCache.clear();
     this.loaded = false;
+    this.loadedSubject.next(false);
   }
 
   /**
@@ -140,7 +146,7 @@ export class PermissionService implements OnDestroy {
       const token = String(role).toUpperCase().replace(/^ROLE_/, '');
       // Only true platform elevation bypasses menu checks. Org owner/admin must
       // use provisioned role_permissions so Academics nav stays role-accurate.
-      return token === 'SUPER_ADMIN' || token === 'PLATFORM_ADMIN';
+      return token === 'SUPER_ADMIN';
     });
   }
 }

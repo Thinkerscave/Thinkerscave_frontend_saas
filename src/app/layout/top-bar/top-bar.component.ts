@@ -94,12 +94,12 @@ export class TopBarComponent {
   }
 
   canOpenOrganizationProfile(): boolean {
-    return ['ADMIN', 'COLLEGE_ADMIN', 'INSTITUTION_ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
+    return ['ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
       .some(role => this.roleTokens().includes(role));
   }
 
   canSwitchTenant(): boolean {
-    return ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']
+    return ['SUPER_ADMIN']
       .some(role => this.roleTokens().includes(role));
   }
 

@@ -1,0 +1,129 @@
+<section class="tc-page-shell tc-directory-page fees-page">
+  <app-toast />
+  <p-confirmDialog />
+
+  <tc-saas-page-header subtitle="Manage the types of fees used in fee structures.">
+    <button type="button" class="p-button p-button-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="openCreate()">
+      <i class="pi pi-plus mr-1"></i> Add Fee Head
+    </button>
+  </tc-saas-page-header>
+
+  <div class="tc-card tc-card--panel fees-surface-panel">
+    <div class="tc-card__body">
+      <div class="fees-toolbar">
+        <input class="p-inputtext p-component fees-toolbar__search" placeholder="Search by name or description" [(ngModel)]="q" (keyup.enter)="search()" />
+        <select class="p-inputtext p-component" [(ngModel)]="category">
+          <option value="">All Categories</option>
+          @for (c of categories; track c) {
+            <option [value]="c">{{ categoryLabel(c) }}</option>
+          }
+        </select>
+        <select class="p-inputtext p-component" [(ngModel)]="status">
+          <option value="">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+        <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
+        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+      </div>
+
+      @if (loading) {
+        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      } @else if (error) {
+        <div class="tc-empty-state tc-empty-state--inline">
+          <p>{{ error }}</p>
+          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+        </div>
+      } @else if (!rows.length) {
+        <div class="tc-empty-state">
+          <p>{{ q || category || status ? 'No fee heads match your search.' : 'No fee heads found.' }}</p>
+        </div>
+      } @else {
+        <div class="fees-table-wrap">
+          <table class="fees-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Fee Head Name</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th class="fees-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.feeHeadId; let i = $index) {
+                <tr>
+                  <td>{{ page * size + i + 1 }}</td>
+                  <td class="font-medium">{{ row.name }}</td>
+                  <td>{{ categoryLabel(row.category) }}</td>
+                  <td>{{ row.description || '—' }}</td>
+                  <td>
+                    <span class="tc-saas-pill" [class]="row.status === 'ACTIVE' ? 'success' : 'danger'">{{ row.status }}</span>
+                  </td>
+                  <td class="fees-table__actions">
+                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="openEdit(row)" title="Edit">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="toggleStatus(row)" title="Activate / Deactivate">
+                      <i class="pi" [ngClass]="row.status === 'ACTIVE' ? 'pi-eye-slash' : 'pi-eye'"></i>
+                    </button>
+                    <button type="button" class="p-button p-button-text p-button-sm p-button-danger" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="remove(row)" title="Delete">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="fees-pager"><span>Showing {{ rows.length }} of {{ total }} entries</span></div>
+      }
+    </div>
+  </div>
+
+  <p-dialog
+    [header]="editing ? 'Edit Fee Head' : 'Add Fee Head'"
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '520px' }"
+    (onHide)="dialogVisible = false">
+    <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="save()">
+      <div>
+        <label class="block mb-1">Fee Head Name <span class="text-red-500">*</span></label>
+        <input class="p-inputtext p-component w-full" formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="text-red-500">Name is required</small>
+        }
+      </div>
+      <div>
+        <label class="block mb-1">Category <span class="text-red-500">*</span></label>
+        <select class="p-inputtext p-component w-full" formControlName="category">
+          @for (c of categories; track c) {
+            <option [value]="c">{{ categoryLabel(c) }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1">Description</label>
+        <textarea class="p-inputtext p-component w-full" rows="3" formControlName="description" maxlength="500"></textarea>
+        <small class="text-color-secondary">{{ (form.value.description || '').length }}/500</small>
+      </div>
+      <div>
+        <label class="block mb-1">Status <span class="text-red-500">*</span></label>
+        <div class="flex gap-3">
+          <label><input type="radio" formControlName="status" value="ACTIVE" /> Active</label>
+          <label><input type="radio" formControlName="status" value="INACTIVE" /> Inactive</label>
+        </div>
+      </div>
+      <div class="flex justify-content-end gap-2 mt-2">
+        <button type="button" class="p-button p-button-outlined" (click)="dialogVisible = false" [disabled]="saving">Cancel</button>
+        <button type="submit" class="p-button" [disabled]="saving">
+          @if (saving) { <i class="pi pi-spin pi-spinner mr-1"></i> }
+          Save
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+</section>

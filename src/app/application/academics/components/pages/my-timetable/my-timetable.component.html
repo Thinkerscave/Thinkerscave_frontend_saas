@@ -50,7 +50,7 @@
               <ng-template #cellTpl>
                 <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
                   <strong>{{ c.subjectName || '—' }}</strong>
-                  <span *ngIf="d.role === 'TEACHER' || d.role === 'STAFF'">
+                  <span *ngIf="d.role === 'STAFF'">
                     {{ c.className }}{{ c.sectionName ? '-' + c.sectionName : '' }}
                   </span>
                   <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
@@ -75,7 +75,7 @@
         </div>
         <span class="mt-now" *ngIf="isCurrent(t.startTime, t.endTime)">CURRENT</span>
       </article>
-      <p class="mt-muted" *ngIf="!d.todaySchedule?.length">No classes scheduled today.</p>
+      <p class="mt-muted" *ngIf="!d.todaySchedule.length">No classes scheduled today.</p>
 
       <div class="mt-actions">
         <a routerLink="/app/academics/my-classes">My Classes</a>

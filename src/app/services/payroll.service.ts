@@ -1,62 +1,25 @@
-import { HttpClient } from '@angular/common/http';
+/**
+ * @deprecated Legacy school-ops payroll client.
+ * Use `PayrollApiService` under `application/payroll` and `financePayrollApi` / `payrollMeApi`.
+ * Kept only so accidental imports fail loudly if revived — do not call these methods.
+ */
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { payrollApi } from '../shared/constants/api.endpoint';
-
-export interface PayrollDTO {
-    id?: number;
-    staffId?: number;
-    staffName: string;
-    department?: string;
-    designation?: string;
-    // Earnings
-    basic?: number;
-    hra?: number;
-    specialAllowance?: number;
-    academicAllowance?: number;
-    medicalAllowance?: number;
-    travelAllowance?: number;
-    dearnessAllowance?: number;
-    otherAllowance?: number;
-    // Deductions
-    professionalTax?: number;
-    incomeTax?: number;
-    providentFund?: number;
-    // Computed
-    grossSalary?: number;
-    totalDeductions?: number;
-    netSalary?: number;
-    ctcAnnual?: number;
-    effectiveFrom?: string;
-}
-
-export interface PayrollRunResult {
-    month: string;
-    totalStaff: number;
-    totalGross: number;
-    totalNet: number;
-    runBy: string;
-    status: string;
-    processedAt: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class PayrollService {
-    constructor(private http: HttpClient) { }
+  getAllPayroll(): never {
+    throw new Error('Deprecated: use PayrollApiService (Finance → Payroll).');
+  }
 
-    getAllPayroll(): Observable<PayrollDTO[]> {
-        return this.http.get<PayrollDTO[]>(payrollApi.all);
-    }
+  getByStaffId(_staffId: number): never {
+    throw new Error('Deprecated: use PayrollApiService (Finance → Payroll).');
+  }
 
-    getByStaffId(staffId: number): Observable<PayrollDTO> {
-        return this.http.get<PayrollDTO>(payrollApi.byStaff(staffId));
-    }
+  saveOrUpdate(_dto: unknown): never {
+    throw new Error('Deprecated: use PayrollApiService (Finance → Payroll).');
+  }
 
-    saveOrUpdate(dto: PayrollDTO): Observable<PayrollDTO> {
-        return this.http.put<PayrollDTO>(payrollApi.saveOrUpdate, dto);
-    }
-
-    runPayroll(): Observable<PayrollRunResult> {
-        return this.http.post<PayrollRunResult>(payrollApi.run, {});
-    }
+  runPayroll(): never {
+    throw new Error('Deprecated: use PayrollApiService (Finance → Payroll).');
+  }
 }

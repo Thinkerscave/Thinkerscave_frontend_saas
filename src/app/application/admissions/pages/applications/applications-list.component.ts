@@ -114,8 +114,7 @@ export class ApplicationsListComponent implements OnInit {
       const token = String(role).toUpperCase().replace(/^ROLE_/, '');
       return token === 'ORGANIZATION_ADMIN'
         || token === 'ORGANIZATION_OWNER'
-        || token === 'SUPER_ADMIN'
-        || token === 'PLATFORM_ADMIN';
+        || token === 'SUPER_ADMIN';
     });
   }
 

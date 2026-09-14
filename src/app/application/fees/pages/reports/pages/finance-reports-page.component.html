@@ -1,0 +1,284 @@
+<section class="tc-page-shell finance-reports" *tcHasPerm="resource; action: 'view'">
+  <tc-saas-page-header subtitle="Complete financial overview of your organization">
+    <details class="finance-export">
+      <summary class="p-button p-button-sm" [class.p-disabled]="exporting || loading">
+        <i class="pi" [ngClass]="exporting ? 'pi-spin pi-spinner' : 'pi-download'"></i>
+        {{ exporting ? 'Exporting…' : 'Export Report' }}
+        <i class="pi pi-chevron-down"></i>
+      </summary>
+      <div class="finance-export__menu">
+        <button type="button" (click)="exportReport('pdf')" [disabled]="exporting || loading">
+          <i class="pi pi-file-pdf"></i> PDF
+        </button>
+        <button type="button" (click)="exportReport('csv')" [disabled]="exporting || loading">
+          <i class="pi pi-file-excel"></i> CSV
+        </button>
+      </div>
+    </details>
+  </tc-saas-page-header>
+
+  <article class="tc-card tc-card--panel finance-filters">
+    <div class="tc-card__body">
+      <div class="finance-filters__grid">
+        <label>
+          <span>Academic Year</span>
+          <select class="p-inputtext p-component" [(ngModel)]="draftFilter.academicYearId">
+            <option [ngValue]="null">All academic years</option>
+            @for (year of years; track year.academicYearId) {
+              <option [ngValue]="year.academicYearId">{{ year.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Period</span>
+          <select class="p-inputtext p-component" [(ngModel)]="draftFilter.period">
+            @for (period of periods; track period.value) {
+              <option [ngValue]="period.value">{{ period.label }}</option>
+            }
+          </select>
+        </label>
+        @if (draftFilter.period === 'CUSTOM') {
+          <label>
+            <span>From</span>
+            <input class="p-inputtext p-component" type="date" [(ngModel)]="draftFilter.from">
+          </label>
+          <label>
+            <span>To</span>
+            <input class="p-inputtext p-component" type="date" [(ngModel)]="draftFilter.to">
+          </label>
+        }
+      </div>
+      <div class="finance-filters__actions">
+        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="resetFilters()" [disabled]="loading">
+          Reset
+        </button>
+        <button type="button" class="p-button p-button-sm" (click)="applyFilters()" [disabled]="loading">
+          Apply
+        </button>
+      </div>
+    </div>
+  </article>
+
+  @if (loading && !overview) {
+    <div class="finance-loading" aria-live="polite">
+      @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+        <span class="finance-skeleton"></span>
+      }
+      <p><i class="pi pi-spin pi-spinner"></i> Loading financial overview…</p>
+    </div>
+  } @else if (errorMessage && !overview) {
+    <div class="tc-empty-state finance-error">
+      <i class="pi" [ngClass]="forbidden ? 'pi-lock' : 'pi-exclamation-circle'"></i>
+      <h3>{{ forbidden ? 'Permission denied' : 'Finance Reports unavailable' }}</h3>
+      <p>{{ errorMessage }}</p>
+      @if (!forbidden) {
+        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+      }
+    </div>
+  } @else {
+    @if (overview; as report) {
+    @if (!hasFinanceData(report)) {
+      <div class="tc-empty-state finance-empty">
+        <i class="pi pi-chart-bar"></i>
+        <h3>No finance data</h3>
+        <p>No financial activity is available for the selected filters.</p>
+      </div>
+    } @else {
+      <tc-kpi-group ariaLabel="Finance report KPIs" mode="equal" [columns]="6" [class.is-loading]="loading">
+        <tc-kpi-card label="Fee Collection" [value]="money(report.kpis.feeCollection)" [hint]="report.filter.label" icon="pi pi-indian-rupee" tone="success"></tc-kpi-card>
+        <tc-kpi-card label="Outstanding Fees" [value]="money(report.kpis.outstandingFees)" [hint]="report.filter.outstandingAsOf || 'Current balance'" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Payroll Paid" [value]="money(report.kpis.payrollPaid)" [hint]="report.filter.label" icon="pi pi-users" tone="info"></tc-kpi-card>
+        <tc-kpi-card label="Expenses Paid" [value]="money(report.kpis.expensesPaid)" [hint]="report.filter.label" icon="pi pi-receipt" tone="danger"></tc-kpi-card>
+        <tc-kpi-card label="Total Outflow" [value]="money(report.kpis.totalOutflow)" [hint]="report.filter.label" icon="pi pi-arrow-up-right" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Net Operational Flow" [value]="money(report.kpis.netOperationalFlow)" [hint]="report.filter.label" icon="pi pi-chart-line" [tone]="report.kpis.netOperationalFlow < 0 ? 'danger' : 'primary'"></tc-kpi-card>
+      </tc-kpi-group>
+
+      <article class="finance-panel finance-panel--hero">
+        <header>
+          <div>
+            <span>Cash movement</span>
+            <h2>Income vs Outflow Trend</h2>
+            <p>Fee collection compared with total operational outflow</p>
+          </div>
+        </header>
+        @if (report.incomeOutflowTrend.length) {
+          <div class="finance-chart finance-chart--hero">
+            <p-chart type="bar" [data]="incomeOutflowData" [options]="trendOptions"></p-chart>
+          </div>
+        } @else {
+          <div class="finance-section-empty">No income and outflow trend for this period.</div>
+        }
+      </article>
+
+      <section class="finance-section">
+        <div class="finance-section__heading">
+          <div><span>Fees</span><h2>Fee Collection</h2></div>
+        </div>
+        <div class="finance-grid finance-grid--2">
+          <article class="finance-panel">
+            <header><div><h3>Fee Collection by Category</h3><p>Actual collection by fee category</p></div></header>
+            @if (report.feeAnalytics.collectionByCategory.length) {
+              <div class="finance-chart"><p-chart type="doughnut" [data]="feeCategoryData" [options]="doughnutOptions"></p-chart></div>
+              <ul class="finance-legend">
+                @for (item of report.feeAnalytics.collectionByCategory; track item.name; let index = $index) {
+                  <li><i [style.background]="['#2563eb','#10b981','#8b5cf6','#f59e0b','#ef4444','#14b8a6'][index % 6]"></i><span>{{ item.name }}</span><strong>{{ money(item.amount) }} · {{ item.percentage | number:'1.0-1' }}%</strong></li>
+                }
+              </ul>
+            } @else {
+              <div class="finance-section-empty">No category collection data.</div>
+            }
+          </article>
+          <article class="finance-panel">
+            <header><div><h3>Monthly Fee Collection Trend</h3><p>Collections across the selected date scope</p></div></header>
+            @if (report.feeAnalytics.collectionTrend.length) {
+              <div class="finance-chart"><p-chart type="line" [data]="feeTrendData" [options]="trendOptions"></p-chart></div>
+            } @else {
+              <div class="finance-section-empty">No fee collection trend data.</div>
+            }
+          </article>
+        </div>
+      </section>
+
+      <section class="finance-section">
+        <div class="finance-section__heading"><div><span>Operations</span><h2>Payroll & Expenses</h2></div></div>
+        <div class="finance-grid finance-grid--2">
+          <article class="finance-panel">
+            <header>
+              <div><h3>Payroll Overview</h3><p>Generated salary and actual payroll payments</p></div>
+              <button type="button" class="finance-link" (click)="navigate(null, '/app/payroll')">View Payroll</button>
+            </header>
+            <div class="finance-metrics">
+              <div><span>Generated</span><strong>{{ money(report.payroll.generatedAmount) }}</strong></div>
+              <div><span>Paid</span><strong>{{ money(report.payroll.paidAmount) }}</strong></div>
+              <div><span>Pending</span><strong>{{ money(report.payroll.pendingAmount) }}</strong></div>
+              <div><span>Employees</span><strong>{{ report.payroll.employeeCount | number }}</strong></div>
+            </div>
+            @if (report.payroll.costTrend.length) {
+              <div class="finance-chart finance-chart--short"><p-chart type="line" [data]="payrollTrendData" [options]="trendOptions"></p-chart></div>
+            } @else {
+              <div class="finance-section-empty">No payroll cost trend data.</div>
+            }
+          </article>
+          <article class="finance-panel">
+            <header>
+              <div><h3>Expenses by Category</h3><p>Paid non-payroll expenses</p></div>
+              <button type="button" class="finance-link" (click)="navigate(null, '/app/expenses')">View Expenses</button>
+            </header>
+            @if (report.expenses.byCategory.length) {
+              <div class="finance-chart finance-chart--short"><p-chart type="doughnut" [data]="expenseCategoryData" [options]="doughnutOptions"></p-chart></div>
+            } @else {
+              <div class="finance-section-empty">No expense category data.</div>
+            }
+          </article>
+          <article class="finance-panel finance-panel--expense-status">
+            <header><div><h3>Expense Status</h3><p>Payment status distribution by amount</p></div></header>
+            @if (report.expenses.statusDistribution.length) {
+              <div class="finance-chart finance-chart--short"><p-chart type="doughnut" [data]="expenseStatusData" [options]="doughnutOptions"></p-chart></div>
+              <ul class="finance-status">
+                @for (item of report.expenses.statusDistribution; track item.status) {
+                  <li><span>{{ label(item.status) }} · {{ item.count | number }}</span><strong>{{ money(item.amount) }}</strong></li>
+                }
+              </ul>
+            } @else {
+              <div class="finance-section-empty">No expense status data.</div>
+            }
+          </article>
+        </div>
+      </section>
+
+      <section class="finance-grid finance-grid--2">
+        <article class="finance-panel">
+          <header>
+            <div><span>Student fees</span><h3>Outstanding Fees</h3><p>{{ report.outstanding.studentsDue | number }} students · {{ money(report.outstanding.amount) }}</p></div>
+            <button type="button" class="finance-link" (click)="navigate(null, '/app/fees/outstanding')">View All</button>
+          </header>
+          @if (report.outstanding.byClass.length) {
+            <div class="finance-table-wrap">
+              <table>
+                <thead><tr><th>Class / Grade</th><th>Students Due</th><th class="align-right">Outstanding Amount</th></tr></thead>
+                <tbody>
+                  @for (row of report.outstanding.byClass; track row.classId || row.className) {
+                    <tr><td>{{ row.className }}</td><td>{{ row.studentsDue | number }}</td><td class="align-right">{{ money(row.outstandingAmount) }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="finance-section-empty">No class-wise outstanding fees.</div>
+          }
+        </article>
+
+        <article class="finance-panel">
+          <header><div><span>Action queue</span><h3>Needs Attention</h3><p>Non-zero financial items requiring review</p></div></header>
+          @if (report.attention.length) {
+            <ul class="finance-attention">
+              @for (item of report.attention; track item.type) {
+                <li>
+                  <span class="finance-attention__icon"><i class="pi pi-exclamation-triangle"></i></span>
+                  <div><strong>{{ item.label }}</strong><small>{{ item.count | number }} items · {{ money(item.amount) }}</small></div>
+                  <button type="button" class="finance-link" (click)="navigate(item.drillPath, '/app/fees/reports')">View</button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="finance-positive"><i class="pi pi-check-circle"></i> No items require attention.</div>
+          }
+        </article>
+      </section>
+
+      <article class="finance-panel">
+        <header>
+          <div><span>Expense analysis</span><h3>Top Expense Heads</h3><p>Highest-impact paid expense heads</p></div>
+          <button type="button" class="finance-link" (click)="navigate(null, '/app/expenses')">View All</button>
+        </header>
+        @if (report.expenses.topHeads.length) {
+          <div class="finance-table-wrap">
+            <table>
+              <thead><tr><th>Expense Head</th><th>Category</th><th class="align-right">Amount</th><th class="align-right">Percentage</th><th></th></tr></thead>
+              <tbody>
+                @for (row of report.expenses.topHeads; track row.headId || row.headName) {
+                  <tr>
+                    <td><strong>{{ row.headName }}</strong></td><td>{{ row.categoryName || '—' }}</td>
+                    <td class="align-right">{{ money(row.amount) }}</td><td class="align-right">{{ row.percentage | number:'1.0-1' }}%</td>
+                    <td><button type="button" class="finance-link" (click)="navigate(row.drillPath, '/app/expenses')">View</button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="finance-section-empty">No expense head data for this period.</div>
+        }
+      </article>
+
+      <article class="finance-panel">
+        <header><div><span>Activity</span><h3>Recent Financial Activity</h3><p>Latest fee, payroll and expense records</p></div></header>
+        @if (report.recentActivity.length) {
+          <div class="finance-table-wrap">
+            <table class="finance-activity-table">
+              <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Description</th><th class="align-right">Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                @for (row of report.recentActivity; track row.type + row.reference + row.date) {
+                  <tr tabindex="0" (click)="navigate(row.drillPath, '/app/fees/reports')" (keydown.enter)="navigate(row.drillPath, '/app/fees/reports')">
+                    <td>{{ row.date | date:'mediumDate' }}</td>
+                    <td><span class="finance-type">{{ label(row.type) }}</span></td>
+                    <td>{{ row.reference }}</td><td>{{ row.description }}</td>
+                    <td class="align-right">{{ money(row.amount) }}</td>
+                    <td><span class="finance-status-pill" [attr.data-status]="row.status">{{ label(row.status) }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="finance-section-empty">No recent financial activity.</div>
+        }
+      </article>
+    }
+  }
+  }
+
+  @if (errorMessage && overview) {
+    <div class="finance-inline-error"><i class="pi pi-exclamation-circle"></i> {{ errorMessage }}</div>
+  }
+</section>

@@ -1,0 +1,229 @@
+<section class="tc-page-shell tc-directory-page fees-page">
+  <app-toast />
+
+  <tc-saas-page-header subtitle="Manage fee heads, structures, collections and outstanding balances.">
+    <select class="p-inputtext p-component fees-year-select"
+            [(ngModel)]="academicYearId"
+            (ngModelChange)="onYearChange()">
+      <option [ngValue]="null" disabled>Academic Year</option>
+      @for (y of years; track y.id) {
+        <option [ngValue]="y.id">{{ y.name }}</option>
+      }
+    </select>
+    <button type="button" class="p-button p-button-sm"
+            *tcHasPerm="resources.COLLECTION; action: 'manage'"
+            (click)="openCollect()">
+      <i class="pi pi-credit-card mr-1"></i> Collect Fee
+    </button>
+  </tc-saas-page-header>
+
+  @if (loading) {
+    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading dashboard…</div>
+  } @else if (error) {
+    <div class="tc-empty-state tc-empty-state--inline">
+      <p>{{ error }}</p>
+      <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+    </div>
+  } @else {
+    <div class="fees-action-grid">
+      <a class="fees-action-card" routerLink="/app/fees/heads" *tcHasPerm="resources.HEADS; action: 'view'">
+        <i class="pi pi-database"></i>
+        <strong>Fee Heads</strong>
+        <span>Manage fee types</span>
+      </a>
+      <a class="fees-action-card" routerLink="/app/fees/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">
+        <i class="pi pi-file"></i>
+        <strong>Fee Structures</strong>
+        <span>Class-wise fee rules</span>
+      </a>
+      <a class="fees-action-card" routerLink="/app/fees/receipts" *tcHasPerm="resources.RECEIPTS; action: 'view'">
+        <i class="pi pi-receipt"></i>
+        <strong>Receipts</strong>
+        <span>View receipts</span>
+      </a>
+      <a class="fees-action-card" routerLink="/app/fees/outstanding" *tcHasPerm="resources.OUTSTANDING; action: 'view'">
+        <i class="pi pi-chart-line"></i>
+        <strong>Outstanding</strong>
+        <span>Pending dues</span>
+      </a>
+      <a class="fees-action-card" routerLink="/app/fees/students" *tcHasPerm="resources.STUDENT_DETAILS; action: 'view'">
+        <i class="pi pi-users"></i>
+        <strong>Student Fee</strong>
+        <span>Student ledgers</span>
+      </a>
+      <a class="fees-action-card" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
+        <i class="pi pi-cog"></i>
+        <strong>Settings</strong>
+        <span>Generation & methods</span>
+      </a>
+    </div>
+
+    @if (kpis) {
+      <tc-kpi-group ariaLabel="Fee KPIs" mode="equal" [columns]="4">
+        <tc-kpi-card label="Generated" [value]="formatMoney(kpis.generated)" icon="pi pi-wallet" tone="primary"></tc-kpi-card>
+        <tc-kpi-card label="Collected" [value]="formatMoney(kpis.collected)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
+        <tc-kpi-card label="Outstanding" [value]="formatMoney(kpis.outstanding)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Overdue" [value]="formatMoney(kpis.overdue)" icon="pi pi-exclamation-triangle" tone="danger"></tc-kpi-card>
+      </tc-kpi-group>
+    }
+
+    <div class="fees-dash-grid">
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Collection trend</span>
+            <h3>Due vs collected by month</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          @if (!trend.length) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>No collection trend data yet.</p></div>
+          } @else {
+            <div class="fees-bar-chart" role="img" aria-label="Collection trend chart">
+              @for (point of trend; track point.month) {
+                <div class="fees-bar-chart__col" [title]="monthLabel(point.month)">
+                  <div class="fees-bar-chart__bars">
+                    <span class="fees-bar-chart__bar fees-bar-chart__bar--due"
+                          [style.height.%]="barHeight(point.due)"
+                          [title]="'Due ' + formatMoney(point.due)"></span>
+                    <span class="fees-bar-chart__bar fees-bar-chart__bar--collected"
+                          [style.height.%]="barHeight(point.collected)"
+                          [title]="'Collected ' + formatMoney(point.collected)"></span>
+                  </div>
+                  <span class="fees-bar-chart__label">{{ monthLabel(point.month) }}</span>
+                </div>
+              }
+            </div>
+            <div class="fees-bar-chart__legend">
+              <span><i class="fees-dot fees-dot--due"></i> Due</span>
+              <span><i class="fees-dot fees-dot--collected"></i> Collected</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Payment status</span>
+            <h3>Balance mix</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          @if (!statusSlices.length) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>No payment status data.</p></div>
+          } @else {
+            <ul class="fees-status-list">
+              @for (slice of statusSlices; track slice.status) {
+                <li>
+                  <div class="fees-status-list__row">
+                    <span>{{ slice.status }}</span>
+                    <strong>{{ formatMoney(slice.amount) }}</strong>
+                  </div>
+                  <div class="fees-status-list__track">
+                    <span class="fees-status-list__fill"
+                          [attr.data-tone]="statusTone(slice.status)"
+                          [style.width.%]="statusWidth(slice.amount)"></span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="fees-dash-grid fees-dash-grid--tables">
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Activity</span>
+            <h3>Recent collections</h3>
+          </div>
+          <a routerLink="/app/fees/receipts" class="p-button p-button-text p-button-sm">Receipts</a>
+        </div>
+        <div class="tc-card__body">
+          @if (!recent.length) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>No recent collections.</p></div>
+          } @else {
+            <div class="fees-table-wrap">
+              <table class="fees-table fees-table--compact">
+                <thead>
+                  <tr>
+                    <th>Paid on</th>
+                    <th>Student ID</th>
+                    <th>Method</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of recent; track row.feePaymentId) {
+                    <tr>
+                      <td>{{ row.paidOn | date:'mediumDate' }}</td>
+                      <td>
+                        <a [routerLink]="['/app/fees/students', row.studentId]">{{ row.studentName || ('#' + row.studentId) }}</a>
+                      </td>
+                      <td>{{ row.paymentMethodName || '—' }}</td>
+                      <td class="text-right">{{ row.amount | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Dues</span>
+            <h3>Upcoming dues</h3>
+          </div>
+          <a routerLink="/app/fees/outstanding" class="p-button p-button-text p-button-sm">Outstanding</a>
+        </div>
+        <div class="tc-card__body">
+          @if (!upcoming.length) {
+            <div class="tc-empty-state tc-empty-state--inline"><p>No upcoming dues.</p></div>
+          } @else {
+            <div class="fees-table-wrap">
+              <table class="fees-table fees-table--compact">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Period</th>
+                    <th>Due</th>
+                    <th class="text-right">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of upcoming; track row.studentBillingPeriodId) {
+                    <tr>
+                      <td>
+                        <a [routerLink]="['/app/fees/students', row.studentId]">{{ row.studentName }}</a>
+                      </td>
+                      <td>{{ row.periodLabel }}</td>
+                      <td>{{ row.dueDate | date:'mediumDate' }}</td>
+                      <td class="text-right">{{ row.balanceAmount | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <p class="fees-helper">
+      Payments are automatically allocated to the oldest outstanding billing period first.
+    </p>
+  }
+
+  <app-collect-fee-dialog
+    [(visible)]="collectVisible"
+    [academicYearId]="academicYearId"
+    [lockedStudent]="collectStudent"
+    (collected)="onCollected()">
+  </app-collect-fee-dialog>
+</section>

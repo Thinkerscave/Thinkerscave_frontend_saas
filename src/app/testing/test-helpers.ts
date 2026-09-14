@@ -43,7 +43,7 @@ export function mockLoginService(overrides: Partial<LoginService> = {}): jasmine
   spy.getOrgType.and.returnValue('SCHOOL');
   spy.getCurrentOrganizationId.and.returnValue('1');
   spy.getOrganizations.and.returnValue([]);
-  spy.getUserRole.and.returnValue(['ADMIN']);
+  spy.getUserRole.and.returnValue(['ORGANIZATION_ADMIN']);
   spy.getUserPrivileges.and.returnValue([]);
   spy.getUser.and.returnValue(mockUserInfo());
 
@@ -76,7 +76,7 @@ export function mockUserInfo(overrides: Partial<UserInfo> = {}): UserInfo {
     lastName: 'User',
     email: 'test@example.com',
     mobile: '1234567890',
-    roles: ['ADMIN'],
+    roles: ['ORGANIZATION_ADMIN'],
     privileges: [],
     orgId: 1,
     orgCode: 'ORG001',
