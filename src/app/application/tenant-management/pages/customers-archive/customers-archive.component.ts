@@ -24,6 +24,7 @@ import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 const LIST_KEY = 'tc-customers-archive';
 
@@ -40,7 +41,8 @@ const LIST_KEY = 'tc-customers-archive';
     SaasPageHeaderComponent,
     SaasPanelComponent,
     SaasFilterRowComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './customers-archive.component.html',
   styleUrl: './customers-archive.component.scss'

@@ -19,6 +19,7 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
@@ -64,6 +65,7 @@ const LIST_KEY = 'tc.leads.view.v2';
     MenuModule,
     SaasPageHeaderComponent,
     SaasPanelComponent,
+    TcPageSkeletonComponent,
     AppListToolbarComponent,
     AppListResultsComponent,
     AppPaginatorComponent,

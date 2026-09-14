@@ -5,6 +5,7 @@ import { DialogModule } from 'primeng/dialog';
 import { FeesApiService } from '../../../fees/services/fees-api.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import { ExpenseDetail, PaymentMethodOption } from '../../models/expenses.model';
 import { ExpensesApiService } from '../../services/expenses-api.service';
 
@@ -66,15 +67,14 @@ export class RecordExpensePaymentDialogComponent implements OnChanges {
         },
         crypto.randomUUID()
       )
+      .pipe(finalizeBusy(v => (this.saving = v)))
       .subscribe({
         next: () => {
-          this.saving = false;
           this.feedback.success('Payment recorded', 'Expense payment saved.');
           this.paid.emit();
           this.visibleChange.emit(false);
         },
         error: e => {
-          this.saving = false;
           this.feedback.error('Payment failed', extractApiError(e, 'Request failed').message);
         }
       });

@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
+import { SoftRefreshKeys, SoftRefreshService } from '../../../../shared/ui/loading';
 
 import {
   EmploymentCategory,
@@ -51,6 +52,7 @@ export class CreateStaffComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly softRefresh = inject(SoftRefreshService);
   private readonly backNav = inject(BackNavigationService);
 
   /** When true, renders as a right-side drawer (directory Add Staff flow). */
@@ -316,9 +318,11 @@ export class CreateStaffComponent implements OnInit {
           next: (res: any) => {
             const newId = res?.staffId ?? 0;
             if (this.drawerMode) {
+              this.softRefresh.mark(SoftRefreshKeys.staffDirectory, 'created');
               this.saved.emit(newId || undefined);
               return;
             }
+            this.softRefresh.mark(SoftRefreshKeys.staffDirectory, 'created');
             this.router.navigate(['/app/staff/profile', newId]);
           },
           error: (err: any) => {

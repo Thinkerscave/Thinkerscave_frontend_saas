@@ -1,8 +1,7 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="tt-page acad-page" *ngIf="!loading; else loadingTpl">
-
-  <tc-saas-page-header>
+<div class="tt-page acad-page">
+<tc-saas-page-header>
     <p-dropdown
       [options]="years"
       [(ngModel)]="selectedYearId"
@@ -16,7 +15,9 @@
     <span class="tt-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
   </tc-saas-page-header>
 
-  <!-- Tabs -->
+    <tc-page-skeleton *ngIf="loading" variant="tabs" [tabs]="4"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<!-- Tabs -->
   <div class="tt-tabs">
     <button class="tt-tab" [class.active]="activeTab === 'readiness'" (click)="activeTab = 'readiness'">Readiness</button>
     <button class="tt-tab" [class.active]="activeTab === 'configuration'" (click)="switchTab('configuration')">Configuration</button>
@@ -379,7 +380,7 @@
         <h3>No timetable grid</h3>
         <p>{{ versions.length ? 'Select a version and filters to view the grid.' : 'Generate a timetable first from the Readiness tab.' }}</p>
       </div>
-      <div class="tt-loading" *ngIf="loadingGrid">Loading grid…</div>
+      <tc-page-skeleton *ngIf="loadingGrid" variant="table" [rows]="5" [columns]="6"></tc-page-skeleton>
     </ng-template>
   </ng-container>
 
@@ -430,11 +431,8 @@
       </ng-template>
     </div>
   </ng-container>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="tt-loading">Loading timetable…</div>
-</ng-template>
 
 <!-- Resource dialog -->
 <p-dialog

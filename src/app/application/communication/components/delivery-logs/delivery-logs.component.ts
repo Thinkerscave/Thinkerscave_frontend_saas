@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 
 import { CommunicationService, Notification } from '../../services/communication.service';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -23,7 +24,8 @@ interface SelectOption {
   selector: 'app-delivery-logs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
   templateUrl: './delivery-logs.component.html',
   styleUrl: './delivery-logs.component.scss'
 })
@@ -60,10 +62,13 @@ export class DeliveryLogsComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.api.listNotifications()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        next: list => { this.notifications = list || []; this.loading = false; this.cdr.markForCheck(); },
-        error: () => { this.notifications = []; this.loading = false; this.cdr.markForCheck(); }
+        next: list => { this.notifications = list || []; this.cdr.markForCheck(); },
+        error: () => { this.notifications = []; this.cdr.markForCheck(); }
       });
   }
 

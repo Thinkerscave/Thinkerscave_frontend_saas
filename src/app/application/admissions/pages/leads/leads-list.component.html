@@ -90,7 +90,14 @@
 
     <app-list-results [busy]="refreshing()">
       @if (!hasLoaded() && loading()) {
-        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading leads…</div>
+        <tc-page-skeleton
+          [variant]="viewMode() === 'card' ? 'cards' : 'list'"
+          [rows]="8"
+          [columns]="6"
+          [kpis]="0"
+          [showKpis]="false"
+          [cards]="6">
+        </tc-page-skeleton>
       } @else if (hasLoaded() && !leads().length) {
         <div class="tc-empty-state">
           <i class="pi pi-inbox"></i>

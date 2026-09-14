@@ -26,7 +26,6 @@ import {
   AppButtonComponent,
   AppCardComponent,
   AppInputComponent,
-  AppLoaderComponent,
   AppPhoneInputComponent,
   AppRadioCardComponent,
   AppSearchableSelectComponent,
@@ -35,6 +34,7 @@ import {
   AppSelectOption,
   phoneErrorMessage
 } from '../../../../shared/ui/app-form';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 type PaymentOption = 'trial' | 'payment_received';
 
@@ -102,7 +102,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     AppSearchableSelectComponent,
     AppRadioCardComponent,
     AppButtonComponent,
-    AppLoaderComponent
+    TcPageSkeletonComponent
   ],
   templateUrl: './provision-organization.component.html',
   styleUrl: './provision-organization.component.scss'

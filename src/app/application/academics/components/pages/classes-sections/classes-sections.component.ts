@@ -34,11 +34,14 @@ import {
   ClassesSectionsDashboard
 } from '../../../models/classes-sections.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-classes-sections-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

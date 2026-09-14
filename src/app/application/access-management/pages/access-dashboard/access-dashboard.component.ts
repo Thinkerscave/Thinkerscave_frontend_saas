@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { AccessDashboardSummary, AccessResponsibility } from '../../models/access.model';
 import { AccessManagementService } from '../../services/access-management.service';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -16,7 +17,8 @@ import {
   selector: 'app-access-dashboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent],
+  imports: [CommonModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent],
   templateUrl: './access-dashboard.component.html',
   styleUrl: './access-dashboard.component.scss'
 })
@@ -35,15 +37,16 @@ export class AccessDashboardComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.errorMessage = '';
-    this.api.getDashboardSummary().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.getDashboardSummary().pipe(
+      finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: summary => {
         this.summary = summary;
-        this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Unable to load access overview. Verify organization context and admin permissions.';
-        this.loading = false;
         this.cdr.markForCheck();
       }
     });

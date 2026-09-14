@@ -5,6 +5,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { ExpenseHeadDialogComponent } from '../../components/expense-head-dialog/expense-head-dialog.component';
 import { EXPENSE_RESOURCES, ExpenseCategory, ExpenseHead } from '../../models/expenses.model';
@@ -20,6 +21,7 @@ import { ExpensesApiService } from '../../services/expenses-api.service';
     HasPermissionDirective,
     SaasPageHeaderComponent,
     SaasPillComponent,
+    TcPageSkeletonComponent,
     ExpenseHeadDialogComponent
   ],
   templateUrl: './expense-heads-page.component.html',
@@ -55,13 +57,11 @@ export class ExpenseHeadsPageComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.api.listHeads(this.q, 0, 200).subscribe({
+    this.api.listHeads(this.q, 0, 200).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: p => {
         this.rows = p.content;
-        this.loading = false;
       },
       error: e => {
-        this.loading = false;
         this.feedback.error('Expense heads', extractApiError(e, 'Request failed').message);
       }
     });

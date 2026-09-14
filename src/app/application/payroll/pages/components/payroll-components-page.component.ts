@@ -3,13 +3,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { finalize } from 'rxjs';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SalaryComponentDialogComponent } from '../../components/salary-component-dialog/salary-component-dialog.component';
 import {
   CALC_METHOD_LABELS,
@@ -31,6 +31,7 @@ import { PayrollApiService } from '../../services/payroll-api.service';
     HasPermissionDirective,
     AppToastComponent,
     SaasPageHeaderComponent,
+    TcPageSkeletonComponent,
     SalaryComponentDialogComponent
   ],
   templateUrl: './payroll-components-page.component.html',
@@ -71,7 +72,7 @@ export class PayrollComponentsPageComponent implements OnInit {
         this.page,
         this.size
       )
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalizeBusy(v => (this.loading = v)))
       .subscribe({
         next: page => {
           this.rows = page.content;

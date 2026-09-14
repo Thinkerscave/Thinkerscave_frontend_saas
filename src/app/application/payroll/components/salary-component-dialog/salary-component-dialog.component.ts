@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import {
   CALC_METHOD_LABELS,
   CalculationMethod,
@@ -98,15 +99,13 @@ export class SalaryComponentDialogComponent implements OnChanges {
     const req$ = this.editing
       ? this.api.updateComponent(this.editing.salaryComponentId, body)
       : this.api.createComponent(body);
-    req$.subscribe({
+    req$.pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.feedback.success(this.editing ? 'Component updated' : 'Component created', body.name);
         this.saved.emit();
         this.close();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Save failed', extractApiError(err, 'Request failed').message);
       }
     });

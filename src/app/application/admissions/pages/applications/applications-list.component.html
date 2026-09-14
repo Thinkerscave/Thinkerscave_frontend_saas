@@ -49,7 +49,15 @@
       </div>
 
       <app-list-results [busy]="searching && !!applications.length">
-        <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading applications…</div>
+        <tc-page-skeleton
+          *ngIf="loading"
+          [variant]="view === 'grid' ? 'cards' : 'list'"
+          [rows]="8"
+          [columns]="6"
+          [kpis]="0"
+          [showKpis]="false"
+          [cards]="6">
+        </tc-page-skeleton>
 
         <div class="adm-app-grid" *ngIf="!loading && applications.length && view === 'grid'">
           <article class="adm-lead-card" *ngFor="let app of applications" (click)="openPrimary(app)">

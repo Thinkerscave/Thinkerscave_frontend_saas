@@ -40,8 +40,8 @@
         </div>
       </div>
 
-      @if (loading) {
-        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      @if (loading && !rows.length) {
+        <tc-page-skeleton variant="list"></tc-page-skeleton>
       } @else if (error) {
         <div class="tc-empty-state tc-empty-state--inline">
           <p>{{ error }}</p>

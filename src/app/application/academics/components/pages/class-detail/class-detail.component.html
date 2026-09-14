@@ -176,15 +176,9 @@
     </div>
   </div>
   <ng-template #loadingTpl>
-    <div class="cd-loading acad-page" aria-busy="true">
-      <div class="cd-skel cd-skel--header"></div>
-      <div class="cd-skel cd-skel--summary"></div>
-      <div class="cd-skel-grid">
-        <div class="cd-skel cd-skel--card" *ngFor="let _ of [1,2,3]"></div>
-      </div>
-      <div class="cd-skel-grid cd-skel-grid--manage">
-        <div class="cd-skel cd-skel--manage" *ngFor="let _ of [1,2,3,4]"></div>
-      </div>
+    <div class="cd-page acad-page" aria-busy="true">
+      <tc-saas-page-header></tc-saas-page-header>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     </div>
   </ng-template>
 </ng-template>

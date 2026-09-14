@@ -75,8 +75,8 @@
             </div>
           </div>
 
-          @if (listLoading) {
-            <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+          @if (listLoading && !rows.length) {
+            <tc-page-skeleton variant="list"></tc-page-skeleton>
           } @else if (listError) {
             <div class="tc-empty-state tc-empty-state--inline"><p>{{ listError }}</p></div>
           } @else {
@@ -126,8 +126,8 @@
   }
 
   <ng-template #detailPanel>
-    @if (detailLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading details…</div>
+    @if (detailLoading && !detail) {
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     } @else if (detailError) {
       <div class="tc-empty-state tc-empty-state--inline"><p>{{ detailError }}</p></div>
     } @else if (!detail) {
@@ -177,7 +177,7 @@
         </div>
 
         @if (tabLoading && activeTab !== 'overview') {
-          <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+          <tc-page-skeleton variant="table"></tc-page-skeleton>
         } @else if (activeTab === 'overview') {
           <div class="fees-table-wrap">
             <table class="fees-table fees-table--compact">
@@ -321,7 +321,7 @@
     [draggable]="false"
     [style]="{ width: '640px', maxWidth: '95vw' }">
     @if (previewLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading preview…</div>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     } @else if (preview) {
       <div class="fees-receipt-preview">
         <div class="fees-receipt-preview__meta">

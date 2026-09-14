@@ -7,8 +7,8 @@
     </button>
   </tc-saas-page-header>
 
-  @if (loading) {
-    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading employee salary…</div>
+  @if (loading && !salary && !error) {
+    <tc-page-skeleton variant="detail"></tc-page-skeleton>
   } @else if (error) {
     <div class="tc-empty-state">
       <i class="pi pi-exclamation-circle"></i>

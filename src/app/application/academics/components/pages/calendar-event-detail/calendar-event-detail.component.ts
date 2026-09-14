@@ -36,11 +36,14 @@ import {
   CalendarEventType
 } from '../../../models/academic-calendar.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-calendar-event-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

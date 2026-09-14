@@ -20,9 +20,9 @@
     </button>
   </tc-saas-page-header>
 
-  @if (loading) {
-    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading dashboard…</div>
-  } @else if (error) {
+  @if (loading && !kpis) {
+    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+  } @else if (error && !kpis) {
     <div class="tc-empty-state tc-empty-state--inline">
       <p>{{ error }}</p>
       <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>

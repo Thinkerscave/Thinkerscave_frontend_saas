@@ -1,63 +1,141 @@
-/* Loading & Skeletons */
-.tc-loading {
+/* Loading & Skeletons — structural shimmer is preferred over blank spinners */
+
+@keyframes tcPulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+@keyframes tcSkelShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Legacy full-page spinner blocks ONLY (no structural skeleton child yet).
+   Containers that already render <tc-page-skeleton> are left alone. */
+.tc-loading:not(:has(tc-page-skeleton)):not(:has(app-skeleton)):not(:has(app-skeleton-loader)),
+.saas-loading:not(:has(tc-page-skeleton)):not(:has(app-skeleton)):not(:has(app-skeleton-loader)),
+.sd-loading:not(:has(tc-page-skeleton)):not(:has(app-skeleton)),
+.ay-loading:not(:has(tc-page-skeleton)),
+.ta-loading:not(:has(tc-page-skeleton)),
+.ov-loading:not(:has(tc-page-skeleton)),
+.ow-loading:not(:has(tc-page-skeleton)) {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--tc-space-10);
-  gap: var(--tc-space-4);
-  color: var(--tc-loader-text);
-  font-size: var(--tc-font-size-sm);
-  
-  i.pi-spin {
-    font-size: 2rem;
-    color: var(--tc-loader-progress);
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 12rem;
+  padding: 0.25rem 0 1rem;
+  color: transparent;
+  font-size: 0;
+  position: relative;
+  overflow: hidden;
+
+  > i.pi-spin,
+  > i.pi-spinner,
+  > .pi-spin,
+  > .pi-spinner {
+    display: none !important;
+  }
+
+  > *:not(i) {
+    display: none;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    display: block;
+    border-radius: var(--tc-radius-lg, 12px);
+    border: 1px solid var(--tc-border);
+    background:
+      linear-gradient(
+        90deg,
+        var(--tc-surface-100) 0%,
+        var(--tc-surface-50) 45%,
+        var(--tc-surface-100) 90%
+      )
+      0 0 / 200% 100%,
+      var(--tc-surface-card);
+    animation: tcSkelShimmer 1.35s ease-in-out infinite;
+  }
+
+  &::before {
+    height: 4.75rem;
+  }
+
+  &::after {
+    height: 14rem;
   }
 }
 
 .tc-loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 72%, transparent);
+  backdrop-filter: blur(1px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
   border-radius: inherit;
+
+  /* Soft busy cue instead of a loud spinner */
+  &::after {
+    content: '';
+    width: min(16rem, 70%);
+    height: 0.35rem;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--tc-surface-100) 0%,
+      color-mix(in srgb, var(--tc-accent) 35%, var(--tc-surface-50)) 50%,
+      var(--tc-surface-100) 100%
+    );
+    background-size: 200% 100%;
+    animation: tcSkelShimmer 1.1s ease-in-out infinite;
+  }
+
+  > i.pi-spin,
+  > .pi-spinner {
+    display: none;
+  }
 }
+
 :root.tc-theme-dark .tc-loading-overlay {
-  background: rgba(15, 23, 42, 0.7);
+  background: color-mix(in srgb, var(--tc-surface-card-solid) 78%, transparent);
 }
 
-/* Skeletons */
-@keyframes tcPulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
+/* Utility skeleton blocks */
 .tc-skeleton {
-  background: var(--tc-surface-200);
+  background: linear-gradient(
+    90deg,
+    var(--tc-surface-100) 0%,
+    var(--tc-surface-50) 45%,
+    var(--tc-surface-100) 90%
+  );
+  background-size: 200% 100%;
   border-radius: var(--tc-radius-sm);
-  animation: tcPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  
+  animation: tcSkelShimmer 1.35s ease-in-out infinite;
+
   &--circle {
     border-radius: 50%;
   }
-  
+
   &--text {
     height: 1rem;
     width: 100%;
     margin-bottom: 0.5rem;
   }
-  
+
   &--title {
     height: 1.5rem;
     width: 60%;
     margin-bottom: 1rem;
   }
-  
+
   &--image {
     width: 100%;
     height: 150px;
@@ -66,23 +144,41 @@
 
 .tc-skeleton-table {
   width: 100%;
-  
+
   .row {
     display: flex;
     gap: 1rem;
     padding: 1rem;
     border-bottom: 1px solid var(--tc-border);
-    
+
     .cell {
       height: 1rem;
-      background: var(--tc-surface-200);
       border-radius: var(--tc-radius-sm);
-      animation: tcPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      
+      background: linear-gradient(
+        90deg,
+        var(--tc-surface-100) 0%,
+        var(--tc-surface-50) 45%,
+        var(--tc-surface-100) 90%
+      );
+      background-size: 200% 100%;
+      animation: tcSkelShimmer 1.35s ease-in-out infinite;
+
       &:nth-child(1) { width: 30%; }
       &:nth-child(2) { width: 20%; }
       &:nth-child(3) { width: 40%; }
       &:nth-child(4) { width: 10%; }
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-loading:not(:has(tc-page-skeleton))::before,
+  .tc-loading:not(:has(tc-page-skeleton))::after,
+  .saas-loading:not(:has(tc-page-skeleton))::before,
+  .saas-loading:not(:has(tc-page-skeleton))::after,
+  .tc-skeleton,
+  .tc-skeleton-table .cell,
+  .tc-loading-overlay::after {
+    animation: tcPulse 1.6s ease-in-out infinite;
   }
 }

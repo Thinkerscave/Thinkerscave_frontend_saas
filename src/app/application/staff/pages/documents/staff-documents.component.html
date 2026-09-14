@@ -20,7 +20,7 @@
   }
 
   @if (loading) {
-    <div class="sd-loading"><i class="pi pi-spin pi-spinner"></i><span>Loading staff...</span></div>
+    <tc-page-skeleton variant="table" [rows]="8" [columns]="5"></tc-page-skeleton>
   }
 
   @if (!loading && filteredStaff().length > 0) {

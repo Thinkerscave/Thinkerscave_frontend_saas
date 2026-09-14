@@ -30,10 +30,7 @@
     <i class="pi pi-check-circle"></i> {{ successMessage }}
   </div>
 
-  <!-- Loading -->
-  <div class="tc-loading" *ngIf="loading">
-    <i class="pi pi-spin pi-spinner"></i> Loading transfer requests…
-  </div>
+  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4" [showKpis]="false"></tc-page-skeleton>
 
   <!-- Table -->
   <div class="tc-table-wrap" *ngIf="!loading && filteredTransfers.length">

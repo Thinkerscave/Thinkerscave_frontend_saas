@@ -69,7 +69,7 @@
     </div>
 
     @if (previewLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Calculating allocation…</div>
+      <tc-page-skeleton variant="form"></tc-page-skeleton>
     } @else if (preview) {
       <div class="fees-alloc-preview">
         <h4>Allocation preview</h4>

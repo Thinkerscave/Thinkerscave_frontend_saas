@@ -15,7 +15,7 @@
 
   @if (activeTab === 'fees') {
     @if (loading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      <tc-page-skeleton variant="form"></tc-page-skeleton>
     } @else if (error) {
       <div class="tc-empty-state tc-empty-state--inline">
         <p>{{ error }}</p>
@@ -151,7 +151,7 @@
 
   @if (activeTab === 'payroll') {
     @if (payrollLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading payroll settings…</div>
+      <tc-page-skeleton variant="form"></tc-page-skeleton>
     } @else if (payrollError) {
       <div class="tc-empty-state tc-empty-state--inline">
         <p>{{ payrollError }}</p>
@@ -287,7 +287,7 @@
 
   @if (activeTab === 'expenses') {
     @if (expensesLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading expense settings…</div>
+      <tc-page-skeleton variant="form"></tc-page-skeleton>
     } @else if (expensesError) {
       <div class="tc-empty-state tc-empty-state--inline">
         <p>{{ expensesError }}</p>

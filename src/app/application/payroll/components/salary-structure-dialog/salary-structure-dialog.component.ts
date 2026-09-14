@@ -4,6 +4,7 @@ import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { DialogModule } from 'primeng/dialog';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import {
   CALC_METHOD_LABELS,
   CalculationMethod,
@@ -110,15 +111,13 @@ export class SalaryStructureDialogComponent implements OnChanges {
     const req$ = this.editing
       ? this.api.updateStructure(this.editing.salaryStructureId, body)
       : this.api.createStructure(body);
-    req$.subscribe({
+    req$.pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.feedback.success(this.editing ? 'Structure updated' : 'Structure created', body.name);
         this.saved.emit();
         this.close();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Save failed', extractApiError(err, 'Request failed').message);
       }
     });

@@ -1,8 +1,8 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="cs-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
+<div class="cs-page acad-page">
+<tc-saas-page-header>
     <button
       type="button"
       class="tc-btn tc-btn--primary"
@@ -14,7 +14,9 @@
     </button>
   </tc-saas-page-header>
 
-  <section class="cs-context" *ngIf="dashboard as dash" aria-label="Academic year context">
+    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="4"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<section class="cs-context" *ngIf="dashboard as dash" aria-label="Academic year context">
     <div class="cs-context__primary">
       <div class="cs-context__label">Academic Year</div>
       <div class="cs-context__controls">
@@ -242,17 +244,8 @@
       </div>
     </ng-template>
   </ng-template>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="cs-loading acad-page" aria-busy="true">
-    <div class="cs-skeleton cs-skeleton--context"></div>
-    <div class="cs-skeleton cs-skeleton--toolbar"></div>
-    <div class="cs-skeleton-grid">
-      <div class="cs-skeleton cs-skeleton--card" *ngFor="let _ of [1,2,3,4]"></div>
-    </div>
-  </div>
-</ng-template>
 
 <p-dialog
   [header]="editingClassId ? 'Edit Class' : 'Add Class'"

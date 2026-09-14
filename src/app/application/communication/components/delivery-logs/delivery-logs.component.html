@@ -7,7 +7,7 @@
     <button type="button" class="tc-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading delivery logs...</div>
+  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>

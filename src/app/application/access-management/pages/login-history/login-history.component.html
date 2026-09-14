@@ -4,7 +4,7 @@
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading history...</div>
+  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4"></tc-page-skeleton>
 
   <p-confirmDialog key="retentionPurge"></p-confirmDialog>
   <p-toast position="top-right"></p-toast>
@@ -15,7 +15,7 @@
     <tc-saas-panel
       title="Archival &amp; retention"
       subtitle="Old sign-in records are purged automatically. The window and schedule are centrally configured; admins can also run the job on demand and inspect its history.">
-      <div *ngIf="retentionLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading archival status...</div>
+      <tc-page-skeleton *ngIf="retentionLoading" variant="kpi" [kpis]="4"></tc-page-skeleton>
       <div *ngIf="retentionError" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ retentionError }}</strong></div>
       <ng-container *ngIf="retention && !retentionLoading">
         <div class="login-history__retention-grid">

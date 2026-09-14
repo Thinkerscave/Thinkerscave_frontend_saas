@@ -22,10 +22,10 @@ import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../shared/ui/saas';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
-import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface KpiTile {
   key: 'total' | 'active' | 'locked';
   label: string;
@@ -42,8 +42,8 @@ const LIST_KEY = 'access.users.view';
   imports: [
     CommonModule, FormsModule, DropdownModule, RouterLink,
     AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
-    SaasPageHeaderComponent, SaasPillComponent, KpiCardComponent, KpiGroupComponent,
-    SkeletonComponent, EmptyStateComponent, AvatarComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPillComponent, KpiCardComponent, KpiGroupComponent, EmptyStateComponent, AvatarComponent
   ],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.scss'

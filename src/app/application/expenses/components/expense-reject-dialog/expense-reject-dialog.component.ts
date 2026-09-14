@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import { ExpensesApiService } from '../../services/expenses-api.service';
 
 @Component({
@@ -28,16 +29,14 @@ export class ExpenseRejectDialogComponent {
   reject(): void {
     if (!this.expenseId || !this.remarks.trim()) return;
     this.saving = true;
-    this.api.reject(this.expenseId, this.remarks.trim()).subscribe({
+    this.api.reject(this.expenseId, this.remarks.trim()).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.feedback.success('Expense rejected', 'The expense was rejected.');
         this.rejected.emit();
         this.visibleChange.emit(false);
         this.remarks = '';
       },
       error: e => {
-        this.saving = false;
         this.feedback.error('Reject failed', extractApiError(e, 'Request failed').message);
       }
     });

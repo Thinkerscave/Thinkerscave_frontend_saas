@@ -50,11 +50,14 @@ export interface AcademicCalendarDayCell {
   events: AcademicCalendarEventDto[];
 }
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-academic-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

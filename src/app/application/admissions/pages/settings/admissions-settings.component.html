@@ -14,9 +14,7 @@
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <div class="tc-loading" *ngIf="loading">
-    <i class="pi pi-spin pi-spinner"></i> Loading settings…
-  </div>
+  <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
   <div class="adm-settings-stack" *ngIf="!loading && settings">
     <tc-saas-panel title="Application documents">

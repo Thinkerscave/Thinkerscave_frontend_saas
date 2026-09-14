@@ -12,6 +12,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { environment } from '../../../../../environments/environment';
@@ -35,7 +36,8 @@ interface LookupOption { id: number; name: string; status?: string; }
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, DialogModule, HasPermissionDirective,
-    AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
+    AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './student-fee-page.component.html',
   styleUrls: ['./student-fee-page.component.scss', '../../fees.shared.scss']
@@ -160,15 +162,15 @@ export class StudentFeePageComponent implements OnInit {
       classId: this.classId ?? undefined,
       sectionId: this.sectionId ?? undefined,
       status: this.status || undefined
-    }, this.page, this.size).subscribe({
+    }, this.page, this.size)
+      .pipe(finalizeBusy(v => { this.listLoading = v; this.cdr.detectChanges(); }))
+      .subscribe({
       next: page => {
         this.rows = page.content;
         this.total = page.totalElements;
-        this.listLoading = false;
         this.cdr.detectChanges();
       },
       error: err => {
-        this.listLoading = false;
         if (err?.status === 403) this.accessRestricted = true;
         else this.listError = extractApiError(err, 'Request failed').message || 'Failed to load students';
         this.cdr.detectChanges();
@@ -210,10 +212,11 @@ export class StudentFeePageComponent implements OnInit {
     this.payments = [];
     this.receipts = [];
     this.yearHistory = [];
-    this.api.studentDetail(this.selectedStudentId, this.academicYearId).subscribe({
+    this.api.studentDetail(this.selectedStudentId, this.academicYearId)
+      .pipe(finalizeBusy(v => (this.detailLoading = v)))
+      .subscribe({
       next: detail => {
         this.detail = detail;
-        this.detailLoading = false;
         this.pageHeader.setPageHeader({
           subtitle: [detail.admissionNumber, detail.className, detail.sectionName].filter(Boolean).join(' · ')
         });
@@ -224,7 +227,6 @@ export class StudentFeePageComponent implements OnInit {
         if (this.activeTab !== 'overview') this.loadActiveTab();
       },
       error: err => {
-        this.detailLoading = false;
         if (err?.status === 403) {
           this.accessRestricted = true;
           this.detail = null;
@@ -244,28 +246,31 @@ export class StudentFeePageComponent implements OnInit {
     if (this.selectedStudentId == null || this.academicYearId == null) return;
     this.tabLoading = true;
     if (this.activeTab === 'payments') {
-      this.api.studentPayments(this.selectedStudentId, this.academicYearId).subscribe({
-        next: rows => { this.payments = rows; this.tabLoading = false; },
+      this.api.studentPayments(this.selectedStudentId, this.academicYearId)
+        .pipe(finalizeBusy(v => (this.tabLoading = v)))
+        .subscribe({
+        next: rows => { this.payments = rows; },
         error: err => {
-          this.tabLoading = false;
           this.payments = [];
           this.feedback.error('Payments', extractApiError(err, 'Request failed').message);
         }
       });
     } else if (this.activeTab === 'receipts') {
-      this.api.studentReceipts(this.selectedStudentId, this.academicYearId).subscribe({
-        next: rows => { this.receipts = rows; this.tabLoading = false; },
+      this.api.studentReceipts(this.selectedStudentId, this.academicYearId)
+        .pipe(finalizeBusy(v => (this.tabLoading = v)))
+        .subscribe({
+        next: rows => { this.receipts = rows; },
         error: err => {
-          this.tabLoading = false;
           this.receipts = [];
           this.feedback.error('Receipts', extractApiError(err, 'Request failed').message);
         }
       });
     } else if (this.activeTab === 'years') {
-      this.api.studentAcademicYears(this.selectedStudentId).subscribe({
-        next: rows => { this.yearHistory = rows; this.tabLoading = false; },
+      this.api.studentAcademicYears(this.selectedStudentId)
+        .pipe(finalizeBusy(v => (this.tabLoading = v)))
+        .subscribe({
+        next: rows => { this.yearHistory = rows; },
         error: err => {
-          this.tabLoading = false;
           this.yearHistory = [];
           this.feedback.error('Academic years', extractApiError(err, 'Request failed').message);
         }
@@ -286,13 +291,11 @@ export class StudentFeePageComponent implements OnInit {
     this.previewVisible = true;
     this.preview = null;
     this.previewLoading = true;
-    this.api.previewReceipt(row.feeReceiptId).subscribe({
+    this.api.previewReceipt(row.feeReceiptId).pipe(finalizeBusy(v => (this.previewLoading = v))).subscribe({
       next: receipt => {
         this.preview = receipt;
-        this.previewLoading = false;
       },
       error: err => {
-        this.previewLoading = false;
         this.previewVisible = false;
         this.feedback.error('Preview failed', extractApiError(err, 'Request failed').message);
       }
@@ -301,7 +304,7 @@ export class StudentFeePageComponent implements OnInit {
 
   downloadReceipt(row: FeeReceipt): void {
     this.downloadingId = row.feeReceiptId;
-    this.api.downloadReceiptPdf(row.feeReceiptId).subscribe({
+    this.api.downloadReceiptPdf(row.feeReceiptId).pipe(finalizeBusy(() => (this.downloadingId = null))).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -309,10 +312,8 @@ export class StudentFeePageComponent implements OnInit {
         a.download = `receipt-${row.receiptNumber || row.feeReceiptId}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
-        this.downloadingId = null;
       },
       error: err => {
-        this.downloadingId = null;
         this.feedback.error('Download failed', extractApiError(err, 'Request failed').message);
       }
     });

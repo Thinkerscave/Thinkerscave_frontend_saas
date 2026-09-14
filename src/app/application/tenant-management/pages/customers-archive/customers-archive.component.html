@@ -35,7 +35,9 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="loadCustomers()">Retry</button>
     </div>
 
-    <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading archived customers…</div>
+    <div *ngIf="loading" class="customers-archive__skeleton">
+      <tc-page-skeleton variant="list" [rows]="6" [columns]="4" [showKpis]="false"></tc-page-skeleton>
+    </div>
 
     <div *ngIf="!loading && !customers.length && !errorMessage" class="tc-empty-state">
       <i class="pi pi-inbox"></i>

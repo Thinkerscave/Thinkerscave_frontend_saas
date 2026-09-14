@@ -4,6 +4,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { DialogModule } from 'primeng/dialog';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import {
   EMPLOYMENT_CATEGORY_OPTIONS,
   GeneratePayrollRequest,
@@ -109,16 +110,14 @@ export class GeneratePayrollDialogComponent {
 
     this.saving = true;
     const key = crypto.randomUUID();
-    this.api.generateRun(body, key).subscribe({
+    this.api.generateRun(body, key).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: result => {
-        this.saving = false;
         this.result = result;
         this.feedback.success('Payroll generated', `${result.generatedCount} employee(s) processed.`);
         this.generated.emit(result);
         if (!result.skippedCount) this.close();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Generate failed', extractApiError(err, 'Request failed').message);
       }
     });

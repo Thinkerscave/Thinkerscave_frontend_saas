@@ -6,7 +6,7 @@
   <div class="tc-empty-state tc-empty-state--inline" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
-  <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading application…</div>
+  <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading">
     <div class="adm-app-form__meta">

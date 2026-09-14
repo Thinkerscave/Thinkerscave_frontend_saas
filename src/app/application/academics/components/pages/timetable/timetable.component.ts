@@ -45,11 +45,14 @@ import {
 
 type TimetableTab = 'readiness' | 'configuration' | 'timetable' | 'conflicts';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-timetable-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     SaasPageHeaderComponent,

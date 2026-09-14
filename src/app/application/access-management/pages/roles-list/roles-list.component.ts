@@ -22,13 +22,15 @@ import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-roles-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppToastComponent, 
     CommonModule, FormsModule, DropdownModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
     AppPaginatorComponent
   ],
   providers: [MessageService],

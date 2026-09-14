@@ -21,7 +21,9 @@
     <button type="button" class="tc-btn" (click)="load(customerId)"><i class="pi pi-refresh"></i> Retry</button>
   </div>
 
-  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading customer…</div>
+  <div *ngIf="loading" class="customer-workspace__skeleton">
+    <tc-page-skeleton variant="detail" [tabs]="2"></tc-page-skeleton>
+  </div>
 
   <ng-container *ngIf="!loading && customer">
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>

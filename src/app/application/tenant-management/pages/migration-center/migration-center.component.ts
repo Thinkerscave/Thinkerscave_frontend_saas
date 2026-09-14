@@ -22,6 +22,7 @@ import {
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 @Component({
   selector: 'app-migration-center',
@@ -33,7 +34,8 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    ProgressBarModule
+    ProgressBarModule,
+    TcPageSkeletonComponent
   ],
   templateUrl: './migration-center.component.html',
   styleUrl: './migration-center.component.scss'

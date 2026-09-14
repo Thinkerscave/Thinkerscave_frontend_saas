@@ -12,8 +12,8 @@
     <span>Your payroll amounts are private. Use the eye icon to reveal each value for this session only.</span>
   </div>
 
-  @if (loading) {
-    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading your payroll…</div>
+  @if (loading && !summary) {
+    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
   } @else if (error) {
     <div class="tc-empty-state">
       <i class="pi pi-exclamation-circle"></i>
@@ -252,7 +252,7 @@
     [draggable]="false"
     [style]="{ width: '640px', maxWidth: '95vw' }">
     @if (detailLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     } @else if (detail) {
       <div class="payroll-meta-row">
         <span>{{ monthLabel(detail.payrollYear, detail.payrollMonth) }}</span>

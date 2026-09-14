@@ -18,6 +18,7 @@ import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 type PriorityFilter = 'all' | 'High' | 'Medium' | 'Low';
 type StatusFilter = 'all' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 
@@ -30,7 +31,8 @@ interface SelectOption {
   selector: 'app-announcements-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent, AppPaginatorComponent],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink, DropdownModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent, AppPaginatorComponent],
   templateUrl: './announcements-list.component.html',
   styleUrl: './announcements-list.component.scss'
 })
@@ -69,10 +71,13 @@ export class AnnouncementsListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.api.listNotices()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        next: list => { this.notices = list || []; this.loading = false; this.cdr.markForCheck(); },
-        error: () => { this.notices = []; this.loading = false; this.cdr.markForCheck(); }
+        next: list => { this.notices = list || []; this.cdr.markForCheck(); },
+        error: () => { this.notices = []; this.cdr.markForCheck(); }
       });
   }
 

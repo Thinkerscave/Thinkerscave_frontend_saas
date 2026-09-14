@@ -22,6 +22,7 @@ import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 type ProfileTab = 'overview' | 'responsibilities' | 'documents' | 'activity';
 
 interface TabConfig { id: ProfileTab; label: string; icon: string; }
@@ -30,7 +31,9 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
+  ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })

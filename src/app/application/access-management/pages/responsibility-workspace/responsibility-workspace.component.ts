@@ -25,6 +25,7 @@ import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources'
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { StaffService } from '../../../staff/services/staff.service';
 import { StaffSummary } from '../../../staff/models/staff.model';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -51,7 +52,7 @@ type Privilege = 'canView' | 'canManage' | 'canApprove';
     MultiSelectModule,
     TooltipModule,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
+    TcPageSkeletonComponent, SaasPanelComponent,
     SaasPillComponent
   ],
   providers: [MessageService, ConfirmationService],

@@ -13,6 +13,7 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 interface ActivityItem {
   title: string;
@@ -30,7 +31,8 @@ interface ActivityItem {
     ChartModule,
     SaasPageHeaderComponent,
     SaasStatGridComponent,
-    SaasPanelComponent
+    SaasPanelComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './platform-dashboard.component.html',
   styleUrl: './platform-dashboard.component.scss'

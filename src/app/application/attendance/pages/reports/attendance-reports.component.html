@@ -54,7 +54,7 @@
   }
 
   @if (loading) {
-    <div class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading report…</strong></div>
+    <tc-page-skeleton variant="dashboard" [kpis]="4"></tc-page-skeleton>
   } @else {
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 

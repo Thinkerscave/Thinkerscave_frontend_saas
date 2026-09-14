@@ -4,14 +4,16 @@
   <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
 
-  <div class="responsibilities-list__intro">
+  <tc-page-skeleton *ngIf="loading" variant="list" [kpis]="4" [showKpis]="true"></tc-page-skeleton>
+
+  <div class="responsibilities-list__intro" *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary responsibilities-list__new" (click)="openCreate()">
       <i class="pi pi-plus"></i> New responsibility
     </button>
   </div>
 
-  <tc-saas-panel title="Organization responsibilities" [subtitle]="totalRecords + ' items · click a name to open details'">
+  <tc-saas-panel *ngIf="!loading" title="Organization responsibilities" [subtitle]="totalRecords + ' items · click a name to open details'">
     <app-list-toolbar
       [search]="search"
       searchPlaceholder="Search name or code"

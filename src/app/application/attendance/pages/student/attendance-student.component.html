@@ -68,7 +68,7 @@
         <strong>{{ copyError }}</strong>
       </div>
 
-      <div *ngIf="rosterLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading roster...</div>
+      <tc-page-skeleton *ngIf="rosterLoading" variant="table" [rows]="8" [columns]="5"></tc-page-skeleton>
 
       <div *ngIf="!rosterLoading && !rows.length" class="saas-empty">
         <i class="pi pi-users"></i>

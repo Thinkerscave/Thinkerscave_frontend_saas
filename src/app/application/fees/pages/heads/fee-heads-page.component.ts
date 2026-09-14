@@ -11,7 +11,7 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
-import { finalize } from 'rxjs';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { FeesApiService } from '../../services/fees-api.service';
 import {
   FEE_HEAD_CATEGORY_LABELS,
@@ -27,7 +27,7 @@ import {
   providers: [ConfirmationService],
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule,
-    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent
+    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fee-heads-page.component.html',
   styleUrls: ['./fee-heads-page.component.scss', '../../fees.shared.scss']
@@ -72,8 +72,8 @@ export class FeeHeadsPageComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.api.listHeads({ q: this.q || undefined, category: this.category || undefined, status: this.status || undefined }, this.page, this.size)
-      .pipe(finalize(() => {
-        this.loading = false;
+      .pipe(finalizeBusy(v => {
+        this.loading = v;
         this.cdr.markForCheck();
       }))
       .subscribe({
@@ -135,15 +135,13 @@ export class FeeHeadsPageComponent implements OnInit {
     const req$ = this.editing
       ? this.api.updateHead(this.editing.feeHeadId, body)
       : this.api.createHead(body);
-    req$.subscribe({
+    req$.pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.dialogVisible = false;
         this.feedback.success(this.editing ? 'Fee head updated' : 'Fee head created', body.name);
         this.load();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Save failed', extractApiError(err, 'Request failed').message);
       }
     });

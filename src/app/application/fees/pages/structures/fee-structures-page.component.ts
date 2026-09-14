@@ -14,6 +14,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { environment } from '../../../../../environments/environment';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { FeesApiService } from '../../services/fees-api.service';
 import {
   FEE_FREQUENCY_OPTIONS,
@@ -34,7 +35,7 @@ interface LookupOption { id: number; name: string; }
   providers: [ConfirmationService],
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule,
-    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent
+    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fee-structures-page.component.html',
   styleUrls: ['./fee-structures-page.component.scss', '../../fees.shared.scss']
@@ -122,14 +123,12 @@ export class FeeStructuresPageComponent implements OnInit {
       academicYearId: this.academicYearId ?? undefined,
       classId: this.classId ?? undefined,
       status: this.status || undefined
-    }, this.page, this.size).subscribe({
+    }, this.page, this.size).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: page => {
         this.rows = page.content;
         this.total = page.totalElements;
-        this.loading = false;
       },
       error: err => {
-        this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load fee structures';
       }
     });
@@ -293,15 +292,13 @@ export class FeeStructuresPageComponent implements OnInit {
     const req$ = this.editing
       ? this.api.updateStructure(this.editing.feeStructureId, body)
       : this.api.createStructure(body);
-    req$.subscribe({
+    req$.pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.dialogVisible = false;
         this.feedback.success(this.editing ? 'Structure updated' : 'Structure created', body.name);
         this.load();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Save failed', extractApiError(err, 'Request failed').message);
       }
     });
@@ -323,15 +320,13 @@ export class FeeStructuresPageComponent implements OnInit {
       targetAcademicYearId: raw.targetAcademicYearId as number,
       targets: classIds.map(classId => ({ classId })),
       onConflict: raw.onConflict as 'CANCEL_CLASS' | 'REPLACE_DEACTIVATE'
-    }).subscribe({
+    }).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: () => {
-        this.saving = false;
         this.cloneVisible = false;
         this.feedback.success('Structures cloned', `${classIds.length} class(es)`);
         this.load();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Clone failed', extractApiError(err, 'Request failed').message);
       }
     });

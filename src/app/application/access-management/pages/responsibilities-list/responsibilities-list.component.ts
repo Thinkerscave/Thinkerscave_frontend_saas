@@ -23,6 +23,7 @@ import { ListContextService } from '../../../../core/services/list-context.servi
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { StaffService } from '../../../staff/services/staff.service';
 import { StaffSummary } from '../../../staff/models/staff.model';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -41,7 +42,8 @@ const LIST_KEY = 'access.responsibilities.view';
     AppToastComponent, DialogModule, MultiSelectModule, TooltipModule,
     AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
     CommonModule, FormsModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],
   templateUrl: './responsibilities-list.component.html',

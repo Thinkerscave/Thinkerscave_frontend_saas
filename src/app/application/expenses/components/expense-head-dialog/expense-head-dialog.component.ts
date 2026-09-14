@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { StaffService } from '../../../staff/services/staff.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import { ExpenseCategory, ExpenseHead } from '../../models/expenses.model';
 import { ExpensesApiService } from '../../services/expenses-api.service';
 
@@ -69,15 +70,15 @@ export class ExpenseHeadDialogComponent implements OnChanges {
       status: r.status as 'ACTIVE' | 'INACTIVE'
     };
     this.saving = true;
-    (this.head ? this.api.updateHead(this.head.expenseHeadId, body) : this.api.createHead(body)).subscribe({
+    (this.head ? this.api.updateHead(this.head.expenseHeadId, body) : this.api.createHead(body))
+      .pipe(finalizeBusy(v => (this.saving = v)))
+      .subscribe({
       next: () => {
-        this.saving = false;
         this.feedback.success('Expense head saved', 'Expense head updated.');
         this.saved.emit();
         this.visibleChange.emit(false);
       },
       error: e => {
-        this.saving = false;
         this.feedback.error('Save failed', extractApiError(e, 'Request failed').message);
       }
     });

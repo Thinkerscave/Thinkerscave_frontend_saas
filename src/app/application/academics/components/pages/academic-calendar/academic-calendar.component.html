@@ -1,11 +1,13 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="ac-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
+<div class="ac-page acad-page">
+<tc-saas-page-header>
   </tc-saas-page-header>
 
-  <!-- Top controls: year + Calendar/List + Add Event -->
+    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="4"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<!-- Top controls: year + Calendar/List + Add Event -->
   <section class="ac-topbar" aria-label="Calendar controls">
     <div class="ac-topbar__left">
       <p-dropdown
@@ -342,14 +344,8 @@
       </div>
     </ng-template>
   </ng-template>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="ac-loading acad-page" aria-busy="true">
-    <div class="ac-skeleton ac-skeleton--context"></div>
-    <div class="ac-skeleton ac-skeleton--cal"></div>
-  </div>
-</ng-template>
 
 <p-dialog
   [header]="editingEventId ? 'Edit Event' : 'Add Event'"

@@ -28,6 +28,7 @@ import {
   ReviewSection
 } from '../../data/application-review.util';
 import { formatAdmissionsLabel } from '../../data/admissions-workspace.config';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPillComponent
@@ -52,7 +53,8 @@ const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
     DocumentPreviewDialogComponent,
     HasPermissionDirective,
     SaasPageHeaderComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    TcPageSkeletonComponent
   ],
   providers: [ConfirmationService, MessageService],
   styleUrls: ['../../admissions.shared.scss'],

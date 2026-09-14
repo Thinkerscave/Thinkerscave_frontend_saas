@@ -10,6 +10,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
@@ -31,7 +32,8 @@ interface LookupOption { id: number; name: string; status?: string; }
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, HasPermissionDirective, AppToastComponent,
-    CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
+    CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './fees-dashboard.component.html',
   styleUrls: ['./fees-dashboard.component.scss', '../../fees.shared.scss']
@@ -96,7 +98,7 @@ export class FeesDashboardComponent implements OnInit {
         catchError(() => of([] as FeePayment[]))
       ),
       upcoming: this.api.upcomingDues(yearId).pipe(catchError(() => of([] as OutstandingItem[])))
-    }).subscribe({
+    }).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: data => {
         this.kpis = data.kpis;
         this.trend = data.trend;
@@ -111,11 +113,9 @@ export class FeesDashboardComponent implements OnInit {
           1,
           this.statusSlices.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)
         );
-        this.loading = false;
         this.cdr.detectChanges();
       },
       error: err => {
-        this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load fee dashboard';
         this.cdr.detectChanges();
       }

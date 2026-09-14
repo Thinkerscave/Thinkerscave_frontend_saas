@@ -108,7 +108,7 @@
     </div>
   </div>
 
-  <div class="tc-loading" *ngIf="loading && !dashboard"><i class="pi pi-spin pi-spinner"></i> Loading report…</div>
+  <tc-page-skeleton *ngIf="loading && !dashboard" variant="dashboard" [kpis]="4"></tc-page-skeleton>
   <div class="tc-empty-state" *ngIf="!loading && errorMessage && !dashboard">
     <h3>{{ errorMessage }}</h3>
     <button type="button" class="tc-btn" (click)="load()">Retry</button>

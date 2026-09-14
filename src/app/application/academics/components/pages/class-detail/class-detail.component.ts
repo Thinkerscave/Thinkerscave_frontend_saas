@@ -32,11 +32,14 @@ import { academicsApi } from '../../../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../../../shared/models/auth.model';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-class-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

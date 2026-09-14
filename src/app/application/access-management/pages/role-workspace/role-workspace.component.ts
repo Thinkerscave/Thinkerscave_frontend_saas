@@ -12,6 +12,7 @@ import { AccessManagementService } from '../../services/access-management.servic
 import { roleTypeLabel } from '../../utils/access-display.util';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { LoginService } from '../../../../core/services/login.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -31,7 +32,8 @@ type Privilege = 'canView' | 'canManage' | 'canApprove';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppToastComponent, 
     CommonModule, FormsModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService],
   templateUrl: './role-workspace.component.html',

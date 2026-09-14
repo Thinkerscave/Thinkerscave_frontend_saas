@@ -29,6 +29,7 @@ import {
 import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-login-history',
   standalone: true,
@@ -37,7 +38,8 @@ import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shar
   imports: [
     CommonModule, FormsModule, DropdownModule, AutoCompleteModule,
     ConfirmDialogModule, ToastModule,
-    SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent, SaasPillComponent,
     AppPaginatorComponent
   ],
   templateUrl: './login-history.component.html',

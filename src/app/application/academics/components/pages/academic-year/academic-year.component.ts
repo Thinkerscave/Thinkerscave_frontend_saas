@@ -34,11 +34,14 @@ import {
   AcademicYearTransitionDto
 } from '../../../models/academic-year-transition.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-academic-year-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

@@ -13,7 +13,7 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
   } @else if (loading()) {
-    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading follow-up queue…</div>
+    <tc-page-skeleton variant="list" [rows]="8" [columns]="6" [kpis]="4"></tc-page-skeleton>
   } @else {
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>
 

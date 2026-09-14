@@ -20,7 +20,7 @@
   <app-toast></app-toast>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading role...</div>
+  <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && role">
     <tc-saas-panel title="Role Details">

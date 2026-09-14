@@ -12,11 +12,15 @@ import { AcademicsOverviewApiService } from '../../../services/academics-overvie
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicsOverview, ACADEMICS_OVERVIEW_RESOURCE } from '../../../models/academics-overview.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-academics-overview-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, ProgressBarModule, SaasPageHeaderComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, DropdownModule, ProgressBarModule, SaasPageHeaderComponent, TcPageSkeletonComponent
+  ],
   templateUrl: './overview.component.html',
   styleUrls: ['./overview.component.scss']
 })

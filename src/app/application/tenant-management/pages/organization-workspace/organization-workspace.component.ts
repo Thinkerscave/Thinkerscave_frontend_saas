@@ -35,6 +35,7 @@ import {
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -44,7 +45,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, TooltipModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent, TcPageSkeletonComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',

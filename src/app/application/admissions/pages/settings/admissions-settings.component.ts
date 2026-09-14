@@ -23,6 +23,7 @@ import {
 } from '../../data/admissions-workspace.config';
 import { AdmissionsSettings } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent
@@ -38,7 +39,7 @@ interface DocumentSettingRow {
   selector: 'app-admissions-crm-settings',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [AppToastComponent, CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent, TcPageSkeletonComponent],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss'],
   templateUrl: './admissions-settings.component.html'

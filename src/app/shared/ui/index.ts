@@ -10,5 +10,6 @@ export * from './page-header/page-actions.directive';
 export * from './quick-actions/quick-actions.component';
 export * from './timeline/timeline.component';
 export * from './workspace-shell/workspace-shell.component';
+export * from './loading';
 export * from './app-form';
 export * from './app-list';

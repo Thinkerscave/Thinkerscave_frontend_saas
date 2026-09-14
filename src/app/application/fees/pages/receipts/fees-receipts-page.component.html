@@ -31,8 +31,8 @@
         </div>
       </div>
 
-      @if (loading) {
-        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading receipts…</div>
+      @if (loading && !rows.length) {
+        <tc-page-skeleton variant="list"></tc-page-skeleton>
       } @else if (error) {
         <div class="tc-empty-state tc-empty-state--inline">
           <p>{{ error }}</p>
@@ -119,7 +119,7 @@
     [style]="{ width: '640px', maxWidth: '95vw' }"
     styleClass="fees-receipt-preview-dialog">
     @if (previewLoading) {
-      <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading preview…</div>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     } @else if (preview) {
       <div class="fees-receipt-preview">
         <div class="fees-receipt-preview__school">

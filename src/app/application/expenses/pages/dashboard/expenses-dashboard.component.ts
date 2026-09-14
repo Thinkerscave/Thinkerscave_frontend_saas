@@ -9,6 +9,7 @@ import { HasPermissionDirective } from '../../../../shared/directives/has-permis
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { ExpenseFormDrawerComponent } from '../../components/expense-form-drawer/expense-form-drawer.component';
 import { ExpenseRejectDialogComponent } from '../../components/expense-reject-dialog/expense-reject-dialog.component';
@@ -39,6 +40,7 @@ import { ExpensesApiService } from '../../services/expenses-api.service';
     KpiGroupComponent,
     SaasPageHeaderComponent,
     SaasPillComponent,
+    TcPageSkeletonComponent,
     ExpenseFormDrawerComponent,
     ExpenseRejectDialogComponent,
     RecordExpensePaymentDialogComponent
@@ -96,15 +98,16 @@ export class ExpensesDashboardComponent implements OnInit {
   loadAll(): void {
     this.loading = true;
     this.error = null;
-    this.api.overview(this.filter).subscribe({
+    this.api.overview(this.filter).pipe(finalizeBusy(v => {
+      this.loading = v;
+      this.cdr.detectChanges();
+    })).subscribe({
       next: k => {
         this.kpis = k;
-        this.loading = false;
         this.cdr.detectChanges();
         this.loadRows();
       },
       error: e => {
-        this.loading = false;
         this.error = extractApiError(e, 'Failed to load expenses').message;
         this.feedback.error('Expenses', this.error!);
         this.cdr.detectChanges();
@@ -114,17 +117,18 @@ export class ExpensesDashboardComponent implements OnInit {
 
   loadRows(): void {
     this.tableLoading = true;
-    this.api.list(this.filter, this.page, this.size, this.sort).subscribe({
+    this.api.list(this.filter, this.page, this.size, this.sort).pipe(finalizeBusy(v => {
+      this.tableLoading = v;
+      this.cdr.detectChanges();
+    })).subscribe({
       next: p => {
         this.rows = p.content;
         this.total = p.totalElements;
-        this.tableLoading = false;
         this.cdr.detectChanges();
       },
       error: e => {
         this.rows = [];
         this.total = 0;
-        this.tableLoading = false;
         this.feedback.error('Expenses', extractApiError(e, 'Request failed').message);
       }
     });

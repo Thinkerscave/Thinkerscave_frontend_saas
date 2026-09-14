@@ -11,11 +11,15 @@ import { AcademicsMeApiService } from '../../../services/academics-me-api.servic
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { ACADEMICS_MY_ACADEMICS_RESOURCE, StudentMyAcademics } from '../../../models/academics-me.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-my-academics-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent, TcPageSkeletonComponent
+  ],
   templateUrl: './my-academics.component.html',
   styleUrls: ['./my-academics.component.scss']
 })

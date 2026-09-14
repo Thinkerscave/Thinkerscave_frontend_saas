@@ -1,5 +1,5 @@
-<div class="ov-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
+<div class="ov-page acad-page">
+<tc-saas-page-header>
     <p-dropdown
       [options]="years"
       [(ngModel)]="selectedYearId"
@@ -11,7 +11,9 @@
     <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }">Academic Year</a>
   </tc-saas-page-header>
 
-  <ng-container *ngIf="overview as ov">
+    <tc-page-skeleton *ngIf="loading" variant="dashboard" [kpis]="4"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<ng-container *ngIf="overview as ov">
     <section class="ov-banner">
       <div class="ov-banner__left">
         <div class="ov-eyebrow">{{ ov.yearHeader.status }} ACADEMIC YEAR</div>
@@ -238,8 +240,5 @@
       <a routerLink="/app/academics/academic-calendar" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar"></i> Academic Calendar</a>
     </section>
   </ng-container>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="ov-loading">Loading academics overview…</div>
-</ng-template>

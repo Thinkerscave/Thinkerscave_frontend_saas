@@ -249,9 +249,7 @@
   </ng-container>
 
 <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ LOADING â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-<div *ngIf="loading" class="sd-loading sd-loading--profile">
-  <i class="pi pi-spin pi-spinner"></i> Loading profile...
-</div>
+<tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="5"></tc-page-skeleton>
 
 <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ ERROR â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div *ngIf="errorMessage && !loading" class="sd-error-banner">

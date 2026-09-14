@@ -20,6 +20,7 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { finalize } from 'rxjs';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPillComponent,
@@ -78,6 +79,7 @@ interface AttentionItem {
     SaasTabsComponent,
     SaasPillComponent,
     SaasPageHeaderComponent,
+    TcPageSkeletonComponent,
     CounselorPickerComponent
   ],
   providers: [MessageService, ConfirmationService],

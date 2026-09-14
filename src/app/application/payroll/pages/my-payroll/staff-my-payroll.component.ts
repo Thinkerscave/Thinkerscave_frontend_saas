@@ -7,6 +7,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   EmployeePayrollDetail,
   EmployeePayrollStatus,
@@ -29,7 +30,7 @@ interface PayslipListItem {
 @Component({
   selector: 'app-staff-my-payroll',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule, HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, DialogModule, HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent],
   templateUrl: './staff-my-payroll.component.html',
   styleUrls: ['../../payroll.shared.scss', './staff-my-payroll.component.scss']
 })
@@ -72,14 +73,12 @@ export class StaffMyPayrollComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = null;
-    this.api.mySummary().subscribe({
+    this.api.mySummary().pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: summary => {
         this.summary = summary;
-        this.loading = false;
         this.loadHistory();
       },
       error: err => {
-        this.loading = false;
         const message = extractApiError(err, 'Request failed').message || 'Unable to load My Payroll';
         this.error = /no staff profile/i.test(message)
           ? 'Your login is not linked to a staff profile yet. Ask an administrator to link your user to a staff record.'
@@ -159,13 +158,11 @@ export class StaffMyPayrollComponent implements OnInit {
     this.detailVisible = true;
     this.detailLoading = true;
     this.detail = null;
-    this.api.myEmployeePayroll(employeePayrollId).subscribe({
+    this.api.myEmployeePayroll(employeePayrollId).pipe(finalizeBusy(v => (this.detailLoading = v))).subscribe({
       next: detail => {
         this.detail = detail;
-        this.detailLoading = false;
       },
       error: err => {
-        this.detailLoading = false;
         this.feedback.error('Details unavailable', extractApiError(err, 'Request failed').message);
       }
     });

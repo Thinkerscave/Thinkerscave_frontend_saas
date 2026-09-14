@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import { DrawerFormComponent } from '../../../../shared/ui/drawer-form/drawer-form.component';
 import { FeesApiService } from '../../../fees/services/fees-api.service';
 import { StaffService } from '../../../staff/services/staff.service';
@@ -166,9 +167,8 @@ export class ExpenseFormDrawerComponent implements OnChanges {
         const uploads = this.files.length
           ? forkJoin(this.files.map(f => this.api.uploadAttachment(detail.expenseId, f)))
           : of([]);
-        uploads.subscribe({
+        uploads.pipe(finalizeBusy(v => (this.saving = v))).subscribe({
           next: () => {
-            this.saving = false;
             this.feedback.success(
               'Expense saved',
               `Expense ${detail.expenseNumber} ${this.expense ? 'updated' : 'created'} successfully.`
@@ -180,7 +180,6 @@ export class ExpenseFormDrawerComponent implements OnChanges {
             }
           },
           error: err => {
-            this.saving = false;
             this.feedback.error(
               'Attachment upload failed',
               extractApiError(err, 'Expense saved, but attachment upload failed.').message

@@ -16,7 +16,7 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <app-loader *ngIf="loading" label="Loading customer…"></app-loader>
+    <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
     <app-card *ngIf="!loading" [hasFooter]="true" [elevated]="true">
       <form class="customer-form" novalidate (submit)="$event.preventDefault()">

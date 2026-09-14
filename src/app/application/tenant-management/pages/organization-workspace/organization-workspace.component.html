@@ -1,7 +1,6 @@
 <div class="ow-page">
   <div *ngIf="loading" class="ow-loading">
-    <i class="pi pi-spin pi-spinner"></i>
-    <span>Loading organization…</span>
+    <tc-page-skeleton variant="detail" [tabs]="3"></tc-page-skeleton>
   </div>
 
   <div *ngIf="errorMessage" class="ow-error">

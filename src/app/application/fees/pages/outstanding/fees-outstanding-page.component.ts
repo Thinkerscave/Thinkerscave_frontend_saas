@@ -10,6 +10,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
 import { CollectFeeDialogComponent } from '../../components/collect-fee-dialog/collect-fee-dialog.component';
@@ -27,7 +28,8 @@ interface LookupOption { id: number; name: string; }
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, HasPermissionDirective, AppToastComponent,
-    CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
+    CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './fees-outstanding-page.component.html',
   styleUrls: ['./fees-outstanding-page.component.scss', '../../fees.shared.scss']
@@ -71,14 +73,12 @@ export class FeesOutstandingPageComponent implements OnInit {
     this.api.listOutstanding({
       academicYearId: this.academicYearId,
       status: this.status || undefined
-    }, this.page, this.size).subscribe({
+    }, this.page, this.size).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: page => {
         this.rows = page.content;
         this.total = page.totalElements;
-        this.loading = false;
       },
       error: err => {
-        this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load outstanding';
       }
     });

@@ -1,9 +1,11 @@
-<div class="mt-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
+<div class="mt-page acad-page">
+<tc-saas-page-header>
     <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
   </tc-saas-page-header>
 
-  <div class="mt-summary" *ngIf="data">
+    <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<div class="mt-summary" *ngIf="data">
     <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>
     <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
     <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
@@ -85,5 +87,5 @@
       <p class="mt-tip">Tip: Use Week/Day and filters to focus on your schedule quickly.</p>
     </aside>
   </div>
+  </ng-container>
 </div>
-<ng-template #loadingTpl><div class="mt-empty">Loading timetable…</div></ng-template>

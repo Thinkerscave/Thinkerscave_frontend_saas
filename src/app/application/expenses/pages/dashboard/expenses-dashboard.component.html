@@ -21,12 +21,9 @@
     </button>
   </tc-saas-page-header>
 
-  @if (loading) {
-    <div class="tc-loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      Loading expenses…
-    </div>
-  } @else if (error) {
+  @if (loading && !kpis) {
+    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+  } @else if (error && !kpis) {
     <div class="tc-empty-state expenses-empty">
       <i class="pi pi-exclamation-circle"></i>
       <h3>Expenses unavailable</h3>
@@ -164,11 +161,8 @@
 
     <div class="tc-card tc-card--panel expenses-panel">
       <div class="tc-card__body">
-        @if (tableLoading) {
-          <div class="tc-loading">
-            <i class="pi pi-spin pi-spinner"></i>
-            Loading…
-          </div>
+        @if (tableLoading && !rows.length) {
+          <tc-page-skeleton variant="table"></tc-page-skeleton>
         } @else if (!rows.length) {
           <div class="tc-empty-state expenses-empty">
             <i class="pi" [ngClass]="heads.length ? 'pi-inbox' : 'pi-sitemap'"></i>

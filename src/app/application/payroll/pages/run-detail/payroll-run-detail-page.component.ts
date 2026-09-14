@@ -7,6 +7,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { RecordPaymentDialogComponent } from '../../components/record-payment-dialog/record-payment-dialog.component';
 import {
   EmployeePayrollDetail,
@@ -31,6 +32,7 @@ type RunTab = 'employees' | 'summary' | 'approval' | 'payments';
     HasPermissionDirective,
     AppToastComponent,
     SaasPageHeaderComponent,
+    TcPageSkeletonComponent,
     RecordPaymentDialogComponent
   ],
   templateUrl: './payroll-run-detail-page.component.html',
@@ -67,13 +69,11 @@ export class PayrollRunDetailPageComponent implements OnInit {
     }
     this.loading = true;
     this.error = null;
-    this.api.getRun(this.runId).subscribe({
+    this.api.getRun(this.runId).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: run => {
         this.run = run;
-        this.loading = false;
       },
       error: err => {
-        this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load payroll run';
       }
     });
@@ -95,14 +95,12 @@ export class PayrollRunDetailPageComponent implements OnInit {
   recalculate(): void {
     if (!this.canRecalculate || this.hasAnyPayment) return;
     this.saving = true;
-    this.api.recalculateRun(this.runId).subscribe({
+    this.api.recalculateRun(this.runId).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: run => {
         this.run = run;
-        this.saving = false;
         this.feedback.success('Recalculated', 'Payroll run updated.');
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Recalculate failed', extractApiError(err, 'Request failed').message);
       }
     });
@@ -110,14 +108,12 @@ export class PayrollRunDetailPageComponent implements OnInit {
 
   approve(): void {
     this.saving = true;
-    this.api.approveRun(this.runId).subscribe({
+    this.api.approveRun(this.runId).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: run => {
         this.run = run;
-        this.saving = false;
         this.feedback.success('Approved', 'Payroll run approved.');
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Approve failed', extractApiError(err, 'Request failed').message);
       }
     });
@@ -125,14 +121,12 @@ export class PayrollRunDetailPageComponent implements OnInit {
 
   returnRun(): void {
     this.saving = true;
-    this.api.returnRun(this.runId, this.returnRemarks || undefined).subscribe({
+    this.api.returnRun(this.runId, this.returnRemarks || undefined).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: run => {
         this.run = run;
-        this.saving = false;
         this.feedback.success('Returned', 'Payroll run returned for correction.');
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Return failed', extractApiError(err, 'Request failed').message);
       }
     });

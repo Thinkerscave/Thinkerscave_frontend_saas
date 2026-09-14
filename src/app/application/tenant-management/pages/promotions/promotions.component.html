@@ -75,7 +75,9 @@
       <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
     </div>
 
-    <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading promotions...</div>
+    <div *ngIf="loading" class="promotions__skeleton">
+      <tc-page-skeleton variant="cards" [cards]="6" [showKpis]="false"></tc-page-skeleton>
+    </div>
 
     <div *ngIf="!loading && !promotions.length && !errorMessage" class="tc-empty-state">
       <i class="pi pi-percentage"></i>

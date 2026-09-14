@@ -2,6 +2,9 @@
   <a routerLink="/app/settings" class="btn-ghost"><i class="pi pi-cog"></i>{{ 'nav.settings' | tcTranslate }}</a>
 </tc-saas-page-header>
 
+<tc-page-skeleton *ngIf="loading()" variant="detail" [tabs]="4"></tc-page-skeleton>
+
+<ng-container *ngIf="!loading()">
 <section class="profile-hero">
   <div class="avatar-xl" *ngIf="photoUrl(); else initialsFallback">
     <img [src]="photoUrl()" [alt]="fullName()">
@@ -76,3 +79,4 @@
     <li><a routerLink="/app/communication/announcements"><i class="pi pi-megaphone"></i>Announcements<small>Latest organization updates</small></a></li>
   </ul>
 </tc-saas-panel>
+</ng-container>

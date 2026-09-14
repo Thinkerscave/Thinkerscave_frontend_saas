@@ -13,12 +13,13 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../shared/ui/saas';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../shared/ui/loading';
 
 @Component({
   selector: 'app-organization-profile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasTabsComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, SaasTabsComponent, SaasStatGridComponent, TcPageSkeletonComponent],
   templateUrl: './organization-profile.component.html',
   styleUrl: './organization-profile.component.scss'
 })
@@ -48,17 +49,18 @@ export class OrganizationProfileComponent implements OnInit {
   private load(): void {
     this.loading = true;
     this.dataService.getProfile()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: profile => {
           this.profile = profile;
-          this.loading = false;
           this.dirty = false;
           this.cdr.markForCheck();
         },
         error: () => {
           this.errorMessage = 'Organization profile could not be loaded. Please retry.';
-          this.loading = false;
           this.cdr.markForCheck();
         }
       });

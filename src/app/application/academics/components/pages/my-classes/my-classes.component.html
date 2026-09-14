@@ -1,9 +1,11 @@
-<div class="mc-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
+<div class="mc-page acad-page">
+<tc-saas-page-header>
     <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
   </tc-saas-page-header>
 
-  <div class="mc-summary" *ngIf="data as d">
+    <tc-page-skeleton *ngIf="loading" variant="cards" [cards]="6"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<div class="mc-summary" *ngIf="data as d">
     <div><strong>{{ d.summary.classCount }}</strong><span>Total Classes</span></div>
     <div><strong>{{ d.summary.sectionCount }}</strong><span>Total Sections</span></div>
     <div><strong>{{ d.summary.studentCount ?? '—' }}</strong><span>Total Students</span></div>
@@ -45,5 +47,5 @@
     </article>
     <div class="mc-empty" *ngIf="!filteredClasses.length">No assigned classes for this year.</div>
   </div>
+  </ng-container>
 </div>
-<ng-template #loadingTpl><div class="mc-empty">Loading your classes…</div></ng-template>

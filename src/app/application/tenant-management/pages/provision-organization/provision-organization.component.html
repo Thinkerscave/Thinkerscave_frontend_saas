@@ -7,7 +7,7 @@
 
 
 
-    <app-loader *ngIf="loading" [label]="isEditMode ? 'Loading organization…' : 'Loading customers, plans and promotions…'"></app-loader>
+    <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
 
 

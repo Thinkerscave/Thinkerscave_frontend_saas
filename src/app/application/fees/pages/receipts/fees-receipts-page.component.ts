@@ -10,6 +10,7 @@ import { HasPermissionDirective } from '../../../../shared/directives/has-permis
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
 import { FEES_RESOURCES, FeeReceipt } from '../../models/fees.model';
@@ -21,7 +22,7 @@ interface LookupOption { id: number; name: string; }
   standalone: true,
   imports: [
     CommonModule, FormsModule, DialogModule,
-    AppToastComponent, SaasPageHeaderComponent, HasPermissionDirective
+    AppToastComponent, SaasPageHeaderComponent, HasPermissionDirective, TcPageSkeletonComponent
   ],
   templateUrl: './fees-receipts-page.component.html',
   styleUrls: ['./fees-receipts-page.component.scss', '../../fees.shared.scss']
@@ -70,14 +71,12 @@ export class FeesReceiptsPageComponent implements OnInit {
     this.api.listReceipts({
       q: this.q.trim() || undefined,
       academicYearId: this.academicYearId ?? undefined
-    }, this.page, this.size).subscribe({
+    }, this.page, this.size).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: page => {
         this.rows = page.content;
         this.total = page.totalElements;
-        this.loading = false;
       },
       error: err => {
-        this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load receipts';
       }
     });
@@ -104,13 +103,11 @@ export class FeesReceiptsPageComponent implements OnInit {
     this.previewVisible = true;
     this.preview = null;
     this.previewLoading = true;
-    this.api.previewReceipt(row.feeReceiptId).subscribe({
+    this.api.previewReceipt(row.feeReceiptId).pipe(finalizeBusy(v => (this.previewLoading = v))).subscribe({
       next: receipt => {
         this.preview = receipt;
-        this.previewLoading = false;
       },
       error: err => {
-        this.previewLoading = false;
         this.previewVisible = false;
         this.feedback.error('Preview failed', extractApiError(err, 'Request failed').message);
       }
@@ -119,7 +116,7 @@ export class FeesReceiptsPageComponent implements OnInit {
 
   download(row: FeeReceipt): void {
     this.downloadingId = row.feeReceiptId;
-    this.api.downloadReceiptPdf(row.feeReceiptId).subscribe({
+    this.api.downloadReceiptPdf(row.feeReceiptId).pipe(finalizeBusy(() => (this.downloadingId = null))).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -127,10 +124,8 @@ export class FeesReceiptsPageComponent implements OnInit {
         a.download = `receipt-${row.receiptNumber || row.feeReceiptId}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
-        this.downloadingId = null;
       },
       error: err => {
-        this.downloadingId = null;
         this.feedback.error('Download failed', extractApiError(err, 'Request failed').message);
       }
     });

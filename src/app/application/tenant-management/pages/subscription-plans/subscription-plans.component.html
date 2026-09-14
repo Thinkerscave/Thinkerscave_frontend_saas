@@ -10,7 +10,9 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading plans...</div>
+  <div *ngIf="loading" class="subscription-plans__skeleton">
+    <tc-page-skeleton variant="cards" [cards]="4"></tc-page-skeleton>
+  </div>
 
   <div *ngIf="!loading && !plans.length" class="tc-empty-state">
     <i class="pi pi-tags"></i>

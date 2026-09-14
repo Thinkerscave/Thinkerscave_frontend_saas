@@ -25,6 +25,7 @@ import { DEV_RESET_PASSWORD, resetPasswordConfirmMessage, resetPasswordTooltip }
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
 import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface MenuAccessNode {
   menuId: number;
   menuName: string;
@@ -41,7 +42,8 @@ interface MenuAccessNode {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppToastComponent, ConfirmDialogModule, TooltipModule, CommonModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './user-permissions.component.html',

@@ -24,6 +24,7 @@ import {
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
 import { AppGridTableToggleComponent, AppListViewMode } from '../../../../shared/ui/app-list';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -38,7 +39,8 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
     SaasTabsComponent,
     SaasPillComponent,
     SaasStatGridComponent,
-    AppGridTableToggleComponent
+    AppGridTableToggleComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './customer-workspace.component.html',
   styleUrl: './customer-workspace.component.scss'

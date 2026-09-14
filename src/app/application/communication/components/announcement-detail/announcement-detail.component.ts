@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { CommunicationService, Notice } from '../../services/communication.service';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -17,7 +18,8 @@ interface DeliverySegment { key: string; label: string; value: number; color: st
   selector: 'app-announcement-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent],
+  imports: [CommonModule, DatePipe, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasPillComponent],
   templateUrl: './announcement-detail.component.html',
   styleUrl: './announcement-detail.component.scss'
 })
@@ -57,17 +59,19 @@ export class AnnouncementDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getNotice(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: notice => {
           this.notice = notice;
-          this.loading = false;
           if (notice?.title) {
             this.pageHeader.setPageHeader({ subtitle: notice.title });
           }
           this.cdr.markForCheck();
         },
-        error: () => { this.loading = false; this.cdr.markForCheck(); }
+        error: () => { this.cdr.markForCheck(); }
       });
   }
 }

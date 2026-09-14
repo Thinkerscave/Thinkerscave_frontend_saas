@@ -13,6 +13,7 @@ import { AppToastComponent } from '../../../../../core/feedback/app-toast.compon
 import { UiFeedbackService } from '../../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 import {
   FINANCE_REPORTS_RESOURCE,
   FinanceReportOverview,
@@ -37,7 +38,8 @@ const CHART_COLORS = [
     AppToastComponent,
     HasPermissionDirective,
     SaasPageHeaderComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './finance-reports-page.component.html',
   styleUrls: ['./finance-reports-page.component.scss', '../../../fees.shared.scss']
@@ -139,7 +141,12 @@ export class FinanceReportsPageComponent implements OnInit {
     this.errorMessage = '';
     this.forbidden = false;
     this.cdr.markForCheck();
-    this.overviewSub = this.api.overview(this.appliedFilter).subscribe({
+    this.overviewSub = this.api.overview(this.appliedFilter)
+      .pipe(finalizeBusy(v => {
+        this.loading = v;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
       next: overview => {
         try {
           this.overview = overview;
@@ -148,10 +155,8 @@ export class FinanceReportsPageComponent implements OnInit {
         } catch (error) {
           console.error('Finance reports chart build failed', error);
           this.errorMessage = 'Report loaded, but one or more charts could not be rendered.';
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
         }
+        this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
         this.overview = null;
@@ -162,7 +167,6 @@ export class FinanceReportsPageComponent implements OnInit {
         if (!this.forbidden) {
           this.feedback.error('Reports', this.errorMessage);
         }
-        this.loading = false;
         this.cdr.detectChanges();
       }
     });

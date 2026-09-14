@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy } from '../../../../shared/ui/loading';
 import { environment } from '../../../../../environments/environment';
 import { PaymentMethodOption, PayrollEmployeeListItem, RecordPaymentRequest } from '../../models/payroll.model';
 import { PayrollApiService } from '../../services/payroll-api.service';
@@ -93,15 +94,15 @@ export class RecordPaymentDialogComponent implements OnChanges {
       remarks: (raw.remarks || '').trim() || null
     };
     this.saving = true;
-    this.api.recordPayment(this.employeePayrollId, body, crypto.randomUUID()).subscribe({
+    this.api.recordPayment(this.employeePayrollId, body, crypto.randomUUID())
+      .pipe(finalizeBusy(v => (this.saving = v)))
+      .subscribe({
       next: () => {
-        this.saving = false;
         this.feedback.success('Payment recorded', 'Employee payroll updated.');
         this.paid.emit();
         this.close();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Payment failed', extractApiError(err, 'Request failed').message);
       }
     });

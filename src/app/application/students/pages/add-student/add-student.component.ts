@@ -16,6 +16,10 @@ import { BackNavigationService } from '../../../../core/services/back-navigation
 import { ParentInfo, StudentWizardRequest } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 import {
+  SoftRefreshKeys,
+  SoftRefreshService
+} from '../../../../shared/ui/loading';
+import {
   SaasTab,
   SaasTabsComponent,
   SaasPageHeaderComponent
@@ -64,6 +68,7 @@ export class AddStudentComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
   private readonly backNav = inject(BackNavigationService);
+  private readonly softRefresh = inject(SoftRefreshService);
 
   currentStep: WizardStep = 1;
   attempted = false;
@@ -339,7 +344,9 @@ export class AddStudentComponent implements OnInit {
             summary: 'Student created',
             detail: `${this.fullName} has been added to the directory.`
           });
-          this.router.navigate(['/app/students/directory']);
+          // Soft SPA return: directory soft-refreshes list data (no blank remount skeleton).
+          this.softRefresh.mark(SoftRefreshKeys.studentsDirectory, 'created');
+          void this.router.navigate(['/app/students/directory']);
         },
         error: err => {
           this.apiError = err?.error?.message || 'Failed to create student. Please retry.';

@@ -13,11 +13,13 @@ import { AccessManagementService } from '../../services/access-management.servic
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-security-policy',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppToastComponent, CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [AppToastComponent, CommonModule, FormsModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent],
   providers: [MessageService],
   templateUrl: './security-policy.component.html',
   styleUrl: './security-policy.component.scss'

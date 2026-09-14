@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -11,6 +11,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { GeneratePayrollDialogComponent } from '../../components/generate-payroll-dialog/generate-payroll-dialog.component';
 import { RecordPaymentDialogComponent } from '../../components/record-payment-dialog/record-payment-dialog.component';
 import {
@@ -39,6 +40,7 @@ import { PayrollApiService } from '../../services/payroll-api.service';
     KpiCardComponent,
     KpiGroupComponent,
     SaasPageHeaderComponent,
+    TcPageSkeletonComponent,
     GeneratePayrollDialogComponent,
     RecordPaymentDialogComponent
   ],
@@ -100,8 +102,8 @@ export class PayrollDashboardComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.api.overview(this.year, this.month)
-      .pipe(finalize(() => {
-        this.loading = false;
+      .pipe(finalizeBusy(v => {
+        this.loading = v;
         this.cdr.detectChanges();
       }))
       .subscribe({
@@ -134,8 +136,8 @@ export class PayrollDashboardComponent implements OnInit {
         this.page,
         this.size
       )
-      .pipe(finalize(() => {
-        this.tableLoading = false;
+      .pipe(finalizeBusy(v => {
+        this.tableLoading = v;
         this.cdr.detectChanges();
       }))
       .subscribe({

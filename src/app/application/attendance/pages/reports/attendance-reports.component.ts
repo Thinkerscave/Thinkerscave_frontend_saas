@@ -13,6 +13,7 @@ import {
   SaasPillComponent
 } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   AttendanceClassSummaryRow,
   AttendanceDefaulterRow,
@@ -33,7 +34,7 @@ interface SelectOption { label: string; value: string; }
     FormsModule,
     DropdownModule,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
+    TcPageSkeletonComponent, SaasPanelComponent,
     SaasTabsComponent,
     SaasFilterRowComponent,
     SaasPillComponent

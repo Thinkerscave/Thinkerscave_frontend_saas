@@ -5,7 +5,9 @@
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="tc-empty-state"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading tenant health...</div>
+  <div *ngIf="loading" class="platform-health__skeleton">
+    <tc-page-skeleton variant="dashboard" [kpis]="4"></tc-page-skeleton>
+  </div>
 
   <ng-container *ngIf="!loading">
     <tc-saas-stat-grid [stats]="stats()"></tc-saas-stat-grid>

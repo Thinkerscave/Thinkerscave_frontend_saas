@@ -20,12 +20,12 @@ import {
   AppButtonComponent,
   AppCardComponent,
   AppInputComponent,
-  AppLoaderComponent,
   AppPhoneInputComponent,
   AppSectionHeaderComponent,
   AppTextareaComponent
 } from '../../../../shared/ui/app-form';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
 interface ContactFormModel {
@@ -78,8 +78,8 @@ const NOTES_MAX = 500;
     AppPhoneInputComponent,
     AppTextareaComponent,
     AppButtonComponent,
-    AppLoaderComponent,
-    SaasPageHeaderComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './customer-form.component.html',
   styleUrl: './customer-form.component.scss'

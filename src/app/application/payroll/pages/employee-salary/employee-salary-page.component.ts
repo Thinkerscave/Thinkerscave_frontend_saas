@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { EmployeeSalaryDialogComponent } from '../../components/employee-salary-dialog/employee-salary-dialog.component';
 import {
   EmployeePayrollDetail,
@@ -30,6 +31,7 @@ type SalaryTab = 'current' | 'statutory' | 'salaryHistory' | 'payrollHistory';
     HasPermissionDirective,
     AppToastComponent,
     SaasPageHeaderComponent,
+    TcPageSkeletonComponent,
     EmployeeSalaryDialogComponent
   ],
   templateUrl: './employee-salary-page.component.html',
@@ -70,7 +72,7 @@ export class EmployeeSalaryPageComponent implements OnInit {
           if (err?.status === 404) return of(null);
           throw err;
         }),
-        finalize(() => (this.loading = false))
+        finalizeBusy(v => (this.loading = v))
       )
       .subscribe({
         next: salary => {

@@ -35,7 +35,7 @@
       <i class="pi pi-check-circle"></i> {{ successMessage }}
     </div>
 
-    <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading documents…</div>
+    <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
 
     <div class="tc-table-wrap" *ngIf="!loading && entries.length">
       <table class="tc-table">

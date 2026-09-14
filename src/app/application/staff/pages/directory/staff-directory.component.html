@@ -80,7 +80,14 @@
 
       <app-list-results [busy]="refreshing">
         <div class="stf-directory-skeleton" *ngIf="!hasLoaded && loading">
-          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
+          <tc-page-skeleton
+            [variant]="view === 'grid' ? 'cards' : 'list'"
+            [rows]="8"
+            [columns]="6"
+            [kpis]="0"
+            [showKpis]="false"
+            [cards]="6">
+          </tc-page-skeleton>
         </div>
 
         <app-empty-state

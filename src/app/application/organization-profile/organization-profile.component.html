@@ -14,7 +14,7 @@
     <strong class="org-success-text">{{ successMessage }}</strong>
   </div>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization profile...</div>
+  <tc-page-skeleton *ngIf="loading" variant="tabs" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && profile">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>

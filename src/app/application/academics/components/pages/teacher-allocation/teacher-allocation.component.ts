@@ -30,11 +30,14 @@ import {
   TeacherRecommendation
 } from '../../../models/teacher-allocation.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-teacher-allocation-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     RouterLink,

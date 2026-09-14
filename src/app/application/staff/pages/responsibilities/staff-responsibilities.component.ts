@@ -16,11 +16,14 @@ import {
 import { StaffService } from '../../services/staff.service';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-staff-responsibilities',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
+  ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-responsibilities.component.html'
 })

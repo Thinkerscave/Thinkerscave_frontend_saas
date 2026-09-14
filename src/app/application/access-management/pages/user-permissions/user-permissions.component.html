@@ -13,7 +13,7 @@
   <app-toast></app-toast>
   <p-confirmDialog></p-confirmDialog>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading user...</div>
+  <tc-page-skeleton *ngIf="loading" variant="detail"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && user">
     <section class="tc-detail-page__content">

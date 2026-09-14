@@ -17,6 +17,7 @@ import { StudentsWorkspaceService } from '../../services/students-workspace.serv
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 type ProfileTab = 'OVERVIEW' | 'PERSONAL' | 'FAMILY' | 'ACADEMICS' | 'DOCUMENTS' | 'MEDICAL' | 'TIMELINE';
 type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
 
@@ -24,7 +25,9 @@ type TimelineFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
   selector: 'app-student-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
+  ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './student-profile-360.component.html'
 })

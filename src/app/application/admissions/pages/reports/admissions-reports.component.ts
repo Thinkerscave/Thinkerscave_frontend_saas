@@ -27,6 +27,7 @@ import {
   LEAD_STATUS_OPTIONS,
   formatAdmissionsLabel
 } from '../../data/admissions-workspace.config';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPillComponent
@@ -53,7 +54,8 @@ const CHART_COLORS = [
     ChartModule,
     DropdownModule,
     SaasPageHeaderComponent,
-    SaasPillComponent
+    SaasPillComponent,
+    TcPageSkeletonComponent
   ],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss'],

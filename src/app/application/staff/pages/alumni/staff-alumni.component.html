@@ -15,7 +15,7 @@
   }
 
   @if (loading) {
-    <div class="sd-loading"><i class="pi pi-spin pi-spinner"></i><span>Loading alumni records...</span></div>
+    <tc-page-skeleton variant="cards" [cards]="6"></tc-page-skeleton>
   }
 
   @if (!loading && filteredAlumni().length === 0 && !errorMessage) {

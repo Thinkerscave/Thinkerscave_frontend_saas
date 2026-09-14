@@ -12,11 +12,11 @@ import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
-import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface SelectOption {
   label: string;
   value: string | null;
@@ -37,8 +37,9 @@ interface KpiTile {
   imports: [
     CommonModule, FormsModule, DropdownModule,
     AppPaginatorComponent, AppListToolbarComponent, AppListResultsComponent,
-    AvatarComponent, SkeletonComponent, EmptyStateComponent,
-    KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
+    AvatarComponent, EmptyStateComponent,
+    KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './alumni-directory.component.html'

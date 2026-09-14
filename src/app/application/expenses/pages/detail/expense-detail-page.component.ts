@@ -5,6 +5,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { ExpenseFormDrawerComponent } from '../../components/expense-form-drawer/expense-form-drawer.component';
 import { ExpenseRejectDialogComponent } from '../../components/expense-reject-dialog/expense-reject-dialog.component';
@@ -28,6 +29,7 @@ type Tab = 'details' | 'payments' | 'approvals' | 'attachments' | 'activity';
     HasPermissionDirective,
     SaasPageHeaderComponent,
     SaasPillComponent,
+    TcPageSkeletonComponent,
     ExpenseFormDrawerComponent,
     ExpenseRejectDialogComponent,
     RecordExpensePaymentDialogComponent
@@ -80,13 +82,11 @@ export class ExpenseDetailPageComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.api.get(this.id).subscribe({
+    this.api.get(this.id).pipe(finalizeBusy(v => (this.loading = v))).subscribe({
       next: e => {
         this.expense = e;
-        this.loading = false;
       },
       error: e => {
-        this.loading = false;
         this.feedback.error('Expense', extractApiError(e, 'Request failed').message);
       }
     });

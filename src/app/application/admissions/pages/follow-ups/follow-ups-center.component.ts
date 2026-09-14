@@ -15,6 +15,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -47,7 +48,8 @@ const LIST_KEY = 'tc.follow-ups.list';
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasTabsComponent,
-    AppPaginatorComponent
+    AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss', '../../../students/students.shared.scss'],

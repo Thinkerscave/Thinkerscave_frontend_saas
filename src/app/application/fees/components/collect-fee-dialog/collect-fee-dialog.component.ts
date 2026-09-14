@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { FeesApiService } from '../../services/fees-api.service';
 import {
   AllocationPreview,
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: 'app-collect-fee-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, DialogModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, DialogModule, TcPageSkeletonComponent],
   templateUrl: './collect-fee-dialog.component.html',
   styleUrls: ['./collect-fee-dialog.component.scss', '../../fees.shared.scss']
 })
@@ -98,9 +99,9 @@ export class CollectFeeDialogComponent implements OnChanges {
       paidOn: this.toIso(raw.paidOn!),
       referenceNumber: raw.referenceNumber || null,
       remarks: raw.remarks || null
-    }).subscribe({
-      next: p => { this.preview = p; this.previewLoading = false; },
-      error: () => { this.preview = null; this.previewLoading = false; }
+    }).pipe(finalizeBusy(v => (this.previewLoading = v))).subscribe({
+      next: p => { this.preview = p; },
+      error: () => { this.preview = null; }
     });
   }
 
@@ -125,9 +126,8 @@ export class CollectFeeDialogComponent implements OnChanges {
       paidOn: this.toIso(raw.paidOn!),
       referenceNumber: raw.referenceNumber || null,
       remarks: raw.remarks || null
-    }, key).subscribe({
+    }, key).pipe(finalizeBusy(v => (this.saving = v))).subscribe({
       next: result => {
-        this.saving = false;
         this.feedback.success('Payment collected', result.receiptNumber
           ? `Receipt ${result.receiptNumber}`
           : 'Receipt generated');
@@ -135,7 +135,6 @@ export class CollectFeeDialogComponent implements OnChanges {
         this.close();
       },
       error: err => {
-        this.saving = false;
         this.feedback.error('Collection failed', extractApiError(err, 'Request failed').message);
       }
     });

@@ -53,11 +53,8 @@
 
   <div class="tc-card tc-card--panel expenses-panel">
     <div class="tc-card__body">
-      @if (loading) {
-        <div class="tc-loading">
-          <i class="pi pi-spin pi-spinner"></i>
-          Loading heads…
-        </div>
+      @if (loading && !rows.length) {
+        <tc-page-skeleton variant="list"></tc-page-skeleton>
       } @else if (!filtered.length) {
         <div class="tc-empty-state expenses-empty">
           <i class="pi pi-sitemap"></i>

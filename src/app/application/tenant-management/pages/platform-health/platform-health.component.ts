@@ -21,6 +21,7 @@ import {
   SaasStat,
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 @Component({
   selector: 'tc-platform-health',
@@ -32,7 +33,8 @@ import {
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasPillComponent,
-    ChartModule
+    ChartModule,
+    TcPageSkeletonComponent
   ],
   templateUrl: './platform-health.component.html',
   styleUrl: './platform-health.component.scss'
