@@ -1,0 +1,119 @@
+<p-dialog
+  header="Generate Payroll"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '720px', maxWidth: '96vw' }"
+  (onHide)="reset()">
+  @if (step === 1) {
+    <form [formGroup]="form" class="payroll-dialog-form" (ngSubmit)="goReview()">
+      <div class="payroll-dialog-grid">
+        <div class="tc-form-field">
+          <label>Payroll Month *</label>
+          <input type="month" formControlName="period" />
+        </div>
+        <div class="tc-form-field">
+          <label>Scope *</label>
+          <select formControlName="scopeType">
+            <option value="ALL">All employees</option>
+            <option value="EMPLOYMENT_CATEGORY">By employment type</option>
+            <option value="CUSTOM">Custom staff IDs</option>
+          </select>
+        </div>
+      </div>
+
+      @if (form.value.scopeType === 'EMPLOYMENT_CATEGORY') {
+        <div class="tc-form-field">
+          <label>Employment types</label>
+          <div class="payroll-dialog-checkboxes">
+            @for (c of categories; track c.value) {
+              <label>
+                <input type="checkbox" [checked]="selectedCategories.has(c.value)" (change)="toggleCategory(c.value, $event)" />
+                {{ c.label }}
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      @if (form.value.scopeType === 'CUSTOM') {
+        <div class="tc-form-field">
+          <label>Staff IDs (comma-separated)</label>
+          <input formControlName="staffIdsRaw" placeholder="e.g. 12, 45, 78" />
+        </div>
+      }
+
+      <div class="tc-form-field">
+        <label>Generation note</label>
+        <textarea rows="2" formControlName="notes" maxlength="500"></textarea>
+      </div>
+
+      <div class="tc-form-field">
+        <label>Optional LOP overrides</label>
+        <div class="payroll-lop-add">
+          <input type="number" placeholder="Staff ID" [(ngModel)]="lopStaffId" [ngModelOptions]="{standalone: true}" />
+          <input type="number" min="0" placeholder="LOP days" [(ngModel)]="lopDays" [ngModelOptions]="{standalone: true}" />
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="addLop()">Add</button>
+        </div>
+        @if (lopOverrides.length) {
+          <ul class="payroll-lop-list">
+            @for (row of lopOverrides; track row.staffId; let i = $index) {
+              <li>
+                <span>Staff #{{ row.staffId }} · {{ row.lopDays }} day(s)</span>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="lopOverrides.splice(i, 1)">Remove</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="payroll-dialog-actions">
+        <button type="button" class="tc-btn tc-btn--outline" (click)="close()">Cancel</button>
+        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="form.invalid">Review</button>
+      </div>
+    </form>
+  } @else {
+    <div class="payroll-dialog-form">
+      <p class="payroll-muted m-0">
+        Confirm generation for <strong>{{ reviewLabel }}</strong>
+        (scope: {{ form.value.scopeType }}).
+      </p>
+      @if (result?.skippedCount) {
+        <div class="payroll-banner payroll-banner--warn">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ result!.skippedCount }} employee(s) skipped (salary not configured).</span>
+        </div>
+      }
+      @if (result?.summary; as s) {
+        <div class="payroll-review-metrics">
+          <div>
+            <span>Employees</span>
+            <strong>{{ s.totalEmployees ?? result?.generatedCount }}</strong>
+          </div>
+          <div>
+            <span>Gross</span>
+            <strong>{{ formatMoney(s.totalGross) }}</strong>
+          </div>
+          <div>
+            <span>Deductions</span>
+            <strong>{{ formatMoney(s.totalDeductions) }}</strong>
+          </div>
+          <div>
+            <span>Net</span>
+            <strong>{{ formatMoney(s.totalNet) }}</strong>
+          </div>
+        </div>
+      } @else if (!result) {
+        <p class="payroll-muted m-0">Click Confirm Generate to create this month’s payroll run.</p>
+      }
+      <div class="payroll-dialog-actions">
+        <button type="button" class="tc-btn tc-btn--outline" (click)="step = 1" [disabled]="saving">Back</button>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="confirm()" [disabled]="saving">
+          @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+          Confirm Generate
+        </button>
+      </div>
+    </div>
+  }
+</p-dialog>

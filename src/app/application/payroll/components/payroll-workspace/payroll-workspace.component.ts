@@ -6,7 +6,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-payroll-workspace',
   standalone: true,
   imports: [CommonModule, RouterOutlet],
-  template: `<router-outlet />`,
-  styles: [':host { display: block; }']
+  templateUrl: './payroll-workspace.component.html',
+  styleUrls: ['./payroll-workspace.component.scss']
 })
 export class PayrollWorkspaceComponent {}

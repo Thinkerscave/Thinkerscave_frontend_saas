@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -26,7 +26,7 @@ import {
   StudentFeeListItem
 } from '../../models/fees.model';
 
-interface LookupOption { id: number; name: string; }
+interface LookupOption { id: number; name: string; status?: string; }
 
 @Component({
   selector: 'app-student-fee-page',
@@ -36,13 +36,14 @@ interface LookupOption { id: number; name: string; }
     AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
   ],
   templateUrl: './student-fee-page.component.html',
-  styleUrls: ['../../fees.shared.scss']
+  styleUrls: ['./student-fee-page.component.scss', '../../fees.shared.scss']
 })
 export class StudentFeePageComponent implements OnInit {
   private readonly api = inject(FeesApiService);
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly resources = FEES_RESOURCES;
 
@@ -88,12 +89,19 @@ export class StudentFeePageComponent implements OnInit {
       .pipe(map(r => r.data ?? []))
       .subscribe(years => {
         this.years = years;
-        this.academicYearId = years[0]?.id ?? null;
+        const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
+          ?? years.find(y => /2026-27/i.test(y.name))
+          ?? years[0];
+        this.academicYearId = current?.id ?? null;
         this.bootstrapScope();
+        this.cdr.detectChanges();
       });
     this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/classes`)
       .pipe(map(r => r.data ?? []))
-      .subscribe(classes => this.classes = classes);
+      .subscribe(classes => {
+        this.classes = classes;
+        this.cdr.detectChanges();
+      });
 
     const routeStudentId = this.route.snapshot.paramMap.get('studentId');
     if (routeStudentId) {
@@ -103,7 +111,7 @@ export class StudentFeePageComponent implements OnInit {
 
   private bootstrapScope(): void {
     this.api.linkedStudents().subscribe({
-      next: linked => { this.linked = linked; },
+      next: linked => { this.linked = linked; this.cdr.detectChanges(); },
       error: () => { this.linked = []; }
     });
 
@@ -112,6 +120,7 @@ export class StudentFeePageComponent implements OnInit {
       next: () => {
         this.canSearch = true;
         this.listLoading = false;
+        this.cdr.detectChanges();
         if (this.selectedStudentId) this.loadDetail();
         else this.search();
       },
@@ -128,6 +137,7 @@ export class StudentFeePageComponent implements OnInit {
         } else {
           this.listError = extractApiError(err, 'Request failed').message || 'Failed to load students';
         }
+        this.cdr.detectChanges();
       }
     });
   }
@@ -147,11 +157,13 @@ export class StudentFeePageComponent implements OnInit {
         this.rows = page.content;
         this.total = page.totalElements;
         this.listLoading = false;
+        this.cdr.detectChanges();
       },
       error: err => {
         this.listLoading = false;
         if (err?.status === 403) this.accessRestricted = true;
         else this.listError = extractApiError(err, 'Request failed').message || 'Failed to load students';
+        this.cdr.detectChanges();
       }
     });
   }

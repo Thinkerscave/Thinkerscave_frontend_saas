@@ -1,0 +1,149 @@
+<section class="tc-page-shell tc-directory-page expenses-page">
+  <app-toast />
+
+  <tc-saas-page-header subtitle="Organization-managed expense classification for operational spending">
+    <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/expenses">
+      <i class="pi pi-arrow-left"></i>
+      Back to Expenses
+    </a>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary tc-btn--sm"
+      *tcHasPerm="resources.HEADS; action: 'manage'"
+      (click)="open(null)"
+    >
+      <i class="pi pi-plus"></i>
+      Add Expense Head
+    </button>
+  </tc-saas-page-header>
+
+  <div class="tc-card tc-card--panel expenses-filters">
+    <div class="tc-card__body">
+      <div class="expenses-filters__grid">
+        <div class="tc-form-field">
+          <label for="head-search">Search</label>
+          <input
+            id="head-search"
+            type="search"
+            placeholder="Search name or description"
+            [(ngModel)]="draftQ"
+            (keyup.enter)="apply()"
+          />
+        </div>
+        <div class="tc-form-field">
+          <label for="head-category">Category</label>
+          <select id="head-category" [(ngModel)]="categoryId">
+            <option [ngValue]="null">All Categories</option>
+            @for (c of categories; track c.expenseCategoryId) {
+              <option [ngValue]="c.expenseCategoryId">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="tc-form-field">
+          <label for="head-status">Status</label>
+          <select id="head-status" [(ngModel)]="status">
+            <option value="">All Statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="expenses-filters__actions">
+        <button type="button" class="tc-btn" (click)="reset()">Reset</button>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="apply()">Apply Filters</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc-card tc-card--panel expenses-panel">
+    <div class="tc-card__body">
+      @if (loading) {
+        <div class="tc-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          Loading heads…
+        </div>
+      } @else if (!filtered.length) {
+        <div class="tc-empty-state expenses-empty">
+          <i class="pi pi-sitemap"></i>
+          <h3>No expense heads found</h3>
+          <p>
+            {{
+              draftQ || categoryId || status
+                ? 'No heads match your filters. Try clearing search or status.'
+                : 'Create your first expense head to classify operational spending.'
+            }}
+          </p>
+          <div class="expenses-empty__actions">
+            @if (draftQ || categoryId || status) {
+              <button type="button" class="tc-btn" (click)="reset()">Reset filters</button>
+            }
+            <button
+              type="button"
+              class="tc-btn tc-btn--primary"
+              *tcHasPerm="resources.HEADS; action: 'manage'"
+              (click)="open(null)"
+            >
+              <i class="pi pi-plus"></i>
+              Add Expense Head
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="expenses-table-wrap">
+          <table class="expenses-table">
+            <thead>
+              <tr>
+                <th>Head Name</th>
+                <th>Category</th>
+                <th>Author (Default)</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th class="expenses-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of filtered; track h.expenseHeadId) {
+                <tr>
+                  <td class="font-medium">{{ h.name }}</td>
+                  <td>{{ h.category.name }}</td>
+                  <td>{{ h.defaultRequesterName || '—' }}</td>
+                  <td>{{ h.description || '—' }}</td>
+                  <td>
+                    <tc-saas-pill
+                      [label]="h.status"
+                      [tone]="h.status === 'ACTIVE' ? 'success' : 'neutral'"
+                    />
+                  </td>
+                  <td class="expenses-table__actions">
+                    <div class="expenses-actions">
+                      <button
+                        type="button"
+                        class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                        *tcHasPerm="resources.HEADS; action: 'manage'"
+                        (click)="open(h)"
+                        title="Edit"
+                      >
+                        <i class="pi pi-pencil"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="tc-btn tc-btn--ghost tc-btn--sm"
+                        *tcHasPerm="resources.HEADS; action: 'manage'"
+                        (click)="toggle(h)"
+                        [title]="h.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                      >
+                        {{ h.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <app-expense-head-dialog [(visible)]="dialog" [head]="selected" (saved)="load()" />
+</section>

@@ -6,7 +6,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-expenses-workspace',
   standalone: true,
   imports: [CommonModule, RouterOutlet],
-  template: '<router-outlet />',
-  styles: [':host { display:block; }']
+  templateUrl: './expenses-workspace.component.html',
+  styleUrls: ['./expenses-workspace.component.scss']
 })
 export class ExpensesWorkspaceComponent {}

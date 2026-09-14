@@ -33,7 +33,7 @@ type SalaryTab = 'current' | 'statutory' | 'salaryHistory' | 'payrollHistory';
     EmployeeSalaryDialogComponent
   ],
   templateUrl: './employee-salary-page.component.html',
-  styleUrls: ['../../payroll.shared.scss']
+  styleUrls: ['../../payroll.shared.scss', './employee-salary-page.component.scss']
 })
 export class EmployeeSalaryPageComponent implements OnInit {
   private readonly api = inject(PayrollApiService);

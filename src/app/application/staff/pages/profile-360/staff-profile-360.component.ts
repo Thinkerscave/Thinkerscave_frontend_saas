@@ -7,7 +7,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
@@ -21,7 +21,7 @@ import { StaffService } from '../../services/staff.service';
 import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 
-type ProfileTab = 'overview' | 'responsibilities' | 'salary' | 'payroll' | 'documents' | 'activity';
+type ProfileTab = 'overview' | 'responsibilities' | 'documents' | 'activity';
 
 interface TabConfig { id: ProfileTab; label: string; icon: string; }
 
@@ -29,7 +29,7 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   selector: 'app-staff-profile-360',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent, AvatarComponent, RouterLink],
+  imports: [CommonModule, FormsModule, DropdownModule, AppBackNavComponent, AvatarComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
@@ -51,8 +51,6 @@ export class StaffProfile360Component implements OnInit {
   readonly tabs: TabConfig[] = [
     { id: 'overview',         label: 'Overview',         icon: 'pi-user' },
     { id: 'responsibilities', label: 'Responsibilities', icon: 'pi-sitemap' },
-    { id: 'salary',           label: 'Salary',           icon: 'pi-money-bill' },
-    { id: 'payroll',          label: 'Payroll',          icon: 'pi-wallet' },
     { id: 'documents',        label: 'Documents',        icon: 'pi-folder-open' },
     { id: 'activity',         label: 'Activity',         icon: 'pi-history' }
   ];
@@ -106,13 +104,7 @@ export class StaffProfile360Component implements OnInit {
   /** Whether the tab-contextual sidebar has anything meaningful to show for the active tab. */
   get hasContextualSidebar(): boolean {
     if (!this.profile) { return false; }
-    switch (this.activeTab) {
-      case 'responsibilities': return true;
-      case 'salary':
-      case 'payroll':
-        return true;
-      default: return false;
-    }
+    return this.activeTab === 'responsibilities';
   }
 
   // ── Quick Actions ────────────────────────────────────────────────────────────

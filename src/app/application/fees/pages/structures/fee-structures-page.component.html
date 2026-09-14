@@ -3,34 +3,48 @@
   <p-confirmDialog />
 
   <tc-saas-page-header subtitle="Define class-wise fee policies for an academic year.">
-    <button type="button" class="p-button p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openCreate()">
-      <i class="pi pi-plus mr-1"></i> Add Fee Structure
+    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openCreate()">
+      <i class="pi pi-plus"></i> Add Fee Structure
     </button>
   </tc-saas-page-header>
 
   <div class="tc-card tc-card--panel fees-surface-panel">
     <div class="tc-card__body">
-      <div class="fees-toolbar">
-        <input class="p-inputtext p-component fees-toolbar__search" placeholder="Search structure" [(ngModel)]="q" (keyup.enter)="search()" />
-        <select class="p-inputtext p-component" [(ngModel)]="academicYearId">
-          <option [ngValue]="null">All Years</option>
-          @for (y of years; track y.id) {
-            <option [ngValue]="y.id">{{ y.name }}</option>
-          }
-        </select>
-        <select class="p-inputtext p-component" [(ngModel)]="classId">
-          <option [ngValue]="null">All Classes</option>
-          @for (c of classes; track c.id) {
-            <option [ngValue]="c.id">{{ c.name }}</option>
-          }
-        </select>
-        <select class="p-inputtext p-component" [(ngModel)]="status">
-          <option value="">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-        </select>
-        <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
-        <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+      <div class="fees-filter-bar">
+        <div class="tc-form-field tc-form-field--grow">
+          <label>Search</label>
+          <input class="p-inputtext p-component" placeholder="Search structure" [(ngModel)]="q" (keyup.enter)="search()" />
+        </div>
+        <div class="tc-form-field">
+          <label>Academic Year</label>
+          <select class="p-inputtext p-component" [(ngModel)]="academicYearId">
+            <option [ngValue]="null">All Years</option>
+            @for (y of years; track y.id) {
+              <option [ngValue]="y.id">{{ y.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="tc-form-field">
+          <label>Class</label>
+          <select class="p-inputtext p-component" [(ngModel)]="classId">
+            <option [ngValue]="null">All Classes</option>
+            @for (c of classes; track c.id) {
+              <option [ngValue]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="tc-form-field">
+          <label>Status</label>
+          <select class="p-inputtext p-component" [(ngModel)]="status">
+            <option value="">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+        <div class="tc-form-field tc-form-field--actions">
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="reset()">Reset</button>
+        </div>
       </div>
 
       @if (loading) {
@@ -38,10 +52,14 @@
       } @else if (error) {
         <div class="tc-empty-state tc-empty-state--inline">
           <p>{{ error }}</p>
-          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
         </div>
       } @else if (!rows.length) {
-        <div class="tc-empty-state"><p>No fee structures found for this academic year.</p></div>
+        <div class="tc-empty-state">
+          <i class="pi pi-inbox"></i>
+          <h3>No fee structures</h3>
+          <p>No fee structures found for this academic year.</p>
+        </div>
       } @else {
         <div class="fees-table-wrap">
           <table class="fees-table">
@@ -61,7 +79,7 @@
               @for (row of rows; track row.feeStructureId) {
                 <tr>
                   <td>
-                    <button type="button" class="p-button p-button-link p-0" (click)="openDetail(row)">{{ row.name }}</button>
+                    <button type="button" class="fees-table__name-link" (click)="openDetail(row)">{{ row.name }}</button>
                   </td>
                   <td>{{ row.academicYearName || row.academicYearId }}</td>
                   <td>{{ row.className || row.classId }}</td>
@@ -70,10 +88,10 @@
                   <td>{{ row.dueDay }}</td>
                   <td><span class="tc-saas-pill" [class]="row.status === 'ACTIVE' ? 'success' : 'danger'">{{ row.status }}</span></td>
                   <td class="fees-table__actions">
-                    <button type="button" class="p-button p-button-text p-button-sm" (click)="openDetail(row)" title="View"><i class="pi pi-eye"></i></button>
-                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openEdit(row)" title="Edit"><i class="pi pi-pencil"></i></button>
-                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openClone(row)" title="Clone"><i class="pi pi-copy"></i></button>
-                    <button type="button" class="p-button p-button-text p-button-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="toggleStatus(row)" title="Activate / Deactivate"><i class="pi pi-sync"></i></button>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" (click)="openDetail(row)" title="View"><i class="pi pi-eye"></i></button>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openEdit(row)" title="Edit"><i class="pi pi-pencil"></i></button>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="openClone(row)" title="Clone"><i class="pi pi-copy"></i></button>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="toggleStatus(row)" title="Activate / Deactivate"><i class="pi pi-sync"></i></button>
                   </td>
                 </tr>
               }
@@ -92,116 +110,112 @@
     [modal]="true"
     [draggable]="false"
     [style]="{ width: '760px', maxWidth: '95vw' }">
-    <div class="mb-3 text-sm">Step {{ step }} of 3 —
+    <div class="fees-muted mb-3">Step {{ step }} of 3 —
       @if (step === 1) { Basic Information }
       @if (step === 2) { Fee Items }
       @if (step === 3) { Summary }
     </div>
 
-    <form [formGroup]="form">
+    <form [formGroup]="form" class="fees-dialog-form">
       @if (step === 1) {
-        <div class="flex flex-column gap-3">
-          <div>
-            <label class="block mb-1">Structure Name *</label>
-            <input class="p-inputtext p-component w-full" formControlName="name" />
-          </div>
-          <div class="grid">
-            <div class="col-6">
-              <label class="block mb-1">Academic Year *</label>
-              <select class="p-inputtext p-component w-full" formControlName="academicYearId">
-                @for (y of years; track y.id) {
-                  <option [ngValue]="y.id">{{ y.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="col-6">
-              <label class="block mb-1">Class *</label>
-              <select class="p-inputtext p-component w-full" formControlName="classId">
-                @for (c of classes; track c.id) {
-                  <option [ngValue]="c.id">{{ c.name }}</option>
-                }
-              </select>
-            </div>
-          </div>
-          <div class="grid">
-            <div class="col-6">
-              <label class="block mb-1">Due Day (1–28) *</label>
-              <input type="number" class="p-inputtext p-component w-full" formControlName="dueDay" min="1" max="28" />
-            </div>
-            <div class="col-6">
-              <label class="block mb-1">Status *</label>
-              <select class="p-inputtext p-component w-full" formControlName="status">
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
-            </div>
-          </div>
-          <p class="fees-helper m-0">This structure will automatically apply to eligible students in the selected class. There is no separate student-level fee assignment.</p>
+        <div class="tc-form-field">
+          <label>Structure Name *</label>
+          <input class="p-inputtext p-component" formControlName="name" />
         </div>
+        <div class="fees-dialog-form__grid">
+          <div class="tc-form-field">
+            <label>Academic Year *</label>
+            <select class="p-inputtext p-component" formControlName="academicYearId">
+              @for (y of years; track y.id) {
+                <option [ngValue]="y.id">{{ y.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Class *</label>
+            <select class="p-inputtext p-component" formControlName="classId">
+              @for (c of classes; track c.id) {
+                <option [ngValue]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Due Day (1–28) *</label>
+            <input type="number" class="p-inputtext p-component" formControlName="dueDay" min="1" max="28" />
+          </div>
+          <div class="tc-form-field">
+            <label>Status *</label>
+            <select class="p-inputtext p-component" formControlName="status">
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <p class="fees-helper">This structure will automatically apply to eligible students in the selected class. There is no separate student-level fee assignment.</p>
       }
 
       @if (step === 2) {
-        <div formArrayName="items" class="flex flex-column gap-3">
+        <div formArrayName="items" class="fees-dialog-form">
           @for (ctrl of items.controls; track $index; let i = $index) {
-            <div class="grid align-items-end" [formGroupName]="i">
-              <div class="col-4">
-                <label class="block mb-1">Fee Head *</label>
-                <select class="p-inputtext p-component w-full" formControlName="feeHeadId">
+            <div class="fees-settings-form-grid" [formGroupName]="i">
+              <div class="tc-form-field">
+                <label>Fee Head *</label>
+                <select class="p-inputtext p-component" formControlName="feeHeadId">
                   @for (h of heads; track h.feeHeadId) {
                     <option [ngValue]="h.feeHeadId">{{ h.name }}</option>
                   }
                 </select>
               </div>
-              <div class="col-2">
-                <label class="block mb-1">Amount *</label>
-                <input type="number" class="p-inputtext p-component w-full" formControlName="amount" min="0.01" step="0.01" />
+              <div class="tc-form-field">
+                <label>Amount *</label>
+                <input type="number" class="p-inputtext p-component" formControlName="amount" min="0.01" step="0.01" />
               </div>
-              <div class="col-2">
-                <label class="block mb-1">Frequency *</label>
-                <select class="p-inputtext p-component w-full" formControlName="frequency">
+              <div class="tc-form-field">
+                <label>Frequency *</label>
+                <select class="p-inputtext p-component" formControlName="frequency">
                   @for (f of frequencies; track f.value) {
                     <option [value]="f.value">{{ f.label }}</option>
                   }
                 </select>
               </div>
-              <div class="col-2">
-                <label class="block mb-1">Type *</label>
-                <select class="p-inputtext p-component w-full" formControlName="type">
+              <div class="tc-form-field">
+                <label>Type *</label>
+                <select class="p-inputtext p-component" formControlName="type">
                   <option value="MANDATORY">Mandatory</option>
                   <option value="OPTIONAL">Optional</option>
                 </select>
               </div>
-              <div class="col-2">
-                <label class="block mb-1">Service *</label>
-                <select class="p-inputtext p-component w-full" formControlName="serviceKey">
+              <div class="tc-form-field">
+                <label>Service *</label>
+                <select class="p-inputtext p-component" formControlName="serviceKey">
                   <option value="NONE">None</option>
                   <option value="TRANSPORT">Transport</option>
                   <option value="HOSTEL">Hostel</option>
                 </select>
               </div>
-              <div class="col-12 flex justify-content-end">
-                <button type="button" class="p-button p-button-text p-button-danger p-button-sm" (click)="removeItem(i)" [disabled]="items.length <= 1">Remove</button>
+              <div class="tc-form-field tc-form-field--actions">
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="removeItem(i)" [disabled]="items.length <= 1">Remove</button>
               </div>
             </div>
           }
-          <button type="button" class="p-button p-button-outlined p-button-sm align-self-start" (click)="addItem()">+ Add Fee Head</button>
-          <div class="flex gap-4 text-sm">
-            <span>Mandatory: <strong>{{ mandatorySum() | number:'1.2-2' }}</strong></span>
-            <span>Optional: <strong>{{ optionalSum() | number:'1.2-2' }}</strong></span>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm align-self-start" (click)="addItem()">+ Add Fee Head</button>
+          <div class="fees-toolbar">
+            <span class="fees-muted">Mandatory: <strong>{{ mandatorySum() | number:'1.2-2' }}</strong></span>
+            <span class="fees-muted">Optional: <strong>{{ optionalSum() | number:'1.2-2' }}</strong></span>
           </div>
         </div>
       }
 
       @if (step === 3) {
-        <div class="flex flex-column gap-2">
+        <div class="fees-dialog-form">
           <div><strong>{{ form.value.name }}</strong></div>
-          <div class="text-sm text-color-secondary">Due day: {{ form.value.dueDay }} · Status: {{ form.value.status }}</div>
+          <div class="fees-muted">Due day: {{ form.value.dueDay }} · Status: {{ form.value.status }}</div>
           <ul class="m-0 pl-3">
             @for (c of items.controls; track $index) {
               <li>{{ headName(c.value.feeHeadId) }} — {{ c.value.amount | number:'1.2-2' }} · {{ c.value.frequency }} · {{ c.value.type }} · {{ c.value.serviceKey }}</li>
             }
           </ul>
-          <div class="flex gap-4 mt-2">
+          <div class="fees-toolbar">
             <span>Mandatory: <strong>{{ mandatorySum() | number:'1.2-2' }}</strong></span>
             <span>Optional: <strong>{{ optionalSum() | number:'1.2-2' }}</strong></span>
           </div>
@@ -210,17 +224,17 @@
       }
     </form>
 
-    <div class="flex justify-content-between mt-3">
-      <button type="button" class="p-button p-button-outlined" (click)="dialogVisible = false" [disabled]="saving">Cancel</button>
-      <div class="flex gap-2">
+    <div class="fees-dialog-form__actions fees-dialog-form__actions--split mt-3">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="dialogVisible = false" [disabled]="saving">Cancel</button>
+      <div class="fees-toolbar">
         @if (step > 1) {
-          <button type="button" class="p-button p-button-outlined" (click)="prevStep()" [disabled]="saving">Back</button>
+          <button type="button" class="tc-btn tc-btn--outline" (click)="prevStep()" [disabled]="saving">Back</button>
         }
         @if (step < 3) {
-          <button type="button" class="p-button" (click)="nextStep()">Next</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="nextStep()">Next</button>
         } @else {
-          <button type="button" class="p-button" (click)="save()" [disabled]="saving">
-            @if (saving) { <i class="pi pi-spin pi-spinner mr-1"></i> }
+          <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving">
+            @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
             Save
           </button>
         }
@@ -231,30 +245,32 @@
   <!-- Detail -->
   <p-dialog header="Fee Structure Details" [(visible)]="detailVisible" [modal]="true" [style]="{ width: '640px' }">
     @if (detail) {
-      <div class="flex flex-column gap-2">
+      <div class="fees-dialog-form">
         <div><strong>{{ detail.name }}</strong> · {{ detail.status }}</div>
-        <div class="text-sm">Year: {{ detail.academicYearName }} · Class: {{ detail.className }} · Due Day: {{ detail.dueDay }}</div>
-        <table class="w-full mt-2">
-          <thead><tr class="text-left text-sm"><th>Fee Head</th><th>Amount</th><th>Frequency</th><th>Type</th><th>Service</th></tr></thead>
-          <tbody>
-            @for (it of detail.items || []; track it.feeHeadId) {
-              <tr>
-                <td>{{ it.feeHeadName || it.feeHeadId }}</td>
-                <td>{{ it.amount | number:'1.2-2' }}</td>
-                <td>{{ it.frequency }}</td>
-                <td>{{ it.type }}</td>
-                <td>{{ it.serviceKey }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <div class="flex gap-3 mt-2">
+        <div class="fees-muted">Year: {{ detail.academicYearName }} · Class: {{ detail.className }} · Due Day: {{ detail.dueDay }}</div>
+        <div class="fees-table-wrap">
+          <table class="fees-table fees-table--compact">
+            <thead><tr><th>Fee Head</th><th>Amount</th><th>Frequency</th><th>Type</th><th>Service</th></tr></thead>
+            <tbody>
+              @for (it of detail.items || []; track it.feeHeadId) {
+                <tr>
+                  <td>{{ it.feeHeadName || it.feeHeadId }}</td>
+                  <td>{{ it.amount | number:'1.2-2' }}</td>
+                  <td>{{ it.frequency }}</td>
+                  <td>{{ it.type }}</td>
+                  <td>{{ it.serviceKey }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="fees-toolbar">
           <span>Mandatory: {{ detail.mandatorySum ?? 0 | number:'1.2-2' }}</span>
           <span>Optional: {{ detail.optionalSum ?? 0 | number:'1.2-2' }}</span>
         </div>
-        <div class="flex justify-content-end gap-2 mt-3">
-          <button type="button" class="p-button p-button-outlined" (click)="detailVisible = false">Close</button>
-          <button type="button" class="p-button" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="detailVisible = false; openEdit(detail!)">Edit</button>
+        <div class="fees-dialog-form__actions">
+          <button type="button" class="tc-btn tc-btn--outline" (click)="detailVisible = false">Close</button>
+          <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resources.STRUCTURES; action: 'manage'" (click)="detailVisible = false; openEdit(detail!)">Edit</button>
         </div>
       </div>
     }
@@ -263,35 +279,35 @@
   <!-- Clone -->
   <p-dialog header="Clone Fee Structure" [(visible)]="cloneVisible" [modal]="true" [style]="{ width: '560px' }">
     @if (cloneSource) {
-      <p class="text-sm mb-3">Source: <strong>{{ cloneSource.name }}</strong> ({{ cloneSource.academicYearName }} / {{ cloneSource.className }})</p>
-      <form [formGroup]="cloneForm" class="flex flex-column gap-3">
-        <div>
-          <label class="block mb-1">Target Academic Year *</label>
-          <select class="p-inputtext p-component w-full" formControlName="targetAcademicYearId">
+      <p class="fees-muted">Source: <strong>{{ cloneSource.name }}</strong> ({{ cloneSource.academicYearName }} / {{ cloneSource.className }})</p>
+      <form [formGroup]="cloneForm" class="fees-dialog-form">
+        <div class="tc-form-field">
+          <label>Target Academic Year *</label>
+          <select class="p-inputtext p-component" formControlName="targetAcademicYearId">
             @for (y of years; track y.id) {
               <option [ngValue]="y.id">{{ y.name }}</option>
             }
           </select>
         </div>
-        <div>
-          <label class="block mb-1">Target Classes *</label>
-          <select class="p-inputtext p-component w-full" multiple size="6" formControlName="targetClassIds">
+        <div class="tc-form-field">
+          <label>Target Classes *</label>
+          <select class="p-inputtext p-component" multiple size="6" formControlName="targetClassIds">
             @for (c of classes; track c.id) {
               <option [ngValue]="c.id">{{ c.name }}</option>
             }
           </select>
         </div>
-        <div>
-          <label class="block mb-1">If class already has an active structure</label>
-          <select class="p-inputtext p-component w-full" formControlName="onConflict">
+        <div class="tc-form-field">
+          <label>If class already has an active structure</label>
+          <select class="p-inputtext p-component" formControlName="onConflict">
             <option value="CANCEL_CLASS">Cancel that class</option>
             <option value="REPLACE_DEACTIVATE">Replace / Deactivate existing</option>
           </select>
         </div>
       </form>
-      <div class="flex justify-content-end gap-2 mt-3">
-        <button type="button" class="p-button p-button-outlined" (click)="cloneVisible = false" [disabled]="saving">Cancel</button>
-        <button type="button" class="p-button" (click)="saveClone()" [disabled]="saving">Clone</button>
+      <div class="fees-dialog-form__actions">
+        <button type="button" class="tc-btn tc-btn--outline" (click)="cloneVisible = false" [disabled]="saving">Cancel</button>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="saveClone()" [disabled]="saving">Clone</button>
       </div>
     }
   </p-dialog>

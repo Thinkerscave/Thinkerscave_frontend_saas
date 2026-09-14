@@ -30,7 +30,7 @@ import {
     HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent
   ],
   templateUrl: './fee-heads-page.component.html',
-  styleUrls: ['../../fees.shared.scss']
+  styleUrls: ['./fee-heads-page.component.scss', '../../fees.shared.scss']
 })
 export class FeeHeadsPageComponent implements OnInit {
   private readonly api = inject(FeesApiService);

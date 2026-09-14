@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
-import { finalize } from 'rxjs';
+import { DropdownModule } from 'primeng/dropdown';
+import { Subscription, finalize } from 'rxjs';
 
 import { AcademicYearDto } from '../../../../academics/models/academic-year.model';
 import { AcademicYearApiService } from '../../../../academics/services/academic-year-api.service';
+import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
+import { UiFeedbackService } from '../../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
-import { KpiCardComponent, KpiGroupComponent } from '../../../../../shared/ui/kpi/kpi-card.component';
-import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas';
+import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../../shared/ui/saas';
 import {
   FINANCE_REPORTS_RESOURCE,
   FinanceReportOverview,
@@ -31,20 +33,24 @@ const CHART_COLORS = [
     CommonModule,
     FormsModule,
     ChartModule,
+    DropdownModule,
+    AppToastComponent,
     HasPermissionDirective,
-    KpiCardComponent,
-    KpiGroupComponent,
-    SaasPageHeaderComponent
+    SaasPageHeaderComponent,
+    SaasPillComponent
   ],
   templateUrl: './finance-reports-page.component.html',
-  styleUrls: ['./finance-reports-page.component.scss']
+  styleUrls: ['./finance-reports-page.component.scss', '../../../fees.shared.scss']
 })
 export class FinanceReportsPageComponent implements OnInit {
   private readonly api = inject(FinanceReportsApiService);
   private readonly academicYearsApi = inject(AcademicYearApiService);
   private readonly router = inject(Router);
+  private readonly feedback = inject(UiFeedbackService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly resource = FINANCE_REPORTS_RESOURCE;
+  readonly chartColors = CHART_COLORS;
   readonly periods: Array<{ label: string; value: FinanceReportPeriod }> = [
     { label: 'This Month', value: 'THIS_MONTH' },
     { label: 'Last Month', value: 'LAST_MONTH' },
@@ -60,8 +66,10 @@ export class FinanceReportsPageComponent implements OnInit {
   overview: FinanceReportOverview | null = null;
   loading = true;
   exporting = false;
+  exportOpen = false;
   errorMessage = '';
   forbidden = false;
+  lastUpdated: Date | null = null;
 
   incomeOutflowData: Record<string, unknown> = {};
   feeCategoryData: Record<string, unknown> = {};
@@ -71,14 +79,20 @@ export class FinanceReportsPageComponent implements OnInit {
   expenseStatusData: Record<string, unknown> = {};
   trendOptions: Record<string, unknown> = {};
   doughnutOptions: Record<string, unknown> = {};
+  private overviewSub: Subscription | null = null;
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.exportOpen = false;
+  }
 
   ngOnInit(): void {
     this.configureCharts();
     this.academicYearsApi.search().subscribe({
       next: years => {
-        this.years = years;
-        const current = years.find(year => year.status === 'CURRENT') ?? years[0];
-        if (current && this.draftFilter.academicYearId == null) {
+        this.years = years ?? [];
+        const current = this.years.find(year => year.status === 'CURRENT') ?? this.years[0];
+        if (current?.academicYearId != null) {
           this.draftFilter.academicYearId = current.academicYearId;
           this.appliedFilter.academicYearId = current.academicYearId;
         }
@@ -88,17 +102,22 @@ export class FinanceReportsPageComponent implements OnInit {
     });
   }
 
+  get periodLabel(): string {
+    return this.periods.find(p => p.value === this.appliedFilter.period)?.label
+      ?? this.overview?.filter?.label
+      ?? 'Selected period';
+  }
+
   applyFilters(): void {
-    if (this.draftFilter.period === 'CUSTOM' &&
-        (!this.draftFilter.from || !this.draftFilter.to)) {
-      this.errorMessage = 'Choose both From and To dates for a custom period.';
+    if (this.draftFilter.period === 'CUSTOM' && (!this.draftFilter.from || !this.draftFilter.to)) {
+      this.feedback.error('Invalid period', 'Choose both From and To dates for a custom period.');
       return;
     }
-    if (this.draftFilter.period === 'CUSTOM' &&
-        this.draftFilter.from! > this.draftFilter.to!) {
-      this.errorMessage = 'From date cannot be after To date.';
+    if (this.draftFilter.period === 'CUSTOM' && this.draftFilter.from! > this.draftFilter.to!) {
+      this.feedback.error('Invalid period', 'From date cannot be after To date.');
       return;
     }
+    this.errorMessage = '';
     this.appliedFilter = { ...this.draftFilter };
     this.load();
   }
@@ -110,32 +129,54 @@ export class FinanceReportsPageComponent implements OnInit {
       academicYearId: current?.academicYearId ?? null
     };
     this.appliedFilter = { ...this.draftFilter };
+    this.errorMessage = '';
     this.load();
   }
 
   load(): void {
+    this.overviewSub?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
     this.forbidden = false;
-    this.api.overview(this.appliedFilter)
-      .pipe(finalize(() => this.loading = false))
-      .subscribe({
-        next: overview => {
+    this.cdr.markForCheck();
+    this.overviewSub = this.api.overview(this.appliedFilter).subscribe({
+      next: overview => {
+        try {
           this.overview = overview;
+          this.lastUpdated = new Date();
           this.buildCharts(overview);
-        },
-        error: (error: HttpErrorResponse) => {
-          this.overview = null;
-          this.forbidden = error.status === 403;
-          this.errorMessage = this.forbidden
-            ? 'You do not have permission to view Finance Reports.'
-            : 'Unable to load Finance Reports.';
+        } catch (error) {
+          console.error('Finance reports chart build failed', error);
+          this.errorMessage = 'Report loaded, but one or more charts could not be rendered.';
+        } finally {
+          this.loading = false;
+          this.cdr.detectChanges();
         }
-      });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.overview = null;
+        this.forbidden = error.status === 403;
+        this.errorMessage = this.forbidden
+          ? 'You do not have permission to view Finance Reports.'
+          : 'Unable to load Finance Reports. Please try again.';
+        if (!this.forbidden) {
+          this.feedback.error('Reports', this.errorMessage);
+        }
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  exportReport(format: 'pdf' | 'csv'): void {
-    if (this.exporting) return;
+  toggleExport(event: Event): void {
+    event.stopPropagation();
+    this.exportOpen = !this.exportOpen;
+  }
+
+  exportReport(format: 'pdf' | 'csv', event?: Event): void {
+    event?.stopPropagation();
+    this.exportOpen = false;
+    if (this.exporting || this.loading) return;
     this.exporting = true;
     this.api.export(this.appliedFilter, format)
       .pipe(finalize(() => this.exporting = false))
@@ -147,8 +188,12 @@ export class FinanceReportsPageComponent implements OnInit {
           anchor.download = file.fileName;
           anchor.click();
           URL.revokeObjectURL(url);
+          this.feedback.success('Export ready', `${format.toUpperCase()} download started.`);
         },
-        error: () => this.errorMessage = 'Unable to export the current report.'
+        error: () => {
+          this.errorMessage = 'Unable to export the current report.';
+          this.feedback.error('Export failed', this.errorMessage);
+        }
       });
   }
 
@@ -171,21 +216,37 @@ export class FinanceReportsPageComponent implements OnInit {
       .replace(/\b\w/g, character => character.toUpperCase());
   }
 
+  outstandingLabel(value: string | null | undefined): string {
+    if (!value || value.toUpperCase() === 'CURRENT') {
+      return 'Current balance';
+    }
+    return this.label(value);
+  }
+
   hasFinanceData(report: FinanceReportOverview): boolean {
     return Object.values(report.kpis ?? {}).some(value => Number(value) !== 0) ||
-      report.incomeOutflowTrend?.length > 0 ||
-      report.feeAnalytics?.collectionByCategory?.length > 0 ||
-      report.feeAnalytics?.collectionTrend?.length > 0 ||
-      report.payroll?.costTrend?.length > 0 ||
-      report.expenses?.byCategory?.length > 0 ||
-      report.expenses?.statusDistribution?.length > 0 ||
-      report.outstanding?.byClass?.length > 0 ||
-      report.attention?.length > 0 ||
-      report.recentActivity?.length > 0;
+      (report.incomeOutflowTrend?.length ?? 0) > 0 ||
+      (report.feeAnalytics?.collectionByCategory?.length ?? 0) > 0 ||
+      (report.feeAnalytics?.collectionTrend?.length ?? 0) > 0 ||
+      (report.payroll?.costTrend?.length ?? 0) > 0 ||
+      (report.expenses?.byCategory?.length ?? 0) > 0 ||
+      (report.expenses?.statusDistribution?.length ?? 0) > 0 ||
+      (report.outstanding?.byClass?.length ?? 0) > 0 ||
+      (report.attention?.length ?? 0) > 0 ||
+      (report.recentActivity?.length ?? 0) > 0;
+  }
+
+  statusTone(status: string | null | undefined): 'neutral' | 'success' | 'warning' | 'danger' | 'info' {
+    const value = (status ?? '').toUpperCase();
+    if (['PAID', 'SUCCESS', 'COMPLETED', 'APPROVED'].includes(value)) return 'success';
+    if (['PENDING', 'PARTIALLY_PAID', 'PENDING_APPROVAL', 'GENERATED'].includes(value)) return 'warning';
+    if (['FAILED', 'REJECTED', 'UNPAID', 'OVERDUE'].includes(value)) return 'danger';
+    if (['FEE', 'FEE_COLLECTION', 'EXPENSE', 'PAYROLL'].includes(value)) return 'info';
+    return 'neutral';
   }
 
   private defaultFilter(): FinanceReportQuery {
-    return { academicYearId: null, period: 'THIS_MONTH', from: null, to: null };
+    return { academicYearId: null, period: 'THIS_ACADEMIC_YEAR', from: null, to: null };
   }
 
   private configureCharts(): void {
@@ -200,7 +261,7 @@ export class FinanceReportsPageComponent implements OnInit {
       maintainAspectRatio: false,
       interaction: { intersect: false, mode: 'index' },
       plugins: {
-        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } },
+        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, padding: 16 } },
         tooltip: {
           callbacks: {
             label: (context: { dataset?: { label?: string }; parsed?: { y?: number } }) =>
@@ -209,7 +270,7 @@ export class FinanceReportsPageComponent implements OnInit {
         }
       },
       scales: {
-        x: { grid: { display: false } },
+        x: { grid: { display: false }, ticks: { maxRotation: 0 } },
         y: {
           beginAtZero: true,
           grid: { color: 'rgba(148, 163, 184, .18)' },
@@ -220,9 +281,9 @@ export class FinanceReportsPageComponent implements OnInit {
     this.doughnutOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '66%',
+      cutout: '68%',
       plugins: {
-        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } },
+        legend: { display: false },
         tooltip: {
           callbacks: {
             label: (context: { label?: string; parsed?: number }) =>
@@ -242,13 +303,15 @@ export class FinanceReportsPageComponent implements OnInit {
           label: 'Fee Collection',
           data: trend.map(point => point.feeCollection),
           backgroundColor: '#10b981',
-          borderRadius: 6
+          borderRadius: 8,
+          maxBarThickness: 28
         },
         {
           label: 'Total Outflow',
           data: trend.map(point => point.totalOutflow),
           backgroundColor: '#2563eb',
-          borderRadius: 6
+          borderRadius: 8,
+          maxBarThickness: 28
         }
       ]
     };
@@ -256,17 +319,8 @@ export class FinanceReportsPageComponent implements OnInit {
       report.feeAnalytics?.collectionByCategory?.map(item => item.name) ?? [],
       report.feeAnalytics?.collectionByCategory?.map(item => item.amount) ?? []
     );
-    this.feeTrendData = this.line(
-      report.feeAnalytics?.collectionTrend ?? [],
-      'Fee Collection',
-      '#10b981',
-      true
-    );
-    this.payrollTrendData = this.line(
-      report.payroll?.costTrend ?? [],
-      'Payroll Cost',
-      '#8b5cf6'
-    );
+    this.feeTrendData = this.line(report.feeAnalytics?.collectionTrend ?? [], 'Fee Collection', '#10b981', true);
+    this.payrollTrendData = this.line(report.payroll?.costTrend ?? [], 'Payroll Paid', '#8b5cf6');
     this.expenseCategoryData = this.donut(
       report.expenses?.byCategory?.map(item => item.name) ?? [],
       report.expenses?.byCategory?.map(item => item.amount) ?? []
@@ -292,7 +346,9 @@ export class FinanceReportsPageComponent implements OnInit {
         backgroundColor: fill ? `${color}22` : color,
         tension: 0.35,
         fill,
-        pointRadius: 3
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2
       }]
     };
   }
@@ -303,7 +359,8 @@ export class FinanceReportsPageComponent implements OnInit {
       datasets: [{
         data: values,
         backgroundColor: labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]),
-        borderWidth: 0
+        borderWidth: 0,
+        hoverOffset: 4
       }]
     };
   }

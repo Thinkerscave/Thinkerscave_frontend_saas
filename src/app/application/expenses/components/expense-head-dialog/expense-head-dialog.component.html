@@ -1,0 +1,50 @@
+<p-dialog
+  [header]="head ? 'Edit Expense Head' : 'Add Expense Head'"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '560px', maxWidth: '95vw' }"
+>
+  <form [formGroup]="form" class="expense-dialog-form" (ngSubmit)="save()">
+    <div class="tc-form-field">
+      <label for="eh-name">Head Name *</label>
+      <input id="eh-name" formControlName="name" />
+    </div>
+    <div class="tc-form-field">
+      <label for="eh-category">Category *</label>
+      <select id="eh-category" formControlName="expenseCategoryId">
+        <option [ngValue]="null">Select category</option>
+        @for (c of categories; track c.expenseCategoryId) {
+          <option [ngValue]="c.expenseCategoryId">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="tc-form-field">
+      <label for="eh-author">Author / Default Requester</label>
+      <select id="eh-author" formControlName="defaultRequesterStaffId">
+        <option [ngValue]="null">None</option>
+        @for (s of staff; track s.staffId) {
+          <option [ngValue]="s.staffId">{{ s.firstName }} {{ s.lastName }}</option>
+        }
+      </select>
+    </div>
+    <div class="tc-form-field">
+      <label for="eh-desc">Description</label>
+      <textarea id="eh-desc" formControlName="description" rows="3"></textarea>
+    </div>
+    <div class="tc-form-field">
+      <label for="eh-status">Status *</label>
+      <select id="eh-status" formControlName="status">
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </div>
+    <div class="expense-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="visibleChange.emit(false)">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save Head' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

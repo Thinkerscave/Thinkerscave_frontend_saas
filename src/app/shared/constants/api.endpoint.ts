@@ -271,20 +271,6 @@ export const staffApi = {
   toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
 };
 
-/**
- * @deprecated Legacy Staff payroll API — retired (410). Use financePayrollApi / payrollMeApi.
- * Do not call these endpoints from application code.
- */
-export const staffPayrollApi = {
-  dashboard: `${BASE}/staff/payroll/dashboard`,
-  generate: `${BASE}/staff/payroll/generate`,
-  list: `${BASE}/staff/payroll`,
-  byId: (id: number) => `${BASE}/staff/payroll/${id}`,
-  markPaid: (id: number) => `${BASE}/staff/payroll/${id}/mark-paid`,
-  bulkMarkPaid: `${BASE}/staff/payroll/mark-paid`,
-  payslip: (id: number) => `${BASE}/staff/payroll/${id}/payslip`,
-};
-
 export const branchApi = {
   getAll: `${BASE}/branches/getAllBranch`,
 };

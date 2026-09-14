@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -24,7 +24,7 @@ import {
   StudentFeeListItem
 } from '../../models/fees.model';
 
-interface LookupOption { id: number; name: string; }
+interface LookupOption { id: number; name: string; status?: string; }
 
 @Component({
   selector: 'app-fees-dashboard',
@@ -34,12 +34,13 @@ interface LookupOption { id: number; name: string; }
     CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
   ],
   templateUrl: './fees-dashboard.component.html',
-  styleUrls: ['../../fees.shared.scss']
+  styleUrls: ['./fees-dashboard.component.scss', '../../fees.shared.scss']
 })
 export class FeesDashboardComponent implements OnInit {
   private readonly api = inject(FeesApiService);
   private readonly http = inject(HttpClient);
   private readonly feedback = inject(UiFeedbackService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly resources = FEES_RESOURCES;
   years: LookupOption[] = [];
@@ -63,13 +64,16 @@ export class FeesDashboardComponent implements OnInit {
       .subscribe({
         next: years => {
           this.years = years;
-          const current = years.find(y => /2026-27/i.test(y.name)) ?? years.find(y => !/preparing|2027/i.test(y.name));
+          const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
+            ?? years.find(y => /2026-27/i.test(y.name))
+            ?? years.find(y => !/preparing|2027/i.test(y.name));
           this.academicYearId = current?.id ?? years[0]?.id ?? null;
           this.load();
         },
         error: err => {
           this.loading = false;
           this.error = extractApiError(err, 'Request failed').message || 'Failed to load academic years';
+          this.cdr.detectChanges();
         }
       });
   }
@@ -108,10 +112,12 @@ export class FeesDashboardComponent implements OnInit {
           this.statusSlices.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)
         );
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: err => {
         this.loading = false;
         this.error = extractApiError(err, 'Request failed').message || 'Failed to load fee dashboard';
+        this.cdr.detectChanges();
       }
     });
   }

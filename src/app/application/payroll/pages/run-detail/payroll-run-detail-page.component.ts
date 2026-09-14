@@ -34,7 +34,7 @@ type RunTab = 'employees' | 'summary' | 'approval' | 'payments';
     RecordPaymentDialogComponent
   ],
   templateUrl: './payroll-run-detail-page.component.html',
-  styleUrls: ['../../payroll.shared.scss']
+  styleUrls: ['../../payroll.shared.scss', './payroll-run-detail-page.component.scss']
 })
 export class PayrollRunDetailPageComponent implements OnInit {
   private readonly api = inject(PayrollApiService);

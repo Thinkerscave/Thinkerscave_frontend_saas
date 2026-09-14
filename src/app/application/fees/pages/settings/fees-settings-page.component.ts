@@ -30,7 +30,7 @@ type SettingsTab = 'fees' | 'payroll' | 'expenses';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent],
   templateUrl: './fees-settings-page.component.html',
-  styleUrls: ['../../fees.shared.scss', '../../../payroll/payroll.shared.scss']
+  styleUrls: ['./fees-settings-page.component.scss', '../../fees.shared.scss', '../../../payroll/payroll.shared.scss']
 })
 export class FeesSettingsPageComponent implements OnInit {
   private readonly api = inject(FeesApiService);
@@ -117,6 +117,16 @@ export class FeesSettingsPageComponent implements OnInit {
       this.loadPayroll();
     }
     if (tab === 'expenses' && !this.expensesSettings && !this.expensesLoading) {
+      this.loadExpenses();
+    }
+  }
+
+  refreshActiveTab(): void {
+    if (this.activeTab === 'fees') {
+      this.load();
+    } else if (this.activeTab === 'payroll') {
+      this.loadPayroll();
+    } else {
       this.loadExpenses();
     }
   }

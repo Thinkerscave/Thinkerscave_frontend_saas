@@ -196,10 +196,12 @@ export function expenseStatusLabel(status?: string | null): string {
   return status ? status.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '—';
 }
 
-export function expenseStatusTone(status?: string | null): string {
+export type ExpenseStatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
+
+export function expenseStatusTone(status?: string | null): ExpenseStatusTone {
   if (status === 'APPROVED' || status === 'PAID') return 'success';
   if (status === 'PENDING_APPROVAL') return 'warning';
   if (status === 'REJECTED' || status === 'UNPAID') return 'danger';
   if (status === 'PARTIALLY_PAID') return 'info';
-  return 'muted';
+  return 'neutral';
 }

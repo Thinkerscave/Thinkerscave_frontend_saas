@@ -1,0 +1,25 @@
+/* Payroll dashboard — page-specific polish */
+:host {
+  display: block;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+tc-saas-page-header .tc-form-field {
+  min-width: 150px;
+}
+
+tc-saas-page-header .tc-form-field input[type='month'] {
+  min-height: 36px;
+  padding: 6px 10px;
+}

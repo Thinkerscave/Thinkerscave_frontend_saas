@@ -14,60 +14,8 @@ import { PayrollApiService } from '../../services/payroll-api.service';
   selector: 'app-record-payment-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DialogModule],
-  template: `
-    <p-dialog
-      header="Record Payment"
-      [(visible)]="visible"
-      (visibleChange)="visibleChange.emit($event)"
-      [modal]="true"
-      [draggable]="false"
-      [style]="{ width: '540px', maxWidth: '95vw' }"
-      (onHide)="visibleChange.emit(false)">
-      @if (employee) {
-        <div class="mb-3 p-2 surface-100 border-round">
-          <strong>{{ employee.employeeName }}</strong>
-          <div class="text-sm text-color-secondary">
-            Net {{ formatMoney(employee.netAmount) }}
-            @if (remaining != null) { · Remaining {{ formatMoney(remaining) }} }
-          </div>
-        </div>
-      }
-      <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="submit()">
-        <div>
-          <label class="block mb-1">Amount *</label>
-          <input class="p-inputtext p-component w-full" type="number" min="0.01" step="0.01" formControlName="amount" />
-        </div>
-        <div>
-          <label class="block mb-1">Paid On *</label>
-          <input class="p-inputtext p-component w-full" type="datetime-local" formControlName="paidOn" />
-        </div>
-        <div>
-          <label class="block mb-1">Payment Method *</label>
-          <select class="p-inputtext p-component w-full" formControlName="paymentMethodId">
-            <option [ngValue]="null" disabled>Select method</option>
-            @for (m of methods; track m.feePaymentMethodId) {
-              <option [ngValue]="m.feePaymentMethodId">{{ m.name }}</option>
-            }
-          </select>
-        </div>
-        <div>
-          <label class="block mb-1">Reference</label>
-          <input class="p-inputtext p-component w-full" formControlName="reference" />
-        </div>
-        <div>
-          <label class="block mb-1">Remarks</label>
-          <textarea class="p-inputtext p-component w-full" rows="2" formControlName="remarks"></textarea>
-        </div>
-        <div class="flex justify-content-end gap-2">
-          <button type="button" class="p-button p-button-outlined" (click)="close()" [disabled]="saving">Cancel</button>
-          <button type="submit" class="p-button" [disabled]="saving || form.invalid || !employeePayrollId">
-            @if (saving) { <i class="pi pi-spin pi-spinner mr-1"></i> }
-            Record Payment
-          </button>
-        </div>
-      </form>
-    </p-dialog>
-  `
+  templateUrl: './record-payment-dialog.component.html',
+  styleUrls: ['../../payroll.shared.scss', './record-payment-dialog.component.scss']
 })
 export class RecordPaymentDialogComponent implements OnChanges {
   private readonly api = inject(PayrollApiService);

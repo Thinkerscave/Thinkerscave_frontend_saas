@@ -43,7 +43,7 @@ import { PayrollApiService } from '../../services/payroll-api.service';
     RecordPaymentDialogComponent
   ],
   templateUrl: './payroll-dashboard.component.html',
-  styleUrls: ['../../payroll.shared.scss']
+  styleUrls: ['../../payroll.shared.scss', './payroll-dashboard.component.scss']
 })
 export class PayrollDashboardComponent implements OnInit {
   private readonly api = inject(PayrollApiService);
@@ -102,19 +102,19 @@ export class PayrollDashboardComponent implements OnInit {
     this.api.overview(this.year, this.month)
       .pipe(finalize(() => {
         this.loading = false;
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }))
       .subscribe({
       next: kpis => {
         this.kpis = kpis;
         this.loadEmployees();
         this.loadActivities();
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: err => {
         this.error = extractApiError(err, 'Failed to load payroll overview').message;
         this.feedback.error('Payroll', this.error);
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }
     });
   }
@@ -136,19 +136,19 @@ export class PayrollDashboardComponent implements OnInit {
       )
       .pipe(finalize(() => {
         this.tableLoading = false;
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: page => {
           this.rows = page.content;
           this.total = page.totalElements;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         },
         error: err => {
           this.feedback.error('Employees', extractApiError(err, 'Request failed').message);
           this.rows = [];
           this.total = 0;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         }
       });
   }
@@ -159,7 +159,7 @@ export class PayrollDashboardComponent implements OnInit {
       .pipe(catchError(() => of([] as PayrollActivityItem[])))
       .subscribe(rows => {
         this.activities = rows;
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       });
   }
 

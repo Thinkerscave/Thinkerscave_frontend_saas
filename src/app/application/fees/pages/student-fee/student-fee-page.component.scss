@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+.student-fee-page {
+  .fees-split__detail {
+    .tc-empty-state--inline {
+      padding: 1.5rem 0.75rem;
+      text-align: center;
+    }
+  }
+}

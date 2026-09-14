@@ -2,18 +2,21 @@
   <app-toast />
 
   <tc-saas-page-header subtitle="Manage fee heads, structures, collections and outstanding balances.">
-    <select class="p-inputtext p-component fees-year-select"
-            [(ngModel)]="academicYearId"
-            (ngModelChange)="onYearChange()">
-      <option [ngValue]="null" disabled>Academic Year</option>
-      @for (y of years; track y.id) {
-        <option [ngValue]="y.id">{{ y.name }}</option>
-      }
-    </select>
-    <button type="button" class="p-button p-button-sm"
+    <div class="tc-form-field fees-year-field">
+      <label>Academic Year</label>
+      <select class="p-inputtext p-component fees-year-select"
+              [(ngModel)]="academicYearId"
+              (ngModelChange)="onYearChange()">
+        <option [ngValue]="null" disabled>Select year</option>
+        @for (y of years; track y.id) {
+          <option [ngValue]="y.id">{{ y.name }}</option>
+        }
+      </select>
+    </div>
+    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
             *tcHasPerm="resources.COLLECTION; action: 'manage'"
             (click)="openCollect()">
-      <i class="pi pi-credit-card mr-1"></i> Collect Fee
+      <i class="pi pi-credit-card"></i> Collect Fee
     </button>
   </tc-saas-page-header>
 
@@ -22,7 +25,7 @@
   } @else if (error) {
     <div class="tc-empty-state tc-empty-state--inline">
       <p>{{ error }}</p>
-      <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
     </div>
   } @else {
     <div class="fees-action-grid">
@@ -140,7 +143,7 @@
             <span>Activity</span>
             <h3>Recent collections</h3>
           </div>
-          <a routerLink="/app/fees/receipts" class="p-button p-button-text p-button-sm">Receipts</a>
+          <a routerLink="/app/fees/receipts" class="tc-btn tc-btn--ghost tc-btn--sm">Receipts</a>
         </div>
         <div class="tc-card__body">
           @if (!recent.length) {
@@ -180,7 +183,7 @@
             <span>Dues</span>
             <h3>Upcoming dues</h3>
           </div>
-          <a routerLink="/app/fees/outstanding" class="p-button p-button-text p-button-sm">Outstanding</a>
+          <a routerLink="/app/fees/outstanding" class="tc-btn tc-btn--ghost tc-btn--sm">Outstanding</a>
         </div>
         <div class="tc-card__body">
           @if (!upcoming.length) {

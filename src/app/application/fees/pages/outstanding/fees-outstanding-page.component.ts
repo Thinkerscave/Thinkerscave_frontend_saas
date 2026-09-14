@@ -30,7 +30,7 @@ interface LookupOption { id: number; name: string; }
     CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent
   ],
   templateUrl: './fees-outstanding-page.component.html',
-  styleUrls: ['../../fees.shared.scss']
+  styleUrls: ['./fees-outstanding-page.component.scss', '../../fees.shared.scss']
 })
 export class FeesOutstandingPageComponent implements OnInit {
   private readonly api = inject(FeesApiService);

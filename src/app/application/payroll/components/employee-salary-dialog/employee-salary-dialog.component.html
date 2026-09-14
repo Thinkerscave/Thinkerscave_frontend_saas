@@ -1,0 +1,105 @@
+<p-dialog
+  header="Manage Employee Salary"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '780px', maxWidth: '96vw' }">
+  <form [formGroup]="form" class="payroll-dialog-form" (ngSubmit)="save()">
+    <div class="payroll-dialog-grid payroll-dialog-grid--3">
+      <div class="tc-form-field">
+        <label>Payment Type *</label>
+        <select formControlName="paymentType">
+          @for (o of paymentTypes; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label>Apply structure</label>
+        <select formControlName="salaryStructureId" (change)="applyStructure()">
+          <option [ngValue]="null">None / custom</option>
+          @for (s of structures; track s.salaryStructureId) {
+            <option [ngValue]="s.salaryStructureId">{{ s.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label>Effective From *</label>
+        <input type="date" formControlName="effectiveFrom" />
+      </div>
+    </div>
+
+    <div class="payroll-dialog-section-head">
+      <strong>Salary lines</strong>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="addLine()">
+        <i class="pi pi-plus"></i> Add line
+      </button>
+    </div>
+
+    <div formArrayName="lines" class="payroll-dialog-lines">
+      @for (ctrl of lines.controls; track $index; let i = $index) {
+        <div class="payroll-dialog-line payroll-dialog-line--salary" [formGroupName]="i">
+          <div class="tc-form-field">
+            <label>Component</label>
+            <select formControlName="salaryComponentId" (change)="onComponentChange(i)">
+              <option [ngValue]="null" disabled>Component</option>
+              @for (c of components; track c.salaryComponentId) {
+                <option [ngValue]="c.salaryComponentId">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Method</label>
+            <select formControlName="calculationMethod">
+              @for (m of methods; track m) {
+                <option [value]="m">{{ methodLabels[m] }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Value</label>
+            <input type="number" step="0.01" formControlName="value" />
+          </div>
+          <label class="payroll-applicable">
+            <input type="checkbox" formControlName="applicable" /> Applicable
+          </label>
+          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" (click)="lines.removeAt(i)" title="Remove">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="payroll-dialog-grid">
+      <div class="tc-form-field">
+        <label>Bank name</label>
+        <input formControlName="bankName" />
+      </div>
+      <div class="tc-form-field">
+        <label>Account holder</label>
+        <input formControlName="accountHolderName" />
+      </div>
+      <div class="tc-form-field">
+        <label>Account number</label>
+        <input formControlName="accountNumber" />
+      </div>
+      <div class="tc-form-field">
+        <label>IFSC</label>
+        <input formControlName="ifscCode" />
+      </div>
+      <div class="tc-form-field" style="grid-column: 1 / -1;">
+        <label>Remarks</label>
+        <textarea rows="2" formControlName="remarks"></textarea>
+      </div>
+    </div>
+
+    <div class="payroll-dialog-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="close()" [disabled]="saving">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving || form.invalid || !staffId">
+        @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+        Save salary
+      </button>
+    </div>
+  </form>
+</p-dialog>

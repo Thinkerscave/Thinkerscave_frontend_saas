@@ -36,7 +36,7 @@ import { PayrollApiService } from '../../services/payroll-api.service';
     SalaryComponentDialogComponent
   ],
   templateUrl: './payroll-components-page.component.html',
-  styleUrls: ['../../payroll.shared.scss']
+  styleUrls: ['../../payroll.shared.scss', './payroll-components-page.component.scss']
 })
 export class PayrollComponentsPageComponent implements OnInit {
   private readonly api = inject(PayrollApiService);

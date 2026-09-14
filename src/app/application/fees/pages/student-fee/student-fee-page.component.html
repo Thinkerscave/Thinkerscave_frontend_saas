@@ -1,57 +1,78 @@
-<section class="tc-page-shell tc-directory-page fees-page">
+<section class="tc-page-shell tc-directory-page fees-page student-fee-page">
   <app-toast />
 
   <tc-saas-page-header subtitle="View fee status, payment history and receipts for your access scope.">
-    <select class="p-inputtext p-component fees-year-select"
-            [(ngModel)]="academicYearId"
-            (ngModelChange)="onYearChange()">
-      @for (y of years; track y.id) {
-        <option [ngValue]="y.id">{{ y.name }}</option>
-      }
-    </select>
+    <div class="tc-form-field fees-year-field">
+      <label>Academic Year</label>
+      <select class="p-inputtext p-component fees-year-select"
+              [(ngModel)]="academicYearId"
+              (ngModelChange)="onYearChange()">
+        @for (y of years; track y.id) {
+          <option [ngValue]="y.id">{{ y.name }}</option>
+        }
+      </select>
+    </div>
   </tc-saas-page-header>
 
   @if (accessRestricted) {
     <div class="tc-empty-state">
-      <h2 class="text-xl">Access Restricted</h2>
+      <i class="pi pi-lock"></i>
+      <h3>Access Restricted</h3>
       <p>You do not have permission to view this student's financial information.</p>
-      <a routerLink="/app/fees/students" class="p-button p-button-outlined">Back</a>
+      <a routerLink="/app/fees/students" class="tc-btn tc-btn--outline">Back</a>
     </div>
   } @else {
     @if (!canSearch && linked.length > 1) {
-      <div class="fees-toolbar mb-0">
-        <label class="fees-toolbar__label">Select Child</label>
-        <select class="p-inputtext p-component" [(ngModel)]="selectedStudentId" (ngModelChange)="onChildChange()">
-          @for (c of linked; track c.studentId) {
-            <option [ngValue]="c.studentId">{{ c.studentName }}</option>
-          }
-        </select>
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__body">
+          <div class="fees-toolbar">
+            <div class="tc-form-field">
+              <label>Select Child</label>
+              <select class="p-inputtext p-component" [(ngModel)]="selectedStudentId" (ngModelChange)="onChildChange()">
+                @for (c of linked; track c.studentId) {
+                  <option [ngValue]="c.studentId">{{ c.studentName }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     }
 
     @if (canSearch) {
       <div class="tc-card tc-card--panel fees-surface-panel">
         <div class="tc-card__body">
-          <div class="fees-toolbar">
-            <input class="p-inputtext p-component fees-toolbar__search"
-                   placeholder="Search by name or admission no..."
-                   [(ngModel)]="q"
-                   (keyup.enter)="search()" />
-            <select class="p-inputtext p-component" [(ngModel)]="classId">
-              <option [ngValue]="null">All Classes</option>
-              @for (c of classes; track c.id) {
-                <option [ngValue]="c.id">{{ c.name }}</option>
-              }
-            </select>
-            <select class="p-inputtext p-component" [(ngModel)]="status">
-              <option value="">All Status</option>
-              <option value="DUE">Due</option>
-              <option value="PARTIALLY_PAID">Partially Paid</option>
-              <option value="OVERDUE">Overdue</option>
-              <option value="PAID">Paid</option>
-            </select>
-            <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
-            <button type="button" class="p-button p-button-outlined p-button-sm" (click)="reset()">Reset</button>
+          <div class="fees-filter-bar">
+            <div class="tc-form-field tc-form-field--grow">
+              <label>Search</label>
+              <input class="p-inputtext p-component"
+                     placeholder="Search by name or admission no..."
+                     [(ngModel)]="q"
+                     (keyup.enter)="search()" />
+            </div>
+            <div class="tc-form-field">
+              <label>Class</label>
+              <select class="p-inputtext p-component" [(ngModel)]="classId">
+                <option [ngValue]="null">All Classes</option>
+                @for (c of classes; track c.id) {
+                  <option [ngValue]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="tc-form-field">
+              <label>Status</label>
+              <select class="p-inputtext p-component" [(ngModel)]="status">
+                <option value="">All Status</option>
+                <option value="DUE">Due</option>
+                <option value="PARTIALLY_PAID">Partially Paid</option>
+                <option value="OVERDUE">Overdue</option>
+                <option value="PAID">Paid</option>
+              </select>
+            </div>
+            <div class="tc-form-field tc-form-field--actions">
+              <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
+              <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="reset()">Reset</button>
+            </div>
           </div>
 
           @if (listLoading) {
@@ -110,7 +131,10 @@
     } @else if (detailError) {
       <div class="tc-empty-state tc-empty-state--inline"><p>{{ detailError }}</p></div>
     } @else if (!detail) {
-      <div class="tc-empty-state"><p>Select a student to view fee details.</p></div>
+      <div class="tc-empty-state tc-empty-state--inline">
+        <i class="pi pi-user"></i>
+        <p>Select a student to view fee details.</p>
+      </div>
     } @else {
       <div class="fees-student-detail">
         <div class="fees-student-detail__head">
@@ -122,10 +146,10 @@
             </p>
           </div>
           @if (detail.canCollectFee) {
-            <button type="button" class="p-button p-button-sm"
+            <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
                     *tcHasPerm="resources.COLLECTION; action: 'manage'"
                     (click)="openCollect()">
-              Collect Fee
+              <i class="pi pi-credit-card"></i> Collect Fee
             </button>
           }
         </div>
@@ -239,9 +263,9 @@
                     <td class="text-right">{{ r.amount | number:'1.2-2' }}</td>
                     <td>{{ r.paymentMethodName || '—' }}</td>
                     <td class="fees-table__actions">
-                      <button type="button" class="p-button p-button-text p-button-sm" title="Preview"
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" title="Preview"
                               (click)="openPreview(r)"><i class="pi pi-eye"></i></button>
-                      <button type="button" class="p-button p-button-text p-button-sm" title="Download"
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" title="Download"
                               [disabled]="downloadingId === r.feeReceiptId"
                               (click)="downloadReceipt(r)">
                         @if (downloadingId === r.feeReceiptId) {
@@ -272,7 +296,7 @@
                   <tr [class.is-selected]="academicYearId === y.academicYearId">
                     <td>{{ y.name }}</td>
                     <td class="fees-table__actions">
-                      <button type="button" class="p-button p-button-text p-button-sm"
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm"
                               [disabled]="academicYearId === y.academicYearId"
                               (click)="switchToYear(y.academicYearId)">
                         {{ academicYearId === y.academicYearId ? 'Current' : 'View' }}
@@ -320,9 +344,9 @@
             }
           </tbody>
         </table>
-        <div class="flex justify-content-end gap-2 mt-3">
-          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="previewVisible = false">Close</button>
-          <button type="button" class="p-button p-button-sm" (click)="downloadReceipt(preview)">Download PDF</button>
+        <div class="fees-receipt-preview__actions">
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="previewVisible = false">Close</button>
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="downloadReceipt(preview)">Download PDF</button>
         </div>
       </div>
     }

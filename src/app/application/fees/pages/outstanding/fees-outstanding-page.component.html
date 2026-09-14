@@ -2,13 +2,16 @@
   <app-toast />
 
   <tc-saas-page-header subtitle="Track dues, partially paid and overdue balances.">
-    <select class="p-inputtext p-component fees-year-select"
-            [(ngModel)]="academicYearId"
-            (ngModelChange)="load()">
-      @for (y of years; track y.id) {
-        <option [ngValue]="y.id">{{ y.name }}</option>
-      }
-    </select>
+    <div class="tc-form-field fees-year-field">
+      <label>Academic Year</label>
+      <select class="p-inputtext p-component fees-year-select"
+              [(ngModel)]="academicYearId"
+              (ngModelChange)="load()">
+        @for (y of years; track y.id) {
+          <option [ngValue]="y.id">{{ y.name }}</option>
+        }
+      </select>
+    </div>
   </tc-saas-page-header>
 
   @if (summary) {
@@ -21,15 +24,20 @@
 
   <div class="tc-card tc-card--panel fees-surface-panel">
     <div class="tc-card__body">
-      <div class="fees-toolbar">
-        <select class="p-inputtext p-component" [(ngModel)]="status">
-          <option value="">All open</option>
-          <option value="DUE">Due</option>
-          <option value="PARTIALLY_PAID">Partially Paid</option>
-          <option value="OVERDUE">Overdue</option>
-        </select>
-        <button type="button" class="p-button p-button-sm" (click)="search()">Search</button>
-        <a routerLink="/app/fees/students" class="p-button p-button-outlined p-button-sm">Student Fee</a>
+      <div class="fees-filter-bar">
+        <div class="tc-form-field">
+          <label>Status</label>
+          <select class="p-inputtext p-component" [(ngModel)]="status">
+            <option value="">All open</option>
+            <option value="DUE">Due</option>
+            <option value="PARTIALLY_PAID">Partially Paid</option>
+            <option value="OVERDUE">Overdue</option>
+          </select>
+        </div>
+        <div class="tc-form-field tc-form-field--actions">
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
+          <a routerLink="/app/fees/students" class="tc-btn tc-btn--outline tc-btn--sm">Student Fee</a>
+        </div>
       </div>
 
       @if (loading) {
@@ -37,10 +45,14 @@
       } @else if (error) {
         <div class="tc-empty-state tc-empty-state--inline">
           <p>{{ error }}</p>
-          <button type="button" class="p-button p-button-outlined p-button-sm" (click)="load()">Retry</button>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
         </div>
       } @else if (!rows.length) {
-        <div class="tc-empty-state"><p>No outstanding dues.</p></div>
+        <div class="tc-empty-state">
+          <i class="pi pi-check-circle"></i>
+          <h3>All clear</h3>
+          <p>No outstanding dues.</p>
+        </div>
       } @else {
         <div class="fees-table-wrap">
           <table class="fees-table">
@@ -67,10 +79,10 @@
                   <td class="text-right">{{ row.balanceAmount | number:'1.2-2' }}</td>
                   <td><span class="tc-saas-pill" [attr.data-status]="row.status">{{ row.status }}</span></td>
                   <td class="fees-table__actions">
-                    <a class="p-button p-button-text p-button-sm"
+                    <a class="tc-btn tc-btn--ghost tc-btn--sm"
                        [routerLink]="['/app/fees/students', row.studentId]">View</a>
                     @if (row.canCollectFee) {
-                      <button type="button" class="p-button p-button-text p-button-sm"
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm"
                               *tcHasPerm="resources.COLLECTION; action: 'manage'"
                               (click)="openCollect(row)">Collect</button>
                     }
@@ -83,9 +95,9 @@
         <div class="fees-pager">
           <span>Showing {{ rows.length }} of {{ total }}</span>
           <div class="fees-pager__btns">
-            <button type="button" class="p-button p-button-outlined p-button-sm"
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
                     [disabled]="page === 0" (click)="prevPage()">Prev</button>
-            <button type="button" class="p-button p-button-outlined p-button-sm"
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
                     [disabled]="(page + 1) * size >= total" (click)="nextPage()">Next</button>
           </div>
         </div>

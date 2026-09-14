@@ -1,0 +1,81 @@
+<p-dialog
+  [header]="editing ? 'Edit Salary Structure' : 'Add Salary Structure'"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '720px', maxWidth: '96vw' }">
+  <form [formGroup]="form" class="payroll-dialog-form" (ngSubmit)="save()">
+    <div class="payroll-dialog-grid">
+      <div class="tc-form-field">
+        <label>Name *</label>
+        <input formControlName="name" />
+      </div>
+      <div class="tc-form-field">
+        <label>Applicable staff type</label>
+        <select formControlName="applicableStaffType">
+          <option [ngValue]="null">All</option>
+          <option value="TEACHING">Teaching</option>
+          <option value="NON_TEACHING">Non-teaching</option>
+        </select>
+      </div>
+      <div class="tc-form-field" style="grid-column: 1 / -1;">
+        <label>Description</label>
+        <textarea rows="2" formControlName="description"></textarea>
+      </div>
+      <div class="tc-form-field">
+        <label>Status *</label>
+        <div class="payroll-dialog-checkboxes">
+          <label><input type="radio" formControlName="status" value="ACTIVE" /> Active</label>
+          <label><input type="radio" formControlName="status" value="INACTIVE" /> Inactive</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="payroll-dialog-section-head">
+      <strong>Structure items</strong>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="addItem()">
+        <i class="pi pi-plus"></i> Add line
+      </button>
+    </div>
+
+    <div formArrayName="items" class="payroll-dialog-lines">
+      @for (ctrl of items.controls; track $index; let i = $index) {
+        <div class="payroll-dialog-line" [formGroupName]="i">
+          <div class="tc-form-field">
+            <label>Component</label>
+            <select formControlName="salaryComponentId">
+              <option [ngValue]="null" disabled>Select</option>
+              @for (c of components; track c.salaryComponentId) {
+                <option [ngValue]="c.salaryComponentId">{{ c.name }} ({{ c.code }})</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Method</label>
+            <select formControlName="calculationMethod">
+              @for (m of methods; track m) {
+                <option [value]="m">{{ methodLabels[m] }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Value</label>
+            <input type="number" step="0.01" formControlName="value" />
+          </div>
+          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" (click)="items.removeAt(i)" title="Remove">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="payroll-dialog-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="close()" [disabled]="saving">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving || form.invalid">
+        @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+        Save
+      </button>
+    </div>
+  </form>
+</p-dialog>

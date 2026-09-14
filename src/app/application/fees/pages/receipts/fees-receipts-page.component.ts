@@ -24,7 +24,7 @@ interface LookupOption { id: number; name: string; }
     AppToastComponent, SaasPageHeaderComponent, HasPermissionDirective
   ],
   templateUrl: './fees-receipts-page.component.html',
-  styleUrls: ['../../fees.shared.scss']
+  styleUrls: ['./fees-receipts-page.component.scss', '../../fees.shared.scss']
 })
 export class FeesReceiptsPageComponent implements OnInit {
   private readonly api = inject(FeesApiService);

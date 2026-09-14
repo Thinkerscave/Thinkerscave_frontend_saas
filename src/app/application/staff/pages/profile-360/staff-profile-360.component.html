@@ -156,24 +156,6 @@
             </div>
           </div>
 
-          <!-- Salary Summary -->
-          <div class="sp-info-card" *ngIf="profile.salarySummary">
-            <h3 class="sp-info-card__title">Salary Summary</h3>
-            <div class="sp-info-rows">
-              <div class="sp-info-row">
-                <span>Gross Salary</span>
-                <strong class="sp-highlight">â‚¹ {{ profile.salarySummary.grossSalary | number }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Salary Type</span>
-                <strong>{{ profile.salarySummary.salaryType | titlecase }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Effective From</span>
-                <strong>{{ profile.salarySummary.effectiveFrom | date:'d MMM yyyy' }}</strong>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -225,30 +207,6 @@
         </div>
       </div>
 
-      <!-- â•â•â•â•â•â• SALARY TAB â•â•â•â•â•â• -->
-      <div *ngIf="activeTab === 'salary'" class="sp-tab-content tc-detail-page__content">
-        <div class="sp-empty-state">
-          <i class="pi pi-money-bill"></i>
-          <h3>Managed in Finance â†’ Payroll</h3>
-          <p>Employee salary is configured under Finance Payroll. Editing here has been removed.</p>
-          <a class="tc-btn tc-btn--primary tc-btn--sm" [routerLink]="['/app/payroll/employees', staffId]">
-            <i class="pi pi-external-link"></i> Open Employee Salary
-          </a>
-        </div>
-      </div>
-
-      <!-- â•â•â•â•â•â• PAYROLL TAB â•â•â•â•â•â• -->
-      <div *ngIf="activeTab === 'payroll'" class="sp-tab-content tc-detail-page__content">
-        <div class="sp-empty-state">
-          <i class="pi pi-wallet"></i>
-          <h3>Managed in Finance â†’ Payroll</h3>
-          <p>Payroll runs, payments and payslips live under Finance Payroll.</p>
-          <a class="tc-btn tc-btn--primary tc-btn--sm" routerLink="/app/payroll">
-            <i class="pi pi-external-link"></i> Open Payroll
-          </a>
-        </div>
-      </div>
-
       <!-- â•â•â•â•â•â• DOCUMENTS TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'documents'" class="sp-tab-content tc-detail-page__content">
         <div class="sp-empty-state">
@@ -285,19 +243,6 @@
         </div>
       </div>
 
-      <!-- Salary tab context -->
-      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'salary'">
-        <h4 class="tc-detail-sidebar-card__title">Finance Payroll</h4>
-        <p class="text-sm">Manage salary components and history in Finance â†’ Payroll.</p>
-        <a class="tc-btn tc-btn--primary tc-btn--sm" [routerLink]="['/app/payroll/employees', staffId]">Open Employee Salary</a>
-      </div>
-
-      <!-- Payroll tab context -->
-      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'payroll'">
-        <h4 class="tc-detail-sidebar-card__title">Finance Payroll</h4>
-        <p class="text-sm">Runs, payments and payslips are managed under Finance.</p>
-        <a class="tc-btn tc-btn--primary tc-btn--sm" routerLink="/app/payroll">Open Payroll</a>
-      </div>
     </aside>
   </div>
 </div>

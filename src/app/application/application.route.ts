@@ -157,7 +157,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'create', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
       { path: 'edit/:id', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
       { path: 'profile/:id', loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
-      { path: 'my-payroll', loadComponent: () => import('./payroll/pages/my-payroll/staff-my-payroll.component').then(m => m.StaffMyPayrollComponent) },
+      { path: 'my-payroll', pathMatch: 'full', redirectTo: '/app/payroll/me' },
       {
         path: '',
         loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
@@ -178,6 +178,11 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'payroll',
     children: [
+      {
+        path: 'me',
+        data: { pageTitle: 'My Payroll' },
+        loadComponent: () => import('./payroll/pages/my-payroll/staff-my-payroll.component').then(m => m.StaffMyPayrollComponent)
+      },
       {
         path: '',
         loadComponent: () => import('./payroll/components/payroll-workspace/payroll-workspace.component').then(m => m.PayrollWorkspaceComponent),

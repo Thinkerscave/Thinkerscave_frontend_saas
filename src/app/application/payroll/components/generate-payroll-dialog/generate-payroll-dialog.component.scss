@@ -1,0 +1,19 @@
+:host { display: block; }
+
+.payroll-lop-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+
+  input {
+    flex: 1 1 120px;
+    min-height: 40px;
+    border: 1px solid var(--tc-border);
+    border-radius: 10px;
+    background: var(--tc-surface-0, var(--tc-surface-card));
+    color: var(--tc-text);
+    font: inherit;
+    padding: 8px 12px;
+  }
+}

@@ -1,0 +1,118 @@
+<tc-drawer-form
+  [open]="open"
+  [title]="expense ? 'Edit Expense' : 'Add Expense'"
+  description="Expense number is generated after save."
+  size="lg"
+  (closed)="close()"
+  (submitted)="save()"
+>
+  <form [formGroup]="form" class="expense-form" (ngSubmit)="save()">
+    <h3>Expense Information</h3>
+    <div class="expense-form__grid">
+      <div class="tc-form-field">
+        <label for="ef-head">Expense Head *</label>
+        <select id="ef-head" formControlName="expenseHeadId" (change)="headChanged()">
+          <option [ngValue]="null">Select head</option>
+          @for (h of heads; track h.expenseHeadId) {
+            <option [ngValue]="h.expenseHeadId">{{ h.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label for="ef-category">Category</label>
+        <input id="ef-category" [value]="selectedHead?.category?.name || ''" readonly />
+      </div>
+      <div class="tc-form-field">
+        <label for="ef-date">Expense Date *</label>
+        <input id="ef-date" type="date" formControlName="expenseDate" />
+      </div>
+      <div class="tc-form-field">
+        <label for="ef-amount">Amount *</label>
+        <input id="ef-amount" type="number" min="0.01" step="0.01" formControlName="amount" [readonly]="approved" />
+      </div>
+    </div>
+
+    <h3>Vendor Information</h3>
+    <div class="expense-form__grid">
+      <div class="tc-form-field">
+        <label for="ef-vendor">Vendor Name</label>
+        <input id="ef-vendor" formControlName="vendorName" />
+      </div>
+      <div class="tc-form-field">
+        <label for="ef-invoice">Vendor Invoice Number</label>
+        <input id="ef-invoice" formControlName="vendorInvoiceNumber" />
+      </div>
+    </div>
+
+    <h3>Author / Requester</h3>
+    <div class="tc-form-field">
+      <label for="ef-requester">Author *</label>
+      <select id="ef-requester" formControlName="requesterStaffId">
+        <option [ngValue]="null">Select staff</option>
+        @for (s of staff; track s.staffId) {
+          <option [ngValue]="s.staffId">
+            {{ s.firstName }} {{ s.lastName }}{{ s.staffCode ? ' (' + s.staffCode + ')' : '' }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <h3>Additional</h3>
+    <div class="tc-form-field">
+      <label for="ef-remarks">Remarks</label>
+      <textarea id="ef-remarks" rows="3" formControlName="remarks"></textarea>
+    </div>
+    <div class="tc-form-field">
+      <label for="ef-files">Attachments (PDF/JPG/PNG, max 10MB)</label>
+      <input id="ef-files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" (change)="filesSelected($event)" />
+    </div>
+
+    @if (!expense && settings?.approvalRequired) {
+      <p class="expense-note">Payment can be recorded after approval.</p>
+    }
+
+    @if (!expense && settings && !settings.approvalRequired && canPay) {
+      <label class="expense-check tc-form-field">
+        <input type="checkbox" formControlName="recordNow" />
+        Record payment now
+      </label>
+
+      @if (form.controls.recordNow.value) {
+        <div class="expense-form__grid">
+          <div class="tc-form-field">
+            <label for="ef-pay-amount">Payment Amount</label>
+            <input id="ef-pay-amount" type="number" min="0.01" formControlName="paymentAmount" />
+          </div>
+          <div class="tc-form-field">
+            <label for="ef-paid-on">Paid On</label>
+            <input id="ef-paid-on" type="date" formControlName="paidOn" />
+          </div>
+          <div class="tc-form-field">
+            <label for="ef-method">Method</label>
+            <select id="ef-method" formControlName="paymentMethodId">
+              <option [ngValue]="null">Select method</option>
+              @for (m of methods; track m.feePaymentMethodId) {
+                <option [ngValue]="m.feePaymentMethodId">{{ m.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label for="ef-ref">Reference</label>
+            <input id="ef-ref" formControlName="referenceNumber" />
+          </div>
+          <div class="tc-form-field tc-form-field--full">
+            <label for="ef-pay-remarks">Payment Remarks</label>
+            <textarea id="ef-pay-remarks" formControlName="paymentRemarks"></textarea>
+          </div>
+        </div>
+      }
+    }
+  </form>
+
+  <div drawer-actions class="expense-actions">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="close()">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="save()">
+      {{ saving ? 'Saving…' : 'Save Expense' }}
+    </button>
+  </div>
+</tc-drawer-form>
