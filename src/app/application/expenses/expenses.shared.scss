@@ -1,10 +1,7 @@
 /* Shared Finance → Expenses styles — aligned with fees + admissions quality */
 
 .expenses-page {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  min-width: 0;
+  /* gap / padding from _page-rhythm.scss */
 
   > tc-saas-page-header,
   > .tc-page-header {

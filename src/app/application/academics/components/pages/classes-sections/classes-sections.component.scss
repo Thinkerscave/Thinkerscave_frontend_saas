@@ -4,8 +4,6 @@
 
 /* Tighter than default acad-page — get to class data faster */
 .cs-page.acad-page {
-  gap: 0.65rem;
-  padding: 0.35rem 0 1rem;
   color: var(--tc-heading, #0f172a);
 }
 

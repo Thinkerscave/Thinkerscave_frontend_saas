@@ -1,15 +1,15 @@
 /* Shared Finance → Payroll styles — aligned with Fees / Admissions / Finance Reports */
 
 .payroll-page {
-  display: block;
+  /* gap / padding from _page-rhythm.scss */
 
   > tc-saas-page-header,
   > .tc-page-header {
-    margin-bottom: var(--tc-space-3, 0.75rem);
+    margin-bottom: 0;
   }
 
   > tc-kpi-group {
-    margin-bottom: var(--tc-space-3, 0.75rem);
+    margin-bottom: 0;
     gap: 0.65rem;
   }
 

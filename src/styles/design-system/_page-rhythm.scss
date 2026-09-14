@@ -1,0 +1,40 @@
+/* ============================================================
+   Page rhythm — single gap between rows, no double ends
+   ------------------------------------------------------------
+   Contract:
+   - Layout shell header sits above the page; page bodies do NOT
+     add top padding/margin (that stacks with shell air).
+   - Major page sections use ONE flex/grid gap only.
+   - Do not also put margin-top/margin-bottom on those same rows.
+   - Bottom padding only — scroll comfort at the end of the page.
+   ============================================================ */
+
+:root {
+  --tc-page-row-gap: var(--tc-space-3); /* 0.75rem */
+  --tc-page-pad-bottom: var(--tc-space-4); /* 1rem */
+}
+
+/* Canonical page body roots used across modules */
+.adm-page,
+.acad-page,
+.fees-page,
+.expenses-page,
+.payroll-page,
+.saas-page,
+.tc-page,
+.tc-directory-page,
+.tc-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-page-row-gap);
+  padding-top: 0;
+  padding-bottom: var(--tc-page-pad-bottom);
+  min-width: 0;
+}
+
+/* Toolbar is a row inside the page flex — page gap spaces it */
+.saas-page-header--toolbar,
+tc-saas-page-header {
+  margin-top: 0;
+  margin-bottom: 0;
+}

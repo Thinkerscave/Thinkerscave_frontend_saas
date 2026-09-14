@@ -7,11 +7,7 @@
 }
 
 .ac-page.acad-page {
-  gap: 0.65rem;
-  padding: 0.25rem 0 0.75rem;
   color: var(--tc-heading, #0f172a);
-  display: flex;
-  flex-direction: column;
   min-height: calc(100dvh - 8.5rem);
 }
 
