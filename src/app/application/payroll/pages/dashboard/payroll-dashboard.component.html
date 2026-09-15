@@ -8,16 +8,6 @@
              [ngModel]="periodValue"
              (ngModelChange)="periodValue = $event; onPeriodChange()" />
     </div>
-    <a class="tc-btn tc-btn--outline tc-btn--sm"
-       routerLink="/app/payroll/components"
-       *tcHasPerm="resources.COMPONENTS; action: 'view'">
-      <i class="pi pi-list"></i> Manage Salary Components
-    </a>
-    <a class="tc-btn tc-btn--outline tc-btn--sm"
-       routerLink="/app/payroll/structures"
-       *tcHasPerm="resources.STRUCTURES; action: 'view'">
-      <i class="pi pi-sitemap"></i> Manage Salary Structures
-    </a>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
             *tcHasPerm="resources.RUN; action: 'manage'"
             (click)="openGenerate()">
@@ -43,6 +33,26 @@
         <tc-kpi-card label="Payment Pending" [value]="'' + paymentPendingCount(kpis)" icon="pi pi-wallet" tone="warning"></tc-kpi-card>
         <tc-kpi-card label="Paid" [value]="'' + (kpis.paidCount ?? kpis.paid ?? 0)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
       </tc-kpi-group>
+
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Shortcuts</span>
+            <h3>Quick Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="payroll-quick-actions">
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll/components" *tcHasPerm="resources.COMPONENTS; action: 'view'">Manage Salary Components</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">Manage Salary Structures</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">Finance Reports</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/settings">Payroll Settings</a>
+          </div>
+          <p class="payroll-helper m-0 mt-3">
+            Salary components, structures and employee salary are managed from Payroll - not from Staff create.
+          </p>
+        </div>
+      </div>
     }
 
     <div class="tc-card tc-card--panel payroll-surface-panel">
@@ -179,53 +189,32 @@
       </div>
     </div>
 
-    <div class="payroll-dash-grid payroll-dash-grid--tables">
-      <div class="tc-card tc-card--panel payroll-surface-panel">
-        <div class="tc-card__header">
-          <div>
-            <span>Activity</span>
-            <h3>Recent Activities</h3>
-          </div>
-        </div>
-        <div class="tc-card__body">
-          @if (!activities.length) {
-            <div class="tc-empty-state tc-empty-state--inline">
-              <i class="pi pi-history"></i>
-              <p>No recent payroll activities.</p>
-            </div>
-          } @else {
-            <ul class="payroll-activity-list">
-              @for (a of activities; track a.activityId || a.occurredOn) {
-                <li>
-                  <div>
-                    <strong>{{ a.action || a.description }}</strong>
-                    <small>{{ a.actorName || 'System' }}</small>
-                  </div>
-                  <time>{{ a.occurredOn | date:'mediumDate' }}</time>
-                </li>
-              }
-            </ul>
-          }
+    <div class="tc-card tc-card--panel payroll-surface-panel">
+      <div class="tc-card__header">
+        <div>
+          <span>Activity</span>
+          <h3>Recent Activities</h3>
         </div>
       </div>
-
-      <div class="tc-card tc-card--panel payroll-surface-panel">
-        <div class="tc-card__header">
-          <div>
-            <span>Shortcuts</span>
-            <h3>Quick Actions</h3>
+      <div class="tc-card__body">
+        @if (!activities.length) {
+          <div class="tc-empty-state tc-empty-state--inline">
+            <i class="pi pi-history"></i>
+            <p>No recent payroll activities.</p>
           </div>
-        </div>
-        <div class="tc-card__body">
-          <div class="payroll-quick-actions">
-            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll">Employee Salaries</a>
-            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/settings">Payroll Settings</a>
-            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">Finance</a>
-          </div>
-          <p class="payroll-helper m-0 mt-3">
-            Salary components, structures and employee salary are managed from Payroll — not from Staff create.
-          </p>
-        </div>
+        } @else {
+          <ul class="payroll-activity-list">
+            @for (a of activities; track a.activityId || a.occurredOn) {
+              <li>
+                <div>
+                  <strong>{{ a.action || a.description }}</strong>
+                  <small>{{ a.actorName || 'System' }}</small>
+                </div>
+                <time>{{ a.occurredOn | date:'mediumDate' }}</time>
+              </li>
+            }
+          </ul>
+        }
       </div>
     </div>
   }

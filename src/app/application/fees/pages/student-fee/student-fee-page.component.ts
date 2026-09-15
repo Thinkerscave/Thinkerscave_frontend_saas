@@ -11,7 +11,6 @@ import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
-import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { BackNavigationService } from '../../../../core/services/back-navigation.service';
@@ -36,7 +35,7 @@ interface LookupOption { id: number; name: string; status?: string; }
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, DialogModule, HasPermissionDirective,
-    AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
+    AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent,
     TcPageSkeletonComponent
   ],
   templateUrl: './student-fee-page.component.html',

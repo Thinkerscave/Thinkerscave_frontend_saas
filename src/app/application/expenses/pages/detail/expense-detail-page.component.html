@@ -2,6 +2,9 @@
   <app-toast />
 
   <tc-saas-page-header [subtitle]="expense?.expenseNumber || 'Expense detail'">
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/expenses">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
     @if (expense) {
       <tc-saas-pill [label]="label(expense.approvalStatus)" [tone]="tone(expense.approvalStatus)" />
       <tc-saas-pill [label]="label(expense.paymentStatus)" [tone]="tone(expense.paymentStatus)" />

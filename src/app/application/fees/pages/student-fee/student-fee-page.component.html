@@ -1,18 +1,20 @@
 <section class="tc-page-shell tc-directory-page fees-page student-fee-page">
   <app-toast />
 
-  <tc-saas-page-header>
-    <div class="tc-form-field fees-year-field">
-      <label>Academic Year</label>
-      <select class="p-inputtext p-component fees-year-select"
-              [(ngModel)]="academicYearId"
-              (ngModelChange)="onYearChange()">
-        @for (y of years; track y.id) {
-          <option [ngValue]="y.id">{{ y.name }}</option>
-        }
-      </select>
+  <section class="fees-context" aria-label="Academic year context">
+    <div class="fees-context__primary">
+      <div class="fees-context__label">Academic Year</div>
+      <div class="fees-context__controls">
+        <select class="p-inputtext p-component fees-year-select fees-year-select--compact"
+                [(ngModel)]="academicYearId"
+                (ngModelChange)="onYearChange()">
+          @for (y of years; track y.id) {
+            <option [ngValue]="y.id">{{ y.name }}</option>
+          }
+        </select>
+      </div>
     </div>
-  </tc-saas-page-header>
+  </section>
 
   @if (accessRestricted) {
     <div class="tc-empty-state">
@@ -215,7 +217,6 @@
               </tbody>
             </table>
           </div>
-          <p class="fees-helper">Payments are automatically allocated to the oldest outstanding dues first.</p>
         } @else if (activeTab === 'payments') {
           <div class="fees-table-wrap">
             <table class="fees-table fees-table--compact">

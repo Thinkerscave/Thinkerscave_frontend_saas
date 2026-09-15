@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DialogModule } from 'primeng/dialog';
+import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -21,7 +22,7 @@ interface LookupOption { id: number; name: string; }
   selector: 'app-fees-receipts-page',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DialogModule,
+    CommonModule, FormsModule, DialogModule, RouterLink,
     AppToastComponent, SaasPageHeaderComponent, HasPermissionDirective, TcPageSkeletonComponent
   ],
   templateUrl: './fees-receipts-page.component.html',

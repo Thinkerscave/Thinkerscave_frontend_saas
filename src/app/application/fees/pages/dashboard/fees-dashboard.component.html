@@ -2,17 +2,6 @@
   <app-toast />
 
   <tc-saas-page-header>
-    <div class="tc-form-field fees-year-field">
-      <label>Academic Year</label>
-      <select class="p-inputtext p-component fees-year-select"
-              [(ngModel)]="academicYearId"
-              (ngModelChange)="onYearChange()">
-        <option [ngValue]="null" disabled>Select year</option>
-        @for (y of years; track y.id) {
-          <option [ngValue]="y.id">{{ y.name }}</option>
-        }
-      </select>
-    </div>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
             *tcHasPerm="resources.COLLECTION; action: 'manage'"
             (click)="openCollect()">
@@ -28,38 +17,21 @@
       <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
     </div>
   } @else {
-    <div class="fees-action-grid">
-      <a class="fees-action-card" routerLink="/app/fees/heads" *tcHasPerm="resources.HEADS; action: 'view'">
-        <i class="pi pi-database"></i>
-        <strong>Fee Heads</strong>
-        <span>Manage fee types</span>
-      </a>
-      <a class="fees-action-card" routerLink="/app/fees/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">
-        <i class="pi pi-file"></i>
-        <strong>Fee Structures</strong>
-        <span>Class-wise fee rules</span>
-      </a>
-      <a class="fees-action-card" routerLink="/app/fees/receipts" *tcHasPerm="resources.RECEIPTS; action: 'view'">
-        <i class="pi pi-receipt"></i>
-        <strong>Receipts</strong>
-        <span>View receipts</span>
-      </a>
-      <a class="fees-action-card" routerLink="/app/fees/outstanding" *tcHasPerm="resources.OUTSTANDING; action: 'view'">
-        <i class="pi pi-chart-line"></i>
-        <strong>Outstanding</strong>
-        <span>Pending dues</span>
-      </a>
-      <a class="fees-action-card" routerLink="/app/fees/students" *tcHasPerm="resources.STUDENT_DETAILS; action: 'view'">
-        <i class="pi pi-users"></i>
-        <strong>Student Fee</strong>
-        <span>Student ledgers</span>
-      </a>
-      <a class="fees-action-card" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
-        <i class="pi pi-cog"></i>
-        <strong>Settings</strong>
-        <span>Generation & methods</span>
-      </a>
-    </div>
+    <section class="fees-context" aria-label="Academic year context">
+      <div class="fees-context__primary">
+        <div class="fees-context__label">Academic Year</div>
+        <div class="fees-context__controls">
+          <select class="p-inputtext p-component fees-year-select fees-year-select--compact"
+                  [(ngModel)]="academicYearId"
+                  (ngModelChange)="onYearChange()">
+            <option [ngValue]="null" disabled>Select year</option>
+            @for (y of years; track y.id) {
+              <option [ngValue]="y.id">{{ y.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </section>
 
     @if (kpis) {
       <tc-kpi-group ariaLabel="Fee KPIs" mode="equal" [columns]="4">
@@ -68,6 +40,54 @@
         <tc-kpi-card label="Outstanding" [value]="formatMoney(kpis.outstanding)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
         <tc-kpi-card label="Overdue" [value]="formatMoney(kpis.overdue)" icon="pi pi-exclamation-triangle" tone="danger"></tc-kpi-card>
       </tc-kpi-group>
+
+      <div class="tc-card tc-card--panel fees-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Navigation</span>
+            <h3>Core Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="fees-action-grid fees-action-grid--core">
+            <a class="fees-action-card" routerLink="/app/fees/heads" *tcHasPerm="resources.HEADS; action: 'view'">
+              <i class="pi pi-database"></i>
+              <strong>Fee Heads</strong>
+              <span>Manage fee types</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">
+              <i class="pi pi-sitemap"></i>
+              <strong>Fee Structures</strong>
+              <span>Class-wise rules</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/students" *tcHasPerm="resources.STUDENT_DETAILS; action: 'view'">
+              <i class="pi pi-users"></i>
+              <strong>Student Fee</strong>
+              <span>Student ledgers</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/outstanding" *tcHasPerm="resources.OUTSTANDING; action: 'view'">
+              <i class="pi pi-clock"></i>
+              <strong>Outstanding</strong>
+              <span>Pending dues</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/receipts" *tcHasPerm="resources.RECEIPTS; action: 'view'">
+              <i class="pi pi-receipt"></i>
+              <strong>Receipts</strong>
+              <span>Payment receipts</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">
+              <i class="pi pi-chart-bar"></i>
+              <strong>Finance Reports</strong>
+              <span>Financial overview</span>
+            </a>
+            <a class="fees-action-card" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
+              <i class="pi pi-cog"></i>
+              <strong>Settings</strong>
+              <span>Generation and methods</span>
+            </a>
+          </div>
+        </div>
+      </div>
     }
 
     <div class="fees-dash-grid">
@@ -217,10 +237,6 @@
         </div>
       </div>
     </div>
-
-    <p class="fees-helper">
-      Payments are automatically allocated to the oldest outstanding billing period first.
-    </p>
   }
 
   <app-collect-fee-dialog

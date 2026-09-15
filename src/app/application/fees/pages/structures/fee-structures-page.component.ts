@@ -6,6 +6,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
@@ -34,7 +35,7 @@ interface LookupOption { id: number; name: string; }
   standalone: true,
   providers: [ConfirmationService],
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule,
+    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule, RouterLink,
     HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fee-structures-page.component.html',

@@ -154,6 +154,12 @@
   }
 }
 
+.expenses-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.5rem;
+}
+
 /* —— Tables —— */
 .expenses-table-wrap {
   overflow: auto;
@@ -490,8 +496,17 @@
     grid-template-columns: 1fr;
   }
 
+  .expenses-quick-actions .tc-btn {
+    flex: 1 1 calc(50% - 0.5rem);
+    justify-content: center;
+  }
+
   .expenses-filters__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  .expenses-quick-actions .tc-btn {
+    flex: 1 1 100%;
+  }
+
   }
 }
 

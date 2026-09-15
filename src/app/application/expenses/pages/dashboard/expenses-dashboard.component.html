@@ -2,14 +2,6 @@
   <app-toast />
 
   <tc-saas-page-header>
-    <a
-      class="tc-btn tc-btn--outline tc-btn--sm"
-      routerLink="/app/expenses/heads"
-      *tcHasPerm="resources.HEADS; action: 'view'"
-    >
-      <i class="pi pi-list"></i>
-      Manage Expense Heads
-    </a>
     <button
       type="button"
       class="tc-btn tc-btn--primary tc-btn--sm"
@@ -64,6 +56,28 @@
           tone="success"
         />
       </tc-kpi-group>
+
+      <div class="tc-card tc-card--panel expenses-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Shortcuts</span>
+            <h3>Quick Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="expenses-quick-actions">
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/expenses/heads" *tcHasPerm="resources.HEADS; action: 'view'">
+              Manage Expense Heads
+            </a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">
+              Finance Reports
+            </a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
+              Expense Settings
+            </a>
+          </div>
+        </div>
+      </div>
     }
 
     <div class="tc-card tc-card--panel expenses-filters">

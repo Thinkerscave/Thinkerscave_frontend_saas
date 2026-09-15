@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -26,7 +27,7 @@ import {
   standalone: true,
   providers: [ConfirmationService],
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule,
+    CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule, RouterLink,
     HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fee-heads-page.component.html',

@@ -3,6 +3,9 @@
   <p-confirmDialog />
 
   <tc-saas-page-header>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.COMPONENTS; action: 'manage'" (click)="openCreate()">
       <i class="pi pi-plus"></i> Add Component
     </button>
