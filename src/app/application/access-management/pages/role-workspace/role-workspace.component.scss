@@ -1,4 +1,26 @@
 .role-workspace {
+  &__organization {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 520px;
+
+    span {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--saas-text-soft, #64748b);
+    }
+
+    select {
+      width: 100%;
+      min-height: 40px;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--saas-border, #cbd5e1);
+      border-radius: 8px;
+      color: var(--saas-text-color, #0f172a);
+      background: var(--tc-surface-card-solid, #fff);
+    }
+  }
+
   &__meta {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

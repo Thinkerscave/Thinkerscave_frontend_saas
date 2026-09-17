@@ -23,6 +23,19 @@
   <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && role">
+    <tc-saas-panel *ngIf="targetOrganizations.length" title="Target Organization"
+      subtitle="Role permissions are organization-specific and synchronize only to the selected tenant.">
+      <label class="role-workspace__organization">
+        <span>Provisioned organization</span>
+        <select [(ngModel)]="selectedOrganizationId" (ngModelChange)="onOrganizationChange()">
+          <option [ngValue]="0">Select an organization</option>
+          <option *ngFor="let organization of targetOrganizations" [ngValue]="organization.id">
+            {{ organization.organizationName }} · {{ organization.tenantIdentifier }}
+          </option>
+        </select>
+      </label>
+    </tc-saas-panel>
+
     <tc-saas-panel title="Role Details">
       <dl class="role-workspace__meta">
         <div><dt>Name</dt><dd>{{ role.roleName }}</dd></div>
@@ -34,7 +47,11 @@
       </dl>
     </tc-saas-panel>
 
-    <tc-saas-panel
+    <div *ngIf="targetOrganizations.length && !selectedOrganizationId" class="saas-empty">
+      Select a provisioned organization to view or edit its role menu assignments.
+    </div>
+
+    <tc-saas-panel *ngIf="selectedOrganizationId"
       title="Role Menu Assignment"
       [subtitle]="editingMenus
         ? 'Select or remove access for menus and submenus. Parent menu visibility is automatically preserved.'

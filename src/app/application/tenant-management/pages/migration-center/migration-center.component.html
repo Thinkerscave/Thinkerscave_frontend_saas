@@ -1,136 +1,147 @@
 <div class="tc-page migration-center">
-<tc-saas-page-header>
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openReleaseDrawer()"><i class="pi pi-plus"></i> Create Release</button>
     <button type="button" class="tc-btn" (click)="load()" [disabled]="loading">
       <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Refresh
     </button>
   </tc-saas-page-header>
 
-  <div *ngIf="errorMessage" class="tc-empty-state migration-center__error">
-    <i class="pi pi-exclamation-triangle"></i>
-    <strong>{{ errorMessage }}</strong>
+  <div *ngIf="errorMessage" class="tc-empty-state migration-center__error" role="alert">
+    <i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong>
     <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
   </div>
+  <tc-page-skeleton *ngIf="loading && !tenants.length" variant="dashboard" [kpis]="4"></tc-page-skeleton>
 
-  <div *ngIf="loading && !jobs.length && !tenants.length" class="migration-center__skeleton">
-    <tc-page-skeleton variant="dashboard" [kpis]="4"></tc-page-skeleton>
-  </div>
-
-  <ng-container *ngIf="!loading || jobs.length || tenants.length">
+  <ng-container *ngIf="!loading || tenants.length">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
-    <div class="migration-center__grid">
-      <tc-saas-panel title="Provisioning Jobs" subtitle="Recent tenant provisioning and onboarding runs">
-      <div *ngIf="!jobs.length && !loading" class="tc-empty-state">
-        <i class="pi pi-cog"></i>
-        <strong>No provisioning jobs</strong>
-        <p>Jobs appear here when organizations are provisioned.</p>
+    <tc-saas-panel title="Current Release" subtitle="Application, Flyway database, and catalog targets are tracked independently">
+      <div class="release-summary" *ngIf="summary.currentRelease as release; else noRelease">
+        <div><small>Release</small><strong>{{ release.releaseVersion }}</strong></div>
+        <div><small>Application Version</small><strong>{{ release.applicationVersion }}</strong></div>
+        <div><small>Target DB Version</small><strong>{{ release.targetDatabaseVersion }}</strong></div>
+        <div><small>Target Catalog Version</small><strong>{{ release.targetCatalogVersion }}</strong></div>
+        <tc-saas-pill [label]="release.status" [tone]="statusTone(release.status)"></tc-saas-pill>
+        <button *ngIf="release.status !== 'RELEASED'" type="button" class="tc-btn tc-btn--primary"
+          [disabled]="executingRelease" (click)="executeCurrentRelease()">
+          <i class="pi" [ngClass]="executingRelease ? 'pi-spinner pi-spin' : 'pi-play'"></i>
+          {{ executingRelease ? 'Executing…' : 'Execute for All Tenants' }}
+        </button>
       </div>
-
-      <div *ngIf="jobs.length" class="tc-table-wrap">
-        <table class="saas-data-table migration-center__table">
-          <thead>
-            <tr>
-              <th>Job Code</th>
-              <th>Organization</th>
-              <th>Status</th>
-              <th class="num">Progress</th>
-              <th>Current Step</th>
-              <th>Started</th>
-              <th>Error</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let job of jobs; trackBy: trackByJobId">
-              <td><strong class="migration-center__mono">{{ job.jobCode }}</strong></td>
-              <td>{{ job.organizationName || '—' }}</td>
-              <td><tc-saas-pill [label]="provisionJobStatusLabel(job.status)" [tone]="provisionJobTone(job.status)"></tc-saas-pill></td>
-              <td class="num migration-center__progress-cell">
-                <p-progressBar *ngIf="job.progressPercentage != null" [value]="job.progressPercentage" [showValue]="true" [style]="{'height': '14px', 'font-size': '10px'}"></p-progressBar>
-                <span *ngIf="job.progressPercentage == null" class="migration-center__progress">—</span>
-              </td>
-              <td class="muted">{{ job.currentStep || '—' }}</td>
-              <td>{{ formatDateTime(job.startedAt) }}</td>
-              <td class="migration-center__error-cell">{{ job.errorMessage || '—' }}</td>
-              <td class="cell-actions">
-                <button
-                  *ngIf="job.status === 'FAILED'"
-                  type="button"
-                  class="tc-btn tc-btn--sm tc-btn--primary"
-                  [disabled]="retryingId === job.id"
-                  (click)="retryJob(job)">
-                  <i class="pi" [ngClass]="retryingId === job.id ? 'pi-spin pi-spinner' : 'pi-replay'"></i>
-                  Retry
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <ng-template #noRelease><div class="tc-empty-state"><strong>No active release</strong><p>Create and release one through the release API.</p></div></ng-template>
     </tc-saas-panel>
 
-    <tc-saas-panel title="Tenant Registry" subtitle="Schema versions, storage and migration status per tenant">
-      <ng-container panel-actions>
-        <button *ngIf="outdatedTenants.length > 0" type="button" class="tc-btn tc-btn--primary" (click)="migrateAllOutdated()">
-          <i class="pi pi-bolt"></i> Migrate {{ outdatedTenants.length }} Out-of-Sync
-        </button>
+    <tc-saas-panel>
+      <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="changeTab($event)"></tc-saas-tabs>
+
+      <ng-container *ngIf="activeTab === 'tenants'">
+        <div class="migration-center__toolbar">
+          <label class="migration-center__search"><i class="pi pi-search"></i><input [(ngModel)]="search" (keyup.enter)="searchTenants()" placeholder="Search organization, tenant ID, or schema"></label>
+          <button type="button" class="tc-btn tc-btn--sm" (click)="searchTenants()">Search</button>
+        </div>
+        <div class="tc-table-wrap">
+          <table class="saas-data-table migration-center__table">
+            <thead><tr>
+              <th>Organization</th><th>Tenant ID</th><th>Schema</th><th>App</th>
+              <th>DB / Target</th><th>Catalog / Target</th><th>Migration</th><th>Catalog Sync</th>
+              <th>Maintenance</th><th>Health</th><th>Last Migration</th><th></th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let tenant of tenants; trackBy: trackTenant">
+                <td><strong>{{ tenant.organizationName }}</strong></td>
+                <td><code>{{ tenant.tenantIdentifier }}</code></td><td><code>{{ tenant.schemaName }}</code></td>
+                <td>{{ tenant.applicationVersion || '—' }}</td>
+                <td>{{ tenant.databaseVersion || '—' }} / {{ tenant.targetDatabaseVersion || '—' }}</td>
+                <td>{{ tenant.catalogVersion || '—' }} / {{ tenant.targetCatalogVersion || '—' }}</td>
+                <td><tc-saas-pill [label]="tenant.migrationStatus" [tone]="statusTone(tenant.migrationStatus)"></tc-saas-pill></td>
+                <td><tc-saas-pill [label]="tenant.catalogSyncStatus" [tone]="statusTone(tenant.catalogSyncStatus)"></tc-saas-pill></td>
+                <td><tc-saas-pill [label]="tenant.maintenanceMode ? 'ON' : 'OFF'" [tone]="tenant.maintenanceMode ? 'warning' : 'neutral'"></tc-saas-pill></td>
+                <td><tc-saas-pill [label]="tenant.healthStatus" [tone]="statusTone(tenant.healthStatus)"></tc-saas-pill></td>
+                <td>{{ formatDateTime(tenant.lastMigrationAt) }}</td>
+                <td><button type="button" class="tc-btn tc-btn--sm" (click)="openTenant(tenant)">Details</button></td>
+              </tr>
+              <tr *ngIf="!tenants.length"><td colspan="12" class="empty">No tenant release operations found.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <app-paginator [page]="tenantPage" [rows]="tenantPageSize" [totalRecords]="tenantTotal"
+          [pageSizeOptions]="pageSizeOptions" noun="tenants" (pageChange)="onTenantPageChange($event)"></app-paginator>
       </ng-container>
 
-      <div *ngIf="!tenants.length && !loading" class="tc-empty-state">
-        <i class="pi pi-database"></i>
-        <strong>No tenants registered</strong>
-        <p>Provision an organization to create tenant registry entries.</p>
+      <div *ngIf="activeTab === 'provisioning'" class="tc-table-wrap">
+        <table class="saas-data-table"><thead><tr><th>Job</th><th>Organization</th><th>Status</th><th>Current Step</th><th>Progress</th><th>Started</th><th>Error</th></tr></thead>
+          <tbody><tr *ngFor="let job of jobs"><td><code>{{ job.jobCode }}</code></td><td>{{ job.organizationName || '—' }}</td>
+            <td><tc-saas-pill [label]="job.status" [tone]="statusTone(job.status)"></tc-saas-pill></td><td>{{ job.currentStep || '—' }}</td>
+            <td>{{ job.progressPercentage ?? 0 }}%</td><td>{{ formatDateTime(job.startedAt) }}</td><td class="migration-center__error-cell">{{ job.errorMessage || '—' }}</td></tr>
+          <tr *ngIf="!jobs.length"><td colspan="7" class="empty">No provisioning jobs found.</td></tr></tbody>
+        </table>
+        <app-paginator [page]="jobPage" [rows]="jobPageSize" [totalRecords]="jobTotal"
+          [pageSizeOptions]="pageSizeOptions" noun="jobs" (pageChange)="onJobPageChange($event)"></app-paginator>
       </div>
 
-      <div *ngIf="tenants.length" class="tc-table-wrap">
-        <table class="saas-data-table migration-center__table">
-          <thead>
-            <tr>
-              <th>Organization</th>
-              <th>Tenant</th>
-              <th>Migration Version</th>
-              <th>Database Version</th>
-              <th>Provision Status</th>
-              <th class="num">Storage</th>
-              <th>Maintenance</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let tenant of tenants; trackBy: trackByTenantId" [class.is-out-of-sync]="tenant.databaseVersion !== tenant.migrationVersion">
-              <td>
-                <strong>{{ tenant.organizationName || '—' }}</strong>
-                <span *ngIf="tenant.databaseVersion !== tenant.migrationVersion" class="migration-center__sync-warning"><i class="pi pi-exclamation-triangle"></i> Out of sync</span>
-              </td>
-              <td class="migration-center__mono">{{ tenant.tenantIdentifier }}</td>
-              <td>{{ tenant.migrationVersion || '—' }}</td>
-              <td>{{ tenant.databaseVersion || '—' }}</td>
-              <td><tc-saas-pill [label]="provisionStatusLabel(tenant.provisionStatus)" [tone]="provisionStatusTone(tenant.provisionStatus)"></tc-saas-pill></td>
-              <td class="num">{{ formatStorageMb(tenant.storageUsedMb) }}</td>
-              <td>
-                <tc-saas-pill
-                  [label]="tenant.maintenanceMode ? 'On' : 'Off'"
-                  [tone]="tenant.maintenanceMode ? 'warning' : 'neutral'">
-                </tc-saas-pill>
-              </td>
-              <td class="cell-actions">
-                <button
-                  type="button"
-                  class="tc-btn tc-btn--sm"
-                  [disabled]="migratingId === tenant.id"
-                  (click)="triggerMigration(tenant)">
-                  <i class="pi" [ngClass]="migratingId === tenant.id ? 'pi-spin pi-spinner' : 'pi-arrow-right-arrow-left'"></i>
-                  Migrate
-                </button>
-              </td>
-            </tr>
-          </tbody>
+      <div *ngIf="activeTab === 'releaseHistory'" class="tc-table-wrap">
+        <table class="saas-data-table"><thead><tr><th>Release</th><th>Application</th><th>Database</th><th>Catalog</th><th>Status</th><th>Released</th><th>Created By</th></tr></thead>
+          <tbody><tr *ngFor="let release of releases"><td><strong>{{ release.releaseVersion }}</strong><small class="migration-center__sub">{{ release.releaseId }}</small></td>
+            <td>{{ release.applicationVersion }}</td><td>{{ release.targetDatabaseVersion }}</td><td>{{ release.targetCatalogVersion }}</td>
+            <td><tc-saas-pill [label]="release.status" [tone]="statusTone(release.status)"></tc-saas-pill></td><td>{{ formatDateTime(release.releasedAt) }}</td><td>{{ release.createdBy }}</td></tr>
+          <tr *ngIf="!releases.length"><td colspan="7" class="empty">No release history found.</td></tr></tbody>
         </table>
+        <app-paginator [page]="releasePage" [rows]="releasePageSize" [totalRecords]="releaseTotal"
+          [pageSizeOptions]="pageSizeOptions" noun="releases" (pageChange)="onReleasePageChange($event)"></app-paginator>
       </div>
     </tc-saas-panel>
-    </div>
   </ng-container>
 </div>
 
+<p-dialog [(visible)]="tenantDialogVisible" [modal]="true" [draggable]="false"
+  [header]="selectedTenant?.organizationName || 'Tenant details'"
+  [style]="{ width: 'min(960px, 96vw)' }" (onHide)="closeTenant()">
+  <div *ngIf="detailLoading" class="migration-center__drawer-loading"><i class="pi pi-spinner pi-spin"></i> Loading tenant history…</div>
+  <ng-container *ngIf="selectedTenant as tenant">
+    <tc-saas-tabs [tabs]="detailTabs" [active]="detailTab" (changeTab)="changeDetailTab($event)"></tc-saas-tabs>
+    <div *ngIf="detailTab === 'overview'" class="detail-grid">
+      <div><small>Schema</small><strong>{{ tenant.schemaName }}</strong></div><div><small>Application</small><strong>{{ tenant.applicationVersion || '—' }}</strong></div>
+      <div><small>Database</small><strong>{{ tenant.databaseVersion || '—' }} → {{ tenant.targetDatabaseVersion || '—' }}</strong></div>
+      <div><small>Catalog</small><strong>{{ tenant.catalogVersion || '—' }} → {{ tenant.targetCatalogVersion || '—' }}</strong></div>
+      <div><small>Migration</small><tc-saas-pill [label]="tenant.migrationStatus" [tone]="statusTone(tenant.migrationStatus)"></tc-saas-pill></div>
+      <div><small>Catalog Sync</small><tc-saas-pill [label]="tenant.catalogSyncStatus" [tone]="statusTone(tenant.catalogSyncStatus)"></tc-saas-pill></div>
+      <div><small>Health</small><tc-saas-pill [label]="tenant.healthStatus" [tone]="statusTone(tenant.healthStatus)"></tc-saas-pill></div>
+      <div><small>Maintenance</small><strong>{{ tenant.maintenanceMode ? 'Enabled' : 'Disabled' }}</strong><span>{{ tenant.maintenanceReason }}</span></div>
+    </div>
+    <div *ngIf="detailTab === 'migrations'" class="history-list">
+      <article *ngFor="let item of tenant.migrationHistory; trackBy: trackMigration"><div><strong>{{ item.migrationVersion || item.targetDatabaseVersion }}</strong><span>{{ item.description || item.executionId }}</span></div>
+        <tc-saas-pill [label]="item.status" [tone]="statusTone(item.status)"></tc-saas-pill><small>{{ formatDateTime(item.completedAt || item.failedAt || item.startedAt) }}</small><p *ngIf="item.errorMessage">{{ item.errorMessage }}</p></article>
+      <div *ngIf="!tenant.migrationHistory.length" class="empty">No Flyway migration history returned.</div>
+    </div>
+    <div *ngIf="detailTab === 'catalog'" class="history-list">
+      <p class="migration-center__notice"><i class="pi pi-info-circle"></i> Catalog synchronization copies definitions. Access still requires feature entitlement and effective permission.</p>
+      <article *ngFor="let item of tenant.catalogSyncHistory; trackBy: trackCatalog"><div><strong>{{ item.catalogVersion || '—' }} → {{ item.targetCatalogVersion }}</strong><span>{{ item.executionId }}</span></div>
+        <tc-saas-pill [label]="item.status" [tone]="statusTone(item.status)"></tc-saas-pill><small>{{ formatDateTime(item.completedAt || item.startedAt) }}</small><p *ngIf="item.errorMessage">{{ item.errorMessage }}</p></article>
+      <div *ngIf="!tenant.catalogSyncHistory.length" class="empty">No catalog synchronization history returned.</div>
+    </div>
+    <div class="migration-center__dialog-actions">
+      <button type="button" class="tc-btn" (click)="closeTenant()">Close</button>
+      <button type="button" class="tc-btn" [disabled]="actionId === tenant.tenantId" (click)="toggleMaintenance()">{{ tenant.maintenanceMode ? 'Disable' : 'Enable' }} Maintenance</button>
+      <button *ngIf="tenant.migrationStatus === 'FAILED'" type="button" class="tc-btn tc-btn--primary" [disabled]="actionId === tenant.tenantId" (click)="retryMigration()">Retry Migration</button>
+      <button *ngIf="tenant.catalogSyncStatus === 'FAILED'" type="button" class="tc-btn tc-btn--primary" [disabled]="actionId === tenant.tenantId" (click)="retryCatalog()">Retry Catalog Sync</button>
+    </div>
+  </ng-container>
+</p-dialog>
 
-
+<p-dialog [(visible)]="releaseDrawerOpen" [modal]="true" [draggable]="false" header="Create Release"
+  [style]="{ width: 'min(560px, 94vw)' }">
+  <div class="release-form">
+    <label>Release Version<input [(ngModel)]="releaseForm.releaseVersion" placeholder="2026.09.16"></label>
+    <label>Application Version<input [(ngModel)]="releaseForm.applicationVersion" placeholder="2.8.0"></label>
+    <label>Target DB Version<input [(ngModel)]="releaseForm.targetDatabaseVersion" placeholder="V18"></label>
+    <label>Target Catalog Version<input [(ngModel)]="releaseForm.targetCatalogVersion" placeholder="C42"></label>
+    <label>Release Notes<textarea [(ngModel)]="releaseForm.releaseNotes" rows="5" placeholder="Operational notes and validation context"></textarea></label>
+    <p class="migration-center__notice"><i class="pi pi-info-circle"></i> Creating a release does not grant feature access. Entitlements and effective permissions remain separate.</p>
+  </div>
+  <div class="migration-center__dialog-actions">
+    <button type="button" class="tc-btn" [disabled]="creatingRelease" (click)="releaseDrawerOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="creatingRelease" (click)="createRelease()">
+      <i class="pi" [ngClass]="creatingRelease ? 'pi-spinner pi-spin' : 'pi-check'"></i> Create Release
+    </button>
+  </div>
+</p-dialog>

@@ -9,12 +9,14 @@
 
     <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
+    <div *ngIf="!loading && !isEditMode && !provisioningResult && !provisioningJob" class="org-form-page__stepper">
+      <tc-saas-stepper [steps]="onboardingSteps" [activeIndex]="currentStep"></tc-saas-stepper>
+    </div>
 
-
-    <div *ngIf="!loading" class="org-form-page__layout">
+    <div *ngIf="!loading && !provisioningResult && !provisioningJob" class="org-form-page__layout">
       <app-card class="org-form-page__main" [hasFooter]="true" [elevated]="true">
         <form class="org-form" novalidate (submit)="$event.preventDefault()">
-          <section class="org-form__section">
+          <section *ngIf="isEditMode || currentStep === 0" class="org-form__section">
             <app-section-header
               title="1. Customer"
               [description]="isEditMode ? 'Billing account is locked after onboarding.' : 'Link this organization to an existing customer account.'"
@@ -49,7 +51,7 @@
 
 
 
-          <section class="org-form__section">
+          <section *ngIf="isEditMode || currentStep === 0" class="org-form__section">
             <app-section-header
               title="2. Organization Details"
               [description]="isEditMode ? 'Update identity and location. Domain stays as provisioned.' : 'Core identity and location for the new institution.'"
@@ -191,7 +193,7 @@
 
 
 
-          <section class="org-form__section">
+          <section *ngIf="isEditMode || currentStep === 0" class="org-form__section">
             <app-section-header
               title="3. Organization Admin"
               [description]="isEditMode ? 'Update the administrator name, email, and mobile number.' : 'The first administrator who will access the tenant workspace.'"
@@ -244,7 +246,7 @@
 
 
 
-          <section class="org-form__section org-form__section--last">
+          <section *ngIf="isEditMode || currentStep === 1" class="org-form__section org-form__section--last">
             <app-section-header
               title="4. Subscription & Payment"
               [description]="isEditMode ? 'Plan and payment were captured at onboarding and cannot be changed on this form.' : 'Choose a plan and how payment should be handled.'"
@@ -306,6 +308,26 @@
                 <i class="pi pi-times"></i>
               </button>
             </div>
+
+            <div *ngIf="selectedPlan && !isEditMode" class="org-form__feature-list">
+              <h3>Included feature definitions</h3>
+              <p>Features are entitled by this subscription. User access still requires an effective role, responsibility, or user permission.</p>
+              <ul>
+                <li *ngFor="let feature of selectedPlan.features"><i class="pi pi-check-circle"></i>{{ feature.featureName || feature.featureCode }}</li>
+              </ul>
+            </div>
+          </section>
+
+          <section *ngIf="!isEditMode && currentStep === 2" class="org-form__section org-form__review">
+            <app-section-header title="Review Your Information" description="Nothing is provisioned until you submit this review." icon="pi pi-check-square"></app-section-header>
+            <dl>
+              <div><dt>Customer</dt><dd>{{ selectedCustomer?.customerName || form.customerId }}</dd></div>
+              <div><dt>Organization</dt><dd>{{ form.organizationName }} ({{ form.shortName }})</dd></div>
+              <div><dt>Domain</dt><dd>{{ domainPreview }}</dd></div>
+              <div><dt>Administrator</dt><dd>{{ form.adminFullName }} · {{ form.adminEmail }}</dd></div>
+              <div><dt>Subscription</dt><dd>{{ selectedPlan?.planName }} · {{ form.paymentOption === 'trial' ? 'Trial' : 'Payment received' }}</dd></div>
+              <div><dt>Feature entitlement</dt><dd>{{ selectedPlan?.features?.length || 0 }} definitions included; permissions remain separate.</dd></div>
+            </dl>
           </section>
         </form>
 
@@ -315,13 +337,20 @@
           <app-button variant="secondary" [disabled]="submitting" (clicked)="cancel()">
             Cancel
           </app-button>
+          <app-button *ngIf="!isEditMode && currentStep > 0" variant="secondary" [disabled]="submitting" (clicked)="previousStep()">
+            Back
+          </app-button>
+          <app-button *ngIf="!isEditMode && currentStep < 2" variant="primary" icon="pi pi-arrow-right" (clicked)="nextStep()">
+            Next
+          </app-button>
           <app-button
+            *ngIf="isEditMode || currentStep === 2"
             variant="primary"
             [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
             [loading]="submitting"
             [disabled]="!canSubmit"
             (clicked)="submit()">
-            {{ isEditMode ? 'Save Organization' : 'Create Organization' }}
+            {{ isEditMode ? 'Save Organization' : 'Submit & Start Provisioning' }}
           </app-button>
         </div>
       </app-card>
@@ -406,6 +435,25 @@
         </div>
       </aside>
     </div>
+
+    <app-card *ngIf="provisioningResult || provisioningJob" class="org-form-page__progress-card" [elevated]="true">
+      <app-section-header title="Provisioning Progress" description="This progress is persisted by the backend provisioning job." icon="pi pi-cog"></app-section-header>
+      <div class="org-form-page__progress-summary">
+        <div><small>Organization</small><strong>{{ provisioningResult?.organizationName || form.organizationName }}</strong></div>
+        <tc-saas-pill [label]="provisioningJob?.status || 'QUEUED'" [tone]="provisioningJob?.status === 'FAILED' ? 'danger' : (provisioningJob?.status === 'COMPLETED' ? 'success' : 'info')"></tc-saas-pill>
+        <strong>{{ provisioningJob?.progressPercentage ?? 0 }}%</strong>
+      </div>
+      <ol class="org-form-page__progress-steps">
+        <li *ngFor="let step of provisioningJob?.steps">
+          <i class="pi" [ngClass]="step.status === 'SUCCESS' ? 'pi-check-circle' : (step.status === 'FAILED' ? 'pi-times-circle' : (step.status === 'RUNNING' ? 'pi-spin pi-spinner' : 'pi-clock'))"></i>
+          <span><strong>{{ step.label }}</strong><small *ngIf="step.errorMessage">{{ step.errorMessage }}</small></span>
+          <tc-saas-pill [label]="step.status" [tone]="step.status === 'SUCCESS' ? 'success' : (step.status === 'FAILED' ? 'danger' : (step.status === 'RUNNING' ? 'info' : 'warning'))"></tc-saas-pill>
+        </li>
+      </ol>
+      <div class="org-form-page__footer">
+        <app-button variant="primary" (clicked)="cancel()">Return to Organizations</app-button>
+      </div>
+    </app-card>
   </div>
 
 

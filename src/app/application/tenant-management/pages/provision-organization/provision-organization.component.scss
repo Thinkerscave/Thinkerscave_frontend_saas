@@ -13,6 +13,22 @@
     gap: 1rem;
   }
 
+  &__stepper { padding: 0.75rem 1rem; border: 1px solid var(--tc-border); border-radius: 14px; background: var(--tc-surface, #fff); }
+  &__progress-card { max-width: 900px; margin: 0 auto; width: 100%; }
+  &__progress-summary {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center;
+    padding: 1rem; border: 1px solid var(--tc-border); border-radius: 12px;
+    small, strong { display: block; }
+    small { color: var(--tc-text-muted); }
+  }
+  &__progress-steps {
+    list-style: none; margin: 1rem 0; padding: 0;
+    li { display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center; padding: .875rem 0; border-bottom: 1px solid var(--tc-border); }
+    small { display: block; margin-top: .2rem; color: var(--tc-danger); }
+    .pi-check-circle { color: var(--tc-success, #16a34a); }
+    .pi-times-circle { color: var(--tc-danger, #dc2626); }
+  }
+
 
 
   &__banner {

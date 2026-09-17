@@ -15,7 +15,7 @@
 
   <div class="tc-audit__chrome">
     <div class="tc-chip-row">
-      <button *ngFor="let c of categories" type="button" class="tc-chip" [class.is-active]="category === c.id" (click)="category = c.id">
+      <button *ngFor="let c of categories" type="button" class="tc-chip" [class.is-active]="category === c.id" (click)="category = c.id; page = 0">
         <i class="pi {{ c.icon }}"></i><span>{{ c.label }}</span>
       </button>
     </div>
@@ -23,12 +23,13 @@
     <div class="tc-audit__filters">
       <div class="tc-search">
         <i class="pi pi-search"></i>
-        <input type="text" [(ngModel)]="search" placeholder="Search action, summary or actor" />
+        <input type="text" [(ngModel)]="search" (ngModelChange)="page = 0" placeholder="Search action, summary or actor" />
       </div>
       <div class="tc-select"><label>Tenant</label>
         <p-dropdown
           [options]="tenantSelectOptions"
           [(ngModel)]="tenantFilter"
+          (ngModelChange)="page = 0"
           optionLabel="label"
           optionValue="value"
           appendTo="body"
@@ -39,15 +40,16 @@
         <p-dropdown
           [options]="severityOptions"
           [(ngModel)]="severity"
+          (ngModelChange)="page = 0"
           optionLabel="label"
           optionValue="value"
           appendTo="body"
           styleClass="att-filter-dropdown">
         </p-dropdown>
       </div>
-      <div class="tc-field tc-field--inline"><label>Actor</label><input type="text" [(ngModel)]="actorFilter" placeholder="user@org" /></div>
-      <div class="tc-field tc-field--inline"><label>From</label><input type="date" [(ngModel)]="fromDate" /></div>
-      <div class="tc-field tc-field--inline"><label>To</label><input type="date" [(ngModel)]="toDate" /></div>
+      <div class="tc-field tc-field--inline"><label>Actor</label><input type="text" [(ngModel)]="actorFilter" (ngModelChange)="page = 0" placeholder="user@org" /></div>
+      <div class="tc-field tc-field--inline"><label>From</label><input type="date" [(ngModel)]="fromDate" (ngModelChange)="page = 0" /></div>
+      <div class="tc-field tc-field--inline"><label>To</label><input type="date" [(ngModel)]="toDate" (ngModelChange)="page = 0" /></div>
       <button type="button" class="tc-link" (click)="resetFilters()"><i class="pi pi-times"></i>Reset</button>
       
       <div class="tc-view-switch" role="group" aria-label="View mode">
@@ -74,11 +76,16 @@
               <span class="tc-audit__category">{{ e.categoryLabel }}</span>
             </header>
             <p class="tc-audit__summary">{{ e.summary }}</p>
+            <p *ngIf="e.errorDetails" class="tc-audit__summary tc-audit__summary--error">{{ e.errorDetails }}</p>
             <footer>
               <span><i class="pi pi-user"></i>{{ e.actor }}</span>
               <span><i class="pi pi-building"></i>{{ e.tenant }}</span>
               <span *ngIf="e.ip"><i class="pi pi-globe"></i>{{ e.ip }}</span>
               <span><i class="pi pi-clock"></i>{{ e.occurredAt | date:'shortTime' }}</span>
+              <span *ngIf="e.entity"><i class="pi pi-box"></i>{{ e.entity }}<ng-container *ngIf="e.entityId"> · {{ e.entityId }}</ng-container></span>
+              <span *ngIf="e.version"><i class="pi pi-code"></i>{{ e.version }}</span>
+              <span *ngIf="e.executionId"><i class="pi pi-hashtag"></i>{{ e.executionId }}</span>
+              <span *ngIf="e.status"><i class="pi pi-circle-fill"></i>{{ e.status }}</span>
               <span class="tc-audit__tag" *ngFor="let t of e.tags">{{ t }}</span>
             </footer>
           </div>
@@ -97,22 +104,33 @@
           <th>Severity</th>
           <th>Actor</th>
           <th>Tenant</th>
+          <th>Entity</th>
+          <th>Version / Status</th>
+          <th>Execution</th>
           <th>Summary</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let e of filtered">
+        <tr *ngFor="let e of pagedFiltered">
           <td class="saas-nowrap">{{ e.occurredAt | date:'short' }}</td>
           <td><strong>{{ e.action }}</strong></td>
           <td>{{ e.categoryLabel }}</td>
           <td><tc-saas-pill [label]="e.severity" [tone]="e.severity === 'critical' ? 'danger' : (e.severity === 'warn' ? 'warning' : 'info')"></tc-saas-pill></td>
           <td>{{ e.actor }}</td>
           <td>{{ e.tenant }}</td>
-          <td class="muted">{{ e.summary }}</td>
+          <td>{{ e.entity || '—' }}<small *ngIf="e.entityId"> · {{ e.entityId }}</small></td>
+          <td>{{ e.version || '—' }} / {{ e.status || '—' }}</td>
+          <td><code>{{ e.executionId || '—' }}</code></td>
+          <td class="muted">{{ e.summary }}<small *ngIf="e.errorDetails">{{ e.errorDetails }}</small></td>
         </tr>
       </tbody>
     </table>
   </div>
+
+  <app-paginator *ngIf="!loading && !errorMessage && filtered.length"
+    [page]="page" [rows]="pageSize" [totalRecords]="filtered.length"
+    [pageSizeOptions]="pageSizeOptions" noun="events" (pageChange)="onPageChange($event)">
+  </app-paginator>
 
   <div *ngIf="!loading && !errorMessage && !filtered.length" class="tc-empty">
     <i class="pi pi-inbox"></i>

@@ -6,11 +6,11 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, finalize, Subject, debounceTime, switchMap, of, catchError } from 'rxjs';
+import { forkJoin, finalize, Subject, debounceTime, switchMap, of, catchError, timer, takeWhile } from 'rxjs';
 
 import {
   CustomerListItem, InstitutionType, OrganizationDetail, OrganizationUpdatePayload, Promotion,
-  ProvisionOrganizationPayload, SubscriptionPlan
+  ProvisionOrganizationPayload, ProvisioningJobDetail, ProvisioningResult, SubscriptionPlan
 } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import { formatCurrency, institutionTypeOptions } from '../../utils/platform-display.util';
@@ -35,6 +35,7 @@ import {
   phoneErrorMessage
 } from '../../../../shared/ui/app-form';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
+import { SaasStep, SaasStepperComponent, SaasPillComponent } from '../../../../shared/ui/saas';
 
 type PaymentOption = 'trial' | 'payment_received';
 
@@ -102,6 +103,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     AppSearchableSelectComponent,
     AppRadioCardComponent,
     AppButtonComponent,
+    SaasStepperComponent,
+    SaasPillComponent,
     TcPageSkeletonComponent
   ],
   templateUrl: './provision-organization.component.html',
@@ -127,6 +130,9 @@ export class ProvisionOrganizationComponent implements OnInit {
   couponSearch = '';
   isEditMode = false;
   editingOrgId: number | null = null;
+  currentStep = 0;
+  provisioningResult: ProvisioningResult | null = null;
+  provisioningJob: ProvisioningJobDetail | null = null;
   private editingOrg: OrganizationDetail | null = null;
 
 
@@ -150,6 +156,11 @@ export class ProvisionOrganizationComponent implements OnInit {
 
   readonly institutionOptions: AppSelectOption[] = institutionTypeOptions();
   readonly formatCurrency = formatCurrency;
+  readonly onboardingSteps: SaasStep[] = [
+    { key: 'details', label: 'Details' },
+    { key: 'subscription', label: 'Subscription & Features' },
+    { key: 'review', label: 'Review' }
+  ];
 
 
 
@@ -261,6 +272,10 @@ export class ProvisionOrganizationComponent implements OnInit {
   get selectedPlan(): SubscriptionPlan | undefined {
     const id = this.form.subscriptionPlanId ? Number(this.form.subscriptionPlanId) : null;
     return this.plans.find(p => p.id === id);
+  }
+
+  get selectedCustomer(): CustomerListItem | undefined {
+    return this.customers.find(customer => customer.id === Number(this.form.customerId));
   }
 
 
@@ -465,6 +480,21 @@ export class ProvisionOrganizationComponent implements OnInit {
     void this.router.navigate(['/app/tenant-management/organizations']);
   }
 
+  nextStep(): void {
+    if (this.currentStep === 0 && !this.validateDetails()) return;
+    if (this.currentStep === 1 && !this.form.subscriptionPlanId) {
+      this.errors = { ...this.errors, subscriptionPlanId: 'Select a subscription plan.' };
+      return;
+    }
+    this.currentStep = Math.min(2, this.currentStep + 1);
+    this.cdr.markForCheck();
+  }
+
+  previousStep(): void {
+    this.currentStep = Math.max(0, this.currentStep - 1);
+    this.cdr.markForCheck();
+  }
+
 
 
   submit(): void {
@@ -486,6 +516,8 @@ export class ProvisionOrganizationComponent implements OnInit {
 
     this.submitting = true;
     this.errorMessage = '';
+    this.provisioningJob = null;
+    this.watchPendingSubmission(this.form.organizationName.trim());
 
     this.api.provisionOrganization(this.buildPayload())
       .pipe(
@@ -497,15 +529,10 @@ export class ProvisionOrganizationComponent implements OnInit {
       )
       .subscribe({
         next: result => {
-          const credentialDetail = result?.adminUsername && result?.temporaryPassword
-            ? ` Admin login: ${result.adminUsername} / ${result.temporaryPassword}`
-            : '';
-          this.feedback.success(
-            'Organization created',
-            `${result.organizationName} was provisioned successfully.${credentialDetail}`,
-            { life: 12000 }
-          );
-          void this.router.navigate(['/app/tenant-management/organizations', result.organizationId]);
+          this.provisioningResult = result;
+          this.feedback.success('Provisioning submitted', `${result.organizationName} is being provisioned.`);
+          if (result.provisioningJobId) this.watchProvisioning(result.provisioningJobId);
+          else this.cdr.markForCheck();
         },
         error: err => {
           const parsed = extractApiError(err, 'Could not create organization. Verify inputs and retry.');
@@ -895,6 +922,59 @@ export class ProvisionOrganizationComponent implements OnInit {
       return false;
     }
     return true;
+  }
+
+  private validateDetails(): boolean {
+    const selectedPlan = this.form.subscriptionPlanId;
+    const paymentOption = this.form.paymentOption;
+    this.form.subscriptionPlanId = this.form.subscriptionPlanId || '1';
+    this.form.paymentOption = this.form.paymentOption || 'trial';
+    const valid = this.validate();
+    this.form.subscriptionPlanId = selectedPlan;
+    this.form.paymentOption = paymentOption;
+    if (!selectedPlan) {
+      const next = { ...this.errors };
+      delete next.subscriptionPlanId;
+      this.errors = next;
+    }
+    return valid || Object.keys(this.errors).every(key => key === 'subscriptionPlanId' || key === 'paymentOption');
+  }
+
+  private watchProvisioning(jobId: number): void {
+    timer(0, 3000).pipe(
+      switchMap(() => this.api.getProvisionJob(jobId)),
+      takeWhile(job =>
+        job.status === 'PENDING'
+        || job.status === 'RUNNING'
+        || job.status === 'QUEUED'
+        || job.status === 'IN_PROGRESS',
+      true),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: job => {
+        this.provisioningJob = job;
+        this.cdr.markForCheck();
+      },
+      error: () => this.feedback.error('Progress unavailable', 'Provisioning was submitted, but progress could not be refreshed.')
+    });
+  }
+
+  private watchPendingSubmission(organizationName: string): void {
+    timer(1000, 1500).pipe(
+      switchMap(() => this.api.getProvisionJobs(0, 10, organizationName)),
+      takeWhile(() => this.submitting, true),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: page => {
+        const job = (page.content ?? []).find(item => item.organizationName === organizationName)
+          ?? page.content?.[0];
+        if (!job) return;
+        this.api.getProvisionJob(job.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(detail => {
+          this.provisioningJob = detail;
+          this.cdr.markForCheck();
+        });
+      }
+    });
   }
 
 

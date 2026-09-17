@@ -1,41 +1,48 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { finalize, forkJoin } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { finalize, forkJoin, Observable } from 'rxjs';
+import { DialogModule } from 'primeng/dialog';
 
-import { ProvisioningJob, TenantRegistry } from '../../models/platform.model';
-import { PlatformManagementService } from '../../services/platform-management.service';
 import {
-  formatDateTime,
-  formatStorageMb,
-  provisionJobStatusLabel,
-  provisionJobTone,
-  provisionStatusLabel,
-  provisionStatusTone
-} from '../../utils/platform-display.util';
+  CatalogSyncExecution,
+  CreateReleasePayload,
+  MigrationExecution,
+  OperationStatus,
+  PlatformRelease,
+  ProvisioningJob,
+  ReleaseSummary,
+  TenantReleaseDetail,
+  TenantReleaseOperation
+} from '../../models/platform.model';
+import { PlatformManagementService } from '../../services/platform-management.service';
+import { formatDateTime } from '../../utils/platform-display.util';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
   SaasPillComponent,
   SaasStat,
-  SaasStatGridComponent
+  SaasStatGridComponent,
+  SaasTab,
+  SaasTabsComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
+
+type CenterTab = 'tenants' | 'provisioning' | 'releaseHistory';
+type DetailTab = 'overview' | 'migrations' | 'catalog';
 
 @Component({
   selector: 'app-migration-center',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    SaasPageHeaderComponent,
-    SaasStatGridComponent,
-    SaasPanelComponent,
-    SaasPillComponent,
-    ProgressBarModule,
-    TcPageSkeletonComponent
+    CommonModule, FormsModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent,
+    SaasPillComponent, SaasTabsComponent, DialogModule, AppPaginatorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './migration-center.component.html',
   styleUrl: './migration-center.component.scss'
@@ -47,36 +54,59 @@ export class MigrationCenterComponent implements OnInit {
   private readonly feedback = inject(UiFeedbackService);
 
   loading = true;
+  detailLoading = false;
+  actionId: number | null = null;
+  creatingRelease = false;
+  executingRelease = false;
+  releaseDrawerOpen = false;
+  tenantDialogVisible = false;
   errorMessage = '';
+  search = '';
+  summary: ReleaseSummary = { totalTenants: 0, upToDate: 0, pendingMigration: 0, failedOrMaintenance: 0 };
+  tenants: TenantReleaseOperation[] = [];
   jobs: ProvisioningJob[] = [];
-  tenants: TenantRegistry[] = [];
-  retryingId: number | null = null;
-  migratingId: number | null = null;
+  releases: PlatformRelease[] = [];
+  tenantPage = 0;
+  tenantPageSize = UI_PAGINATION.defaultSize;
+  tenantTotal = 0;
+  jobPage = 0;
+  jobPageSize = UI_PAGINATION.defaultSize;
+  jobTotal = 0;
+  releasePage = 0;
+  releasePageSize = UI_PAGINATION.defaultSize;
+  releaseTotal = 0;
+  readonly pageSizeOptions = UI_PAGINATION.options;
+  selectedTenant: TenantReleaseDetail | null = null;
+  activeTab: CenterTab = 'tenants';
+  detailTab: DetailTab = 'overview';
+  releaseForm: CreateReleasePayload = {
+    releaseVersion: '',
+    applicationVersion: '',
+    targetDatabaseVersion: '',
+    targetCatalogVersion: '',
+    releaseNotes: ''
+  };
 
   readonly formatDateTime = formatDateTime;
-  readonly provisionJobStatusLabel = provisionJobStatusLabel;
-  readonly provisionJobTone = provisionJobTone;
-  readonly provisionStatusLabel = provisionStatusLabel;
-  readonly provisionStatusTone = provisionStatusTone;
-  readonly formatStorageMb = formatStorageMb;
+  readonly tabs: SaasTab[] = [
+    { key: 'tenants', label: 'Tenants' },
+    { key: 'provisioning', label: 'Provisioning Jobs' },
+    { key: 'releaseHistory', label: 'Release History' }
+  ];
+  readonly detailTabs: SaasTab[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'migrations', label: 'Database Migrations' },
+    { key: 'catalog', label: 'Catalog Sync' }
+  ];
 
-  ngOnInit(): void {
-    this.load();
-  }
+  ngOnInit(): void { this.load(); }
 
   get stats(): SaasStat[] {
-    const jobs = this.jobs;
-    const tenants = this.tenants;
-    const inProgress = jobs.filter(j => j.status === 'IN_PROGRESS' || j.status === 'QUEUED').length;
-    const failedJobs = jobs.filter(j => j.status === 'FAILED').length;
-    const maintenance = tenants.filter(t => t.maintenanceMode).length;
-    const pendingMigration = tenants.filter(t => t.provisionStatus !== 'COMPLETED').length;
-
     return [
-      { key: 'tenants', label: 'Registered Tenants', value: tenants.length, helper: 'Tenant registry entries', icon: 'pi pi-database', tone: 'primary' },
-      { key: 'jobs', label: 'Provision Jobs', value: jobs.length, helper: 'Recent provisioning runs', icon: 'pi pi-cog', tone: 'info' },
-      { key: 'progress', label: 'In Progress', value: inProgress, helper: 'Queued or running jobs', icon: 'pi pi-sync', tone: 'warning' },
-      { key: 'failed', label: 'Failed / Maintenance', value: failedJobs + maintenance, helper: `${failedJobs} failed · ${pendingMigration} not completed`, icon: 'pi pi-exclamation-triangle', tone: failedJobs ? 'danger' : 'neutral' }
+      { key: 'total', label: 'Total Tenants', value: this.summary.totalTenants, helper: 'All registered organizations', icon: 'pi pi-users', tone: 'primary' },
+      { key: 'current', label: 'Up to Date', value: this.summary.upToDate, helper: 'Database and catalog current', icon: 'pi pi-check-circle', tone: 'success' },
+      { key: 'pending', label: 'Pending Migration', value: this.summary.pendingMigration, helper: 'Awaiting database release', icon: 'pi pi-clock', tone: 'warning' },
+      { key: 'failed', label: 'Failed / Maintenance', value: this.summary.failedOrMaintenance, helper: 'Requires operator attention', icon: 'pi pi-exclamation-triangle', tone: 'danger' }
     ];
   }
 
@@ -84,94 +114,190 @@ export class MigrationCenterComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     forkJoin({
-      jobs: this.api.getProvisionJobs(0, 50),
-      registry: this.api.getTenantRegistry(0, 50)
-    })
-      .pipe(
-        finalize(() => {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: ({ jobs, registry }) => {
-          this.jobs = jobs.content ?? [];
-          this.tenants = registry.content ?? [];
-        },
-        error: () => {
-          this.jobs = [];
-          this.tenants = [];
-          this.errorMessage = 'Unable to load migration data. Verify backend access and try again.';
-        }
-      });
+      summary: this.api.getReleaseSummary(),
+      tenants: this.api.getTenantReleaseOperations(this.tenantPage, this.tenantPageSize, this.search.trim() || undefined),
+      jobs: this.api.getProvisionJobs(this.jobPage, this.jobPageSize),
+      releases: this.api.getReleaseHistory(this.releasePage, this.releasePageSize)
+    }).pipe(
+      finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: result => {
+        this.summary = result.summary;
+        this.tenants = result.tenants.content ?? [];
+        this.jobs = result.jobs.content ?? [];
+        this.releases = result.releases.content ?? [];
+        this.tenantTotal = result.tenants.totalElements ?? this.tenants.length;
+        this.jobTotal = result.jobs.totalElements ?? this.jobs.length;
+        this.releaseTotal = result.releases.totalElements ?? this.releases.length;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to load release operations. Verify the platform APIs and retry.';
+      }
+    });
   }
 
-  retryJob(job: ProvisioningJob): void {
-    if (job.status !== 'FAILED') return;
-
-    this.retryingId = job.id;
-    this.api.retryProvisionJob(job.id)
-      .pipe(
-        finalize(() => {
-          this.retryingId = null;
-          this.cdr.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: () => {
-          this.feedback.success('Job retried', `${job.jobCode} has been re-queued.`);
-          this.load();
-        },
-        error: () => this.feedback.error('Retry failed', 'Could not retry this provisioning job.')
-      });
+  openTenant(tenant: TenantReleaseOperation): void {
+    this.detailLoading = true;
+    this.detailTab = 'overview';
+    this.tenantDialogVisible = true;
+    this.selectedTenant = { ...tenant, migrationHistory: [], catalogSyncHistory: [] };
+    forkJoin({
+      detail: this.api.getTenantReleaseDetail(tenant.tenantId),
+      migrations: this.api.getTenantMigrationHistory(tenant.tenantId),
+      catalog: this.api.getCatalogSyncHistory(tenant.tenantId)
+    }).pipe(
+      finalize(() => { this.detailLoading = false; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: ({ detail, migrations, catalog }) => {
+        this.selectedTenant = { ...detail, migrationHistory: migrations, catalogSyncHistory: catalog };
+      },
+      error: () => this.feedback.error('Details unavailable', 'Could not load this tenant operation history.')
+    });
   }
 
-  triggerMigration(tenant: TenantRegistry): void {
-    this.migratingId = tenant.id;
-    this.api.triggerTenantMigration(tenant.id)
-      .pipe(
-        finalize(() => {
-          this.migratingId = null;
-          this.cdr.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: () => {
-          this.feedback.success('Migration triggered', `Schema migration started for ${tenant.organizationName || tenant.tenantIdentifier}.`);
-          this.load();
-        },
-        error: () => this.feedback.error('Migration failed', 'Could not trigger tenant migration.')
-      });
+  closeTenant(): void {
+    this.tenantDialogVisible = false;
+    this.selectedTenant = null;
   }
 
-  get outdatedTenants(): TenantRegistry[] {
-    return this.tenants.filter(t => t.databaseVersion && t.migrationVersion && t.databaseVersion !== t.migrationVersion);
+  openReleaseDrawer(): void {
+    this.releaseForm = {
+      releaseVersion: '',
+      applicationVersion: this.summary.currentRelease?.applicationVersion ?? '',
+      targetDatabaseVersion: this.summary.currentRelease?.targetDatabaseVersion ?? '',
+      targetCatalogVersion: this.summary.currentRelease?.targetCatalogVersion ?? '',
+      releaseNotes: ''
+    };
+    this.releaseDrawerOpen = true;
   }
 
-  migrateAllOutdated(): void {
-    const outdated = this.outdatedTenants;
-    if (!outdated.length) return;
-
-    this.feedback.info('Batch Migration', `Triggering migration for ${outdated.length} tenants...`);
-    // In a real app, this would call a batch API or queue them. For now, we simulate looping them.
-    for (const t of outdated) {
-      this.triggerMigration(t);
+  createRelease(): void {
+    const payload = this.releaseForm;
+    if (!payload.releaseVersion.trim() || !payload.applicationVersion.trim()
+      || !payload.targetDatabaseVersion.trim() || !payload.targetCatalogVersion.trim()) {
+      this.feedback.formError('Complete all release version fields.', 'Release is incomplete');
+      return;
     }
+    this.creatingRelease = true;
+    this.api.createRelease({
+      ...payload,
+      releaseVersion: payload.releaseVersion.trim(),
+      applicationVersion: payload.applicationVersion.trim(),
+      targetDatabaseVersion: payload.targetDatabaseVersion.trim(),
+      targetCatalogVersion: payload.targetCatalogVersion.trim(),
+      releaseNotes: payload.releaseNotes?.trim() || undefined
+    }).pipe(
+      finalize(() => { this.creatingRelease = false; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: release => {
+        this.releaseDrawerOpen = false;
+        this.feedback.success('Release created', `${release.releaseVersion} is ready for backend validation.`);
+        this.load();
+      },
+      error: () => this.feedback.error('Release not created', 'Verify version targets and try again.')
+    });
   }
 
-  progressLabel(job: ProvisioningJob): string {
-    if (job.progressPercentage != null) return `${job.progressPercentage}%`;
-    return '—';
+  executeCurrentRelease(): void {
+    const release = this.summary.currentRelease;
+    if (!release || release.status === 'RELEASED' || this.executingRelease) return;
+    this.executingRelease = true;
+    this.api.executeRelease(release.id).pipe(
+      finalize(() => { this.executingRelease = false; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: executed => {
+        this.feedback.success('Release execution finished', `${executed.releaseVersion} completed with status ${executed.status}.`);
+        this.load();
+      },
+      error: () => this.feedback.error('Release execution failed', 'Review tenant migration and catalog histories for details.')
+    });
   }
 
-  trackByJobId(_: number, item: ProvisioningJob): number {
-    return item.id;
+  retryMigration(): void {
+    const tenant = this.selectedTenant;
+    if (!tenant || tenant.migrationStatus !== 'FAILED') return;
+    this.runAction(tenant, 'migration', this.api.retryTenantMigration(tenant.tenantId));
   }
 
-  trackByTenantId(_: number, item: TenantRegistry): number {
-    return item.id;
+  retryCatalog(): void {
+    const tenant = this.selectedTenant;
+    if (!tenant || tenant.catalogSyncStatus !== 'FAILED') return;
+    this.runAction(tenant, 'catalog sync', this.api.retryCatalogSync(tenant.tenantId));
+  }
+
+  toggleMaintenance(): void {
+    const tenant = this.selectedTenant;
+    if (!tenant) return;
+    this.actionId = tenant.tenantId;
+    this.api.setMigrationMaintenance(
+      tenant.tenantId,
+      !tenant.maintenanceMode,
+      tenant.maintenanceMode ? undefined : 'Enabled by platform operator'
+    ).pipe(
+      finalize(() => { this.actionId = null; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: updated => {
+        this.feedback.success('Maintenance updated', `Maintenance is now ${updated.maintenanceMode ? 'enabled' : 'disabled'}.`);
+        this.openTenant(updated);
+        this.load();
+      },
+      error: () => this.feedback.error('Update failed', 'Could not change maintenance mode.')
+    });
+  }
+
+  changeTab(key: string): void { this.activeTab = key as CenterTab; }
+  searchTenants(): void {
+    this.tenantPage = 0;
+    this.load();
+  }
+  onTenantPageChange(event: AppPageChangeEvent): void {
+    this.tenantPage = event.page;
+    this.tenantPageSize = event.rows;
+    this.load();
+  }
+  onJobPageChange(event: AppPageChangeEvent): void {
+    this.jobPage = event.page;
+    this.jobPageSize = event.rows;
+    this.load();
+  }
+  onReleasePageChange(event: AppPageChangeEvent): void {
+    this.releasePage = event.page;
+    this.releasePageSize = event.rows;
+    this.load();
+  }
+  changeDetailTab(key: string): void { this.detailTab = key as DetailTab; }
+  statusTone(status: OperationStatus | string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
+    if (status === 'SUCCESS' || status === 'HEALTHY' || status === 'RELEASED') return 'success';
+    if (status === 'FAILED' || status === 'CRITICAL') return 'danger';
+    if (status === 'RUNNING') return 'info';
+    if (status === 'PENDING' || status === 'WARNING' || status === 'MAINTENANCE') return 'warning';
+    return 'neutral';
+  }
+  trackTenant(_: number, row: TenantReleaseOperation): number { return row.tenantId; }
+  trackMigration(_: number, row: MigrationExecution): string { return row.executionId; }
+  trackCatalog(_: number, row: CatalogSyncExecution): string { return row.executionId; }
+
+  private runAction(
+    tenant: TenantReleaseDetail,
+    label: string,
+    request: Observable<unknown>
+  ): void {
+    this.actionId = tenant.tenantId;
+    request.pipe(
+      finalize(() => { this.actionId = null; this.cdr.markForCheck(); }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
+        this.feedback.success('Retry queued', `${tenant.organizationName} ${label} was queued by the backend.`);
+        this.openTenant(tenant);
+        this.load();
+      },
+      error: () => this.feedback.error('Retry failed', `Could not retry ${label}.`)
+    });
   }
 }

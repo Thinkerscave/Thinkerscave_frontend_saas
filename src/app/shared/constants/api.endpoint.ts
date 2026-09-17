@@ -505,16 +505,48 @@ export const platformApi = {
   provisionJobs: `${PLATFORM_BASE}/provision/jobs`,
   provisionJobById: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}`,
   retryProvisionJob: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/retry`,
+  provisionJobSteps: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/steps`,
   tenantRegistry: `${PLATFORM_BASE}/tenant-registry`,
   tenantById: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}`,
   tenantMaintenance: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/maintenance`,
   tenantResume: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/resume`,
   tenantBackup: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/backup`,
   tenantMigrate: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/migrate`,
+  operationAudit: `${PLATFORM_BASE}/operations/audit`,
   provisioningTemplates: `${PLATFORM_BASE}/provisioning-templates`,
   maintenanceSchedules: `${PLATFORM_BASE}/maintenance`,
   orgConfiguration: (orgId: number) => `${PLATFORM_BASE}/organization-configurations/${orgId}`,
   retention: `${PLATFORM_BASE}/retention`,
   retentionTask: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}`,
   runRetention: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}/run`
+};
+
+/** Release orchestration. Bulk execution is backend-owned and sequential. */
+export const platformReleaseApi = {
+  summary: `${PLATFORM_BASE}/releases/summary`,
+  releases: `${PLATFORM_BASE}/releases`,
+  releaseById: (id: number | string) => `${PLATFORM_BASE}/releases/${id}`,
+  execute: (id: number | string) => `${PLATFORM_BASE}/releases/${id}/execute`
+};
+
+/** Flyway tenant migration operations; separate from catalog synchronization. */
+export const platformMigrationApi = {
+  tenants: `${PLATFORM_BASE}/migrations/tenants`,
+  tenantDetail: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}`,
+  tenantHistory: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/history`,
+  retry: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/retry`,
+  maintenance: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/maintenance`
+};
+
+/** Catalog definitions synchronize independently and never grant runtime access. */
+export const platformCatalogSyncApi = {
+  status: `${PLATFORM_BASE}/catalog-sync/status`,
+  tenantHistory: (tenantId: number) => `${PLATFORM_BASE}/catalog-sync/tenants/${tenantId}/history`,
+  retry: (tenantId: number) => `${PLATFORM_BASE}/catalog-sync/tenants/${tenantId}/retry`
+};
+
+export const platformTenantHealthApi = {
+  summary: `${PLATFORM_BASE}/tenant-health/summary`,
+  tenants: `${PLATFORM_BASE}/tenant-health/tenants`,
+  tenantById: (tenantId: number) => `${PLATFORM_BASE}/tenant-health/tenants/${tenantId}`
 };

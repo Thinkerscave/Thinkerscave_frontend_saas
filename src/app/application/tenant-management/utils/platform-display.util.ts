@@ -160,6 +160,8 @@ const PROMOTION_STATUS_LABELS: Record<PromotionStatus, string> = {
 };
 
 const PROVISION_JOB_STATUS_LABELS: Record<ProvisionJobStatus, string> = {
+  PENDING: 'Pending',
+  RUNNING: 'Running',
   QUEUED: 'Queued',
   IN_PROGRESS: 'In Progress',
   COMPLETED: 'Completed',
