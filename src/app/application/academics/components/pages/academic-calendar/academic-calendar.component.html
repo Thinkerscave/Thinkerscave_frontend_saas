@@ -11,46 +11,26 @@
   <!-- Top controls: year + Calendar/List + Add Event -->
   <section class="ac-topbar" aria-label="Calendar controls">
     <div class="ac-topbar__left">
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId"
-        placeholder="Select year"
-        styleClass="ac-year-dd"
-        appendTo="body">
+      <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="onYearChange()" optionLabel="name"
+        optionValue="academicYearId" placeholder="Select year" styleClass="ac-year-dd" appendTo="body">
       </p-dropdown>
-      <span
-        class="ac-badge"
-        *ngIf="dashboard as dash"
-        [class.ac-badge--success]="dash.status === 'CURRENT'"
+      <span class="ac-badge" *ngIf="dashboard as dash" [class.ac-badge--success]="dash.status === 'CURRENT'"
         [class.ac-badge--neutral]="dash.status !== 'CURRENT'">
         {{ dash.status === 'CURRENT' ? 'Current' : dash.status }}
       </span>
       <span class="ac-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
 
       <div class="ac-view-toggle" role="group" aria-label="View mode">
-        <button
-          type="button"
-          [class.active]="viewMode === 'calendar'"
-          (click)="setViewMode('calendar')">
+        <button type="button" [class.active]="viewMode === 'calendar'" (click)="setViewMode('calendar')">
           Calendar
         </button>
-        <button
-          type="button"
-          [class.active]="viewMode === 'list'"
-          (click)="setViewMode('list')">
+        <button type="button" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
           List
         </button>
       </div>
     </div>
 
-    <button
-      type="button"
-      class="tc-btn tc-btn--primary"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="readOnly"
+    <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="readOnly"
       (click)="openCreateEvent()">
       <i class="pi pi-plus"></i>
       Add Event
@@ -77,37 +57,20 @@
         <span *ngFor="let d of weekDays" [class.ac-weekday--sun]="d === 'Sun'">{{ d }}</span>
       </div>
 
-      <div
-        class="ac-month__grid"
-        role="grid"
-        [attr.aria-label]="monthLabel"
-        [attr.data-weeks]="calendarWeekCount">
-        <div
-          class="ac-day"
-          *ngFor="let cell of calendarDays; trackBy: trackByDateKey"
-          role="gridcell"
-          [class.ac-day--muted]="!cell.inMonth"
-          [class.ac-day--today]="cell.isToday"
-          [class.ac-day--sunday]="cell.isSunday && cell.inMonth"
-          [attr.tabindex]="cell.inMonth ? 0 : -1"
-          [attr.aria-disabled]="!cell.inMonth"
-          (click)="cell.inMonth && onDayClick(cell, $event)"
+      <div class="ac-month__grid" role="grid" [attr.aria-label]="monthLabel" [attr.data-weeks]="calendarWeekCount">
+        <div class="ac-day" *ngFor="let cell of calendarDays; trackBy: trackByDateKey" role="gridcell"
+          [class.ac-day--muted]="!cell.inMonth" [class.ac-day--today]="cell.isToday"
+          [class.ac-day--sunday]="cell.isSunday && cell.inMonth" [attr.tabindex]="cell.inMonth ? 0 : -1"
+          [attr.aria-disabled]="!cell.inMonth" (click)="cell.inMonth && onDayClick(cell, $event)"
           (keydown.enter)="cell.inMonth && onDayClick(cell, $event)">
           <span class="ac-day__num" [class.ac-day__num--today]="cell.isToday">{{ cell.day }}</span>
           <span class="ac-day__events" *ngIf="cell.inMonth && cell.events.length">
-            <button
-              type="button"
-              class="ac-chip-event"
-              *ngFor="let ev of visibleChips(cell)"
-              [attr.data-tone]="typeTone(ev.eventType)"
-              [title]="ev.title"
+            <button type="button" class="ac-chip-event" *ngFor="let ev of visibleChips(cell)"
+              [attr.data-tone]="typeTone(ev.eventType)" [title]="ev.title"
               (click)="onEventChipClick(ev.eventId, $event)">
               {{ ev.title }}
             </button>
-            <button
-              type="button"
-              class="ac-chip-more"
-              *ngIf="hiddenChipCount(cell) as more"
+            <button type="button" class="ac-chip-more" *ngIf="hiddenChipCount(cell) as more"
               (click)="onDayClick(cell, $event)">
               +{{ more }} more
             </button>
@@ -127,10 +90,7 @@
       <section class="ac-side-card">
         <h3>Upcoming Events</h3>
         <div class="ac-upcoming-list" *ngIf="upcomingPreview.length; else noUpcoming">
-          <button
-            type="button"
-            class="ac-up-item"
-            *ngFor="let event of upcomingPreview"
+          <button type="button" class="ac-up-item" *ngFor="let event of upcomingPreview"
             (click)="openDetails(event.eventId)">
             <span class="ac-up-date">
               <strong>{{ upcomingDay(event) }}</strong>
@@ -139,7 +99,8 @@
             <span class="ac-up-body">
               <strong>{{ event.title }}</strong>
               <span class="ac-up-meta">
-                <span class="ac-tag" [attr.data-tone]="typeTone(event.eventType)">{{ typeLabel(event.eventType) }}</span>
+                <span class="ac-tag" [attr.data-tone]="typeTone(event.eventType)">{{ typeLabel(event.eventType)
+                  }}</span>
                 <span *ngIf="event.location" class="ac-up-loc">{{ event.location }}</span>
               </span>
             </span>
@@ -169,58 +130,22 @@
   <!-- ========== LIST / TABLE VIEW ========== -->
   <ng-container *ngIf="viewMode === 'list'">
     <div class="acad-toolbar ac-toolbar">
-      <input
-        class="acad-toolbar__search"
-        type="search"
-        placeholder="Search events..."
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="onSearchChange($event)"
-        aria-label="Search events" />
+      <input class="acad-toolbar__search" type="search" placeholder="Search events..." [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)" aria-label="Search events" />
       <div class="acad-toolbar__filters">
-        <p-dropdown
-          [options]="typeOptions"
-          [(ngModel)]="typeFilter"
-          (onChange)="onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Types"
-          styleClass="ac-filter-dd"
-          appendTo="body">
+        <p-dropdown [options]="typeOptions" [(ngModel)]="typeFilter" (onChange)="onFilterChange()" optionLabel="label"
+          optionValue="value" placeholder="All Types" styleClass="ac-filter-dd" appendTo="body">
         </p-dropdown>
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="statusFilter"
-          (onChange)="onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Status"
-          styleClass="ac-filter-dd"
-          appendTo="body">
+        <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" (onChange)="onFilterChange()"
+          optionLabel="label" optionValue="value" placeholder="All Status" styleClass="ac-filter-dd" appendTo="body">
         </p-dropdown>
-        <p-dropdown
-          [options]="audienceFilterOptions"
-          [(ngModel)]="audienceFilter"
-          (onChange)="onFilterChange()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All Audience"
-          styleClass="ac-filter-dd"
-          appendTo="body">
+        <p-dropdown [options]="audienceFilterOptions" [(ngModel)]="audienceFilter" (onChange)="onFilterChange()"
+          optionLabel="label" optionValue="value" placeholder="All Audience" styleClass="ac-filter-dd" appendTo="body">
         </p-dropdown>
-        <input
-          class="ac-date-input"
-          type="date"
-          [(ngModel)]="fromDate"
-          (ngModelChange)="onFilterChange()"
-          aria-label="From date"
-          title="From date" />
-        <input
-          class="ac-date-input"
-          type="date"
-          [(ngModel)]="toDate"
-          (ngModelChange)="onFilterChange()"
-          aria-label="To date"
-          title="To date" />
+        <input class="ac-date-input" type="date" [(ngModel)]="fromDate" (ngModelChange)="onFilterChange()"
+          aria-label="From date" title="From date" />
+        <input class="ac-date-input" type="date" [(ngModel)]="toDate" (ngModelChange)="onFilterChange()"
+          aria-label="To date" title="To date" />
       </div>
     </div>
 
@@ -264,13 +189,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                *ngFor="let event of pagedEvents"
-                class="acad-card-clickable"
-                (click)="openDetails(event.eventId)"
-                (keydown.enter)="openDetails(event.eventId)"
-                tabindex="0"
-                role="link">
+              <tr *ngFor="let event of pagedEvents" class="acad-card-clickable" (click)="openDetails(event.eventId)"
+                (keydown.enter)="openDetails(event.eventId)" tabindex="0" role="link">
                 <td>
                   <strong>{{ formatDateRange(event) }}</strong>
                   <div class="ac-muted">{{ formatTimeDisplay(event) }}</div>
@@ -283,19 +203,14 @@
                 </td>
                 <td>{{ audienceLabel(event) }}</td>
                 <td>
-                  <span
-                    class="ac-badge"
-                    [class.ac-badge--success]="event.status === 'PUBLISHED'"
+                  <span class="ac-badge" [class.ac-badge--success]="event.status === 'PUBLISHED'"
                     [class.ac-badge--warn]="event.status === 'DRAFT'"
                     [class.ac-badge--neutral]="event.status === 'INACTIVE'">
                     {{ statusLabel(event.status) }}
                   </span>
                 </td>
                 <td class="ac-table__actions" (click)="$event.stopPropagation()">
-                  <button
-                    type="button"
-                    class="ac-icon-btn"
-                    (click)="buildMenu(event); eventMenu.toggle($event)"
+                  <button type="button" class="ac-icon-btn" (click)="buildMenu(event); eventMenu.toggle($event)"
                     aria-label="More actions">
                     <i class="pi pi-ellipsis-v"></i>
                   </button>
@@ -306,14 +221,8 @@
         </div>
       </div>
 
-      <app-paginator
-        *ngIf="totalEvents > 0"
-        [page]="page"
-        [rows]="pageSize"
-        [totalRecords]="totalEvents"
-        [pageSizeOptions]="pageSizeOptions"
-        noun="events"
-        (pageChange)="onPageChange($event)">
+      <app-paginator *ngIf="totalEvents > 0" [page]="page" [rows]="pageSize" [totalRecords]="totalEvents"
+        [pageSizeOptions]="pageSizeOptions" noun="events" (pageChange)="onPageChange($event)">
       </app-paginator>
     </ng-container>
   </ng-container>
@@ -333,12 +242,8 @@
           There are no calendar events for
           {{ dashboard?.name || 'this academic year' }}.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="readOnly"
-          (click)="openCreateEvent()">
+        <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'"
+          [disabled]="readOnly" (click)="openCreateEvent()">
           <i class="pi pi-plus"></i>
           Add Event
         </button>
@@ -354,12 +259,8 @@
   </div>
 </ng-template>
 
-<p-dialog
-  [header]="editingEventId ? 'Edit Event' : 'Add Event'"
-  [(visible)]="showEventDialog"
-  [modal]="true"
-  [style]="{ width: 'min(560px, 94vw)' }"
-  [draggable]="false">
+<p-dialog [header]="editingEventId ? 'Edit Event' : 'Add Event'" [(visible)]="showEventDialog" [modal]="true"
+  [style]="{ width: 'min(560px, 94vw)' }" [draggable]="false">
   <form class="ac-form" [formGroup]="eventForm">
     <div class="ac-form__banner" *ngIf="isEditingPublished">
       This event is published. Saving updates the live calendar entry.
@@ -373,13 +274,8 @@
       </label>
       <label>
         Type *
-        <p-dropdown
-          [options]="eventTypeOptions"
-          formControlName="eventType"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="ac-form-dd">
+        <p-dropdown [options]="eventTypeOptions" formControlName="eventType" optionLabel="label" optionValue="value"
+          appendTo="body" styleClass="ac-form-dd">
         </p-dropdown>
       </label>
       <label>
@@ -425,41 +321,20 @@
       <legend>Visibility</legend>
       <label>
         Applies To *
-        <p-dropdown
-          [options]="audienceOptions"
-          formControlName="audienceType"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="ac-form-dd">
+        <p-dropdown [options]="audienceOptions" formControlName="audienceType" optionLabel="label" optionValue="value"
+          appendTo="body" styleClass="ac-form-dd">
         </p-dropdown>
       </label>
       <label *ngIf="eventForm.value.audienceType === 'CLASS'">
         Classes *
-        <p-multiSelect
-          [options]="classOptions"
-          formControlName="classIds"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select classes"
-          [filter]="true"
-          appendTo="body"
-          styleClass="ac-form-dd"
-          display="chip">
+        <p-multiSelect [options]="classOptions" formControlName="classIds" optionLabel="label" optionValue="value"
+          placeholder="Select classes" [filter]="true" appendTo="body" styleClass="ac-form-dd" display="chip">
         </p-multiSelect>
       </label>
       <label *ngIf="eventForm.value.audienceType === 'SECTION'">
         Sections *
-        <p-multiSelect
-          [options]="sectionOptions"
-          formControlName="sectionIds"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select sections"
-          [filter]="true"
-          appendTo="body"
-          styleClass="ac-form-dd"
-          display="chip">
+        <p-multiSelect [options]="sectionOptions" formControlName="sectionIds" optionLabel="label" optionValue="value"
+          placeholder="Select sections" [filter]="true" appendTo="body" styleClass="ac-form-dd" display="chip">
         </p-multiSelect>
       </label>
     </fieldset>

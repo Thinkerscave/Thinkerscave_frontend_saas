@@ -40,6 +40,15 @@ export class TeacherAllocationApiService {
       .post<ApiResponse<TeacherAllocationRow>>(academicsApi.teacherAllocationAssign, body)
       .pipe(map((res) => res.data));
   }
+  assignClassTeacher(body: {
+    sectionId: number;
+    staffId: number;
+    effectiveFrom?: string;
+  }): Observable<unknown> {
+    return this.http
+      .post<ApiResponse<unknown>>(academicsApi.classTeachers, body)
+      .pipe(map((res) => res.data));
+  }
 
   unassign(allocationId: number): Observable<TeacherAllocationRow> {
     return this.http

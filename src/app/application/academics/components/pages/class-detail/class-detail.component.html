@@ -1,24 +1,16 @@
 <p-confirmDialog></p-confirmDialog>
-<p-menu #sectionMenu [popup]="true" [model]="menuItems"></p-menu>
+<p-menu #sectionMenu [popup]="true" [model]="menuItems" appendTo="body"></p-menu>
 
 <div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
   <tc-saas-page-header>
     <button type="button" class="tc-btn tc-btn--back" (click)="back()">
       <i class="pi pi-arrow-left"></i> Back
     </button>
-    <button
-      type="button"
-      class="tc-btn"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage"
+    <button type="button" class="tc-btn" *tcHasPerm="resource; action: 'manage'" [disabled]="!canManage"
       (click)="openEditClass()">
       <i class="pi pi-pencil"></i> Edit Class
     </button>
-    <button
-      type="button"
-      class="tc-btn tc-btn--primary"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage"
+    <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" [disabled]="!canManage"
       (click)="openAddSection()">
       <i class="pi pi-plus"></i> Add Section
     </button>
@@ -60,19 +52,14 @@
     </div>
 
     <div class="cd-section-grid acad-stagger" *ngIf="c.sections?.length; else noSections">
-      <article
-        class="cd-section-card"
-        *ngFor="let section of c.sections"
+      <article class="cd-section-card" *ngFor="let section of c.sections"
         [class.cd-section-card--inactive]="!section.active">
         <header>
           <div class="cd-section-card__identity">
             <h3>{{ sectionDisplayName(section) }}</h3>
             <code>{{ section.code }}</code>
           </div>
-          <span
-            class="cd-badge"
-            [class.cd-badge--success]="section.active"
-            [class.cd-badge--neutral]="!section.active">
+          <span class="cd-badge" [class.cd-badge--success]="section.active" [class.cd-badge--neutral]="!section.active">
             {{ section.active ? 'Active' : 'Inactive' }}
           </span>
         </header>
@@ -85,11 +72,7 @@
         <div class="cd-section-card__teacher">
           <span>Class Teacher</span>
           <strong *ngIf="section.classTeacherName">{{ section.classTeacherName }}</strong>
-          <button
-            *ngIf="!section.classTeacherName"
-            type="button"
-            class="cd-assign"
-            [disabled]="!canManage"
+          <button *ngIf="!section.classTeacherName" type="button" class="cd-assign" [disabled]="!canManage"
             (click)="openAssignTeacher(section)">
             {{ canManage ? 'Assign Teacher' : 'Not assigned' }}
           </button>
@@ -99,12 +82,8 @@
           <button type="button" class="cd-details" (click)="viewStudents(section)">
             View Students <span aria-hidden="true">→</span>
           </button>
-          <button
-            type="button"
-            class="cd-icon-btn"
-            *ngIf="canManage"
-            (click)="buildMenu(section); sectionMenu.toggle($event)"
-            aria-label="Section actions">
+          <button type="button" class="cd-icon-btn" *ngIf="canManage"
+            (click)="buildMenu(section); sectionMenu.toggle($event)" aria-label="Section actions">
             <i class="pi pi-ellipsis-v"></i>
           </button>
         </footer>
@@ -119,12 +98,8 @@
           No sections have been created for this class yet.
           Create a section to start organizing students and assigning a class teacher.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage"
-          (click)="openAddSection()">
+        <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'"
+          [disabled]="!canManage" (click)="openAddSection()">
           <i class="pi pi-plus"></i> Add Section
         </button>
       </div>
@@ -139,25 +114,19 @@
         <span>{{ studentCount }} enrolled</span>
         <em>View Students →</em>
       </button>
-      <a
-        class="cd-manage-card"
-        [routerLink]="['/app/academics/classes-sections', c.classId, 'subjects']"
+      <a class="cd-manage-card" [routerLink]="['/app/academics/classes-sections', c.classId, 'subjects']"
         [queryParams]="{ from: 'classes' }">
         <strong>Subjects &amp; Mapping</strong>
         <span>Manage subject mappings for this class</span>
         <em>Manage Mapping →</em>
       </a>
-      <a
-        class="cd-manage-card"
-        routerLink="/app/academics/teacher-allocation"
+      <a class="cd-manage-card" routerLink="/app/academics/teacher-allocation"
         [queryParams]="{ from: 'classes', classId: c.classId }">
         <strong>Teacher Allocation</strong>
         <span>Manage teacher assignments</span>
         <em>Manage Teachers →</em>
       </a>
-      <a
-        class="cd-manage-card"
-        routerLink="/app/academics/timetable"
+      <a class="cd-manage-card" routerLink="/app/academics/timetable"
         [queryParams]="{ from: 'classes', classId: c.classId }">
         <strong>Timetable</strong>
         <span>View weekly schedule</span>
@@ -192,56 +161,44 @@
   </ng-template>
 </ng-template>
 
-<p-dialog
-  header="Edit Class"
-  [(visible)]="showClassDialog"
-  [modal]="true"
-  [style]="{ width: 'min(480px, 94vw)' }"
+<p-dialog header="Edit Class" [(visible)]="showClassDialog" [modal]="true" [style]="{ width: 'min(480px, 94vw)' }"
   [draggable]="false">
   <form class="cd-form" [formGroup]="classForm" (ngSubmit)="saveClass()">
     <label>Class Name *<input type="text" formControlName="name" /></label>
     <label>Class Code<input type="text" formControlName="code" /></label>
     <label>
       Stage *
-      <p-dropdown
-        [options]="classStageOptions"
-        formControlName="stage"
-        optionLabel="label"
-        optionValue="value"
+      <p-dropdown [options]="classStageOptions" formControlName="stage" optionLabel="label" optionValue="value"
         appendTo="body">
       </p-dropdown>
     </label>
     <div class="cd-form__actions">
       <button type="button" class="tc-btn" (click)="showClassDialog = false">Cancel</button>
-      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save'
+        }}</button>
     </div>
   </form>
 </p-dialog>
 
-<p-dialog
-  [header]="editingSectionId ? 'Edit Section' : 'Add Section'"
-  [(visible)]="showSectionDialog"
-  [modal]="true"
-  [style]="{ width: 'min(480px, 94vw)' }"
-  [draggable]="false">
+<p-dialog [header]="editingSectionId ? 'Edit Section' : 'Add Section'" [(visible)]="showSectionDialog" [modal]="true"
+  [style]="{ width: 'min(480px, 94vw)' }" [draggable]="false">
   <form class="cd-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
-    <label>Section Name *<input type="text" formControlName="name" (blur)="suggestSectionCode()" placeholder="A" /></label>
+    <label>Section Name *<input type="text" formControlName="name" (blur)="suggestSectionCode()" placeholder="A" />
+      <small class="cd-form__error" *ngIf="sectionForm.get('name')?.invalid && sectionForm.get('name')?.touched">
+        Section Name is required.
+      </small>
+    </label>
     <label>Section Code<input type="text" formControlName="code" placeholder="C1-A" /></label>
     <label>
       Class Teacher
-      <p-dropdown
-        [options]="staffOptions"
-        formControlName="classTeacherStaffId"
-        optionLabel="label"
-        optionValue="value"
-        [showClear]="true"
-        placeholder="Select teacher (optional)"
-        appendTo="body">
+      <p-dropdown [options]="staffOptions" formControlName="classTeacherStaffId" optionLabel="label" optionValue="value"
+        [showClear]="true" placeholder="Select teacher (optional)" appendTo="body">
       </p-dropdown>
     </label>
     <div class="cd-form__actions">
       <button type="button" class="tc-btn" (click)="showSectionDialog = false">Cancel</button>
-      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save'
+        }}</button>
     </div>
   </form>
 </p-dialog>

@@ -37,6 +37,11 @@ export class ClassesSectionsApiService {
       .pipe(map((res) => res.data));
   }
 
+  getSectionsByClass(classId: number): Observable<ClassSectionDto[]> {
+    return this.http
+      .get<ApiResponse<ClassSectionDto[]>>(academicsApi.sectionsByClass(classId))
+      .pipe(map((res) => res.data));
+  }
   createClass(body: AcademicClassCreateRequest): Observable<AcademicClassDto> {
     return this.http
       .post<ApiResponse<AcademicClassDto>>(academicsApi.classes, body)

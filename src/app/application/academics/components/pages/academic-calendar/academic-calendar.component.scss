@@ -318,11 +318,25 @@
   border-left-color: #64748b;
 }
 
-.ac-legend__dot[data-tone='holiday'] { background: #f59e0b; }
-.ac-legend__dot[data-tone='exam'] { background: #ec4899; }
-.ac-legend__dot[data-tone='school'] { background: #7c3aed; }
-.ac-legend__dot[data-tone='academic'] { background: #10b981; }
-.ac-legend__dot[data-tone='default'] { background: #64748b; }
+.ac-legend__dot[data-tone='holiday'] {
+  background: #f59e0b;
+}
+
+.ac-legend__dot[data-tone='exam'] {
+  background: #ec4899;
+}
+
+.ac-legend__dot[data-tone='school'] {
+  background: #7c3aed;
+}
+
+.ac-legend__dot[data-tone='academic'] {
+  background: #10b981;
+}
+
+.ac-legend__dot[data-tone='default'] {
+  background: #64748b;
+}
 
 .ac-legend {
   display: flex;
@@ -736,22 +750,30 @@
 
 .ac-skeleton {
   border-radius: 12px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 45%, transparent),
-    color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 18%, transparent),
-    color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 45%, transparent)
-  );
+  background: linear-gradient(90deg,
+      color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 45%, transparent),
+      color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 18%, transparent),
+      color-mix(in srgb, var(--tc-surface-300, #e2e8f0) 45%, transparent));
   background-size: 200% 100%;
   animation: ac-shimmer 1.2s ease-in-out infinite;
 }
 
-.ac-skeleton--context { height: 48px; }
-.ac-skeleton--cal { height: 420px; }
+.ac-skeleton--context {
+  height: 48px;
+}
+
+.ac-skeleton--cal {
+  height: 420px;
+}
 
 @keyframes ac-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .ac-form {
@@ -896,6 +918,7 @@
 }
 
 @media print {
+
   .ac-side,
   .ac-topbar,
   tc-saas-page-header,
