@@ -9,7 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 
 import {
   Payroll,
@@ -23,6 +23,9 @@ import {
   PageResponse
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { ClassesSectionsApiService } from '../../../academics/services/classes-sections-api.service';
+import { TeacherAllocationApiService } from '../../../academics/services/teacher-allocation-api.service';
+import { AcademicYearApiService } from '../../../academics/services/academic-year-api.service';
 import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 type ProfileTab = 'overview' | 'responsibilities' | 'salary' | 'payroll' | 'documents' | 'activity';
@@ -41,7 +44,11 @@ export class StaffProfile360Component implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
   private readonly api = inject(StaffService);
+  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly teacherAllocationApi = inject(TeacherAllocationApiService);
+  private readonly academicYearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+
 
   loading = true;
   errorMessage = '';
@@ -56,19 +63,30 @@ export class StaffProfile360Component implements OnInit {
   activeTab: ProfileTab = 'overview';
 
   readonly tabs: TabConfig[] = [
-    { id: 'overview',         label: 'Overview',         icon: 'pi-user' },
+    { id: 'overview', label: 'Overview', icon: 'pi-user' },
     { id: 'responsibilities', label: 'Responsibilities', icon: 'pi-sitemap' },
-    { id: 'salary',           label: 'Salary',           icon: 'pi-money-bill' },
-    { id: 'payroll',          label: 'Payroll',          icon: 'pi-wallet' },
-    { id: 'documents',        label: 'Documents',        icon: 'pi-folder-open' },
-    { id: 'activity',         label: 'Activity',         icon: 'pi-history' }
+    { id: 'salary', label: 'Salary', icon: 'pi-money-bill' },
+    { id: 'payroll', label: 'Payroll', icon: 'pi-wallet' },
+    { id: 'documents', label: 'Documents', icon: 'pi-folder-open' },
+    { id: 'activity', label: 'Activity', icon: 'pi-history' }
   ];
 
   // ── Assign Responsibility Modal ──────────────────────────────────────────────
   showAssignModal = false;
   allResponsibilities: Responsibility[] = [];
-  assignForm: ResponsibilityAssignmentRequest = this.emptyAssignForm();
+  assignForm: ResponsibilityAssignmentRequest = {
+    staffId: 0,
+    responsibilityId: 0,
+    scope: '',
+    effectiveFrom: ''
+  };
+  assignClassId: number | null = null;
+  assignSectionId: number | null = null;
 
+  classOptions: { label: string; value: number }[] = [];
+  sectionOptions: { label: string; value: number }[] = [];
+
+  private assignAcademicYearId: number | null = null;
   // ── Salary Modal ──────────────────────────────────────────────────────────────
   showSalaryModal = false;
   salaryForm: SalaryStructureRequest = this.emptySalaryForm();
@@ -76,7 +94,8 @@ export class StaffProfile360Component implements OnInit {
   savingSalary = false;
 
   readonly salaryTypeOptions: { value: SalaryType; label: string }[] = [
-    { value: 'MONTHLY',    label: 'Monthly' },
+    { value: 'MONTHLY', label: 'Monthly' },
+    { value: 'YEARLY', label: 'Yearly' },
     { value: 'DAILY_WAGE', label: 'Daily Wage' }
   ];
 
@@ -91,8 +110,8 @@ export class StaffProfile360Component implements OnInit {
   }
   get grossSalary(): number {
     return (this.salaryForm.basicPay ?? 0) + (this.salaryForm.hra ?? 0)
-         + (this.salaryForm.da ?? 0) + (this.salaryForm.specialAllowance ?? 0)
-         + (this.salaryForm.transportAllowance ?? 0) + (this.salaryForm.otherAllowance ?? 0);
+      + (this.salaryForm.da ?? 0) + (this.salaryForm.specialAllowance ?? 0)
+      + (this.salaryForm.transportAllowance ?? 0) + (this.salaryForm.otherAllowance ?? 0);
   }
 
   ngOnInit(): void {
@@ -161,27 +180,102 @@ export class StaffProfile360Component implements OnInit {
         this.cdr.markForCheck();
       });
     }
-    this.assignForm = this.emptyAssignForm();
-    this.showAssignModal = true;
-  }
 
-  emptyAssignForm(): ResponsibilityAssignmentRequest {
-    return {
+    this.assignForm = {
       staffId: this.staffId,
       responsibilityId: 0,
       scope: '',
-      effectiveFrom: new Date().toISOString().substring(0, 10)
+      effectiveFrom: ''
     };
+    this.assignClassId = null;
+    this.assignSectionId = null;
+    this.classOptions = [];
+    this.sectionOptions = [];
+
+    this.showAssignModal = true;
+
+    this.loadAssignClasses();
   }
 
+  private loadAssignClasses(): void {
+    this.academicYearApi.search().subscribe({
+      next: years => {
+        const currentYear = years.find(y => y.status === 'CURRENT');
+
+        if (!currentYear?.academicYearId) {
+          return;
+        }
+
+        this.assignAcademicYearId = currentYear.academicYearId;
+
+        this.classesApi.getDashboard(currentYear.academicYearId, { active: true })
+          .subscribe({
+            next: dashboard => {
+              this.classOptions = dashboard.classes.map(cls => ({
+                label: cls.name,
+                value: cls.classId
+              }));
+
+              this.cdr.markForCheck();
+            }
+          });
+      }
+    });
+  }
+  onAssignClassChange(): void {
+    this.assignSectionId = null;
+    this.sectionOptions = [];
+
+    if (!this.assignClassId) {
+      return;
+    }
+
+    this.classesApi.getSectionsByClass(this.assignClassId)
+      .subscribe({
+        next: sections => {
+          this.sectionOptions = sections.map(section => ({
+            label: section.name,
+            value: section.sectionId
+          }));
+
+          this.cdr.markForCheck();
+        }
+      });
+  }
   saveAssignment(): void {
-    if (!this.assignForm.responsibilityId) { return; }
+    if (!this.assignForm.responsibilityId) {
+      return;
+    }
+
+    if (!this.assignSectionId) {
+      return;
+    }
+
     this.assignForm.staffId = this.staffId;
+
+    const selectedResponsibility = this.allResponsibilities.find(
+      r => r.responsibilityId === this.assignForm.responsibilityId
+    );
+
     this.api.assignResponsibility(this.assignForm)
       .subscribe({
         next: () => {
-          this.showAssignModal = false;
-          this.load();
+          if (selectedResponsibility?.responsibilityCode !== 'CLASS_TEACHER') {
+            this.showAssignModal = false;
+            this.load();
+            return;
+          }
+
+          this.teacherAllocationApi.assignClassTeacher({
+            sectionId: this.assignSectionId!,
+            staffId: this.staffId,
+            effectiveFrom: this.assignForm.effectiveFrom
+          }).subscribe({
+            next: () => {
+              this.showAssignModal = false;
+              this.load();
+            }
+          });
         }
       });
   }

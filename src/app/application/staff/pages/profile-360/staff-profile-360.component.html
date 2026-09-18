@@ -8,7 +8,7 @@
   <!-- ───────── HERO ───────── -->
   <div class="sp-hero">
     <div class="sp-hero__avatar-wrap">
-      <img *ngIf="profile.photoUrl" [src]="profile.photoUrl" [alt]="profile.fullName" class="sp-avatar sp-avatar--xl"/>
+      <img *ngIf="profile.photoUrl" [src]="profile.photoUrl" [alt]="profile.fullName" class="sp-avatar sp-avatar--xl" />
       <div *ngIf="!profile.photoUrl" class="sp-avatar sp-avatar--xl sp-avatar--initials">
         {{ initials(profile.fullName) }}
       </div>
@@ -24,7 +24,7 @@
       <div class="sp-hero__chips">
         <span class="sp-chip">
           <i class="pi" [class.pi-graduation-cap]="profile.staffType === 'TEACHING'"
-             [class.pi-briefcase]="profile.staffType !== 'TEACHING'"></i>
+            [class.pi-briefcase]="profile.staffType !== 'TEACHING'"></i>
           {{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}
         </span>
         <span class="sp-chip">
@@ -38,13 +38,8 @@
     </div>
 
     <div class="sp-hero__actions">
-      <button id="btn-edit-profile" type="button" class="sp-action-btn" (click)="editProfile()">
-        <i class="pi pi-pencil"></i> Edit Profile
-      </button>
-      <button id="btn-more-actions" type="button" class="sp-action-btn sp-action-btn--outline"
-              (click)="openAssignModal()">
-        <i class="pi pi-plus"></i> Assign Responsibility
-      </button>
+
+
     </div>
   </div>
 
@@ -56,11 +51,8 @@
 
       <!-- Tabs -->
       <div class="sp-tabs">
-        <button *ngFor="let tab of tabs"
-                type="button"
-                class="sp-tab-btn"
-                [class.is-active]="activeTab === tab.id"
-                (click)="setTab(tab.id)">
+        <button *ngFor="let tab of tabs" type="button" class="sp-tab-btn" [class.is-active]="activeTab === tab.id"
+          (click)="setTab(tab.id)">
           <i class="pi" [ngClass]="tab.icon"></i>
           {{ tab.label }}
         </button>
@@ -187,6 +179,7 @@
           </button>
         </div>
 
+
         <div *ngIf="!profile.responsibilities || profile.responsibilities.length === 0" class="sp-empty-state">
           <i class="pi pi-sitemap"></i>
           <p>No responsibilities assigned yet.</p>
@@ -253,10 +246,12 @@
               <div *ngIf="s.basicPay"><span>Basic Pay</span><strong>₹{{ s.basicPay | number }}</strong></div>
               <div *ngIf="s.hra"><span>HRA</span><strong>₹{{ s.hra | number }}</strong></div>
               <div *ngIf="s.da"><span>DA</span><strong>₹{{ s.da | number }}</strong></div>
-              <div *ngIf="s.specialAllowance"><span>Special Allow.</span><strong>₹{{ s.specialAllowance | number }}</strong></div>
+              <div *ngIf="s.specialAllowance"><span>Special Allow.</span><strong>₹{{ s.specialAllowance | number
+                  }}</strong></div>
               <div *ngIf="s.pfEmployee"><span>PF</span><strong>₹{{ s.pfEmployee | number }}</strong></div>
               <div *ngIf="s.esiEmployee"><span>ESI</span><strong>₹{{ s.esiEmployee | number }}</strong></div>
-              <div *ngIf="s.professionalTax"><span>Prof. Tax</span><strong>₹{{ s.professionalTax | number }}</strong></div>
+              <div *ngIf="s.professionalTax"><span>Prof. Tax</span><strong>₹{{ s.professionalTax | number }}</strong>
+              </div>
             </div>
             <button *ngIf="s.active" type="button" class="sd-btn sd-btn--ghost" (click)="openSalaryModal(s)">
               <i class="pi pi-pencil"></i> Edit
@@ -306,12 +301,11 @@
                 </td>
                 <td>{{ p.generatedOn | date:'d MMM yyyy' }}</td>
                 <td>
-                  <button type="button" class="sd-icon-btn" title="Download Payslip"
-                          (click)="downloadPayslip(p)">
+                  <button type="button" class="sd-icon-btn" title="Download Payslip" (click)="downloadPayslip(p)">
                     <i class="pi pi-download"></i>
                   </button>
-                  <button *ngIf="p.status !== 'PAID'" type="button" class="sd-icon-btn"
-                          title="Mark Paid" (click)="markPaid(p)">
+                  <button *ngIf="p.status !== 'PAID'" type="button" class="sd-icon-btn" title="Mark Paid"
+                    (click)="markPaid(p)">
                     <i class="pi pi-check-circle"></i>
                   </button>
                 </td>
@@ -359,8 +353,8 @@
         <button type="button" class="sp-quick-btn" (click)="setTab('payroll')">
           <i class="pi pi-wallet"></i> View Payslip
         </button>
-        <button type="button" class="sp-quick-btn" [class.danger]="profile.active"
-                (click)="toggleActive()" [disabled]="actionLoading">
+        <button type="button" class="sp-quick-btn" [class.danger]="profile.active" (click)="toggleActive()"
+          [disabled]="actionLoading">
           <i class="pi" [class.pi-ban]="profile.active" [class.pi-check]="!profile.active"></i>
           {{ profile.active ? 'Deactivate Staff' : 'Activate Staff' }}
         </button>
@@ -412,39 +406,53 @@
     <div class="sm-modal__body">
       <div class="sw-field">
         <label class="sw-label">Responsibility <span class="req">*</span></label>
-        <p-dropdown
-          inputId="select-assign-responsibility"
-          [options]="responsibilityOptions"
-          [(ngModel)]="assignForm.responsibilityId"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
+        <p-dropdown inputId="select-assign-responsibility" [options]="responsibilityOptions"
+          [(ngModel)]="assignForm.responsibilityId" optionLabel="label" optionValue="value" appendTo="body"
           styleClass="att-filter-dropdown">
         </p-dropdown>
       </div>
+      <div class="sw-form-grid">
+        <div class="sw-field">
+          <label class="sw-label">Class <span class="req">*</span></label>
+          <p-dropdown inputId="select-assign-class" [options]="classOptions" [(ngModel)]="assignClassId"
+            optionLabel="label" optionValue="value" placeholder="Select Class" appendTo="body"
+            styleClass="att-filter-dropdown" (onChange)="onAssignClassChange()">
+          </p-dropdown>
+        </div>
+
+        <div class="sw-field">
+          <label class="sw-label">Section <span class="req">*</span></label>
+          <p-dropdown inputId="select-assign-section" [options]="sectionOptions" [(ngModel)]="assignSectionId"
+            optionLabel="label" optionValue="value" placeholder="Select Section" appendTo="body"
+            styleClass="att-filter-dropdown" [disabled]="!assignClassId">
+          </p-dropdown>
+        </div>
+      </div>
+
+
       <div class="sw-field">
         <label class="sw-label">Scope / Notes</label>
-        <input type="text" [(ngModel)]="assignForm.scope" placeholder="e.g. Class 10A, Science Block"/>
+        <input type="text" [(ngModel)]="assignForm.scope" placeholder="e.g. Class 10A, Science Block" />
       </div>
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Effective From <span class="req">*</span></label>
-          <input type="date" [(ngModel)]="assignForm.effectiveFrom"/>
+          <input type="date" [(ngModel)]="assignForm.effectiveFrom" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Effective To</label>
-          <input type="date" [(ngModel)]="assignForm.effectiveTo"/>
+          <input type="date" [(ngModel)]="assignForm.effectiveTo" />
         </div>
       </div>
       <div class="sw-field">
         <label class="sw-label">Remarks</label>
-        <input type="text" [(ngModel)]="assignForm.remarks"/>
+        <input type="text" [(ngModel)]="assignForm.remarks" />
       </div>
     </div>
     <div class="sm-modal__foot">
       <button type="button" class="sd-btn sd-btn--ghost" (click)="showAssignModal = false">Cancel</button>
       <button type="button" class="sd-btn sd-btn--primary" (click)="saveAssignment()"
-              [disabled]="!assignForm.responsibilityId">
+        [disabled]="!assignForm.responsibilityId || !assignSectionId">
         Assign
       </button>
     </div>
@@ -464,58 +472,53 @@
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Salary Type</label>
-          <p-dropdown
-            [options]="salaryTypeOptions"
-            [(ngModel)]="salaryForm.salaryType"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="att-filter-dropdown">
+          <p-dropdown [options]="salaryTypeOptions" [(ngModel)]="salaryForm.salaryType" optionLabel="label"
+            optionValue="value" appendTo="body" styleClass="att-filter-dropdown">
           </p-dropdown>
         </div>
         <div class="sw-field">
           <label class="sw-label">Effective From <span class="req">*</span></label>
-          <input type="date" [(ngModel)]="salaryForm.effectiveFrom"/>
+          <input type="date" [(ngModel)]="salaryForm.effectiveFrom" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Basic Pay (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.basicPay" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.basicPay" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">HRA (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.hra" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.hra" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">DA (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.da" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.da" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Special Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.specialAllowance" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.specialAllowance" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Transport Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.transportAllowance" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.transportAllowance" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Other Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.otherAllowance" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.otherAllowance" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">PF — Employee (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.pfEmployee" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.pfEmployee" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">ESI — Employee (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.esiEmployee" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.esiEmployee" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Professional Tax (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.professionalTax" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.professionalTax" min="0" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Other Deduction (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.otherDeduction" min="0"/>
+          <input type="number" [(ngModel)]="salaryForm.otherDeduction" min="0" />
         </div>
       </div>
       <div class="sw-salary-summary">
@@ -528,19 +531,19 @@
       <div class="sw-form-grid">
         <div class="sw-field">
           <label class="sw-label">Bank Name</label>
-          <input type="text" [(ngModel)]="salaryForm.bankName"/>
+          <input type="text" [(ngModel)]="salaryForm.bankName" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Account Holder</label>
-          <input type="text" [(ngModel)]="salaryForm.accountHolderName"/>
+          <input type="text" [(ngModel)]="salaryForm.accountHolderName" />
         </div>
         <div class="sw-field">
           <label class="sw-label">Account Number</label>
-          <input type="text" [(ngModel)]="salaryForm.accountNumber"/>
+          <input type="text" [(ngModel)]="salaryForm.accountNumber" />
         </div>
         <div class="sw-field">
           <label class="sw-label">IFSC Code</label>
-          <input type="text" [(ngModel)]="salaryForm.ifscCode"/>
+          <input type="text" [(ngModel)]="salaryForm.ifscCode" />
         </div>
       </div>
     </div>
@@ -553,4 +556,3 @@
     </div>
   </div>
 </div>
-

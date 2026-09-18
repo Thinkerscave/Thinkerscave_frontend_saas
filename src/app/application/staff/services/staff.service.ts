@@ -45,14 +45,14 @@ export class StaffService {
 
   getStaffList(filters: StaffFilterParams = {}): Observable<PageResponse<StaffSummary>> {
     let params = new HttpParams();
-    if (filters.keyword)            { params = params.set('keyword',            filters.keyword); }
-    if (filters.staffType)          { params = params.set('staffType',          filters.staffType); }
+    if (filters.keyword) { params = params.set('keyword', filters.keyword); }
+    if (filters.staffType) { params = params.set('staffType', filters.staffType); }
     if (filters.employmentCategory) { params = params.set('employmentCategory', filters.employmentCategory); }
-    if (filters.employmentStatus)   { params = params.set('employmentStatus',   filters.employmentStatus); }
-    if (filters.designation)        { params = params.set('designation',        filters.designation); }
-    if (filters.page !== undefined)  { params = params.set('page',              String(filters.page)); }
-    if (filters.size !== undefined)  { params = params.set('size',              String(filters.size)); }
-    if (filters.sort)               { params = params.set('sort',               filters.sort); }
+    if (filters.employmentStatus) { params = params.set('employmentStatus', filters.employmentStatus); }
+    if (filters.designation) { params = params.set('designation', filters.designation); }
+    if (filters.page !== undefined) { params = params.set('page', String(filters.page)); }
+    if (filters.size !== undefined) { params = params.set('size', String(filters.size)); }
+    if (filters.sort) { params = params.set('sort', filters.sort); }
     return this.http
       .get<ApiResponse<PageResponse<StaffSummary>>>(`${this.base}/staff`, { params })
       .pipe(map(r => ({
@@ -211,12 +211,12 @@ export class StaffService {
 
   getPayrollList(filters: PayrollFilterParams = {}): Observable<PageResponse<Payroll>> {
     let params = new HttpParams();
-    if (filters.year !== undefined)  { params = params.set('year',    String(filters.year)); }
-    if (filters.month !== undefined) { params = params.set('month',   String(filters.month)); }
-    if (filters.status)              { params = params.set('status',  filters.status); }
-    if (filters.staffId !== undefined){ params = params.set('staffId', String(filters.staffId)); }
-    if (filters.page !== undefined)  { params = params.set('page',    String(filters.page)); }
-    if (filters.size !== undefined)  { params = params.set('size',    String(filters.size)); }
+    if (filters.year !== undefined) { params = params.set('year', String(filters.year)); }
+    if (filters.month !== undefined) { params = params.set('month', String(filters.month)); }
+    if (filters.status) { params = params.set('status', filters.status); }
+    if (filters.staffId !== undefined) { params = params.set('staffId', String(filters.staffId)); }
+    if (filters.page !== undefined) { params = params.set('page', String(filters.page)); }
+    if (filters.size !== undefined) { params = params.set('size', String(filters.size)); }
     return this.http
       .get<ApiResponse<PageResponse<Payroll>>>(`${this.base}/payroll`, { params })
       .pipe(map(r => r.data));

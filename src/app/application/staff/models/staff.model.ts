@@ -9,7 +9,7 @@
 export type StaffType = 'TEACHING' | 'NON_TEACHING';
 export type EmploymentCategory = 'PERMANENT' | 'CONTRACT' | 'TEMPORARY' | 'PART_TIME' | 'VISITING_FACULTY';
 export type EmploymentStatus = 'ACTIVE' | 'PROBATION' | 'NOTICE_PERIOD' | 'RESIGNED' | 'RETIRED' | 'CONTRACT_COMPLETED';
-export type SalaryType = 'MONTHLY' | 'DAILY_WAGE';
+export type SalaryType = 'MONTHLY' | 'YEARLY' | 'DAILY_WAGE';
 export type PayrollStatus = 'GENERATED' | 'PAID' | 'PENDING' | 'CANCELLED';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -333,4 +333,6 @@ export interface PayrollFilterParams {
 export interface StaffCreateResponse {
   staffId: number;
   staffCode: string;
+  userId: number;
+  temporaryPassword: string;
 }
