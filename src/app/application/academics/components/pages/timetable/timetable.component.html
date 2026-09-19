@@ -2,13 +2,7 @@
 
 <div class="tt-page acad-page">
 <tc-saas-page-header>
-    <p-dropdown
-      [options]="years"
-      [(ngModel)]="selectedYearId"
-      (onChange)="onYearChange()"
-      optionLabel="name"
-      optionValue="academicYearId">
-    </p-dropdown>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <span class="tt-badge" *ngIf="dashboard as dash" [class.tt-badge--success]="dash.academicYearStatus === 'CURRENT'">
       {{ dash.academicYearStatus }}
     </span>

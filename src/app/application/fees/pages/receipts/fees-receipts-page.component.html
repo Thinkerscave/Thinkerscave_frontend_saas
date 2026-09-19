@@ -2,20 +2,14 @@
   <app-toast />
 
   <tc-saas-page-header>
+    <tc-academic-year-selector
+      *tcHasPerm="resources.RECEIPTS; action: 'view'"
+      [allowAll]="true"
+      (yearChange)="onAcademicYearChange($event)">
+    </tc-academic-year-selector>
     <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
       <i class="pi pi-arrow-left"></i> Back
     </a>
-    <div class="tc-form-field fees-year-field" *tcHasPerm="resources.RECEIPTS; action: 'view'">
-      <label>Academic Year</label>
-      <select class="p-inputtext p-component fees-year-select"
-              [(ngModel)]="academicYearId"
-              (ngModelChange)="onYearChange()">
-        <option [ngValue]="null">All years</option>
-        @for (y of years; track y.id) {
-          <option [ngValue]="y.id">{{ y.name }}</option>
-        }
-      </select>
-    </div>
   </tc-saas-page-header>
 
   <div class="tc-card tc-card--panel fees-surface-panel" *tcHasPerm="resources.RECEIPTS; action: 'view'">

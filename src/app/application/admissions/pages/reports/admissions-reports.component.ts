@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  OnInit,
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ import { MessageService } from 'primeng/api';
 import { ChartModule } from 'primeng/chart';
 import { DropdownModule } from 'primeng/dropdown';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 
 import {
   AdmissionReportDashboard,
@@ -32,6 +31,7 @@ import {
   SaasPageHeaderComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
 
 const APPLICATION_STATUS_OPTIONS = [
   'DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'ACTION_REQUIRED', 'DOCUMENTS_PENDING',
@@ -54,6 +54,7 @@ const CHART_COLORS = [
     ChartModule,
     DropdownModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     SaasPillComponent,
     TcPageSkeletonComponent
   ],
@@ -61,7 +62,7 @@ const CHART_COLORS = [
   styleUrls: ['../../admissions.shared.scss'],
   templateUrl: './admissions-reports.component.html'
 })
-export class AdmissionsReportsComponent implements OnInit {
+export class AdmissionsReportsComponent {
   private readonly api = inject(AdmissionsCrmService);
   private readonly nav = inject(AdmissionsNavService);
   private readonly router = inject(Router);
@@ -87,9 +88,9 @@ export class AdmissionsReportsComponent implements OnInit {
   dashboard: AdmissionReportDashboard | null = null;
   lastUpdated: Date | null = null;
 
-  years: LookupOption[] = [];
   classes: LookupOption[] = [];
   counselors: CounselorOption[] = [];
+  private chartsReady = false;
 
   filter: AdmissionReportFilter = {
     academicYearId: null,
@@ -114,30 +115,36 @@ export class AdmissionsReportsComponent implements OnInit {
   doughnutOptions: Record<string, unknown> = {};
   barOptions: Record<string, unknown> = {};
 
-  ngOnInit(): void {
-    this.initChartOptions();
-    forkJoin({
-      years: this.api.academicYears(),
-      counselors: this.api.searchCounselors('', 0, 100)
-    }).subscribe({
-      next: ({ years, counselors }) => {
-        this.years = years;
-        this.counselors = counselors.content ?? [];
-        this.applyDefaultAcademicYear();
+  constructor() {
+    this.api.searchCounselors('', 0, 100).subscribe({
+      next: page => {
+        this.counselors = page.content ?? [];
         this.cdr.markForCheck();
-        this.load();
-      },
-      error: () => this.load()
+      }
     });
   }
 
-  private applyDefaultAcademicYear(): void {
-    if (this.filter.academicYearId != null) return;
-    const current = this.years.find(y => (y.status || '').toUpperCase() === 'CURRENT')
-      ?? this.years[0];
-    if (!current?.id) return;
-    this.filter.academicYearId = current.id;
-    this.onYearChange();
+  onAcademicYearChange(yearId: number | null): void {
+    if (!this.chartsReady) {
+      this.initChartOptions();
+      this.chartsReady = true;
+    }
+    this.filter.academicYearId = yearId;
+    this.filter.classId = null;
+    this.classes = [];
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.api.academicClasses(yearId).subscribe({
+      next: classes => {
+        this.classes = classes;
+        this.cdr.markForCheck();
+      }
+    });
+    this.load();
   }
 
   onYearChange(): void {
@@ -157,8 +164,9 @@ export class AdmissionsReportsComponent implements OnInit {
   }
 
   resetFilters(): void {
+    const yearId = this.filter.academicYearId;
     this.filter = {
-      academicYearId: null,
+      academicYearId: yearId,
       classId: null,
       source: null,
       counselorId: null,
@@ -169,8 +177,7 @@ export class AdmissionsReportsComponent implements OnInit {
       trendGranularity: this.filter.trendGranularity || 'MONTHLY',
       recentLimit: 15
     };
-    this.classes = [];
-    this.applyDefaultAcademicYear();
+    this.onYearChange();
     this.load();
   }
 

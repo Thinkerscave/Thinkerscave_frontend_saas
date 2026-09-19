@@ -13,14 +13,14 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicClassDto } from '../../../models/classes-sections.model';
 import {
   ACADEMICS_TEACHER_ALLOCATION_RESOURCE,
@@ -45,6 +45,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     DropdownModule,
     ProgressBarModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
@@ -54,7 +55,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class TeacherAllocationPageComponent implements OnInit {
   private readonly api = inject(TeacherAllocationApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
+  private readonly yearCtx = inject(AcademicYearContextService);
   private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -74,7 +75,6 @@ export class TeacherAllocationPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  years: AcademicYearDto[] = [];
   classes: AcademicClassDto[] = [];
   classOptions: { label: string; value: number | null }[] = [{ label: 'All Classes', value: null }];
   sections: { label: string; value: number | null }[] = [{ label: 'All Sections', value: null }];
@@ -113,28 +113,26 @@ export class TeacherAllocationPageComponent implements OnInit {
     const qpYear = qp.get('academicYearId');
     if (qpClass) this.classFilter = Number(qpClass);
     if (qpSubject) this.subjectFilter = Number(qpSubject);
-
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const preferred = qpYear
-          ? years.find((y) => y.academicYearId === Number(qpYear))
-          : null;
-        const current = preferred ?? years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
+    if (qpYear) {
+      const id = Number(qpYear);
+      if (Number.isFinite(id)) {
+        this.yearCtx.selectYear(id);
       }
-    });
+    }
+  }
+
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.classFilter = null;
+    this.sectionFilter = null;
+    this.subjectFilter = null;
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {
@@ -169,13 +167,6 @@ export class TeacherAllocationPageComponent implements OnInit {
           detail: err?.error?.message || 'Please try again'
         })
       });
-  }
-
-  onYearChange(): void {
-    this.classFilter = null;
-    this.sectionFilter = null;
-    this.subjectFilter = null;
-    this.reload();
   }
 
   onClassChange(): void {

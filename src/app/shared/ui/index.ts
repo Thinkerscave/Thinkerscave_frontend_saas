@@ -11,5 +11,6 @@ export * from './quick-actions/quick-actions.component';
 export * from './timeline/timeline.component';
 export * from './workspace-shell/workspace-shell.component';
 export * from './loading';
+export * from './academic-year-selector';
 export * from './app-form';
 export * from './app-list';

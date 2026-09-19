@@ -12,6 +12,9 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
+import { AcademicYearContextService } from '../../../../shared/services/academic-year-context.service';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { environment } from '../../../../../environments/environment';
@@ -36,7 +39,7 @@ interface LookupOption { id: number; name: string; status?: string; }
   imports: [
     CommonModule, FormsModule, RouterLink, DialogModule, HasPermissionDirective,
     AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent,
-    TcPageSkeletonComponent
+    SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './student-fee-page.component.html',
   styleUrls: ['./student-fee-page.component.scss', '../../fees.shared.scss']
@@ -49,10 +52,10 @@ export class StudentFeePageComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly pageHeader = inject(BreadCrumbService);
   private readonly backNav = inject(BackNavigationService);
+  private readonly yearCtx = inject(AcademicYearContextService);
 
   readonly resources = FEES_RESOURCES;
 
-  years: LookupOption[] = [];
   classes: LookupOption[] = [];
   linked: LinkedStudentOption[] = [];
   academicYearId: number | null = null;
@@ -96,26 +99,6 @@ export class StudentFeePageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
-      .pipe(map(r => r.data ?? []))
-      .subscribe({
-        next: years => {
-          this.years = years;
-          const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
-            ?? years.find(y => /2026-27/i.test(y.name))
-            ?? years[0];
-          this.academicYearId = current?.id ?? null;
-          this.bootstrapScope();
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.pageBooting = false;
-          this.listLoading = false;
-          this.detailLoading = false;
-          this.listError = 'Failed to load academic years';
-          this.cdr.detectChanges();
-        }
-      });
     this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/classes`)
       .pipe(map(r => r.data ?? []))
       .subscribe(classes => {
@@ -127,6 +110,24 @@ export class StudentFeePageComponent implements OnInit {
     if (routeStudentId) {
       this.selectedStudentId = Number(routeStudentId);
       this.detailLoading = true;
+    }
+  }
+
+  onAcademicYearChange(yearId: number | null): void {
+    this.academicYearId = yearId;
+    if (yearId == null) {
+      this.rows = [];
+      this.detail = null;
+      this.pageBooting = false;
+      this.listLoading = false;
+      this.detailLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.pageBooting) {
+      this.bootstrapScope();
+    } else {
+      this.onYearChange();
     }
   }
 
@@ -299,6 +300,7 @@ export class StudentFeePageComponent implements OnInit {
   }
 
   switchToYear(yearId: number): void {
+    this.yearCtx.selectYear(yearId);
     this.academicYearId = yearId;
     this.activeTab = 'overview';
     this.loadDetail();

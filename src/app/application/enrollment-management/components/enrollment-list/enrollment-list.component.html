@@ -1,4 +1,5 @@
 <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <ng-container>
         <p-button label="New enrollment" icon="pi pi-plus"
                   (onClick)="router.navigate(['/app/enrollments/new'])"></p-button>

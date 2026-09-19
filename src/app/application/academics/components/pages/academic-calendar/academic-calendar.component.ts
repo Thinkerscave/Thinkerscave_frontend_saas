@@ -19,15 +19,14 @@ import { MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/utils/paged-result.util';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicCalendarApiService } from '../../../services/academic-calendar-api.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_CALENDAR_RESOURCE,
   AcademicCalendarDashboard,
@@ -62,6 +61,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     FormsModule,
     ReactiveFormsModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     AppPaginatorComponent,
     DialogModule,
     DropdownModule,
@@ -78,7 +78,6 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 export class AcademicCalendarPageComponent implements OnInit {
   private readonly api = inject(AcademicCalendarApiService);
   private readonly classesApi = inject(ClassesSectionsApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -108,7 +107,6 @@ export class AcademicCalendarPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: AcademicCalendarDashboard | null = null;
   searchTerm = '';
@@ -225,26 +223,19 @@ export class AcademicCalendarPageComponent implements OnInit {
     this.eventForm.get('audienceType')?.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.cdr.markForCheck());
+  }
 
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const current = years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.loadClassOptions(this.selectedYearId);
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
-      }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.page = 0;
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.loadClassOptions(yearId);
+    this.reload();
   }
 
   onSearchChange(value: string): void {
@@ -253,14 +244,6 @@ export class AcademicCalendarPageComponent implements OnInit {
 
   onFilterChange(): void {
     this.page = 0;
-    this.reload();
-  }
-
-  onYearChange(): void {
-    this.page = 0;
-    if (this.selectedYearId) {
-      this.loadClassOptions(this.selectedYearId);
-    }
     this.reload();
   }
 

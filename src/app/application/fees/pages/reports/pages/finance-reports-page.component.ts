@@ -1,18 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { DropdownModule } from 'primeng/dropdown';
 import { Subscription, finalize } from 'rxjs';
 
-import { AcademicYearDto } from '../../../../academics/models/academic-year.model';
-import { AcademicYearApiService } from '../../../../academics/services/academic-year-api.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { AppToastComponent } from '../../../../../core/feedback/app-toast.component';
 import { UiFeedbackService } from '../../../../../core/feedback/ui-feedback.service';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { SaasPageHeaderComponent, SaasPillComponent } from '../../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 import {
   FINANCE_REPORTS_RESOURCE,
@@ -38,15 +38,16 @@ const CHART_COLORS = [
     AppToastComponent,
     HasPermissionDirective,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     SaasPillComponent,
     TcPageSkeletonComponent
   ],
   templateUrl: './finance-reports-page.component.html',
   styleUrls: ['./finance-reports-page.component.scss', '../../../fees.shared.scss']
 })
-export class FinanceReportsPageComponent implements OnInit {
+export class FinanceReportsPageComponent {
   private readonly api = inject(FinanceReportsApiService);
-  private readonly academicYearsApi = inject(AcademicYearApiService);
+  private readonly yearCtx = inject(AcademicYearContextService);
   private readonly router = inject(Router);
   private readonly feedback = inject(UiFeedbackService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -62,7 +63,6 @@ export class FinanceReportsPageComponent implements OnInit {
     { label: 'Custom', value: 'CUSTOM' }
   ];
 
-  years: AcademicYearDto[] = [];
   draftFilter: FinanceReportQuery = this.defaultFilter();
   appliedFilter: FinanceReportQuery = this.defaultFilter();
   overview: FinanceReportOverview | null = null;
@@ -82,26 +82,27 @@ export class FinanceReportsPageComponent implements OnInit {
   trendOptions: Record<string, unknown> = {};
   doughnutOptions: Record<string, unknown> = {};
   private overviewSub: Subscription | null = null;
+  private chartsConfigured = false;
 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.exportOpen = false;
   }
 
-  ngOnInit(): void {
-    this.configureCharts();
-    this.academicYearsApi.search().subscribe({
-      next: years => {
-        this.years = years ?? [];
-        const current = this.years.find(year => year.status === 'CURRENT') ?? this.years[0];
-        if (current?.academicYearId != null) {
-          this.draftFilter.academicYearId = current.academicYearId;
-          this.appliedFilter.academicYearId = current.academicYearId;
-        }
-        this.load();
-      },
-      error: () => this.load()
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    if (!this.chartsConfigured) {
+      this.configureCharts();
+      this.chartsConfigured = true;
+    }
+    this.draftFilter = { ...this.draftFilter, academicYearId: yearId };
+    this.appliedFilter = { ...this.appliedFilter, academicYearId: yearId };
+    if (yearId == null) {
+      this.overview = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.load();
   }
 
   get periodLabel(): string {
@@ -125,10 +126,9 @@ export class FinanceReportsPageComponent implements OnInit {
   }
 
   resetFilters(): void {
-    const current = this.years.find(year => year.status === 'CURRENT') ?? this.years[0];
     this.draftFilter = {
       ...this.defaultFilter(),
-      academicYearId: current?.academicYearId ?? null
+      academicYearId: this.yearCtx.selectedYearId()
     };
     this.appliedFilter = { ...this.draftFilter };
     this.errorMessage = '';

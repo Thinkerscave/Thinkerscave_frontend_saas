@@ -2,19 +2,10 @@
   <app-toast />
 
   <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
       <i class="pi pi-arrow-left"></i> Back
     </a>
-    <div class="tc-form-field fees-year-field">
-      <label>Academic Year</label>
-      <select class="p-inputtext p-component fees-year-select"
-              [(ngModel)]="academicYearId"
-              (ngModelChange)="load()">
-        @for (y of years; track y.id) {
-          <option [ngValue]="y.id">{{ y.name }}</option>
-        }
-      </select>
-    </div>
   </tc-saas-page-header>
 
   @if (summary) {

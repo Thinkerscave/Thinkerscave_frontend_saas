@@ -15,6 +15,7 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenuModule } from 'primeng/menu';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { AppGridTableToggleComponent, AppListViewMode, AppPaginatorComponent } from '../../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/utils/paged-result.util';
@@ -22,10 +23,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { ViewPreferenceService } from '../../../../services/view-preference.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
   SUBJECT_CATEGORY_OPTIONS,
@@ -48,6 +47,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     FormsModule,
     ReactiveFormsModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     AppGridTableToggleComponent,
     AppPaginatorComponent,
     DialogModule,
@@ -62,7 +62,6 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class SubjectsMappingPageComponent implements OnInit {
   private readonly api = inject(SubjectsMappingApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -91,7 +90,6 @@ export class SubjectsMappingPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: SubjectsMappingDashboard | null = null;
   searchTerm = '';
@@ -170,25 +168,18 @@ export class SubjectsMappingPageComponent implements OnInit {
         this.page = 0;
         this.reload();
       });
+  }
 
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const current = years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
-      }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.page = 0;
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   onSearchChange(value: string): void {
@@ -196,11 +187,6 @@ export class SubjectsMappingPageComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.page = 0;
-    this.reload();
-  }
-
-  onYearChange(): void {
     this.page = 0;
     this.reload();
   }

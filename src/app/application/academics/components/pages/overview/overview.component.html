@@ -1,14 +1,8 @@
 <div class="ov-page acad-page">
 <tc-saas-page-header>
-    <p-dropdown
-      [options]="years"
-      [(ngModel)]="selectedYearId"
-      (onChange)="reload()"
-      optionLabel="name"
-      optionValue="academicYearId">
-    </p-dropdown>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <span class="ov-pill" *ngIf="overview?.yearHeader?.status === 'CURRENT'">Active</span>
-    <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }">Academic Year</a>
+    <a class="ov-btn ov-btn--ghost" routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }">Manage years</a>
   </tc-saas-page-header>
 
     <tc-page-skeleton *ngIf="loading" variant="dashboard" [kpis]="4"></tc-page-skeleton>

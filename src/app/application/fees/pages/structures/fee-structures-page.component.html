@@ -3,6 +3,10 @@
   <p-confirmDialog />
 
   <tc-saas-page-header>
+    <tc-academic-year-selector
+      [allowAll]="true"
+      (yearChange)="onAcademicYearChange($event)">
+    </tc-academic-year-selector>
     <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
       <i class="pi pi-arrow-left"></i> Back
     </a>
@@ -17,15 +21,6 @@
         <div class="tc-form-field tc-form-field--grow">
           <label>Search</label>
           <input class="p-inputtext p-component" placeholder="Search structure" [(ngModel)]="q" (keyup.enter)="search()" />
-        </div>
-        <div class="tc-form-field">
-          <label>Academic Year</label>
-          <select class="p-inputtext p-component" [(ngModel)]="academicYearId">
-            <option [ngValue]="null">All Years</option>
-            @for (y of years; track y.id) {
-              <option [ngValue]="y.id">{{ y.name }}</option>
-            }
-          </select>
         </div>
         <div class="tc-form-field">
           <label>Class</label>

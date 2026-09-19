@@ -1,17 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
-import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
 import { CollectFeeDialogComponent } from '../../components/collect-fee-dialog/collect-fee-dialog.component';
 import {
@@ -21,25 +19,21 @@ import {
   StudentFeeListItem
 } from '../../models/fees.model';
 
-interface LookupOption { id: number; name: string; }
-
 @Component({
   selector: 'app-fees-outstanding-page',
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink, HasPermissionDirective, AppToastComponent,
     CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
-    TcPageSkeletonComponent
+    TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fees-outstanding-page.component.html',
   styleUrls: ['./fees-outstanding-page.component.scss', '../../fees.shared.scss']
 })
-export class FeesOutstandingPageComponent implements OnInit {
+export class FeesOutstandingPageComponent {
   private readonly api = inject(FeesApiService);
-  private readonly http = inject(HttpClient);
 
   readonly resources = FEES_RESOURCES;
-  years: LookupOption[] = [];
   academicYearId: number | null = null;
   status = '';
   rows: OutstandingItem[] = [];
@@ -52,14 +46,17 @@ export class FeesOutstandingPageComponent implements OnInit {
   collectVisible = false;
   collectStudent: StudentFeeListItem | null = null;
 
-  ngOnInit(): void {
-    this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
-      .pipe(map(r => r.data ?? []))
-      .subscribe(years => {
-        this.years = years;
-        this.academicYearId = years[0]?.id ?? null;
-        this.load();
-      });
+  onAcademicYearChange(yearId: number | null): void {
+    this.academicYearId = yearId;
+    this.page = 0;
+    if (yearId == null) {
+      this.rows = [];
+      this.summary = null;
+      this.total = 0;
+      this.loading = false;
+      return;
+    }
+    this.load();
   }
 
   load(): void {

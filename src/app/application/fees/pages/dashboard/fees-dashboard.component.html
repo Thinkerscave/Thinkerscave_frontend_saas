@@ -2,6 +2,7 @@
   <app-toast />
 
   <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
             *tcHasPerm="resources.COLLECTION; action: 'manage'"
             (click)="openCollect()">
@@ -17,22 +18,6 @@
       <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
     </div>
   } @else {
-    <section class="fees-context" aria-label="Academic year context">
-      <div class="fees-context__primary">
-        <div class="fees-context__label">Academic Year</div>
-        <div class="fees-context__controls">
-          <select class="p-inputtext p-component fees-year-select fees-year-select--compact"
-                  [(ngModel)]="academicYearId"
-                  (ngModelChange)="onYearChange()">
-            <option [ngValue]="null" disabled>Select year</option>
-            @for (y of years; track y.id) {
-              <option [ngValue]="y.id">{{ y.name }}</option>
-            }
-          </select>
-        </div>
-      </div>
-    </section>
-
     @if (kpis) {
       <tc-kpi-group ariaLabel="Fee KPIs" mode="equal" [columns]="4">
         <tc-kpi-card label="Generated" [value]="formatMoney(kpis.generated)" icon="pi pi-wallet" tone="primary"></tc-kpi-card>

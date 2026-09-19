@@ -101,41 +101,6 @@
   padding-bottom: 0.35rem;
 }
 
-.fees-context {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--tc-border, #e2e8f0);
-  border-radius: 12px;
-  background: var(--tc-surface-card, #fff);
-  border-left: 3px solid var(--tc-primary-600, #2563eb);
-}
-
-.fees-context__primary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 180px;
-}
-
-.fees-context__label {
-  margin: 0;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--tc-text-muted, #64748b);
-}
-
-.fees-context__controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .fees-muted {
   font-size: 0.75rem;
   color: var(--tc-text-muted);
@@ -751,10 +716,6 @@
     grid-template-columns: 1fr;
   }
 
-  .fees-context {
-    justify-content: flex-start;
-  }
-
   .fees-action-grid {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
@@ -807,12 +768,6 @@
   .fees-year-select,
   .fees-year-field {
     min-width: 0;
-    width: 100%;
-  }
-
-  .fees-context,
-  .fees-context__primary,
-  .fees-context__controls {
     width: 100%;
   }
 }

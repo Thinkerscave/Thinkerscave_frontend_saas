@@ -99,6 +99,13 @@ tc-saas-page-header:not(:has(.tc-btn--back)):not(:has(.saas-page-header__actions
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.saas-page-header__actions tc-academic-year-selector {
+  order: -1;
 }
 
 .saas-page-header__actions:empty {

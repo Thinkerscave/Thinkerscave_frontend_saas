@@ -1,20 +1,9 @@
 <section class="tc-page-shell tc-directory-page fees-page student-fee-page">
   <app-toast />
 
-  <section class="fees-context" aria-label="Academic year context">
-    <div class="fees-context__primary">
-      <div class="fees-context__label">Academic Year</div>
-      <div class="fees-context__controls">
-        <select class="p-inputtext p-component fees-year-select fees-year-select--compact"
-                [(ngModel)]="academicYearId"
-                (ngModelChange)="onYearChange()">
-          @for (y of years; track y.id) {
-            <option [ngValue]="y.id">{{ y.name }}</option>
-          }
-        </select>
-      </div>
-    </div>
-  </section>
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+  </tc-saas-page-header>
 
   @if (accessRestricted) {
     <div class="tc-empty-state">

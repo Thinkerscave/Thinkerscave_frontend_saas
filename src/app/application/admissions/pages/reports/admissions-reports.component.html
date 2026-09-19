@@ -2,6 +2,7 @@
 
 <section class="tc-page-shell adm-page adm-reports-page">
   <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <span class="adm-report-updated" *ngIf="lastUpdated">Last updated {{ lastUpdated | date:'medium' }}</span>
     <button
       type="button"
@@ -16,20 +17,6 @@
   <div class="adm-report-filters tc-card tc-card--panel">
     <div class="tc-card__body">
       <div class="adm-report-filters__grid">
-        <div class="tc-form-field">
-          <label>Academic Year</label>
-          <p-dropdown
-            [options]="years"
-            [(ngModel)]="filter.academicYearId"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="Current / all years"
-            [showClear]="true"
-            appendTo="body"
-            styleClass="att-filter-dropdown"
-            (onChange)="onYearChange()"
-          />
-        </div>
         <div class="tc-form-field">
           <label>Date from</label>
           <input type="date" [(ngModel)]="filter.dateFrom" />

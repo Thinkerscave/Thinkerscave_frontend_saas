@@ -1,14 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DropdownModule } from 'primeng/dropdown';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { ACADEMICS_MY_ACADEMICS_RESOURCE, StudentMyAcademics } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
@@ -18,35 +15,34 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent, TcPageSkeletonComponent
+    CommonModule, RouterLink, SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './my-academics.component.html',
   styleUrls: ['./my-academics.component.scss']
 })
-export class MyAcademicsPageComponent implements OnInit {
+export class MyAcademicsPageComponent {
   private readonly api = inject(AcademicsMeApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_ACADEMICS_RESOURCE;
   loading = true;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   data: StudentMyAcademics | null = null;
 
-  ngOnInit(): void {
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
-        this.reload();
-      },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    if (yearId == null) {
+      this.data = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {
+    if (!this.selectedYearId) return;
     this.loading = true;
     this.api.myAcademics(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))

@@ -1,5 +1,9 @@
 <section class="tc-page-shell adm-page adm-leads-page">
   <tc-saas-page-header>
+    <tc-academic-year-selector
+      [allowAll]="true"
+      (yearChange)="onAcademicYearChange($event)">
+    </tc-academic-year-selector>
     <button type="button" class="tc-btn" (click)="exportCsv()" title="Download the current lead list as CSV">
       <i class="pi pi-download"></i> Export
     </button>
@@ -254,20 +258,6 @@
   styleClass="adm-more-filters-dialog"
   [style]="{ width: 'min(480px, 94vw)' }">
   <div class="adm-more-filters-form">
-    <div class="tc-form-field">
-      <label>Academic Year</label>
-      <p-dropdown
-        [options]="years()"
-        [(ngModel)]="filterYearId"
-        optionLabel="name"
-        optionValue="id"
-        placeholder="All years"
-        [showClear]="true"
-        appendTo="body"
-        styleClass="att-filter-dropdown"
-        (onChange)="onFilterYearChange(filterYearId)">
-      </p-dropdown>
-    </div>
     <div class="tc-form-field">
       <label>Class</label>
       <p-dropdown

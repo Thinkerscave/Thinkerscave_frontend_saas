@@ -21,6 +21,7 @@ import { finalize } from 'rxjs';
 
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
@@ -64,6 +65,7 @@ const LIST_KEY = 'tc.leads.view.v2';
     DialogModule,
     MenuModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     SaasPanelComponent,
     TcPageSkeletonComponent,
     AppListToolbarComponent,
@@ -208,6 +210,13 @@ export class LeadsListComponent implements OnInit {
     this.reloadLeads(true);
   }
 
+  onAcademicYearChange(yearId: number | null): void {
+    this.onFilterYearChange(yearId);
+    this.applied = { ...this.filter, academicYearId: this.filterYearId, scope: this.leadScope };
+    this.pageIndex = 0;
+    this.reloadLeads(!this.hasLoaded());
+  }
+
   runSearch(): void {
     this.applied = { ...this.filter, academicYearId: this.filterYearId, scope: this.leadScope };
     this.pageIndex = 0;
@@ -236,11 +245,9 @@ export class LeadsListComponent implements OnInit {
   }
 
   clearMoreFilters(): void {
-    this.filterYearId = null;
     this.filterClasses.set([]);
     this.filter = {
       ...this.filter,
-      academicYearId: null,
       classId: null,
       followUpFrom: null,
       followUpTo: null
@@ -249,7 +256,6 @@ export class LeadsListComponent implements OnInit {
 
   get moreFiltersActiveCount(): number {
     let count = 0;
-    if (this.filterYearId) count += 1;
     if (this.filter.classId) count += 1;
     if (this.filter.followUpFrom) count += 1;
     if (this.filter.followUpTo) count += 1;
@@ -302,10 +308,8 @@ export class LeadsListComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.filter = {};
-    this.applied = { scope: this.leadScope };
-    this.filterYearId = null;
-    this.filterClasses.set([]);
+    this.filter = { academicYearId: this.filterYearId };
+    this.applied = { scope: this.leadScope, academicYearId: this.filterYearId };
     this.pageIndex = 0;
     this.reloadLeads(false);
   }

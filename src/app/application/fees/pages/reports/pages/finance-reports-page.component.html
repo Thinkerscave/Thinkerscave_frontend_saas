@@ -2,6 +2,7 @@
   <app-toast />
 
   <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     @if (lastUpdated) {
       <span class="fin-report-updated">Last updated {{ lastUpdated | date:'medium' }}</span>
     }
@@ -38,19 +39,6 @@
   <div class="fin-report-filters tc-card tc-card--panel">
     <div class="tc-card__body">
       <div class="fin-report-filters__grid">
-        <div class="tc-form-field">
-          <label>Academic Year</label>
-          <p-dropdown
-            [options]="years"
-            [(ngModel)]="draftFilter.academicYearId"
-            optionLabel="name"
-            optionValue="academicYearId"
-            placeholder="Current academic year"
-            [showClear]="true"
-            appendTo="body"
-            styleClass="att-filter-dropdown"
-          />
-        </div>
         <div class="tc-form-field">
           <label>Period</label>
           <p-dropdown

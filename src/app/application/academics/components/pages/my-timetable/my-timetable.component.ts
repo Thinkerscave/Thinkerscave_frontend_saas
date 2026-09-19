@@ -1,14 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DropdownModule } from 'primeng/dropdown';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { ACADEMICS_MY_TIMETABLE_RESOURCE, MyTimetable } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
@@ -18,20 +16,18 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent, TcPageSkeletonComponent
+    CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './my-timetable.component.html',
   styleUrls: ['./my-timetable.component.scss']
 })
-export class MyTimetablePageComponent implements OnInit {
+export class MyTimetablePageComponent {
   private readonly api = inject(AcademicsMeApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_TIMETABLE_RESOURCE;
   loading = true;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   data: MyTimetable | null = null;
   viewMode: 'week' | 'day' = 'week';
@@ -40,18 +36,19 @@ export class MyTimetablePageComponent implements OnInit {
 
   private readonly palette = ['#dbeafe', '#dcfce7', '#fce7f3', '#ffedd5', '#ede9fe', '#e0f2fe', '#fef3c7'];
 
-  ngOnInit(): void {
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
-        this.reload();
-      },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    if (yearId == null) {
+      this.data = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {
+    if (!this.selectedYearId) return;
     this.loading = true;
     this.api.myTimetable(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))

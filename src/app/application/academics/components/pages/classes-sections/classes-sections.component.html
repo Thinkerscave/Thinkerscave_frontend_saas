@@ -3,6 +3,8 @@
 
 <div class="cs-page acad-page">
 <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <span class="cs-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
     <button
       type="button"
       class="tc-btn tc-btn--primary"
@@ -25,38 +27,6 @@
   </tc-page-skeleton>
 
   <ng-container *ngIf="dashboard">
-<section class="cs-context" aria-label="Academic year context">
-    <div class="cs-context__primary">
-      <div class="cs-context__label">Academic Year</div>
-      <div class="cs-context__controls">
-        <p-dropdown
-          [options]="years"
-          [(ngModel)]="selectedYearId"
-          (onChange)="onYearChange()"
-          optionLabel="name"
-          optionValue="academicYearId"
-          placeholder="Select year"
-          styleClass="cs-year-dd"
-          appendTo="body">
-        </p-dropdown>
-        <span
-          class="cs-badge"
-          [class.cs-badge--success]="dashboard.academicYearStatus === 'CURRENT'"
-          [class.cs-badge--neutral]="dashboard.academicYearStatus !== 'CURRENT'">
-          {{ dashboard.academicYearStatus }}
-        </span>
-        <span class="cs-readonly" *ngIf="dashboard.yearReadOnly">Historical · Read only</span>
-      </div>
-    </div>
-    <div class="cs-context__summary">
-      <span>{{ dashboard.classCount }} Classes</span>
-      <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dashboard.sectionCount }} Sections</span>
-      <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dashboard.studentCount }} Students</span>
-    </div>
-  </section>
-
   <div class="acad-toolbar cs-toolbar">
     <input
       class="acad-toolbar__search"

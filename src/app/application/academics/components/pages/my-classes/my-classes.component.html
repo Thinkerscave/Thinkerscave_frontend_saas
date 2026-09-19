@@ -1,6 +1,6 @@
 <div class="mc-page acad-page">
 <tc-saas-page-header>
-    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
   <tc-page-skeleton

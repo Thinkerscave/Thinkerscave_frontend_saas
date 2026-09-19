@@ -15,6 +15,8 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { environment } from '../../../../../environments/environment';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
+import { AcademicYearContextService } from '../../../../shared/services/academic-year-context.service';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { FeesApiService } from '../../services/fees-api.service';
 import {
@@ -36,7 +38,8 @@ interface LookupOption { id: number; name: string; }
   providers: [ConfirmationService],
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, DialogModule, ConfirmDialogModule, RouterLink,
-    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcPageSkeletonComponent
+    HasPermissionDirective, AppToastComponent, SaasPageHeaderComponent, TcAcademicYearSelectorComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './fee-structures-page.component.html',
   styleUrls: ['./fee-structures-page.component.scss', '../../fees.shared.scss']
@@ -47,13 +50,13 @@ export class FeeStructuresPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly feedback = inject(UiFeedbackService);
   private readonly confirm = inject(ConfirmationService);
+  private readonly yearCtx = inject(AcademicYearContextService);
 
   readonly resources = FEES_RESOURCES;
   readonly frequencies = FEE_FREQUENCY_OPTIONS;
 
   rows: FeeStructure[] = [];
   heads: FeeHead[] = [];
-  years: LookupOption[] = [];
   classes: LookupOption[] = [];
   loading = true;
   saving = false;
@@ -94,20 +97,25 @@ export class FeeStructuresPageComponent implements OnInit {
     return this.form.get('items') as FormArray;
   }
 
+  /** Form/dialog year options from shared context (not the list filter). */
+  get years(): LookupOption[] {
+    return this.yearCtx.years().map(y => ({ id: y.academicYearId, name: y.name }));
+  }
+
   ngOnInit(): void {
-    this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
-      .pipe(map(r => r.data ?? []))
-      .subscribe(years => {
-        this.years = years;
-        this.academicYearId = years[0]?.id ?? null;
-        this.loadClasses();
-        this.load();
-      });
+    this.yearCtx.ensureLoaded().subscribe();
+    this.loadClasses();
     this.api.headLookups().subscribe({ next: h => this.heads = h, error: () => this.heads = [] });
     this.api.getSettings().subscribe({
       next: s => { this.defaultDueDay = s.defaultDueDayForNewStructures ?? 10; },
       error: () => { /* GET must not create; missing config is ok for UI defaults */ }
     });
+  }
+
+  onAcademicYearChange(yearId: number | null): void {
+    this.academicYearId = yearId;
+    this.page = 0;
+    this.load();
   }
 
   loadClasses(): void {

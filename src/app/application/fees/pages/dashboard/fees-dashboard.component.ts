@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
@@ -12,7 +10,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
-import { environment } from '../../../../../environments/environment';
+import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
 import { FeesApiService } from '../../services/fees-api.service';
 import { CollectFeeDialogComponent } from '../../components/collect-fee-dialog/collect-fee-dialog.component';
 import {
@@ -25,27 +23,23 @@ import {
   StudentFeeListItem
 } from '../../models/fees.model';
 
-interface LookupOption { id: number; name: string; status?: string; }
-
 @Component({
   selector: 'app-fees-dashboard',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, HasPermissionDirective, AppToastComponent,
+    CommonModule, RouterLink, HasPermissionDirective, AppToastComponent,
     CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent, SaasPageHeaderComponent,
-    TcPageSkeletonComponent
+    TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './fees-dashboard.component.html',
   styleUrls: ['./fees-dashboard.component.scss', '../../fees.shared.scss']
 })
-export class FeesDashboardComponent implements OnInit {
+export class FeesDashboardComponent {
   private readonly api = inject(FeesApiService);
-  private readonly http = inject(HttpClient);
   private readonly feedback = inject(UiFeedbackService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly resources = FEES_RESOURCES;
-  years: LookupOption[] = [];
   academicYearId: number | null = null;
   kpis: FeeDashboardKpis | null = null;
   trend: CollectionTrendPoint[] = [];
@@ -60,24 +54,19 @@ export class FeesDashboardComponent implements OnInit {
   trendMax = 1;
   statusTotal = 1;
 
-  ngOnInit(): void {
-    this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/academic-years`)
-      .pipe(map(r => r.data ?? []))
-      .subscribe({
-        next: years => {
-          this.years = years;
-          const current = years.find(y => String(y.status || '').toUpperCase() === 'CURRENT')
-            ?? years.find(y => /2026-27/i.test(y.name))
-            ?? years.find(y => !/preparing|2027/i.test(y.name));
-          this.academicYearId = current?.id ?? years[0]?.id ?? null;
-          this.load();
-        },
-        error: err => {
-          this.loading = false;
-          this.error = extractApiError(err, 'Request failed').message || 'Failed to load academic years';
-          this.cdr.detectChanges();
-        }
-      });
+  onAcademicYearChange(yearId: number | null): void {
+    this.academicYearId = yearId;
+    if (yearId == null) {
+      this.kpis = null;
+      this.trend = [];
+      this.statusSlices = [];
+      this.recent = [];
+      this.upcoming = [];
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.load();
   }
 
   load(): void {
@@ -120,10 +109,6 @@ export class FeesDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  onYearChange(): void {
-    this.load();
   }
 
   openCollect(): void {
