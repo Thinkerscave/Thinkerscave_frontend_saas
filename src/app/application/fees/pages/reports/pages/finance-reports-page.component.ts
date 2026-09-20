@@ -102,6 +102,9 @@ export class FinanceReportsPageComponent {
       this.cdr.markForCheck();
       return;
     }
+    this.overview = null;
+    this.loading = true;
+    this.cdr.markForCheck();
     this.load();
   }
 

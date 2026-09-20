@@ -457,6 +457,7 @@ export const APPLICATION_ROUTES: Routes = [
           { path: '', data: { workspacePage: 'dashboard', ...FEES_PAGES.dashboard }, loadComponent: () => import('./fees/pages/dashboard/fees-dashboard.component').then(m => m.FeesDashboardComponent) },
           { path: 'heads', data: { workspacePage: 'heads', ...FEES_PAGES.heads }, loadComponent: () => import('./fees/pages/heads/fee-heads-page.component').then(m => m.FeeHeadsPageComponent) },
           { path: 'structures', data: { workspacePage: 'structures', ...FEES_PAGES.structures }, loadComponent: () => import('./fees/pages/structures/fee-structures-page.component').then(m => m.FeeStructuresPageComponent) },
+          { path: 'structures/:classId', data: { workspacePage: 'structures', ...FEES_PAGES.structureClass }, loadComponent: () => import('./fees/pages/structures/fee-structure-class-page.component').then(m => m.FeeStructureClassPageComponent) },
           { path: 'students', data: { workspacePage: 'students', ...FEES_PAGES.students }, loadComponent: () => import('./fees/pages/student-fee/student-fee-page.component').then(m => m.StudentFeePageComponent) },
           { path: 'students/:studentId', data: { workspacePage: 'students', ...FEES_PAGES.studentDetail }, loadComponent: () => import('./fees/pages/student-fee/student-fee-page.component').then(m => m.StudentFeePageComponent) },
           { path: 'receipts', data: { workspacePage: 'receipts', ...FEES_PAGES.receipts }, loadComponent: () => import('./fees/pages/receipts/fees-receipts-page.component').then(m => m.FeesReceiptsPageComponent) },

@@ -1,145 +1,244 @@
-<section class="tc-page-shell tc-directory-page fees-page">
+<section class="tc-page-shell tc-directory-page fees-page fh-page">
   <app-toast />
-  <p-confirmDialog />
 
   <tc-saas-page-header>
     <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
       <i class="pi pi-arrow-left"></i> Back
     </a>
-    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="openCreate()">
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary tc-btn--sm"
+      *tcHasPerm="resources.HEADS; action: 'manage'"
+      (click)="openCreate()">
       <i class="pi pi-plus"></i> Add Fee Head
     </button>
   </tc-saas-page-header>
 
-  <div class="tc-card tc-card--panel fees-surface-panel">
-    <div class="tc-card__body">
-      <div class="fees-filter-bar">
-        <div class="tc-form-field tc-form-field--grow">
-          <label>Search</label>
-          <input class="p-inputtext p-component" placeholder="Search by name or description" [(ngModel)]="q" (keyup.enter)="search()" />
-        </div>
-        <div class="tc-form-field">
-          <label>Category</label>
-          <select class="p-inputtext p-component" [(ngModel)]="category">
-            <option value="">All Categories</option>
-            @for (c of categories; track c) {
-              <option [value]="c">{{ categoryLabel(c) }}</option>
-            }
-          </select>
-        </div>
-        <div class="tc-form-field">
-          <label>Status</label>
-          <select class="p-inputtext p-component" [(ngModel)]="status">
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
-        </div>
-        <div class="tc-form-field tc-form-field--actions">
-          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
-          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="reset()">Reset</button>
-        </div>
-      </div>
+  <tc-page-skeleton
+    *ngIf="loading && !rows.length"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="5">
+  </tc-page-skeleton>
 
-      @if (loading && !rows.length) {
-        <tc-page-skeleton layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
-      } @else if (error) {
-        <div class="tc-empty-state tc-empty-state--inline">
-          <p>{{ error }}</p>
-          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
-        </div>
-      } @else if (!rows.length) {
-        <div class="tc-empty-state">
-          <i class="pi pi-inbox"></i>
-          <h3>No fee heads</h3>
-          <p>{{ q || category || status ? 'No fee heads match your search.' : 'No fee heads found.' }}</p>
-        </div>
-      } @else {
-        <div class="fees-table-wrap">
-          <table class="fees-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Fee Head Name</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th class="fees-table__actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows; track row.feeHeadId; let i = $index) {
-                <tr>
-                  <td>{{ page * size + i + 1 }}</td>
-                  <td class="font-medium">{{ row.name }}</td>
-                  <td>{{ categoryLabel(row.category) }}</td>
-                  <td>{{ row.description || '—' }}</td>
-                  <td>
-                    <span class="tc-saas-pill" [class]="row.status === 'ACTIVE' ? 'success' : 'danger'">{{ row.status }}</span>
-                  </td>
-                  <td class="fees-table__actions">
-                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="openEdit(row)" title="Edit">
-                      <i class="pi pi-pencil"></i>
-                    </button>
-                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="toggleStatus(row)" title="Activate / Deactivate">
-                      <i class="pi" [ngClass]="row.status === 'ACTIVE' ? 'pi-eye-slash' : 'pi-eye'"></i>
-                    </button>
-                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" *tcHasPerm="resources.HEADS; action: 'manage'" (click)="remove(row)" title="Delete">
-                      <i class="pi pi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <div class="fees-pager"><span>Showing {{ rows.length }} of {{ total }} entries</span></div>
-      }
-    </div>
-  </div>
-
-  <p-dialog
-    [header]="editing ? 'Edit Fee Head' : 'Add Fee Head'"
-    [(visible)]="dialogVisible"
-    [modal]="true"
-    [draggable]="false"
-    [style]="{ width: '520px' }"
-    (onHide)="dialogVisible = false">
-    <form [formGroup]="form" class="fees-dialog-form" (ngSubmit)="save()">
-      <div class="tc-form-field">
-        <label>Fee Head Name <span class="text-red-500">*</span></label>
-        <input class="p-inputtext p-component" formControlName="name" />
-        @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="text-red-500">Name is required</small>
-        }
-      </div>
-      <div class="tc-form-field">
-        <label>Category <span class="text-red-500">*</span></label>
-        <select class="p-inputtext p-component" formControlName="category">
+  @if (!loading || rows.length) {
+    <div class="acad-toolbar fh-toolbar">
+      <input
+        class="acad-toolbar__search"
+        type="search"
+        placeholder="Search fee heads..."
+        [ngModel]="q"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search fee heads" />
+      <div class="acad-toolbar__filters">
+        <select
+          class="fh-native-select"
+          [ngModel]="category"
+          (ngModelChange)="onCategoryChange($event)"
+          aria-label="Category">
+          <option value="">All categories</option>
           @for (c of categories; track c) {
-            <option [value]="c">{{ categoryLabel(c) }}</option>
+            <option [ngValue]="c">{{ categoryLabel(c) }}</option>
+          }
+        </select>
+        <select
+          class="fh-native-select"
+          [ngModel]="status"
+          (ngModelChange)="onStatusChange($event)"
+          aria-label="Status">
+          @for (opt of statusOptions; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
           }
         </select>
       </div>
-      <div class="tc-form-field">
-        <label>Description</label>
-        <textarea class="p-inputtext p-component" rows="3" formControlName="description" maxlength="500"></textarea>
-        <small class="fees-muted">{{ (form.value.description || '').length }}/500</small>
+      <div class="acad-toolbar__end">
+        <app-grid-table-toggle
+          pageKey="fees.heads.view"
+          [mode]="viewMode"
+          (modeChange)="onViewModeChange($event)"
+          ariaLabel="View mode">
+        </app-grid-table-toggle>
       </div>
-      <div class="tc-form-field">
-        <label>Status <span class="text-red-500">*</span></label>
-        <div class="fees-radio-row">
-          <label><input type="radio" formControlName="status" value="ACTIVE" /> Active</label>
-          <label><input type="radio" formControlName="status" value="INACTIVE" /> Inactive</label>
+    </div>
+
+    @if (error) {
+      <div class="tc-empty-state tc-empty-state--inline">
+        <p>{{ error }}</p>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (!rows.length) {
+      @if (isFilterEmptyState) {
+        <div class="fh-empty">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+          <h3>No fee heads match your filters</h3>
+          <p>Try changing the search, category, or status filter.</p>
+          <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
         </div>
+      } @else {
+        <div class="fh-empty">
+          <i class="pi pi-inbox" aria-hidden="true"></i>
+          <h3>No fee heads yet</h3>
+          <p>Create fee heads to use them in class fee structures.</p>
+          @if (canManage) {
+            <button
+              type="button"
+              class="tc-btn tc-btn--primary"
+              *tcHasPerm="resources.HEADS; action: 'manage'"
+              (click)="openCreate()">
+              Add Fee Head
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="fh-results" [class.fh-results--refreshing]="loading">
+        @if (viewMode === 'grid') {
+          <div class="fh-grid">
+            @for (row of rows; track row.feeHeadId) {
+              <article class="fh-card" [class.fh-card--inactive]="row.status !== 'ACTIVE'">
+                <div class="fh-card__top">
+                  <div class="fh-card__identity">
+                    <h2>{{ row.name }}</h2>
+                    <span class="fh-card__category">{{ categoryLabel(row.category) }}</span>
+                  </div>
+                  <span
+                    class="fh-badge"
+                    [class.fh-badge--success]="row.status === 'ACTIVE'"
+                    [class.fh-badge--muted]="row.status !== 'ACTIVE'">
+                    {{ row.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+
+                <p class="fh-card__desc">
+                  {{ row.description?.trim() || 'No description provided.' }}
+                </p>
+
+                <div class="fh-card__actions">
+                  @if (canManage) {
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--outline tc-btn--sm"
+                      *tcHasPerm="resources.HEADS; action: 'manage'"
+                      (click)="openEdit(row)">
+                      <i class="pi pi-pencil"></i> Edit
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="fh-table-wrap">
+            <table class="fh-table">
+              <thead>
+                <tr>
+                  <th>Fee Head</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th class="fh-table__actions" aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row.feeHeadId) {
+                  <tr [class.fh-row--inactive]="row.status !== 'ACTIVE'">
+                    <td>
+                      <strong>{{ row.name }}</strong>
+                    </td>
+                    <td>{{ categoryLabel(row.category) }}</td>
+                    <td class="fh-table__desc">{{ row.description?.trim() || '—' }}</td>
+                    <td>
+                      <span
+                        class="fh-badge"
+                        [class.fh-badge--success]="row.status === 'ACTIVE'"
+                        [class.fh-badge--muted]="row.status !== 'ACTIVE'">
+                        {{ row.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td class="fh-table__actions">
+                      @if (canManage) {
+                        <button
+                          type="button"
+                          class="tc-btn tc-btn--outline tc-btn--sm"
+                          *tcHasPerm="resources.HEADS; action: 'manage'"
+                          (click)="openEdit(row)">
+                          <i class="pi pi-pencil"></i> Edit
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
-      <div class="fees-dialog-form__actions">
-        <button type="button" class="tc-btn tc-btn--outline" (click)="dialogVisible = false" [disabled]="saving">Cancel</button>
-        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
-          @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
-          Save
-        </button>
-      </div>
-    </form>
-  </p-dialog>
+
+      <app-paginator
+        *ngIf="total > 0"
+        [page]="page"
+        [rows]="size"
+        [totalRecords]="total"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="fee heads"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
+    }
+  }
 </section>
+
+<p-dialog
+  [header]="editing ? 'Edit Fee Head' : 'Add Fee Head'"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [dismissableMask]="true"
+  [style]="{ width: 'min(520px, 94vw)' }">
+  <form class="fees-dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="tc-form-field">
+      <label>Fee Head Name <span class="text-red-500">*</span></label>
+      <input type="text" formControlName="name" maxlength="100" autocomplete="off" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <small class="text-red-500">Name is required (max 100 characters).</small>
+      }
+    </div>
+
+    <div class="tc-form-field">
+      <label>Category <span class="text-red-500">*</span></label>
+      <select formControlName="category">
+        @for (c of categories; track c) {
+          <option [ngValue]="c">{{ categoryLabel(c) }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="tc-form-field">
+      <label>Description</label>
+      <textarea rows="3" formControlName="description" maxlength="500"></textarea>
+      <small class="fees-muted">{{ (form.value.description || '').length }}/500</small>
+    </div>
+
+    <div class="tc-form-field">
+      <label>Status <span class="text-red-500">*</span></label>
+      <div class="fees-radio-row">
+        <label><input type="radio" formControlName="status" value="ACTIVE" /> Active</label>
+        <label><input type="radio" formControlName="status" value="INACTIVE" /> Inactive</label>
+      </div>
+    </div>
+
+    <div class="fees-dialog-form__actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="dialogVisible = false" [disabled]="saving">
+        Cancel
+      </button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        @if (saving) {
+          <i class="pi pi-spin pi-spinner"></i>
+        }
+        {{ saving ? 'Saving…' : (editing ? 'Save Changes' : 'Create') }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

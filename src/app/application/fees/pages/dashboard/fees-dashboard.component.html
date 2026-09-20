@@ -1,17 +1,17 @@
-<section class="tc-page-shell tc-directory-page fees-page">
+<section class="tc-page-shell tc-directory-page fees-page fees-dash">
   <app-toast />
 
   <tc-saas-page-header>
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
-            *tcHasPerm="resources.COLLECTION; action: 'manage'"
+            *tcHasPerm="resources.MANAGEMENT; action: 'manage'"
             (click)="openCollect()">
       <i class="pi pi-credit-card"></i> Collect Fee
     </button>
   </tc-saas-page-header>
 
   @if (loading && !kpis) {
-    <tc-page-skeleton layout="dashboard" [kpis]="4" [charts]="2" [rows]="6" [columns]="4"></tc-page-skeleton>
+    <tc-page-skeleton layout="dashboard" [kpis]="4" [charts]="1" [rows]="6" [columns]="4"></tc-page-skeleton>
   } @else if (error && !kpis) {
     <div class="tc-empty-state tc-empty-state--inline">
       <p>{{ error }}</p>
@@ -26,60 +26,57 @@
         <tc-kpi-card label="Overdue" [value]="formatMoney(kpis.overdue)" icon="pi pi-exclamation-triangle" tone="danger"></tc-kpi-card>
       </tc-kpi-group>
 
-      <div class="tc-card tc-card--panel fees-surface-panel">
-        <div class="tc-card__header">
+      <div class="fees-insight-row" *tcHasPerm="resources.MANAGEMENT; action: 'view'">
+        <article class="fees-insight-card fees-insight-card--rate">
+          <div class="fees-insight-card__icon"><i class="pi pi-chart-line"></i></div>
           <div>
-            <span>Navigation</span>
-            <h3>Core Actions</h3>
+            <span class="fees-insight-card__label">Collection rate</span>
+            <strong>{{ collectionRate }}%</strong>
+            <p>{{ formatMoney(kpis.collected) }} of {{ formatMoney(kpis.generated) }} billed</p>
           </div>
-        </div>
-        <div class="tc-card__body">
-          <div class="fees-action-grid fees-action-grid--core">
-            <a class="fees-action-card" routerLink="/app/fees/heads" *tcHasPerm="resources.HEADS; action: 'view'">
-              <i class="pi pi-database"></i>
-              <strong>Fee Heads</strong>
-              <span>Manage fee types</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">
-              <i class="pi pi-sitemap"></i>
-              <strong>Fee Structures</strong>
-              <span>Class-wise rules</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/students" *tcHasPerm="resources.STUDENT_DETAILS; action: 'view'">
-              <i class="pi pi-users"></i>
-              <strong>Student Fee</strong>
-              <span>Student ledgers</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/outstanding" *tcHasPerm="resources.OUTSTANDING; action: 'view'">
-              <i class="pi pi-clock"></i>
-              <strong>Outstanding</strong>
-              <span>Pending dues</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/receipts" *tcHasPerm="resources.RECEIPTS; action: 'view'">
-              <i class="pi pi-receipt"></i>
-              <strong>Receipts</strong>
-              <span>Payment receipts</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">
-              <i class="pi pi-chart-bar"></i>
-              <strong>Finance Reports</strong>
-              <span>Financial overview</span>
-            </a>
-            <a class="fees-action-card" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
-              <i class="pi pi-cog"></i>
-              <strong>Settings</strong>
-              <span>Generation and methods</span>
-            </a>
+          <div class="fees-insight-card__meter" aria-hidden="true">
+            <span [style.width.%]="collectionRate"></span>
           </div>
-        </div>
+        </article>
+        <article class="fees-insight-card" [class.fees-insight-card--alert]="hasOverdue">
+          <div class="fees-insight-card__icon"><i class="pi pi-bell"></i></div>
+          <div>
+            <span class="fees-insight-card__label">{{ attentionValueLabel }}</span>
+            <strong>{{ attentionAmount }}</strong>
+            <p>{{ attentionLabel }}</p>
+          </div>
+          <a routerLink="/app/fees/outstanding" class="fees-insight-card__cta">Review →</a>
+        </article>
       </div>
+
+      <section class="fees-nav-hub" *tcHasPerm="resources.MANAGEMENT; action: 'view'" aria-label="Fee workspace">
+        <header class="fees-nav-hub__head">
+          <div>
+            <span class="fees-nav-hub__eyebrow">Workspace</span>
+            <h3>Quick navigation</h3>
+          </div>
+          <p>Jump into fee setup, collection and student ledgers.</p>
+        </header>
+        <div class="fees-nav-hub__grid">
+          @for (card of navCards; track card.route) {
+            <a class="fees-nav-card" [routerLink]="card.route" [attr.data-tone]="card.tone">
+              <span class="fees-nav-card__icon"><i [class]="card.icon"></i></span>
+              <span class="fees-nav-card__body">
+                <strong>{{ card.title }}</strong>
+                <small>{{ card.subtitle }}</small>
+              </span>
+              <i class="pi pi-arrow-right fees-nav-card__chevron" aria-hidden="true"></i>
+            </a>
+          }
+        </div>
+      </section>
     }
 
     <div class="fees-dash-grid">
-      <div class="tc-card tc-card--panel fees-surface-panel">
+      <div class="tc-card tc-card--panel fees-surface-panel fees-trend-panel">
         <div class="tc-card__header">
           <div>
-            <span>Collection trend</span>
+            <span>Cash flow</span>
             <h3>Due vs collected by month</h3>
           </div>
         </div>
@@ -113,38 +110,6 @@
       <div class="tc-card tc-card--panel fees-surface-panel">
         <div class="tc-card__header">
           <div>
-            <span>Payment status</span>
-            <h3>Balance mix</h3>
-          </div>
-        </div>
-        <div class="tc-card__body">
-          @if (!statusSlices.length) {
-            <div class="tc-empty-state tc-empty-state--inline"><p>No payment status data.</p></div>
-          } @else {
-            <ul class="fees-status-list">
-              @for (slice of statusSlices; track slice.status) {
-                <li>
-                  <div class="fees-status-list__row">
-                    <span>{{ slice.status }}</span>
-                    <strong>{{ formatMoney(slice.amount) }}</strong>
-                  </div>
-                  <div class="fees-status-list__track">
-                    <span class="fees-status-list__fill"
-                          [attr.data-tone]="statusTone(slice.status)"
-                          [style.width.%]="statusWidth(slice.amount)"></span>
-                  </div>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      </div>
-    </div>
-
-    <div class="fees-dash-grid fees-dash-grid--tables">
-      <div class="tc-card tc-card--panel fees-surface-panel">
-        <div class="tc-card__header">
-          <div>
             <span>Activity</span>
             <h3>Recent collections</h3>
           </div>
@@ -159,7 +124,7 @@
                 <thead>
                   <tr>
                     <th>Paid on</th>
-                    <th>Student ID</th>
+                    <th>Student</th>
                     <th>Method</th>
                     <th class="text-right">Amount</th>
                   </tr>
@@ -181,45 +146,51 @@
           }
         </div>
       </div>
+    </div>
 
-      <div class="tc-card tc-card--panel fees-surface-panel">
-        <div class="tc-card__header">
-          <div>
-            <span>Dues</span>
-            <h3>Upcoming dues</h3>
-          </div>
-          <a routerLink="/app/fees/outstanding" class="tc-btn tc-btn--ghost tc-btn--sm">Outstanding</a>
+    <div class="tc-card tc-card--panel fees-surface-panel">
+      <div class="tc-card__header">
+        <div>
+          <span>Dues pipeline</span>
+          <h3>Upcoming &amp; open dues</h3>
         </div>
-        <div class="tc-card__body">
-          @if (!upcoming.length) {
-            <div class="tc-empty-state tc-empty-state--inline"><p>No upcoming dues.</p></div>
-          } @else {
-            <div class="fees-table-wrap">
-              <table class="fees-table fees-table--compact">
-                <thead>
+        <a routerLink="/app/fees/outstanding" class="tc-btn tc-btn--ghost tc-btn--sm">Outstanding</a>
+      </div>
+      <div class="tc-card__body">
+        @if (!upcoming.length) {
+          <div class="tc-empty-state tc-empty-state--inline"><p>No open dues for this academic year.</p></div>
+        } @else {
+          <div class="fees-table-wrap">
+            <table class="fees-table fees-table--compact">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Period</th>
+                  <th>Due</th>
+                  <th>Status</th>
+                  <th class="text-right">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of upcoming; track row.studentBillingPeriodId) {
                   <tr>
-                    <th>Student</th>
-                    <th>Period</th>
-                    <th>Due</th>
-                    <th class="text-right">Balance</th>
+                    <td>
+                      <a [routerLink]="['/app/fees/students', row.studentId]">{{ row.studentName }}</a>
+                    </td>
+                    <td>{{ row.periodLabel }}</td>
+                    <td>{{ row.dueDate | date:'mediumDate' }}</td>
+                    <td>
+                      <span class="fees-status-pill" [attr.data-tone]="statusTone(row.status || 'DUE')">
+                        {{ row.status || 'DUE' }}
+                      </span>
+                    </td>
+                    <td class="text-right">{{ row.balanceAmount | number:'1.2-2' }}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  @for (row of upcoming; track row.studentBillingPeriodId) {
-                    <tr>
-                      <td>
-                        <a [routerLink]="['/app/fees/students', row.studentId]">{{ row.studentName }}</a>
-                      </td>
-                      <td>{{ row.periodLabel }}</td>
-                      <td>{{ row.dueDate | date:'mediumDate' }}</td>
-                      <td class="text-right">{{ row.balanceAmount | number:'1.2-2' }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </div>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     </div>
   }

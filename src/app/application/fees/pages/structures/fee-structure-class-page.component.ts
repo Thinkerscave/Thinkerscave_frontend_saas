@@ -2,14 +2,11 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   OnInit,
   inject
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -18,21 +15,12 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
-import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
-import { UI_PAGINATION, UI_SEARCH } from '../../../../shared/config/ui-standards';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
-import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
 import { AcademicYearContextService } from '../../../../shared/services/academic-year-context.service';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
-import {
-  AppGridTableToggleComponent,
-  AppListViewMode,
-  AppPaginatorComponent
-} from '../../../../shared/ui/app-list';
-import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { FeesApiService } from '../../services/fees-api.service';
 import {
-  ClassFeeConfiguredFilter,
   ClassFeeStructureOverview,
   FEE_FREQUENCY_OPTIONS,
   FEES_RESOURCES,
@@ -44,7 +32,7 @@ import {
 } from '../../models/fees.model';
 
 @Component({
-  selector: 'app-fee-structures-page',
+  selector: 'app-fee-structure-class-page',
   standalone: true,
   providers: [ConfirmationService],
   imports: [
@@ -57,55 +45,46 @@ import {
     HasPermissionDirective,
     AppToastComponent,
     SaasPageHeaderComponent,
-    TcAcademicYearSelectorComponent,
     TcPageSkeletonComponent,
-    AppGridTableToggleComponent,
-    AppPaginatorComponent
+    KpiCardComponent,
+    KpiGroupComponent
   ],
-  templateUrl: './fee-structures-page.component.html',
-  styleUrls: ['./fee-structures-page.component.scss', '../../fees.shared.scss']
+  templateUrl: './fee-structure-class-page.component.html',
+  styleUrls: ['./fee-structure-class-page.component.scss', '../../fees.shared.scss']
 })
-export class FeeStructuresPageComponent implements OnInit {
+export class FeeStructureClassPageComponent implements OnInit {
   private readonly api = inject(FeesApiService);
   private readonly fb = inject(FormBuilder);
   private readonly feedback = inject(UiFeedbackService);
   private readonly yearCtx = inject(AcademicYearContextService);
-  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly viewPrefs = inject(ViewPreferenceService);
   readonly permissions = inject(PermissionService);
 
   readonly resources = FEES_RESOURCES;
   readonly frequencies = FEE_FREQUENCY_OPTIONS;
-  readonly statusOptions: { label: string; value: ClassFeeConfiguredFilter }[] = [
-    { label: 'All', value: 'ALL' },
-    { label: 'Configured', value: 'CONFIGURED' },
-    { label: 'Not Configured', value: 'NOT_CONFIGURED' }
-  ];
-  readonly pageSizeOptions = UI_PAGINATION.options;
 
-  private readonly search$ = new Subject<string>();
-
-  rows: ClassFeeStructureOverview[] = [];
-  heads: FeeHead[] = [];
-  loading = true;
-  saving = false;
-  error: string | null = null;
+  classId: number | null = null;
   academicYearId: number | null = null;
-  yearEditable = true;
   yearName = '';
+  yearEditable = true;
 
-  q = '';
-  configuredStatus: ClassFeeConfiguredFilter = 'ALL';
-  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
-  page = 0;
-  size = UI_PAGINATION.defaultSize;
-  total = 0;
+  structure: FeeStructure | null = null;
+  notConfigured = false;
+  className = '';
+  loading = true;
+  error: string | null = null;
+  saving = false;
+  heads: FeeHead[] = [];
 
   configureVisible = false;
-  configureTarget: ClassFeeStructureOverview | null = null;
   editingExisting = false;
+
+  copyVisible = false;
+  copyCandidates: ClassFeeStructureOverview[] = [];
+  copySelectedIds = new Set<number>();
+  copyOnConflict: 'SKIP' | 'REPLACE' = 'SKIP';
+  copyLoading = false;
 
   form = this.fb.group({
     items: this.fb.array([])
@@ -119,144 +98,110 @@ export class FeeStructuresPageComponent implements OnInit {
     return this.permissions.canManage(this.resources.STRUCTURES);
   }
 
-  get hasActiveFilters(): boolean {
-    return !!this.q.trim() || this.configuredStatus !== 'ALL';
-  }
-
-  get isFilterEmptyState(): boolean {
-    return this.hasActiveFilters && !this.rows.length && !this.loading && !this.error;
+  get displayTitle(): string {
+    const name = this.structure?.className || this.className || 'Class';
+    return `${name} Fee Structure`;
   }
 
   ngOnInit(): void {
-    this.yearCtx.ensureLoaded().subscribe();
     this.api.headLookups().subscribe({
       next: h => { this.heads = h ?? []; this.cdr.markForCheck(); },
-      error: () => { this.heads = []; this.cdr.markForCheck(); }
+      error: () => { this.heads = []; }
     });
 
-    this.search$
-      .pipe(debounceTime(UI_SEARCH.debounceMs), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.page = 0;
-        this.load({ soft: true });
-      });
+    this.yearCtx.ensureLoaded().subscribe(() => {
+      const paramClassId = Number(this.route.snapshot.paramMap.get('classId'));
+      const qpYear = Number(this.route.snapshot.queryParamMap.get('yearId'));
+      this.classId = Number.isFinite(paramClassId) ? paramClassId : null;
+      const yearId = Number.isFinite(qpYear) && qpYear > 0
+        ? qpYear
+        : this.yearCtx.selectedYearId();
+      this.academicYearId = yearId;
+      if (yearId != null) {
+        this.yearCtx.selectYear(yearId);
+        this.yearName = this.yearCtx.selectedYearLabel();
+      }
+      this.load();
+    });
   }
 
-  onAcademicYearChange(yearId: number | null): void {
-    this.academicYearId = yearId;
-    this.yearName = this.yearCtx.selectedYearLabel();
-    this.page = 0;
-    this.syncYearEditableFromContext();
-    if (yearId == null) {
-      this.rows = [];
-      this.total = 0;
+  load(): void {
+    if (this.classId == null || this.academicYearId == null) {
       this.loading = false;
+      this.error = 'Missing class or academic year.';
       this.cdr.markForCheck();
       return;
     }
-    // Full skeleton so users clearly see year data is reloading.
-    this.rows = [];
-    this.total = 0;
     this.loading = true;
-    this.cdr.markForCheck();
-    this.load();
-  }
-
-  private syncYearEditableFromContext(): void {
-    const status = String(this.yearCtx.selectedYear()?.status || '').toUpperCase();
-    this.yearEditable = ['DRAFT', 'PREPARING', 'READY_FOR_APPROVAL', 'REJECTED', 'APPROVED'].includes(status);
-  }
-
-  onSearchChange(value: string): void {
-    this.q = value ?? '';
-    this.search$.next(this.q.trim());
-  }
-
-  onStatusFilterChange(value: ClassFeeConfiguredFilter): void {
-    this.configuredStatus = value ?? 'ALL';
-    this.page = 0;
-    this.load({ soft: true });
-  }
-
-  onViewModeChange(mode: AppListViewMode): void {
-    this.viewMode = mode;
-    this.cdr.markForCheck();
-  }
-
-  onPageChange(event: AppPageChangeEvent): void {
-    this.page = event.page;
-    if (event.rows && event.rows !== this.size) {
-      this.size = event.rows;
-      this.page = 0;
-    }
-    this.load({ soft: true });
-  }
-
-  clearFilters(): void {
-    this.q = '';
-    this.configuredStatus = 'ALL';
-    this.page = 0;
-    this.load({ soft: true });
-  }
-
-  load(opts?: { soft?: boolean }): void {
-    if (this.academicYearId == null) return;
-    const soft = !!opts?.soft && this.rows.length > 0;
-    if (!soft) {
-      this.loading = true;
-      this.rows = [];
-    }
     this.error = null;
+    this.notConfigured = false;
+    this.structure = null;
     this.api
-      .classStructureOverview(
-        this.academicYearId,
-        { q: this.q.trim() || undefined, configuredStatus: this.configuredStatus },
-        this.page,
-        this.size
-      )
+      .getStructureByClass(this.academicYearId, this.classId)
       .pipe(finalizeBusy(v => {
-        if (!soft) this.loading = v;
+        this.loading = v;
         this.cdr.markForCheck();
       }))
       .subscribe({
-        next: page => {
-          this.rows = page?.content ?? [];
-          this.total = page?.totalElements ?? 0;
-          if (this.rows.length) {
-            this.yearEditable = !!this.rows[0].yearEditable;
-            if (this.rows[0].academicYearName) {
-              this.yearName = this.rows[0].academicYearName;
-            }
-          }
+        next: detail => {
+          this.structure = detail;
+          this.className = detail.className ?? this.className;
+          this.yearEditable = detail.yearEditable !== false;
+          if (detail.academicYearName) this.yearName = detail.academicYearName;
+          this.notConfigured = false;
           this.cdr.markForCheck();
         },
         error: err => {
-          this.error = extractApiError(err, 'Request failed').message || 'Failed to load fee structures';
+          const status = err?.status ?? err?.error?.status;
+          const msg = extractApiError(err, 'Request failed').message || '';
+          if (status === 404 || /not configured|not found/i.test(msg)) {
+            this.notConfigured = true;
+            this.structure = null;
+            this.bootstrapClassMeta();
+          } else {
+            this.error = msg || 'Failed to load fee structure';
+          }
           this.cdr.markForCheck();
         }
       });
   }
 
-  openDetails(row: ClassFeeStructureOverview): void {
-    void this.router.navigate(['/app/fees/structures', row.classId], {
-      queryParams: { yearId: this.academicYearId }
+  /** When structure is missing, pull class name / yearEditable from overview. */
+  private bootstrapClassMeta(): void {
+    if (this.academicYearId == null || this.classId == null) return;
+    this.api.classStructureOverview(this.academicYearId, {}, 0, 100).subscribe({
+      next: page => {
+        const row = (page?.content ?? []).find(c => c.classId === this.classId);
+        if (row) {
+          this.className = row.className;
+          this.yearEditable = !!row.yearEditable;
+          if (row.academicYearName) this.yearName = row.academicYearName;
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => { /* keep defaults */ }
     });
   }
 
-  openConfigure(row: ClassFeeStructureOverview, edit = false): void {
-    if (!this.yearEditable || !this.canManage) return;
-    this.configureTarget = row;
-    this.editingExisting = edit || row.configured;
+  openConfigure(edit = false): void {
+    if (!this.yearEditable || !this.canManage || this.classId == null || this.academicYearId == null) return;
+    this.editingExisting = edit || !!this.structure;
     this.form.reset();
     this.items.clear();
+    this.configureVisible = false;
 
-    if (row.configured && row.feeStructureId) {
-      this.api.getStructureByClass(this.academicYearId!, row.classId).subscribe({
-        next: detail => this.populateConfigureForm(detail),
+    if (this.editingExisting) {
+      this.api.getStructureByClass(this.academicYearId, this.classId).subscribe({
+        next: detail => {
+          this.structure = detail;
+          this.className = detail.className ?? this.className;
+          (detail.items ?? []).forEach(it => this.items.push(this.itemGroup(it)));
+          if (!this.items.length) this.addItem();
+          this.configureVisible = true;
+          this.cdr.markForCheck();
+        },
         error: err => {
           this.feedback.error('Load failed', extractApiError(err, 'Request failed').message);
-          this.addItem();
-          this.configureVisible = true;
           this.cdr.markForCheck();
         }
       });
@@ -264,14 +209,6 @@ export class FeeStructuresPageComponent implements OnInit {
     }
 
     this.addItem();
-    this.configureVisible = true;
-    this.cdr.markForCheck();
-  }
-
-  private populateConfigureForm(detail: FeeStructure): void {
-    this.items.clear();
-    (detail.items ?? []).forEach(it => this.items.push(this.itemGroup(it)));
-    if (!this.items.length) this.addItem();
     this.configureVisible = true;
     this.cdr.markForCheck();
   }
@@ -338,7 +275,7 @@ export class FeeStructuresPageComponent implements OnInit {
   }
 
   saveConfigure(): void {
-    if (!this.configureTarget || !this.academicYearId || !this.yearEditable || !this.canManage) return;
+    if (!this.yearEditable || !this.canManage || this.classId == null || this.academicYearId == null) return;
     this.items.controls.forEach(c => c.markAllAsTouched());
     if (this.form.invalid || this.items.length < 1) {
       this.feedback.formError('Please complete all required fields.');
@@ -364,9 +301,9 @@ export class FeeStructuresPageComponent implements OnInit {
 
     const body = {
       academicYearId: this.academicYearId,
-      classId: this.configureTarget.classId,
+      classId: this.classId,
       // Due day is settings-driven — not shown in structure UI.
-      dueDay: this.configureTarget.dueDay ?? 10,
+      dueDay: this.structure?.dueDay ?? 10,
       items: this.items.controls.map(c => ({
         feeHeadId: c.value.feeHeadId as number,
         amount: Number(c.value.amount),
@@ -385,14 +322,76 @@ export class FeeStructuresPageComponent implements OnInit {
         this.configureVisible = false;
         this.feedback.success(
           this.editingExisting ? 'Fee structure updated' : 'Fee structure configured',
-          this.configureTarget?.className ?? ''
+          this.className || ''
         );
-        this.load({ soft: true });
+        this.load();
       },
       error: err => {
         this.feedback.error('Save failed', extractApiError(err, 'Request failed').message);
       }
     });
+  }
+
+  openCopy(): void {
+    if (!this.structure?.feeStructureId || !this.yearEditable || !this.canManage) return;
+    this.copySelectedIds = new Set();
+    this.copyOnConflict = 'SKIP';
+    this.copyVisible = true;
+    this.copyLoading = true;
+    this.copyCandidates = [];
+    this.api
+      .classStructureOverview(this.academicYearId!, { configuredStatus: 'ALL' }, 0, 100)
+      .pipe(finalizeBusy(v => {
+        this.copyLoading = v;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: page => {
+          this.copyCandidates = (page?.content ?? []).filter(c => c.classId !== this.classId);
+          this.cdr.markForCheck();
+        },
+        error: err => {
+          this.feedback.error('Load failed', extractApiError(err, 'Request failed').message);
+          this.copyVisible = false;
+        }
+      });
+  }
+
+  toggleCopyClass(classId: number, checked: boolean): void {
+    if (checked) this.copySelectedIds.add(classId);
+    else this.copySelectedIds.delete(classId);
+  }
+
+  isCopySelected(classId: number): boolean {
+    return this.copySelectedIds.has(classId);
+  }
+
+  saveCopy(): void {
+    if (!this.structure?.feeStructureId || !this.yearEditable || !this.canManage) return;
+    const ids = [...this.copySelectedIds];
+    if (!ids.length) {
+      this.feedback.formError('Select at least one target class.');
+      return;
+    }
+    this.saving = true;
+    this.api
+      .copyStructureToClasses(this.structure.feeStructureId, {
+        targetClassIds: ids,
+        onConflict: this.copyOnConflict
+      })
+      .pipe(finalizeBusy(v => {
+        this.saving = v;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.copyVisible = false;
+          this.feedback.success('Structure copied', `${ids.length} class(es)`);
+        },
+        error: err => {
+          this.feedback.error('Copy failed', extractApiError(err, 'Request failed').message);
+        }
+      });
   }
 
   formatMoney(v: number | null | undefined): string {
@@ -402,5 +401,18 @@ export class FeeStructuresPageComponent implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
     });
+  }
+
+  frequencyLabel(f: FeeFrequency | string | undefined): string {
+    return this.frequencies.find(x => x.value === f)?.label ?? String(f ?? '—');
+  }
+
+  serviceLabel(s: FeeServiceKey | string | undefined): string {
+    switch (s) {
+      case 'TRANSPORT': return 'Transport';
+      case 'HOSTEL': return 'Hostel';
+      case 'NONE': return 'None';
+      default: return String(s ?? '—');
+    }
   }
 }

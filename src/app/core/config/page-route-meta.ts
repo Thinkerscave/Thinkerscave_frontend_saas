@@ -475,9 +475,17 @@ export const FEES_PAGES = {
   structures: {
     breadcrumb: 'Fee Structures',
     pageTitle: 'Fee Structures',
-    pageSubtitle: 'Define class-wise fee policies for an academic year.',
+    pageSubtitle: 'Configure class-wise fee structures for the selected academic year.',
     pageKind: 'main',
     hideBack: true
+  },
+  structureClass: {
+    breadcrumb: 'Class Fee Structure',
+    pageTitle: 'Class Fee Structure',
+    pageSubtitle: 'View and configure fee structure for this class.',
+    pageKind: 'detail',
+    hideBack: true,
+    backFallback: '/app/fees/structures'
   },
   students: {
     breadcrumb: 'Student Fee',

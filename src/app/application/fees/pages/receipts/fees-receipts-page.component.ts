@@ -48,6 +48,13 @@ export class FeesReceiptsPageComponent {
   onAcademicYearChange(yearId: number | null): void {
     this.academicYearId = yearId;
     this.page = 0;
+    this.rows = [];
+    this.total = 0;
+    if (yearId == null) {
+      this.loading = false;
+      return;
+    }
+    this.loading = true;
     this.load();
   }
 

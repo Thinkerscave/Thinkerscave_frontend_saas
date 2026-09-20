@@ -7,10 +7,14 @@ import {
   AcademicYearOption,
   AllocationPreview,
   BillingPeriodRow,
+  ClassFeeConfiguredFilter,
+  ClassFeeStructureOverview,
   CloneFeeStructureRequest,
   CollectFeeRequest,
   CollectFeeResult,
   CollectionTrendPoint,
+  ConfigureClassFeeStructureRequest,
+  CopyClassFeeStructureRequest,
   FeeDashboardKpis,
   FeeHead,
   FeeHeadRequest,
@@ -156,6 +160,32 @@ export class FeesApiService {
     return this.http.get<ApiEnvelope<PageResponse<FeeStructure>>>(`${this.base}/structures`, { params }).pipe(map(r => this.mapPage(r.data)));
   }
 
+  classStructureOverview(
+    academicYearId: number,
+    filter: { q?: string; configuredStatus?: ClassFeeConfiguredFilter },
+    page = 0,
+    size = 10
+  ): Observable<PageResponse<ClassFeeStructureOverview>> {
+    let params = this.pageParams(page, size, 'displayOrder,asc');
+    params = params.set('academicYearId', String(academicYearId));
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.configuredStatus && filter.configuredStatus !== 'ALL') {
+      params = params.set('configuredStatus', filter.configuredStatus);
+    }
+    return this.http
+      .get<ApiEnvelope<PageResponse<ClassFeeStructureOverview>>>(`${this.base}/structures/class-overview`, { params })
+      .pipe(map(r => this.mapPage(r.data)));
+  }
+
+  getStructureByClass(academicYearId: number, classId: number): Observable<FeeStructure> {
+    const params = new HttpParams()
+      .set('academicYearId', String(academicYearId))
+      .set('classId', String(classId));
+    return this.http
+      .get<ApiEnvelope<FeeStructure>>(`${this.base}/structures/by-class`, { params })
+      .pipe(map(r => r.data));
+  }
+
   getStructure(id: number): Observable<FeeStructure> {
     return this.http.get<ApiEnvelope<FeeStructure>>(`${this.base}/structures/${id}`).pipe(map(r => r.data));
   }
@@ -168,12 +198,24 @@ export class FeesApiService {
     return this.http.put<ApiEnvelope<FeeStructure>>(`${this.base}/structures/${id}`, body).pipe(map(r => r.data));
   }
 
+  configureClassStructure(body: ConfigureClassFeeStructureRequest): Observable<FeeStructure> {
+    return this.http
+      .post<ApiEnvelope<FeeStructure>>(`${this.base}/structures/configure`, body)
+      .pipe(map(r => r.data));
+  }
+
   patchStructureStatus(id: number, status: string): Observable<FeeStructure> {
     return this.http.patch<ApiEnvelope<FeeStructure>>(`${this.base}/structures/${id}/status`, { status }).pipe(map(r => r.data));
   }
 
   cloneStructure(id: number, body: CloneFeeStructureRequest): Observable<FeeStructure[]> {
     return this.http.post<ApiEnvelope<FeeStructure[]>>(`${this.base}/structures/${id}/clone`, body).pipe(map(r => r.data ?? []));
+  }
+
+  copyStructureToClasses(id: number, body: CopyClassFeeStructureRequest): Observable<FeeStructure[]> {
+    return this.http
+      .post<ApiEnvelope<FeeStructure[]>>(`${this.base}/structures/${id}/copy-to-classes`, body)
+      .pipe(map(r => r.data ?? []));
   }
 
   // ─── Student Fee ─────────────────────────────────────────────────────────

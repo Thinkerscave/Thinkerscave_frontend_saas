@@ -20,6 +20,50 @@
   }
 }
 
+/* Dense toolbar — same rhythm as Academics directory pages */
+.fees-page .acad-toolbar,
+.fs-toolbar.acad-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.fees-page .acad-toolbar__search,
+.fs-toolbar .acad-toolbar__search {
+  flex: 0 1 220px;
+  min-width: 140px;
+  max-width: 260px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--tc-bg, #fff);
+  color: var(--tc-text);
+  font-size: 0.82rem;
+}
+
+.fees-page .acad-toolbar__filters,
+.fs-toolbar .acad-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.fees-page .acad-toolbar__end,
+.fs-toolbar .acad-toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
 /* Form fields — mirror admissions / finance reports (page + dialogs) */
 .fees-page .tc-form-field,
 .fees-dialog-form .tc-form-field {
@@ -360,12 +404,12 @@
   }
 
   &__bar {
-    width: 9px;
-    border-radius: 3px 3px 0 0;
+    width: 14px;
+    border-radius: 4px 4px 0 0;
     min-height: 4px;
 
     &--due {
-      background: color-mix(in srgb, var(--tc-warning, #f59e0b) 70%, transparent);
+      background: color-mix(in srgb, var(--tc-warning, #f59e0b) 80%, transparent);
     }
 
     &--collected {

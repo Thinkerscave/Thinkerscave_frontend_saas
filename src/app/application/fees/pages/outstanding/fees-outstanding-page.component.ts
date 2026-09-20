@@ -56,6 +56,10 @@ export class FeesOutstandingPageComponent {
       this.loading = false;
       return;
     }
+    this.rows = [];
+    this.summary = null;
+    this.total = 0;
+    this.loading = true;
     this.load();
   }
 

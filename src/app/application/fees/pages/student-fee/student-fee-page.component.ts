@@ -219,6 +219,12 @@ export class StudentFeePageComponent implements OnInit {
   }
 
   onYearChange(): void {
+    this.rows = [];
+    this.total = 0;
+    this.detail = null;
+    this.listLoading = !!this.canSearch;
+    this.detailLoading = !!this.selectedStudentId;
+    this.cdr.detectChanges();
     if (this.canSearch) this.search();
     if (this.selectedStudentId) this.loadDetail();
   }

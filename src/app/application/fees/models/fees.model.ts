@@ -68,23 +68,68 @@ export interface FeeStructure {
   name: string;
   academicYearId: number;
   academicYearName?: string;
+  academicYearStatus?: string;
+  yearEditable?: boolean;
   classId: number;
   className?: string;
+  classCode?: string;
   dueDay: number;
   status: FeeMasterStatus;
+  /** Annualized required (mandatory) total. */
   mandatorySum?: number;
+  /** Annualized optional total. */
   optionalSum?: number;
+  /** Annualized required + optional. */
+  totalFees?: number;
   configuredMonthlyAmount?: number | null;
+  feeHeadCount?: number;
+  updatedOn?: string | null;
+  updatedBy?: string | null;
   items?: FeeStructureItem[];
 }
 
 export interface FeeStructureRequest {
-  name: string;
+  name?: string | null;
   academicYearId: number;
   classId: number;
   dueDay: number;
-  status: FeeMasterStatus;
+  status?: FeeMasterStatus;
   items: FeeStructureItem[];
+}
+
+export interface ConfigureClassFeeStructureRequest {
+  academicYearId: number;
+  classId: number;
+  /** Optional — server uses settings / existing structure when omitted. */
+  dueDay?: number;
+  items: FeeStructureItem[];
+}
+
+export interface CopyClassFeeStructureRequest {
+  targetClassIds: number[];
+  onConflict: 'SKIP' | 'REPLACE';
+}
+
+export type ClassFeeConfiguredFilter = 'ALL' | 'CONFIGURED' | 'NOT_CONFIGURED';
+
+export interface ClassFeeStructureOverview {
+  classId: number;
+  className: string;
+  classCode?: string;
+  configured: boolean;
+  feeStructureId?: number | null;
+  requiredFees?: number | null;
+  optionalFees?: number | null;
+  totalFees?: number | null;
+  configuredMonthlyAmount?: number | null;
+  feeHeadCount?: number | null;
+  dueDay?: number | null;
+  academicYearId: number;
+  academicYearName?: string;
+  academicYearStatus?: string;
+  yearEditable: boolean;
+  updatedOn?: string | null;
+  updatedBy?: string | null;
 }
 
 export interface CloneFeeStructureRequest {

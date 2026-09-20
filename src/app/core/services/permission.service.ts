@@ -15,6 +15,29 @@ export interface EffectivePermission {
   isOverride: boolean;
 }
 
+/**
+ * Nested Finance workspace resources inherit from their sidebar parent page.
+ * These must not require separate role-matrix submenu assignment.
+ */
+const FINANCE_PARENT_RESOURCE: Record<string, string> = {
+  FEES_HEADS: 'FEES_MANAGEMENT',
+  FEES_STRUCTURES: 'FEES_MANAGEMENT',
+  FEES_RECEIPTS: 'FEES_MANAGEMENT',
+  FEES_OUTSTANDING: 'FEES_MANAGEMENT',
+  FEES_COLLECTION: 'FEES_MANAGEMENT',
+  PAYROLL_COMPONENTS: 'PAYROLL',
+  PAYROLL_STRUCTURES: 'PAYROLL',
+  PAYROLL_EMPLOYEE_SALARY: 'PAYROLL',
+  PAYROLL_RUN: 'PAYROLL',
+  PAYROLL_PAYMENT: 'PAYROLL',
+  PAYROLL_PAYSLIP: 'PAYROLL',
+  PAYROLL_SETTINGS: 'PAYROLL',
+  EXPENSE_HEADS: 'EXPENSES',
+  EXPENSE_PAYMENT: 'EXPENSES',
+  EXPENSE_APPROVAL: 'EXPENSES',
+  EXPENSE_SETTINGS: 'EXPENSES'
+};
+
 @Injectable({ providedIn: 'root' })
 export class PermissionService implements OnDestroy {
   private readonly http = inject(HttpClient);
@@ -107,7 +130,7 @@ export class PermissionService implements OnDestroy {
     if (this.isPlatformSuperAdmin()) {
       return true;
     }
-    return this.permissionCache.get(menuCode)?.canView ?? false;
+    return this.resolveFlag(menuCode, 'canView');
   }
 
   /**
@@ -117,7 +140,7 @@ export class PermissionService implements OnDestroy {
     if (this.isPlatformSuperAdmin()) {
       return true;
     }
-    return this.permissionCache.get(menuCode)?.canManage ?? false;
+    return this.resolveFlag(menuCode, 'canManage');
   }
 
   /**
@@ -127,7 +150,7 @@ export class PermissionService implements OnDestroy {
     if (this.isPlatformSuperAdmin()) {
       return true;
     }
-    return this.permissionCache.get(menuCode)?.canApprove ?? false;
+    return this.resolveFlag(menuCode, 'canApprove');
   }
 
   /**
@@ -135,6 +158,18 @@ export class PermissionService implements OnDestroy {
    */
   getPermission(menuCode: string): EffectivePermission | undefined {
     return this.permissionCache.get(menuCode);
+  }
+
+  private resolveFlag(menuCode: string, flag: 'canView' | 'canManage' | 'canApprove'): boolean {
+    const direct = this.permissionCache.get(menuCode);
+    if (direct?.[flag]) {
+      return true;
+    }
+    const parent = FINANCE_PARENT_RESOURCE[menuCode];
+    if (!parent) {
+      return false;
+    }
+    return this.permissionCache.get(parent)?.[flag] ?? false;
   }
 
   private isPlatformSuperAdmin(): boolean {

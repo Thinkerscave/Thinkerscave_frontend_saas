@@ -19,9 +19,16 @@ import {
   FeeDashboardKpis,
   FeePayment,
   OutstandingItem,
-  PaymentStatusSlice,
   StudentFeeListItem
 } from '../../models/fees.model';
+
+interface FeesNavCard {
+  title: string;
+  subtitle: string;
+  route: string;
+  icon: string;
+  tone: 'blue' | 'violet' | 'teal' | 'amber' | 'rose' | 'slate' | 'green';
+}
 
 @Component({
   selector: 'app-fees-dashboard',
@@ -40,10 +47,19 @@ export class FeesDashboardComponent {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly resources = FEES_RESOURCES;
+  readonly navCards: FeesNavCard[] = [
+    { title: 'Fee Heads', subtitle: 'Tuition, transport, exam & more', route: '/app/fees/heads', icon: 'pi pi-database', tone: 'blue' },
+    { title: 'Fee Structures', subtitle: 'Class-wise fee policies', route: '/app/fees/structures', icon: 'pi pi-sitemap', tone: 'violet' },
+    { title: 'Student Fee', subtitle: 'Ledgers & payment history', route: '/app/fees/students', icon: 'pi pi-users', tone: 'teal' },
+    { title: 'Outstanding', subtitle: 'Pending and overdue dues', route: '/app/fees/outstanding', icon: 'pi pi-clock', tone: 'amber' },
+    { title: 'Receipts', subtitle: 'Immutable payment proofs', route: '/app/fees/receipts', icon: 'pi pi-receipt', tone: 'green' },
+    { title: 'Reports', subtitle: 'Finance overview & exports', route: '/app/fees/reports', icon: 'pi pi-chart-bar', tone: 'rose' },
+    { title: 'Settings', subtitle: 'Generation & payment methods', route: '/app/fees/settings', icon: 'pi pi-cog', tone: 'slate' }
+  ];
+
   academicYearId: number | null = null;
   kpis: FeeDashboardKpis | null = null;
   trend: CollectionTrendPoint[] = [];
-  statusSlices: PaymentStatusSlice[] = [];
   recent: FeePayment[] = [];
   upcoming: OutstandingItem[] = [];
   loading = true;
@@ -52,20 +68,50 @@ export class FeesDashboardComponent {
   collectStudent: StudentFeeListItem | null = null;
 
   trendMax = 1;
-  statusTotal = 1;
+
+  get collectionRate(): number {
+    const generated = Number(this.kpis?.generated ?? 0);
+    const collected = Number(this.kpis?.collected ?? 0);
+    if (generated <= 0) return 0;
+    return Math.min(100, Math.round((collected / generated) * 100));
+  }
+
+  get hasOverdue(): boolean {
+    return Number(this.kpis?.overdue ?? 0) > 0;
+  }
+
+  get attentionAmount(): string {
+    if (this.hasOverdue) {
+      return this.formatMoney(this.kpis?.overdue);
+    }
+    return String(this.upcoming.length || '—');
+  }
+
+  get attentionLabel(): string {
+    return this.hasOverdue ? 'Overdue balances waiting follow-up' : 'Open dues in the pipeline below';
+  }
+
+  get attentionValueLabel(): string {
+    return this.hasOverdue ? 'Needs attention' : 'Open dues listed';
+  }
 
   onAcademicYearChange(yearId: number | null): void {
     this.academicYearId = yearId;
     if (yearId == null) {
       this.kpis = null;
       this.trend = [];
-      this.statusSlices = [];
       this.recent = [];
       this.upcoming = [];
       this.loading = false;
       this.cdr.detectChanges();
       return;
     }
+    this.kpis = null;
+    this.trend = [];
+    this.recent = [];
+    this.upcoming = [];
+    this.loading = true;
+    this.cdr.detectChanges();
     this.load();
   }
 
@@ -74,14 +120,13 @@ export class FeesDashboardComponent {
       this.loading = false;
       return;
     }
-    this.loading = !this.kpis;
+    this.loading = true;
     this.error = null;
     const yearId = this.academicYearId;
 
     forkJoin({
       kpis: this.api.dashboardKpis(yearId),
       trend: this.api.collectionTrend(yearId).pipe(catchError(() => of([] as CollectionTrendPoint[]))),
-      status: this.api.paymentStatus(yearId).pipe(catchError(() => of([] as PaymentStatusSlice[]))),
       recent: this.api.recentCollections(0, 8).pipe(
         map(p => p.content),
         catchError(() => of([] as FeePayment[]))
@@ -91,16 +136,11 @@ export class FeesDashboardComponent {
       next: data => {
         this.kpis = data.kpis;
         this.trend = data.trend;
-        this.statusSlices = data.status;
         this.recent = data.recent;
         this.upcoming = data.upcoming;
         this.trendMax = Math.max(
           1,
           ...this.trend.map(t => Math.max(Number(t.collected) || 0, Number(t.due) || 0))
-        );
-        this.statusTotal = Math.max(
-          1,
-          this.statusSlices.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)
         );
         this.cdr.detectChanges();
       },
@@ -129,15 +169,17 @@ export class FeesDashboardComponent {
     return Math.max(4, Math.round((Number(value) || 0) / this.trendMax * 100));
   }
 
-  statusWidth(amount: number): number {
-    return Math.max(2, Math.round((Number(amount) || 0) / this.statusTotal * 100));
-  }
-
   statusTone(status: string): string {
     switch (status) {
-      case 'COLLECTED': return 'success';
-      case 'OVERDUE': return 'danger';
-      default: return 'warning';
+      case 'PAID':
+      case 'COLLECTED':
+        return 'success';
+      case 'OVERDUE':
+        return 'danger';
+      case 'PARTIALLY_PAID':
+        return 'warning';
+      default:
+        return 'warning';
     }
   }
 

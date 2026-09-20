@@ -74,10 +74,16 @@ export class PageMetaService {
     },
     hasPrevious: boolean
   ): boolean {
-    if (route.hideBack || route.pageKind === 'main') {
+    if (route.hideBack) {
       return false;
     }
-    if (route.pageKind === 'detail' || route.showBack) {
+    if (route.showBack) {
+      return true;
+    }
+    if (route.pageKind === 'main') {
+      return false;
+    }
+    if (route.pageKind === 'detail') {
       return true;
     }
     return hasPrevious || !!route.backFallback;
