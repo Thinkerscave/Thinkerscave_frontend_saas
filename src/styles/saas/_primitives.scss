@@ -291,6 +291,21 @@ tc-saas-page-header:not(:has(.tc-btn--back)):not(:has(.saas-page-header__actions
   border-bottom-color: var(--saas-primary);
 }
 
+.saas-tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--saas-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* ---------------- Stepper ---------------- */
 .saas-stepper {
   list-style: none;

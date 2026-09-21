@@ -206,14 +206,54 @@ export interface AttendanceSummaryData {
   date?: string;
 }
 
+export type StaffAttendanceWidgetState =
+  | 'NOT_STARTED'
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'WEEKEND'
+  | 'HOLIDAY'
+  | 'ON_LEAVE';
+
+export type StaffAttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'ON_LEAVE' | 'HALF_DAY' | 'WFH';
+
 export interface StaffAttendanceToggleData {
-  staffId: number;
+  staffId?: number;
+  staffName?: string;
+  organizationName?: string;
+  date?: string;
+  state?: StaffAttendanceWidgetState;
+  status?: string;
+  attendanceRequired?: boolean;
+  attendanceId?: number;
   signedIn: boolean;
   signedOut: boolean;
+  active?: boolean;
+  autoClosed?: boolean;
   signInTime?: string;
   signOutTime?: string;
   workingMinutesSoFar?: number;
-  status?: string;
+  holidayName?: string;
+  leaveLabel?: string;
+  reason?: string;
+}
+
+export interface StaffAttendanceTodayResponse {
+  attendanceId?: number;
+  staffId?: number;
+  staffName?: string;
+  organizationName?: string;
+  date?: string;
+  state: StaffAttendanceWidgetState;
+  status?: StaffAttendanceStatus | string;
+  attendanceRequired?: boolean;
+  active?: boolean;
+  autoClosed?: boolean;
+  signInTime?: string;
+  signOutTime?: string;
+  workingMinutes?: number;
+  holidayName?: string;
+  leaveLabel?: string;
+  reason?: string;
 }
 
 export interface TimetableSlotItem {
@@ -336,8 +376,6 @@ export interface SupportTicketsData {
 
 /* ───────────────────────── Staff attendance passthrough ───────────────────────── */
 
-export type StaffAttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'ON_LEAVE' | 'HALF_DAY' | 'WFH';
-
 export interface StaffAttendanceResponse {
   attendanceId?: number;
   staffId: number;
@@ -353,4 +391,7 @@ export interface StaffAttendanceResponse {
   status?: StaffAttendanceStatus;
   remarks?: string;
   markedBy?: string;
+  autoClosed?: boolean;
+  active?: boolean;
+  state?: StaffAttendanceWidgetState;
 }

@@ -184,10 +184,26 @@ export const attendanceApi = {
 export const staffAttendanceApi = {
   base: `${BASE}/attendance/staff`,
   myToday: `${BASE}/attendance/staff/me/today`,
+  myHistory: (from: string, to: string) =>
+    `${BASE}/attendance/staff/me/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
   signIn: `${BASE}/attendance/staff/sign-in`,
   signOut: `${BASE}/attendance/staff/sign-out`,
   today: (date?: string) => date ? `${BASE}/attendance/staff/today?date=${date}` : `${BASE}/attendance/staff/today`,
   history: (staffId: number) => `${BASE}/attendance/staff/history/${staffId}`,
+  historyRange: (staffId: number, from: string, to: string) =>
+    `${BASE}/attendance/staff/history/${staffId}/range?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+  regularizations: {
+    base: `${BASE}/attendance/staff/regularizations`,
+    me: (status?: string) =>
+      status
+        ? `${BASE}/attendance/staff/regularizations/me?status=${encodeURIComponent(status)}`
+        : `${BASE}/attendance/staff/regularizations/me`,
+    pending: `${BASE}/attendance/staff/regularizations/pending`,
+    pendingCount: `${BASE}/attendance/staff/regularizations/pending/count`,
+    byId: (id: number) => `${BASE}/attendance/staff/regularizations/${id}`,
+    approve: (id: number) => `${BASE}/attendance/staff/regularizations/${id}/approve`,
+    reject: (id: number) => `${BASE}/attendance/staff/regularizations/${id}/reject`,
+  },
 };
 
 export const leaveApi = {

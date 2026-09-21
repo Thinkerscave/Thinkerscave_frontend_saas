@@ -20,7 +20,7 @@ export interface SaasStat {
   icon: string;
   tone: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 }
-export interface SaasTab { key: string; label: string; icon?: string; }
+export interface SaasTab { key: string; label: string; icon?: string; badge?: string | number | null; }
 export interface SaasStep { key: string; label: string; }
 
 /* -------- KPI stat card -------- */
@@ -77,6 +77,7 @@ export class SaasStatGridComponent {
               [class.is-active]="tab.key === active"
               (click)="changeTab.emit(tab.key)">
         <i *ngIf="tab.icon" [class]="tab.icon"></i>{{ tab.label }}
+        <span class="saas-tabs__badge" *ngIf="tab.badge != null && tab.badge !== ''">{{ tab.badge }}</span>
       </button>
     </nav>
   `

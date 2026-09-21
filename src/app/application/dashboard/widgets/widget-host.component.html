@@ -1,6 +1,12 @@
-<ng-container *ngIf="widget.widgetType === 'WELCOME_HEADER'; else cardWidget">
+<ng-container *ngIf="widget.widgetType === 'WELCOME_HEADER'; else afterWelcome">
   <tc-welcome-header-widget [data]="widget.data" [state]="widget.state"></tc-welcome-header-widget>
 </ng-container>
+
+<ng-template #afterWelcome>
+  <ng-container *ngIf="widget.widgetType === 'STAFF_ATTENDANCE_TOGGLE'; else cardWidget">
+    <tc-staff-attendance-toggle-widget [data]="widget.data"></tc-staff-attendance-toggle-widget>
+  </ng-container>
+</ng-template>
 
 <ng-template #cardWidget>
   <tc-widget-card
@@ -27,7 +33,6 @@
       <tc-calendar-widget *ngSwitchCase="'CALENDAR'" [data]="data"></tc-calendar-widget>
       <tc-calendar-widget *ngSwitchCase="'EVENTS'" [data]="data"></tc-calendar-widget>
       <tc-attendance-summary-widget *ngSwitchCase="'ATTENDANCE_SUMMARY'" [data]="data"></tc-attendance-summary-widget>
-      <tc-staff-attendance-toggle-widget *ngSwitchCase="'STAFF_ATTENDANCE_TOGGLE'" [data]="data"></tc-staff-attendance-toggle-widget>
       <tc-timetable-widget *ngSwitchCase="'TIMETABLE'" [data]="data"></tc-timetable-widget>
       <tc-profile-summary-widget *ngSwitchCase="'PROFILE_SUMMARY'" [data]="data"></tc-profile-summary-widget>
       <tc-child-profile-widget *ngSwitchCase="'CHILD_PROFILE'" [data]="data"></tc-child-profile-widget>

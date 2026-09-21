@@ -678,7 +678,7 @@ export const ATTENDANCE_PAGES = {
   staff: {
     breadcrumb: 'Staff Attendance',
     pageTitle: 'Staff Attendance',
-    pageSubtitle: 'Mark and review staff attendance.',
+    pageSubtitle: 'View your attendance history, submit regularization requests, and manage approvals.',
     pageKind: 'main',
     hideBack: true
   },
