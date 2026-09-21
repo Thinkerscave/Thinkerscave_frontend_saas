@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import {
   AcademicYearOption,
   AllocationPreview,
+  BillingPeriodOption,
   BillingPeriodRow,
   ClassFeeConfiguredFilter,
   ClassFeeStructureOverview,
@@ -30,7 +31,8 @@ import {
   PaymentMethod,
   PaymentStatusSlice,
   StudentFeeDetail,
-  StudentFeeListItem
+  StudentFeeListItem,
+  StudentFeeSummary
 } from '../models/fees.model';
 
 interface ApiEnvelope<T> {
@@ -95,10 +97,32 @@ export class FeesApiService {
 
   // ─── Receipts ────────────────────────────────────────────────────────────
 
-  listReceipts(filter: { q?: string; academicYearId?: number }, page = 0, size = 10, sort = 'issuedOn,desc'): Observable<PageResponse<FeeReceipt>> {
+  listReceipts(
+    filter: {
+      q?: string;
+      academicYearId?: number;
+      studentId?: number;
+      classId?: number;
+      sectionId?: number;
+      paymentMethod?: string;
+      status?: string;
+      fromDate?: string;
+      toDate?: string;
+    },
+    page = 0,
+    size = 10,
+    sort = 'issuedOn,desc'
+  ): Observable<PageResponse<FeeReceipt>> {
     let params = this.pageParams(page, size, sort);
     if (filter.q) params = params.set('q', filter.q);
     if (filter.academicYearId != null) params = params.set('academicYearId', String(filter.academicYearId));
+    if (filter.studentId != null) params = params.set('studentId', String(filter.studentId));
+    if (filter.classId != null) params = params.set('classId', String(filter.classId));
+    if (filter.sectionId != null) params = params.set('sectionId', String(filter.sectionId));
+    if (filter.paymentMethod) params = params.set('paymentMethod', filter.paymentMethod);
+    if (filter.status) params = params.set('status', filter.status);
+    if (filter.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter.toDate) params = params.set('toDate', filter.toDate);
     return this.http.get<ApiEnvelope<PageResponse<FeeReceipt>>>(`${this.base}/receipts`, { params })
       .pipe(map(r => this.mapPage(r.data)));
   }
@@ -220,12 +244,49 @@ export class FeesApiService {
 
   // ─── Student Fee ─────────────────────────────────────────────────────────
 
-  listStudents(filter: Record<string, string | number | undefined>, page = 0, size = 10, sort = 'fullName,asc'): Observable<PageResponse<StudentFeeListItem>> {
+  listStudents(
+    filter: {
+      academicYearId?: number;
+      q?: string;
+      classId?: number;
+      sectionId?: number;
+      status?: string;
+      periodKey?: string;
+      outstandingOnly?: boolean | string;
+      [key: string]: string | number | boolean | undefined;
+    },
+    page = 0,
+    size = 10,
+    sort = 'outstanding,desc'
+  ): Observable<PageResponse<StudentFeeListItem>> {
     let params = this.pageParams(page, size, sort);
     Object.entries(filter).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') params = params.set(k, String(v));
     });
     return this.http.get<ApiEnvelope<PageResponse<StudentFeeListItem>>>(`${this.base}/students`, { params }).pipe(map(r => this.mapPage(r.data)));
+  }
+
+  studentFeeSummary(filter: {
+    academicYearId?: number;
+    q?: string;
+    classId?: number;
+    sectionId?: number;
+    status?: string;
+    periodKey?: string;
+    outstandingOnly?: boolean | string;
+  }): Observable<StudentFeeSummary> {
+    let params = new HttpParams();
+    Object.entries(filter).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') params = params.set(k, String(v));
+    });
+    return this.http.get<ApiEnvelope<StudentFeeSummary>>(`${this.base}/students/summary`, { params }).pipe(map(r => r.data));
+  }
+
+  billingPeriodOptions(academicYearId: number): Observable<BillingPeriodOption[]> {
+    const params = new HttpParams().set('academicYearId', String(academicYearId));
+    return this.http
+      .get<ApiEnvelope<BillingPeriodOption[]>>(`${this.base}/students/billing-periods`, { params })
+      .pipe(map(r => r.data ?? []));
   }
 
   linkedStudents(): Observable<LinkedStudentOption[]> {

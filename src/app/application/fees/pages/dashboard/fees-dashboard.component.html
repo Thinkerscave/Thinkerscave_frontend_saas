@@ -45,7 +45,7 @@
             <strong>{{ attentionAmount }}</strong>
             <p>{{ attentionLabel }}</p>
           </div>
-          <a routerLink="/app/fees/outstanding" class="fees-insight-card__cta">Review →</a>
+          <a routerLink="/app/fees/students" [queryParams]="{ outstandingOnly: true }" class="fees-insight-card__cta">Review →</a>
         </article>
       </div>
 
@@ -154,7 +154,7 @@
           <span>Dues pipeline</span>
           <h3>Upcoming &amp; open dues</h3>
         </div>
-        <a routerLink="/app/fees/outstanding" class="tc-btn tc-btn--ghost tc-btn--sm">Outstanding</a>
+        <a routerLink="/app/fees/students" [queryParams]="{ outstandingOnly: true }" class="tc-btn tc-btn--ghost tc-btn--sm">Outstanding</a>
       </div>
       <div class="tc-card__body">
         @if (!upcoming.length) {

@@ -488,18 +488,19 @@ export const FEES_PAGES = {
     backFallback: '/app/fees/structures'
   },
   students: {
-    breadcrumb: 'Student Fee',
-    pageTitle: 'Student Fee',
-    pageSubtitle: 'View fee status, payment history and receipts for your access scope.',
+    breadcrumb: 'Student Fees',
+    pageTitle: 'Student Fees',
+    pageSubtitle: 'View and manage student fee status and collect payments.',
     pageKind: 'main',
     hideBack: true
   },
   studentDetail: {
-    breadcrumb: 'Student Fee',
-    pageTitle: 'Student Fee',
-    pageSubtitle: 'View fee status, payment history and receipts for this student.',
+    breadcrumb: 'Student Fee Details',
+    pageTitle: 'Student Fee Details',
+    pageSubtitle: 'Fee schedule, payments and structure for this student.',
     pageKind: 'detail',
     showBack: true,
+    hideBack: true,
     backFallback: '/app/fees/students'
   },
   receipts: {

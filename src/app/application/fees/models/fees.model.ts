@@ -142,6 +142,7 @@ export interface StudentFeeKpis {
   totalFee: number;
   paid: number;
   outstanding: number;
+  overdue?: number;
   advance: number;
 }
 
@@ -154,8 +155,16 @@ export interface StudentFeeListItem {
   totalFee: number;
   paid: number;
   outstanding: number;
+  overdue?: number;
   advance?: number;
+  status?: BillingPeriodStatus;
   canCollectFee?: boolean;
+}
+
+export interface StudentFeeStructureBreakdownItem {
+  feeHeadName: string;
+  frequency: string;
+  amount: number;
 }
 
 export interface StudentFeeDetail {
@@ -166,8 +175,23 @@ export interface StudentFeeDetail {
   sectionName?: string;
   academicYearId: number;
   academicYearName?: string;
+  status?: FeeMasterStatus | string;
   kpis: StudentFeeKpis;
+  structureBreakdown?: StudentFeeStructureBreakdownItem[];
   canCollectFee?: boolean;
+}
+
+export interface StudentFeeSummary {
+  totalFee: number;
+  paid: number;
+  outstanding: number;
+  overdue: number;
+  studentCount?: number;
+}
+
+export interface BillingPeriodOption {
+  periodKey: string;
+  periodLabel: string;
 }
 
 export interface BillingPeriodRow {

@@ -1,45 +1,61 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { DialogModule } from 'primeng/dialog';
-import { map } from 'rxjs';
-import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
+import { Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
-import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
-import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
+import { UI_PAGINATION, UI_SEARCH } from '../../../../shared/config/ui-standards';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi/kpi-card.component';
 import { finalizeBusy, TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { TcAcademicYearSelectorComponent } from '../../../../shared/ui/academic-year-selector';
-import { AcademicYearContextService } from '../../../../shared/services/academic-year-context.service';
-import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-import { BackNavigationService } from '../../../../core/services/back-navigation.service';
+import {
+  AppGridTableToggleComponent,
+  AppListViewMode,
+  AppPaginatorComponent
+} from '../../../../shared/ui/app-list';
+import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { environment } from '../../../../../environments/environment';
 import { FeesApiService } from '../../services/fees-api.service';
-import { CollectFeeDialogComponent } from '../../components/collect-fee-dialog/collect-fee-dialog.component';
 import {
-  AcademicYearOption,
-  BillingPeriodRow,
-  FEES_RESOURCES,
-  FeePayment,
-  FeeReceipt,
+  BillingPeriodOption,
+  BillingPeriodStatus,
   LinkedStudentOption,
-  StudentFeeDetail,
-  StudentFeeListItem
+  StudentFeeListItem,
+  StudentFeeSummary
 } from '../../models/fees.model';
 
-interface LookupOption { id: number; name: string; status?: string; }
+interface LookupOption {
+  id: number;
+  name: string;
+  status?: string;
+}
 
 @Component({
   selector: 'app-student-fee-page',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, DialogModule, HasPermissionDirective,
-    AppToastComponent, CollectFeeDialogComponent, KpiCardComponent, KpiGroupComponent,
-    SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    AppToastComponent,
+    KpiCardComponent,
+    KpiGroupComponent,
+    SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
+    TcPageSkeletonComponent,
+    AppGridTableToggleComponent,
+    AppPaginatorComponent
   ],
   templateUrl: './student-fee-page.component.html',
   styleUrls: ['./student-fee-page.component.scss', '../../fees.shared.scss']
@@ -48,326 +64,362 @@ export class StudentFeePageComponent implements OnInit {
   private readonly api = inject(FeesApiService);
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly feedback = inject(UiFeedbackService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly pageHeader = inject(BreadCrumbService);
-  private readonly backNav = inject(BackNavigationService);
-  private readonly yearCtx = inject(AcademicYearContextService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly viewPrefs = inject(ViewPreferenceService);
 
-  readonly resources = FEES_RESOURCES;
+  readonly pageSizeOptions = UI_PAGINATION.options;
+  readonly statusOptions: { label: string; value: '' | BillingPeriodStatus }[] = [
+    { label: 'All', value: '' },
+    { label: 'Paid', value: 'PAID' },
+    { label: 'Partially Paid', value: 'PARTIALLY_PAID' },
+    { label: 'Due', value: 'DUE' },
+    { label: 'Overdue', value: 'OVERDUE' }
+  ];
+
+  private readonly search$ = new Subject<string>();
 
   classes: LookupOption[] = [];
+  sections: LookupOption[] = [];
+  periodOptions: BillingPeriodOption[] = [];
   linked: LinkedStudentOption[] = [];
-  academicYearId: number | null = null;
-  selectedStudentId: number | null = null;
 
+  academicYearId: number | null = null;
   canSearch = true;
-  accessRestricted = false;
-  /** True until first year+scope bootstrap finishes — prevents empty content flash. */
-  pageBooting = true;
-  listLoading = true;
-  detailLoading = false;
-  tabLoading = false;
-  listError: string | null = null;
-  detailError: string | null = null;
+  linkedMode = false;
+  loading = true;
+  summaryLoading = false;
+  error: string | null = null;
 
   q = '';
   classId: number | null = null;
   sectionId: number | null = null;
-  status = '';
+  status: '' | BillingPeriodStatus = '';
+  periodKey = '';
+  outstandingOnly = false;
+  viewMode: AppListViewMode = this.viewPrefs.globalDefault();
   page = 0;
   size = UI_PAGINATION.defaultSize;
   total = 0;
   rows: StudentFeeListItem[] = [];
+  summary: StudentFeeSummary | null = null;
 
-  detail: StudentFeeDetail | null = null;
-  periods: BillingPeriodRow[] = [];
-  payments: FeePayment[] = [];
-  receipts: FeeReceipt[] = [];
-  yearHistory: AcademicYearOption[] = [];
-  activeTab: 'overview' | 'payments' | 'receipts' | 'years' = 'overview';
-  collectVisible = false;
-  collectStudent: StudentFeeListItem | null = null;
+  get hasActiveFilters(): boolean {
+    return (
+      !!this.q.trim() ||
+      this.classId != null ||
+      this.sectionId != null ||
+      !!this.status ||
+      !!this.periodKey ||
+      this.outstandingOnly
+    );
+  }
 
-  previewVisible = false;
-  previewLoading = false;
-  preview: FeeReceipt | null = null;
-  downloadingId: number | null = null;
-
-  goBack(): void {
-    this.backNav.back({ fallback: '/app/fees/students' });
+  get isFilterEmptyState(): boolean {
+    return this.hasActiveFilters && !this.rows.length && !this.loading && !this.error;
   }
 
   ngOnInit(): void {
-    this.http.get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/classes`)
+    const outstandingParam = this.route.snapshot.queryParamMap.get('outstandingOnly');
+    this.outstandingOnly = outstandingParam === 'true' || outstandingParam === '1';
+
+    this.http
+      .get<{ success: boolean; data: LookupOption[] }>(`${environment.baseUrl}/students/classes`)
       .pipe(map(r => r.data ?? []))
-      .subscribe(classes => {
-        this.classes = classes;
-        this.cdr.detectChanges();
+      .subscribe({
+        next: classes => {
+          this.classes = classes;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.classes = [];
+          this.cdr.markForCheck();
+        }
       });
 
-    const routeStudentId = this.route.snapshot.paramMap.get('studentId');
-    if (routeStudentId) {
-      this.selectedStudentId = Number(routeStudentId);
-      this.detailLoading = true;
-    }
+    this.search$
+      .pipe(debounceTime(UI_SEARCH.debounceMs), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.page = 0;
+        this.load({ soft: true });
+      });
   }
 
   onAcademicYearChange(yearId: number | null): void {
     this.academicYearId = yearId;
+    this.page = 0;
+    this.periodKey = '';
+    this.periodOptions = [];
     if (yearId == null) {
       this.rows = [];
-      this.detail = null;
-      this.pageBooting = false;
-      this.listLoading = false;
-      this.detailLoading = false;
-      this.cdr.detectChanges();
+      this.total = 0;
+      this.summary = null;
+      this.loading = false;
+      this.cdr.markForCheck();
       return;
     }
-    if (this.pageBooting) {
-      this.bootstrapScope();
-    } else {
-      this.onYearChange();
-    }
+    this.rows = [];
+    this.total = 0;
+    this.summary = null;
+    this.loading = true;
+    this.cdr.markForCheck();
+    this.loadPeriodOptions(yearId);
+    this.bootstrapAndLoad();
   }
 
-  private bootstrapScope(): void {
+  private bootstrapAndLoad(): void {
     this.api.linkedStudents().subscribe({
-      next: linked => { this.linked = linked; this.cdr.detectChanges(); },
-      error: () => { this.linked = []; }
-    });
-
-    this.listLoading = true;
-    this.api.listStudents({ academicYearId: this.academicYearId ?? undefined }, 0, 1).subscribe({
-      next: () => {
-        this.canSearch = true;
-        this.pageBooting = false;
-        this.cdr.detectChanges();
-        if (this.selectedStudentId) {
-          this.loadDetail();
-          this.search();
-        } else {
-          this.search();
-        }
+      next: linked => {
+        this.linked = linked ?? [];
+        this.cdr.markForCheck();
       },
-      error: err => {
-        this.listLoading = false;
-        this.pageBooting = false;
-        this.detailLoading = false;
-        if (err?.status === 403) {
-          this.canSearch = false;
-          if (this.linked.length >= 1) {
-            this.selectedStudentId = this.linked[0].studentId;
-            this.detailLoading = true;
-            this.loadDetail();
-          } else {
-            this.detailError = 'No fee records available.';
+      error: () => {
+        this.linked = [];
+      }
+    });
+    this.load();
+  }
+
+  private loadPeriodOptions(yearId: number): void {
+    this.api.billingPeriodOptions(yearId).subscribe({
+      next: opts => {
+        this.periodOptions = opts ?? [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.periodOptions = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onSearchChange(value: string): void {
+    this.q = value ?? '';
+    this.search$.next(this.q.trim());
+  }
+
+  onClassChange(value: number | null): void {
+    this.classId = value;
+    this.sectionId = null;
+    this.sections = [];
+    this.page = 0;
+    if (value != null) {
+      this.http
+        .get<{ success: boolean; data: LookupOption[] }>(
+          `${environment.baseUrl}/students/sections`,
+          { params: { classId: String(value) } }
+        )
+        .pipe(map(r => r.data ?? []))
+        .subscribe({
+          next: sections => {
+            this.sections = sections;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.sections = [];
+            this.cdr.markForCheck();
           }
-        } else {
-          this.listError = extractApiError(err, 'Request failed').message || 'Failed to load students';
-        }
-        this.cdr.detectChanges();
-      }
-    });
+        });
+    }
+    this.load({ soft: true });
   }
 
-  search(): void {
-    if (!this.canSearch || this.academicYearId == null) return;
-    this.listLoading = true;
-    this.listError = null;
-    this.api.listStudents({
-      academicYearId: this.academicYearId,
-      q: this.q || undefined,
-      classId: this.classId ?? undefined,
-      sectionId: this.sectionId ?? undefined,
-      status: this.status || undefined
-    }, this.page, this.size)
-      .pipe(finalizeBusy(v => { this.listLoading = v; this.cdr.detectChanges(); }))
-      .subscribe({
-      next: page => {
-        this.rows = page.content;
-        this.total = page.totalElements;
-        this.cdr.detectChanges();
-      },
-      error: err => {
-        if (err?.status === 403) this.accessRestricted = true;
-        else this.listError = extractApiError(err, 'Request failed').message || 'Failed to load students';
-        this.cdr.detectChanges();
-      }
-    });
+  onSectionChange(value: number | null): void {
+    this.sectionId = value;
+    this.page = 0;
+    this.load({ soft: true });
   }
 
-  reset(): void {
+  onStatusChange(value: '' | BillingPeriodStatus): void {
+    this.status = value ?? '';
+    this.page = 0;
+    this.load({ soft: true });
+  }
+
+  onPeriodChange(value: string): void {
+    this.periodKey = value ?? '';
+    this.page = 0;
+    this.load({ soft: true });
+  }
+
+  onOutstandingOnlyChange(value: boolean): void {
+    this.outstandingOnly = !!value;
+    this.page = 0;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { outstandingOnly: this.outstandingOnly ? true : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.load({ soft: true });
+  }
+
+  onViewModeChange(mode: AppListViewMode): void {
+    this.viewMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.size) {
+      this.size = event.rows;
+      this.page = 0;
+    }
+    this.load({ soft: true });
+  }
+
+  clearFilters(): void {
     this.q = '';
     this.classId = null;
     this.sectionId = null;
+    this.sections = [];
     this.status = '';
+    this.periodKey = '';
+    this.outstandingOnly = false;
     this.page = 0;
-    this.search();
-  }
-
-  selectStudent(id: number): void {
-    this.selectedStudentId = id;
-    this.accessRestricted = false;
-    this.activeTab = 'overview';
-    this.loadDetail();
-  }
-
-  onChildChange(): void {
-    this.activeTab = 'overview';
-    this.loadDetail();
-  }
-
-  onYearChange(): void {
-    this.rows = [];
-    this.total = 0;
-    this.detail = null;
-    this.listLoading = !!this.canSearch;
-    this.detailLoading = !!this.selectedStudentId;
-    this.cdr.detectChanges();
-    if (this.canSearch) this.search();
-    if (this.selectedStudentId) this.loadDetail();
-  }
-
-  loadDetail(): void {
-    if (this.selectedStudentId == null || this.academicYearId == null) return;
-    this.detailLoading = true;
-    this.detailError = null;
-    this.accessRestricted = false;
-    this.payments = [];
-    this.receipts = [];
-    this.yearHistory = [];
-    this.api.studentDetail(this.selectedStudentId, this.academicYearId)
-      .pipe(finalizeBusy(v => (this.detailLoading = v)))
-      .subscribe({
-      next: detail => {
-        this.detail = detail;
-        this.pageHeader.setPageHeader({
-          subtitle: [detail.admissionNumber, detail.className, detail.sectionName].filter(Boolean).join(' · ')
-        });
-        this.api.studentPeriods(this.selectedStudentId!, this.academicYearId!).subscribe({
-          next: periods => this.periods = periods,
-          error: () => this.periods = []
-        });
-        if (this.activeTab !== 'overview') this.loadActiveTab();
-      },
-      error: err => {
-        if (err?.status === 403) {
-          this.accessRestricted = true;
-          this.detail = null;
-        } else {
-          this.detailError = extractApiError(err, 'Request failed').message || 'Failed to load student fee details';
-        }
-      }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { outstandingOnly: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
+    this.load({ soft: true });
   }
 
-  setTab(tab: 'overview' | 'payments' | 'receipts' | 'years'): void {
-    this.activeTab = tab;
-    if (tab !== 'overview') this.loadActiveTab();
+  openLinkedStudent(id: number): void {
+    void this.router.navigate(['/app/fees/students', id]);
   }
 
-  private loadActiveTab(): void {
-    if (this.selectedStudentId == null || this.academicYearId == null) return;
-    this.tabLoading = true;
-    if (this.activeTab === 'payments') {
-      this.api.studentPayments(this.selectedStudentId, this.academicYearId)
-        .pipe(finalizeBusy(v => (this.tabLoading = v)))
-        .subscribe({
-        next: rows => { this.payments = rows; },
-        error: err => {
-          this.payments = [];
-          this.feedback.error('Payments', extractApiError(err, 'Request failed').message);
-        }
-      });
-    } else if (this.activeTab === 'receipts') {
-      this.api.studentReceipts(this.selectedStudentId, this.academicYearId)
-        .pipe(finalizeBusy(v => (this.tabLoading = v)))
-        .subscribe({
-        next: rows => { this.receipts = rows; },
-        error: err => {
-          this.receipts = [];
-          this.feedback.error('Receipts', extractApiError(err, 'Request failed').message);
-        }
-      });
-    } else if (this.activeTab === 'years') {
-      this.api.studentAcademicYears(this.selectedStudentId)
-        .pipe(finalizeBusy(v => (this.tabLoading = v)))
-        .subscribe({
-        next: rows => { this.yearHistory = rows; },
-        error: err => {
-          this.yearHistory = [];
-          this.feedback.error('Academic years', extractApiError(err, 'Request failed').message);
-        }
-      });
+  load(opts?: { soft?: boolean }): void {
+    if (this.academicYearId == null) return;
+
+    const soft = !!opts?.soft && this.rows.length > 0;
+    if (!soft) {
+      this.loading = true;
+      this.rows = [];
     } else {
-      this.tabLoading = false;
+      this.loading = true;
     }
+    this.error = null;
+
+    const filter = this.buildFilter();
+    this.loadSummary(filter);
+
+    this.api
+      .listStudents(filter, this.page, this.size)
+      .pipe(
+        finalizeBusy(v => {
+          this.loading = v;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: page => {
+          this.canSearch = true;
+          this.linkedMode = false;
+          this.rows = page?.content ?? [];
+          this.total = page?.totalElements ?? 0;
+          this.cdr.markForCheck();
+        },
+        error: err => {
+          if (err?.status === 403) {
+            this.canSearch = false;
+            this.linkedMode = true;
+            this.rows = [];
+            this.total = 0;
+            this.summary = null;
+            this.error = null;
+            if (this.linked.length === 1) {
+              this.openLinkedStudent(this.linked[0].studentId);
+            }
+          } else {
+            this.error = extractApiError(err, 'Request failed').message || 'Failed to load student fees';
+          }
+          this.cdr.markForCheck();
+        }
+      });
   }
 
-  switchToYear(yearId: number): void {
-    this.yearCtx.selectYear(yearId);
-    this.academicYearId = yearId;
-    this.activeTab = 'overview';
-    this.loadDetail();
-    if (this.canSearch) this.search();
-  }
-
-  openPreview(row: FeeReceipt): void {
-    this.previewVisible = true;
-    this.preview = null;
-    this.previewLoading = true;
-    this.api.previewReceipt(row.feeReceiptId).pipe(finalizeBusy(v => (this.previewLoading = v))).subscribe({
-      next: receipt => {
-        this.preview = receipt;
+  private loadSummary(filter: ReturnType<StudentFeePageComponent['buildFilter']>): void {
+    this.summaryLoading = true;
+    this.api.studentFeeSummary(filter).subscribe({
+      next: summary => {
+        this.summary = summary;
+        this.summaryLoading = false;
+        this.cdr.markForCheck();
       },
-      error: err => {
-        this.previewVisible = false;
-        this.feedback.error('Preview failed', extractApiError(err, 'Request failed').message);
+      error: () => {
+        this.summary = null;
+        this.summaryLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
-  downloadReceipt(row: FeeReceipt): void {
-    this.downloadingId = row.feeReceiptId;
-    this.api.downloadReceiptPdf(row.feeReceiptId).pipe(finalizeBusy(() => (this.downloadingId = null))).subscribe({
-      next: blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `receipt-${row.receiptNumber || row.feeReceiptId}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      error: err => {
-        this.feedback.error('Download failed', extractApiError(err, 'Request failed').message);
-      }
-    });
-  }
-
-  openCollect(): void {
-    if (!this.detail) return;
-    this.collectStudent = {
-      studentId: this.detail.studentId,
-      studentName: this.detail.studentName,
-      admissionNumber: this.detail.admissionNumber,
-      className: this.detail.className,
-      sectionName: this.detail.sectionName,
-      totalFee: this.detail.kpis?.totalFee ?? 0,
-      paid: this.detail.kpis?.paid ?? 0,
-      outstanding: this.detail.kpis?.outstanding ?? 0,
-      advance: this.detail.kpis?.advance ?? 0,
-      canCollectFee: this.detail.canCollectFee
+  private buildFilter() {
+    return {
+      academicYearId: this.academicYearId ?? undefined,
+      q: this.q.trim() || undefined,
+      classId: this.classId ?? undefined,
+      sectionId: this.sectionId ?? undefined,
+      status: this.status || undefined,
+      periodKey: this.periodKey || undefined,
+      outstandingOnly: this.outstandingOnly ? true : undefined
     };
-    this.collectVisible = true;
-  }
-
-  onCollected(): void {
-    this.loadDetail();
-    if (this.canSearch) this.search();
   }
 
   formatMoney(v: number | null | undefined): string {
-    return Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return Number(v ?? 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  classLabel(row: StudentFeeListItem): string {
+    const cls = row.className?.trim();
+    const sec = row.sectionName?.trim();
+    if (cls && sec) return `${cls} - ${sec}`;
+    return cls || sec || '—';
+  }
+
+  initials(name: string | null | undefined): string {
+    const parts = String(name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  statusLabel(status: BillingPeriodStatus | string | null | undefined): string {
+    switch (status) {
+      case 'PAID':
+        return 'Paid';
+      case 'PARTIALLY_PAID':
+        return 'Partially Paid';
+      case 'OVERDUE':
+        return 'Overdue';
+      case 'DUE':
+        return 'Due';
+      default:
+        return status ? String(status) : '—';
+    }
+  }
+
+  statusTone(status: BillingPeriodStatus | string | null | undefined): string {
+    switch (status) {
+      case 'PAID':
+        return 'success';
+      case 'PARTIALLY_PAID':
+        return 'info';
+      case 'OVERDUE':
+        return 'danger';
+      case 'DUE':
+        return 'warning';
+      default:
+        return 'muted';
+    }
   }
 }

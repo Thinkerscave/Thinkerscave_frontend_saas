@@ -1,88 +1,159 @@
-<section class="tc-page-shell tc-directory-page fees-page">
+<section class="tc-page-shell tc-directory-page fees-page fr-page">
   <app-toast />
 
   <tc-saas-page-header>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
     <tc-academic-year-selector
       *tcHasPerm="resources.RECEIPTS; action: 'view'"
       [allowAll]="true"
       (yearChange)="onAcademicYearChange($event)">
     </tc-academic-year-selector>
-    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
-      <i class="pi pi-arrow-left"></i> Back
-    </a>
   </tc-saas-page-header>
 
-  <div class="tc-card tc-card--panel fees-surface-panel" *tcHasPerm="resources.RECEIPTS; action: 'view'">
-    <div class="tc-card__body">
-      <div class="fees-filter-bar">
-        <div class="tc-form-field tc-form-field--grow">
-          <label>Search</label>
-          <input class="p-inputtext p-component"
-                 placeholder="Search receipt no., student or admission no."
-                 [(ngModel)]="q"
-                 (keyup.enter)="search()" />
-        </div>
-        <div class="tc-form-field tc-form-field--actions">
-          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
-          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="reset()">Reset</button>
-        </div>
-      </div>
+  <tc-page-skeleton
+    *ngIf="loading && !rows.length"
+    layout="directory-table"
+    [showKpis]="false"
+    [showFilter]="true"
+    [rows]="10"
+    [columns]="9">
+  </tc-page-skeleton>
 
-      @if (loading && !rows.length) {
-        <tc-page-skeleton layout="table-only" [rows]="8" [columns]="7"></tc-page-skeleton>
-      } @else if (error) {
-        <div class="tc-empty-state tc-empty-state--inline">
-          <p>{{ error }}</p>
-          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
-        </div>
-      } @else if (!rows.length) {
-        <div class="tc-empty-state">
-          <i class="pi pi-receipt"></i>
-          <h3>No receipts</h3>
-          <p>{{ q ? 'No receipts match your search.' : 'No receipts found for this academic year.' }}</p>
+  @if (!loading || rows.length) {
+    <div class="acad-toolbar fr-toolbar">
+      <input
+        class="acad-toolbar__search"
+        type="search"
+        placeholder="Search receipt no., student or admission no."
+        [ngModel]="q"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search receipts" />
+      <div class="acad-toolbar__filters">
+        <select
+          class="fr-native-select"
+          [ngModel]="classId"
+          (ngModelChange)="onClassChange($event)"
+          aria-label="Class">
+          <option [ngValue]="null">All classes</option>
+          @for (c of classes; track c.id) {
+            <option [ngValue]="c.id">{{ c.name }}</option>
+          }
+        </select>
+        <select
+          class="fr-native-select"
+          [ngModel]="paymentMethod"
+          (ngModelChange)="onPaymentMethodChange($event)"
+          aria-label="Payment method">
+          <option value="">All methods</option>
+          @for (m of paymentMethods; track m.feePaymentMethodId) {
+            <option [ngValue]="m.name">{{ m.name }}</option>
+          }
+        </select>
+        <input
+          class="fr-native-date"
+          type="date"
+          [ngModel]="fromDate"
+          (ngModelChange)="onFromDateChange($event)"
+          aria-label="From date"
+          title="From date" />
+        <input
+          class="fr-native-date"
+          type="date"
+          [ngModel]="toDate"
+          (ngModelChange)="onToDateChange($event)"
+          aria-label="To date"
+          title="To date" />
+      </div>
+    </div>
+
+    @if (studentId != null) {
+      <div class="fees-filter-chip-row">
+        <span class="fees-filter-chip">
+          Student: {{ studentNameChip || ('#' + studentId) }}
+          <button
+            type="button"
+            class="fees-filter-chip__clear"
+            (click)="clearStudentFilter()"
+            aria-label="Clear student filter">
+            <i class="pi pi-times"></i>
+          </button>
+        </span>
+      </div>
+    }
+
+    @if (error) {
+      <div class="tc-empty-state tc-empty-state--inline">
+        <p>{{ error }}</p>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (!rows.length) {
+      @if (isFilterEmptyState) {
+        <div class="fr-empty">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+          <h3>No receipts match your filters</h3>
+          <p>Try changing the search, class, payment method, or date range.</p>
+          <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
         </div>
       } @else {
-        <div class="fees-table-wrap">
-          <table class="fees-table fees-table--compact">
+        <div class="fr-empty">
+          <i class="pi pi-receipt" aria-hidden="true"></i>
+          <h3>No receipts yet</h3>
+          <p>Receipts appear here after fee payments are collected.</p>
+        </div>
+      }
+    } @else {
+      <div class="fr-results" [class.fr-results--refreshing]="loading">
+        <div class="fr-table-wrap">
+          <table class="fr-table">
             <thead>
               <tr>
-                <th>Receipt #</th>
+                <th>Receipt No.</th>
+                <th>Date</th>
                 <th>Student</th>
+                <th>Admission No.</th>
                 <th>Class</th>
                 <th class="text-right">Amount</th>
-                <th>Method</th>
-                <th>Issued On</th>
-                <th class="fees-table__actions">Actions</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+                <th class="fr-table__actions" aria-label="Actions"></th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows; track row.feeReceiptId) {
                 <tr>
-                  <td class="font-medium">{{ row.receiptNumber }}</td>
-                  <td>
-                    <div>{{ row.studentName }}</div>
-                    @if (row.admissionNumber) {
-                      <div class="fees-muted">{{ row.admissionNumber }}</div>
-                    }
-                  </td>
+                  <td><strong>{{ row.receiptNumber }}</strong></td>
+                  <td>{{ row.issuedOn | date:'mediumDate' }}</td>
+                  <td>{{ row.studentName || '—' }}</td>
+                  <td>{{ row.admissionNumber || '—' }}</td>
                   <td>{{ classLabel(row) }}</td>
                   <td class="text-right">{{ row.amount | number:'1.2-2' }}</td>
                   <td>{{ row.paymentMethodName || '—' }}</td>
-                  <td>{{ row.issuedOn | date:'mediumDate' }}</td>
-                  <td class="fees-table__actions">
-                    <button type="button"
-                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
-                            title="Preview"
-                            *tcHasPerm="resources.RECEIPTS; action: 'view'"
-                            (click)="openPreview(row)">
+                  <td>
+                    <span
+                      class="fr-badge"
+                      [class.fr-badge--success]="statusTone(row.status) === 'success'"
+                      [class.fr-badge--muted]="statusTone(row.status) === 'muted'">
+                      {{ statusLabel(row.status) }}
+                    </span>
+                  </td>
+                  <td class="fr-table__actions">
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                      title="View"
+                      *tcHasPerm="resources.RECEIPTS; action: 'view'"
+                      (click)="openPreview(row)">
                       <i class="pi pi-eye"></i>
                     </button>
-                    <button type="button"
-                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
-                            title="Download PDF"
-                            *tcHasPerm="resources.RECEIPTS; action: 'view'"
-                            [disabled]="downloadingId === row.feeReceiptId"
-                            (click)="download(row)">
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                      title="Download"
+                      *tcHasPerm="resources.RECEIPTS; action: 'view'"
+                      [disabled]="downloadingId === row.feeReceiptId"
+                      (click)="download(row)">
                       @if (downloadingId === row.feeReceiptId) {
                         <i class="pi pi-spin pi-spinner"></i>
                       } @else {
@@ -95,18 +166,19 @@
             </tbody>
           </table>
         </div>
-        <div class="fees-pager">
-          <span>Showing {{ rows.length }} of {{ total }}</span>
-          <div class="fees-pager__btns">
-            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
-                    [disabled]="page === 0" (click)="prevPage()">Prev</button>
-            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
-                    [disabled]="(page + 1) * size >= total" (click)="nextPage()">Next</button>
-          </div>
-        </div>
-      }
-    </div>
-  </div>
+      </div>
+
+      <app-paginator
+        *ngIf="total > 0"
+        [page]="page"
+        [rows]="size"
+        [totalRecords]="total"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="receipts"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
+    }
+  }
 
   <p-dialog
     header="Receipt preview"
@@ -131,7 +203,17 @@
         <div class="fees-receipt-preview__meta">
           <div><span>Receipt</span><strong>{{ preview.receiptNumber }}</strong></div>
           <div><span>Issued</span><strong>{{ preview.issuedOn | date:'medium' }}</strong></div>
-          <div><span>Status</span><strong>{{ preview.status }}</strong></div>
+          <div>
+            <span>Status</span>
+            <strong>
+              <span
+                class="fr-badge"
+                [class.fr-badge--success]="statusTone(preview.status) === 'success'"
+                [class.fr-badge--muted]="statusTone(preview.status) === 'muted'">
+                {{ statusLabel(preview.status) }}
+              </span>
+            </strong>
+          </div>
         </div>
         <div class="fees-receipt-preview__student">
           <div><span>Student</span><strong>{{ preview.studentName }}</strong></div>
@@ -175,11 +257,12 @@
         }
         <div class="fees-receipt-preview__actions">
           <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="previewVisible = false">Close</button>
-          <button type="button"
-                  class="tc-btn tc-btn--primary tc-btn--sm"
-                  *tcHasPerm="resources.RECEIPTS; action: 'view'"
-                  [disabled]="downloadingId === preview.feeReceiptId"
-                  (click)="download(preview)">
+          <button
+            type="button"
+            class="tc-btn tc-btn--primary tc-btn--sm"
+            *tcHasPerm="resources.RECEIPTS; action: 'view'"
+            [disabled]="downloadingId === preview.feeReceiptId"
+            (click)="download(preview)">
             @if (downloadingId === preview.feeReceiptId) {
               <i class="pi pi-spin pi-spinner"></i>
             } @else {

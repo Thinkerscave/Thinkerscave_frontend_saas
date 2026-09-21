@@ -50,8 +50,7 @@ export class FeesDashboardComponent {
   readonly navCards: FeesNavCard[] = [
     { title: 'Fee Heads', subtitle: 'Tuition, transport, exam & more', route: '/app/fees/heads', icon: 'pi pi-database', tone: 'blue' },
     { title: 'Fee Structures', subtitle: 'Class-wise fee policies', route: '/app/fees/structures', icon: 'pi pi-sitemap', tone: 'violet' },
-    { title: 'Student Fee', subtitle: 'Ledgers & payment history', route: '/app/fees/students', icon: 'pi pi-users', tone: 'teal' },
-    { title: 'Outstanding', subtitle: 'Pending and overdue dues', route: '/app/fees/outstanding', icon: 'pi pi-clock', tone: 'amber' },
+    { title: 'Student Fees', subtitle: 'Ledgers & payment history', route: '/app/fees/students', icon: 'pi pi-users', tone: 'teal' },
     { title: 'Receipts', subtitle: 'Immutable payment proofs', route: '/app/fees/receipts', icon: 'pi pi-receipt', tone: 'green' },
     { title: 'Reports', subtitle: 'Finance overview & exports', route: '/app/fees/reports', icon: 'pi pi-chart-bar', tone: 'rose' },
     { title: 'Settings', subtitle: 'Generation & payment methods', route: '/app/fees/settings', icon: 'pi pi-cog', tone: 'slate' }

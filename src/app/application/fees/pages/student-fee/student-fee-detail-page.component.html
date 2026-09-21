@@ -1,0 +1,237 @@
+<section class="tc-page-shell tc-directory-page fees-page sfd-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/students">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+  </tc-saas-page-header>
+
+  @if (accessRestricted) {
+    <div class="tc-empty-state">
+      <i class="pi pi-lock"></i>
+      <h3>Access Restricted</h3>
+      <p>You do not have permission to view this student's financial information.</p>
+      <button type="button" class="tc-btn tc-btn--outline" (click)="goBack()">Back</button>
+    </div>
+  } @else if (loading && !detail) {
+    <tc-page-skeleton layout="detail" [showKpis]="true" [kpis]="4" [sections]="3" [rows]="8" [columns]="6"></tc-page-skeleton>
+  } @else if (error) {
+    <div class="tc-empty-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Unable to load</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="tc-btn tc-btn--outline" (click)="load()">Retry</button>
+    </div>
+  } @else if (detail) {
+    <header class="sfd-identity">
+      <div class="sfd-identity__main">
+        <div class="sfd-identity__title-row">
+          <h1>{{ detail.studentName }}</h1>
+          @if (isActiveStudent()) {
+            <span class="sf-badge" data-tone="success">Active</span>
+          }
+        </div>
+        <p class="sfd-identity__sub">
+          <span>{{ detail.admissionNumber || '—' }}</span>
+          @if (classSectionLabel()) {
+            <span aria-hidden="true">·</span>
+            <span>{{ classSectionLabel() }}</span>
+          }
+          @if (detail.academicYearName) {
+            <span aria-hidden="true">·</span>
+            <span>{{ detail.academicYearName }}</span>
+          }
+        </p>
+      </div>
+      @if (detail.canCollectFee) {
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary tc-btn--sm"
+          *tcHasPerm="resources.COLLECTION; action: 'manage'"
+          (click)="openCollect()">
+          <i class="pi pi-credit-card"></i> Collect Fee
+        </button>
+      }
+    </header>
+
+    <tc-kpi-group ariaLabel="Student fee KPIs" mode="equal" [columns]="4">
+      <tc-kpi-card label="Total Fee" [value]="formatMoney(detail.kpis.totalFee)" icon="pi pi-wallet" tone="primary"></tc-kpi-card>
+      <tc-kpi-card label="Paid" [value]="formatMoney(detail.kpis.paid)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
+      <tc-kpi-card label="Outstanding" [value]="formatMoney(detail.kpis.outstanding)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+      <tc-kpi-card label="Overdue" [value]="formatMoney(detail.kpis.overdue)" icon="pi pi-exclamation-triangle" tone="danger"></tc-kpi-card>
+    </tc-kpi-group>
+
+    <section class="sfd-panel">
+      <header class="sfd-panel__head">
+        <div>
+          <h2>Fee Schedule</h2>
+          <p>Billing periods for the selected academic year.</p>
+        </div>
+      </header>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Due Date</th>
+              <th class="text-right">Amount</th>
+              <th class="text-right">Paid</th>
+              <th class="text-right">Balance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of periods; track p.studentBillingPeriodId) {
+              <tr>
+                <td>{{ p.periodLabel }}</td>
+                <td>{{ p.dueDate | date:'mediumDate' }}</td>
+                <td class="text-right">{{ p.totalAmount | number:'1.2-2' }}</td>
+                <td class="text-right">{{ p.paidAmount | number:'1.2-2' }}</td>
+                <td class="text-right">{{ p.balanceAmount | number:'1.2-2' }}</td>
+                <td>
+                  <span class="sf-badge" [attr.data-tone]="statusTone(p.status)">
+                    {{ statusLabel(p.status) }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6">No fee schedule for this academic year.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sfd-panel">
+      <header class="sfd-panel__head">
+        <div>
+          <h2>Recent Payments</h2>
+          <p>Latest collections for this student.</p>
+        </div>
+        <a
+          class="tc-btn tc-btn--ghost tc-btn--sm"
+          [routerLink]="['/app/fees/receipts']"
+          [queryParams]="{ studentId: detail.studentId, studentName: detail.studentName }">
+          View All Receipts
+        </a>
+      </header>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="text-right">Amount</th>
+              <th>Method</th>
+              <th>Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of payments; track p.feePaymentId) {
+              <tr>
+                <td>{{ p.paidOn | date:'mediumDate' }}</td>
+                <td class="text-right">{{ p.amount | number:'1.2-2' }}</td>
+                <td>{{ p.paymentMethodName || '—' }}</td>
+                <td>
+                  @if (p.receiptId) {
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="openPreview(p)">
+                      {{ p.receiptNumber || 'View' }}
+                    </button>
+                  } @else {
+                    —
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4">No payments recorded for this academic year.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (detail.structureBreakdown?.length) {
+      <section class="sfd-panel">
+        <button
+          type="button"
+          class="sfd-collapse"
+          [attr.aria-expanded]="structureOpen"
+          (click)="structureOpen = !structureOpen">
+          <span>
+            <h2>Fee Structure Breakdown</h2>
+            <p>Heads and amounts configured for this student.</p>
+          </span>
+          <i class="pi" [class.pi-chevron-down]="!structureOpen" [class.pi-chevron-up]="structureOpen"></i>
+        </button>
+        @if (structureOpen) {
+          <div class="sf-table-wrap">
+            <table class="sf-table">
+              <thead>
+                <tr>
+                  <th>Fee Head</th>
+                  <th>Frequency</th>
+                  <th class="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of detail.structureBreakdown; track item.feeHeadName + item.frequency) {
+                  <tr>
+                    <td>{{ item.feeHeadName }}</td>
+                    <td>{{ item.frequency }}</td>
+                    <td class="text-right">{{ item.amount | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+
+  <p-dialog
+    header="Receipt preview"
+    [(visible)]="previewVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '640px', maxWidth: '95vw' }">
+    @if (previewLoading) {
+      <tc-page-skeleton layout="detail-section" [sections]="2"></tc-page-skeleton>
+    } @else if (preview) {
+      <div class="fees-receipt-preview">
+        <div class="fees-receipt-preview__meta">
+          <div><span>Receipt</span><strong>{{ preview.receiptNumber }}</strong></div>
+          <div><span>Issued</span><strong>{{ preview.issuedOn | date:'medium' }}</strong></div>
+          <div><span>Amount</span><strong>{{ preview.amount | number:'1.2-2' }}</strong></div>
+        </div>
+        <table class="fees-table fees-table--compact">
+          <thead>
+            <tr><th>Period</th><th class="text-right">Amount</th></tr>
+          </thead>
+          <tbody>
+            @for (line of preview.lines || []; track line.feeReceiptLineId) {
+              <tr>
+                <td>{{ line.periodLabel }}</td>
+                <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2">No line items</td></tr>
+            }
+          </tbody>
+        </table>
+        <div class="fees-receipt-preview__actions">
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="previewVisible = false">Close</button>
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="downloadReceipt(preview)">Download PDF</button>
+        </div>
+      </div>
+    }
+  </p-dialog>
+
+  <app-collect-fee-dialog
+    [(visible)]="collectVisible"
+    [academicYearId]="academicYearId"
+    [lockedStudent]="collectStudent"
+    (collected)="onCollected()">
+  </app-collect-fee-dialog>
+</section>

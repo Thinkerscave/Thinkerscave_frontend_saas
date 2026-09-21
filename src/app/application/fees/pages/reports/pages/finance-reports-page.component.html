@@ -316,7 +316,7 @@
                 <p>{{ overview.outstanding.studentsDue | number }} students · {{ money(overview.outstanding.amount) }}</p>
               </div>
             </div>
-            <button type="button" class="fin-link" (click)="navigate(null, '/app/fees/outstanding')">View All</button>
+            <button type="button" class="fin-link" (click)="navigate(null, '/app/fees/students?outstandingOnly=true')">View All</button>
           </header>
           @if (overview.outstanding.byClass.length) {
             <div class="fin-table-wrap">
