@@ -16,16 +16,15 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMICS_TIMETABLE_RESOURCE,
   AcademicResource,
@@ -46,14 +45,18 @@ import {
 
 type TimetableTab = 'readiness' | 'configuration' | 'timetable' | 'conflicts';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-timetable-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     DialogModule,
     DropdownModule,
     ProgressBarModule,
@@ -66,11 +69,10 @@ type TimetableTab = 'readiness' | 'configuration' | 'timetable' | 'conflicts';
 })
 export class TimetablePageComponent implements OnInit, OnDestroy {
   private readonly api = inject(TimetableApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
+  private readonly yearCtx = inject(AcademicYearContextService);
   private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly workloadsApi = inject(TeacherAllocationApiService);
   private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
@@ -80,15 +82,14 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   readonly resource = ACADEMICS_TIMETABLE_RESOURCE;
 
   loading = true;
+  refreshing = false;
   saving = false;
-  showBack = false;
   generating = false;
   savingConfig = false;
   savingResource = false;
   loadingGrid = false;
   loadingReadiness = false;
 
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: TimetableDashboard | null = null;
   readiness: TimetableReadiness | null = null;
@@ -137,33 +138,13 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const qp = this.route.snapshot.queryParamMap;
-    this.showBack = !!qp.get('from');
-    const qpYear = qp.get('academicYearId');
-
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const preferred = qpYear ? years.find(y => y.academicYearId === Number(qpYear)) : null;
-        const current = preferred ?? years.find(y => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
+    const qpYear = this.route.snapshot.queryParamMap.get('academicYearId');
+    if (qpYear) {
+      const id = Number(qpYear);
+      if (Number.isFinite(id)) {
+        this.yearCtx.selectYear(id);
       }
-    });
-  }
-
-  goBack(): void {
-    this.nav.back(this.route);
+    }
   }
 
   ngOnDestroy(): void {
@@ -171,11 +152,37 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.cancelPoll$.complete();
   }
 
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.dashboard = null;
+    this.readiness = null;
+    this.config = this.emptyConfig();
+    this.versions = [];
+    this.grid = null;
+    this.conflicts = [];
+    this.stopPolling();
+    if (yearId == null) {
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
+  }
+
   reload(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
+    const initial = !this.dashboard;
+    if (initial) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
     this.api.getDashboard(this.selectedYearId)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
@@ -188,17 +195,6 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
           detail: err?.error?.message || 'Please try again'
         })
       });
-  }
-
-  onYearChange(): void {
-    this.dashboard = null;
-    this.readiness = null;
-    this.config = this.emptyConfig();
-    this.versions = [];
-    this.grid = null;
-    this.conflicts = [];
-    this.stopPolling();
-    this.reload();
   }
 
   switchTab(tab: TimetableTab): void {

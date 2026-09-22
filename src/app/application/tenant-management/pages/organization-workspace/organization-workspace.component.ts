@@ -35,6 +35,7 @@ import {
   SaasTabsComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
 
@@ -44,7 +45,7 @@ type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, TooltipModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent
+    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, SaasTabsComponent, TcPageSkeletonComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './organization-workspace.component.html',
@@ -139,7 +140,6 @@ export class OrganizationWorkspaceComponent implements OnInit {
           this.org = null;
         } else {
           this.org = org;
-          this.pageHeader.setPageHeader({ title: org.organizationName || 'Organization Details' });
           this.pageHeader.setPageSubtitle(this.subtitle);
         }
         this.features = (features ?? []).filter(f => f.active !== false);

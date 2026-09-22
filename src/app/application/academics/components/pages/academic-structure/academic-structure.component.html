@@ -1,9 +1,11 @@
-<div class="as-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
-    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+<div class="as-page acad-page">
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
-  <div class="as-summary" *ngIf="data as d">
+    <tc-page-skeleton *ngIf="loading" variant="list" [rows]="6" [columns]="3" [showKpis]="false"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<div class="as-summary" *ngIf="data as d">
     <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>
     <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
     <div><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
@@ -39,5 +41,5 @@
       </div>
     </aside>
   </div>
+  </ng-container>
 </div>
-<ng-template #loadingTpl><div class="as-empty">Loading structure…</div></ng-template>

@@ -1,6 +1,6 @@
 <section class="tc-page-shell tc-directory-page stu-directory-page" (click)="closeMoreMenu()">
 
-  <tc-saas-page-header subtitle="Manage student records, enrollment status and academic placement.">
+  <tc-saas-page-header>
     <button type="button" class="tc-btn tc-btn--primary" (click)="openAddStudent()">
       <i class="pi pi-plus"></i> {{ 'students.add' | tcTranslate }}
     </button>
@@ -94,9 +94,14 @@
         <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <app-list-results [busy]="refreshing">
+      <app-list-results [busy]="refreshing && hasLoaded">
         <div class="stu-directory-skeleton" *ngIf="!hasLoaded && loading">
-          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
+          <tc-page-skeleton
+            [layout]="view === 'grid' ? 'cards-only' : 'table-only'"
+            [rows]="8"
+            [columns]="6"
+            [cards]="8">
+          </tc-page-skeleton>
         </div>
 
         <div class="stu-directory-grid" *ngIf="students.length && view === 'grid'">

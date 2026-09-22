@@ -4,14 +4,25 @@
   <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
 
-  <div class="responsibilities-list__intro">
+  <tc-page-skeleton
+    *ngIf="loading && !hasLoaded"
+    [layout]="view === 'grid' ? 'directory-cards' : 'directory-table'"
+    [kpis]="3"
+    [showKpis]="true"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="8"
+    [columns]="6">
+  </tc-page-skeleton>
+
+  <div class="responsibilities-list__intro" *ngIf="hasLoaded">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
     <button *ngIf="canManage" type="button" class="tc-btn tc-btn--primary responsibilities-list__new" (click)="openCreate()">
       <i class="pi pi-plus"></i> New responsibility
     </button>
   </div>
 
-  <tc-saas-panel title="Organization responsibilities" [subtitle]="totalRecords + ' items · click a name to open details'">
+  <tc-saas-panel *ngIf="hasLoaded" title="Organization responsibilities" [subtitle]="totalRecords + ' items · click a name to open details'">
     <app-list-toolbar
       [search]="search"
       searchPlaceholder="Search name or code"
@@ -25,7 +36,7 @@
       (viewChange)="onViewModeChange($event)">
     </app-list-toolbar>
 
-    <app-list-results [busy]="refreshing">
+    <app-list-results [busy]="refreshing && hasLoaded">
       <div class="responsibilities-list__grid" *ngIf="view === 'grid'">
         <article class="responsibilities-list__card" *ngFor="let r of list; trackBy: trackById" (click)="openDetails(r)">
           <strong>{{ r.responsibilityName }}</strong>

@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+.fees-settings-page {
+  .fees-settings-grid {
+    gap: 1rem;
+  }
+
+  .fees-surface-panel .tc-card__body {
+    gap: 0.85rem;
+  }
+}

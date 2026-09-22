@@ -1,9 +1,11 @@
-<div class="mt-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
-    <p-dropdown [options]="years" [(ngModel)]="selectedYearId" (onChange)="reload()" optionLabel="name" optionValue="academicYearId"></p-dropdown>
+<div class="mt-page acad-page">
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
-  <div class="mt-summary" *ngIf="data">
+    <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<div class="mt-summary" *ngIf="data">
     <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>
     <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
     <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
@@ -50,7 +52,7 @@
               <ng-template #cellTpl>
                 <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
                   <strong>{{ c.subjectName || '—' }}</strong>
-                  <span *ngIf="d.role === 'TEACHER' || d.role === 'STAFF'">
+                  <span *ngIf="d.role === 'STAFF'">
                     {{ c.className }}{{ c.sectionName ? '-' + c.sectionName : '' }}
                   </span>
                   <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
@@ -75,7 +77,7 @@
         </div>
         <span class="mt-now" *ngIf="isCurrent(t.startTime, t.endTime)">CURRENT</span>
       </article>
-      <p class="mt-muted" *ngIf="!d.todaySchedule?.length">No classes scheduled today.</p>
+      <p class="mt-muted" *ngIf="!d.todaySchedule.length">No classes scheduled today.</p>
 
       <div class="mt-actions">
         <a routerLink="/app/academics/my-classes">My Classes</a>
@@ -85,5 +87,5 @@
       <p class="mt-tip">Tip: Use Week/Day and filters to focus on your schedule quickly.</p>
     </aside>
   </div>
+  </ng-container>
 </div>
-<ng-template #loadingTpl><div class="mt-empty">Loading timetable…</div></ng-template>

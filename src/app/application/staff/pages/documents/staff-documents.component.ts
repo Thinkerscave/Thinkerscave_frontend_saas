@@ -12,11 +12,13 @@ import { finalize } from 'rxjs';
 import { StaffSummary } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-staff-documents',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,
+    TcPageSkeletonComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-documents.component.html'
 })

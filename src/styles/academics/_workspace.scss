@@ -1,17 +1,5 @@
-/* Academics shell — global so every page gets the same header→content air */
-
-/*
- * Spacing contract:
- * - Top padding = breathing room under layout title/breadcrumb (user-visible gap).
- * - Gap = rhythm between major blocks (actions, banners, grids) — ~Org 20px density.
- * - Do not use zero top padding; do not restore the old 1.25rem×1.5rem page pad.
- */
+/* Academics shell — rhythm from _page-rhythm.scss; keep enter animation only */
 .acad-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.85rem 0 1.5rem;
-  min-width: 0;
   animation: acad-page-in 260ms var(--tc-anim-easing, cubic-bezier(0.22, 1, 0.36, 1));
 }
 

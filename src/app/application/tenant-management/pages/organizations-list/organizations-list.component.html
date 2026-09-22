@@ -66,10 +66,14 @@
     </div>
 
     <!-- ── Loading ── -->
-    <app-list-results [busy]="refreshing">
+    <app-list-results [busy]="refreshing && hasLoaded">
     <div *ngIf="!hasLoaded && loading" class="org-loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      <span>Loading organizations…</span>
+      <tc-page-skeleton
+        [layout]="viewMode === 'grid' ? 'cards-only' : 'table-only'"
+        [rows]="8"
+        [columns]="6"
+        [cards]="6">
+      </tc-page-skeleton>
     </div>
 
     <div *ngIf="hasLoaded && !filteredOrganizations.length && !errorMessage" class="org-empty">

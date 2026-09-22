@@ -15,13 +15,15 @@ import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 const ALUMNI_STATUSES: EmploymentStatus[] = ['RESIGNED', 'RETIRED', 'CONTRACT_COMPLETED'];
 
 @Component({
   selector: 'app-staff-alumni',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, AppPaginatorComponent],
+  imports: [CommonModule, FormsModule, AppPaginatorComponent,
+    TcPageSkeletonComponent],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-alumni.component.html'
 })

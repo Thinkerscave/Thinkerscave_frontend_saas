@@ -18,18 +18,6 @@ const ALIASES: Record<string, string[]> = {
   ACCESS_SECURITY_POLICY: ['ACCESS_SECURITY_POLICY', 'SECURITY_POLICY']
 };
 
-function isOrgAccessAdmin(login: LoginService): boolean {
-  const roles = (login.getUserRole() ?? []).map(role =>
-    String(role).toUpperCase().replace(/^ROLE_/, '').replace(/[\s-]+/g, '_')
-  );
-  return roles.some(role =>
-    role === 'ORGANIZATION_ADMIN'
-    || role === 'ORGANIZATION_OWNER'
-    || role === 'COLLEGE_ADMIN'
-    || role === 'INSTITUTION_ADMIN'
-  );
-}
-
 function permissionFor(permissions: PermissionService, resource: string) {
   for (const code of ALIASES[resource] ?? [resource]) {
     const perm = permissions.getPermission(code);
@@ -41,23 +29,21 @@ function permissionFor(permissions: PermissionService, resource: string) {
 /** True when the current user may create/edit/lock/reset on this Access page. */
 export function accessCanManage(
   permissions: PermissionService,
-  login: LoginService,
+  _login: LoginService,
   resource: string
 ): boolean {
   if (permissions.canManage(resource)) return true;
   const perm = permissionFor(permissions, resource);
-  if (perm) return !!perm.canManage;
-  return isOrgAccessAdmin(login);
+  return !!perm?.canManage;
 }
 
 /** True when the current user may open this Access page. */
 export function accessCanView(
   permissions: PermissionService,
-  login: LoginService,
+  _login: LoginService,
   resource: string
 ): boolean {
   if (permissions.canView(resource) || permissions.canManage(resource)) return true;
   const perm = permissionFor(permissions, resource);
-  if (perm) return !!perm.canView || !!perm.canManage;
-  return isOrgAccessAdmin(login);
+  return !!perm && (!!perm.canView || !!perm.canManage);
 }

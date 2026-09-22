@@ -1,6 +1,5 @@
 <div class="saas-page responsibility-workspace">
   <tc-saas-page-header>
-    <app-back-nav fallback="/app/access-management/responsibilities" label="Back to list"></app-back-nav>
     <ng-container *ngIf="canManage && responsibility">
       <button
         *ngIf="!definitionLocked()"
@@ -27,7 +26,7 @@
   <p-confirmDialog></p-confirmDialog>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading responsibility...</div>
+  <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && responsibility">
     <tc-saas-panel title="Details">

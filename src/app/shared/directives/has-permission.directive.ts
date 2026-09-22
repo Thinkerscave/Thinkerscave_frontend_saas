@@ -1,10 +1,14 @@
-import { Directive, inject, Input, OnChanges, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, inject, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { PermissionService } from '../../core/services/permission.service';
 
 /**
  * Structural directive that conditionally renders an element based on the current
  * user's effective permissions. Removes the host element from the DOM when the
  * permission check fails (not just hidden — completely excluded from rendering).
+ *
+ * Re-evaluates when PermissionService finishes loading effective permissions so
+ * async permission fetch after navigation still shows Manage / Generate actions.
  *
  * Usage:
  *   <button *tcHasPerm="'FEES_SETUP'">View Fees Setup</button>
@@ -17,7 +21,7 @@ import { PermissionService } from '../../core/services/permission.service';
   selector: '[tcHasPerm]',
   standalone: true,
 })
-export class HasPermissionDirective implements OnChanges {
+export class HasPermissionDirective implements OnInit, OnChanges, OnDestroy {
   /** The menuCode to check (e.g. 'STUDENTS_DIRECTORY', 'FEES_SETUP'). */
   @Input() tcHasPerm: string = '';
 
@@ -29,9 +33,18 @@ export class HasPermissionDirective implements OnChanges {
   private readonly permissionService = inject(PermissionService);
 
   private isRendered = false;
+  private permSub?: Subscription;
+
+  ngOnInit(): void {
+    this.permSub = this.permissionService.permissionsLoaded$.subscribe(() => this.updateView());
+  }
 
   ngOnChanges(): void {
     this.updateView();
+  }
+
+  ngOnDestroy(): void {
+    this.permSub?.unsubscribe();
   }
 
   private updateView(): void {

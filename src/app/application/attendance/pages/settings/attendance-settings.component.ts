@@ -9,11 +9,13 @@ import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
 import { AttendanceOrgSettings } from '../../../school-operations/models/school-operations.model';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-attendance-settings',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasPanelComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent],
   templateUrl: './attendance-settings.component.html',
   styleUrl: './attendance-settings.component.scss'
 })

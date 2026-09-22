@@ -1,14 +1,10 @@
-<app-workspace-header
-    title="Academic enrollments"
-    subtitle="Student lifecycle"
-    description="Track active, promoted and withdrawn enrollments across academic years."
-    icon="pi pi-id-card"
-    [breadcrumbs]="[{ label: 'Students' }, { label: 'Enrollments' }]">
-    <ng-container actions>
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <ng-container>
         <p-button label="New enrollment" icon="pi pi-plus"
                   (onClick)="router.navigate(['/app/enrollments/new'])"></p-button>
     </ng-container>
-</app-workspace-header>
+</tc-saas-page-header>
 
 <section class="tc-kpi-strip">
     <app-kpi-card label="Total"     [value]="enrollments().length"  icon="pi pi-users"        tone="info"></app-kpi-card>

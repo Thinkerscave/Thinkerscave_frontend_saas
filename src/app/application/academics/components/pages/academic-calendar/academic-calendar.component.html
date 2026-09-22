@@ -1,35 +1,40 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="ac-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> Back
+<div class="ac-page acad-page">
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <span
+      class="ac-badge"
+      *ngIf="dashboard as dash"
+      [class.ac-badge--success]="dash.status === 'CURRENT'"
+      [class.ac-badge--neutral]="dash.status !== 'CURRENT'">
+      {{ dash.status === 'CURRENT' ? 'Current' : dash.status }}
+    </span>
+    <span class="ac-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="readOnly"
+      (click)="openCreateEvent()">
+      <i class="pi pi-plus"></i>
+      Add Event
     </button>
   </tc-saas-page-header>
 
-  <!-- Top controls: year + Calendar/List + Add Event -->
+    <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    layout="detail-section"
+    [sections]="2"
+    [showKpis]="false"
+    [showFilter]="false">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="dashboard">
+<!-- Top controls: Calendar/List toggle -->
   <section class="ac-topbar" aria-label="Calendar controls">
     <div class="ac-topbar__left">
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="selectedYearId"
-        (onChange)="onYearChange()"
-        optionLabel="name"
-        optionValue="academicYearId"
-        placeholder="Select year"
-        styleClass="ac-year-dd"
-        appendTo="body">
-      </p-dropdown>
-      <span
-        class="ac-badge"
-        *ngIf="dashboard as dash"
-        [class.ac-badge--success]="dash.status === 'CURRENT'"
-        [class.ac-badge--neutral]="dash.status !== 'CURRENT'">
-        {{ dash.status === 'CURRENT' ? 'Current' : dash.status }}
-      </span>
-      <span class="ac-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
-
       <div class="ac-view-toggle" role="group" aria-label="View mode">
         <button
           type="button"
@@ -45,16 +50,6 @@
         </button>
       </div>
     </div>
-
-    <button
-      type="button"
-      class="tc-btn tc-btn--primary"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="readOnly"
-      (click)="openCreateEvent()">
-      <i class="pi pi-plus"></i>
-      Add Event
-    </button>
   </section>
 
   <!-- ========== CALENDAR VIEW ========== -->
@@ -345,14 +340,8 @@
       </div>
     </ng-template>
   </ng-template>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="ac-loading acad-page" aria-busy="true">
-    <div class="ac-skeleton ac-skeleton--context"></div>
-    <div class="ac-skeleton ac-skeleton--cal"></div>
-  </div>
-</ng-template>
 
 <p-dialog
   [header]="editingEventId ? 'Edit Event' : 'Add Event'"

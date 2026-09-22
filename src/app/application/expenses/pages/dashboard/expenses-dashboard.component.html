@@ -1,0 +1,335 @@
+<section class="tc-page-shell tc-directory-page expenses-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary tc-btn--sm"
+      *tcHasPerm="resources.EXPENSES; action: 'manage'"
+      (click)="openAdd()"
+    >
+      <i class="pi pi-plus"></i>
+      Add Expense
+    </button>
+  </tc-saas-page-header>
+
+  @if (loading && !kpis) {
+    <tc-page-skeleton layout="dashboard" [kpis]="4" [charts]="0" [rows]="8" [columns]="8"></tc-page-skeleton>
+  } @else if (error && !kpis) {
+    <div class="tc-empty-state expenses-empty">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Expenses unavailable</h3>
+      <p>{{ error }}</p>
+      <div class="expenses-empty__actions">
+        <button type="button" class="tc-btn tc-btn--outline" (click)="loadAll()">Retry</button>
+      </div>
+    </div>
+  } @else {
+    @if (kpis) {
+      <tc-kpi-group ariaLabel="Expense KPIs" mode="equal" [columns]="4">
+        <tc-kpi-card
+          label="Total Expenses"
+          [value]="money(kpis.totalExpenseAmount)"
+          [hint]="kpis.periodLabel"
+          icon="pi pi-wallet"
+          tone="primary"
+        />
+        <tc-kpi-card
+          label="Pending Approval"
+          [value]="money(kpis.pendingApprovalAmount)"
+          [hint]="kpis.pendingApprovalCount + ' expenses'"
+          icon="pi pi-clock"
+          tone="warning"
+        />
+        <tc-kpi-card
+          label="Pending Payment"
+          [value]="money(kpis.pendingPaymentAmount)"
+          [hint]="kpis.pendingPaymentCount + ' expenses'"
+          icon="pi pi-credit-card"
+          tone="warning"
+        />
+        <tc-kpi-card
+          label="Paid"
+          [value]="money(kpis.paidAmount)"
+          [hint]="kpis.paidCount + ' expenses'"
+          icon="pi pi-check-circle"
+          tone="success"
+        />
+      </tc-kpi-group>
+
+      <div class="tc-card tc-card--panel expenses-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Shortcuts</span>
+            <h3>Quick Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="expenses-quick-actions">
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/expenses/heads" *tcHasPerm="resources.HEADS; action: 'view'">
+              Manage Expense Heads
+            </a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">
+              Finance Reports
+            </a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/settings" *tcHasPerm="resources.SETTINGS; action: 'view'">
+              Expense Settings
+            </a>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="tc-card tc-card--panel expenses-filters">
+      <div class="tc-card__body">
+        <div class="expenses-filters__grid">
+          <div class="tc-form-field">
+            <label for="exp-search">Search</label>
+            <input
+              id="exp-search"
+              type="search"
+              placeholder="Search expenses"
+              [(ngModel)]="draft.q"
+              (keyup.enter)="apply()"
+            />
+          </div>
+
+          <div class="tc-form-field">
+            <label for="exp-period">Period</label>
+            <select id="exp-period" [(ngModel)]="draft.datePreset">
+              <option value="THIS_MONTH">This Month</option>
+              <option value="THIS_QUARTER">This Quarter</option>
+              <option value="THIS_FY">This FY</option>
+              <option value="CUSTOM">Custom</option>
+            </select>
+          </div>
+
+          @if (draft.datePreset === 'CUSTOM') {
+            <div class="tc-form-field">
+              <label for="exp-from">From</label>
+              <input id="exp-from" type="date" [(ngModel)]="draft.dateFrom" />
+            </div>
+            <div class="tc-form-field">
+              <label for="exp-to">To</label>
+              <input id="exp-to" type="date" [(ngModel)]="draft.dateTo" />
+            </div>
+          }
+
+          <div class="tc-form-field">
+            <label for="exp-category">Category</label>
+            <select id="exp-category" [(ngModel)]="draft.categoryId">
+              <option [ngValue]="undefined">All Categories</option>
+              @for (c of categories; track c.expenseCategoryId) {
+                <option [ngValue]="c.expenseCategoryId">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="tc-form-field">
+            <label for="exp-head">Expense Head</label>
+            <select id="exp-head" [(ngModel)]="draft.expenseHeadId">
+              <option [ngValue]="undefined">All Heads</option>
+              @for (h of heads; track h.expenseHeadId) {
+                <option [ngValue]="h.expenseHeadId">{{ h.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="tc-form-field">
+            <label for="exp-approval">Approval Status</label>
+            <select id="exp-approval" [(ngModel)]="draft.approvalStatus">
+              <option [ngValue]="undefined">All Approvals</option>
+              @for (s of approvalStatuses; track s) {
+                <option [ngValue]="s">{{ label(s) }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="tc-form-field">
+            <label for="exp-payment">Payment Status</label>
+            <select id="exp-payment" [(ngModel)]="draft.paymentStatus">
+              <option [ngValue]="undefined">All Payments</option>
+              @for (s of paymentStatuses; track s) {
+                <option [ngValue]="s">{{ label(s) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="expenses-filters__actions">
+          <div class="expenses-filters__sort">
+            <label for="exp-sort">Sort</label>
+            <select id="exp-sort" [(ngModel)]="sort" (ngModelChange)="changeSort($event)">
+              <option value="expenseDate,desc">Date (newest)</option>
+              <option value="expenseDate,asc">Date (oldest)</option>
+              <option value="amount,desc">Amount (high)</option>
+              <option value="amount,asc">Amount (low)</option>
+              <option value="expenseNumber,asc">Expense No.</option>
+            </select>
+          </div>
+          <button type="button" class="tc-btn" (click)="reset()">Reset</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="apply()">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tc-card tc-card--panel expenses-panel">
+      <div class="tc-card__body">
+        @if (tableLoading && !rows.length) {
+          <tc-page-skeleton layout="table-only" [rows]="8" [columns]="8"></tc-page-skeleton>
+        } @else if (!rows.length) {
+          <div class="tc-empty-state expenses-empty">
+            <i class="pi" [ngClass]="heads.length ? 'pi-inbox' : 'pi-sitemap'"></i>
+            <h3>{{ heads.length ? 'No expenses found' : 'Set up expense heads first' }}</h3>
+            <p>
+              {{
+                heads.length
+                  ? 'No expenses match your filters. Try adjusting the period or status filters.'
+                  : 'Create at least one expense head before recording expenses.'
+              }}
+            </p>
+            <div class="expenses-empty__actions">
+              @if (!heads.length) {
+                <a class="tc-btn tc-btn--primary" routerLink="/app/expenses/heads">Manage Expense Heads</a>
+              } @else {
+                <button
+                  type="button"
+                  class="tc-btn"
+                  (click)="reset()"
+                >
+                  Reset filters
+                </button>
+                <button
+                  type="button"
+                  class="tc-btn tc-btn--primary"
+                  *tcHasPerm="resources.EXPENSES; action: 'manage'"
+                  (click)="openAdd()"
+                >
+                  <i class="pi pi-plus"></i>
+                  Add Expense
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="expenses-table-wrap">
+            <table class="expenses-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Expense No.</th>
+                  <th>Expense Head</th>
+                  <th>Category</th>
+                  <th>Vendor</th>
+                  <th class="text-right">Amount</th>
+                  <th>Approval</th>
+                  <th>Payment</th>
+                  <th class="expenses-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of rows; track r.expenseId) {
+                  <tr>
+                    <td>{{ r.date | date: 'mediumDate' }}</td>
+                    <td>
+                      <a [routerLink]="['/app/expenses', r.expenseId]">{{ r.expenseNumber }}</a>
+                    </td>
+                    <td>{{ r.headName }}</td>
+                    <td>{{ r.categoryName }}</td>
+                    <td>{{ r.vendorName || '—' }}</td>
+                    <td class="text-right">{{ money(r.amount) }}</td>
+                    <td>
+                      <tc-saas-pill [label]="label(r.approvalStatus)" [tone]="tone(r.approvalStatus)" />
+                    </td>
+                    <td>
+                      <tc-saas-pill [label]="label(r.paymentStatus)" [tone]="tone(r.paymentStatus)" />
+                    </td>
+                    <td class="expenses-table__actions">
+                      <div class="expenses-actions">
+                        <a
+                          class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                          [routerLink]="['/app/expenses', r.expenseId]"
+                          title="View"
+                        >
+                          <i class="pi pi-eye"></i>
+                        </a>
+                        @if (r.approvalStatus === 'DRAFT' || r.approvalStatus === 'PENDING_APPROVAL') {
+                          <button
+                            type="button"
+                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                            *tcHasPerm="resources.EXPENSES; action: 'manage'"
+                            (click)="edit(r)"
+                            title="Edit"
+                          >
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                        }
+                        @if (r.approvalStatus === 'APPROVED' && r.paymentStatus !== 'PAID') {
+                          <button
+                            type="button"
+                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                            *tcHasPerm="resources.PAYMENT; action: 'manage'"
+                            (click)="pay(r)"
+                            title="Record Payment"
+                          >
+                            <i class="pi pi-credit-card"></i>
+                          </button>
+                        }
+                        @if (r.approvalStatus === 'PENDING_APPROVAL') {
+                          <button
+                            type="button"
+                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                            *tcHasPerm="resources.APPROVAL; action: 'approve'"
+                            (click)="approve(r)"
+                            title="Approve"
+                          >
+                            <i class="pi pi-check"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                            *tcHasPerm="resources.APPROVAL; action: 'approve'"
+                            (click)="rejectExpense(r)"
+                            title="Reject"
+                          >
+                            <i class="pi pi-times"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="expenses-pager">
+            <span>Showing {{ rows.length }} of {{ total }}</span>
+            <div class="expenses-pager__btns">
+              <button
+                type="button"
+                class="tc-btn tc-btn--outline tc-btn--sm"
+                [disabled]="page === 0"
+                (click)="previous()"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                class="tc-btn tc-btn--outline tc-btn--sm"
+                [disabled]="(page + 1) * size >= total"
+                (click)="next()"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <app-expense-form-drawer [(open)]="drawer" [expense]="editing" (saved)="loadAll()" />
+  <app-record-expense-payment-dialog [(visible)]="payment" [expense]="paymentExpense" (paid)="loadAll()" />
+  <app-expense-reject-dialog [(visible)]="reject" [expenseId]="rejectId" (rejected)="loadAll()" />
+</section>

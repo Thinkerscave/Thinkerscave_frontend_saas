@@ -3,13 +3,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
+import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { CommunicationService, Notice } from '../../services/communication.service';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
   SaasPillComponent
 } from '../../../../shared/ui/saas';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
 interface DeliverySegment { key: string; label: string; value: number; color: string; }
 
@@ -17,7 +18,8 @@ interface DeliverySegment { key: string; label: string; value: number; color: st
   selector: 'app-announcement-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, AppBackNavComponent],
+  imports: [CommonModule, DatePipe, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasPillComponent],
   templateUrl: './announcement-detail.component.html',
   styleUrl: './announcement-detail.component.scss'
 })
@@ -26,6 +28,7 @@ export class AnnouncementDetailComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly api = inject(CommunicationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
   notice: Notice | null = null;
@@ -56,14 +59,19 @@ export class AnnouncementDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getNotice(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: notice => {
           this.notice = notice;
-          this.loading = false;
+          if (notice?.title) {
+            this.pageHeader.setPageHeader({ subtitle: notice.title });
+          }
           this.cdr.markForCheck();
         },
-        error: () => { this.loading = false; this.cdr.markForCheck(); }
+        error: () => { this.cdr.markForCheck(); }
       });
   }
 }

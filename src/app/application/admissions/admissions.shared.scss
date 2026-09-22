@@ -3,14 +3,7 @@
    Used across Inquiry Center / Admission Center / Settings / Detail / Wizard
    ============================================================ */
 
-/* Academics-matching page rhythm */
-.adm-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.85rem 0 1.5rem;
-  min-width: 0;
-}
+/* Page rhythm comes from global _page-rhythm.scss (.adm-page) */
 
 .adm-page .tc-filter-bar {
   display: grid;
@@ -3099,6 +3092,12 @@
 }
 
 .adm-report-kpis.is-refreshing { opacity: 0.72; }
+
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
 
 .adm-report-kpi {
   background: var(--tc-surface, #fff);

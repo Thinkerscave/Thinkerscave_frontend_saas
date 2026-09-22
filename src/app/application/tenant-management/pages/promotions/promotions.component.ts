@@ -27,6 +27,7 @@ import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 interface PromotionDraft {
   promotionCode: string;
@@ -51,7 +52,8 @@ interface PromotionDraft {
     SaasPillComponent,
     CalendarModule,
     AppGridTableToggleComponent,
-    AppPaginatorComponent
+    AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.scss'

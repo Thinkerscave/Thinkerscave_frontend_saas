@@ -6,7 +6,7 @@
 }
 
 .ta-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .ta-breadcrumb {
@@ -270,4 +270,10 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.ta-results--refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }

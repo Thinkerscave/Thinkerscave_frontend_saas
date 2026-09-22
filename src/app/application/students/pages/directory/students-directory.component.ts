@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
-import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
@@ -13,6 +12,7 @@ import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { SoftRefreshKeys, SoftRefreshService, TcPageSkeletonComponent, ListSnapshotCache } from '../../../../shared/ui/loading';
 
 import {
   StudentDirectoryCard,
@@ -44,6 +44,12 @@ interface FilterOption<T = string | null> {
 
 const LIST_KEY = 'students.directory.view';
 
+interface StudentsDirectorySnapshot {
+  students: StudentDirectoryCard[];
+  totalElements: number;
+  kpi: StudentKpi;
+}
+
 @Component({
   selector: 'app-students-directory',
   standalone: true,
@@ -56,7 +62,7 @@ const LIST_KEY = 'students.directory.view';
     AppListResultsComponent,
     AppPaginatorComponent,
     AvatarComponent,
-    SkeletonComponent,
+    TcPageSkeletonComponent,
     TcTranslatePipe,
     EmptyStateComponent,
     KpiCardComponent,
@@ -73,6 +79,8 @@ export class StudentsDirectoryComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
+  private readonly softRefresh = inject(SoftRefreshService);
+  private readonly snapshots = inject(ListSnapshotCache);
   private readonly query = new ListQuerySession();
 
   loading = true;
@@ -188,6 +196,20 @@ export class StudentsDirectoryComponent implements OnInit {
       sectionId: this.filter.sectionId,
       status: this.filter.status
     };
+
+    // Soft return from Add Student (or other mutations): restore snapshot + refresh in place.
+    const soft = this.softRefresh.consume(SoftRefreshKeys.studentsDirectory);
+    const snap = this.snapshots.get<StudentsDirectorySnapshot>(LIST_KEY);
+    if (soft && snap) {
+      this.students = snap.students;
+      this.totalElements = snap.totalElements;
+      this.kpi = snap.kpi;
+      this.hasLoaded = true;
+      this.loading = false;
+      this.loadAll(true);
+      return;
+    }
+
     this.loadAll(!saved);
   }
 
@@ -195,6 +217,10 @@ export class StudentsDirectoryComponent implements OnInit {
     if (resetPage) this.pageIndex = 0;
     this.api.kpi().subscribe(kpi => {
       this.kpi = kpi;
+      const snap = this.snapshots.get<StudentsDirectorySnapshot>(LIST_KEY);
+      if (snap) {
+        this.snapshots.set<StudentsDirectorySnapshot>(LIST_KEY, { ...snap, kpi });
+      }
       this.cdr.markForCheck();
     });
     this.api.listClasses().subscribe(classes => {
@@ -246,6 +272,11 @@ export class StudentsDirectoryComponent implements OnInit {
           this.students = page.content;
           this.totalElements = page.totalElements;
           this.errorMessage = '';
+          this.snapshots.set<StudentsDirectorySnapshot>(LIST_KEY, {
+            students: this.students,
+            totalElements: this.totalElements,
+            kpi: this.kpi
+          });
         },
         error: () => {
           if (!this.query.isCurrent(requestId)) {

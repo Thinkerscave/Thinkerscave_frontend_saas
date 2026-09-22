@@ -10,7 +10,7 @@
 
   <app-toast></app-toast>
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading policy...</div>
+  <tc-page-skeleton *ngIf="loading" variant="form"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading">
     <p class="security-policy__note" *ngIf="!canManage">You can review these rules. Ask an organization admin to change them.</p>

@@ -33,11 +33,14 @@ import {
   SubjectTimetablePreference
 } from '../../../models/subjects-mapping.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-subject-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -157,7 +160,6 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
       next: (subject) => {
         this.subject = subject;
         this.pageHeader.setPageHeader({
-          title: subject.name,
           subtitle: subject.academicYearName || 'Subject details'
         });
         this.loadClasses(subject.academicYearId);

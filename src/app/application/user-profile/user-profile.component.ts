@@ -11,6 +11,7 @@ import {
   SaasTab,
   SaasTabsComponent
 } from '../../shared/ui/saas';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../shared/ui/loading';
 import { LoginService } from '../../core/services/login.service';
 import { UserProfileService } from '../services/user-profile.service';
 import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
@@ -30,7 +31,8 @@ type TabKey = 'overview' | 'edit' | 'security' | 'quick-links';
     SaasPanelComponent,
     SaasPillComponent,
     SaasTabsComponent,
-    TcTranslatePipe
+    TcTranslatePipe,
+    TcPageSkeletonComponent
   ],
   templateUrl: './user-profile.component.html',
   styleUrl: './user-profile.component.scss'
@@ -86,7 +88,10 @@ export class UserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.profileService.loadProfile()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => this.loading.set(busy)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: user => {
           this.user.set(user);
@@ -96,9 +101,7 @@ export class UserProfileComponent implements OnInit {
             email: user.email || '',
             mobile: user.mobile || ''
           });
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false)
+        }
       });
   }
 

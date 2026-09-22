@@ -1,11 +1,10 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
 
-<div class="cs-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
+<div class="cs-page acad-page">
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <span class="cs-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
     <button
       type="button"
       class="tc-btn tc-btn--primary"
@@ -17,38 +16,17 @@
     </button>
   </tc-saas-page-header>
 
-  <section class="cs-context" *ngIf="dashboard as dash" aria-label="Academic year context">
-    <div class="cs-context__primary">
-      <div class="cs-context__label">Academic Year</div>
-      <div class="cs-context__controls">
-        <p-dropdown
-          [options]="years"
-          [(ngModel)]="selectedYearId"
-          (onChange)="onYearChange()"
-          optionLabel="name"
-          optionValue="academicYearId"
-          placeholder="Select year"
-          styleClass="cs-year-dd"
-          appendTo="body">
-        </p-dropdown>
-        <span
-          class="cs-badge"
-          [class.cs-badge--success]="dash.academicYearStatus === 'CURRENT'"
-          [class.cs-badge--neutral]="dash.academicYearStatus !== 'CURRENT'">
-          {{ dash.academicYearStatus }}
-        </span>
-        <span class="cs-readonly" *ngIf="dash.yearReadOnly">Historical · Read only</span>
-      </div>
-    </div>
-    <div class="cs-context__summary">
-      <span>{{ dash.classCount }} Classes</span>
-      <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dash.sectionCount }} Sections</span>
-      <span class="cs-dot" aria-hidden="true">·</span>
-      <span>{{ dash.studentCount }} Students</span>
-    </div>
-  </section>
+  <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="6">
+  </tc-page-skeleton>
 
+  <ng-container *ngIf="dashboard">
   <div class="acad-toolbar cs-toolbar">
     <input
       class="acad-toolbar__search"
@@ -245,17 +223,8 @@
       </div>
     </ng-template>
   </ng-template>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="cs-loading acad-page" aria-busy="true">
-    <div class="cs-skeleton cs-skeleton--context"></div>
-    <div class="cs-skeleton cs-skeleton--toolbar"></div>
-    <div class="cs-skeleton-grid">
-      <div class="cs-skeleton cs-skeleton--card" *ngFor="let _ of [1,2,3,4]"></div>
-    </div>
-  </div>
-</ng-template>
 
 <p-dialog
   [header]="editingClassId ? 'Edit Class' : 'Add Class'"

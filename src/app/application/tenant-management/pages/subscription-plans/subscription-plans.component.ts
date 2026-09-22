@@ -15,12 +15,13 @@ import {
   SaasPanelComponent
 } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 @Component({
   selector: 'app-subscription-plans',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPillComponent, SaasPanelComponent],
+  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPillComponent, SaasPanelComponent, TcPageSkeletonComponent],
   templateUrl: './subscription-plans.component.html',
   styleUrl: './subscription-plans.component.scss'
 })

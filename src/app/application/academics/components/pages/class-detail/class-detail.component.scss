@@ -3,8 +3,7 @@
 :host { display: block; }
 
 .cd-page.acad-page {
-  gap: 0.85rem;
-  padding: 0.35rem 0 1.15rem;
+  /* gap / padding from _page-rhythm.scss */
 }
 
 /* ── Identity (no duplicate profile card) ── */

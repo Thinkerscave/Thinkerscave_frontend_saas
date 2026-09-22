@@ -1,10 +1,4 @@
 <section class="sd-workspace">
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Staff Documents</h1>
-      <p class="sd-header__sub">Access compliance and mandatory documents per staff member.</p>
-    </div>
-  </header>
 
   <div class="sd-info-banner">
     <i class="pi pi-info-circle"></i>
@@ -25,11 +19,11 @@
     <div class="sd-error-banner"><i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}</div>
   }
 
-  @if (loading) {
-    <div class="sd-loading"><i class="pi pi-spin pi-spinner"></i><span>Loading staff...</span></div>
+  @if (loading && !staff.length) {
+    <tc-page-skeleton layout="table-only" [rows]="8" [columns]="5"></tc-page-skeleton>
   }
 
-  @if (!loading && filteredStaff().length > 0) {
+  @if ((!loading || staff.length) && filteredStaff().length > 0) {
     <div class="sd-table-wrap">
       <table class="sd-table">
         <thead>

@@ -1,13 +1,13 @@
 <section class="tc-page-shell adm-page adm-detail">
+  <tc-saas-page-header></tc-saas-page-header>
   @if (loading()) {
-    <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading lead detail…</div>
+    <tc-page-skeleton variant="detail" [tabs]="4"></tc-page-skeleton>
   } @else if (error()) {
     <div class="tc-empty-state" role="alert">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>Could not load lead</h3>
       <p>{{ error() }}</p>
       <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
-      <button type="button" class="tc-btn tc-btn--back" (click)="goBack()">Back</button>
     </div>
   } @else if (detail()) {
     <!-- ═══ Lead Identity Header (Figma: identity left + actions right, one row) ═══ -->
@@ -31,9 +31,6 @@
         </div>
       </div>
       <div class="adm-detail__hero-actions">
-        <button type="button" class="tc-btn tc-btn--back" (click)="goBack()" title="Back to Leads">
-          <i class="pi pi-arrow-left"></i> Back
-        </button>
         @if (contactMobile) {
           <a class="tc-btn tc-btn--ghost tc-btn--icon" [href]="'tel:' + contactMobile" title="Call {{ contactMobile }}"><i class="pi pi-phone"></i></a>
           <a class="tc-btn tc-btn--ghost tc-btn--icon" [href]="'https://wa.me/' + contactMobile" target="_blank" rel="noopener" title="WhatsApp {{ contactMobile }}"><i class="pi pi-whatsapp"></i></a>
@@ -292,7 +289,7 @@
               </div>
             </div>
             @if (activityLoading()) {
-              <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading activity…</div>
+              <tc-page-skeleton variant="table" [rows]="4" [columns]="3"></tc-page-skeleton>
             } @else if (!activityItems().length) {
               <div class="tc-empty-state adm-empty-compact">
                 <h3>No activity yet</h3>

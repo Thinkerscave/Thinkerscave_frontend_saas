@@ -12,6 +12,7 @@ import { DrawerFormComponent } from '../../shared/ui/drawer-form/drawer-form.com
 import { GlobalSettingsComponent } from '../../application/global-settings/global-settings.component';
 import { SettingsUiService } from '../../core/services/settings-ui.service';
 import { LanguageService } from '../../core/services/language.service';
+import { NavigationHistoryService } from '../../core/services/navigation-history.service';
 import { TcTranslatePipe } from '../../shared/pipes/tc-translate.pipe';
 
 @Component({
@@ -37,6 +38,8 @@ export class LayoutComponent {
   readonly sidebarLayout = inject(SidebarLayoutService);
   readonly settingsUi = inject(SettingsUiService);
   private readonly language = inject(LanguageService);
+  /** Constructed with the shell so in-app history is recorded from the first page. */
+  private readonly _navigationHistory = inject(NavigationHistoryService);
 
   /** Keep title reactive to language changes. */
   settingsTitle(): string {

@@ -1,8 +1,5 @@
 <div class="saas-page organization-profile">
-  <tc-saas-page-header
-    title="Organization Profile"
-    subtitle="Manage your institution's profile, contact details, and branding"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Organization Profile'}]">
+  <tc-saas-page-header>
     <button type="button" class="saas-btn saas-btn--primary" (click)="save()" [disabled]="!dirty || saving">
       <i class="pi" [class.pi-save]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>{{ saving ? 'Saving...' : 'Save Changes' }}
     </button>
@@ -17,7 +14,7 @@
     <strong class="org-success-text">{{ successMessage }}</strong>
   </div>
 
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading organization profile...</div>
+  <tc-page-skeleton *ngIf="loading" variant="tabs" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && profile">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>

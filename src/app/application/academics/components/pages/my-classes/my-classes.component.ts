@@ -1,56 +1,74 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DropdownModule } from 'primeng/dropdown';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { ACADEMICS_MY_CLASSES_RESOURCE, TeacherMyClasses } from '../../../models/academics-me.model';
+
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
 @Component({
   selector: 'app-my-classes-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, SaasPageHeaderComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
+  ],
   templateUrl: './my-classes.component.html',
   styleUrls: ['./my-classes.component.scss']
 })
-export class MyClassesPageComponent implements OnInit {
+export class MyClassesPageComponent {
   private readonly api = inject(AcademicsMeApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_CLASSES_RESOURCE;
   loading = true;
-  years: AcademicYearDto[] = [];
+  refreshing = false;
+  hasLoaded = false;
   selectedYearId: number | null = null;
   data: TeacherMyClasses | null = null;
   q = '';
   viewMode: 'list' | 'grid' = 'list';
 
-  ngOnInit(): void {
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        this.selectedYearId = (years.find((y) => y.status === 'CURRENT') ?? years[0])?.academicYearId ?? null;
-        this.reload();
-      },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    if (yearId == null) {
+      this.data = null;
+      this.loading = false;
+      this.hasLoaded = true;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {
-    this.loading = true;
+    if (!this.selectedYearId) return;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.api.myClasses(this.selectedYearId)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: (d) => this.data = d,
-        error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load classes', detail: err?.error?.message })
+        next: (d) => {
+          this.data = d;
+          this.hasLoaded = true;
+        },
+        error: (err) => {
+          this.hasLoaded = true;
+          this.messages.add({ severity: 'error', summary: 'Unable to load classes', detail: err?.error?.message });
+        }
       });
   }
 

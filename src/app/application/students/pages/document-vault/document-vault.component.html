@@ -1,15 +1,9 @@
 <section class="tc-page-shell stu-module-page stu-document-page">
-  <header class="tc-page-header">
-    <div class="tc-page-header__main">
-      <h1>Document Vault</h1>
-      <p>Centralised repository for every student document — uploads, verification, and missing tracking.</p>
+  <tc-saas-page-header>
       <span class="adm-count"><i class="pi pi-file"></i> {{ kpi.totalDocuments }} on file</span>
-    </div>
-    <div class="tc-page-header__actions">
       <button type="button" class="tc-btn" (click)="openBulk()"><i class="pi pi-upload"></i> Bulk Upload</button>
       <button type="button" class="tc-btn tc-btn--primary" (click)="openUpload()"><i class="pi pi-plus"></i> Upload Document</button>
-    </div>
-  </header>
+  </tc-saas-page-header>
 
   <div class="stu-kpi-grid">
     <div *ngFor="let tile of kpiTiles" class="tc-card tc-card--kpi" [attr.data-tone]="tile.tone">
@@ -41,9 +35,9 @@
       <i class="pi pi-check-circle"></i> {{ successMessage }}
     </div>
 
-    <div class="tc-loading" *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Loading documents…</div>
+    <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
 
-    <div class="tc-table-wrap" *ngIf="!loading && entries.length">
+    <div class="tc-table-wrap" *ngIf="hasLoaded && entries.length" [class.is-refreshing]="refreshing">
       <table class="tc-table">
         <thead>
           <tr><th>Student</th><th>Document Type</th><th>File Name</th><th>Category</th><th>Status</th><th>Uploaded On</th><th></th></tr>
@@ -75,7 +69,7 @@
       </table>
     </div>
 
-    <div class="tc-empty-state" *ngIf="!loading && !entries.length">
+    <div class="tc-empty-state" *ngIf="hasLoaded && !entries.length">
       <i class="pi pi-folder-open"></i>
       <h3>No documents found</h3>
       <p>Upload documents from individual student profiles or via bulk upload.</p>

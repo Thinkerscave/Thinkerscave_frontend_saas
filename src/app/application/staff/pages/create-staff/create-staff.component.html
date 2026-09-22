@@ -11,17 +11,8 @@
     </button>
   </div>
 
-  <!-- Page header -->
+  <!-- Page actions -->
   <div *ngIf="!drawerMode" class="sw-wizard-header">
-    <div class="sw-wizard-header__left">
-      <button type="button" class="sw-back-btn" (click)="cancel()">
-        <i class="pi pi-arrow-left"></i>
-      </button>
-      <div>
-        <h1>{{ isEditMode ? 'Edit Staff Profile' : 'Create Staff Profile' }}</h1>
-        <p>{{ isEditMode ? 'Update staff member details.' : 'Add a new staff member to the organization.' }}</p>
-      </div>
-    </div>
     <div class="sw-wizard-header__actions">
       <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
       <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
@@ -241,56 +232,6 @@
           </div>
         </div>
 
-        <h3 class="sw-form-section__sub">Salary Information</h3>
-        <div class="sw-form-grid">
-          <div class="sw-field">
-            <label class="sw-label">Salary Type <span class="req">*</span></label>
-            <p-dropdown inputId="select-salary-type"
-                        [options]="salaryTypeOptions"
-                        [(ngModel)]="salaryType"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="body"
-                        styleClass="w-full">
-            </p-dropdown>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Effective From <span class="req">*</span></label>
-            <input id="input-salary-effective" type="date" [(ngModel)]="salaryEffectiveFrom"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Basic Pay (₹)</label>
-            <input id="input-basic-pay" type="number" [(ngModel)]="basicPay" min="0" placeholder="40,000"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">HRA (₹)</label>
-            <input id="input-hra" type="number" [(ngModel)]="hra" min="0" placeholder="8,000"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">DA (₹)</label>
-            <input id="input-da" type="number" [(ngModel)]="da" min="0" placeholder="4,000"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Special Allowance (₹)</label>
-            <input id="input-special-allowance" type="number" [(ngModel)]="specialAllowance" min="0"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Transport Allowance (₹)</label>
-            <input id="input-transport" type="number" [(ngModel)]="transportAllowance" min="0"/>
-          </div>
-          <div class="sw-field">
-            <label class="sw-label">Other Allowance (₹)</label>
-            <input id="input-other-allowance" type="number" [(ngModel)]="otherAllowance" min="0"/>
-          </div>
-        </div>
-
-        <div class="sw-salary-summary">
-          <div class="sw-salary-summary__row">
-            <span>Gross Salary</span>
-            <strong>₹ {{ grossSalary | number }}</strong>
-          </div>
-        </div>
-
         <h3 class="sw-form-section__sub">Bank Details</h3>
         <div class="sw-form-grid">
           <div class="sw-field">
@@ -310,6 +251,10 @@
             <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="SBIN0001234"/>
           </div>
         </div>
+
+        <p class="sw-helper text-sm" style="margin: 0.75rem 0 0; color: var(--tc-text-muted);">
+          Salary is configured later in Finance → Payroll.
+        </p>
 
         <div class="sw-final-box">
           <i class="pi pi-check-circle"></i>

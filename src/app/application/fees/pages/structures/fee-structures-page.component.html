@@ -1,0 +1,324 @@
+<section class="tc-page-shell tc-directory-page fees-page fs-page">
+  <app-toast />
+  <p-confirmDialog />
+
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+  </tc-saas-page-header>
+
+  @if (!yearEditable && academicYearId != null) {
+    <div class="fs-banner fs-banner--lock" role="status">
+      <i class="pi pi-lock" aria-hidden="true"></i>
+      <p>This academic year has been published. Fee structures are now locked and cannot be modified.</p>
+    </div>
+  }
+
+  <tc-page-skeleton
+    *ngIf="loading"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="7">
+  </tc-page-skeleton>
+
+  @if (!loading) {
+    <div class="acad-toolbar fs-toolbar">
+      <input
+        class="acad-toolbar__search"
+        type="search"
+        placeholder="Search by class name..."
+        [ngModel]="q"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search by class name" />
+      <div class="acad-toolbar__filters">
+        <select
+          class="fs-native-select"
+          [ngModel]="configuredStatus"
+          (ngModelChange)="onStatusFilterChange($event)"
+          aria-label="Configuration status">
+          @for (opt of statusOptions; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="acad-toolbar__end">
+        <app-grid-table-toggle
+          pageKey="fees.structures.view"
+          [mode]="viewMode"
+          (modeChange)="onViewModeChange($event)"
+          ariaLabel="View mode">
+        </app-grid-table-toggle>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="tc-empty-state tc-empty-state--inline">
+        <p>{{ error }}</p>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (!rows.length) {
+      @if (isFilterEmptyState) {
+        <div class="fs-empty">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+          <h3>No classes match your filters</h3>
+          <p>Try changing the search or status filter.</p>
+          <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
+        </div>
+      } @else {
+        <div class="fs-empty">
+          <i class="pi pi-inbox" aria-hidden="true"></i>
+          <h3>No classes found</h3>
+          <p>
+            There are no classes available for
+            {{ yearName || 'this academic year' }}.
+          </p>
+        </div>
+      }
+    } @else {
+      <div class="fs-results">
+        @if (viewMode === 'grid') {
+          <div class="fs-grid">
+            @for (row of rows; track row.classId) {
+              <article
+                class="fs-card"
+                [class.fs-card--configured]="row.configured"
+                [class.fs-card--pending]="!row.configured"
+                (click)="row.configured ? openDetails(row) : null"
+                (keydown.enter)="row.configured ? openDetails(row) : null"
+                [attr.tabindex]="row.configured ? 0 : null"
+                [attr.role]="row.configured ? 'link' : null"
+                [attr.aria-label]="(row.configured ? 'View details for ' : '') + row.className">
+                <div class="fs-card__top">
+                  <div class="fs-card__identity">
+                    <h2>{{ row.className }}</h2>
+                    @if (row.classCode) {
+                      <code>{{ row.classCode }}</code>
+                    }
+                  </div>
+                  <span
+                    class="fs-badge"
+                    [class.fs-badge--success]="row.configured"
+                    [class.fs-badge--warn]="!row.configured">
+                    {{ row.configured ? 'Configured' : 'Not Configured' }}
+                  </span>
+                </div>
+
+                @if (row.configured) {
+                  <div class="fs-card__stats">
+                    <div>
+                      <strong>{{ formatMoney(row.totalFees) }}</strong>
+                      <span>Total</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatMoney(row.requiredFees) }}</strong>
+                      <span>Required</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatMoney(row.optionalFees) }}</strong>
+                      <span>Optional</span>
+                    </div>
+                  </div>
+                  <div class="fs-card__meta">
+                    <span>{{ row.feeHeadCount || 0 }} fee heads</span>
+                    @if (row.configuredMonthlyAmount != null) {
+                      <span>· Monthly {{ formatMoney(row.configuredMonthlyAmount) }}</span>
+                    }
+                  </div>
+                } @else {
+                  <p class="fs-card__hint">
+                    Fee structure has not been configured for this class yet.
+                  </p>
+                }
+
+                <div class="fs-card__actions" (click)="$event.stopPropagation()">
+                  @if (!row.configured && yearEditable && canManage) {
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--primary tc-btn--sm"
+                      *tcHasPerm="resources.STRUCTURES; action: 'manage'"
+                      (click)="openConfigure(row)">
+                      Configure Class
+                    </button>
+                  } @else if (!row.configured) {
+                    <span class="fs-details fs-details--muted">Not configured</span>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="fs-table-wrap">
+            <table class="fs-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Required Fees</th>
+                  <th class="text-right">Optional Fees</th>
+                  <th class="text-right">Monthly</th>
+                  <th>Fee Heads</th>
+                  <th>Status</th>
+                  <th class="fs-table__actions" aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row.classId) {
+                  <tr
+                    [class.fs-row--clickable]="row.configured"
+                    (click)="row.configured ? openDetails(row) : null"
+                    (keydown.enter)="row.configured ? openDetails(row) : null"
+                    [attr.tabindex]="row.configured ? 0 : null"
+                    [attr.role]="row.configured ? 'link' : null">
+                    <td>
+                      <strong>{{ row.className }}</strong>
+                      @if (row.classCode) {
+                        <code class="fs-code">{{ row.classCode }}</code>
+                      }
+                    </td>
+                    <td class="text-right">{{ row.configured ? formatMoney(row.totalFees) : '—' }}</td>
+                    <td class="text-right">{{ row.configured ? formatMoney(row.requiredFees) : '—' }}</td>
+                    <td class="text-right">{{ row.configured ? formatMoney(row.optionalFees) : '—' }}</td>
+                    <td class="text-right">
+                      {{ row.configured && row.configuredMonthlyAmount != null ? formatMoney(row.configuredMonthlyAmount) : '—' }}
+                    </td>
+                    <td>{{ row.configured ? (row.feeHeadCount || 0) : '—' }}</td>
+                    <td>
+                      <span
+                        class="fs-badge"
+                        [class.fs-badge--success]="row.configured"
+                        [class.fs-badge--warn]="!row.configured">
+                        {{ row.configured ? 'Configured' : 'Not Configured' }}
+                      </span>
+                    </td>
+                    <td class="fs-table__actions" (click)="$event.stopPropagation()">
+                      @if (!row.configured && yearEditable && canManage) {
+                        <button
+                          type="button"
+                          class="tc-btn tc-btn--primary tc-btn--sm"
+                          *tcHasPerm="resources.STRUCTURES; action: 'manage'"
+                          (click)="openConfigure(row)">
+                          Configure
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <app-paginator
+        *ngIf="total > 0"
+        [page]="page"
+        [rows]="size"
+        [totalRecords]="total"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="classes"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
+    }
+  }
+</section>
+
+<!-- Configure / Edit dialog -->
+<p-dialog
+  [header]="editingExisting ? 'Edit Fee Structure' : 'Configure Class Fee Structure'"
+  [(visible)]="configureVisible"
+  [modal]="true"
+  [style]="{ width: 'min(720px, 96vw)' }"
+  [draggable]="false"
+  [dismissableMask]="true">
+  @if (configureTarget) {
+    <form class="fees-dialog-form" [formGroup]="form" (ngSubmit)="saveConfigure()">
+      <div class="fees-dialog-form__grid fees-dialog-form__grid--two">
+        <div class="tc-form-field">
+          <label>Class</label>
+          <p class="fs-readonly-value">{{ configureTarget.className }}</p>
+        </div>
+        <div class="tc-form-field">
+          <label>Academic Year</label>
+          <p class="fs-readonly-value">{{ yearName || configureTarget.academicYearName }}</p>
+        </div>
+      </div>
+
+      <div class="fs-items-head">
+        <h4>Fee Items</h4>
+        @if (yearEditable) {
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="addItem()">
+            <i class="pi pi-plus"></i> Add Item
+          </button>
+        }
+      </div>
+
+      <div class="fs-items" formArrayName="items">
+        @for (ctrl of items.controls; track $index; let i = $index) {
+          <div class="fs-item-row" [formGroupName]="i">
+            <div class="tc-form-field fs-item-row__head">
+              <label>Fee Head</label>
+              <select formControlName="feeHeadId">
+                <option [ngValue]="null">Select head</option>
+                @for (h of heads; track h.feeHeadId) {
+                  <option [ngValue]="h.feeHeadId">{{ h.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="tc-form-field">
+              <label>Amount</label>
+              <input type="number" formControlName="amount" min="0.01" step="0.01" />
+            </div>
+            <div class="tc-form-field">
+              <label>Frequency</label>
+              <select formControlName="frequency">
+                @for (f of frequencies; track f.value) {
+                  <option [ngValue]="f.value">{{ f.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="tc-form-field">
+              <label>Type</label>
+              <select formControlName="type" (change)="onItemTypeChange(i)">
+                <option value="MANDATORY">Required</option>
+                <option value="OPTIONAL">Optional</option>
+              </select>
+            </div>
+            <div class="tc-form-field">
+              <label>Service</label>
+              <select formControlName="serviceKey" [attr.disabled]="ctrl.value.type === 'MANDATORY' ? true : null">
+                <option value="NONE">None</option>
+                <option value="TRANSPORT">Transport</option>
+                <option value="HOSTEL">Hostel</option>
+              </select>
+            </div>
+            @if (items.length > 1) {
+              <button type="button" class="fs-icon-btn fs-item-row__remove" (click)="removeItem(i)" aria-label="Remove item">
+                <i class="pi pi-trash"></i>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="fs-summary">
+        <div><span>Total (annualized)</span><strong>{{ formatMoney(summaryTotal()) }}</strong></div>
+        <div><span>Required</span><strong>{{ formatMoney(summaryRequired()) }}</strong></div>
+        <div><span>Optional</span><strong>{{ formatMoney(summaryOptional()) }}</strong></div>
+      </div>
+
+      <div class="fees-dialog-form__actions">
+        <button type="button" class="tc-btn" (click)="configureVisible = false">Cancel</button>
+        @if (yearEditable && canManage) {
+          <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : (editingExisting ? 'Save Changes' : 'Configure') }}
+          </button>
+        }
+      </div>
+    </form>
+  }
+</p-dialog>

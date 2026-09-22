@@ -14,12 +14,16 @@ import {
   ResponsibilityRequest
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 @Component({
   selector: 'app-staff-responsibilities',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
+  ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-responsibilities.component.html'
 })
@@ -28,6 +32,8 @@ export class StaffResponsibilitiesComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
 
@@ -45,12 +51,26 @@ export class StaffResponsibilitiesComponent implements OnInit {
   ngOnInit(): void { this.load(); }
 
   load(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.api.getResponsibilities()
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: list => { this.list = list; },
-        error: () => { this.errorMessage = 'Unable to load responsibilities.'; }
+        next: list => {
+          this.list = list;
+          this.hasLoaded = true;
+        },
+        error: () => {
+          this.hasLoaded = true;
+          this.errorMessage = 'Unable to load responsibilities.';
+        }
       });
   }
 

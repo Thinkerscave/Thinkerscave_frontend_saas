@@ -32,11 +32,14 @@ import { academicsApi } from '../../../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../../../shared/models/auth.model';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-class-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -150,10 +153,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     })).subscribe({
       next: (cls) => {
         this.cls = cls;
-        this.pageHeader.setPageHeader({
-          title: cls.name,
-          subtitle: cls.academicYearName || 'Class details'
-        });
+        this.pageHeader.setPageSubtitle(cls.academicYearName || null);
       },
       error: () => {
         this.cls = null;

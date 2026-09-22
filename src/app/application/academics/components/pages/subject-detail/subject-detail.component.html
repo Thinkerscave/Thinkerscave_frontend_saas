@@ -3,9 +3,6 @@
 
 <div class="sd-page acad-page" *ngIf="!loading && !loadError && subject as s; else bootTpl">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
     <button
       type="button"
       class="tc-btn"
@@ -176,15 +173,14 @@
       <p>We couldn't load this subject information right now.</p>
       <div class="sd-error__actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
-        <button type="button" class="tc-btn" (click)="back()">Back to Subjects</button>
+        <button type="button" class="tc-btn" (click)="back()">Go back</button>
       </div>
     </div>
   </div>
   <ng-template #loadingTpl>
     <div class="sd-page acad-page" aria-busy="true">
-      <div class="sd-skel sd-skel--identity"></div>
-      <div class="sd-skel sd-skel--section"></div>
-      <div class="sd-skel sd-skel--section"></div>
+      <tc-saas-page-header></tc-saas-page-header>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
     </div>
   </ng-template>
 </ng-template>

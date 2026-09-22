@@ -13,15 +13,14 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicClassDto } from '../../../models/classes-sections.model';
 import {
   ACADEMICS_TEACHER_ALLOCATION_RESOURCE,
@@ -31,11 +30,14 @@ import {
   TeacherRecommendation
 } from '../../../models/teacher-allocation.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-teacher-allocation-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -43,6 +45,7 @@ import {
     DropdownModule,
     ProgressBarModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     ConfirmDialogModule,
     HasPermissionDirective
   ],
@@ -52,11 +55,10 @@ import {
 })
 export class TeacherAllocationPageComponent implements OnInit {
   private readonly api = inject(TeacherAllocationApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
+  private readonly yearCtx = inject(AcademicYearContextService);
   private readonly classesApi = inject(ClassesSectionsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly nav = inject(AcademicsNavService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
@@ -71,9 +73,8 @@ export class TeacherAllocationPageComponent implements OnInit {
   ];
 
   loading = true;
+  refreshing = false;
   saving = false;
-  showBack = false;
-  years: AcademicYearDto[] = [];
   classes: AcademicClassDto[] = [];
   classOptions: { label: string; value: number | null }[] = [{ label: 'All Classes', value: null }];
   sections: { label: string; value: number | null }[] = [{ label: 'All Sections', value: null }];
@@ -107,43 +108,41 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
-    this.showBack = !!qp.get('from');
     const qpClass = qp.get('classId');
     const qpSubject = qp.get('subjectId');
     const qpYear = qp.get('academicYearId');
     if (qpClass) this.classFilter = Number(qpClass);
     if (qpSubject) this.subjectFilter = Number(qpSubject);
-
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const preferred = qpYear
-          ? years.find((y) => y.academicYearId === Number(qpYear))
-          : null;
-        const current = preferred ?? years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
+    if (qpYear) {
+      const id = Number(qpYear);
+      if (Number.isFinite(id)) {
+        this.yearCtx.selectYear(id);
       }
-    });
+    }
   }
 
-  goBack(): void {
-    this.nav.back(this.route);
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.classFilter = null;
+    this.sectionFilter = null;
+    this.subjectFilter = null;
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {
     if (!this.selectedYearId) return;
-    this.loading = true;
+    const initial = !this.dashboard;
+    if (initial) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
     this.api
       .getDashboard(this.selectedYearId, {
         classId: this.classFilter,
@@ -153,6 +152,7 @@ export class TeacherAllocationPageComponent implements OnInit {
       })
       .pipe(finalize(() => {
         this.loading = false;
+        this.refreshing = false;
         this.cdr.markForCheck();
       }))
       .subscribe({
@@ -167,13 +167,6 @@ export class TeacherAllocationPageComponent implements OnInit {
           detail: err?.error?.message || 'Please try again'
         })
       });
-  }
-
-  onYearChange(): void {
-    this.classFilter = null;
-    this.sectionFilter = null;
-    this.subjectFilter = null;
-    this.reload();
   }
 
   onClassChange(): void {

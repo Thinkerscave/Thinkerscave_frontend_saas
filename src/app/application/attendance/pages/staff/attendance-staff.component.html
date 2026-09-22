@@ -1,74 +1,436 @@
-<div class="saas-page attendance-staff">
+<app-toast></app-toast>
+<section class="saas-page att-page">
   <tc-saas-page-header
     title="Staff Attendance"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Staff Attendance'}]">
-    <button type="button" class="tc-btn tc-btn--primary"><i class="pi pi-file"></i>Attendance Log</button>
+    subtitle="View your attendance history, submit regularization requests, and manage approvals.">
   </tc-saas-page-header>
 
-  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
-  <div class="attendance-staff__layout">
-    <tc-saas-panel title="My Attendance" subtitle="Personal clock-in and clock-out">
-      <article class="attendance-staff__me">
-        <div class="attendance-staff__me-avatar">{{ meName.charAt(0) }}</div>
-        <strong>{{ meName }}</strong>
-        <small>{{ meRole }}</small>
-        <div class="attendance-staff__clock">{{ clockTime }}</div>
-        <p class="attendance-staff__date">{{ clockDate }}</p>
-        <div class="attendance-staff__me-status" [class.is-in]="meStatus === 'IN'">
-          <small>Status</small>
-          <strong>{{ meStatus === 'IN' ? 'Signed In' : 'Not Signed In' }}</strong>
+  <!-- ═══════════════ My Attendance ═══════════════ -->
+  <ng-container *ngIf="activeTab === 'my'">
+    <!-- Horizontal today's strip -->
+    <article class="att-today" [attr.data-state]="today?.state || 'NOT_STARTED'">
+      <div class="att-today__status">
+        <span class="att-today__dot"></span>
+        <div>
+          <strong>{{ todayStateLabel() }}</strong>
+          <small *ngIf="today?.state === 'ACTIVE'">Live Tracking</small>
+          <small *ngIf="today?.state === 'WEEKEND' || today?.state === 'HOLIDAY' || today?.state === 'ON_LEAVE'">
+            Attendance not required
+          </small>
+          <small *ngIf="today?.state === 'NOT_STARTED'">Ready when you are</small>
+          <small *ngIf="today?.state === 'COMPLETED'">Thank you for today</small>
         </div>
-        <button type="button" class="tc-btn tc-btn--primary attendance-staff__me-action" (click)="signInOut()">
-          <i class="pi" [ngClass]="meStatus === 'IN' ? 'pi-sign-out' : 'pi-sign-in'"></i>
-          {{ meStatus === 'IN' ? 'Sign Out' : 'Sign In' }}
-        </button>
-      </article>
-    </tc-saas-panel>
+      </div>
 
-    <tc-saas-panel title="Today's Attendance Log" subtitle="Recent sign in / sign out events">
-      <div class="saas-table-wrap">
-        <table class="saas-data-table">
-          <thead><tr><th>Date</th><th>Sign In</th><th>Sign Out</th><th>Working Hours</th><th>Status</th></tr></thead>
+      <div class="att-today__meta">
+        <div>
+          <span>Sign In</span>
+          <strong>{{ formatTime(today?.signInTime) }}</strong>
+        </div>
+        <div>
+          <span>Sign Out</span>
+          <strong>{{ formatTime(today?.signOutTime) }}</strong>
+        </div>
+        <div class="att-today__timer" *ngIf="today?.state === 'ACTIVE' || today?.state === 'NOT_STARTED'">
+          <strong>{{ elapsed.hours }}:{{ elapsed.minutes }}:{{ elapsed.seconds }}</strong>
+        </div>
+        <div *ngIf="today?.state === 'COMPLETED'">
+          <span>Working</span>
+          <strong>{{ formatMinutes(today?.workingMinutes) }}</strong>
+        </div>
+      </div>
+
+      <div class="att-today__actions">
+        <span class="att-today__chip" *ngIf="today?.attendanceRequired !== false">Working Day</span>
+        <span class="att-today__chip" *ngIf="today?.state === 'WEEKEND'">Weekend</span>
+        <span class="att-today__chip" *ngIf="today?.state === 'HOLIDAY'">{{ today?.holidayName || 'Holiday' }}</span>
+        <span class="att-today__chip" *ngIf="today?.state === 'ON_LEAVE'">{{ today?.leaveLabel || 'On Leave' }}</span>
+
+        <button
+          *ngIf="today?.state === 'NOT_STARTED'"
+          type="button"
+          class="tc-btn tc-btn--primary"
+          [disabled]="todayBusy"
+          (click)="onSignIn()">
+          <i class="pi" [ngClass]="todayBusy ? 'pi-spin pi-spinner' : 'pi-play'"></i>
+          {{ todayBusy ? 'Signing In...' : 'Sign In' }}
+        </button>
+        <button
+          *ngIf="today?.state === 'ACTIVE'"
+          type="button"
+          class="tc-btn tc-btn--danger"
+          [disabled]="todayBusy"
+          (click)="onSignOut()">
+          <i class="pi" [ngClass]="todayBusy ? 'pi-spin pi-spinner' : 'pi-stop'"></i>
+          {{ todayBusy ? 'Signing Out...' : 'Sign Out' }}
+        </button>
+      </div>
+    </article>
+
+    <!-- Attendance History -->
+    <tc-saas-panel title="Attendance History">
+      <div panel-actions class="att-history__toolbar">
+        <div class="att-history__toggle">
+          <button type="button" [class.is-active]="historyView === 'calendar'" (click)="setHistoryView('calendar')">Calendar</button>
+          <button type="button" [class.is-active]="historyView === 'list'" (click)="setHistoryView('list')">List</button>
+        </div>
+        <div class="att-history__month">
+          <button type="button" class="att-icon-btn" (click)="prevMonth()" aria-label="Previous month"><i class="pi pi-chevron-left"></i></button>
+          <strong>{{ monthLabel }}</strong>
+          <button type="button" class="att-icon-btn" (click)="nextMonth()" aria-label="Next month"><i class="pi pi-chevron-right"></i></button>
+        </div>
+      </div>
+
+      <div class="att-history__loading" *ngIf="historyLoading">
+        <i class="pi pi-spin pi-spinner"></i> Loading history…
+      </div>
+
+      <!-- Calendar view -->
+      <div class="att-cal" *ngIf="!historyLoading && historyView === 'calendar'">
+        <div class="att-cal__main">
+          <div class="att-cal__weekdays">
+            <span *ngFor="let d of weekDays">{{ d }}</span>
+          </div>
+          <div class="att-cal__grid">
+            <button
+              type="button"
+              class="att-cal__cell"
+              *ngFor="let cell of calendarCells"
+              [disabled]="cell.otherMonth"
+              [class.is-other]="cell.otherMonth"
+              [class.is-selected]="cell.date === selectedDate"
+              [attr.data-status]="cell.record?.displayStatus"
+              (click)="selectDay(cell)">
+              <ng-container *ngIf="!cell.otherMonth">
+                <span class="att-cal__day">{{ cell.day }}</span>
+                <span class="att-cal__label" *ngIf="cell.record">{{ cell.record.displayStatus | titlecase }}</span>
+              </ng-container>
+            </button>
+          </div>
+          <div class="att-cal__legend">
+            <span data-status="PRESENT">Present</span>
+            <span data-status="LATE">Late</span>
+            <span data-status="ABSENT">Absent</span>
+            <span data-status="ON_LEAVE">On Leave</span>
+            <span data-status="WEEKEND">Weekend</span>
+            <span data-status="HOLIDAY">Holiday</span>
+          </div>
+        </div>
+
+        <aside class="att-cal__detail" *ngIf="selectedDay as day">
+          <h4>{{ formatDate(day.date) }}</h4>
+          <tc-saas-pill [label]="(day.displayStatus || '—') | titlecase" [tone]="statusTone(day.displayStatus)"></tc-saas-pill>
+
+          <ng-container *ngIf="day.attendanceRequired; else notRequired">
+            <dl class="att-detail-list">
+              <div><dt>Sign In</dt><dd>{{ formatTime(day.signInTime) }}</dd></div>
+              <div><dt>Sign Out</dt><dd>{{ formatTime(day.signOutTime) }}</dd></div>
+              <div><dt>Working</dt><dd>{{ formatMinutes(day.workingMinutes) }}</dd></div>
+            </dl>
+            <p class="att-muted" *ngIf="day.regularizationStatus === 'PENDING'">Regularization Pending</p>
+            <p class="att-muted" *ngIf="day.regularizationStatus === 'APPROVED'">Regularization Approved</p>
+            <button
+              *ngIf="day.canRegularize"
+              type="button"
+              class="tc-btn tc-btn--outline"
+              (click)="openRegularizeForDay(day)">
+              Apply for Regularization
+            </button>
+          </ng-container>
+          <ng-template #notRequired>
+            <p class="att-muted">Attendance not required.</p>
+            <p *ngIf="day.holidayName">{{ day.holidayName }}</p>
+            <p *ngIf="day.leaveLabel">{{ day.leaveLabel }}</p>
+          </ng-template>
+        </aside>
+      </div>
+
+      <!-- List view -->
+      <div class="att-list" *ngIf="!historyLoading && historyView === 'list'">
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Sign In</th>
+              <th>Sign Out</th>
+              <th>Working Hours</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr *ngIf="!todayLog.length"><td colspan="5"><div class="saas-empty"><i class="pi pi-clock"></i><strong>No attendance entries</strong></div></td></tr>
-            <tr *ngFor="let row of todayLog">
-              <td>{{ row.date }}</td>
-              <td>{{ row.signIn }}</td>
-              <td>{{ row.signOut }}</td>
-              <td>{{ row.hours }}</td>
-              <td><tc-saas-pill [label]="row.status" [tone]="$any(row.tone)"></tc-saas-pill></td>
+            <tr *ngFor="let row of listRows">
+              <td>{{ formatDate(row.date) }}</td>
+              <td>{{ formatDay(row.date) }}</td>
+              <td>{{ formatTime(row.signInTime) }}</td>
+              <td>{{ formatTime(row.signOutTime) }}</td>
+              <td>{{ formatMinutes(row.workingMinutes) }}</td>
+              <td><tc-saas-pill [label]="(row.displayStatus || '—') | titlecase" [tone]="statusTone(row.displayStatus)"></tc-saas-pill></td>
+              <td>
+                <button
+                  *ngIf="actionLabel(row) !== '—'"
+                  type="button"
+                  class="att-link-btn"
+                  (click)="onListAction(row)">
+                  {{ actionLabel(row) }}
+                </button>
+                <span *ngIf="actionLabel(row) === '—'">—</span>
+              </td>
+            </tr>
+            <tr *ngIf="!listRows.length">
+              <td colspan="7" class="att-empty">No attendance records for this month.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </tc-saas-panel>
+  </ng-container>
+
+  <!-- ═══════════════ Regularization ═══════════════ -->
+  <ng-container *ngIf="activeTab === 'regularization'">
+    <tc-saas-panel title="Regularization Requests" subtitle="View and manage your attendance correction requests.">
+      <div panel-actions>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="openRegModal()">
+          <i class="pi pi-plus"></i> New Regularization Request
+        </button>
+      </div>
+
+      <tc-saas-filter-row>
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="regSearch" placeholder="Search..." />
+        </span>
+        <p-dropdown
+          [options]="regStatusFilters"
+          [(ngModel)]="regStatusFilter"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Status">
+        </p-dropdown>
+      </tc-saas-filter-row>
+
+      <div class="att-history__loading" *ngIf="regLoading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      <table class="att-table" *ngIf="!regLoading">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Day</th>
+            <th>Requested Time</th>
+            <th>Requested Status</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Requested On</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let req of filteredMyRequests">
+            <td>{{ formatDate(req.attendanceDate) }}</td>
+            <td>{{ formatDay(req.attendanceDate) }}</td>
+            <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
+            <td>{{ req.requestedStatus | titlecase }}</td>
+            <td>{{ req.reason }}</td>
+            <td><tc-saas-pill [label]="req.status | titlecase" [tone]="statusTone(req.status)"></tc-saas-pill></td>
+            <td>{{ formatDate(req.requestedAt) }}</td>
+            <td><button type="button" class="att-link-btn" (click)="viewMyRequest(req)">View</button></td>
+          </tr>
+          <tr *ngIf="!filteredMyRequests.length">
+            <td colspan="8" class="att-empty">No regularization requests yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </tc-saas-panel>
+  </ng-container>
+
+  <!-- ═══════════════ Approvers ═══════════════ -->
+  <ng-container *ngIf="activeTab === 'approvers' && canApprove">
+    <tc-saas-panel title="Pending Regularization Requests" subtitle="Review and take action on attendance correction requests.">
+      <div class="att-history__loading" *ngIf="approverLoading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
+      <table class="att-table" *ngIf="!approverLoading">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Date</th>
+            <th>Requested Time</th>
+            <th>Reason</th>
+            <th>Requested On</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let req of pendingRequests">
+            <td>{{ req.staffName }}</td>
+            <td>{{ req.department || '—' }}</td>
+            <td>{{ formatDate(req.attendanceDate) }}</td>
+            <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
+            <td>{{ req.reason }}</td>
+            <td>{{ formatDate(req.requestedAt) }}</td>
+            <td><button type="button" class="att-link-btn" (click)="openReview(req)">Review</button></td>
+          </tr>
+          <tr *ngIf="!pendingRequests.length">
+            <td colspan="7" class="att-empty">No pending requests.</td>
+          </tr>
+        </tbody>
+      </table>
+    </tc-saas-panel>
+  </ng-container>
+</section>
+
+<!-- Regularize Attendance modal -->
+<p-dialog
+  header="Regularize Attendance"
+  [(visible)]="regModalVisible"
+  [modal]="true"
+  [style]="{ width: 'min(520px, 95vw)' }"
+  [draggable]="false"
+  styleClass="att-dialog">
+  <div class="att-form">
+    <label>Date *</label>
+    <p-calendar [(ngModel)]="regFormDate" dateFormat="dd MM yy" [showIcon]="true"></p-calendar>
+
+    <label>Attendance Status *</label>
+    <p-dropdown
+      [options]="statusOptions"
+      [(ngModel)]="regForm.requestedStatus"
+      optionLabel="label"
+      optionValue="value">
+    </p-dropdown>
+
+    <label>Sign In Time *</label>
+    <p-calendar [(ngModel)]="regFormSignIn" [timeOnly]="true" hourFormat="12" [showIcon]="true"></p-calendar>
+
+    <label>Sign Out Time *</label>
+    <p-calendar [(ngModel)]="regFormSignOut" [timeOnly]="true" hourFormat="12" [showIcon]="true"></p-calendar>
+
+    <label>Reason *</label>
+    <input pInputText [(ngModel)]="regForm.reason" maxlength="500" />
+
+    <label>Remarks</label>
+    <textarea pInputTextarea [(ngModel)]="regForm.remarks" rows="3" maxlength="1000"></textarea>
+
+    <div class="att-form__hours">
+      <span>Working Hours</span>
+      <strong>{{ computedWorkingHoursLabel }}</strong>
+    </div>
   </div>
+  <ng-template pTemplate="footer">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="regModalVisible = false">Cancel</button>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      [disabled]="regSubmitting || !regForm.reason.trim() || !regFormDate"
+      (click)="submitRegularization()">
+      {{ regSubmitting ? 'Submitting…' : 'Submit Request' }}
+    </button>
+  </ng-template>
+</p-dialog>
 
-  <tc-saas-panel title="Teacher Absence Impact" subtitle="Substitute arrangement status for absent teachers">
-    <div *ngIf="!absentTeacherImpact.length" class="saas-empty"><i class="pi pi-check-circle"></i><strong>No teacher impact today</strong></div>
-    <article class="impact-row" *ngFor="let item of absentTeacherImpact">
-      <div class="impact-row__teacher">
-        <span class="attendance-staff__me-avatar small">{{ item.teacher.charAt(0) }}</span>
+<!-- Day detail modal (list View) -->
+<p-dialog
+  header="Attendance Details"
+  [(visible)]="detailVisible"
+  [modal]="true"
+  [style]="{ width: 'min(420px, 95vw)' }"
+  [draggable]="false">
+  <ng-container *ngIf="detailDay as day">
+    <h4>{{ formatDate(day.date) }}</h4>
+    <tc-saas-pill [label]="(day.displayStatus || '—') | titlecase" [tone]="statusTone(day.displayStatus)"></tc-saas-pill>
+    <dl class="att-detail-list">
+      <div><dt>Sign In</dt><dd>{{ formatTime(day.signInTime) }}</dd></div>
+      <div><dt>Sign Out</dt><dd>{{ formatTime(day.signOutTime) }}</dd></div>
+      <div><dt>Working</dt><dd>{{ formatMinutes(day.workingMinutes) }}</dd></div>
+    </dl>
+    <button
+      *ngIf="day.canRegularize"
+      type="button"
+      class="tc-btn tc-btn--outline"
+      (click)="detailVisible = false; openRegularizeForDay(day)">
+      Apply for Regularization
+    </button>
+  </ng-container>
+</p-dialog>
+
+<!-- Review / View request modal -->
+<p-dialog
+  [header]="canApprove && reviewRequest?.status === 'PENDING' && activeTab === 'approvers' ? 'Review Attendance Regularization' : 'Regularization Request'"
+  [(visible)]="reviewVisible"
+  [modal]="true"
+  [style]="{ width: 'min(560px, 95vw)' }"
+  [draggable]="false">
+  <ng-container *ngIf="reviewRequest as req">
+    <div class="att-review">
+      <div class="att-review__block">
+        <h5>Employee</h5>
+        <p><strong>{{ req.staffName }}</strong></p>
+        <p class="att-muted">{{ req.department || '—' }}</p>
+        <p>Attendance Date: {{ formatDate(req.attendanceDate) }}</p>
+      </div>
+      <div class="att-review__grid">
         <div>
-          <strong>{{ item.teacher }}</strong>
-          <small>{{ item.subject }}</small>
+          <h5>Current attendance</h5>
+          <dl class="att-detail-list">
+            <div><dt>Status</dt><dd>{{ (req.currentStatus || req.previousStatus || '—') | titlecase }}</dd></div>
+            <div><dt>Sign In</dt><dd>{{ formatTime(req.currentSignInTime || req.previousSignInTime) }}</dd></div>
+            <div><dt>Sign Out</dt><dd>{{ formatTime(req.currentSignOutTime || req.previousSignOutTime) }}</dd></div>
+          </dl>
         </div>
-        <tc-saas-pill label="Absent Today" tone="danger"></tc-saas-pill>
-      </div>
-      <div class="impact-row__classes">
-        <small>Affected Classes ({{ item.affectedClasses.length }})</small>
         <div>
-          <span class="saas-chip" *ngFor="let cls of item.affectedClasses">{{ cls }}</span>
+          <h5>Requested correction</h5>
+          <dl class="att-detail-list">
+            <div><dt>Status</dt><dd>{{ req.requestedStatus | titlecase }}</dd></div>
+            <div><dt>Sign In</dt><dd>{{ formatTime(req.requestedSignInTime) }}</dd></div>
+            <div><dt>Sign Out</dt><dd>{{ formatTime(req.requestedSignOutTime) }}</dd></div>
+            <div><dt>Working</dt><dd>{{ formatMinutes(req.requestedWorkingMinutes) }}</dd></div>
+          </dl>
         </div>
       </div>
-      <div class="impact-row__action">
-        <small>Arrangement Status</small>
-        <tc-saas-pill [label]="item.status" tone="warning"></tc-saas-pill>
-        <button type="button" class="tc-btn tc-btn--primary"><i class="pi pi-user-plus"></i>Open Arrangement</button>
+      <div class="att-review__block">
+        <h5>Reason</h5>
+        <p>{{ req.reason }}</p>
+        <h5 *ngIf="req.remarks">Remarks</h5>
+        <p *ngIf="req.remarks">{{ req.remarks }}</p>
+        <p *ngIf="req.decisionComment"><strong>Decision:</strong> {{ req.decisionComment }}</p>
       </div>
-    </article>
-  </tc-saas-panel>
-</div>
+    </div>
+  </ng-container>
+  <ng-template pTemplate="footer">
+    <ng-container *ngIf="canApprove && reviewRequest?.status === 'PENDING' && activeTab === 'approvers'">
+      <button type="button" class="tc-btn tc-btn--danger" (click)="openDecision('REJECT')">Reject</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openDecision('APPROVE')">Approve</button>
+    </ng-container>
+  </ng-template>
+</p-dialog>
 
-
+<!-- Decision confirmation -->
+<p-dialog
+  [header]="decisionMode === 'APPROVE' ? 'Approve Regularization?' : 'Reject Regularization?'"
+  [(visible)]="decisionVisible"
+  [modal]="true"
+  [style]="{ width: 'min(460px, 95vw)' }"
+  [draggable]="false">
+  <p *ngIf="decisionMode === 'APPROVE'">
+    You are about to approve the attendance correction
+    for <strong>{{ reviewRequest?.staffName }}</strong> on {{ formatDate(reviewRequest?.attendanceDate) }}.
+  </p>
+  <p *ngIf="decisionMode === 'REJECT'">
+    The attendance record will remain unchanged.
+  </p>
+  <label class="att-form-label">{{ decisionMode === 'APPROVE' ? 'Approval' : 'Rejection' }} Comment *</label>
+  <textarea pInputTextarea [(ngModel)]="decisionComment" rows="4" maxlength="1000"></textarea>
+  <ng-template pTemplate="footer">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="decisionVisible = false">Cancel</button>
+    <button
+      type="button"
+      class="tc-btn"
+      [class.tc-btn--primary]="decisionMode === 'APPROVE'"
+      [class.tc-btn--danger]="decisionMode === 'REJECT'"
+      [disabled]="decisionSubmitting || !decisionComment.trim()"
+      (click)="confirmDecision()">
+      {{ decisionSubmitting ? 'Saving…' : (decisionMode === 'APPROVE' ? 'Confirm Approval' : 'Confirm Rejection') }}
+    </button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,470 @@
+<section class="tc-page-shell tc-directory-page fees-page fin-reports-page" *tcHasPerm="resource; action: 'view'">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    @if (lastUpdated) {
+      <span class="fin-report-updated">Last updated {{ lastUpdated | date:'medium' }}</span>
+    }
+    <button type="button" class="tc-btn" (click)="load()" [disabled]="loading">
+      <i class="pi" [ngClass]="loading ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
+      Refresh
+    </button>
+    <div class="fin-export" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        [disabled]="exporting || loading"
+        (click)="toggleExport($event)"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="exportOpen"
+      >
+        <i class="pi" [ngClass]="exporting ? 'pi-spin pi-spinner' : 'pi-download'"></i>
+        {{ exporting ? 'Exporting…' : 'Export Report' }}
+        <i class="pi pi-chevron-down"></i>
+      </button>
+      @if (exportOpen) {
+        <div class="fin-export__menu" role="menu">
+          <button type="button" role="menuitem" (click)="exportReport('pdf', $event)">
+            <i class="pi pi-file-pdf"></i> PDF
+          </button>
+          <button type="button" role="menuitem" (click)="exportReport('csv', $event)">
+            <i class="pi pi-file-excel"></i> CSV / Excel
+          </button>
+        </div>
+      }
+    </div>
+  </tc-saas-page-header>
+
+  <div class="fin-report-filters tc-card tc-card--panel">
+    <div class="tc-card__body">
+      <div class="fin-report-filters__grid">
+        <div class="tc-form-field">
+          <label>Period</label>
+          <p-dropdown
+            [options]="periods"
+            [(ngModel)]="draftFilter.period"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="att-filter-dropdown"
+          />
+        </div>
+        @if (draftFilter.period === 'CUSTOM') {
+          <div class="tc-form-field">
+            <label>From</label>
+            <input type="date" [(ngModel)]="draftFilter.from" />
+          </div>
+          <div class="tc-form-field">
+            <label>To</label>
+            <input type="date" [(ngModel)]="draftFilter.to" />
+          </div>
+        }
+      </div>
+      <div class="fin-report-filters__actions">
+        @if (overview?.filter; as filter) {
+          <tc-saas-pill tone="info" [label]="filter.label || periodLabel"></tc-saas-pill>
+          <span class="fees-muted">{{ filter.from | date:'mediumDate' }} – {{ filter.to | date:'mediumDate' }}</span>
+        }
+        <div class="fin-report-filters__buttons">
+          <button type="button" class="tc-btn" (click)="resetFilters()" [disabled]="loading">Reset</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="applyFilters()" [disabled]="loading">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (loading && !overview) {
+    <tc-page-skeleton variant="dashboard"></tc-page-skeleton>
+  } @else if (errorMessage && !overview) {
+    <div class="tc-empty-state">
+      <i class="pi" [ngClass]="forbidden ? 'pi-lock' : 'pi-exclamation-circle'"></i>
+      <h3>{{ forbidden ? 'Permission denied' : 'Finance Reports unavailable' }}</h3>
+      <p>{{ errorMessage }}</p>
+      @if (!forbidden) {
+        <button type="button" class="tc-btn" (click)="load()">Retry</button>
+      }
+    </div>
+  } @else if (overview) {
+    @if (!hasFinanceData(overview)) {
+      <div class="tc-empty-state">
+        <i class="pi pi-chart-bar"></i>
+        <h3>No finance data</h3>
+        <p>No fee, payroll or expense activity matches the selected filters.</p>
+        <button type="button" class="tc-btn" (click)="resetFilters()">Reset filters</button>
+      </div>
+    } @else {
+      <div class="fin-report-kpis" [class.is-refreshing]="loading">
+        <article class="fin-report-kpi">
+          <i class="pi pi-wallet fin-report-kpi__icon tone-green"></i>
+          <strong>{{ money(overview.kpis.feeCollection) }}</strong>
+          <span>Fee Collection</span>
+          <small>{{ periodLabel }}</small>
+        </article>
+        <article class="fin-report-kpi">
+          <i class="pi pi-clock fin-report-kpi__icon tone-orange"></i>
+          <strong>{{ money(overview.kpis.outstandingFees) }}</strong>
+          <span>Outstanding Fees</span>
+          <small>{{ outstandingLabel(overview.filter.outstandingAsOf) }}</small>
+        </article>
+        <article class="fin-report-kpi">
+          <i class="pi pi-users fin-report-kpi__icon tone-purple"></i>
+          <strong>{{ money(overview.kpis.payrollPaid) }}</strong>
+          <span>Payroll Paid</span>
+          <small>Recorded payments</small>
+        </article>
+        <article class="fin-report-kpi">
+          <i class="pi pi-receipt fin-report-kpi__icon tone-red"></i>
+          <strong>{{ money(overview.kpis.expensesPaid) }}</strong>
+          <span>Expenses Paid</span>
+          <small>Non-payroll outflow</small>
+        </article>
+        <article class="fin-report-kpi">
+          <i class="pi pi-arrow-up-right fin-report-kpi__icon tone-indigo"></i>
+          <strong>{{ money(overview.kpis.totalOutflow) }}</strong>
+          <span>Total Outflow</span>
+          <small>Payroll + Expenses</small>
+        </article>
+        <article class="fin-report-kpi">
+          <i class="pi pi-chart-line fin-report-kpi__icon" [ngClass]="overview.kpis.netOperationalFlow < 0 ? 'tone-red' : 'tone-teal'"></i>
+          <strong [class.is-negative]="overview.kpis.netOperationalFlow < 0">{{ money(overview.kpis.netOperationalFlow) }}</strong>
+          <span>Net Operational Flow</span>
+          <small>Collection − Outflow</small>
+        </article>
+      </div>
+
+      <div class="fin-report-row fin-report-row--hero">
+        <article class="fin-section-card">
+          <header class="fin-section-card__head">
+            <div class="fin-section-card__title-wrap">
+              <i class="pi pi-chart-bar"></i>
+              <div>
+                <h3>Income vs Outflow Trend</h3>
+                <p>Fee collection compared with total operational outflow</p>
+              </div>
+            </div>
+          </header>
+          @if (overview.incomeOutflowTrend.length) {
+            <div class="fin-chart-box fin-chart-box--hero">
+              <p-chart type="bar" [data]="incomeOutflowData" [options]="trendOptions" height="320px"></p-chart>
+            </div>
+          } @else {
+            <div class="fin-section-empty">No income and outflow trend for this period.</div>
+          }
+        </article>
+      </div>
+
+      <section class="fin-report-block">
+        <div class="fin-report-block__heading">
+          <span>Fees</span>
+          <h2>Fee Collection</h2>
+        </div>
+        <div class="fin-report-row fin-report-row--2">
+          <article class="fin-section-card">
+            <header class="fin-section-card__head">
+              <div class="fin-section-card__title-wrap">
+                <i class="pi pi-chart-pie"></i>
+                <div>
+                  <h3>Fee Collection by Category</h3>
+                  <p>Attributed from billing-period fee heads</p>
+                </div>
+              </div>
+            </header>
+            @if (overview.feeAnalytics.collectionByCategory.length) {
+              <div class="fin-donut-split">
+                <div class="fin-chart-box">
+                  <p-chart type="doughnut" [data]="feeCategoryData" [options]="doughnutOptions" height="220px"></p-chart>
+                </div>
+                <ul class="fin-legend-list">
+                  @for (item of overview.feeAnalytics.collectionByCategory; track item.name; let i = $index) {
+                    <li>
+                      <i [style.background]="chartColors[i % chartColors.length]"></i>
+                      <span>{{ item.name }}</span>
+                      <strong>{{ money(item.amount) }} · {{ item.percentage | number:'1.0-1' }}%</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <div class="fin-section-empty">No category collection data for this period.</div>
+            }
+          </article>
+
+          <article class="fin-section-card">
+            <header class="fin-section-card__head">
+              <div class="fin-section-card__title-wrap">
+                <i class="pi pi-chart-line"></i>
+                <div>
+                  <h3>Monthly Fee Collection Trend</h3>
+                  <p>Collections across the selected date scope</p>
+                </div>
+              </div>
+            </header>
+            @if (overview.feeAnalytics.collectionTrend.length) {
+              <div class="fin-chart-box fin-chart-box--md">
+                <p-chart type="line" [data]="feeTrendData" [options]="trendOptions" height="260px"></p-chart>
+              </div>
+            } @else {
+              <div class="fin-section-empty">No fee collection trend data.</div>
+            }
+          </article>
+        </div>
+      </section>
+
+      <section class="fin-report-block">
+        <div class="fin-report-block__heading">
+          <span>Operations</span>
+          <h2>Payroll & Expenses</h2>
+        </div>
+        <div class="fin-report-row fin-report-row--3">
+          <article class="fin-section-card">
+            <header class="fin-section-card__head fin-section-card__head--row">
+              <div class="fin-section-card__title-wrap">
+                <i class="pi pi-users"></i>
+                <div>
+                  <h3>Payroll Overview</h3>
+                  <p>Generated salary vs recorded payments</p>
+                </div>
+              </div>
+              <button type="button" class="fin-link" (click)="navigate(null, '/app/payroll')">View Payroll</button>
+            </header>
+            <div class="fin-metrics">
+              <div><span>Generated</span><strong>{{ money(overview.payroll.generatedAmount) }}</strong></div>
+              <div><span>Paid</span><strong>{{ money(overview.payroll.paidAmount) }}</strong></div>
+              <div><span>Pending</span><strong>{{ money(overview.payroll.pendingAmount) }}</strong></div>
+              <div><span>Employees</span><strong>{{ overview.payroll.employeeCount | number }}</strong></div>
+            </div>
+            @if (overview.payroll.costTrend.length) {
+              <div class="fin-chart-box fin-chart-box--sm">
+                <p-chart type="line" [data]="payrollTrendData" [options]="trendOptions" height="180px"></p-chart>
+              </div>
+            } @else {
+              <div class="fin-section-empty fin-section-empty--compact">No payroll cost trend.</div>
+            }
+          </article>
+
+          <article class="fin-section-card">
+            <header class="fin-section-card__head fin-section-card__head--row">
+              <div class="fin-section-card__title-wrap">
+                <i class="pi pi-sitemap"></i>
+                <div>
+                  <h3>Expenses by Category</h3>
+                  <p>Paid non-payroll expenses</p>
+                </div>
+              </div>
+              <button type="button" class="fin-link" (click)="navigate(null, '/app/expenses')">View Expenses</button>
+            </header>
+            @if (overview.expenses.byCategory.length) {
+              <div class="fin-donut-split fin-donut-split--stack">
+                <div class="fin-chart-box">
+                  <p-chart type="doughnut" [data]="expenseCategoryData" [options]="doughnutOptions" height="180px"></p-chart>
+                </div>
+                <ul class="fin-legend-list">
+                  @for (item of overview.expenses.byCategory; track item.name; let i = $index) {
+                    <li>
+                      <i [style.background]="chartColors[i % chartColors.length]"></i>
+                      <span>{{ item.name }}</span>
+                      <strong>{{ money(item.amount) }}</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <div class="fin-section-empty">No expense category data.</div>
+            }
+          </article>
+
+          <article class="fin-section-card">
+            <header class="fin-section-card__head">
+              <div class="fin-section-card__title-wrap">
+                <i class="pi pi-flag"></i>
+                <div>
+                  <h3>Expense Status</h3>
+                  <p>Payment mix for approved expenses</p>
+                </div>
+              </div>
+            </header>
+            @if (overview.expenses.statusDistribution.length) {
+              <div class="fin-donut-split fin-donut-split--stack">
+                <div class="fin-chart-box">
+                  <p-chart type="doughnut" [data]="expenseStatusData" [options]="doughnutOptions" height="180px"></p-chart>
+                </div>
+                <ul class="fin-status-list">
+                  @for (item of overview.expenses.statusDistribution; track item.status) {
+                    <li>
+                      <tc-saas-pill [tone]="statusTone(item.status)" [label]="label(item.status)"></tc-saas-pill>
+                      <span>{{ item.count | number }}</span>
+                      <strong>{{ money(item.amount) }}</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <div class="fin-section-empty">No expense status data.</div>
+            }
+          </article>
+        </div>
+      </section>
+
+      <div class="fin-report-row fin-report-row--2">
+        <article class="fin-section-card">
+          <header class="fin-section-card__head fin-section-card__head--row">
+            <div class="fin-section-card__title-wrap">
+              <i class="pi pi-exclamation-circle"></i>
+              <div>
+                <h3>Outstanding Fees</h3>
+                <p>{{ overview.outstanding.studentsDue | number }} students · {{ money(overview.outstanding.amount) }}</p>
+              </div>
+            </div>
+            <button type="button" class="fin-link" (click)="navigate(null, '/app/fees/students?outstandingOnly=true')">View All</button>
+          </header>
+          @if (overview.outstanding.byClass.length) {
+            <div class="fin-table-wrap">
+              <table class="fin-mini-table">
+                <thead>
+                  <tr>
+                    <th>Class / Grade</th>
+                    <th>Students Due</th>
+                    <th class="align-right">Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of overview.outstanding.byClass; track row.classId || row.className) {
+                    <tr>
+                      <td>{{ row.className || '—' }}</td>
+                      <td>{{ row.studentsDue | number }}</td>
+                      <td class="align-right">{{ money(row.outstandingAmount) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="fin-section-empty">No class-wise outstanding fees.</div>
+          }
+        </article>
+
+        <article class="fin-section-card">
+          <header class="fin-section-card__head">
+            <div class="fin-section-card__title-wrap">
+              <i class="pi pi-bell"></i>
+              <div>
+                <h3>Needs Attention</h3>
+                <p>Items requiring management follow-up</p>
+              </div>
+            </div>
+          </header>
+          @if (overview.attention.length) {
+            <ul class="fin-attention">
+              @for (item of overview.attention; track item.type) {
+                <li>
+                  <span class="fin-attention__icon"><i class="pi pi-exclamation-triangle"></i></span>
+                  <div>
+                    <strong>{{ item.label }}</strong>
+                    <small>{{ item.count | number }} {{ item.count === 1 ? 'item' : 'items' }} · {{ money(item.amount) }}</small>
+                  </div>
+                  <button type="button" class="tc-btn tc-btn--sm" (click)="navigate(item.drillPath, '/app/fees/reports')">View</button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="fin-positive"><i class="pi pi-check-circle"></i> No items require attention.</div>
+          }
+        </article>
+      </div>
+
+      <article class="fin-section-card">
+        <header class="fin-section-card__head fin-section-card__head--row">
+          <div class="fin-section-card__title-wrap">
+            <i class="pi pi-list"></i>
+            <div>
+              <h3>Top Expense Heads</h3>
+              <p>Highest-impact paid expense heads in this period</p>
+            </div>
+          </div>
+          <button type="button" class="fin-link" (click)="navigate(null, '/app/expenses')">View All</button>
+        </header>
+        @if (overview.expenses.topHeads.length) {
+          <div class="fin-table-wrap">
+            <table class="fin-mini-table">
+              <thead>
+                <tr>
+                  <th>Expense Head</th>
+                  <th>Category</th>
+                  <th class="align-right">Amount</th>
+                  <th class="align-right">Share</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of overview.expenses.topHeads; track row.headId || row.headName) {
+                  <tr>
+                    <td><strong>{{ row.headName }}</strong></td>
+                    <td>{{ row.categoryName || '—' }}</td>
+                    <td class="align-right">{{ money(row.amount) }}</td>
+                    <td class="align-right">{{ row.percentage | number:'1.0-1' }}%</td>
+                    <td class="align-right">
+                      <button type="button" class="fin-link" (click)="navigate(row.drillPath, '/app/expenses')">View</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="fin-section-empty">No expense head data for this period.</div>
+        }
+      </article>
+
+      <article class="fin-section-card">
+        <header class="fin-section-card__head">
+          <div class="fin-section-card__title-wrap">
+            <i class="pi pi-history"></i>
+            <div>
+              <h3>Recent Financial Activity</h3>
+              <p>Latest fee, payroll and expense records</p>
+            </div>
+          </div>
+        </header>
+        @if (overview.recentActivity.length) {
+          <div class="fin-table-wrap">
+            <table class="fin-mini-table fin-activity-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Reference</th>
+                  <th>Description</th>
+                  <th class="align-right">Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of overview.recentActivity; track row.type + row.reference + row.date) {
+                  <tr tabindex="0" (click)="navigate(row.drillPath, '/app/fees/reports')" (keydown.enter)="navigate(row.drillPath, '/app/fees/reports')">
+                    <td>{{ row.date | date:'mediumDate' }}</td>
+                    <td><tc-saas-pill [tone]="statusTone(row.type)" [label]="label(row.type)"></tc-saas-pill></td>
+                    <td class="fin-mono">{{ row.reference || '—' }}</td>
+                    <td>{{ row.description || '—' }}</td>
+                    <td class="align-right"><strong>{{ money(row.amount) }}</strong></td>
+                    <td><tc-saas-pill [tone]="statusTone(row.status)" [label]="label(row.status)"></tc-saas-pill></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="fin-section-empty">No recent financial activity.</div>
+        }
+      </article>
+    }
+  }
+
+  @if (errorMessage && overview) {
+    <div class="fin-inline-error" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="load()">Retry</button>
+    </div>
+  }
+</section>

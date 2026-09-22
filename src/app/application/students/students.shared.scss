@@ -264,16 +264,6 @@
   .stu-chart-panel__canvas { height: 180px; position: relative; }
 }
 
-.stu-fee-legend {
-  display: flex;
-  gap: 12px;
-  font-size: 0.8rem;
-  color: var(--tc-text-muted);
-  flex-wrap: wrap;
-
-  strong { color: var(--tc-text); margin-right: 4px; }
-}
-
 @media (max-width: 900px) {
   .stu-hero {
     grid-template-columns: 1fr;
@@ -792,14 +782,6 @@
     strong { display: block; font-size: 1.5rem; font-weight: 800; color: var(--tc-text); line-height: 1; }
     small  { font-size: 0.72rem; color: var(--tc-text-muted); display: block; margin-top: 2px; }
   }
-}
-
-/* Fee progress bar */
-.stu-fee-bar {
-  height: 10px; background: var(--tc-surface-100); border-radius: 999px; overflow: hidden;
-  > span { display: block; height: 100%;
-           background: linear-gradient(90deg, var(--tc-primary-500), var(--tc-primary-700));
-           transition: width .35s ease; }
 }
 
 /* ============================================================
@@ -2192,4 +2174,10 @@
   .stu-form-grid--3 {
     grid-template-columns: 1fr;
   }
+}
+
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }

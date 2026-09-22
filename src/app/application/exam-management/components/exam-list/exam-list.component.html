@@ -1,13 +1,9 @@
-<app-workspace-header
-    title="Exams"
-    subtitle="Examination management"
-    description="Schedule exams, capture marks and publish results."
-    icon="pi pi-file-edit"
-    [breadcrumbs]="[{ label: 'Academics' }, { label: 'Exams' }]">
-    <ng-container actions>
+<tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <ng-container>
         <p-button label="New exam" icon="pi pi-plus" routerLink="/app/exams/new"></p-button>
     </ng-container>
-</app-workspace-header>
+</tc-saas-page-header>
 
 <section class="tc-kpi-strip">
     <app-kpi-card label="Total exams"  [value]="exams().length"          icon="pi pi-list"         tone="info"></app-kpi-card>

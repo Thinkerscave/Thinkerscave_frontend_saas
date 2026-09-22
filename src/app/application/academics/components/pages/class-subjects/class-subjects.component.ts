@@ -31,11 +31,14 @@ import {
   SubjectCategory
 } from '../../../models/subjects-mapping.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-class-subjects-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     SaasPageHeaderComponent,
@@ -145,8 +148,7 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
         this.cls = cls;
         this.board = board;
         this.pageHeader.setPageHeader({
-          title: cls.name,
-          subtitle: 'Subject mapping'
+          subtitle: cls.name || 'Subject mapping'
         });
       },
       error: () => {

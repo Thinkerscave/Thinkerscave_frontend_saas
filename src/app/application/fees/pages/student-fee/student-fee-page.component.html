@@ -1,0 +1,273 @@
+<section class="tc-page-shell tc-directory-page fees-page sf-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+  </tc-saas-page-header>
+
+  @if (linkedMode) {
+    <div class="sf-linked">
+      <i class="pi pi-users" aria-hidden="true"></i>
+      <h3>Your linked students</h3>
+      <p>Select a student to view fee details.</p>
+      @if (!linked.length) {
+        <p class="fees-muted">No linked students available.</p>
+      } @else {
+        <ul class="sf-linked__list">
+          @for (c of linked; track c.studentId) {
+            <li>
+              <button type="button" class="tc-btn tc-btn--outline" (click)="openLinkedStudent(c.studentId)">
+                {{ c.studentName }}
+                @if (c.admissionNumber) {
+                  <span class="fees-muted">· {{ c.admissionNumber }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  } @else {
+    <tc-page-skeleton
+      *ngIf="loading && !rows.length"
+      [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+      [showKpis]="true"
+      [showFilter]="true"
+      [kpis]="4"
+      [cards]="8"
+      [rows]="10"
+      [columns]="9">
+    </tc-page-skeleton>
+
+    @if (!loading || rows.length || summary) {
+      <tc-kpi-group ariaLabel="Student fee KPIs" mode="equal" [columns]="4">
+        <tc-kpi-card
+          label="Total Fee"
+          [value]="formatMoney(summary?.totalFee)"
+          icon="pi pi-wallet"
+          tone="primary">
+        </tc-kpi-card>
+        <tc-kpi-card
+          label="Paid"
+          [value]="formatMoney(summary?.paid)"
+          icon="pi pi-check-circle"
+          tone="success">
+        </tc-kpi-card>
+        <tc-kpi-card
+          label="Outstanding"
+          [value]="formatMoney(summary?.outstanding)"
+          icon="pi pi-clock"
+          tone="warning">
+        </tc-kpi-card>
+        <tc-kpi-card
+          label="Overdue"
+          [value]="formatMoney(summary?.overdue)"
+          icon="pi pi-exclamation-triangle"
+          tone="danger">
+        </tc-kpi-card>
+      </tc-kpi-group>
+
+      <div class="acad-toolbar sf-toolbar">
+        <input
+          class="acad-toolbar__search"
+          type="search"
+          placeholder="Search students..."
+          [ngModel]="q"
+          (ngModelChange)="onSearchChange($event)"
+          aria-label="Search students" />
+        <div class="acad-toolbar__filters">
+          <select
+            class="sf-native-select"
+            [ngModel]="classId"
+            (ngModelChange)="onClassChange($event)"
+            aria-label="Class">
+            <option [ngValue]="null">All classes</option>
+            @for (c of classes; track c.id) {
+              <option [ngValue]="c.id">{{ c.name }}</option>
+            }
+          </select>
+          <select
+            class="sf-native-select"
+            [ngModel]="sectionId"
+            (ngModelChange)="onSectionChange($event)"
+            [disabled]="classId == null"
+            aria-label="Section">
+            <option [ngValue]="null">All sections</option>
+            @for (s of sections; track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+          <select
+            class="sf-native-select"
+            [ngModel]="status"
+            (ngModelChange)="onStatusChange($event)"
+            aria-label="Status">
+            @for (opt of statusOptions; track opt.value) {
+              <option [ngValue]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+          <select
+            class="sf-native-select"
+            [ngModel]="periodKey"
+            (ngModelChange)="onPeriodChange($event)"
+            aria-label="Billing period">
+            <option value="">All periods</option>
+            @for (p of periodOptions; track p.periodKey) {
+              <option [ngValue]="p.periodKey">{{ p.periodLabel }}</option>
+            }
+          </select>
+          <label class="sf-toggle">
+            <input
+              type="checkbox"
+              [ngModel]="outstandingOnly"
+              (ngModelChange)="onOutstandingOnlyChange($event)" />
+            Outstanding only
+          </label>
+        </div>
+        <div class="acad-toolbar__end">
+          <app-grid-table-toggle
+            pageKey="fees.students.view"
+            [mode]="viewMode"
+            (modeChange)="onViewModeChange($event)"
+            ariaLabel="View mode">
+          </app-grid-table-toggle>
+        </div>
+      </div>
+
+      @if (error) {
+        <div class="tc-empty-state tc-empty-state--inline">
+          <p>{{ error }}</p>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+        </div>
+      } @else if (!rows.length && !loading) {
+        @if (isFilterEmptyState) {
+          <div class="sf-empty">
+            <i class="pi pi-filter-slash" aria-hidden="true"></i>
+            <h3>No students match your filters</h3>
+            <p>Try changing the search, class, status, or billing period.</p>
+            <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
+          </div>
+        } @else {
+          <div class="sf-empty">
+            <i class="pi pi-inbox" aria-hidden="true"></i>
+            <h3>No student fee records</h3>
+            <p>There are no student fee records for the selected academic year.</p>
+          </div>
+        }
+      } @else if (rows.length) {
+        <div class="sf-results" [class.sf-results--refreshing]="loading">
+          @if (viewMode === 'grid') {
+            <div class="sf-grid">
+              @for (row of rows; track row.studentId) {
+                <article class="sf-card">
+                  <div class="sf-card__top">
+                    <div class="sf-card__identity">
+                      <span class="sf-avatar" aria-hidden="true">{{ initials(row.studentName) }}</span>
+                      <div>
+                        <h2>{{ row.studentName }}</h2>
+                        <span class="sf-card__meta">
+                          {{ row.admissionNumber || '—' }} · {{ classLabel(row) }}
+                        </span>
+                      </div>
+                    </div>
+                    <span class="sf-badge" [attr.data-tone]="statusTone(row.status)">
+                      {{ statusLabel(row.status) }}
+                    </span>
+                  </div>
+
+                  <div class="sf-card__amounts">
+                    <div>
+                      <span>Total</span>
+                      <strong>{{ row.totalFee | number:'1.2-2' }}</strong>
+                    </div>
+                    <div>
+                      <span>Paid</span>
+                      <strong>{{ row.paid | number:'1.2-2' }}</strong>
+                    </div>
+                    <div>
+                      <span>Outstanding</span>
+                      <strong>{{ row.outstanding | number:'1.2-2' }}</strong>
+                    </div>
+                    <div>
+                      <span>Overdue</span>
+                      <strong>{{ (row.overdue ?? 0) | number:'1.2-2' }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="sf-card__actions">
+                    <a
+                      class="tc-btn tc-btn--outline tc-btn--sm"
+                      [routerLink]="['/app/fees/students', row.studentId]">
+                      View Details
+                    </a>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="sf-table-wrap">
+              <table class="sf-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Admission No.</th>
+                    <th>Class</th>
+                    <th class="text-right">Total Fee</th>
+                    <th class="text-right">Paid</th>
+                    <th class="text-right">Outstanding</th>
+                    <th class="text-right">Overdue</th>
+                    <th>Status</th>
+                    <th class="sf-table__actions" aria-label="Actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of rows; track row.studentId) {
+                    <tr>
+                      <td>
+                        <div class="sf-table__student">
+                          <span class="sf-avatar sf-avatar--sm" aria-hidden="true">{{ initials(row.studentName) }}</span>
+                          <strong>{{ row.studentName }}</strong>
+                        </div>
+                      </td>
+                      <td>{{ row.admissionNumber || '—' }}</td>
+                      <td>{{ classLabel(row) }}</td>
+                      <td class="text-right">{{ row.totalFee | number:'1.2-2' }}</td>
+                      <td class="text-right">{{ row.paid | number:'1.2-2' }}</td>
+                      <td class="text-right">{{ row.outstanding | number:'1.2-2' }}</td>
+                      <td class="text-right">{{ (row.overdue ?? 0) | number:'1.2-2' }}</td>
+                      <td>
+                        <span class="sf-badge" [attr.data-tone]="statusTone(row.status)">
+                          {{ statusLabel(row.status) }}
+                        </span>
+                      </td>
+                      <td class="sf-table__actions">
+                        <a
+                          class="tc-btn tc-btn--outline tc-btn--sm"
+                          [routerLink]="['/app/fees/students', row.studentId]">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <app-paginator
+          *ngIf="total > 0"
+          [page]="page"
+          [rows]="size"
+          [totalRecords]="total"
+          [pageSizeOptions]="pageSizeOptions"
+          noun="students"
+          (pageChange)="onPageChange($event)">
+        </app-paginator>
+      }
+    }
+  }
+</section>

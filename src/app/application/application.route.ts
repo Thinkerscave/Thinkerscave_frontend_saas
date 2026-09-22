@@ -1,20 +1,25 @@
 import { Routes } from '@angular/router';
-import { ACADEMICS_PAGES, ACADEMICS_ROOT, ACCESS_MGMT_ROOT, ACCESS_PAGES, TENANT_MGMT_ROOT, TENANT_PAGES } from '../core/config/page-route-meta';
+import {
+  ACADEMICS_PAGES, ACADEMICS_ROOT,
+  ACCESS_MGMT_ROOT, ACCESS_PAGES,
+  ADMISSIONS_PAGES, ADMISSIONS_ROOT,
+  ATTENDANCE_PAGES, ATTENDANCE_ROOT,
+  EXPENSES_PAGES, EXPENSES_ROOT,
+  FEES_PAGES, FEES_ROOT,
+  ORG_PROFILE_PAGES,
+  PAYROLL_PAGES, PAYROLL_ROOT,
+  STAFF_PAGES, STAFF_ROOT,
+  STUDENTS_PAGES, STUDENTS_ROOT,
+  TENANT_MGMT_ROOT, TENANT_PAGES,
+  USER_PROFILE_PAGE
+} from '../core/config/page-route-meta';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
-import { roleGuard } from '../core/guard/role.guard';
-
-const TENANT_MANAGEMENT_ROLES = ['SUPER_ADMIN', 'Super Admin', 'PLATFORM_ADMIN', 'Platform Admin', 'THINKERSCAVE_INTERNAL', 'ThinkerScave Internal Team', 'INTERNAL_TEAM', 'Internal Team'];
-const ORGANIZATION_PROFILE_ROLES = ['ADMIN', 'Admin', 'COLLEGE_ADMIN', 'College Admin', 'INSTITUTION_ADMIN', 'Institution Admin', 'ORGANIZATION_ADMIN', 'Organization Admin', 'ORGANIZATION_OWNER', 'Organization Owner'];
-const ACCESS_MANAGEMENT_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES];
-const ACADEMICS_ROLES = [...TENANT_MANAGEMENT_ROLES, ...ORGANIZATION_PROFILE_ROLES, 'PRINCIPAL', 'Principal', 'TEACHER', 'Teacher', 'STAFF', 'Staff', 'PARENT', 'Parent'];
-const ONBOARDING_ROLES = [...ORGANIZATION_PROFILE_ROLES];
 
 export const APPLICATION_ROUTES: Routes = [
   {
     path: 'onboarding',
-    canActivate: [roleGuard(ONBOARDING_ROLES)],
     loadComponent: () => import('./onboarding/onboarding-checklist.component').then(m => m.OnboardingChecklistComponent)
   },
   {
@@ -23,7 +28,6 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'tenant-management',
-    canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     data: { ...TENANT_MGMT_ROOT },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'organizations' },
@@ -51,7 +55,6 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'platform',
-    canActivate: [roleGuard(TENANT_MANAGEMENT_ROLES)],
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/app' },
       { path: 'customers', pathMatch: 'full', redirectTo: '/app/tenant-management/customers' },
@@ -67,13 +70,12 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'access-management',
-    canActivate: [roleGuard(ACCESS_MANAGEMENT_ROLES)],
     data: { ...ACCESS_MGMT_ROOT },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'users' },
-      { path: 'roles', data: { ...ACCESS_PAGES.users }, loadComponent: () => import('./tenant-management/pages/platform-roles/platform-roles.component').then(m => m.PlatformRolesComponent) },
-      { path: 'roles/:roleId', pathMatch: 'full', redirectTo: 'roles' },
+      { path: 'roles', data: { ...ACCESS_PAGES.roles }, loadComponent: () => import('./access-management/pages/roles-list/roles-list.component').then(m => m.RolesListComponent) },
+      { path: 'roles/:roleId', data: { ...ACCESS_PAGES.roleWorkspace }, loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
       { path: 'feature-catalog', data: { ...ACCESS_PAGES.featureCatalog, catalogMode: 'organization' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'menus', pathMatch: 'full', redirectTo: 'feature-catalog' },
       { path: 'responsibilities', data: { ...ACCESS_PAGES.responsibilities }, loadComponent: () => import('./access-management/pages/responsibilities-list/responsibilities-list.component').then(m => m.ResponsibilitiesListComponent) },
@@ -87,22 +89,20 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'organization-profile',
-    canActivate: [roleGuard(ORGANIZATION_PROFILE_ROLES)],
+    data: { ...ORG_PROFILE_PAGES.profile },
     loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent)
   },
   {
     path: 'organization',
-    canActivate: [roleGuard(ORGANIZATION_PROFILE_ROLES)],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
-      { path: 'profile', loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent) },
+      { path: 'profile', data: { ...ORG_PROFILE_PAGES.profile }, loadComponent: () => import('./organization-profile/organization-profile.component').then(m => m.OrganizationProfileComponent) },
       { path: 'access-control', pathMatch: 'full', redirectTo: '/app/access-management/users' },
-      { path: 'activity-logs', loadComponent: () => import('./organization-profile/pages/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) }
+      { path: 'activity-logs', data: { ...ORG_PROFILE_PAGES.activityLogs }, loadComponent: () => import('./organization-profile/pages/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) }
     ]
   },
   {
     path: 'admin',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/app' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: '/app' },
@@ -167,20 +167,21 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'staff',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF', 'PARENT'])],
+    data: { ...STAFF_ROOT },
     children: [
-      { path: 'create', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
-      { path: 'edit/:id', loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
-      { path: 'profile/:id', loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
+      { path: 'create', data: { ...STAFF_PAGES.create }, loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
+      { path: 'edit/:id', data: { ...STAFF_PAGES.edit }, loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
+      { path: 'profile/:id', data: { ...STAFF_PAGES.profile }, loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
+      { path: 'my-payroll', pathMatch: 'full', redirectTo: '/app/payroll/me' },
       {
         path: '',
         loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Staff' }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', ...STAFF_PAGES.directory }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
           { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
-          { path: 'payroll', data: { workspacePage: 'payroll' }, loadComponent: () => import('./staff/pages/payroll/staff-payroll.component').then(m => m.StaffPayrollComponent) },
-          { path: 'leave-availability', data: { workspacePage: 'leave' }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
+          { path: 'payroll', pathMatch: 'full', redirectTo: '/app/payroll' },
+          { path: 'leave-availability', data: { workspacePage: 'leave', ...STAFF_PAGES.leave }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'alumni', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
@@ -190,9 +191,46 @@ export const APPLICATION_ROUTES: Routes = [
     ]
   },
   {
+    path: 'payroll',
+    data: { ...PAYROLL_ROOT },
+    children: [
+      {
+        path: 'me',
+        data: { ...PAYROLL_PAGES.myPayroll },
+        loadComponent: () => import('./payroll/pages/my-payroll/staff-my-payroll.component').then(m => m.StaffMyPayrollComponent)
+      },
+      {
+        path: '',
+        loadComponent: () => import('./payroll/components/payroll-workspace/payroll-workspace.component').then(m => m.PayrollWorkspaceComponent),
+        children: [
+          { path: '', data: { workspacePage: 'dashboard', ...PAYROLL_PAGES.dashboard }, loadComponent: () => import('./payroll/pages/dashboard/payroll-dashboard.component').then(m => m.PayrollDashboardComponent) },
+          { path: 'components', data: { workspacePage: 'components', ...PAYROLL_PAGES.components }, loadComponent: () => import('./payroll/pages/components/payroll-components-page.component').then(m => m.PayrollComponentsPageComponent) },
+          { path: 'structures', data: { workspacePage: 'structures', ...PAYROLL_PAGES.structures }, loadComponent: () => import('./payroll/pages/structures/payroll-structures-page.component').then(m => m.PayrollStructuresPageComponent) },
+          { path: 'employees/:staffId', data: { workspacePage: 'employee-salary', ...PAYROLL_PAGES.employeeSalary }, loadComponent: () => import('./payroll/pages/employee-salary/employee-salary-page.component').then(m => m.EmployeeSalaryPageComponent) },
+          { path: 'runs/:runId', data: { workspacePage: 'run-detail', ...PAYROLL_PAGES.runDetail }, loadComponent: () => import('./payroll/pages/run-detail/payroll-run-detail-page.component').then(m => m.PayrollRunDetailPageComponent) }
+        ]
+      }
+    ]
+  },
+  {
     path: 'salary',
     pathMatch: 'full',
-    redirectTo: 'staff/operations'
+    redirectTo: 'payroll'
+  },
+  {
+    path: 'expenses',
+    data: { ...EXPENSES_ROOT },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./expenses/components/expenses-workspace/expenses-workspace.component').then(m => m.ExpensesWorkspaceComponent),
+        children: [
+          { path: '', data: { workspacePage: 'dashboard', ...EXPENSES_PAGES.dashboard }, loadComponent: () => import('./expenses/pages/dashboard/expenses-dashboard.component').then(m => m.ExpensesDashboardComponent) },
+          { path: 'heads', data: { workspacePage: 'heads', ...EXPENSES_PAGES.heads }, loadComponent: () => import('./expenses/pages/heads/expense-heads-page.component').then(m => m.ExpenseHeadsPageComponent) },
+          { path: ':expenseId', data: { workspacePage: 'detail', ...EXPENSES_PAGES.detail }, loadComponent: () => import('./expenses/pages/detail/expense-detail-page.component').then(m => m.ExpenseDetailPageComponent) }
+        ]
+      }
+    ]
   },
   {
     path: 'leave',
@@ -201,14 +239,14 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'attendance',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'TEACHER', 'HR_MANAGER', 'STAFF', 'STUDENT', 'PARENT'])],
+    data: { ...ATTENDANCE_ROOT },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'students' },
-      { path: 'students', loadComponent: () => import('./attendance/pages/student/attendance-student.component').then(m => m.AttendanceStudentComponent) },
-      { path: 'staff', loadComponent: () => import('./attendance/pages/staff/attendance-staff.component').then(m => m.AttendanceStaffComponent) },
-      { path: 'reports', loadComponent: () => import('./attendance/pages/reports/attendance-reports.component').then(m => m.AttendanceReportsComponent) },
-      { path: 'calendar', loadComponent: () => import('./attendance/pages/calendar/attendance-calendar.component').then(m => m.AttendanceCalendarComponent) },
-      { path: 'settings', loadComponent: () => import('./attendance/pages/settings/attendance-settings.component').then(m => m.AttendanceSettingsComponent) },
+      { path: 'students', data: { ...ATTENDANCE_PAGES.students }, loadComponent: () => import('./attendance/pages/student/attendance-student.component').then(m => m.AttendanceStudentComponent) },
+      { path: 'staff', data: { ...ATTENDANCE_PAGES.staff }, loadComponent: () => import('./attendance/pages/staff/attendance-staff.component').then(m => m.AttendanceStaffComponent) },
+      { path: 'reports', data: { ...ATTENDANCE_PAGES.reports }, loadComponent: () => import('./attendance/pages/reports/attendance-reports.component').then(m => m.AttendanceReportsComponent) },
+      { path: 'calendar', data: { ...ATTENDANCE_PAGES.calendar }, loadComponent: () => import('./attendance/pages/calendar/attendance-calendar.component').then(m => m.AttendanceCalendarComponent) },
+      { path: 'settings', data: { ...ATTENDANCE_PAGES.settings }, loadComponent: () => import('./attendance/pages/settings/attendance-settings.component').then(m => m.AttendanceSettingsComponent) },
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'students' },
       { path: 'class', pathMatch: 'full', redirectTo: 'students' },
       { path: 'hostel', pathMatch: 'full', redirectTo: 'students' }
@@ -232,11 +270,11 @@ export const APPLICATION_ROUTES: Routes = [
   // ━━━ Admissions CRM module (EduReach workspace) ━━━
   {
     path: 'admissions',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'STAFF'])],
+    data: { ...ADMISSIONS_ROOT },
     children: [
-      { path: 'lead/:id', loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
-      { path: 'form/:id', loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
-      { path: 'application/:id', loadComponent: () => import('./admissions/pages/application-review/application-review.component').then(m => m.ApplicationReviewComponent) },
+      { path: 'lead/:id', data: { ...ADMISSIONS_PAGES.lead }, loadComponent: () => import('./admissions/pages/lead-detail/lead-detail.component').then(m => m.LeadDetailComponent) },
+      { path: 'form/:id', data: { ...ADMISSIONS_PAGES.form }, loadComponent: () => import('./admissions/pages/application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent) },
+      { path: 'application/:id', data: { ...ADMISSIONS_PAGES.review }, loadComponent: () => import('./admissions/pages/application-review/application-review.component').then(m => m.ApplicationReviewComponent) },
       { path: 'wizard/:id', pathMatch: 'full', redirectTo: 'form/:id' },
       {
         path: '',
@@ -244,12 +282,12 @@ export const APPLICATION_ROUTES: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'overview', pathMatch: 'full', redirectTo: 'leads' },
-          { path: 'leads', data: { workspacePage: 'leads' }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
-          { path: 'follow-ups', data: { workspacePage: 'follow-ups' }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
-          { path: 'applications', data: { workspacePage: 'applications' }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
-          { path: 'settings', data: { workspacePage: 'settings' }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
+          { path: 'leads', data: { workspacePage: 'leads', ...ADMISSIONS_PAGES.leads }, loadComponent: () => import('./admissions/pages/leads/leads-list.component').then(m => m.LeadsListComponent) },
+          { path: 'follow-ups', data: { workspacePage: 'follow-ups', ...ADMISSIONS_PAGES.followUps }, loadComponent: () => import('./admissions/pages/follow-ups/follow-ups-center.component').then(m => m.FollowUpsCenterComponent) },
+          { path: 'applications', data: { workspacePage: 'applications', ...ADMISSIONS_PAGES.applications }, loadComponent: () => import('./admissions/pages/applications/applications-list.component').then(m => m.ApplicationsListComponent) },
+          { path: 'settings', data: { workspacePage: 'settings', ...ADMISSIONS_PAGES.settings }, loadComponent: () => import('./admissions/pages/settings/admissions-settings.component').then(m => m.AdmissionsSettingsComponent) },
           { path: 'enrollment', pathMatch: 'full', redirectTo: 'applications' },
-          { path: 'reports', data: { workspacePage: 'reports' }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
+          { path: 'reports', data: { workspacePage: 'reports', ...ADMISSIONS_PAGES.reports }, loadComponent: () => import('./admissions/pages/reports/admissions-reports.component').then(m => m.AdmissionsReportsComponent) },
           // Legacy redirects
           { path: 'inquiry-center', pathMatch: 'full', redirectTo: 'leads' },
           { path: 'admission-center', pathMatch: 'full', redirectTo: 'applications' },
@@ -279,22 +317,22 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: 'students',
-    canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER', 'PRINCIPAL', 'HR_MANAGER', 'TEACHER', 'STAFF', 'RECEPTIONIST', 'PARENT'])],
+    data: { ...STUDENTS_ROOT },
     children: [
-      { path: 'profile/:id', loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
+      { path: 'profile/:id', data: { ...STUDENTS_PAGES.profile }, loadComponent: () => import('./students/pages/profile-360/student-profile-360.component').then(m => m.StudentProfile360Component) },
       {
         path: '',
         loadComponent: () => import('./students/components/students-workspace/students-workspace.component').then(m => m.StudentsWorkspaceComponent),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory', pageTitle: 'Students' }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
+          { path: 'directory', data: { workspacePage: 'directory', ...STUDENTS_PAGES.directory }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
           { path: 'transfers', pathMatch: 'full', redirectTo: '/app/transfers' },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'alumni', data: { workspacePage: 'alumni' }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
+          { path: 'alumni', data: { workspacePage: 'alumni', ...STUDENTS_PAGES.alumni }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
           // Legacy paths kept as redirects so deep links and bookmarks remain stable.
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'add-student', data: { workspacePage: 'directory' }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
+          { path: 'add-student', data: { workspacePage: 'directory', ...STUDENTS_PAGES.addStudent }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
           { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
@@ -311,7 +349,6 @@ export const APPLICATION_ROUTES: Routes = [
   // ━━━ Academics module (Overview / Academic Year / Classes & Sections / Subjects / Teacher Allocation / Timetable + role pages) ━━━
   {
     path: 'academics',
-    canActivate: [roleGuard(ACADEMICS_ROLES)],
     data: { ...ACADEMICS_ROOT },
     loadComponent: () => import('./academics/components/academics-workspace/academics-workspace.component').then(m => m.AcademicsWorkspaceComponent),
     children: [
@@ -410,8 +447,30 @@ export const APPLICATION_ROUTES: Routes = [
   },
   // ━━━ User Profile ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
+    path: 'fees',
+    data: { ...FEES_ROOT },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./fees/components/fees-workspace/fees-workspace.component').then(m => m.FeesWorkspaceComponent),
+        children: [
+          { path: '', data: { workspacePage: 'dashboard', ...FEES_PAGES.dashboard }, loadComponent: () => import('./fees/pages/dashboard/fees-dashboard.component').then(m => m.FeesDashboardComponent) },
+          { path: 'heads', data: { workspacePage: 'heads', ...FEES_PAGES.heads }, loadComponent: () => import('./fees/pages/heads/fee-heads-page.component').then(m => m.FeeHeadsPageComponent) },
+          { path: 'structures', data: { workspacePage: 'structures', ...FEES_PAGES.structures }, loadComponent: () => import('./fees/pages/structures/fee-structures-page.component').then(m => m.FeeStructuresPageComponent) },
+          { path: 'structures/:classId', data: { workspacePage: 'structures', ...FEES_PAGES.structureClass }, loadComponent: () => import('./fees/pages/structures/fee-structure-class-page.component').then(m => m.FeeStructureClassPageComponent) },
+          { path: 'students', data: { workspacePage: 'students', ...FEES_PAGES.students }, loadComponent: () => import('./fees/pages/student-fee/student-fee-page.component').then(m => m.StudentFeePageComponent) },
+          { path: 'students/:studentId', data: { workspacePage: 'students', ...FEES_PAGES.studentDetail }, loadComponent: () => import('./fees/pages/student-fee/student-fee-detail-page.component').then(m => m.StudentFeeDetailPageComponent) },
+          { path: 'receipts', data: { workspacePage: 'receipts', ...FEES_PAGES.receipts }, loadComponent: () => import('./fees/pages/receipts/fees-receipts-page.component').then(m => m.FeesReceiptsPageComponent) },
+          { path: 'outstanding', data: { workspacePage: 'outstanding', ...FEES_PAGES.outstanding }, loadComponent: () => import('./fees/pages/outstanding/fees-outstanding-page.component').then(m => m.FeesOutstandingPageComponent) },
+          { path: 'reports', data: { workspacePage: 'reports', ...FEES_PAGES.reports }, loadComponent: () => import('./fees/pages/reports/pages/finance-reports-page.component').then(m => m.FinanceReportsPageComponent) },
+          { path: 'settings', data: { workspacePage: 'settings', ...FEES_PAGES.settings }, loadComponent: () => import('./fees/pages/settings/fees-settings-page.component').then(m => m.FeesSettingsPageComponent) }
+        ]
+      }
+    ]
+  },
+  {
     path: 'profile',
-    data: { profilePage: 'profile' },
+    data: { profilePage: 'profile', ...USER_PROFILE_PAGE },
     loadComponent: () => import('./user-profile/user-profile.component').then(m => m.UserProfileComponent)
   },
   {

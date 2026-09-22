@@ -1,58 +1,156 @@
 <div class="saas-page role-workspace">
   <tc-saas-page-header>
-    <app-back-nav fallback="/app/access-management/roles" label="Back to list"></app-back-nav>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="saving || loading">
-      <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> Save Permissions
-    </button>
+    <ng-container *ngIf="role && canConfigure">
+      <button
+        *ngIf="!editingMenus"
+        type="button"
+        class="tc-btn tc-btn--primary"
+        (click)="startEditMenus()">
+        <i class="pi pi-pencil"></i> Edit menus
+      </button>
+      <ng-container *ngIf="editingMenus">
+        <button type="button" class="tc-btn" (click)="cancelEditMenus()" [disabled]="saving">Cancel</button>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="saveMenus()" [disabled]="saving">
+          <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i> {{ saving ? 'Saving…' : 'Save menus' }}
+        </button>
+      </ng-container>
+    </ng-container>
   </tc-saas-page-header>
 
   <app-toast></app-toast>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading role...</div>
+  <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="3"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && role">
-    <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
+    <tc-saas-panel *ngIf="targetOrganizations.length" title="Target Organization"
+      subtitle="Role permissions are organization-specific and synchronize only to the selected tenant.">
+      <label class="role-workspace__organization">
+        <span>Provisioned organization</span>
+        <select [(ngModel)]="selectedOrganizationId" (ngModelChange)="onOrganizationChange()">
+          <option [ngValue]="0">Select an organization</option>
+          <option *ngFor="let organization of targetOrganizations" [ngValue]="organization.id">
+            {{ organization.organizationName }} · {{ organization.tenantIdentifier }}
+          </option>
+        </select>
+      </label>
+    </tc-saas-panel>
 
-    <section *ngIf="activeTab === 'overview'">
-      <tc-saas-panel title="Role Details">
-        <dl class="role-workspace__meta">
-          <div><dt>Code</dt><dd><code>{{ role.roleCode }}</code></dd></div>
-          <div><dt>Type</dt><dd>{{ roleTypeLabel(role.roleType) }}</dd></div>
-          <div><dt>Users</dt><dd>{{ role.activeUserCount ?? 0 }}</dd></div>
-          <div><dt>Status</dt><dd><tc-saas-pill [label]="role.active === false ? 'Inactive' : 'Active'" [tone]="role.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
-          <div *ngIf="role.description"><dt>Description</dt><dd>{{ role.description }}</dd></div>
-        </dl>
-      </tc-saas-panel>
-    </section>
+    <tc-saas-panel title="Role Details">
+      <dl class="role-workspace__meta">
+        <div><dt>Name</dt><dd>{{ role.roleName }}</dd></div>
+        <div><dt>Code</dt><dd><code>{{ role.roleCode }}</code></dd></div>
+        <div><dt>Type</dt><dd>{{ roleTypeLabel(role.roleType) }}</dd></div>
+        <div><dt>Users</dt><dd>{{ role.activeUserCount ?? 0 }}</dd></div>
+        <div><dt>Status</dt><dd><tc-saas-pill [label]="role.active === false ? 'Inactive' : 'Active'" [tone]="role.active === false ? 'danger' : 'success'"></tc-saas-pill></dd></div>
+        <div *ngIf="role.description" class="role-workspace__desc"><dt>Description</dt><dd>{{ role.description }}</dd></div>
+      </dl>
+    </tc-saas-panel>
 
-    <section *ngIf="activeTab === 'permissions'">
-      <tc-saas-panel title="Menu Permission Matrix" subtitle="View · Manage · Approve per menu page">
-        <div class="saas-table-wrap">
-          <table class="saas-data-table permission-matrix">
-            <thead>
-              <tr>
-                <th>Menu</th>
-                <th>Module</th>
-                <th>View</th>
-                <th>Manage</th>
-                <th>Approve</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of rows; trackBy: trackByMenuId">
-                <td><strong>{{ row.menuName }}</strong><br><code>{{ row.menuCode }}</code></td>
-                <td>{{ row.parentMenuName || '—' }}</td>
-                <td class="permission-cell"><input type="checkbox" [checked]="row.canView" (change)="toggle(row, 'canView')"></td>
-                <td class="permission-cell"><input type="checkbox" [checked]="row.canManage" (change)="toggle(row, 'canManage')"></td>
-                <td class="permission-cell"><input type="checkbox" [checked]="row.canApprove" (change)="toggle(row, 'canApprove')"></td>
-              </tr>
-              <tr *ngIf="!rows.length"><td colspan="5" class="empty">No menu permissions configured for this role.</td></tr>
-            </tbody>
-          </table>
+    <div *ngIf="targetOrganizations.length && !selectedOrganizationId" class="saas-empty">
+      Select a provisioned organization to view or edit its role menu assignments.
+    </div>
+
+    <tc-saas-panel *ngIf="selectedOrganizationId"
+      title="Role Menu Assignment"
+      [subtitle]="editingMenus
+        ? 'Select or remove access for menus and submenus. Parent menu visibility is automatically preserved.'
+        : (assignedMenuCount + ' menu entries assigned')">
+      <div class="role-workspace__toolbar">
+        <input
+          type="search"
+          class="saas-search"
+          [(ngModel)]="search"
+          placeholder="Search menu or submenu...">
+        <span class="role-workspace__count">Assigned: {{ assignedMenuCount }}</span>
+      </div>
+
+      <p *ngIf="!canConfigure" class="empty">Read only view. Only SUPER_ADMIN can update role-level menu assignments.</p>
+
+      <ng-container *ngIf="!editingMenus">
+        <div class="role-workspace__tree" *ngIf="visibleModules.length">
+          <section class="role-workspace__module" *ngFor="let module of visibleModules; trackBy: trackByMenuId">
+            <header>
+              <i class="pi pi-folder"></i>
+              <div>
+                <strong>{{ module.row.menuName }}</strong>
+                <code>{{ module.row.menuCode }}</code>
+              </div>
+              <span class="status-pill" [class.status-pill--off]="!moduleAssigned(module)">
+                {{ moduleAssigned(module) ? 'Assigned' : 'Not assigned' }}
+              </span>
+            </header>
+            <ul *ngIf="module.children.length">
+              <li *ngFor="let page of module.children; trackBy: trackByMenuId">
+                <div class="role-workspace__item-meta">
+                  <span>{{ page.row.menuName }}</span>
+                  <code>{{ page.row.menuCode }}</code>
+                </div>
+                <div class="role-workspace__item-right">
+                  <span class="status-pill" [class.status-pill--off]="!moduleAssigned(page)">
+                    {{ moduleAssigned(page) ? 'Assigned' : 'Not assigned' }}
+                  </span>
+                  <div class="role-workspace__chips">
+                    <span class="chip" *ngIf="page.row.canView">View</span>
+                    <span class="chip chip--manage" *ngIf="page.row.canManage">Manage</span>
+                    <span class="chip chip--approve" *ngIf="page.row.canApprove">Approve</span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </section>
         </div>
-      </tc-saas-panel>
-    </section>
+        <p *ngIf="!visibleModules.length" class="empty">No menu rows match this search.</p>
+      </ng-container>
+
+      <ng-container *ngIf="editingMenus">
+        <div class="role-workspace__tree" *ngIf="visibleModules.length">
+          <section class="role-workspace__module" *ngFor="let module of visibleModules; trackBy: trackByMenuId">
+            <header>
+              <i class="pi pi-folder"></i>
+              <div>
+                <strong>{{ module.row.menuName }}</strong>
+                <code>{{ module.row.menuCode }}</code>
+              </div>
+              <div class="role-workspace__checks">
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canView') : module.row.canView"
+                    [indeterminate]="someChildrenHave(module, 'canView')"
+                    (change)="toggleModule(module, 'canView')"> View
+                </label>
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canManage') : module.row.canManage"
+                    [indeterminate]="someChildrenHave(module, 'canManage')"
+                    (change)="toggleModule(module, 'canManage')"> Manage
+                </label>
+                <label>
+                  <input type="checkbox"
+                    [checked]="module.children.length ? allChildrenHave(module, 'canApprove') : module.row.canApprove"
+                    [indeterminate]="someChildrenHave(module, 'canApprove')"
+                    (change)="toggleModule(module, 'canApprove')"> Approve
+                </label>
+              </div>
+            </header>
+            <ul *ngIf="module.children.length">
+              <li *ngFor="let page of module.children; trackBy: trackByMenuId">
+                <div class="role-workspace__item-meta">
+                  <span>{{ page.row.menuName }}</span>
+                  <code>{{ page.row.menuCode }}</code>
+                </div>
+                <div class="role-workspace__checks">
+                  <label><input type="checkbox" [checked]="page.row.canView" (change)="toggleLeaf(page.row, 'canView')"> View</label>
+                  <label><input type="checkbox" [checked]="page.row.canManage" (change)="toggleLeaf(page.row, 'canManage')"> Manage</label>
+                  <label><input type="checkbox" [checked]="page.row.canApprove" (change)="toggleLeaf(page.row, 'canApprove')"> Approve</label>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+        <p *ngIf="!visibleModules.length" class="empty">No menu rows match this search.</p>
+      </ng-container>
+    </tc-saas-panel>
   </ng-container>
 </div>
 

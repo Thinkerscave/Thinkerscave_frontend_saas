@@ -26,12 +26,12 @@ import {
   AppListEmptyStateComponent,
   AppListViewMode,
   AppPaginatorComponent,
-  AppSkeletonGroupComponent,
   AppSkeletonLoaderComponent,
   AppStatCardComponent
 } from '../../../../shared/ui/app-list';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
@@ -71,7 +71,7 @@ const VIEW_KEY = 'tc-customer-view-mode';
     AppCustomerCardComponent,
     AppListEmptyStateComponent,
     AppSkeletonLoaderComponent,
-    AppSkeletonGroupComponent
+    TcPageSkeletonComponent
   ],
   templateUrl: './customers-list.component.html',
   styleUrl: './customers-list.component.scss'

@@ -1,0 +1,291 @@
+<section class="tc-page-shell tc-directory-page payroll-page my-payroll-page" *tcHasPerm="resources.MY; action: 'view'">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()" [disabled]="loading">
+      <i class="pi" [ngClass]="loading ? 'pi-spin pi-spinner' : 'pi-refresh'"></i> Refresh
+    </button>
+  </tc-saas-page-header>
+
+  <div class="payroll-banner payroll-banner--info">
+    <i class="pi pi-shield"></i>
+    <span>Your payroll amounts are private. Use the eye icon to reveal each value for this session only.</span>
+  </div>
+
+  @if (loading && !summary) {
+    <tc-page-skeleton layout="dashboard" [kpis]="3" [charts]="1" [rows]="6" [columns]="4"></tc-page-skeleton>
+  } @else if (error) {
+    <div class="tc-empty-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>{{ errorTitle }}</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+    </div>
+  } @else if (summary && !summary.salaryConfigured) {
+    <div class="tc-empty-state">
+      <i class="pi pi-wallet"></i>
+      <h3>Salary not configured</h3>
+      <p>Salary is not configured for your profile yet. Contact Administration for help.</p>
+      <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="contactAdmin()">Contact Administration</button>
+    </div>
+  } @else if (summary) {
+    <div class="payroll-dash-grid my-payroll-hero">
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Current period</span>
+            <h3>
+              @if (summary.current) {
+                {{ monthLabel(summary.current.year, summary.current.month) }}
+              } @else {
+                No payroll yet
+              }
+            </h3>
+          </div>
+          @if (summary.current) {
+            <span class="tc-saas-pill" [attr.data-tone]="statusTone(summary.current.status)">{{ statusLabel(summary.current.status) }}</span>
+          }
+        </div>
+        <div class="tc-card__body">
+          @if (!summary.current) {
+            <div class="tc-empty-state tc-empty-state--inline">
+              <i class="pi pi-calendar"></i>
+              <p>Payroll has not been generated for the current period.</p>
+            </div>
+          } @else {
+            <div class="payroll-mask-row">
+              <span>Total Earnings</span>
+              <div class="payroll-mask-row__value">
+                <strong>{{ masked(summary.current.grossAmount, revealEarnings) }}</strong>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                        (click)="revealEarnings = !revealEarnings"
+                        [attr.aria-label]="revealEarnings ? 'Hide earnings' : 'Show earnings'">
+                  <i class="pi" [ngClass]="revealEarnings ? 'pi-eye-slash' : 'pi-eye'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="payroll-mask-row">
+              <span>Total Deductions</span>
+              <div class="payroll-mask-row__value">
+                <strong>{{ masked(summary.current.totalDeductions, revealDeductions) }}</strong>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                        (click)="revealDeductions = !revealDeductions"
+                        [attr.aria-label]="revealDeductions ? 'Hide deductions' : 'Show deductions'">
+                  <i class="pi" [ngClass]="revealDeductions ? 'pi-eye-slash' : 'pi-eye'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="payroll-mask-row payroll-mask-row--net">
+              <span>Net Salary</span>
+              <div class="payroll-mask-row__value">
+                <strong>{{ masked(summary.current.netAmount, revealNet) }}</strong>
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                        (click)="revealNet = !revealNet"
+                        [attr.aria-label]="revealNet ? 'Hide net' : 'Show net'">
+                  <i class="pi" [ngClass]="revealNet ? 'pi-eye-slash' : 'pi-eye'"></i>
+                </button>
+              </div>
+            </div>
+            @if (summary.current.paidOn) {
+              <p class="payroll-muted m-0 mt-2">
+                Paid {{ summary.current.paidOn | date:'mediumDate' }}
+                @if (summary.current.paymentMethodName) { · {{ summary.current.paymentMethodName }} }
+              </p>
+            }
+            <div class="payroll-quick-actions">
+              @if (summary.current.employeePayrollId) {
+                <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="viewDetails(summary.current.employeePayrollId!)">
+                  <i class="pi pi-list"></i> View Salary Details
+                </button>
+                @if (summary.current.payslipAvailable !== false && summary.current.payslipDocumentId) {
+                  <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="downloadPayslip(summary.current.employeePayrollId!, true)">
+                    <i class="pi pi-download"></i> Download Payslip
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Documents</span>
+            <h3>Payslips</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          @if (!payslipRows.length) {
+            <div class="tc-empty-state tc-empty-state--inline">
+              <i class="pi pi-file"></i>
+              <p>No payslips available yet.</p>
+            </div>
+          } @else {
+            <ul class="my-payslip-list">
+              @for (row of payslipRows; track row.employeePayrollId) {
+                <li>
+                  <div>
+                    <strong>{{ monthLabel(row.year, row.month) }}</strong>
+                    @if (row.payslipNumber) {
+                      <small>{{ row.payslipNumber }}</small>
+                    } @else {
+                      <small>Stored payslip</small>
+                    }
+                  </div>
+                  <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="downloadPayslip(row.employeePayrollId, true)">
+                    <i class="pi pi-download"></i> Download
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          <div class="payroll-quick-actions">
+            <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="contactAdmin()">
+              <i class="pi pi-envelope"></i> Contact Administration
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tc-card tc-card--panel payroll-surface-panel">
+      <div class="tc-card__header">
+        <div>
+          <span>History</span>
+          <h3>Payroll History</h3>
+        </div>
+      </div>
+      <div class="tc-card__body">
+        <div class="payroll-toolbar payroll-toolbar--filters my-payroll-filters">
+          <div class="tc-form-field">
+            <label>Year</label>
+            <select [(ngModel)]="filterYear" (ngModelChange)="applyHistoryFilters()">
+              <option value="">All years</option>
+              @for (y of yearOptions; track y) {
+                <option [value]="y">{{ y }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Status</label>
+            <select [(ngModel)]="filterStatus" (ngModelChange)="applyHistoryFilters()">
+              <option value="">All status</option>
+              @for (s of statusFilterOptions; track s) {
+                <option [value]="s">{{ statusLabel(s) }}</option>
+              }
+            </select>
+          </div>
+          <div class="payroll-toolbar__actions">
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="resetHistoryFilters()" [disabled]="!filterYear && !filterStatus">Reset</button>
+          </div>
+        </div>
+
+        @if (!filteredHistory.length) {
+          <div class="tc-empty-state tc-empty-state--inline">
+            <i class="pi pi-inbox"></i>
+            <h3>No payroll records</h3>
+            <p>{{ history.length ? 'No records match the selected filters.' : 'Your payroll history will appear here after Finance generates a run.' }}</p>
+            @if (history.length && (filterYear || filterStatus)) {
+              <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="resetHistoryFilters()">Reset filters</button>
+            }
+          </div>
+        } @else {
+          <div class="payroll-table-wrap">
+            <table class="payroll-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th class="text-right">Net</th>
+                  <th>Status</th>
+                  <th>Paid date</th>
+                  <th>Payslip</th>
+                  <th class="payroll-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredHistory; track row.employeePayrollId) {
+                  <tr>
+                    <td class="font-medium">{{ monthLabel(row.year, row.month) }}</td>
+                    <td class="text-right payroll-mono">{{ masked(row.netAmount, revealHistoryNet) }}</td>
+                    <td><span class="tc-saas-pill" [attr.data-tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</span></td>
+                    <td>{{ row.paidOn ? (row.paidOn | date:'mediumDate') : '—' }}</td>
+                    <td>
+                      @if (row.payslipAvailable !== false && row.payslipDocumentId) {
+                        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm" (click)="downloadPayslip(row.employeePayrollId, true)" title="Download payslip">
+                          <i class="pi pi-download"></i>
+                        </button>
+                      } @else {
+                        <span class="payroll-muted">Not available</span>
+                      }
+                    </td>
+                    <td class="payroll-table__actions">
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="viewDetails(row.employeePayrollId)">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="payroll-pager">
+            <span>{{ filteredHistory.length }} of {{ history.length }} period(s)</span>
+            <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="revealHistoryNet = !revealHistoryNet">
+              <i class="pi" [ngClass]="revealHistoryNet ? 'pi-eye-slash' : 'pi-eye'"></i>
+              {{ revealHistoryNet ? 'Hide amounts' : 'Reveal amounts' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <p class="payroll-helper">
+      Important: Payslips are stored documents generated by Finance. Contact Administration for corrections after payment.
+    </p>
+  }
+
+  <p-dialog
+    header="Salary Details"
+    [(visible)]="detailVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '640px', maxWidth: '95vw' }">
+    @if (detailLoading) {
+      <tc-page-skeleton layout="detail-section" [sections]="2"></tc-page-skeleton>
+    } @else if (detail) {
+      <div class="payroll-meta-row">
+        <span>{{ monthLabel(detail.payrollYear, detail.payrollMonth) }}</span>
+        <span class="tc-saas-pill" [attr.data-tone]="statusTone(detail.status)">{{ statusLabel(detail.status) }}</span>
+      </div>
+      <div class="payroll-table-wrap">
+        <table class="payroll-table payroll-table--compact">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Type</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of detail.lines || []; track line.componentCode) {
+              <tr>
+                <td>{{ line.componentName }}</td>
+                <td>{{ line.componentType }}</td>
+                <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3">No line details.</td></tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">Net</td>
+              <td class="text-right"><strong>{{ detail.netAmount | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </p-dialog>
+</section>

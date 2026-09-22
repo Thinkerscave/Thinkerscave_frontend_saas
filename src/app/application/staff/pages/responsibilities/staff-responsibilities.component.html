@@ -1,18 +1,11 @@
 <section class="sd-workspace">
-  <!-- ───────── HEADER ───────── -->
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Responsibilities</h1>
-      <p class="sd-header__sub">Manage organizational roles and responsibilities.</p>
-    </div>
-    <div class="sd-header__actions">
-      <button type="button" class="sd-btn sd-btn--primary" (click)="openAdd()">
-        <i class="pi pi-plus"></i> Create Responsibility
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header>
+    <button type="button" class="sd-btn sd-btn--primary" (click)="openAdd()">
+      <i class="pi pi-plus"></i> Create Responsibility
+    </button>
+  </tc-saas-page-header>
 
-  <!-- ───────── KPI TILES ───────── -->
+  <!-- KPI TILES -->
   <div class="sd-kpi-row">
     <div class="sd-kpi-card" data-color="blue">
       <div class="sd-kpi-card__icon"><i class="pi pi-sitemap"></i></div>
@@ -55,11 +48,9 @@
     <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
   </div>
 
-  <div *ngIf="loading" class="sd-loading">
-    <i class="pi pi-spin pi-spinner"></i> Loading responsibilities...
-  </div>
+  <tc-page-skeleton *ngIf="loading && !hasLoaded" layout="table-only" [rows]="8" [columns]="6" [showKpis]="false"></tc-page-skeleton>
 
-  <div class="sd-table-wrap" *ngIf="!loading && filtered.length > 0">
+  <div class="sd-table-wrap" *ngIf="hasLoaded && filtered.length > 0" [class.is-refreshing]="refreshing">
     <table class="sd-table">
       <thead>
         <tr>
@@ -102,7 +93,7 @@
     </table>
   </div>
   
-  <div *ngIf="!loading && filtered.length === 0 && !errorMessage" class="sd-empty">
+  <div *ngIf="hasLoaded && filtered.length === 0 && !errorMessage" class="sd-empty">
     <i class="pi pi-sitemap"></i>
     <p>No responsibilities match your search.</p>
   </div>

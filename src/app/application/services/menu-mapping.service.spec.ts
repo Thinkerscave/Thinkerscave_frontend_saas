@@ -47,24 +47,16 @@ describe('MenuMappingService', () => {
     expect(flattened[0].items?.[1].routerLink).toBe('/app/tenant-management/promotions');
   });
 
-  it('should inject Access Management for organization admins even without backend menus', () => {
-    const result = (service as any).ensureAccessManagementWorkspace([
+  it('should preserve backend-resolved menu items without injecting or pruning routes', () => {
+    const backendMenus: MenuItem[] = [
       { label: 'Staff', icon: 'pi pi-id-card', routerLink: '/app/staff', items: [
         { label: 'Directory', routerLink: '/app/staff/directory' },
         { label: 'Responsibilities', routerLink: '/app/staff/responsibilities' }
       ] }
-    ]) as MenuItem[];
+    ];
 
-    const access = result.find(item => item.label === 'Access Management');
-    const staff = result.find(item => item.label === 'Staff');
-    expect(access?.items?.map(child => child.routerLink)).toEqual([
-      '/app/access-management/users',
-      '/app/access-management/responsibilities',
-      '/app/access-management/feature-catalog',
-      '/app/access-management/login-history',
-      '/app/access-management/security-policy'
-    ]);
-    expect(staff?.items?.some(child => String(child.routerLink).includes('responsibilities'))).toBeFalse();
-    expect(result.some(item => item.label === 'Access Management')).toBeTrue();
+    const result = (service as any).applyNavigationRules(backendMenus) as MenuItem[];
+
+    expect(result).toEqual(backendMenus);
   });
 });

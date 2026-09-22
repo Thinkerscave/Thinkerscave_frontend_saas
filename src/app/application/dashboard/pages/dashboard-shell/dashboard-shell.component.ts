@@ -108,7 +108,7 @@ export class DashboardShellComponent implements OnInit {
     }
     return {
       ...response,
-      widgets: response.widgets.filter(widget => widget.widgetType !== 'FEE_SUMMARY' && widget.widgetKey !== 'FEE_SUMMARY')
+      widgets: response.widgets
     };
   }
 
@@ -119,7 +119,13 @@ export class DashboardShellComponent implements OnInit {
       return response;
     }
 
-    const priority: Array<WidgetDTO<any>['widgetType']> = ['WELCOME_HEADER', 'KPI_GRID', 'QUICK_ACTIONS', 'CHART'];
+    const priority: Array<WidgetDTO<any>['widgetType']> = [
+      'WELCOME_HEADER',
+      'KPI_GRID',
+      'STAFF_ATTENDANCE_TOGGLE',
+      'QUICK_ACTIONS',
+      'CHART'
+    ];
     const selectedKeys = new Set<string>();
     const ordered: WidgetDTO<any>[] = [];
 

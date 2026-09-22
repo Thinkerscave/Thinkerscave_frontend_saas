@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 /**
- * Overlay loader for the table/grid only. Header, filters, and view toggle
- * stay mounted so a search feels like a data refresh, not a page reload.
+ * Soft refresh overlay for list/table regions.
+ * Keeps existing content visible; never blanks the page.
  */
 @Component({
   selector: 'app-list-results',
@@ -12,9 +12,9 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="app-list-results" [class.is-busy]="busy" [attr.aria-busy]="busy">
-      <div class="app-list-results__overlay" *ngIf="busy">
-        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-        <span>{{ busyLabel }}</span>
+      <div class="app-list-results__overlay" *ngIf="busy" role="status" aria-live="polite">
+        <span class="app-list-results__bar" aria-hidden="true"></span>
+        <span class="app-list-results__label" *ngIf="busyLabel">{{ busyLabel }}</span>
       </div>
       <ng-content></ng-content>
     </div>
@@ -23,5 +23,6 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 })
 export class AppListResultsComponent {
   @Input() busy = false;
-  @Input() busyLabel = 'Updating results…';
+  /** Optional; leave empty — skeleton/soft dim is enough without “Updating…” copy. */
+  @Input() busyLabel = '';
 }

@@ -36,11 +36,14 @@ import {
   CalendarEventType
 } from '../../../models/academic-calendar.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-calendar-event-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -138,7 +141,6 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
       next: (event) => {
         this.event = event;
         this.pageHeader.setPageHeader({
-          title: event.title,
           subtitle: this.formatDateRange(event)
         });
         this.loadClassOptions(event.academicYearId);

@@ -8,7 +8,7 @@
     <button type="button" class="tc-btn tc-btn--primary" (click)="load()">Retry</button>
   </div>
 
-  <div *ngIf="loading && !errorMessage" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading access overview...</div>
+  <tc-page-skeleton *ngIf="loading && !errorMessage" variant="dashboard" [kpis]="4"></tc-page-skeleton>
 
   <ng-container *ngIf="!loading && !errorMessage">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>

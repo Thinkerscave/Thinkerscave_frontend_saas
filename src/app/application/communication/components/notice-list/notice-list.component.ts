@@ -6,10 +6,10 @@ import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { WorkspaceHeaderComponent } from '../../../../shared/components/workspace-header/workspace-header.component';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { KpiCardComponent } from '../../../../shared/components/kpi-card/kpi-card.component';
 import { CommunicationService, Notice, NoticeStatus } from '../../services/communication.service';
 
@@ -27,10 +27,10 @@ import { CommunicationService, Notice, NoticeStatus } from '../../services/commu
         TableModule,
         TooltipModule,
         ConfirmDialogModule,
-        WorkspaceHeaderComponent,
+        SaasPageHeaderComponent,
         StatusBadgeComponent,
         EmptyStateComponent,
-        SkeletonComponent,
+        TcPageSkeletonComponent,
         KpiCardComponent
     ],
     providers: [ConfirmationService],

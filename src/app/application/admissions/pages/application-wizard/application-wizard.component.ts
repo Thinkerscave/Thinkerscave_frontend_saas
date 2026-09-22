@@ -51,6 +51,7 @@ import {
   normalizeDocumentType,
   resolveRequiredDocuments
 } from '../../data/admissions-workspace.config';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasStep,
@@ -94,7 +95,8 @@ interface DocChecklistItem {
     DropdownModule,
     DocumentPreviewDialogComponent,
     SaasPageHeaderComponent,
-    SaasStepperComponent
+    SaasStepperComponent,
+    TcPageSkeletonComponent
   ],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss'],

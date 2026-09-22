@@ -24,6 +24,7 @@ import {
 } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
 import { AdmissionsNavService } from '../../services/admissions-nav.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPillComponent,
@@ -60,6 +61,7 @@ const APPLICATIONS_RESOURCE = 'ADMISSIONS_APPLICATIONS';
     SaasPageHeaderComponent,
     SaasPillComponent,
     SaasTabsComponent,
+    TcPageSkeletonComponent,
     AppListToolbarComponent,
     AppListResultsComponent,
     AppPaginatorComponent
@@ -114,8 +116,7 @@ export class ApplicationsListComponent implements OnInit {
       const token = String(role).toUpperCase().replace(/^ROLE_/, '');
       return token === 'ORGANIZATION_ADMIN'
         || token === 'ORGANIZATION_OWNER'
-        || token === 'SUPER_ADMIN'
-        || token === 'PLATFORM_ADMIN';
+        || token === 'SUPER_ADMIN';
     });
   }
 

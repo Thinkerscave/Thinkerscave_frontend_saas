@@ -1,0 +1,25 @@
+<p-dialog
+  header="Reject Expense"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+>
+  <div class="expense-dialog-form">
+    <div class="tc-form-field">
+      <label for="er-reason">Reason *</label>
+      <textarea id="er-reason" rows="4" [(ngModel)]="remarks" maxlength="1000"></textarea>
+    </div>
+    <div class="expense-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="visibleChange.emit(false)">Cancel</button>
+      <button
+        type="button"
+        class="tc-btn tc-btn--danger"
+        [disabled]="saving || !remarks.trim()"
+        (click)="reject()"
+      >
+        {{ saving ? 'Rejecting…' : 'Reject' }}
+      </button>
+    </div>
+  </div>
+</p-dialog>

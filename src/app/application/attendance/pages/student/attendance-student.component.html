@@ -1,7 +1,5 @@
 <div class="saas-page attendance-student">
-  <tc-saas-page-header
-    title="Student Attendance"
-    [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Student Attendance'}]">
+  <tc-saas-page-header>
     <button type="button" class="tc-btn"><i class="pi pi-calendar"></i>Attendance Calendar</button>
     <button type="button" class="tc-btn" (click)="exportCsv()"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
@@ -70,7 +68,7 @@
         <strong>{{ copyError }}</strong>
       </div>
 
-      <div *ngIf="rosterLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i>Loading roster...</div>
+      <tc-page-skeleton *ngIf="rosterLoading" layout="table-only" [rows]="8" [columns]="5"></tc-page-skeleton>
 
       <div *ngIf="!rosterLoading && !rows.length" class="saas-empty">
         <i class="pi pi-users"></i>

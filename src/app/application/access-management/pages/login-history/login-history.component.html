@@ -1,24 +1,32 @@
 <div class="saas-page login-history">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="load(); loadRetention()" [disabled]="loading"><i class="pi pi-refresh"></i> Refresh</button>
+    <button type="button" class="tc-btn" (click)="load(); loadRetention()" [disabled]="loading || refreshing"><i class="pi pi-refresh"></i> Refresh</button>
   </tc-saas-page-header>
 
   <div *ngIf="errorMessage" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ errorMessage }}</strong></div>
-  <div *ngIf="loading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading history...</div>
+  <tc-page-skeleton
+    *ngIf="loading && !hasLoaded"
+    layout="directory-table"
+    [kpis]="3"
+    [showKpis]="true"
+    [showFilter]="true"
+    [rows]="8"
+    [columns]="6">
+  </tc-page-skeleton>
 
   <p-confirmDialog key="retentionPurge"></p-confirmDialog>
   <p-toast position="top-right"></p-toast>
 
-  <ng-container *ngIf="!loading">
+  <ng-container *ngIf="hasLoaded">
     <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
 
     <tc-saas-panel
       title="Archival &amp; retention"
       subtitle="Old sign-in records are purged automatically. The window and schedule are centrally configured; admins can also run the job on demand and inspect its history.">
-      <div *ngIf="retentionLoading" class="saas-loading"><i class="pi pi-spin pi-spinner"></i> Loading archival status...</div>
+      <tc-page-skeleton *ngIf="retentionLoading && !retention" layout="detail-section" [sections]="1" [showKpis]="false"></tc-page-skeleton>
       <div *ngIf="retentionError" class="saas-empty"><i class="pi pi-exclamation-triangle"></i><strong>{{ retentionError }}</strong></div>
-      <ng-container *ngIf="retention && !retentionLoading">
-        <div class="login-history__retention-grid">
+      <ng-container *ngIf="retention">
+        <div class="login-history__retention-grid" [class.is-refreshing]="retentionLoading">
           <div class="login-history__retention-fact">
             <small>Retention window</small>
             <strong>{{ retention.retentionDays }} days</strong>
@@ -127,7 +135,7 @@
           (onChange)="onFilterChange()">
         </p-dropdown>
       </div>
-      <div class="saas-table-wrap">
+      <div class="saas-table-wrap" [class.is-refreshing]="refreshing">
         <table class="saas-data-table">
           <thead>
             <tr>

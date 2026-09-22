@@ -1,10 +1,4 @@
 <section class="sd-workspace">
-  <header class="sd-header">
-    <div class="sd-header__left">
-      <h1 class="sd-header__title">Alumni Staff</h1>
-      <p class="sd-header__sub">Former staff members who resigned, retired, or completed their contract.</p>
-    </div>
-  </header>
 
   <div class="sd-filter-panel">
     <div class="sd-filter-panel__search">
@@ -20,8 +14,8 @@
     <div class="sd-error-banner"><i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}</div>
   }
 
-  @if (loading) {
-    <div class="sd-loading"><i class="pi pi-spin pi-spinner"></i><span>Loading alumni records...</span></div>
+  @if (loading && !alumni.length) {
+    <tc-page-skeleton layout="cards-only" [cards]="6"></tc-page-skeleton>
   }
 
   @if (!loading && filteredAlumni().length === 0 && !errorMessage) {
@@ -32,7 +26,7 @@
     </div>
   }
 
-  @if (!loading && filteredAlumni().length > 0) {
+  @if ((!loading || alumni.length) && filteredAlumni().length > 0) {
     <div class="sd-card-grid">
       @for (s of pagedAlumni(); track trackByStaff($index, s)) {
         <article class="sd-card" (click)="openProfile(s)">

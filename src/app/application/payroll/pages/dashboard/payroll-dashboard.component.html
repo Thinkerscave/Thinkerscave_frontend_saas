@@ -1,0 +1,234 @@
+<section class="tc-page-shell tc-directory-page payroll-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <div class="tc-form-field payroll-year-select">
+      <label class="sr-only">Period</label>
+      <input type="month"
+             [ngModel]="periodValue"
+             (ngModelChange)="periodValue = $event; onPeriodChange()" />
+    </div>
+    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
+            *tcHasPerm="resources.RUN; action: 'manage'"
+            (click)="openGenerate()">
+      <i class="pi pi-play"></i> Generate Payroll
+    </button>
+  </tc-saas-page-header>
+
+  @if (loading && !kpis) {
+    <tc-page-skeleton layout="dashboard" [kpis]="5" [charts]="0" [rows]="8" [columns]="10"></tc-page-skeleton>
+  } @else if (error && !kpis) {
+    <div class="tc-empty-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Payroll unavailable</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="loadAll()">Retry</button>
+    </div>
+  } @else {
+    @if (kpis) {
+      <tc-kpi-group ariaLabel="Payroll KPIs" mode="equal" [columns]="5">
+        <tc-kpi-card label="Total Employees" [value]="'' + (kpis.totalStaff ?? kpis.totalEmployees ?? 0)" icon="pi pi-users" tone="primary"></tc-kpi-card>
+        <tc-kpi-card label="Generated" [value]="'' + (kpis.generatedCount ?? kpis.generated ?? 0)" icon="pi pi-file" tone="info"></tc-kpi-card>
+        <tc-kpi-card label="Pending Approval" [value]="'' + (kpis.pendingApprovalCount ?? kpis.pendingApproval ?? 0)" icon="pi pi-clock" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Payment Pending" [value]="'' + paymentPendingCount(kpis)" icon="pi pi-wallet" tone="warning"></tc-kpi-card>
+        <tc-kpi-card label="Paid" [value]="'' + (kpis.paidCount ?? kpis.paid ?? 0)" icon="pi pi-check-circle" tone="success"></tc-kpi-card>
+      </tc-kpi-group>
+
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__header">
+          <div>
+            <span>Shortcuts</span>
+            <h3>Quick Actions</h3>
+          </div>
+        </div>
+        <div class="tc-card__body">
+          <div class="payroll-quick-actions">
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll/components" *tcHasPerm="resources.COMPONENTS; action: 'view'">Manage Salary Components</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll/structures" *tcHasPerm="resources.STRUCTURES; action: 'view'">Manage Salary Structures</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/reports" *tcHasPerm="'FINANCE_REPORTS'; action: 'view'">Finance Reports</a>
+            <a class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees/settings">Payroll Settings</a>
+          </div>
+          <p class="payroll-helper m-0 mt-3">
+            Salary components, structures and employee salary are managed from Payroll - not from Staff create.
+          </p>
+        </div>
+      </div>
+    }
+
+    <div class="tc-card tc-card--panel payroll-surface-panel">
+      <div class="tc-card__body">
+        <div class="payroll-toolbar payroll-toolbar--filters">
+          <div class="tc-form-field payroll-toolbar__search">
+            <label>Search</label>
+            <input type="search"
+                   placeholder="Name or employee ID"
+                   [(ngModel)]="draftQ"
+                   (keyup.enter)="search()" />
+          </div>
+          <div class="tc-form-field">
+            <label>Employment</label>
+            <select [(ngModel)]="draftEmploymentCategory">
+              <option value="">All types</option>
+              @for (o of employmentOptions; track o.value) {
+                <option [value]="o.value">{{ o.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Payment type</label>
+            <select [(ngModel)]="draftPaymentType">
+              <option value="">All types</option>
+              @for (o of paymentTypes; track o.value) {
+                <option [value]="o.value">{{ o.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="tc-form-field">
+            <label>Status</label>
+            <select [(ngModel)]="draftStatus">
+              <option value="">All status</option>
+              @for (s of statusOptions; track s) {
+                <option [value]="s">{{ statusLabel(s) }}</option>
+              }
+            </select>
+          </div>
+          <div class="payroll-toolbar__actions">
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="resetFilters()">Reset</button>
+            <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
+          </div>
+        </div>
+
+        @if (tableLoading && !rows.length) {
+          <tc-page-skeleton layout="table-only" [rows]="8" [columns]="10"></tc-page-skeleton>
+        } @else if (!rows.length) {
+          <div class="tc-empty-state">
+            <i class="pi pi-users"></i>
+            <h3>No employees found</h3>
+            <p>{{ q || employmentCategory || paymentType || status ? 'No employees match your filters.' : 'No employees found for this period.' }}</p>
+            @if (q || employmentCategory || paymentType || status) {
+              <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="resetFilters()">Reset filters</button>
+            }
+          </div>
+        } @else {
+          <div class="payroll-table-wrap">
+            <table class="payroll-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Employee ID</th>
+                  <th>Designation</th>
+                  <th>Employment Type</th>
+                  <th>Payment Type</th>
+                  <th class="text-right">Gross</th>
+                  <th class="text-right">Deductions</th>
+                  <th class="text-right">Net</th>
+                  <th>Status</th>
+                  <th class="payroll-table__actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row.staffId) {
+                  <tr>
+                    <td class="font-medium">
+                      <a [routerLink]="['/app/payroll/employees', row.staffId]">{{ row.staffName || row.employeeName || ('#' + row.staffId) }}</a>
+                    </td>
+                    <td>{{ row.staffCode || row.employeeCode || ('#' + row.staffId) }}</td>
+                    <td>{{ row.designation || '—' }}</td>
+                    <td>{{ row.employmentCategory || '—' }}</td>
+                    <td>{{ row.paymentType || '—' }}</td>
+                    <td class="text-right">{{ formatMoney(row.grossAmount) }}</td>
+                    <td class="text-right">{{ formatMoney(row.totalDeductions) }}</td>
+                    <td class="text-right">{{ formatMoney(row.netAmount) }}</td>
+                    <td>
+                      <span class="tc-saas-pill" [attr.data-tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</span>
+                    </td>
+                    <td class="payroll-table__actions">
+                      @if (row.payrollRunId) {
+                        <a class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                           [routerLink]="['/app/payroll/runs', row.payrollRunId]"
+                           title="View run">
+                          <i class="pi pi-eye"></i>
+                        </a>
+                      }
+                      <a class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                         [routerLink]="['/app/payroll/employees', row.staffId]"
+                         *tcHasPerm="resources.EMPLOYEE_SALARY; action: 'manage'"
+                         title="Manage Salary">
+                        <i class="pi pi-pencil"></i>
+                      </a>
+                      @if (canRecordPayment(row)) {
+                        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                                *tcHasPerm="resources.PAYMENT; action: 'manage'"
+                                (click)="openPayment(row)"
+                                title="Record Payment">
+                          <i class="pi pi-credit-card"></i>
+                        </button>
+                      }
+                      @if (row.payslipDocumentId) {
+                        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon-sm"
+                                *tcHasPerm="resources.PAYSLIP; action: 'view'"
+                                (click)="downloadPayslip(row)"
+                                title="Download Payslip">
+                          <i class="pi pi-download"></i>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="payroll-pager">
+            <span>Showing {{ rows.length }} of {{ total }} entries</span>
+            <div class="payroll-pager__btns">
+              <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="prevPage()" [disabled]="page === 0">Prev</button>
+              <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="nextPage()" [disabled]="(page + 1) * size >= total">Next</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="tc-card tc-card--panel payroll-surface-panel">
+      <div class="tc-card__header">
+        <div>
+          <span>Activity</span>
+          <h3>Recent Activities</h3>
+        </div>
+      </div>
+      <div class="tc-card__body">
+        @if (!activities.length) {
+          <div class="tc-empty-state tc-empty-state--inline">
+            <i class="pi pi-history"></i>
+            <p>No recent payroll activities.</p>
+          </div>
+        } @else {
+          <ul class="payroll-activity-list">
+            @for (a of activities; track a.activityId || a.occurredOn) {
+              <li>
+                <div>
+                  <strong>{{ a.action || a.description }}</strong>
+                  <small>{{ a.actorName || 'System' }}</small>
+                </div>
+                <time>{{ a.occurredOn | date:'mediumDate' }}</time>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <app-generate-payroll-dialog
+    [(visible)]="generateVisible"
+    (generated)="onGenerated()">
+  </app-generate-payroll-dialog>
+
+  <app-record-payment-dialog
+    [(visible)]="paymentVisible"
+    [employee]="paymentEmployee"
+    [employeePayrollId]="paymentEmployee?.employeePayrollId ?? null"
+    [remaining]="paymentEmployee?.netAmount ?? null"
+    (paid)="onPaid()">
+  </app-record-payment-dialog>
+</section>

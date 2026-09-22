@@ -1,0 +1,300 @@
+<section class="tc-page-shell tc-directory-page expenses-page">
+  <app-toast />
+
+  <tc-saas-page-header [subtitle]="expense?.expenseNumber || 'Expense detail'">
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/expenses">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+    @if (expense) {
+      <tc-saas-pill [label]="label(expense.approvalStatus)" [tone]="tone(expense.approvalStatus)" />
+      <tc-saas-pill [label]="label(expense.paymentStatus)" [tone]="tone(expense.paymentStatus)" />
+
+      @if (
+        expense.approvalStatus === 'DRAFT' ||
+        expense.approvalStatus === 'PENDING_APPROVAL' ||
+        expense.approvalStatus === 'APPROVED'
+      ) {
+        <button
+          type="button"
+          class="tc-btn tc-btn--outline tc-btn--sm"
+          *tcHasPerm="resources.EXPENSES; action: 'manage'"
+          (click)="drawer = true"
+        >
+          <i class="pi pi-pencil"></i>
+          Edit
+        </button>
+      }
+
+      @if (expense.approvalStatus === 'DRAFT') {
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary tc-btn--sm"
+          *tcHasPerm="resources.EXPENSES; action: 'manage'"
+          (click)="submit()"
+        >
+          <i class="pi pi-send"></i>
+          Submit
+        </button>
+      }
+
+      @if (expense.approvalStatus === 'APPROVED' && expense.paymentStatus !== 'PAID') {
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary tc-btn--sm"
+          *tcHasPerm="resources.PAYMENT; action: 'manage'"
+          (click)="payment = true"
+        >
+          <i class="pi pi-credit-card"></i>
+          Record Payment
+        </button>
+      }
+
+      @if (expense.approvalStatus === 'PENDING_APPROVAL') {
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary tc-btn--sm"
+          *tcHasPerm="resources.APPROVAL; action: 'approve'"
+          (click)="approve()"
+        >
+          <i class="pi pi-check"></i>
+          Approve
+        </button>
+        <button
+          type="button"
+          class="tc-btn tc-btn--danger tc-btn--sm"
+          *tcHasPerm="resources.APPROVAL; action: 'approve'"
+          (click)="reject = true"
+        >
+          <i class="pi pi-times"></i>
+          Reject
+        </button>
+      }
+
+      @if (expense.approvalStatus === 'REJECTED') {
+        <button
+          type="button"
+          class="tc-btn tc-btn--outline tc-btn--sm"
+          *tcHasPerm="resources.EXPENSES; action: 'manage'"
+          (click)="returnToDraft()"
+        >
+          Return to Draft
+        </button>
+      }
+    }
+  </tc-saas-page-header>
+
+  @if (loading && !expense) {
+    <tc-page-skeleton layout="detail" [tabs]="5" [sections]="3"></tc-page-skeleton>
+  } @else if (expense) {
+    <div class="expense-summary">
+      <div class="expense-summary__card">
+        <span>Total Amount</span>
+        <strong>{{ money(expense.amount) }}</strong>
+      </div>
+      <div class="expense-summary__card">
+        <span>Paid Amount</span>
+        <strong>{{ money(expense.paidAmount) }}</strong>
+      </div>
+      <div class="expense-summary__card">
+        <span>Remaining</span>
+        <strong>{{ money(expense.remainingAmount) }}</strong>
+      </div>
+    </div>
+
+    <nav class="expenses-tabs" aria-label="Expense sections">
+      @for (t of tabs; track t) {
+        <button
+          type="button"
+          class="expenses-tabs__btn"
+          [class.is-active]="tab === t"
+          (click)="tab = t"
+        >
+          {{ label(t) }}
+        </button>
+      }
+    </nav>
+
+    <div class="tc-card tc-card--panel expenses-panel">
+      <div class="tc-card__body">
+        @if (tab === 'details') {
+          <dl class="expense-details">
+            <div>
+              <dt>Expense Head</dt>
+              <dd>{{ expense.headName }}</dd>
+            </div>
+            <div>
+              <dt>Category</dt>
+              <dd>{{ expense.categoryName }}</dd>
+            </div>
+            <div>
+              <dt>Date</dt>
+              <dd>{{ expense.expenseDate | date: 'mediumDate' }}</dd>
+            </div>
+            <div>
+              <dt>Amount</dt>
+              <dd>{{ money(expense.amount) }}</dd>
+            </div>
+            <div>
+              <dt>Vendor</dt>
+              <dd>{{ expense.vendorName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Invoice No.</dt>
+              <dd>{{ expense.vendorInvoiceNumber || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Requester</dt>
+              <dd>{{ expense.requester.name }}</dd>
+            </div>
+            <div>
+              <dt>Remarks</dt>
+              <dd>{{ expense.remarks || '—' }}</dd>
+            </div>
+          </dl>
+        }
+
+        @if (tab === 'payments') {
+          @if (!expense.payments.length) {
+            <div class="tc-empty-state expenses-empty">
+              <i class="pi pi-credit-card"></i>
+              <h3>No payments recorded</h3>
+              <p>Payments appear here after they are recorded against this expense.</p>
+              @if (expense.approvalStatus === 'APPROVED' && expense.paymentStatus !== 'PAID') {
+                <div class="expenses-empty__actions">
+                  <button
+                    type="button"
+                    class="tc-btn tc-btn--primary"
+                    *tcHasPerm="resources.PAYMENT; action: 'manage'"
+                    (click)="payment = true"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="expenses-table-wrap">
+              <table class="expenses-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Remarks</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of expense.payments; track p.expensePaymentId) {
+                    <tr>
+                      <td>{{ p.paidOn | date: 'mediumDate' }}</td>
+                      <td>{{ p.paymentMethodName || '—' }}</td>
+                      <td>{{ p.referenceNumber || '—' }}</td>
+                      <td>{{ p.remarks || '—' }}</td>
+                      <td class="text-right">{{ money(p.amount) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+
+        @if (tab === 'approvals') {
+          @if (!expense.approvalEvents.length) {
+            <div class="tc-empty-state expenses-empty">
+              <i class="pi pi-history"></i>
+              <h3>No approval events</h3>
+              <p>Submit, approve, and reject actions will appear in this timeline.</p>
+            </div>
+          } @else {
+            <ul class="expense-timeline">
+              @for (a of expense.approvalEvents; track a.id) {
+                <li>
+                  <strong>{{ label(a.eventType) }}</strong>
+                  <span>{{ a.actor || 'System' }} · {{ a.occurredOn | date: 'medium' }}</span>
+                  @if (a.remarks) {
+                    <p>{{ a.remarks }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (tab === 'attachments') {
+          <div class="expense-attachments-head">
+            <p class="expenses-muted">PDF, JPG, or PNG — use attachments for invoices and receipts.</p>
+            <label class="tc-btn tc-btn--outline tc-btn--sm" *tcHasPerm="resources.EXPENSES; action: 'manage'">
+              <i class="pi pi-upload"></i>
+              Upload
+              <input hidden type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="upload($event)" />
+            </label>
+          </div>
+
+          @if (!expense.attachments.length) {
+            <div class="tc-empty-state expenses-empty">
+              <i class="pi pi-paperclip"></i>
+              <h3>No attachments</h3>
+              <p>Upload supporting documents for this expense.</p>
+            </div>
+          } @else {
+            <ul class="expense-files">
+              @for (a of expense.attachments; track a.managedDocumentId) {
+                <li>
+                  <i class="pi pi-file"></i>
+                  <span>{{ a.fileName }}</span>
+                  <div class="expense-files__actions">
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--ghost tc-btn--sm"
+                      (click)="download(a.managedDocumentId, a.fileName)"
+                    >
+                      Download
+                    </button>
+                    <button
+                      type="button"
+                      class="tc-btn tc-btn--ghost tc-btn--sm"
+                      *tcHasPerm="resources.EXPENSES; action: 'manage'"
+                      (click)="remove(a.managedDocumentId)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (tab === 'activity') {
+          @if (!activity.length) {
+            <div class="tc-empty-state expenses-empty">
+              <i class="pi pi-clock"></i>
+              <h3>No activity yet</h3>
+              <p>Approvals, payments, and attachment uploads will show up here.</p>
+            </div>
+          } @else {
+            <ul class="expense-timeline">
+              @for (a of activity; track a.when + a.label) {
+                <li>
+                  <strong>{{ a.label }}</strong>
+                  <span>{{ a.when | date: 'medium' }}</span>
+                  <p>{{ a.detail }}</p>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  <app-expense-form-drawer [(open)]="drawer" [expense]="expense" (saved)="load()" />
+  <app-record-expense-payment-dialog [(visible)]="payment" [expense]="expense" (paid)="load()" />
+  <app-expense-reject-dialog
+    [(visible)]="reject"
+    [expenseId]="expense?.expenseId || null"
+    (rejected)="load()"
+  />
+</section>

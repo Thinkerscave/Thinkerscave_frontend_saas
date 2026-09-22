@@ -1,0 +1,235 @@
+:host {
+  display: block;
+}
+
+.fh-page {
+  color: var(--tc-heading, #0f172a);
+  gap: 0.5rem;
+}
+
+.fh-native-select {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 12.5rem;
+  min-width: 8.5rem;
+  min-height: 2.1rem;
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  font-size: 0.82rem;
+  background: var(--tc-surface-0, #fff);
+  color: var(--tc-text);
+}
+
+.fh-results--refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.fh-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.fh-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.fh-card--inactive {
+  opacity: 0.82;
+}
+
+.fh-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.fh-card__identity {
+  min-width: 0;
+}
+
+.fh-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--tc-heading, #0f172a);
+}
+
+.fh-card__category {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--tc-text-muted, #64748b);
+}
+
+.fh-card__desc {
+  margin: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--tc-text-muted, #64748b);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fh-card__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: auto;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--tc-border, #e2e8f0);
+}
+
+.fh-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex: 0 0 auto;
+
+  &--success {
+    background: color-mix(in srgb, var(--tc-success, #16a34a) 14%, #fff);
+    color: #166534;
+  }
+
+  &--muted {
+    background: var(--tc-surface-100, #f1f5f9);
+    color: #64748b;
+  }
+}
+
+.fh-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--tc-surface-card, #fff);
+}
+
+.fh-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+
+  th {
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tc-text-muted, #64748b);
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--tc-border, #e2e8f0);
+    background: color-mix(in srgb, var(--tc-bg, #f8fafc) 80%, #fff);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid var(--tc-border, #e2e8f0);
+    font-size: 0.875rem;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  strong {
+    font-weight: 650;
+    color: var(--tc-heading, #0f172a);
+  }
+}
+
+.fh-table__desc {
+  color: var(--tc-text-muted, #64748b);
+  max-width: 28rem;
+}
+
+.fh-table__actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.fh-row--inactive {
+  opacity: 0.78;
+}
+
+.fh-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  padding: 2.5rem 1rem;
+  color: var(--tc-text-muted, #64748b);
+  border: 1px dashed var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--tc-surface-card, #fff);
+
+  i {
+    font-size: 1.5rem;
+    opacity: 0.55;
+    margin-bottom: 0.25rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  p {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    max-width: 28rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .fh-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .fh-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .fh-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fh-native-select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .fh-toolbar.acad-toolbar .acad-toolbar__end {
+    margin-left: 0;
+    width: 100%;
+  }
+}

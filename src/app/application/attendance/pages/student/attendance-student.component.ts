@@ -15,6 +15,7 @@ import {
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
 import { AttendanceWorkspaceData, RosterAttendanceRow } from '../../../school-operations/models/school-operations.model';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface PendingClass { className: string; sectionName: string; completed: number; total: number; pct: number; }
 interface SelectOption { label: string; value: string; }
 
@@ -22,7 +23,8 @@ interface SelectOption { label: string; value: string; }
   selector: 'app-attendance-student',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPanelComponent, SaasFilterRowComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent, SaasFilterRowComponent],
   templateUrl: './attendance-student.component.html',
   styleUrl: './attendance-student.component.scss'
 })

@@ -11,7 +11,14 @@ export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 export type DiscountType = 'PERCENTAGE' | 'FLAT_AMOUNT' | 'FLAT';
 export type PromotionStatus = 'DRAFT' | 'ACTIVE' | 'EXPIRED' | 'ARCHIVED';
 export type ProvisionStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'MAINTENANCE';
-export type ProvisionJobStatus = 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type ProvisionJobStatus =
+  | 'PENDING'
+  | 'RUNNING'
+  | 'QUEUED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
 
 export interface SpringPage<T> {
   content: T[];
@@ -549,6 +556,12 @@ export interface PlatformAuditLog {
   sourceIp?: string;
   changes?: string;
   summary?: string;
+  version?: string;
+  status?: string;
+  executionId?: string;
+  correlationId?: string;
+  errorDetails?: string;
+  metadata?: Record<string, unknown>;
   occurredAt: string;
 }
 
@@ -562,4 +575,140 @@ export interface PlatformSecurityAuditLog {
   severity?: string;
   message?: string;
   occurredAt: string;
+}
+
+export type ReleaseStatus = 'DRAFT' | 'READY' | 'RELEASED' | 'FAILED';
+export type OperationStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED';
+export type TenantHealthStatus = 'HEALTHY' | 'WARNING' | 'MAINTENANCE' | 'CRITICAL';
+
+export interface PlatformRelease {
+  id: number;
+  releaseId: string;
+  releaseVersion: string;
+  applicationVersion: string;
+  targetDatabaseVersion: string;
+  targetCatalogVersion: string;
+  status: ReleaseStatus;
+  createdAt: string;
+  releasedAt?: string;
+  createdBy: string;
+  releaseNotes?: string;
+}
+
+export interface ReleaseSummary {
+  currentRelease?: PlatformRelease;
+  totalTenants: number;
+  upToDate: number;
+  pendingMigration: number;
+  failedOrMaintenance: number;
+}
+
+export interface CreateReleasePayload {
+  releaseVersion: string;
+  applicationVersion: string;
+  targetDatabaseVersion: string;
+  targetCatalogVersion: string;
+  releaseNotes?: string;
+}
+
+export interface TenantReleaseOperation {
+  tenantId: number;
+  organizationId: number;
+  organizationName: string;
+  tenantIdentifier: string;
+  schemaName: string;
+  applicationVersion?: string;
+  databaseVersion?: string;
+  targetDatabaseVersion?: string;
+  catalogVersion?: string;
+  targetCatalogVersion?: string;
+  migrationStatus: OperationStatus;
+  catalogSyncStatus: OperationStatus;
+  maintenanceMode: boolean;
+  maintenanceReason?: string;
+  maintenanceStartedAt?: string;
+  healthStatus: TenantHealthStatus;
+  lastMigrationAt?: string;
+  lastHealthCheckAt?: string;
+}
+
+export interface MigrationExecution {
+  executionId: string;
+  tenantId: number;
+  releaseId?: string;
+  currentDatabaseVersion?: string;
+  targetDatabaseVersion: string;
+  migrationVersion?: string;
+  description?: string;
+  status: OperationStatus;
+  startedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  failedMigrationVersion?: string;
+  errorMessage?: string;
+  retryCount: number;
+}
+
+export interface CatalogSyncExecution {
+  executionId: string;
+  tenantId: number;
+  catalogVersion?: string;
+  targetCatalogVersion: string;
+  status: OperationStatus;
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+  retryCount: number;
+}
+
+export interface TenantReleaseDetail extends TenantReleaseOperation {
+  subscriptionPlanName?: string;
+  active?: boolean;
+  migrationHistory: MigrationExecution[];
+  catalogSyncHistory: CatalogSyncExecution[];
+}
+
+export interface TenantHealthSummary {
+  totalTenants: number;
+  healthy: number;
+  warning: number;
+  maintenance: number;
+  critical: number;
+  checkedAt: string;
+}
+
+export interface TenantHealthRecord {
+  tenantId: number;
+  organizationName: string;
+  tenantIdentifier: string;
+  schemaName: string;
+  databaseVersion?: string;
+  catalogVersion?: string;
+  migrationStatus: OperationStatus;
+  storageUsedMb?: number;
+  provisionStatus?: ProvisionStatus;
+  healthStatus: TenantHealthStatus;
+  healthScore?: number;
+  maintenanceMode: boolean;
+  lastCheckAt?: string;
+  issues?: string[];
+}
+
+export interface TenantHealthResponse {
+  summary: TenantHealthSummary;
+  tenants: SpringPage<TenantHealthRecord>;
+}
+
+export interface ProvisioningStep {
+  code: string;
+  label: string;
+  status: OperationStatus;
+  sequence: number;
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+}
+
+export interface ProvisioningJobDetail extends ProvisioningJob {
+  steps: ProvisioningStep[];
 }

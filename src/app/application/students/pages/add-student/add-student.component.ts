@@ -12,12 +12,17 @@ import { MessageService } from 'primeng/api';
 import { catchError, finalize, of } from 'rxjs';
 
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { ParentInfo, StudentWizardRequest } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 import {
-  SaasPageHeaderComponent,
+  SoftRefreshKeys,
+  SoftRefreshService
+} from '../../../../shared/ui/loading';
+import {
   SaasTab,
-  SaasTabsComponent
+  SaasTabsComponent,
+  SaasPageHeaderComponent
 } from '../../../../shared/ui/saas';
 import {
   AppCardComponent,
@@ -43,8 +48,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     CommonModule,
     FormsModule,
     AppToastComponent,
-    SaasPageHeaderComponent,
     SaasTabsComponent,
+    SaasPageHeaderComponent,
     AppCardComponent,
     AppInputComponent,
     AppPhoneInputComponent,
@@ -62,6 +67,8 @@ export class AddStudentComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
+  private readonly backNav = inject(BackNavigationService);
+  private readonly softRefresh = inject(SoftRefreshService);
 
   currentStep: WizardStep = 1;
   attempted = false;
@@ -167,7 +174,7 @@ export class AddStudentComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/app/students/directory']);
+    this.backNav.back({ fallback: '/app/students/directory' });
   }
 
   emptyParent(relationship = 'FATHER'): ParentInfo {
@@ -337,7 +344,9 @@ export class AddStudentComponent implements OnInit {
             summary: 'Student created',
             detail: `${this.fullName} has been added to the directory.`
           });
-          this.router.navigate(['/app/students/directory']);
+          // Soft SPA return: directory soft-refreshes list data (no blank remount skeleton).
+          this.softRefresh.mark(SoftRefreshKeys.studentsDirectory, 'created');
+          void this.router.navigate(['/app/students/directory']);
         },
         error: err => {
           this.apiError = err?.error?.message || 'Failed to create student. Please retry.';

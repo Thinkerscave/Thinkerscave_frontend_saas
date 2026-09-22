@@ -1,0 +1,204 @@
+<section class="tc-page-shell tc-directory-page payroll-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/payroll">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.EMPLOYEE_SALARY; action: 'manage'" (click)="openEdit()">
+      <i class="pi pi-pencil"></i> {{ salary ? 'Change Salary' : 'Configure Salary' }}
+    </button>
+  </tc-saas-page-header>
+
+  @if (loading && !salary && !error) {
+    <tc-page-skeleton variant="detail"></tc-page-skeleton>
+  } @else if (error) {
+    <div class="tc-empty-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Salary unavailable</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+    </div>
+  } @else {
+    <div class="payroll-tabs">
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'current'" (click)="activeTab = 'current'">Current Salary</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'statutory'" (click)="activeTab = 'statutory'">Statutory applicability</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'salaryHistory'" (click)="activeTab = 'salaryHistory'">Salary History</button>
+      <button type="button" class="payroll-tabs__btn" [class.is-active]="activeTab === 'payrollHistory'" (click)="activeTab = 'payrollHistory'">Payroll History</button>
+    </div>
+
+    @if (activeTab === 'current') {
+      @if (!salary) {
+        <div class="tc-empty-state">
+          <i class="pi pi-wallet"></i>
+          <h3>Salary not configured</h3>
+          <p>Configure from Finance → Payroll — never show ₹0 as a fake salary.</p>
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" *tcHasPerm="resources.EMPLOYEE_SALARY; action: 'manage'" (click)="openEdit()">
+            Configure Salary
+          </button>
+        </div>
+      } @else {
+        <div class="tc-card tc-card--panel payroll-surface-panel">
+          <div class="tc-card__header">
+            <div>
+              <span>{{ salary.paymentType }}</span>
+              <h3>Effective {{ salary.effectiveFrom | date:'mediumDate' }}</h3>
+            </div>
+            @if (salary.grossPreview != null) {
+              <strong class="payroll-mono">Gross preview {{ formatMoney(salary.grossPreview) }}</strong>
+            }
+          </div>
+          <div class="tc-card__body">
+            <div class="payroll-table-wrap">
+              <table class="payroll-table payroll-table--compact">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th class="text-right">Value</th>
+                    <th>Applicable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of salary.lines || []; track line.salaryComponentId) {
+                    <tr>
+                      <td>{{ line.salaryComponentName || ('#' + line.salaryComponentId) }}</td>
+                      <td>{{ line.componentType }}</td>
+                      <td>{{ line.calculationMethod }}</td>
+                      <td class="text-right">{{ line.value | number:'1.2-2' }}</td>
+                      <td>{{ line.applicable ? 'Yes' : 'No' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5">No salary lines.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    @if (activeTab === 'statutory') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          @if (!salary?.lines?.length) {
+            <div class="tc-empty-state tc-empty-state--inline">
+              <i class="pi pi-shield"></i>
+              <p>No statutory lines until salary is configured.</p>
+            </div>
+          } @else {
+            <div class="payroll-table-wrap">
+              <table class="payroll-table payroll-table--compact">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Type</th>
+                    <th>Applicable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of salary!.lines!; track line.salaryComponentId) {
+                    @if (line.componentType !== 'EARNING') {
+                      <tr>
+                        <td>{{ line.salaryComponentName || ('#' + line.salaryComponentId) }}</td>
+                        <td>{{ line.componentType }}</td>
+                        <td>{{ line.applicable ? 'Yes' : 'No' }}</td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'salaryHistory') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          @if (!history.length) {
+            <div class="tc-empty-state tc-empty-state--inline">
+              <i class="pi pi-history"></i>
+              <p>No salary history.</p>
+            </div>
+          } @else {
+            <div class="payroll-table-wrap">
+              <table class="payroll-table">
+                <thead>
+                  <tr>
+                    <th>Effective From</th>
+                    <th>Effective To</th>
+                    <th>Payment Type</th>
+                    <th>Active</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of history; track row.employeeSalaryId) {
+                    <tr>
+                      <td>{{ row.effectiveFrom | date:'mediumDate' }}</td>
+                      <td>{{ row.effectiveTo ? (row.effectiveTo | date:'mediumDate') : 'Open' }}</td>
+                      <td>{{ row.paymentType }}</td>
+                      <td>{{ row.active ? 'Yes' : 'No' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'payrollHistory') {
+      <div class="tc-card tc-card--panel payroll-surface-panel">
+        <div class="tc-card__body">
+          @if (!payrollHistory.length) {
+            <div class="tc-empty-state tc-empty-state--inline">
+              <i class="pi pi-calendar"></i>
+              <p>No payroll history.</p>
+            </div>
+          } @else {
+            <div class="payroll-table-wrap">
+              <table class="payroll-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th class="text-right">Gross</th>
+                    <th class="text-right">Deductions</th>
+                    <th class="text-right">Net</th>
+                    <th>Status</th>
+                    <th class="payroll-table__actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of payrollHistory; track row.employeePayrollId) {
+                    <tr>
+                      <td>{{ monthLabel(row.payrollYear, row.payrollMonth) }}</td>
+                      <td class="text-right">{{ formatMoney(row.grossAmount) }}</td>
+                      <td class="text-right">{{ formatMoney(row.totalDeductions) }}</td>
+                      <td class="text-right">{{ formatMoney(row.netAmount) }}</td>
+                      <td><span class="tc-saas-pill" [attr.data-tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</span></td>
+                      <td class="payroll-table__actions">
+                        <a class="tc-btn tc-btn--ghost tc-btn--sm" [routerLink]="['/app/payroll/runs', row.payrollRunId]">View run</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <app-employee-salary-dialog
+    [(visible)]="dialogVisible"
+    [staffId]="staffId"
+    [current]="salary"
+    (saved)="load()">
+  </app-employee-salary-dialog>
+</section>

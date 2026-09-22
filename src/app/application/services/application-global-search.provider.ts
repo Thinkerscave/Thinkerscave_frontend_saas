@@ -198,9 +198,15 @@ export class ApplicationGlobalSearchProvider extends GlobalSearchProvider {
     const link = String(result.link ?? '').toLowerCase();
     const category = String(result.category ?? '').toLowerCase();
     const label = String(result.label ?? '').toLowerCase();
-    return link.includes('/app/fees')
+    return link.includes('/app/fees/setup')
+      || link.includes('/app/fees/contracts')
+      || link.includes('/app/fees/ledger')
+      || link.includes('/app/fees/adjustments')
+      || link.includes('/app/fees/controls')
+      || link.includes('/app/fees/audit')
+      || link.includes('/app/fees/dashboard')
+      || link.includes('/app/fees/my-fees')
       || link.includes('/app/reports')
-      || category === 'fee'
       || label === 'fee management';
   }
 

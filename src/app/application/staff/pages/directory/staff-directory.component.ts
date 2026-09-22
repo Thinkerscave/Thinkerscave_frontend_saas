@@ -21,7 +21,6 @@ import {
   StaffType
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
-import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
@@ -34,6 +33,7 @@ import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 
+import { SoftRefreshKeys, SoftRefreshService, TcPageSkeletonComponent, ListSnapshotCache } from '../../../../shared/ui/loading';
 interface KpiTile {
   key: keyof StaffDashboard;
   label: string;
@@ -60,12 +60,12 @@ const LIST_KEY = 'staff.directory.view';
     AppListResultsComponent,
     AppPaginatorComponent,
     AvatarComponent,
-    SkeletonComponent,
     EmptyStateComponent,
     CreateStaffComponent,
     KpiCardComponent,
     KpiGroupComponent,
-    SaasPageHeaderComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent
   ],
   styleUrls: ['../../staff.shared.scss'],
   templateUrl: './staff-directory.component.html'
@@ -78,6 +78,8 @@ export class StaffDirectoryComponent implements OnInit {
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly feedback = inject(UiFeedbackService);
   private readonly query = new ListQuerySession();
+  private readonly softRefresh = inject(SoftRefreshService);
+  private readonly snapshots = inject(ListSnapshotCache);
 
   loading = true;
   refreshing = false;
@@ -171,6 +173,18 @@ export class StaffDirectoryComponent implements OnInit {
       };
       this.appliedFilters = { ...this.filters };
     }
+    const soft = this.softRefresh.consume(SoftRefreshKeys.staffDirectory);
+    const snap = this.snapshots.get<{ staffPage: PageResponse<StaffSummary>; dashboard: StaffDashboard }>(LIST_KEY);
+    if (soft && snap) {
+      this.staffPage = snap.staffPage;
+      this.dashboard = snap.dashboard;
+      this.hasLoaded = true;
+      this.loading = false;
+      this.loadDashboard();
+      this.loadStaff();
+      return;
+    }
+
     this.loadDashboard();
     this.loadStaff();
   }
@@ -214,6 +228,7 @@ export class StaffDirectoryComponent implements OnInit {
           }
           this.staffPage = page;
           this.errorMessage = '';
+          this.snapshots.set(LIST_KEY, { staffPage: this.staffPage, dashboard: this.dashboard });
         },
         error: () => {
           if (!this.query.isCurrent(requestId)) {

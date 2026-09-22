@@ -9,12 +9,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenuModule } from 'primeng/menu';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { AppGridTableToggleComponent, AppListViewMode, AppPaginatorComponent } from '../../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/utils/paged-result.util';
@@ -22,11 +23,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
-import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { ViewPreferenceService } from '../../../../services/view-preference.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import {
   ACADEMIC_STAGE_OPTIONS,
   ACADEMICS_CLASSES_RESOURCE,
@@ -35,15 +33,19 @@ import {
   ClassesSectionsDashboard
 } from '../../../models/classes-sections.model';
 
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+
 @Component({
   selector: 'app-classes-sections-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    TcPageSkeletonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     AppGridTableToggleComponent,
     AppPaginatorComponent,
     DialogModule,
@@ -58,12 +60,9 @@ import {
 })
 export class ClassesSectionsPageComponent implements OnInit {
   private readonly api = inject(ClassesSectionsApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly nav = inject(AcademicsNavService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -87,8 +86,6 @@ export class ClassesSectionsPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  showBack = false;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   dashboard: ClassesSectionsDashboard | null = null;
   searchTerm = '';
@@ -147,8 +144,6 @@ export class ClassesSectionsPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.showBack = this.route.snapshot.queryParamMap.get('from') === 'overview';
-
     this.search$
       .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -156,28 +151,18 @@ export class ClassesSectionsPageComponent implements OnInit {
         this.reload();
       });
 
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const current = years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) {
-          this.reload();
-        } else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load academic years' });
-        this.cdr.markForCheck();
-      }
-    });
   }
 
-  goBack(): void {
-    this.nav.back(this.route);
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    this.page = 0;
+    if (yearId == null) {
+      this.dashboard = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   onSearchChange(value: string): void {
@@ -185,11 +170,6 @@ export class ClassesSectionsPageComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.page = 0;
-    this.reload();
-  }
-
-  onYearChange(): void {
     this.page = 0;
     this.reload();
   }

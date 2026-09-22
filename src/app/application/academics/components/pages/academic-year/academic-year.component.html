@@ -1,10 +1,7 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="ay-page acad-page" *ngIf="!loading; else loadingTpl">
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" *ngIf="showBack" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
+<div class="ay-page acad-page">
+<tc-saas-page-header>
     <button
       type="button"
       class="ay-btn ay-btn--primary"
@@ -15,7 +12,9 @@
     </button>
   </tc-saas-page-header>
 
-  <div class="ay-layout">
+    <tc-page-skeleton *ngIf="loading" variant="dashboard" [kpis]="4"></tc-page-skeleton>
+  <ng-container *ngIf="!loading">
+<div class="ay-layout">
     <div class="ay-main">
       <section class="ay-hero-grid">
         <!-- Current year -->
@@ -248,11 +247,8 @@
       </div>
     </aside>
   </div>
+  </ng-container>
 </div>
-
-<ng-template #loadingTpl>
-  <div class="ay-loading">Loading academic years…</div>
-</ng-template>
 
 <!-- Create drawer -->
 <p-dialog

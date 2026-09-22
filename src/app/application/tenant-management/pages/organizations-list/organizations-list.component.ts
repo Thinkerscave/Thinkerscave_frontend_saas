@@ -27,6 +27,7 @@ import { ListContextService } from '../../../../core/services/list-context.servi
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 type StatusFilter = 'all' | OrganizationStatus;
 type PillTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
@@ -39,7 +40,7 @@ const LIST_KEY = 'tc.organizations.viewMode';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterLink,
-    Select, SaasStatGridComponent, SaasPillComponent, AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent
+    Select, SaasStatGridComponent, SaasPillComponent, AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent, TcPageSkeletonComponent
   ],
   templateUrl: './organizations-list.component.html',
   styleUrl: './organizations-list.component.scss'

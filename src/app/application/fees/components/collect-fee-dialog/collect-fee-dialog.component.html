@@ -1,0 +1,149 @@
+<p-dialog
+  header="Collect Fee"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '640px', maxWidth: '95vw' }"
+  [draggable]="false"
+  styleClass="fees-collect-dialog">
+  @if (lastResult) {
+    <div class="fees-alloc-preview fees-collect-success">
+      <h4>Payment allocated</h4>
+      <p class="fees-muted m-0">
+        @if (lastResult.receiptNumber) {
+          Receipt {{ lastResult.receiptNumber }} ·
+        }
+        {{ lastResult.amount | number:'1.2-2' }} collected
+      </p>
+      <ul>
+        @for (a of lastResult.allocations; track a.studentBillingPeriodId) {
+          <li>
+            <span>{{ a.periodLabel }}</span>
+            <strong>{{ a.allocatedAmount | number:'1.2-2' }}</strong>
+          </li>
+        } @empty {
+          <li class="fees-muted">Amount applied to advance.</li>
+        }
+      </ul>
+      <div class="fees-alloc-preview__totals">
+        <div><span>Allocated</span><strong>{{ lastResult.allocatedAmount | number:'1.2-2' }}</strong></div>
+        <div><span>Advance remaining</span><strong>{{ lastResult.advanceRemaining | number:'1.2-2' }}</strong></div>
+      </div>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="fees-dialog-form" (ngSubmit)="collect()">
+      <div class="tc-form-field">
+        <label>Student *</label>
+        @if (lockedStudent) {
+          <div class="fees-student-chip">
+            <strong>{{ lockedStudent.studentName }}</strong>
+            <span>
+              {{ lockedStudent.admissionNumber }}
+              @if (lockedStudent.className) { · {{ lockedStudent.className }} }
+            </span>
+            <div class="fees-collect-chips">
+              <span class="fees-collect-chip fees-collect-chip--warn">
+                Outstanding {{ lockedStudent.outstanding | number:'1.2-2' }}
+              </span>
+              @if ((lockedStudent.overdue ?? 0) > 0) {
+                <span class="fees-collect-chip fees-collect-chip--danger">
+                  Overdue {{ lockedStudent.overdue | number:'1.2-2' }}
+                </span>
+              }
+            </div>
+          </div>
+        } @else {
+          <input class="p-inputtext p-component" placeholder="Search name or admission no..."
+                 [(ngModel)]="studentQuery" [ngModelOptions]="{standalone: true}" (ngModelChange)="onSearch($event)" />
+          @if (suggestions.length) {
+            <ul class="fees-suggest-list">
+              @for (s of suggestions; track s.studentId) {
+                <li (click)="pickStudent(s)">
+                  {{ s.studentName }} · {{ s.admissionNumber }} · {{ s.className || '—' }}
+                </li>
+              }
+            </ul>
+          }
+          @if (selectedStudent) {
+            <div class="fees-muted mt-1">
+              Selected: <strong>{{ selectedStudent.studentName }}</strong>
+              · Outstanding {{ selectedStudent.outstanding | number:'1.2-2' }}
+              @if ((selectedStudent.overdue ?? 0) > 0) {
+                · Overdue {{ selectedStudent.overdue | number:'1.2-2' }}
+              }
+              · Advance {{ selectedStudent.advance || 0 | number:'1.2-2' }}
+            </div>
+          }
+        }
+      </div>
+
+      <div class="fees-dialog-form__grid">
+        <div class="tc-form-field">
+          <label>Payment Amount *</label>
+          <input class="p-inputtext p-component" type="number" min="0.01" step="0.01" formControlName="amount" (blur)="refreshPreview()" />
+          @if (quickAmounts.length) {
+            <div class="fees-quick-amounts">
+              @for (amt of quickAmounts; track amt) {
+                <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="applyAmount(amt)">
+                  {{ amt === activeStudent?.outstanding ? 'Full outstanding' : (amt | number:'1.0-0') }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+        <div class="tc-form-field">
+          <label>Payment Method *</label>
+          <select class="p-inputtext p-component" formControlName="paymentMethodId" (change)="refreshPreview()">
+            <option [ngValue]="null" disabled>Select method</option>
+            @for (m of methods; track m.feePaymentMethodId) {
+              <option [ngValue]="m.feePaymentMethodId">{{ m.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="tc-form-field">
+          <label>Payment Date *</label>
+          <input class="p-inputtext p-component" type="datetime-local" formControlName="paidOn" />
+        </div>
+        <div class="tc-form-field">
+          <label>Reference / Transaction No.</label>
+          <input class="p-inputtext p-component" formControlName="referenceNumber" />
+        </div>
+        <div class="tc-form-field tc-form-field--full">
+          <label>Remarks</label>
+          <textarea class="p-inputtext p-component" rows="2" formControlName="remarks"></textarea>
+        </div>
+      </div>
+
+      @if (previewLoading) {
+        <tc-page-skeleton variant="form"></tc-page-skeleton>
+      } @else if (preview) {
+        <div class="fees-alloc-preview">
+          <h4>Allocation preview</h4>
+          <p class="fees-muted m-0">Applied to the oldest outstanding period first.</p>
+          <ul>
+            @for (a of preview.allocations; track a.studentBillingPeriodId) {
+              <li>
+                <span>{{ a.periodLabel }}</span>
+                <strong>{{ a.allocatedAmount | number:'1.2-2' }}</strong>
+              </li>
+            } @empty {
+              <li class="fees-muted">No periods to allocate — amount may go to advance.</li>
+            }
+          </ul>
+          <div class="fees-alloc-preview__totals">
+            <div><span>Allocated</span><strong>{{ preview.allocatedAmount | number:'1.2-2' }}</strong></div>
+            <div><span>Advance after payment</span><strong>{{ preview.advanceRemaining | number:'1.2-2' }}</strong></div>
+          </div>
+        </div>
+      }
+
+      <div class="fees-dialog-form__actions">
+        <button type="button" class="tc-btn tc-btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving || form.invalid || !effectiveStudentId">
+          @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+          Collect &amp; Generate Receipt
+        </button>
+      </div>
+    </form>
+  }
+</p-dialog>

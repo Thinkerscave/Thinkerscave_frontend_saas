@@ -1,14 +1,9 @@
-<app-workspace-header
-    title="Notices"
-    subtitle="Communication"
-    description="Publish announcements to students, staff and parents."
-    icon="pi pi-megaphone"
-    [breadcrumbs]="[{ label: 'Communication' }, { label: 'Notices' }]">
-    <ng-container actions>
+<tc-saas-page-header>
+    <ng-container>
         <p-button label="New notice" icon="pi pi-plus"
                   (onClick)="router.navigate(['/app/communication/notices/new'])"></p-button>
     </ng-container>
-</app-workspace-header>
+</tc-saas-page-header>
 
 <section class="tc-kpi-strip">
     <app-kpi-card label="Total"     [value]="notices().length"     icon="pi pi-list"          tone="info"></app-kpi-card>
@@ -18,8 +13,8 @@
 </section>
 
 <section class="tc-card">
-    <ng-container *ngIf="loading(); else loaded">
-        <app-skeleton shape="table" [rows]="6" [columns]="5"></app-skeleton>
+    <ng-container *ngIf="loading() && !notices().length; else loaded">
+        <tc-page-skeleton layout="table-only" [rows]="6" [columns]="5"></tc-page-skeleton>
     </ng-container>
 
     <ng-template #loaded>

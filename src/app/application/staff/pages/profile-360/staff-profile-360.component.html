@@ -1,9 +1,10 @@
-<div class="sp-page tc-detail-page" *ngIf="!loading && profile">
+﻿<section class="sp-page tc-detail-page">
+  <tc-saas-page-header></tc-saas-page-header>
 
-  <!-- ───────── COMPACT IDENTITY HEADER ───────── -->
+  <ng-container *ngIf="!loading && profile">
+
+  <!-- Compact identity header -->
   <header class="tc-detail-hero tc-detail-page__hero">
-    <app-back-nav class="tc-detail-hero__back" fallback="/app/staff/directory" label="Back to list"></app-back-nav>
-
     <div class="tc-detail-hero__identity">
       <tc-avatar [name]="profile.fullName" [imageUrl]="profile.photoUrl" size="xl"></tc-avatar>
       <div class="tc-detail-hero__meta">
@@ -47,7 +48,7 @@
     </div>
   </header>
 
-  <!-- ───────── WORKSPACE ───────── -->
+  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ WORKSPACE â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
   <div class="tc-detail-layout" [class.tc-detail-layout--full]="!hasContextualSidebar">
 
     <!-- Main content -->
@@ -65,7 +66,7 @@
         </button>
       </div>
 
-      <!-- ══════ OVERVIEW TAB ══════ -->
+      <!-- â•â•â•â•â•â• OVERVIEW TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'overview'" class="sp-tab-content tc-detail-page__content">
         <div class="tc-detail-info-grid">
 
@@ -156,28 +157,10 @@
             </div>
           </div>
 
-          <!-- Salary Summary -->
-          <div class="sp-info-card" *ngIf="profile.salarySummary">
-            <h3 class="sp-info-card__title">Salary Summary</h3>
-            <div class="sp-info-rows">
-              <div class="sp-info-row">
-                <span>Gross Salary</span>
-                <strong class="sp-highlight">₹ {{ profile.salarySummary.grossSalary | number }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Salary Type</span>
-                <strong>{{ profile.salarySummary.salaryType | titlecase }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Effective From</span>
-                <strong>{{ profile.salarySummary.effectiveFrom | date:'d MMM yyyy' }}</strong>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- ══════ RESPONSIBILITIES TAB ══════ -->
+      <!-- â•â•â•â•â•â• RESPONSIBILITIES TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'responsibilities'" class="sp-tab-content tc-detail-page__content">
         <div class="tc-detail-tab-bar">
           <h3>Assigned Responsibilities</h3>
@@ -207,7 +190,7 @@
               <tr *ngFor="let r of profile.responsibilities; trackBy: trackByAssignId">
                 <td><strong>{{ r.responsibilityName }}</strong></td>
                 <td><code>{{ r.responsibilityCode }}</code></td>
-                <td>{{ r.scope || '—' }}</td>
+                <td>{{ r.scope || 'â€”' }}</td>
                 <td>{{ r.effectiveFrom | date:'d MMM yyyy' }}</td>
                 <td>
                   <span class="sd-status-pill" [attr.data-status]="r.active ? 'ACTIVE' : 'INACTIVE'">
@@ -225,102 +208,7 @@
         </div>
       </div>
 
-      <!-- ══════ SALARY TAB ══════ -->
-      <div *ngIf="activeTab === 'salary'" class="sp-tab-content tc-detail-page__content">
-        <div class="tc-detail-tab-bar">
-          <h3>Salary Structure</h3>
-          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openSalaryModal()">
-            <i class="pi pi-plus"></i> Update Salary
-          </button>
-        </div>
-
-        <div *ngIf="salaryHistory.length === 0" class="sp-empty-state">
-          <i class="pi pi-money-bill"></i>
-          <p>No salary structure configured yet.</p>
-        </div>
-
-        <div class="sp-salary-cards" *ngIf="salaryHistory.length > 0">
-          <div *ngFor="let s of salaryHistory" class="sp-salary-card" [class.is-active]="s.active">
-            <div class="sp-salary-card__header">
-              <span class="sp-salary-card__type">{{ s.salaryType | titlecase }}</span>
-              <span *ngIf="s.active" class="sd-status-pill" data-status="ACTIVE">Current</span>
-              <span *ngIf="!s.active" class="sd-status-pill" data-status="INACTIVE">Past</span>
-            </div>
-            <div class="sp-salary-card__amount">₹ {{ s.grossSalary | number }}</div>
-            <div class="sp-salary-card__eff">Effective: {{ s.effectiveFrom | date:'d MMM yyyy' }}</div>
-            <div class="sp-salary-components">
-              <div *ngIf="s.basicPay"><span>Basic Pay</span><strong>₹{{ s.basicPay | number }}</strong></div>
-              <div *ngIf="s.hra"><span>HRA</span><strong>₹{{ s.hra | number }}</strong></div>
-              <div *ngIf="s.da"><span>DA</span><strong>₹{{ s.da | number }}</strong></div>
-              <div *ngIf="s.specialAllowance"><span>Special Allow.</span><strong>₹{{ s.specialAllowance | number }}</strong></div>
-              <div *ngIf="s.pfEmployee"><span>PF</span><strong>₹{{ s.pfEmployee | number }}</strong></div>
-              <div *ngIf="s.esiEmployee"><span>ESI</span><strong>₹{{ s.esiEmployee | number }}</strong></div>
-              <div *ngIf="s.professionalTax"><span>Prof. Tax</span><strong>₹{{ s.professionalTax | number }}</strong></div>
-            </div>
-            <button *ngIf="s.active" type="button" class="sd-btn sd-btn--ghost" (click)="openSalaryModal(s)">
-              <i class="pi pi-pencil"></i> Edit
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════ PAYROLL TAB ══════ -->
-      <div *ngIf="activeTab === 'payroll'" class="sp-tab-content tc-detail-page__content">
-        <div class="tc-detail-tab-bar">
-          <h3>Payroll History</h3>
-        </div>
-
-        <div *ngIf="loadingPayroll" class="sd-loading">
-          <i class="pi pi-spin pi-spinner"></i> Loading payroll...
-        </div>
-
-        <div *ngIf="!loadingPayroll && (!payrollPage || payrollPage.content.length === 0)" class="sp-empty-state">
-          <i class="pi pi-wallet"></i>
-          <p>No payroll records found.</p>
-        </div>
-
-        <div class="sd-table-wrap" *ngIf="!loadingPayroll && payrollPage && payrollPage.content.length > 0">
-          <table class="sd-table">
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th>Gross Salary</th>
-                <th>Deductions</th>
-                <th>Net Salary</th>
-                <th>Status</th>
-                <th>Generated On</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of payrollPage.content; trackBy: trackByPayrollId">
-                <td><strong>{{ monthName(p.payrollMonth) }} {{ p.payrollYear }}</strong></td>
-                <td>₹{{ p.grossSalary | number }}</td>
-                <td>₹{{ p.totalDeductions | number }}</td>
-                <td><strong>₹{{ p.netSalary | number }}</strong></td>
-                <td>
-                  <span class="sd-status-pill" [attr.data-payroll]="p.status">
-                    {{ p.status | titlecase }}
-                  </span>
-                </td>
-                <td>{{ p.generatedOn | date:'d MMM yyyy' }}</td>
-                <td>
-                  <button type="button" class="sd-icon-btn" title="Download Payslip"
-                          (click)="downloadPayslip(p)">
-                    <i class="pi pi-download"></i>
-                  </button>
-                  <button *ngIf="p.status !== 'PAID'" type="button" class="sd-icon-btn"
-                          title="Mark Paid" (click)="markPaid(p)">
-                    <i class="pi pi-check-circle"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ══════ DOCUMENTS TAB ══════ -->
+      <!-- â•â•â•â•â•â• DOCUMENTS TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'documents'" class="sp-tab-content tc-detail-page__content">
         <div class="sp-empty-state">
           <i class="pi pi-folder-open"></i>
@@ -329,7 +217,7 @@
         </div>
       </div>
 
-      <!-- ══════ ACTIVITY TAB ══════ -->
+      <!-- â•â•â•â•â•â• ACTIVITY TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'activity'" class="sp-tab-content tc-detail-page__content">
         <div class="sp-empty-state">
           <i class="pi pi-history"></i>
@@ -340,7 +228,7 @@
 
     </div>
 
-    <!-- ───────── CONTEXTUAL SIDEBAR ───────── -->
+    <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ CONTEXTUAL SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <aside class="tc-detail-sidebar" *ngIf="hasContextualSidebar">
 
       <!-- Responsibilities tab context -->
@@ -356,58 +244,21 @@
         </div>
       </div>
 
-      <!-- Salary tab context -->
-      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'salary' && profile.salarySummary">
-        <h4 class="tc-detail-sidebar-card__title">Current Salary</h4>
-        <div class="sp-sidebar-stat">
-          <span>Gross Salary</span>
-          <strong>₹ {{ profile.salarySummary.grossSalary | number }}</strong>
-        </div>
-        <div class="sp-sidebar-stat">
-          <span>Salary Type</span>
-          <strong>{{ profile.salarySummary.salaryType | titlecase }}</strong>
-        </div>
-        <div class="sp-sidebar-stat">
-          <span>Effective From</span>
-          <strong>{{ profile.salarySummary.effectiveFrom | date:'d MMM yyyy' }}</strong>
-        </div>
-      </div>
-
-      <!-- Payroll tab context -->
-      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'payroll' && profile.payrollSummary">
-        <h4 class="tc-detail-sidebar-card__title">Latest Payroll</h4>
-        <div class="sp-sidebar-stat">
-          <span>Month</span>
-          <strong>{{ profile.payrollSummary.lastPayrollMonth }}</strong>
-        </div>
-        <div class="sp-sidebar-stat">
-          <span>Net Pay</span>
-          <strong>₹ {{ profile.payrollSummary.lastNetSalary | number }}</strong>
-        </div>
-        <div class="sp-sidebar-stat">
-          <span>Status</span>
-          <span class="sd-status-pill" [attr.data-payroll]="profile.payrollSummary.lastPayrollStatus">
-            {{ profile.payrollSummary.lastPayrollStatus | titlecase }}
-          </span>
-        </div>
-      </div>
     </aside>
   </div>
-</div>
+  </ng-container>
 
-<!-- ───────── LOADING ───────── -->
-<div *ngIf="loading" class="sd-loading sd-loading--profile">
-  <i class="pi pi-spin pi-spinner"></i> Loading profile...
-</div>
+<!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ LOADING â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="5"></tc-page-skeleton>
 
-<!-- ───────── ERROR ───────── -->
+<!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ ERROR â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div *ngIf="errorMessage && !loading" class="sd-error-banner">
   <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      ASSIGN RESPONSIBILITY MODAL
-════════════════════════════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div *ngIf="showAssignModal" class="sm-overlay" (click)="showAssignModal = false">
   <div class="sm-modal" (click)="$event.stopPropagation()">
     <div class="sm-modal__head">
@@ -456,106 +307,5 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     SALARY MODAL
-════════════════════════════════════════════════════════════════════════════ -->
-<div *ngIf="showSalaryModal" class="sm-overlay" (click)="showSalaryModal = false">
-  <div class="sm-modal sm-modal--lg" (click)="$event.stopPropagation()">
-    <div class="sm-modal__head">
-      <h2>{{ editSalaryId ? 'Update Salary Structure' : 'Add Salary Structure' }}</h2>
-      <button type="button" (click)="showSalaryModal = false"><i class="pi pi-times"></i></button>
-    </div>
-    <div class="sm-modal__body">
-      <div class="sw-form-grid">
-        <div class="sw-field">
-          <label class="sw-label">Salary Type</label>
-          <p-dropdown
-            [options]="salaryTypeOptions"
-            [(ngModel)]="salaryForm.salaryType"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="att-filter-dropdown">
-          </p-dropdown>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Effective From <span class="req">*</span></label>
-          <input type="date" [(ngModel)]="salaryForm.effectiveFrom"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Basic Pay (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.basicPay" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">HRA (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.hra" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">DA (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.da" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Special Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.specialAllowance" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Transport Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.transportAllowance" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Other Allowance (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.otherAllowance" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">PF — Employee (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.pfEmployee" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">ESI — Employee (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.esiEmployee" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Professional Tax (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.professionalTax" min="0"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Other Deduction (₹)</label>
-          <input type="number" [(ngModel)]="salaryForm.otherDeduction" min="0"/>
-        </div>
-      </div>
-      <div class="sw-salary-summary">
-        <div class="sw-salary-summary__row">
-          <span>Calculated Gross Salary</span>
-          <strong>₹ {{ grossSalary | number }}</strong>
-        </div>
-      </div>
-      <h4 class="sw-section-subtitle">Bank Details</h4>
-      <div class="sw-form-grid">
-        <div class="sw-field">
-          <label class="sw-label">Bank Name</label>
-          <input type="text" [(ngModel)]="salaryForm.bankName"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Account Holder</label>
-          <input type="text" [(ngModel)]="salaryForm.accountHolderName"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">Account Number</label>
-          <input type="text" [(ngModel)]="salaryForm.accountNumber"/>
-        </div>
-        <div class="sw-field">
-          <label class="sw-label">IFSC Code</label>
-          <input type="text" [(ngModel)]="salaryForm.ifscCode"/>
-        </div>
-      </div>
-    </div>
-    <div class="sm-modal__foot">
-      <button type="button" class="sd-btn sd-btn--ghost" (click)="showSalaryModal = false">Cancel</button>
-      <button type="button" class="sd-btn sd-btn--primary" (click)="saveSalary()" [disabled]="savingSalary">
-        <i *ngIf="savingSalary" class="pi pi-spin pi-spinner"></i>
-        Save Salary
-      </button>
-    </div>
-  </div>
-</div>
+</section>
 

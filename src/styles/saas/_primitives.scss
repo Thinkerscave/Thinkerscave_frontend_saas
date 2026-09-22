@@ -47,10 +47,7 @@
 /* ---------------- Page wrapper ---------------- */
 .saas-page,
 .tc-page {
-  padding: 0 0 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  /* gap / padding-bottom from _page-rhythm.scss */
   background: var(--saas-bg);
   min-height: 100%;
 }
@@ -60,14 +57,25 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.saas-page-header--toolbar {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
 }
 
 .saas-page-header--actions-only {
   margin: 0;
   padding: 0;
   min-height: 0;
+}
+
+/* Hide empty toolbars (no Back, no projected actions) */
+tc-saas-page-header:not(:has(.tc-btn--back)):not(:has(.saas-page-header__actions > *)) {
+  display: none;
 }
 
 .saas-page-header__main h1 {
@@ -88,10 +96,20 @@
 
 .saas-page-header__actions {
   display: flex;
-  gap: 10px;
+  gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
   margin-left: auto;
+  min-width: 0;
+}
+
+.saas-page-header__actions tc-academic-year-selector {
+  order: -1;
+}
+
+.saas-page-header__actions:empty {
+  display: none;
 }
 
 /* ---------------- Buttons ---------------- */
@@ -271,6 +289,21 @@
 .saas-tabs button.is-active {
   color: var(--saas-primary);
   border-bottom-color: var(--saas-primary);
+}
+
+.saas-tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--saas-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* ---------------- Stepper ---------------- */
@@ -541,8 +574,6 @@ select.saas-select {
    ─────────────────────────────────────────────────────────────*/
 .saas-page,
 .tc-page {
-  gap: 0.5rem;
-  padding: 0 0 0.75rem;
   background:
     radial-gradient(circle at top left, color-mix(in srgb, var(--saas-primary) 8%, transparent), transparent 32rem),
     var(--saas-bg);
@@ -875,9 +906,8 @@ select.saas-select:hover {
 
 @media (max-width: 768px) {
   .saas-page,
-.tc-page {
-    padding: 0 0 0.85rem;
-    gap: 0.75rem;
+  .tc-page {
+    /* keep shared page rhythm tokens */
   }
 
   .saas-page-header,

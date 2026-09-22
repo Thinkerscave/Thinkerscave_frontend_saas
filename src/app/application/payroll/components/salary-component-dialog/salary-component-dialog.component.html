@@ -1,0 +1,68 @@
+<p-dialog
+  [header]="editing ? 'Edit Salary Component' : 'Add Salary Component'"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '560px', maxWidth: '95vw' }">
+  <form [formGroup]="form" class="payroll-dialog-form" (ngSubmit)="save()">
+    <div class="payroll-dialog-grid">
+      <div class="tc-form-field">
+        <label>Code *</label>
+        <input formControlName="code" />
+      </div>
+      <div class="tc-form-field">
+        <label>Name *</label>
+        <input formControlName="name" />
+      </div>
+      <div class="tc-form-field">
+        <label>Type *</label>
+        <select formControlName="componentType">
+          @for (t of types; track t) {
+            <option [value]="t">{{ typeLabels[t] }}</option>
+          }
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label>Calculation *</label>
+        <select formControlName="calculationMethod">
+          @for (m of methods; track m) {
+            <option [value]="m">{{ methodLabels[m] }}</option>
+          }
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label>Default value</label>
+        <input type="number" step="0.01" formControlName="defaultValue" />
+      </div>
+      <div class="tc-form-field">
+        <label>Statutory</label>
+        <select formControlName="statutoryCode">
+          <option [ngValue]="null">None</option>
+          <option value="PF">PF</option>
+          <option value="ESI">ESI</option>
+          <option value="PT">PT</option>
+          <option value="TDS">TDS</option>
+        </select>
+      </div>
+      <div class="tc-form-field">
+        <label>Sort order</label>
+        <input type="number" formControlName="sortOrder" />
+      </div>
+      <div class="tc-form-field">
+        <label>Status *</label>
+        <div class="payroll-dialog-checkboxes">
+          <label><input type="radio" formControlName="status" value="ACTIVE" /> Active</label>
+          <label><input type="radio" formControlName="status" value="INACTIVE" /> Inactive</label>
+        </div>
+      </div>
+    </div>
+    <div class="payroll-dialog-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="close()" [disabled]="saving">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving || form.invalid">
+        @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+        Save
+      </button>
+    </div>
+  </form>
+</p-dialog>

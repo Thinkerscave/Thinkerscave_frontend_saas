@@ -8,6 +8,9 @@ import { forkJoin } from 'rxjs';
 import { PlatformAuditLog, PlatformSecurityAuditLog } from '../../models/platform.model';
 import { PlatformManagementService } from '../../services/platform-management.service';
 import { SaasPageHeaderComponent, SaasStat, SaasStatGridComponent, SaasPillComponent } from '../../../../shared/ui/saas';
+import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
 
 type EventCategory = 'all' | 'user' | 'tenant' | 'security' | 'auth' | 'subscription' | 'configuration';
 type Severity = 'all' | 'info' | 'warn' | 'critical';
@@ -24,13 +27,19 @@ interface TimelineEvent {
   summary: string;
   occurredAt: string;
   ip?: string;
+  entity?: string;
+  entityId?: string;
+  version?: string;
+  status?: string;
+  executionId?: string;
+  errorDetails?: string;
   tags: string[];
 }
 
 @Component({
   selector: 'app-audit-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPillComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, SaasPageHeaderComponent, SaasStatGridComponent, SaasPillComponent, AppPaginatorComponent],
   templateUrl: './audit-center.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -44,6 +53,9 @@ export class AuditCenterComponent implements OnInit {
   errorMessage = '';
   events: TimelineEvent[] = [];
   viewMode: 'timeline' | 'table' = 'timeline';
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
+  readonly pageSizeOptions = UI_PAGINATION.options;
 
   search = '';
   category: EventCategory = 'all';
@@ -81,13 +93,15 @@ export class AuditCenterComponent implements OnInit {
     this.errorMessage = '';
     forkJoin({
       audit: this.platformApi.getAuditLogs(0, 200),
-      security: this.platformApi.getSecurityAuditLogs(0, 200)
+      security: this.platformApi.getSecurityAuditLogs(0, 200),
+      operations: this.platformApi.getOperationAuditLogs()
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ audit, security }) => {
+        next: ({ audit, security, operations }) => {
           this.events = [
             ...(audit.content ?? []).map(e => this.fromAudit(e)),
+            ...operations.map(e => this.fromAudit(e)),
             ...(security.content ?? []).map(e => this.fromSecurity(e))
           ].sort((a, b) => (b.occurredAt || '').localeCompare(a.occurredAt || ''));
           this.loading = false;
@@ -116,6 +130,12 @@ export class AuditCenterComponent implements OnInit {
       summary: e.summary || e.changes || '—',
       occurredAt: e.occurredAt,
       ip: e.sourceIp,
+      entity: e.entityType,
+      entityId: e.entityId,
+      version: e.version,
+      status: e.status,
+      executionId: e.executionId,
+      errorDetails: e.errorDetails,
       tags: [e.eventType, e.entityType].filter(Boolean) as string[]
     };
   }
@@ -134,6 +154,7 @@ export class AuditCenterComponent implements OnInit {
       summary: e.message || '—',
       occurredAt: e.occurredAt,
       ip: e.sourceIp,
+      status: e.success ? 'SUCCESS' : 'FAILED',
       tags: [e.severity, e.success ? 'SUCCESS' : 'FAILURE'].filter(Boolean) as string[]
     };
   }
@@ -184,7 +205,7 @@ export class AuditCenterComponent implements OnInit {
   }
 
   get groupedFiltered(): { date: string; events: TimelineEvent[] }[] {
-    const list = this.filtered;
+    const list = this.pagedFiltered;
     const map = new Map<string, TimelineEvent[]>();
     for (const e of list) {
       const date = (e.occurredAt || '').split('T')[0];
@@ -194,6 +215,16 @@ export class AuditCenterComponent implements OnInit {
     return Array.from(map.entries())
       .map(([date, events]) => ({ date, events }))
       .sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  get pagedFiltered(): TimelineEvent[] {
+    const start = this.page * this.pageSize;
+    return this.filtered.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    this.pageSize = event.rows;
   }
 
   get stats(): SaasStat[] {
@@ -206,6 +237,7 @@ export class AuditCenterComponent implements OnInit {
   }
 
   resetFilters(): void {
+    this.page = 0;
     this.search = '';
     this.category = 'all';
     this.severity = 'all';
@@ -217,9 +249,11 @@ export class AuditCenterComponent implements OnInit {
 
   exportCsv(): void {
     const rows = this.filtered.map(e => [
-      e.occurredAt, e.category, e.severity, e.tenant, e.actor, e.action, (e.summary || '').replace(/[\r\n,]+/g, ' ')
+      e.occurredAt, e.category, e.severity, e.tenant, e.actor, e.action, e.entity, e.entityId,
+      e.version, e.status, e.executionId, (e.summary || '').replace(/[\r\n,]+/g, ' '),
+      (e.errorDetails || '').replace(/[\r\n,]+/g, ' ')
     ].map(v => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(','));
-    const csv = ['Occurred,Category,Severity,Tenant,Actor,Action,Summary', ...rows].join('\n');
+    const csv = ['Occurred,Category,Severity,Tenant,Actor,Action,Entity,Entity ID,Version,Status,Execution ID,Summary,Error', ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);

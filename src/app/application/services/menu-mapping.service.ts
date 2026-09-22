@@ -1,4 +1,4 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { catchError, map, Observable, of, Subject, tap } from 'rxjs';
@@ -16,19 +16,6 @@ interface SidebarMenuNode {
   route?: string;
   icon?: string;
   children?: SidebarMenuNode[];
-}
-
-interface WorkspaceMenuLeaf {
-  item: MenuItem;
-  path: string[];
-  routeText: string;
-  groupKey: string;
-}
-
-interface WorkspaceMenuGroupDefinition {
-  key: string;
-  label: string;
-  icon: string;
 }
 
 @Injectable({
@@ -74,7 +61,7 @@ export class MenuMappingService {
     const orgId = this.resolveSidebarOrganizationId(parsedUser);
 
     if (!userId || Number.isNaN(userId) || !orgId) {
-      return of(this.applyNavigationRules(this.consolidateWorkspaceMenu([])));
+      return of([]);
     }
 
     return this.http.get<unknown>(accessApi.sidebar(userId, orgId)).pipe(
@@ -82,17 +69,8 @@ export class MenuMappingService {
         const sidebar = unwrapApiResponse<SidebarMenuNode[]>(response, unwrapApiList<SidebarMenuNode>(response));
         const items = (sidebar ?? []).map(node => this.mapSidebarNode(node));
         const normalized = this.normalizeMenuItems(items);
-        // Keep sidebar database-driven: preserve backend hierarchy/order instead of
-        // rebuilding groups from frontend heuristics.
-        const filtered = this.applyNavigationRules(normalized);
-
-        // Guardrail: if role filtering/grouping accidentally removes everything,
-        // fall back to normalized server sidebar so users still get navigation.
-        if (filtered.length === 0 && normalized.length > 0) {
-          return normalized;
-        }
-
-        return filtered;
+        const flattened = this.flattenGroupedMenus(normalized);
+        return this.applyNavigationRules(flattened);
       }),
       tap(menus => {
         this.menuCache = menus;
@@ -101,7 +79,7 @@ export class MenuMappingService {
       }),
       catchError(err => {
         this.logger.error('Failed to load side menus', err);
-        return of(this.applyNavigationRules([]));
+        return of([]);
       })
     );
   }
@@ -154,6 +132,66 @@ export class MenuMappingService {
     this.menuRefreshSubject.next();
   }
 
+  /** Sidebar trail for the current URL: parent group + matching leaf when present. */
+  trailForUrl(url: string): { label: string; link: string[] | null }[] {
+    const path = this.normalizePath(url);
+    if (!path || !this.menuCache.length) {
+      return [];
+    }
+
+    type Node = { item: MenuItem; ancestors: MenuItem[] };
+    const nodes: Node[] = [];
+    const walk = (items: MenuItem[] | undefined, ancestors: MenuItem[]): void => {
+      for (const item of items ?? []) {
+        nodes.push({ item, ancestors });
+        if (item.items?.length) {
+          walk(item.items, [...ancestors, item]);
+        }
+      }
+    };
+    walk(this.menuCache, []);
+
+    let best: Node | null = null;
+    let bestLen = -1;
+    for (const node of nodes) {
+      const link = this.normalizePath(this.routerLinkText(node.item.routerLink));
+      if (!link) {
+        continue;
+      }
+      if (path === link || path.startsWith(`${link}/`)) {
+        if (link.length > bestLen) {
+          best = node;
+          bestLen = link.length;
+        }
+      }
+    }
+
+    if (!best) {
+      const workspace = this.workspacePrefix(path);
+      if (workspace) {
+        const group = nodes.find(node =>
+          (node.item.items ?? []).some(child => {
+            const link = this.normalizePath(this.routerLinkText(child.routerLink));
+            return link === workspace || link.startsWith(`${workspace}/`);
+          })
+        );
+        if (group?.item.label) {
+          const groupLink = this.normalizePath(this.routerLinkText(group.item.routerLink))
+            || this.firstChildLink(group.item);
+          return [{ label: group.item.label, link: groupLink ? [groupLink] : null }];
+        }
+      }
+      return [];
+    }
+
+    return [...best.ancestors, best.item]
+      .filter(item => !!item.label)
+      .map(item => {
+        const link = this.normalizePath(this.routerLinkText(item.routerLink));
+        return { label: item.label as string, link: link ? [link] : null };
+      });
+  }
+
   private normalizeMenuItems(items: MenuItem[]): MenuItem[] {
     return (items ?? []).map(item => ({
       ...item,
@@ -180,512 +218,8 @@ export class MenuMappingService {
     return `/app/${link.replace(/^\/+/, '')}`;
   }
 
-  private consolidateWorkspaceMenu(items: MenuItem[]): MenuItem[] {
-    const leaves = this.uniqueLeaves(this.flattenMenuItems(items));
-    if (!leaves.length) {
-      return items;
-    }
-
-    const grouped = this.workspaceGroups()
-      .map(group => this.toWorkspaceGroup(group, leaves.filter(leaf => leaf.groupKey === group.key)))
-      .filter((item): item is MenuItem => !!item);
-
-    const uncategorized = leaves.filter(leaf => leaf.groupKey === 'more');
-    if (uncategorized.length) {
-      grouped.push(this.toWorkspaceGroup({ key: 'more', label: 'More', icon: 'pi pi-ellipsis-h' }, uncategorized)!);
-    }
-
-    return grouped;
-  }
-
-  private workspaceGroups(): WorkspaceMenuGroupDefinition[] {
-    return [
-      { key: 'dashboard', label: 'Dashboard', icon: 'pi pi-home' },
-      { key: 'customers', label: 'Customers', icon: 'pi pi-users' },
-      { key: 'organizations', label: 'Organizations', icon: 'pi pi-building' },
-      { key: 'students', label: 'Students', icon: 'pi pi-users' },
-      { key: 'staff', label: 'Staff', icon: 'pi pi-id-card' },
-      { key: 'attendance', label: 'Attendance', icon: 'pi pi-calendar-check' },
-      { key: 'admissions', label: 'Admissions', icon: 'pi pi-inbox' },
-      { key: 'academics', label: 'Academics', icon: 'pi pi-book' },
-      { key: 'finance', label: 'Finance', icon: 'pi pi-wallet' },
-      { key: 'exams', label: 'Exams', icon: 'pi pi-file-check' },
-      { key: 'communication', label: 'Communication', icon: 'pi pi-send' },
-      { key: 'subscriptions', label: 'Subscription Management', icon: 'pi pi-credit-card' },
-      { key: 'tenant-management', label: 'Tenant Management', icon: 'pi pi-server' },
-      { key: 'platform-catalog', label: 'Platform Catalog', icon: 'pi pi-th-large' },
-      { key: 'access', label: 'Access Management', icon: 'pi pi-lock' },
-      { key: 'admin', label: 'Administration', icon: 'pi pi-shield' }
-    ];
-  }
-
-  private toWorkspaceGroup(group: WorkspaceMenuGroupDefinition, leaves: WorkspaceMenuLeaf[]): MenuItem | null {
-    if (!leaves.length) {
-      return null;
-    }
-
-    const first = leaves[0].item;
-    const childItems = leaves.map(leaf => ({
-      ...leaf.item,
-      label: this.normalizedWorkspaceLeafLabel(leaf.item.label, leaf.routeText),
-      items: undefined,
-      title: leaf.path.slice(0, -1).join(' / ') || leaf.item.title
-    }));
-
-    if ((group.key === 'dashboard' || group.key === 'customers' || group.key === 'organizations') && childItems.length === 1) {
-      return {
-        ...first,
-        label: group.label,
-        icon: group.icon,
-        items: undefined
-      };
-    }
-
-    // Parent group must not reuse the first child's route — prune would drop that child
-    // as a duplicate (this is why Academics Overview disappeared from the submenu).
-    const parentRouterLink =
-      group.key === 'academics' ? '/app/academics'
-        : group.key === 'admissions' ? '/app/admissions'
-          : first.routerLink;
-
-    return {
-      label: group.label,
-      icon: group.icon,
-      routerLink: parentRouterLink,
-      queryParams: group.key === 'academics' || group.key === 'admissions' ? undefined : first.queryParams,
-      items: childItems
-    };
-  }
-
-  private flattenMenuItems(items: MenuItem[], parents: string[] = []): WorkspaceMenuLeaf[] {
-    return (items ?? []).flatMap(item => {
-      const label = item.label ?? 'Menu item';
-      const path = [...parents, label];
-      const routeText = this.routerLinkText(item.routerLink);
-      const current: WorkspaceMenuLeaf[] = routeText ? [{
-        item,
-        path,
-        routeText,
-        groupKey: this.workspaceGroupKey(label, routeText, path)
-      }] : [];
-
-      return [...current, ...this.flattenMenuItems(item.items ?? [], path)];
-    });
-  }
-
-  private uniqueLeaves(leaves: WorkspaceMenuLeaf[]): WorkspaceMenuLeaf[] {
-    const seen = new Set<string>();
-    return leaves.filter(leaf => {
-      const key = `${leaf.routeText}::${leaf.item.label ?? ''}::${JSON.stringify(leaf.item.queryParams ?? {})}`;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
-  }
-
-  private routerLinkText(routerLink: MenuItem['routerLink']): string {
-    if (!routerLink) {
-      return '';
-    }
-
-    return Array.isArray(routerLink) ? routerLink.join('/') : String(routerLink);
-  }
-
-  private workspaceGroupKey(label: string, routeText: string, path: string[]): string {
-    const haystack = `${label} ${routeText} ${path.join(' ')}`.toLowerCase();
-    const route = routeText.toLowerCase();
-
-    if (/^\/?app\/?$/.test(route) || route.includes('/app/tenant-management/dashboard')) return 'dashboard';
-    if (route.includes('/app/tenant-management/customers')) return 'customers';
-    if (route.includes('/app/tenant-management/organizations')) return 'organizations';
-    if (this.isPlatformCatalogRoute(route)) return 'platform-catalog';
-    if (route.includes('/app/tenant-management/subscription-plans') || route.includes('/app/tenant-management/promotions')) return 'subscriptions';
-    if (route.includes('/app/tenant-management/tenant-health')
-      || route.includes('/app/tenant-management/platform-health')
-      || route.includes('/app/tenant-management/migration-center')
-      || route.includes('/app/tenant-management/audit-center')) return 'tenant-management';
-    if (route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || route.includes('/app/organization-registration')) return 'tenant-management';
-    if (route.includes('/app/access-management') || route.includes('/app/organization/access-control')) return 'access';
-    if (route.includes('/app/organization')) return 'admin';
-    if (route.includes('/app/admin')) return 'admin';
-    if (route.includes('/app/academics')) return 'academics';
-    if (route.includes('/app/students') || /managestudent|manage-class|manage-section/.test(route)) return 'students';
-    if (route.includes('/app/staff') || /salary|leave|manage-branch|manage-department/.test(route)) return 'staff';
-    if (route.includes('/app/attendance')) return 'attendance';
-    if (route.includes('/app/admissions') || route.includes('/app/inquiry') || route.includes('/app/counsellor') || route.includes('/public/admission')) return 'admissions';
-    if (route.includes('/app/fees') || route.includes('/app/reports')) return 'finance';
-
-    if (/academic|academics|subject|syllabus|curriculum|timetable|calendar|teacher-allocation|hierarchy|year|course/.test(haystack)) return 'academics';
-    if (/student|parent|alumni|class|section|promotion|transfer|document|id-card/.test(haystack)) return 'students';
-    if (/staff|employee|salary|leave|payroll|department|branch/.test(haystack)) return 'staff';
-    if (/attendance|present|absent/.test(haystack)) return 'attendance';
-    if (/inquiry|admission|lead|counsellor|counseling|enrollment|application|follow-up/.test(haystack)) return 'admissions';
-    if (/fee|fees|finance|payment|receipt|ledger|contract|adjustment|concession|collection|outstanding|report/.test(haystack)) return 'finance';
-    if (/exam|marks|mark sheet|marksheet|grade|result/.test(haystack)) return 'exams';
-    if (/communication|message|notice|notification|email|sms|chat/.test(haystack)) return 'communication';
-    if (/tenant management|subscription plan|tenant onboarding|organization directory|organization management/.test(haystack)) return 'tenant-management';
-    if (/access management|access and management|access control|login history|security policy/.test(haystack)) return 'access';
-    if (/platform control|my organization/.test(haystack)) return 'admin';
-    if (/admin|administration|role|permission|access|audit|monitoring|setting|menu|privilege|navigation|system/.test(haystack)) return 'admin';
-    if (/\bdashboard\b/.test(haystack)) return 'dashboard';
-
-    return 'more';
-  }
-
-  private normalizedWorkspaceLeafLabel(label: string | undefined, routeText: string): string | undefined {
-    const normalizedRoute = routeText.toLowerCase();
-    const normalizedLabel = (label ?? '').trim().toLowerCase();
-
-    if (normalizedRoute === '/app/students' || normalizedRoute === '/app/students/directory') {
-      return 'Student Directory';
-    }
-
-    if (normalizedRoute === '/app/staff' || normalizedRoute === '/app/staff/directory') {
-      return 'Staff Directory';
-    }
-
-    if (normalizedRoute === '/app/attendance' || normalizedRoute === '/app/attendance/students') {
-      return 'Student Attendance';
-    }
-
-    // Keep student transfer workflow and transfer-request workflow distinct in sidebar labels.
-    if (normalizedRoute.includes('/app/transfers') && normalizedLabel === 'transfers') {
-      return 'Transfer Requests';
-    }
-
-    return label;
-  }
-
-  private ensureAdmissionsWorkspace(items: MenuItem[]): MenuItem[] {
-    const pages: Array<{ label: string; route: string; icon: string }> = [
-      { label: 'Leads', route: '/app/admissions/leads', icon: 'pi pi-users' },
-      { label: 'Follow-ups', route: '/app/admissions/follow-ups', icon: 'pi pi-calendar' },
-      { label: 'Applications', route: '/app/admissions/applications', icon: 'pi pi-file-edit' },
-      { label: 'Reports', route: '/app/admissions/reports', icon: 'pi pi-chart-line' },
-      { label: 'Settings', route: '/app/admissions/settings', icon: 'pi pi-cog' }
-    ];
-
-    const childItems: MenuItem[] = pages.map(page => ({
-      label: page.label,
-      icon: page.icon,
-      routerLink: page.route
-    }));
-
-    const group: MenuItem = {
-      label: 'Admissions',
-      icon: 'pi pi-inbox',
-      routerLink: '/app/admissions',
-      items: childItems
-    };
-
-    const index = items.findIndex(item => {
-      const label = (item.label ?? '').toLowerCase();
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      return label === 'admissions' || route.includes('/app/admissions');
-    });
-
-    if (index >= 0) {
-      const current = items[index];
-      const existing = current.items ?? [];
-      const ordered = pages.map(page => {
-        const found = existing.find(child =>
-          this.routerLinkText(child.routerLink).toLowerCase() === page.route
-        );
-        return found
-          ? { ...found, label: page.label, icon: found.icon || page.icon, routerLink: page.route }
-          : { label: page.label, icon: page.icon, routerLink: page.route };
-      });
-      const next = [...items];
-      next[index] = {
-        ...current,
-        label: 'Admissions',
-        icon: current.icon || 'pi pi-inbox',
-        routerLink: '/app/admissions',
-        items: ordered
-      };
-      return next;
-    }
-
-    const after = items.findIndex(item => {
-      const label = (item.label ?? '').toLowerCase();
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      return label === 'attendance' || route.includes('/app/attendance');
-    });
-    const insertAt = after >= 0 ? after + 1 : items.length;
-    return [...items.slice(0, insertAt), group, ...items.slice(insertAt)];
-  }
-
   private applyNavigationRules(items: MenuItem[]): MenuItem[] {
-    return this.normalizeTenantRoutes(items);
-  }
-
-  /**
-   * Org-admin Academics side menu must always expose Overview as a child leaf.
-   * Also folds stray top-level Timetable / academics pages back under Academics.
-   */
-  private ensureAcademicsWorkspace(items: MenuItem[]): MenuItem[] {
-    const pages: Array<{ label: string; route: string; icon: string }> = [
-      { label: 'Overview', route: '/app/academics/overview', icon: 'pi pi-home' },
-      { label: 'Academic Year', route: '/app/academics/academic-year', icon: 'pi pi-calendar' },
-      { label: 'Classes & Sections', route: '/app/academics/classes-sections', icon: 'pi pi-th-large' },
-      { label: 'Subjects & Mapping', route: '/app/academics/subjects-mapping', icon: 'pi pi-book' },
-      { label: 'Teacher Allocation', route: '/app/academics/teacher-allocation', icon: 'pi pi-user-edit' },
-      { label: 'Timetable', route: '/app/academics/timetable', icon: 'pi pi-table' },
-      { label: 'Academic Calendar', route: '/app/academics/academic-calendar', icon: 'pi pi-calendar-plus' }
-    ];
-    const pageRoutes = new Set(pages.map(p => p.route));
-
-    const collectExisting = (nodes: MenuItem[]): MenuItem[] => {
-      const found: MenuItem[] = [];
-      for (const node of nodes ?? []) {
-        const route = this.routerLinkText(node.routerLink).toLowerCase();
-        if (route.startsWith('/app/academics/') || pageRoutes.has(route)) {
-          found.push(node);
-        }
-        if (node.items?.length) {
-          found.push(...collectExisting(node.items));
-        }
-      }
-      return found;
-    };
-
-    const existingLeaves = collectExisting(items);
-    const byRoute = new Map<string, MenuItem>();
-    for (const leaf of existingLeaves) {
-      const route = this.routerLinkText(leaf.routerLink).toLowerCase();
-      if (!byRoute.has(route)) {
-        byRoute.set(route, leaf);
-      }
-    }
-
-    // Keep only admin pages that the role already has (or always keep Overview).
-    const orderedChildren: MenuItem[] = [];
-    for (const page of pages) {
-      const found = byRoute.get(page.route);
-      if (found || page.route === '/app/academics/overview') {
-        orderedChildren.push(
-          found
-            ? { ...found, label: page.label, icon: found.icon || page.icon, routerLink: page.route, items: undefined }
-            : { label: page.label, icon: page.icon, routerLink: page.route }
-        );
-      }
-    }
-
-    // Preserve any other /app/academics/* leaves (e.g. role pages) after the admin set.
-    for (const [route, leaf] of byRoute) {
-      if (pageRoutes.has(route)) continue;
-      if (!route.startsWith('/app/academics/')) continue;
-      orderedChildren.push({ ...leaf, items: undefined });
-    }
-
-    if (!orderedChildren.length) {
-      return items;
-    }
-
-    const group: MenuItem = {
-      label: 'Academics',
-      icon: 'pi pi-book',
-      routerLink: '/app/academics',
-      items: orderedChildren
-    };
-
-    // Drop top-level Academics / Timetable stubs; replace with one group.
-    const withoutAcademics = items.filter(item => {
-      const label = (item.label ?? '').toLowerCase();
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      if (label === 'academics') return false;
-      if (route === '/app/academics' || route.startsWith('/app/academics/')) return false;
-      if (label === 'timetable' && (route.includes('/academics/timetable') || !route)) return false;
-      return true;
-    });
-
-    const after = withoutAcademics.findIndex(item => {
-      const label = (item.label ?? '').toLowerCase();
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      return label === 'admissions' || route.includes('/app/admissions');
-    });
-    const insertAt = after >= 0 ? after + 1 : withoutAcademics.length;
-    return [...withoutAcademics.slice(0, insertAt), group, ...withoutAcademics.slice(insertAt)];
-  }
-
-  /**
-   * Org-admin Access Management must appear even when the backend sidebar no longer
-   * returns it (roles/menus moved to platform catalog). Org admins manage users,
-   * responsibilities and menu assignment — never platform roles or menu CRUD.
-   */
-  private ensureAccessManagementWorkspace(items: MenuItem[]): MenuItem[] {
-    const pages: Array<{ label: string; route: string; icon: string }> = [
-      { label: 'Users', route: '/app/access-management/users', icon: 'pi pi-users' },
-      { label: 'Responsibilities', route: '/app/access-management/responsibilities', icon: 'pi pi-sitemap' },
-      { label: 'Feature Catalog', route: '/app/access-management/feature-catalog', icon: 'pi pi-th-large' },
-      { label: 'Login History', route: '/app/access-management/login-history', icon: 'pi pi-history' },
-      { label: 'Security Policy', route: '/app/access-management/security-policy', icon: 'pi pi-shield' }
-    ];
-
-    const childItems: MenuItem[] = pages.map(page => ({
-      label: page.label,
-      icon: page.icon,
-      routerLink: page.route
-    }));
-
-    const group: MenuItem = {
-      label: 'Access Management',
-      icon: 'pi pi-lock',
-      routerLink: '/app/access-management/users',
-      items: childItems
-    };
-
-    const stripped = this.filterNavigationItems(items, item => {
-      if (this.isAccessManagementItem(item) || this.isOrgCatalogManagementItem(item)) {
-        return true;
-      }
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      const label = (item.label ?? '').toLowerCase();
-      return route === '/app/staff/responsibilities'
-        || (label === 'responsibilities' && route.includes('/staff'));
-    });
-
-    const after = stripped.findIndex(item => {
-      const label = (item.label ?? '').toLowerCase();
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      return label === 'staff' || route.includes('/app/staff');
-    });
-    const insertAt = after >= 0 ? after + 1 : stripped.length;
-    return [...stripped.slice(0, insertAt), group, ...stripped.slice(insertAt)];
-  }
-  
-  private pruneNavigationMenus(items: MenuItem[]): MenuItem[] {
-    const blockedRoutes = new Set<string>([
-      '/app/exams',
-      '/app/enrollments',
-      '/app/students/transfers',
-      '/app/students/documents',
-      '/app/staff/documents',
-      '/app/staff/alumni',
-      '/app/fees',
-      '/app/fees/setup',
-      '/app/fees/contracts',
-      '/app/fees/ledger',
-      '/app/fees/adjustments',
-      '/app/fees/controls',
-      '/app/fees/audit',
-      '/app/fees/dashboard',
-      '/app/responsibilities',
-      '/app/staff/responsibilities',
-      '/app/onboarding',
-      '/app/profile',
-      '/app/settings',
-      '/app/organization-profile',
-      '/app/organization/profile'
-    ]);
-
-    const canonicalRoute = (routeText: string): string => {
-      if (routeText === '/app/students/directory') return '/app/students';
-      if (routeText === '/app/staff/directory') return '/app/staff';
-      if (routeText === '/app/attendance/students') return '/app/attendance';
-      if (routeText === '/app/admissions/leads') return '/app/admissions';
-      if (routeText === '/app/academics/overview') return '/app/academics';
-      if (routeText === '/app/access-management/users') return '/app/access-management';
-      return routeText;
-    };
-
-    const preserveChildRoutes = new Set<string>([
-      '/app/students',
-      '/app/students/directory',
-      '/app/staff',
-      '/app/staff/directory',
-      '/app/attendance',
-      '/app/attendance/students',
-      '/app/admissions',
-      '/app/admissions/leads',
-      '/app/admissions/follow-ups',
-      '/app/admissions/applications',
-      '/app/admissions/reports',
-      '/app/admissions/settings',
-      '/app/academics',
-      '/app/academics/overview',
-      '/app/academics/academic-year',
-      '/app/academics/classes-sections',
-      '/app/academics/subjects-mapping',
-      '/app/academics/teacher-allocation',
-      '/app/academics/timetable',
-      '/app/academics/academic-calendar',
-      '/app/access-management',
-      '/app/access-management/users',
-      '/app/access-management/responsibilities',
-      '/app/access-management/feature-catalog',
-      '/app/access-management/menus',
-      '/app/access-management/login-history',
-      '/app/access-management/security-policy'
-    ]);
-
-    const walk = (menuItems: MenuItem[]): MenuItem[] => {
-      const seen = new Set<string>();
-      const next: MenuItem[] = [];
-
-      for (const item of menuItems ?? []) {
-        const routeText = this.routerLinkText(item.routerLink).toLowerCase();
-        if (routeText && blockedRoutes.has(routeText)) {
-          continue;
-        }
-        if (routeText.startsWith('/app/exams') || routeText.startsWith('/app/fees')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/setup')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/contracts')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/ledger')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/adjustments')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/controls')) {
-          continue;
-        }
-        if (routeText.startsWith('/app/fees/audit')) {
-          continue;
-        }
-
-        const normalizedRoute = canonicalRoute(routeText);
-        let children = item.items ? walk(item.items) : undefined;
-        if (children?.length && normalizedRoute) {
-          children = children.filter(child => {
-            const rawChildRoute = this.routerLinkText(child.routerLink).toLowerCase();
-            if (preserveChildRoutes.has(rawChildRoute)) {
-              return true;
-            }
-            const childRoute = canonicalRoute(rawChildRoute);
-            return !childRoute || childRoute !== normalizedRoute;
-          });
-        }
-
-        if (normalizedRoute && seen.has(normalizedRoute)) {
-          continue;
-        }
-        if (normalizedRoute) {
-          seen.add(normalizedRoute);
-        }
-
-        if (!normalizedRoute && (!children || children.length === 0)) {
-          continue;
-        }
-
-        next.push({
-          ...item,
-          items: children && children.length ? children : undefined
-        });
-      }
-
-      return next;
-    };
-
-    return walk(items);
+    return items;
   }
 
   private mapSidebarNode(node: SidebarMenuNode): MenuItem {
@@ -745,178 +279,39 @@ export class MenuMappingService {
     };
   }
 
-  private isPlatformCatalogRoute(route: string): boolean {
-    const normalized = route.toLowerCase();
-    return normalized.includes('/app/tenant-management/menus')
-      || normalized.includes('/app/tenant-management/roles')
-      || normalized.includes('/app/tenant-management/feature-catalog');
+  private routerLinkText(routerLink: MenuItem['routerLink']): string {
+    if (!routerLink) {
+      return '';
+    }
+    return Array.isArray(routerLink) ? routerLink.join('/') : String(routerLink);
   }
 
-  private isOrgCatalogManagementItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    const label = (item.label ?? '').toLowerCase();
-    return route.includes('/app/access-management/roles')
-      || (label === 'roles' && route.includes('/access-management'))
-      || (label === 'roles & responsibilities' && route.includes('/access-management'));
+  private normalizePath(url: string): string {
+    const path = (url || '').split('?')[0].split('#')[0].trim();
+    if (!path) {
+      return '';
+    }
+    const withSlash = path.startsWith('/') ? path : `/${path}`;
+    return withSlash.length > 1 ? withSlash.replace(/\/+$/, '') : withSlash;
   }
 
-  private normalizeTenantRoutes(items: MenuItem[]): MenuItem[] {
-    return (items ?? []).map(item => {
-      const route = this.routerLinkText(item.routerLink).toLowerCase();
-      const isLegacyOrganization = route.includes('/app/admin/organizations') || route.includes('/app/organization-registration');
-      const normalizedRouterLink = this.normalizedTenantRouterLink(route, item.routerLink, isLegacyOrganization);
-      return {
-        ...item,
-        label: this.normalizedTenantLabel(item.label, route, isLegacyOrganization),
-        routerLink: normalizedRouterLink,
-        items: item.items ? this.normalizeTenantRoutes(item.items) : item.items
-      };
-    });
+  private workspacePrefix(path: string): string {
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length >= 2 && parts[0] === 'app') {
+      return `/app/${parts[1]}`;
+    }
+    return '';
   }
 
-  private normalizedTenantRouterLink(route: string, routerLink: MenuItem['routerLink'], isLegacyOrganization: boolean): MenuItem['routerLink'] {
-    if (isLegacyOrganization) {
-      return ['/app/tenant-management/organizations'];
-    }
-    if (route.includes('/app/platform/dashboard') || route === '/app/platform') {
-      return ['/app/tenant-management/organizations'];
-    }
-    if (route.includes('/app/platform/organizations')) {
-      return Array.isArray(routerLink) && this.routerLinkText(routerLink).includes(':orgId') ? routerLink : ['/app/tenant-management/organizations'];
-    }
-    if (route.includes('/app/platform/subscriptions')) {
-      return ['/app/tenant-management/subscription-plans'];
-    }
-    if (route.includes('/app/platform/audit')) {
-      return ['/app/tenant-management/audit-center'];
-    }
-    return routerLink;
-  }
-
-  private normalizedTenantLabel(label: string | undefined, route: string, isLegacyOrganization: boolean): string | undefined {
-    if (route.includes('/app/platform') && /platform control/i.test(label ?? '')) {
-      return 'Tenant Management';
-    }
-    if (isLegacyOrganization && /registration|management/i.test(label ?? '')) {
-      return 'Organizations';
-    }
-    if (route.includes('/app/platform/subscriptions')) {
-      return 'Subscription Plans';
-    }
-    if (route.includes('/app/platform/audit')) {
-      return 'Audit Center';
-    }
-    return label;
-  }
-
-  private isRedundantTenantMenuStub(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    const label = (item.label ?? '').toLowerCase();
-    if (label !== 'tenant management') {
-      return false;
-    }
-    return route === '/app/tenant-management' || route.endsWith('/tenant-management');
-  }
-
-  private isTenantManagementItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    const label = (item.label ?? '').toLowerCase();
-    return route.includes('/app/tenant-management') || route.includes('/app/platform') || route.includes('/app/admin/organizations') || label.includes('tenant management') || label.includes('platform control center');
-  }
-
-  private isAccessManagementItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    const label = (item.label ?? '').toLowerCase();
-    return route.includes('/app/access-management')
-      || route.includes('/app/organization/access-control')
-      || label.includes('access management')
-      || label.includes('access and management')
-      || label.includes('access control');
-  }
-
-  private isOrganizationProfileItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    return route.includes('/app/organization') || route.includes('/app/organization-profile');
-  }
-
-  private isFeeManagementItem(item: MenuItem): boolean {
-    const route = this.routerLinkText(item.routerLink).toLowerCase();
-    if (route.includes('/app/admissions')) {
-      return false;
-    }
-    const label = (item.label ?? '').toLowerCase();
-    const id = String(item.id ?? '').toLowerCase();
-    return route.includes('/app/fees')
-      || route.includes('/app/reports')
-      || id.includes('fee')
-      || label.includes('fee')
-      || label.includes('finance')
-      || label.includes('payment collection');
-  }
-
-  private filterNavigationItems(items: MenuItem[], shouldRemove: (item: MenuItem) => boolean): MenuItem[] {
-    const filteredItems: MenuItem[] = [];
-
-    (items ?? []).forEach(item => {
-      if (shouldRemove(item)) {
-        return;
+  private firstChildLink(item: MenuItem): string {
+    for (const child of item.items ?? []) {
+      const link = this.normalizePath(this.routerLinkText(child.routerLink));
+      if (link) {
+        return link;
       }
-
-      const children = item.items ? this.filterNavigationItems(item.items, shouldRemove) : undefined;
-      if (item.items && !children?.length && !item.routerLink) {
-        return;
-      }
-
-      filteredItems.push({
-        ...item,
-        items: children?.length ? children : undefined
-      });
-    });
-
-    return filteredItems;
-  }
-
-  private currentRoleTokens(): string[] {
-    const userStr = sessionStorage.getItem('user') ?? localStorage.getItem('user');
-    if (!userStr) {
-      return [];
     }
-
-    try {
-      const parsed = JSON.parse(userStr);
-      const user = parsed?.data && parsed.firstName === undefined ? parsed.data : parsed;
-      const roleValues = [
-        user.role,
-        user.roleCode,
-        user.roleName,
-        user.roleType,
-        ...(Array.isArray(user.roles) ? user.roles : [])
-      ];
-      return roleValues
-        .flatMap((role: any) => {
-          if (role && typeof role === 'object') {
-            return [role.roleType, role.roleCode, role.roleName, role.name];
-          }
-          return [role];
-        })
-        .filter(Boolean)
-        .map((role: any) => this.normalizeRoleToken(String(role)));
-    } catch {
-      return [];
-    }
+    return '';
   }
 
-  private hasAnyRole(userRoles: string[], allowedRoles: string[]): boolean {
-    const allowed = allowedRoles.map(role => this.normalizeRoleToken(role));
-    return allowed.some(role => userRoles.includes(role));
-  }
-
-  private isTenantManagerRole(): boolean {
-    return this.hasAnyRole(this.currentRoleTokens(), ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM']);
-  }
-
-  private normalizeRoleToken(role: string): string {
-    return role.trim().replace(/^ROLE_/i, '').replace(/[\s-]+/g, '_').toUpperCase();
-  }
 }
 

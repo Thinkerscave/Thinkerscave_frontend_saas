@@ -1,56 +1,46 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
-import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicsOverviewApiService } from '../../../services/academics-overview-api.service';
-import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicsOverview, ACADEMICS_OVERVIEW_RESOURCE } from '../../../models/academics-overview.model';
+
+import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
 @Component({
   selector: 'app-academics-overview-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, DropdownModule, ProgressBarModule, SaasPageHeaderComponent],
+  imports: [
+    CommonModule, RouterLink, ProgressBarModule, SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
+  ],
   templateUrl: './overview.component.html',
   styleUrls: ['./overview.component.scss']
 })
-export class AcademicsOverviewPageComponent implements OnInit {
+export class AcademicsOverviewPageComponent {
   private readonly api = inject(AcademicsOverviewApiService);
-  private readonly yearApi = inject(AcademicYearApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_OVERVIEW_RESOURCE;
   loading = true;
-  years: AcademicYearDto[] = [];
   selectedYearId: number | null = null;
   overview: AcademicsOverview | null = null;
   snapshotTab: 'classes' | 'subjects' = 'classes';
 
-  ngOnInit(): void {
-    this.yearApi.search().subscribe({
-      next: (years) => {
-        this.years = years;
-        const current = years.find((y) => y.status === 'CURRENT') ?? years[0] ?? null;
-        this.selectedYearId = current?.academicYearId ?? null;
-        if (this.selectedYearId) this.reload();
-        else {
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.messages.add({ severity: 'error', summary: 'Unable to load years' });
-        this.cdr.markForCheck();
-      }
-    });
+  onAcademicYearChange(yearId: number | null): void {
+    this.selectedYearId = yearId;
+    if (yearId == null) {
+      this.overview = null;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.reload();
   }
 
   reload(): void {

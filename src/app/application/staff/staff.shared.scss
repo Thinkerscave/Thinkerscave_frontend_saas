@@ -1075,3 +1075,9 @@
 .sd-table-actions {
   position: relative;
 }
+
+.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}

@@ -1,5 +1,5 @@
 <div class="saas-page attendance-reports">
-  <tc-saas-page-header title="Reports" [breadcrumbs]="[{label:'Home',route:'/app'},{label:'Attendance'},{label:'Reports'}]">
+  <tc-saas-page-header>
     <button type="button" class="tc-btn" (click)="exportPdf()" title="Opens the browser print dialog (not a generated PDF file)">
       <i class="pi pi-print"></i>Print
     </button>
@@ -53,9 +53,9 @@
     </div>
   }
 
-  @if (loading) {
-    <div class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading report…</strong></div>
-  } @else {
+  @if (loading && !report) {
+    <tc-page-skeleton layout="dashboard" [kpis]="0" [showKpis]="false" [charts]="2" [rows]="6" [columns]="5"></tc-page-skeleton>
+  } @else if (report || !loading) {
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="activeTab = $event"></tc-saas-tabs>
 
     <ng-container [ngSwitch]="activeTab">

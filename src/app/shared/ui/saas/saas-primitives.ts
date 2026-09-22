@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BreadCrumbService } from '../../../core/services/bread-crumb.service';
+
+export type { SaasBreadcrumb } from './saas-page-header.component';
+export { SaasPageHeaderComponent } from './saas-page-header.component';
 
 /* ============================================================
    ThinkersCave SaaS premium primitives — match inspired images.
    Light theme, white cards, blue primary, soft shadows.
    ============================================================ */
 
-export interface SaasBreadcrumb { label: string; route?: string; }
 export interface SaasStat {
   key: string;
   label: string;
@@ -19,42 +20,8 @@ export interface SaasStat {
   icon: string;
   tone: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 }
-export interface SaasTab { key: string; label: string; icon?: string; }
+export interface SaasTab { key: string; label: string; icon?: string; badge?: string | number | null; }
 export interface SaasStep { key: string; label: string; }
-
-/* -------- Page toolbar (actions only; title + subtitle live in layout shell) -------- */
-@Component({
-  selector: 'tc-saas-page-header',
-  standalone: true,
-  imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { style: 'display: block;' },
-  template: `
-    <header class="saas-page-header" [class.saas-page-header--actions-only]="!showTitle">
-      <div class="saas-page-header__main" *ngIf="showTitle">
-        <h1>{{ title }}</h1>
-      </div>
-      <div class="saas-page-header__actions"><ng-content></ng-content></div>
-    </header>
-  `
-})
-export class SaasPageHeaderComponent implements OnChanges {
-  private readonly pageHeader = inject(BreadCrumbService);
-
-  /** When false (default), page title is shown only in the layout shell breadcrumb. */
-  @Input() showTitle = false;
-  @Input() title = '';
-  /** Dynamic subtitle override — registers with shell header (static pages use route data). */
-  @Input() subtitle?: string;
-  /** @deprecated Breadcrumbs are rendered once in the layout shell. */
-  @Input() breadcrumbs: SaasBreadcrumb[] = [];
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if ('subtitle' in changes && this.subtitle) {
-      this.pageHeader.setPageSubtitle(this.subtitle);
-    }
-  }
-}
 
 /* -------- KPI stat card -------- */
 @Component({
@@ -110,6 +77,7 @@ export class SaasStatGridComponent {
               [class.is-active]="tab.key === active"
               (click)="changeTab.emit(tab.key)">
         <i *ngIf="tab.icon" [class]="tab.icon"></i>{{ tab.label }}
+        <span class="saas-tabs__badge" *ngIf="tab.badge != null && tab.badge !== ''">{{ tab.badge }}</span>
       </button>
     </nav>
   `

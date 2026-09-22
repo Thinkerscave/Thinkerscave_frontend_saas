@@ -30,6 +30,7 @@ import {
   AppListViewMode,
   AppPaginatorComponent
 } from '../../../../shared/ui/app-list';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -64,7 +65,8 @@ interface MenuDraft {
     CommonModule, FormsModule, DropdownModule, ConfirmDialogModule, DialogModule,
     DragDropModule,
     SaasPageHeaderComponent, SaasStatGridComponent,
-    AppListToolbarComponent, AppPaginatorComponent
+    AppListToolbarComponent, AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './menu-management.component.html',
@@ -80,6 +82,7 @@ export class MenuManagementComponent implements OnInit {
   private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
+  hasLoaded = false;
   saving = false;
   reordering = false;
   errorMessage = '';
@@ -247,13 +250,19 @@ export class MenuManagementComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.errorMessage = '';
     forkJoin({
       menus: this.api.getMenuTree(true),
       features: this.platformApi.getFeatures()
     }).pipe(
-      finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
+      finalize(() => {
+        this.loading = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: ({ menus, features }) => {

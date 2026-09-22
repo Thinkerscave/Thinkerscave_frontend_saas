@@ -12,7 +12,9 @@ import {
   StudentDirectoryCard
 } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface KpiTile {
   key: keyof DocumentVaultKpi;
   label: string;
@@ -24,7 +26,9 @@ interface KpiTile {
   selector: 'app-document-vault',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent,
+    TcPageSkeletonComponent
+  ],
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './document-vault.component.html'
 })
@@ -33,6 +37,8 @@ export class DocumentVaultComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
+  refreshing = false;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
   successMessage = '';
@@ -72,31 +78,54 @@ export class DocumentVaultComponent implements OnInit {
   ngOnInit(): void { this.loadAll(); }
 
   loadAll(): void {
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     forkJoin({
       kpi: this.api.documentKpi(),
       docs: this.api.documents(this.activeCategory === 'ALL' ? undefined : this.activeCategory),
       students: this.api.search({})
     })
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: ({ kpi, docs, students }) => {
           this.kpi = kpi;
           this.entries = docs;
           this.students = students.content ?? [];
+          this.hasLoaded = true;
           this.errorMessage = '';
         },
-        error: () => { this.errorMessage = 'Could not load documents.'; }
+        error: () => {
+          this.hasLoaded = true;
+          this.errorMessage = 'Could not load documents.';
+        }
       });
   }
 
   filterCategory(c: 'ALL' | DocumentVaultCategory): void {
     this.activeCategory = c;
-    this.loading = true;
+    if (this.hasLoaded) {
+      this.refreshing = true;
+    } else {
+      this.loading = true;
+    }
     this.api.documents(c === 'ALL' ? undefined : c)
-      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.refreshing = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
-        next: docs => { this.entries = docs; },
+        next: docs => {
+          this.entries = docs;
+          this.hasLoaded = true;
+        },
         error: () => { this.errorMessage = 'Could not filter documents.'; }
       });
   }

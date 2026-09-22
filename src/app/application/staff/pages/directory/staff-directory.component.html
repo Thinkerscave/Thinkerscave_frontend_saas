@@ -1,6 +1,6 @@
 <section class="tc-page-shell tc-directory-page stf-directory-page" (click)="closeMenu()">
 
-  <tc-saas-page-header subtitle="Manage teaching and non-teaching staff across the organization.">
+  <tc-saas-page-header>
     <button type="button" class="tc-btn" (click)="importStaff()">
       <i class="pi pi-upload"></i> Import
     </button>
@@ -78,9 +78,14 @@
         <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <app-list-results [busy]="refreshing">
+      <app-list-results [busy]="refreshing && hasLoaded">
         <div class="stf-directory-skeleton" *ngIf="!hasLoaded && loading">
-          <app-skeleton [shape]="view === 'grid' ? 'card' : 'table'" [rows]="view === 'grid' ? 6 : 8" [columns]="6"></app-skeleton>
+          <tc-page-skeleton
+            [layout]="view === 'grid' ? 'cards-only' : 'table-only'"
+            [rows]="8"
+            [columns]="6"
+            [cards]="8">
+          </tc-page-skeleton>
         </div>
 
         <app-empty-state

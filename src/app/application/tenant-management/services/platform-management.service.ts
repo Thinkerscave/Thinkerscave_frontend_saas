@@ -1,7 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { platformApi, auditApi } from '../../../shared/constants/api.endpoint';
+import {
+  platformApi,
+  auditApi,
+  platformCatalogSyncApi,
+  platformMigrationApi,
+  platformReleaseApi,
+  platformTenantHealthApi
+} from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
 import { AccessMenu, RetentionPurgeResult, RetentionTaskStatus } from '../../access-management/models/access.model';
 import {
@@ -28,11 +35,20 @@ import {
   ProvisionOrganizationPayload,
   ProvisioningJob,
   ProvisioningResult,
+  ProvisioningJobDetail,
   PlatformAuditLog,
   PlatformSecurityAuditLog,
+  CatalogSyncExecution,
+  CreateReleasePayload,
+  MigrationExecution,
+  PlatformRelease,
+  ReleaseSummary,
   SpringPage,
   SubscriptionPlan,
-  TenantRegistry
+  TenantHealthResponse,
+  TenantRegistry,
+  TenantReleaseDetail,
+  TenantReleaseOperation
 } from '../models/platform.model';
 
 @Injectable({ providedIn: 'root' })
@@ -291,6 +307,12 @@ export class PlatformManagementService {
     );
   }
 
+  getProvisionJob(id: number): Observable<ProvisioningJobDetail> {
+    return this.http.get<unknown>(platformApi.provisionJobById(id)).pipe(
+      map(r => unwrapApiResponse<ProvisioningJobDetail>(r, {} as ProvisioningJobDetail))
+    );
+  }
+
   provisionOrganization(payload: ProvisionOrganizationPayload): Observable<ProvisioningResult> {
     return this.http.post<unknown>(platformApi.provision, payload, {
       headers: { 'X-Skip-Error-Toast': '1' }
@@ -330,6 +352,114 @@ export class PlatformManagementService {
     const params = new HttpParams().set('page', String(page)).set('size', String(size));
     return this.http.get<unknown>(auditApi.security, { params }).pipe(
       map(r => this.mapPageResponse<PlatformSecurityAuditLog>(r))
+    );
+  }
+
+  getOperationAuditLogs(): Observable<PlatformAuditLog[]> {
+    return this.http.get<unknown>(platformApi.operationAudit).pipe(
+      map(response => {
+        const rows = unwrapApiResponse<Record<string, unknown>[]>(response, []);
+        return rows.map(row => ({
+          id: Number(row['id']),
+          tenantCode: String(row['tenant_identifier'] ?? ''),
+          eventType: String(row['event_type'] ?? ''),
+          action: String(row['event_type'] ?? ''),
+          entityType: String(row['entity_type'] ?? ''),
+          entityId: String(row['entity_id'] ?? ''),
+          actorUsername: String(row['actor'] ?? 'system'),
+          summary: String(row['details'] ?? row['event_type'] ?? ''),
+          version: String(row['target_version'] ?? ''),
+          status: String(row['status'] ?? ''),
+          executionId: String(row['execution_id'] ?? ''),
+          errorDetails: String(row['error_message'] ?? ''),
+          occurredAt: String(row['created_on'] ?? '')
+        }));
+      })
+    );
+  }
+
+  getReleaseSummary(): Observable<ReleaseSummary> {
+    return this.http.get<unknown>(platformReleaseApi.summary).pipe(
+      map(r => unwrapApiResponse<ReleaseSummary>(r, {
+        totalTenants: 0, upToDate: 0, pendingMigration: 0, failedOrMaintenance: 0
+      }))
+    );
+  }
+
+  getReleaseHistory(page = 0, size = 20): Observable<SpringPage<PlatformRelease>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<unknown>(platformReleaseApi.releases, { params }).pipe(
+      map(r => this.mapPageResponse<PlatformRelease>(r))
+    );
+  }
+
+  createRelease(payload: CreateReleasePayload): Observable<PlatformRelease> {
+    return this.http.post<unknown>(platformReleaseApi.releases, payload).pipe(
+      map(r => unwrapApiResponse<PlatformRelease>(r, {} as PlatformRelease))
+    );
+  }
+
+  executeRelease(id: number | string): Observable<PlatformRelease> {
+    return this.http.post<unknown>(platformReleaseApi.execute(id), {}).pipe(
+      map(r => unwrapApiResponse<PlatformRelease>(r, {} as PlatformRelease))
+    );
+  }
+
+  getTenantReleaseOperations(page = 0, size = 50, search?: string): Observable<SpringPage<TenantReleaseOperation>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search) params = params.set('search', search);
+    return this.http.get<unknown>(platformMigrationApi.tenants, { params }).pipe(
+      map(r => this.mapPageResponse<TenantReleaseOperation>(r))
+    );
+  }
+
+  getTenantReleaseDetail(tenantId: number): Observable<TenantReleaseDetail> {
+    return this.http.get<unknown>(platformMigrationApi.tenantDetail(tenantId)).pipe(
+      map(r => unwrapApiResponse<TenantReleaseDetail>(r, {} as TenantReleaseDetail))
+    );
+  }
+
+  getTenantMigrationHistory(tenantId: number): Observable<MigrationExecution[]> {
+    return this.http.get<unknown>(platformMigrationApi.tenantHistory(tenantId)).pipe(
+      map(r => unwrapApiResponse<MigrationExecution[]>(r, []))
+    );
+  }
+
+  retryTenantMigration(tenantId: number): Observable<MigrationExecution> {
+    return this.http.post<unknown>(platformMigrationApi.retry(tenantId), {}).pipe(
+      map(r => unwrapApiResponse<MigrationExecution>(r, {} as MigrationExecution))
+    );
+  }
+
+  setMigrationMaintenance(tenantId: number, enabled: boolean, reason?: string): Observable<TenantReleaseOperation> {
+    return this.http.put<unknown>(platformMigrationApi.maintenance(tenantId), { enabled, reason }).pipe(
+      map(r => unwrapApiResponse<TenantReleaseOperation>(r, {} as TenantReleaseOperation))
+    );
+  }
+
+  getCatalogSyncHistory(tenantId: number): Observable<CatalogSyncExecution[]> {
+    return this.http.get<unknown>(platformCatalogSyncApi.tenantHistory(tenantId)).pipe(
+      map(r => unwrapApiResponse<CatalogSyncExecution[]>(r, []))
+    );
+  }
+
+  retryCatalogSync(tenantId: number): Observable<CatalogSyncExecution> {
+    return this.http.post<unknown>(platformCatalogSyncApi.retry(tenantId), {}).pipe(
+      map(r => unwrapApiResponse<CatalogSyncExecution>(r, {} as CatalogSyncExecution))
+    );
+  }
+
+  getTenantHealth(page = 0, size = 100, search?: string): Observable<TenantHealthResponse> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search) params = params.set('search', search);
+    return this.http.get<unknown>(platformTenantHealthApi.tenants, { params }).pipe(
+      map(r => unwrapApiResponse<TenantHealthResponse>(r, {
+        summary: {
+          totalTenants: 0, healthy: 0, warning: 0, maintenance: 0, critical: 0,
+          checkedAt: new Date(0).toISOString()
+        },
+        tenants: this.emptyPage()
+      }))
     );
   }
 

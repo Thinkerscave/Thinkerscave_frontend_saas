@@ -16,12 +16,13 @@ import { finalize } from 'rxjs';
 
 import { CounselorOption } from '../../models/admissions-crm.model';
 import { AdmissionsCrmService } from '../../services/admissions-crm.service';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 @Component({
   selector: 'app-counselor-picker',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DialogModule],
+  imports: [CommonModule, FormsModule, DialogModule, TcPageSkeletonComponent],
   template: `
     <p-dialog
       [header]="title"
@@ -41,7 +42,7 @@ import { AdmissionsCrmService } from '../../services/admissions-crm.service';
         />
       </div>
       @if (loading()) {
-        <div class="tc-loading"><i class="pi pi-spin pi-spinner"></i> Loading staff...</div>
+        <tc-page-skeleton variant="table" [rows]="4" [columns]="2"></tc-page-skeleton>
       } @else if (!staff().length) {
         <div class="tc-empty-state adm-empty-compact">
           <p>No matching staff found.</p>

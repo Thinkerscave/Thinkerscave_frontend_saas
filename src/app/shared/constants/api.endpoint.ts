@@ -110,6 +110,8 @@ export const accessApi = {
   deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
   rolePermissions: (roleId: number, organizationId: number) =>
     `${ACCESS_BASE}/roles/${roleId}/permissions?organizationId=${organizationId}`,
+  rolePermissionByMenu: (roleId: number, menuId: number, organizationId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}?organizationId=${organizationId}`,
   menus: `${ACCESS_BASE}/menus`,
   menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
   menuTree: `${ACCESS_BASE}/menus/tree`,
@@ -182,10 +184,26 @@ export const attendanceApi = {
 export const staffAttendanceApi = {
   base: `${BASE}/attendance/staff`,
   myToday: `${BASE}/attendance/staff/me/today`,
+  myHistory: (from: string, to: string) =>
+    `${BASE}/attendance/staff/me/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
   signIn: `${BASE}/attendance/staff/sign-in`,
   signOut: `${BASE}/attendance/staff/sign-out`,
   today: (date?: string) => date ? `${BASE}/attendance/staff/today?date=${date}` : `${BASE}/attendance/staff/today`,
   history: (staffId: number) => `${BASE}/attendance/staff/history/${staffId}`,
+  historyRange: (staffId: number, from: string, to: string) =>
+    `${BASE}/attendance/staff/history/${staffId}/range?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+  regularizations: {
+    base: `${BASE}/attendance/staff/regularizations`,
+    me: (status?: string) =>
+      status
+        ? `${BASE}/attendance/staff/regularizations/me?status=${encodeURIComponent(status)}`
+        : `${BASE}/attendance/staff/regularizations/me`,
+    pending: `${BASE}/attendance/staff/regularizations/pending`,
+    pendingCount: `${BASE}/attendance/staff/regularizations/pending/count`,
+    byId: (id: number) => `${BASE}/attendance/staff/regularizations/${id}`,
+    approve: (id: number) => `${BASE}/attendance/staff/regularizations/${id}/approve`,
+    reject: (id: number) => `${BASE}/attendance/staff/regularizations/${id}/reject`,
+  },
 };
 
 export const leaveApi = {
@@ -197,11 +215,41 @@ export const leaveApi = {
   cancel: (id: number) => `${BASE}/leave/${id}`,
 };
 
+/** @deprecated Legacy school-ops payroll endpoints — use financePayrollApi */
 export const payrollApi = {
   all: `${BASE}/payroll`,
   byStaff: (staffId: number) => `${BASE}/payroll/${staffId}`,
   saveOrUpdate: `${BASE}/payroll`,
   run: `${BASE}/payroll/run`,
+};
+
+/** Finance → Payroll (admin) */
+export const financePayrollApi = {
+  base: `${BASE}/payroll`,
+  overview: `${BASE}/payroll/overview`,
+  employees: `${BASE}/payroll/employees`,
+  components: `${BASE}/payroll/components`,
+  componentById: (id: number) => `${BASE}/payroll/components/${id}`,
+  structures: `${BASE}/payroll/structures`,
+  structureById: (id: number) => `${BASE}/payroll/structures/${id}`,
+  employeeSalary: (staffId: number) => `${BASE}/payroll/employees/${staffId}/salary`,
+  employeeSalaryHistory: (staffId: number) => `${BASE}/payroll/employees/${staffId}/salary/history`,
+  runsGenerate: `${BASE}/payroll/runs/generate`,
+  runById: (runId: number) => `${BASE}/payroll/runs/${runId}`,
+  runRecalculate: (runId: number) => `${BASE}/payroll/runs/${runId}/recalculate`,
+  runApprove: (runId: number) => `${BASE}/payroll/runs/${runId}/approve`,
+  runReturn: (runId: number) => `${BASE}/payroll/runs/${runId}/return`,
+  employeePayrollPayments: (id: number) => `${BASE}/payroll/employee-payrolls/${id}/payments`,
+  employeePayrollPayslip: (id: number) => `${BASE}/payroll/employee-payrolls/${id}/payslip`,
+  settings: `${BASE}/payroll/settings`,
+};
+
+/** Finance → Payroll (staff self-service) */
+export const payrollMeApi = {
+  summary: `${BASE}/payroll/me/summary`,
+  history: `${BASE}/payroll/me/history`,
+  employeePayroll: (id: number) => `${BASE}/payroll/me/employee-payrolls/${id}`,
+  payslip: (id: number) => `${BASE}/payroll/me/employee-payrolls/${id}/payslip`,
 };
 
 export const tenantApi = {
@@ -224,25 +272,19 @@ export const staffApi = {
   responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
   staffResponsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
   staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
+  /** @deprecated Legacy Staff salary structure APIs — use Finance payroll structures / employee salary */
   salaryStructures: `${BASE}/staff/salary-structures`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryStructureForStaff: (staffId: number) => `${BASE}/staff/${staffId}/salary-structure`,
+  /** @deprecated Legacy — use Finance payroll */
   salaryHistory: (staffId: number) => `${BASE}/staff/${staffId}/salary-history`,
   /** @deprecated legacy endpoints — do not use */
   saveOrUpdate: `${BASE}/staff/saveOrUpdateStaff`,
   getAll: `${BASE}/staff/getAllStaff`,
   getByCode: (code: string) => `${BASE}/staff/getStaffByCode/${code}`,
   toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
-};
-
-export const staffPayrollApi = {
-  dashboard: `${BASE}/payroll/dashboard`,
-  generate: `${BASE}/payroll/generate`,
-  list: `${BASE}/payroll`,
-  byId: (id: number) => `${BASE}/payroll/${id}`,
-  markPaid: (id: number) => `${BASE}/payroll/${id}/mark-paid`,
-  bulkMarkPaid: `${BASE}/payroll/mark-paid`,
-  payslip: (id: number) => `${BASE}/payroll/${id}/payslip`,
 };
 
 export const branchApi = {
@@ -479,16 +521,48 @@ export const platformApi = {
   provisionJobs: `${PLATFORM_BASE}/provision/jobs`,
   provisionJobById: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}`,
   retryProvisionJob: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/retry`,
+  provisionJobSteps: (id: number) => `${PLATFORM_BASE}/provision/jobs/${id}/steps`,
   tenantRegistry: `${PLATFORM_BASE}/tenant-registry`,
   tenantById: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}`,
   tenantMaintenance: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/maintenance`,
   tenantResume: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/resume`,
   tenantBackup: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/backup`,
   tenantMigrate: (id: number) => `${PLATFORM_BASE}/tenant-registry/${id}/migrate`,
+  operationAudit: `${PLATFORM_BASE}/operations/audit`,
   provisioningTemplates: `${PLATFORM_BASE}/provisioning-templates`,
   maintenanceSchedules: `${PLATFORM_BASE}/maintenance`,
   orgConfiguration: (orgId: number) => `${PLATFORM_BASE}/organization-configurations/${orgId}`,
   retention: `${PLATFORM_BASE}/retention`,
   retentionTask: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}`,
   runRetention: (taskKey: string) => `${PLATFORM_BASE}/retention/${taskKey}/run`
+};
+
+/** Release orchestration. Bulk execution is backend-owned and sequential. */
+export const platformReleaseApi = {
+  summary: `${PLATFORM_BASE}/releases/summary`,
+  releases: `${PLATFORM_BASE}/releases`,
+  releaseById: (id: number | string) => `${PLATFORM_BASE}/releases/${id}`,
+  execute: (id: number | string) => `${PLATFORM_BASE}/releases/${id}/execute`
+};
+
+/** Flyway tenant migration operations; separate from catalog synchronization. */
+export const platformMigrationApi = {
+  tenants: `${PLATFORM_BASE}/migrations/tenants`,
+  tenantDetail: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}`,
+  tenantHistory: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/history`,
+  retry: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/retry`,
+  maintenance: (tenantId: number) => `${PLATFORM_BASE}/migrations/tenants/${tenantId}/maintenance`
+};
+
+/** Catalog definitions synchronize independently and never grant runtime access. */
+export const platformCatalogSyncApi = {
+  status: `${PLATFORM_BASE}/catalog-sync/status`,
+  tenantHistory: (tenantId: number) => `${PLATFORM_BASE}/catalog-sync/tenants/${tenantId}/history`,
+  retry: (tenantId: number) => `${PLATFORM_BASE}/catalog-sync/tenants/${tenantId}/retry`
+};
+
+export const platformTenantHealthApi = {
+  summary: `${PLATFORM_BASE}/tenant-health/summary`,
+  tenants: `${PLATFORM_BASE}/tenant-health/tenants`,
+  tenantById: (tenantId: number) => `${PLATFORM_BASE}/tenant-health/tenants/${tenantId}`
 };

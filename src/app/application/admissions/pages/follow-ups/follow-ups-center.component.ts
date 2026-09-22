@@ -15,6 +15,7 @@ import { AppToastComponent } from '../../../../core/feedback/app-toast.component
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -47,7 +48,8 @@ const LIST_KEY = 'tc.follow-ups.list';
     SaasStatGridComponent,
     SaasPanelComponent,
     SaasTabsComponent,
-    AppPaginatorComponent
+    AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   providers: [MessageService],
   styleUrls: ['../../admissions.shared.scss', '../../../students/students.shared.scss'],
@@ -65,6 +67,7 @@ export class FollowUpsCenterComponent implements OnInit {
   readonly pageConfig = admissionsPageConfig('follow-ups');
 
   readonly loading = signal(true);
+  readonly hasLoaded = signal(false);
   readonly error = signal<string | null>(null);
   readonly activeTab = signal<FollowUpTab>('today');
   readonly todayItems = signal<FollowUpRecord[]>([]);
@@ -156,7 +159,10 @@ export class FollowUpsCenterComponent implements OnInit {
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
+        finalize(() => {
+          this.loading.set(false);
+          this.hasLoaded.set(true);
+        })
       )
       .subscribe({
         next: ({ today, overdue, upcoming, completed }) => {

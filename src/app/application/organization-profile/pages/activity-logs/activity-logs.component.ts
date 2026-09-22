@@ -18,6 +18,7 @@ import {
   SaasStatGridComponent,
   SaasStat
 } from '../../../../shared/ui/saas';
+import { TcPageSkeletonComponent, finalizeBusy } from '../../../../shared/ui/loading';
 
 interface SelectOption {
   label: string;
@@ -28,7 +29,7 @@ interface SelectOption {
   selector: 'app-activity-logs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, AppPaginatorComponent, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent],
+  imports: [CommonModule, FormsModule, DatePipe, DropdownModule, AppPaginatorComponent, SaasPageHeaderComponent, SaasPanelComponent, SaasFilterRowComponent, SaasPillComponent, SaasStatGridComponent, TcPageSkeletonComponent],
   templateUrl: './activity-logs.component.html',
   styleUrl: './activity-logs.component.scss'
 })
@@ -52,15 +53,17 @@ export class ActivityLogsComponent implements OnInit {
 
   ngOnInit(): void {
     this.adminData.loadWorkspace()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: ws => {
           this.workspace = ws;
           this.logs = (ws?.auditLogs || []);
-          this.loading = false;
           this.cdr.markForCheck();
         },
-        error: () => { this.loading = false; this.cdr.markForCheck(); }
+        error: () => { this.cdr.markForCheck(); }
       });
   }
 

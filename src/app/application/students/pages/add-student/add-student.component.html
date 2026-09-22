@@ -1,12 +1,7 @@
 <app-toast />
 
 <section class="stu-add-page">
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
-  </tc-saas-page-header>
-
+  <tc-saas-page-header></tc-saas-page-header>
   <div *ngIf="lookupWarning" class="stu-add-page__banner" role="status">
     <i class="pi pi-info-circle"></i>
     <span>{{ lookupWarning }}</span>

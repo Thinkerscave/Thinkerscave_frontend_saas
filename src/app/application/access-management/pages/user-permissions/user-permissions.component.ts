@@ -24,8 +24,8 @@ import {
 import { DEV_RESET_PASSWORD, resetPasswordConfirmMessage, resetPasswordTooltip } from '../../utils/access-dev.config';
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
 import { SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent } from '../../../../shared/ui/saas';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
 
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 interface MenuAccessNode {
   menuId: number;
   menuName: string;
@@ -42,7 +42,8 @@ interface MenuAccessNode {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppToastComponent, ConfirmDialogModule, TooltipModule, CommonModule,
-    SaasPageHeaderComponent, SaasPanelComponent, SaasPillComponent, AppBackNavComponent
+    SaasPageHeaderComponent,
+    TcPageSkeletonComponent, SaasPanelComponent, SaasPillComponent
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './user-permissions.component.html',
@@ -98,8 +99,9 @@ export class UserPermissionsComponent implements OnInit {
       next: ({ user, permissions }) => {
         this.user = user;
         this.modules = this.buildTree(permissions ?? []);
-        this.pageHeader.setPageHeader({ title: user ? userDisplayName(user) : 'User access' });
-        this.pageHeader.setPageSubtitle('Account, assigned menus and sign-in activity');
+        this.pageHeader.setPageSubtitle(
+          user ? userDisplayName(user) : 'Account, assigned menus and sign-in activity'
+        );
       },
       error: () => {
         this.errorMessage = 'Unable to load this user.';

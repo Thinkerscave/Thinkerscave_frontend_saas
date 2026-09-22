@@ -1,0 +1,17 @@
+:host { display: block; }
+
+.payroll-dialog-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.payroll-applicable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--tc-text);
+  white-space: nowrap;
+  padding-bottom: 0.35rem;
+}

@@ -1,16 +1,16 @@
-﻿/* Page Header */
+﻿/* Page Header — shell chrome only; Back + actions live in the compact toolbar row */
 .tc-page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--tc-space-3);
-  padding: 0 0 var(--tc-space-3) 0;
-  
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0;
+
   &__main {
     display: flex;
     flex-direction: column;
     gap: var(--tc-space-1);
-    
+
     h1, .tc-page-header__title {
       margin: 0;
       font-size: var(--tc-font-size-2xl);
@@ -19,35 +19,36 @@
       display: flex;
       align-items: center;
       gap: var(--tc-space-3);
-      
+
       i.pi {
         color: var(--tc-accent);
       }
     }
-    
+
     p, .tc-page-header__subtitle {
       margin: 0;
       color: var(--tc-text-muted);
       font-size: var(--tc-font-size-sm);
     }
   }
-  
+
   &__actions {
     display: flex;
     align-items: center;
-    gap: var(--tc-space-3);
+    justify-content: flex-end;
+    gap: 0.5rem;
     flex-wrap: wrap;
+    margin-left: auto;
   }
 }
 
 @media (max-width: 768px) {
   .tc-page-header {
     flex-direction: column;
-    
+
     &__actions {
-      width: 100%;
-      justify-content: flex-start;
+      width: auto;
+      justify-content: flex-end;
     }
   }
 }
-

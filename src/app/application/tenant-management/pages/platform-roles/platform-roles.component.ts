@@ -16,6 +16,7 @@ import {
   SaasStatGridComponent
 } from '../../../../shared/ui/saas';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -28,7 +29,8 @@ import { ViewPreferenceService } from '../../../services/view-preference.service
   imports: [
     CommonModule, FormsModule, RouterLink, DropdownModule, DialogModule,
     SaasPageHeaderComponent, SaasStatGridComponent,
-    AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent
+    AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent,
+    TcPageSkeletonComponent
   ],
   templateUrl: './platform-roles.component.html',
   styleUrl: './platform-roles.component.scss'
@@ -41,6 +43,7 @@ export class PlatformRolesComponent implements OnInit {
   private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
+  hasLoaded = false;
   saving = false;
   errorMessage = '';
   search = '';
@@ -127,10 +130,16 @@ export class PlatformRolesComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    if (!this.hasLoaded) {
+      this.loading = true;
+    }
     this.errorMessage = '';
     this.api.getRoles(true).pipe(
-      finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
+      finalize(() => {
+        this.loading = false;
+        this.hasLoaded = true;
+        this.cdr.markForCheck();
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: roles => {

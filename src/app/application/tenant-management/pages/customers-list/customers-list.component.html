@@ -94,7 +94,7 @@
 
   <!-- Content panel -->
   <section class="customers-list__panel">
-    <app-list-results [busy]="refreshing">
+    <app-list-results [busy]="refreshing && hasLoaded">
     <app-list-empty-state
       *ngIf="errorMessage && hasLoaded"
       icon="pi pi-exclamation-triangle"
@@ -106,11 +106,12 @@
     </app-list-empty-state>
 
     <ng-container *ngIf="!hasLoaded && loading">
-      <app-skeleton-group
-        [variant]="effectiveViewMode === 'table' ? 'row' : 'card'"
-        [layout]="effectiveViewMode === 'grid' ? 'grid' : 'stack'"
-        [count]="6">
-      </app-skeleton-group>
+      <tc-page-skeleton
+        [layout]="effectiveViewMode === 'grid' ? 'cards-only' : 'table-only'"
+        [rows]="8"
+        [columns]="6"
+        [cards]="6">
+      </tc-page-skeleton>
     </ng-container>
 
     <app-list-empty-state

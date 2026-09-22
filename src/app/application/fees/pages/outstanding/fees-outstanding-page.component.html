@@ -1,0 +1,108 @@
+<section class="tc-page-shell tc-directory-page fees-page">
+  <app-toast />
+
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <a type="button" class="tc-btn tc-btn--outline tc-btn--sm" routerLink="/app/fees">
+      <i class="pi pi-arrow-left"></i> Back
+    </a>
+  </tc-saas-page-header>
+
+  @if (summary) {
+    <tc-kpi-group ariaLabel="Outstanding summary" mode="equal" [columns]="3">
+      <tc-kpi-card label="Total Outstanding" [value]="formatMoney(summary.totalOutstanding)" icon="pi pi-wallet" tone="warning"></tc-kpi-card>
+      <tc-kpi-card label="Overdue" [value]="summary.overdueCount || 0" icon="pi pi-exclamation-triangle" tone="danger"></tc-kpi-card>
+      <tc-kpi-card label="Due / Partial" [value]="(summary.dueCount || 0) + (summary.partiallyPaidCount || 0)" icon="pi pi-clock" tone="info"></tc-kpi-card>
+    </tc-kpi-group>
+  }
+
+  <div class="tc-card tc-card--panel fees-surface-panel">
+    <div class="tc-card__body">
+      <div class="fees-filter-bar">
+        <div class="tc-form-field">
+          <label>Status</label>
+          <select class="p-inputtext p-component" [(ngModel)]="status">
+            <option value="">All open</option>
+            <option value="DUE">Due</option>
+            <option value="PARTIALLY_PAID">Partially Paid</option>
+            <option value="OVERDUE">Overdue</option>
+          </select>
+        </div>
+        <div class="tc-form-field tc-form-field--actions">
+          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="search()">Search</button>
+          <a routerLink="/app/fees/students" class="tc-btn tc-btn--outline tc-btn--sm">Student Fee</a>
+        </div>
+      </div>
+
+      @if (loading && !rows.length) {
+        <tc-page-skeleton layout="table-only" [rows]="8" [columns]="8"></tc-page-skeleton>
+      } @else if (error) {
+        <div class="tc-empty-state tc-empty-state--inline">
+          <p>{{ error }}</p>
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="load()">Retry</button>
+        </div>
+      } @else if (!rows.length) {
+        <div class="tc-empty-state">
+          <i class="pi pi-check-circle"></i>
+          <h3>All clear</h3>
+          <p>No outstanding dues.</p>
+        </div>
+      } @else {
+        <div class="fees-table-wrap">
+          <table class="fees-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Admission No.</th>
+                <th>Class</th>
+                <th>Period</th>
+                <th>Due Date</th>
+                <th class="text-right">Outstanding</th>
+                <th>Status</th>
+                <th class="fees-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.studentBillingPeriodId) {
+                <tr>
+                  <td>{{ row.studentName }}</td>
+                  <td>{{ row.admissionNumber }}</td>
+                  <td>{{ row.className }}@if (row.sectionName) { / {{ row.sectionName }} }</td>
+                  <td>{{ row.periodLabel }}</td>
+                  <td>{{ row.dueDate | date:'mediumDate' }}</td>
+                  <td class="text-right">{{ row.balanceAmount | number:'1.2-2' }}</td>
+                  <td><span class="tc-saas-pill" [attr.data-status]="row.status">{{ row.status }}</span></td>
+                  <td class="fees-table__actions">
+                    <a class="tc-btn tc-btn--ghost tc-btn--sm"
+                       [routerLink]="['/app/fees/students', row.studentId]">View</a>
+                    @if (row.canCollectFee) {
+                      <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm"
+                              *tcHasPerm="resources.COLLECTION; action: 'manage'"
+                              (click)="openCollect(row)">Collect</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="fees-pager">
+          <span>Showing {{ rows.length }} of {{ total }}</span>
+          <div class="fees-pager__btns">
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
+                    [disabled]="page === 0" (click)="prevPage()">Prev</button>
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
+                    [disabled]="(page + 1) * size >= total" (click)="nextPage()">Next</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <app-collect-fee-dialog
+    [(visible)]="collectVisible"
+    [academicYearId]="academicYearId"
+    [lockedStudent]="collectStudent"
+    (collected)="load()">
+  </app-collect-fee-dialog>
+</section>

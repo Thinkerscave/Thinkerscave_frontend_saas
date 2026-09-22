@@ -3,9 +3,6 @@
 
 <div class="csub-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn tc-btn--back" (click)="back()">
-      <i class="pi pi-arrow-left"></i> Back
-    </button>
     <button
       type="button"
       class="tc-btn tc-btn--primary"
@@ -121,8 +118,8 @@
   </div>
   <ng-template #loadingTpl>
     <div class="csub-page acad-page" aria-busy="true">
-      <div class="csub-skel csub-skel--identity"></div>
-      <div class="csub-skel csub-skel--section"></div>
+      <tc-saas-page-header></tc-saas-page-header>
+      <tc-page-skeleton variant="table" [rows]="6" [columns]="4"></tc-page-skeleton>
     </div>
   </ng-template>
 </ng-template>

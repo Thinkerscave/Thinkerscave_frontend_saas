@@ -25,7 +25,7 @@ import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources'
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { StaffService } from '../../../staff/services/staff.service';
 import { StaffSummary } from '../../../staff/models/staff.model';
-import { AppBackNavComponent } from '../../../../shared/ui/app-list';
+import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -51,9 +51,8 @@ type Privilege = 'canView' | 'canManage' | 'canApprove';
     FormsModule,
     MultiSelectModule,
     TooltipModule,
-    AppBackNavComponent,
     SaasPageHeaderComponent,
-    SaasPanelComponent,
+    TcPageSkeletonComponent, SaasPanelComponent,
     SaasPillComponent
   ],
   providers: [MessageService, ConfirmationService],
@@ -137,9 +136,6 @@ export class ResponsibilityWorkspaceComponent implements OnInit {
         this.rows = (matrix.rows ?? []).map(r => ({ ...r }));
         this.modules = this.buildTree(this.rows);
         this.assignedStaff = staff ?? [];
-        this.pageHeader.setPageHeader({
-          title: responsibility?.responsibilityName || 'Responsibility'
-        });
         this.pageHeader.setPageSubtitle(
           this.definitionLocked()
             ? 'System responsibility · assign staff only (definition is protected)'

@@ -1,10 +1,23 @@
 /** Normalize a role token the same way roleGuard / top-bar do. */
+const CANONICAL_ROLES = new Set([
+  'SUPER_ADMIN',
+  'ORGANIZATION_OWNER',
+  'ORGANIZATION_ADMIN',
+  'STAFF',
+  'STUDENT',
+  'PARENT'
+]);
+
 export function normalizeRoleToken(role: unknown): string {
-  return String(role ?? '')
+  const normalized = String(role ?? '')
     .trim()
     .replace(/^ROLE_/i, '')
     .replace(/[\s-]+/g, '_')
     .toUpperCase();
+  if (CANONICAL_ROLES.has(normalized)) {
+    return normalized;
+  }
+  return '';
 }
 
 export function roleTokensFromUser(user: unknown): string[] {
@@ -24,7 +37,8 @@ export function roleTokensFromUser(user: unknown): string[] {
       return [role];
     })
     .filter(Boolean)
-    .map((role) => normalizeRoleToken(role));
+    .map((role) => normalizeRoleToken(role))
+    .filter((role) => CANONICAL_ROLES.has(role));
 }
 
 function hasAny(tokens: string[], candidates: string[]): boolean {
@@ -48,13 +62,9 @@ export function resolveAcademicsEntry(tokens: string[]): string {
   if (hasAny(tokens, ['STUDENT', 'PARENT'])) {
     return '/app/academics/my-academics';
   }
-  if (hasAny(tokens, ['TEACHER', 'STAFF']) && !hasAny(tokens, [
+  if (hasAny(tokens, ['STAFF']) && !hasAny(tokens, [
     'ORGANIZATION_ADMIN',
-    'ORGANIZATION_OWNER',
-    'INSTITUTION_ADMIN',
-    'COLLEGE_ADMIN',
-    'ADMIN',
-    'PRINCIPAL'
+    'ORGANIZATION_OWNER'
   ])) {
     return '/app/academics/my-classes';
   }
@@ -64,13 +74,8 @@ export function resolveAcademicsEntry(tokens: string[]): string {
 export function isOrgSetupRole(tokens: string[]): boolean {
   return hasAny(tokens, [
     'SUPER_ADMIN',
-    'PLATFORM_ADMIN',
     'ORGANIZATION_ADMIN',
-    'ORGANIZATION_OWNER',
-    'INSTITUTION_ADMIN',
-    'COLLEGE_ADMIN',
-    'ADMIN',
-    'PRINCIPAL'
+    'ORGANIZATION_OWNER'
   ]);
 }
 
@@ -80,13 +85,13 @@ export function resolveGlobalSearchScope(tokens: string[], isPlatform = false): 
   if (hasAny(tokens, ['STUDENT', 'PARENT'])) {
     return 'hidden';
   }
-  if (isPlatform || hasAny(tokens, ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'THINKERSCAVE_INTERNAL', 'INTERNAL_TEAM'])) {
+  if (isPlatform || hasAny(tokens, ['SUPER_ADMIN'])) {
     return 'platform';
   }
-  if (isOrgSetupRole(tokens) || hasAny(tokens, ['HR_MANAGER', 'ACADEMIC_COORDINATOR', 'RECEPTIONIST'])) {
+  if (isOrgSetupRole(tokens)) {
     return 'organization';
   }
-  if (hasAny(tokens, ['TEACHER', 'STAFF'])) {
+  if (hasAny(tokens, ['STAFF'])) {
     return 'teacher';
   }
   return 'organization';

@@ -1,0 +1,48 @@
+<p-dialog
+  header="Record Payment"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '540px', maxWidth: '95vw' }"
+>
+  <form [formGroup]="form" class="expense-dialog-form" (ngSubmit)="submit()">
+    <p class="expense-dialog-meta">
+      <strong>{{ expense?.expenseNumber }}</strong>
+      · Remaining {{ money(expense?.remainingAmount) }}
+    </p>
+
+    <div class="tc-form-field">
+      <label for="ep-amount">Amount *</label>
+      <input id="ep-amount" type="number" min="0.01" step="0.01" formControlName="amount" />
+    </div>
+    <div class="tc-form-field">
+      <label for="ep-paid-on">Paid On *</label>
+      <input id="ep-paid-on" type="date" formControlName="paidOn" />
+    </div>
+    <div class="tc-form-field">
+      <label for="ep-method">Payment Method</label>
+      <select id="ep-method" formControlName="paymentMethodId">
+        <option [ngValue]="null">Select method</option>
+        @for (m of methods; track m.feePaymentMethodId) {
+          <option [ngValue]="m.feePaymentMethodId">{{ m.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="tc-form-field">
+      <label for="ep-ref">Reference</label>
+      <input id="ep-ref" formControlName="referenceNumber" />
+    </div>
+    <div class="tc-form-field">
+      <label for="ep-remarks">Remarks</label>
+      <textarea id="ep-remarks" formControlName="remarks" rows="3"></textarea>
+    </div>
+
+    <div class="expense-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="visibleChange.emit(false)">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Recording…' : 'Record Payment' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

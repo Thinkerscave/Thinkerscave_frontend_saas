@@ -13,17 +13,17 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
+import { SoftRefreshKeys, SoftRefreshService } from '../../../../shared/ui/loading';
 
 import {
   EmploymentCategory,
   EmploymentStatus,
-  SalaryStructureRequest,
-  SalaryType,
   StaffCreateRequest,
   StaffDetail,
   StaffType
 } from '../../models/staff.model';
 import { StaffService } from '../../services/staff.service';
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 
 type WizardStep = 'personal' | 'employment';
 
@@ -52,6 +52,8 @@ export class CreateStaffComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly softRefresh = inject(SoftRefreshService);
+  private readonly backNav = inject(BackNavigationService);
 
   /** When true, renders as a right-side drawer (directory Add Staff flow). */
   @Input() drawerMode = false;
@@ -97,19 +99,11 @@ export class CreateStaffComponent implements OnInit {
   contractStartDate = '';
   contractEndDate = '';
 
-  // ── Salary ────────────────────────────────────────────────────────────────
-  salaryType: SalaryType = 'MONTHLY';
-  basicPay: number | null = null;
-  hra: number | null = null;
-  da: number | null = null;
-  specialAllowance: number | null = null;
-  transportAllowance: number | null = null;
-  otherAllowance: number | null = null;
+  // ── Bank (optional on create; salary configured in Finance → Payroll) ─────
   bankName = '';
   accountHolderName = '';
   accountNumber = '';
   ifscCode = '';
-  salaryEffectiveFrom = '';
 
   // ── Emergency ─────────────────────────────────────────────────────────────
   emergencyContactName = '';
@@ -177,17 +171,6 @@ export class CreateStaffComponent implements OnInit {
     { value: 'CONTRACT_COMPLETED', label: 'Contract Completed' }
   ];
 
-  readonly salaryTypeOptions: SelectOption<SalaryType>[] = [
-    { value: 'MONTHLY',    label: 'Monthly' },
-    { value: 'DAILY_WAGE', label: 'Daily Wage' }
-  ];
-
-  get grossSalary(): number {
-    return (this.basicPay ?? 0) + (this.hra ?? 0) + (this.da ?? 0)
-         + (this.specialAllowance ?? 0) + (this.transportAllowance ?? 0)
-         + (this.otherAllowance ?? 0);
-  }
-
   get activeStepIndex(): number {
     return this.steps.findIndex(s => s.id === this.activeStep);
   }
@@ -201,7 +184,6 @@ export class CreateStaffComponent implements OnInit {
     } else {
       // Set today as default joining date
       this.joiningDate = new Date().toISOString().substring(0, 10);
-      this.salaryEffectiveFrom = new Date().toISOString().substring(0, 10);
     }
   }
 
@@ -240,11 +222,6 @@ export class CreateStaffComponent implements OnInit {
     this.emergencyContactName     = s.emergencyContactName ?? '';
     this.emergencyContactRelation = s.emergencyContactRelation ?? '';
     this.emergencyContactNumber   = s.emergencyContactNumber ?? '';
-
-    if (s.salarySummary) {
-      this.salaryType          = s.salarySummary.salaryType;
-      this.salaryEffectiveFrom = s.salarySummary.effectiveFrom;
-    }
   }
 
   setStep(step: WizardStep): void { this.activeStep = step; }
@@ -268,7 +245,7 @@ export class CreateStaffComponent implements OnInit {
       this.closed.emit();
       return;
     }
-    this.router.navigate(['/app/staff/directory']);
+    this.backNav.back({ fallback: '/app/staff/directory' });
   }
 
   submit(): void {
@@ -339,30 +316,13 @@ export class CreateStaffComponent implements OnInit {
         .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
         .subscribe({
           next: (res: any) => {
-            // If create, also set salary structure if filled in
             const newId = res?.staffId ?? 0;
-            if (this.salaryEffectiveFrom && newId > 0) {
-              const salReq: SalaryStructureRequest = {
-                staffId: newId,
-                salaryType: this.salaryType,
-                basicPay: this.basicPay ?? undefined,
-                hra: this.hra ?? undefined,
-                da: this.da ?? undefined,
-                specialAllowance: this.specialAllowance ?? undefined,
-                transportAllowance: this.transportAllowance ?? undefined,
-                otherAllowance: this.otherAllowance ?? undefined,
-                bankName: this.bankName || undefined,
-                accountHolderName: this.accountHolderName || undefined,
-                accountNumber: this.accountNumber || undefined,
-                ifscCode: this.ifscCode || undefined,
-                effectiveFrom: this.salaryEffectiveFrom
-              };
-              this.api.createSalaryStructure(salReq).subscribe();
-            }
             if (this.drawerMode) {
+              this.softRefresh.mark(SoftRefreshKeys.staffDirectory, 'created');
               this.saved.emit(newId || undefined);
               return;
             }
+            this.softRefresh.mark(SoftRefreshKeys.staffDirectory, 'created');
             this.router.navigate(['/app/staff/profile', newId]);
           },
           error: (err: any) => {
