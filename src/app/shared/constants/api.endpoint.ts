@@ -55,6 +55,7 @@ export const academicsApi = {
   timetableSlotById: (id: number) => `${BASE}/academics/timetable/slots/${id}`,
   timetableDashboard: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/dashboard`,
   timetableConfiguration: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/configuration`,
+  timetableConfigurationTemplate: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/configuration/template`,
   timetableGenerate: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/generate`,
   timetableReadiness: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/readiness`,
   timetableGenerations: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/generations`,

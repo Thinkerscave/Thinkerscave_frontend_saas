@@ -144,6 +144,90 @@
   transition: opacity 0.15s ease;
 }
 
+/* Tab counters */
+.tt-tab__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 0.3rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #B45309; }
+.tt-tab__count--danger { background: rgba(239, 68, 68, 0.14); color: #DC2626; }
+
+.tt-btn--lg { font-size: 0.9rem; padding: 0.6rem 1.1rem; }
+
+/* Readiness hero */
+.tt-hero { display: flex; align-items: center; gap: 0.9rem; padding: 1rem 1.1rem; border-radius: 10px; border: 1px solid var(--tc-border); background: var(--tc-surface-card); margin-bottom: 1rem; }
+.tt-hero--ready { border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.05); }
+.tt-hero--blocked { border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.04); }
+.tt-hero__icon { font-size: 1.7rem; }
+.tt-hero--ready .tt-hero__icon { color: #059669; }
+.tt-hero--blocked .tt-hero__icon { color: #DC2626; }
+.tt-hero__body { flex: 1; min-width: 0; }
+.tt-hero__title { font-size: 1.02rem; font-weight: 700; color: var(--tc-heading); }
+.tt-hero__text { font-size: 0.83rem; color: var(--tc-text); margin-top: 0.15rem; line-height: 1.45; }
+.tt-hero__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+.tt-hero__hint { font-size: 0.74rem; color: var(--tc-text-muted); max-width: 240px; text-align: right; }
+
+.tt-summary-card--warn { border-color: rgba(245, 158, 11, 0.4); }
+.tt-summary-card--warn .tt-summary-card__value { color: #B45309; }
+
+/* Readiness issues */
+.tt-issue-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.tt-issue { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.7rem 0.8rem; border-radius: 8px; border: 1px solid var(--tc-border); background: var(--tc-bg); }
+.tt-issue--blocking { border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.03); }
+.tt-issue--warning { border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.03); }
+.tt-issue__icon { font-size: 1rem; margin-top: 0.1rem; }
+.tt-issue--blocking .tt-issue__icon { color: #DC2626; }
+.tt-issue--warning .tt-issue__icon { color: #D97706; }
+.tt-issue__body { flex: 1; min-width: 0; }
+.tt-issue__title { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; font-size: 0.86rem; font-weight: 600; color: var(--tc-heading); }
+.tt-issue__msg { font-size: 0.82rem; color: var(--tc-text); margin-top: 0.15rem; }
+.tt-issue__details { margin: 0.4rem 0 0.2rem; padding-left: 1.1rem; font-size: 0.78rem; color: var(--tc-text); line-height: 1.55; }
+.tt-link { background: none; border: none; padding: 0; color: #2563eb; font-size: 0.78rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; }
+.tt-link:hover { text-decoration: underline; }
+
+.tt-passed { margin-bottom: 1rem; }
+.tt-passed__list { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.tt-passed__item { display: flex; align-items: baseline; gap: 0.45rem; font-size: 0.8rem; color: var(--tc-text); }
+
+/* Version cards */
+.tt-version-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.75rem; }
+.tt-version-card { border: 1px solid var(--tc-border); border-radius: 10px; padding: 0.85rem 1rem; background: var(--tc-surface-card); }
+.tt-version-card__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tt-version-card__title { font-size: 0.92rem; font-weight: 600; color: var(--tc-heading); }
+.tt-version-card__meta { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.78rem; color: var(--tc-text-muted); margin: 0.35rem 0 0.6rem; }
+.tt-version-card__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* Banners */
+.tt-banner { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 0.75rem; line-height: 1.45; }
+.tt-banner i { margin-top: 0.15rem; }
+.tt-banner--info { background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); color: var(--tc-text); }
+.tt-banner--info i { color: #2563eb; }
+.tt-banner--warn { background: rgba(245, 158, 11, 0.07); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--tc-text); }
+.tt-banner--warn i { color: #D97706; }
+
+/* Configuration extras */
+.tt-field-block { margin-top: 1rem; }
+.tt-field-head { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+.tt-field-label { font-size: 0.82rem; font-weight: 600; color: var(--tc-text); }
+.tt-day-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.65rem; border-radius: 999px; border: 1px solid var(--tc-border); font-size: 0.8rem; cursor: pointer; user-select: none; }
+.tt-day-chip.is-on { border-color: #2563eb; background: rgba(37, 99, 235, 0.08); color: #1d4ed8; font-weight: 600; }
+.tt-day-chip.is-disabled { cursor: not-allowed; opacity: 0.75; }
+.tt-day-chip input { accent-color: #2563eb; margin: 0; }
+.tt-periods-table tr.is-break td { background: rgba(245, 158, 11, 0.05); }
+.tt-form-group input:disabled, .tt-form-group select:disabled, .tt-periods-table td input:disabled, .tt-periods-table td select:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* Grid extras */
+.tt-free { display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 0.72rem; color: var(--tc-text-muted); opacity: 0.7; }
+.tt-slot + .tt-slot { margin-top: 0.2rem; }
+
+/* Conflicts extras */
+.tt-conflict-card.is-closed { opacity: 0.6; }
+
+/* Utilities */
+.tt-ml-auto { margin-left: auto; }
+.tt-mt { margin-top: 0.75rem; }
+.tt-mb { margin: 0 0 0.6rem; }
+.tt-text-success { color: #059669; }
+.tt-text-danger { color: #DC2626; }
+.tt-text-warn { color: #D97706; }
+.tt-empty--inline { padding: 1rem; border: 1px dashed var(--tc-border); border-radius: 10px; }
+
 /* Resource dialog form */
 .tt-dialog-form { display: flex; flex-direction: column; gap: 0.65rem; }
 .tt-dialog-form .tt-form-group { margin: 0; }
@@ -151,4 +235,7 @@
 @media (max-width: 768px) {
   .tt-form { grid-template-columns: 1fr; }
   .tt-grid-toolbar { flex-direction: column; align-items: flex-start; }
+  .tt-hero { flex-direction: column; align-items: flex-start; }
+  .tt-hero__actions { align-items: flex-start; }
+  .tt-hero__hint { text-align: left; }
 }

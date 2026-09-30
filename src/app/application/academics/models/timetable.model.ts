@@ -22,14 +22,22 @@ export interface ReadinessSummary {
   requirements: number;
   teachers: number;
   resources: number;
+  weeklySlots: number;
+  unscheduledSubjects: number;
 }
 
 export interface ReadinessCheckItem {
   code: string;
+  title?: string;
   status: ReadinessCheckStatus;
   severity: ReadinessCheckSeverity;
   message: string;
   reference?: string;
+  /** Specific classes/sections/subjects/teachers/periods that need attention. */
+  details?: string[];
+  actionLabel?: string | null;
+  /** App route, or `tab:<name>` for a tab on the timetable page. */
+  actionRoute?: string | null;
 }
 
 export interface TimetableReadiness {
@@ -38,6 +46,8 @@ export interface TimetableReadiness {
   checks: ReadinessCheckItem[];
   blockingIssues: ReadinessCheckItem[];
   warnings: ReadinessCheckItem[];
+  configurationId?: number | null;
+  configurationName?: string | null;
 }
 
 export interface GenerationStartResponse {
@@ -92,6 +102,7 @@ export type ConflictType =
   | 'PERIOD_CAPACITY_CONFLICT'
   | 'WORKLOAD_CONFLICT'
   | 'SUBJECT_ALLOCATION_CONFLICT'
+  | 'SUBJECT_PREFERENCE_CONFLICT'
   | string;
 export type GridView = 'CLASS' | 'TEACHER' | 'ROOM';
 export type ResourceType = 'CLASSROOM' | 'LABORATORY' | 'ACTIVITY_ROOM' | 'AUDITORIUM' | 'OTHER';
@@ -120,12 +131,31 @@ export interface TimetableVersionSummary {
   openBlockingConflicts?: number;
 }
 
+export interface TimetableFilterOption {
+  id: number;
+  name: string;
+}
+
+export interface TimetableFilterClass {
+  classId: number;
+  name: string;
+  sections: TimetableFilterOption[];
+}
+
+export interface TimetableFilters {
+  classes: TimetableFilterClass[];
+  teachers: TimetableFilterOption[];
+  rooms: TimetableFilterOption[];
+}
+
 export interface TimetableDashboard {
   academicYearId: number;
   academicYearName: string;
   academicYearStatus: string;
   yearReadOnly: boolean;
   readinessChecks: ReadinessCheck[];
+  readiness?: TimetableReadiness;
+  filters?: TimetableFilters;
   overallStatus: OverallReadinessStatus;
   canGenerate: boolean;
   configurationSummary?: TimetableConfiguration | null;
@@ -164,6 +194,9 @@ export interface TimetableConfiguration {
   active?: boolean;
   workingDays: TimetableWorkingDay[];
   periods: TimetablePeriod[];
+  /** Set on unsaved templates: where the prefilled values came from. */
+  templateSource?: string | null;
+  lockedReason?: string | null;
 }
 
 export interface TimetableVersion {
@@ -215,9 +248,12 @@ export interface TimetableConflict {
   message: string;
   sectionId?: number;
   sectionName?: string;
+  className?: string;
   dayOfWeek?: DayOfWeek;
   periodId?: number;
+  periodName?: string;
   timetablePeriodId?: number;
+  resolvedAt?: string;
 }
 
 export interface TimetableGenerateResult {
