@@ -53,6 +53,16 @@ export const ADMISSIONS_ROOT = {
   breadcrumbLink: ['/app/admissions/leads']
 } as const;
 
+export const FRONT_DESK_ROOT = {
+  breadcrumb: 'Front Desk',
+  breadcrumbLink: ['/app/front-desk']
+} as const;
+
+export const DOCUMENTATION_ROOT = {
+  breadcrumb: 'Documentation',
+  breadcrumbLink: ['/app/documentation/collection-masters']
+} as const;
+
 export const ATTENDANCE_ROOT = {
   breadcrumb: 'Attendance',
   breadcrumbLink: ['/app/attendance/students']
@@ -665,6 +675,42 @@ export const ADMISSIONS_PAGES = {
     showBack: true,
     backFallback: '/app/admissions/applications'
   }
+} as const;
+
+const deskMain = (breadcrumb: string, pageTitle: string) => ({
+  breadcrumb,
+  pageTitle,
+  pageKind: 'main' as const,
+  hideBack: true
+});
+
+export const FRONT_DESK_PAGES = {
+  overview: deskMain('Daily Overview', 'Daily Overview'),
+  visitors: deskMain('Visitor Pass', 'Visitor Pass'),
+  activeVisitors: deskMain('Active Visitors', 'Active Visitors'),
+  inquiries: deskMain('Admission Inquiries', 'Admission Inquiries'),
+  onlineInquiries: deskMain('Online Inquiries', 'Online Inquiries'),
+  inquiry: {
+    breadcrumb: 'Inquiry',
+    pageTitle: 'Inquiry',
+    pageKind: 'detail' as const,
+    showBack: true,
+    backFallback: '/app/front-desk/inquiries'
+  },
+  appointments: deskMain('Appointments', 'Appointments'),
+  inward: deskMain('Inward Mail', 'Inward Mail'),
+  outward: deskMain('Outward Dispatch', 'Outward Dispatch'),
+  calls: deskMain('Call Logs', 'Call Logs'),
+  grievances: deskMain('Help Desk', 'Help Desk'),
+  certificates: deskMain('Certificate Requests', 'Certificate Requests'),
+  gatePass: deskMain('Early Exit', 'Early Exit')
+} as const;
+
+export const DOCUMENTATION_PAGES = {
+  collectionMasters: deskMain('Collection Master', 'Collection Master'),
+  materialMasters: deskMain('Material Master', 'Material Master'),
+  collections: deskMain('Document Collection', 'Document Collection'),
+  handovers: deskMain('Study Material Handover', 'Study Material Handover')
 } as const;
 
 export const ATTENDANCE_PAGES = {

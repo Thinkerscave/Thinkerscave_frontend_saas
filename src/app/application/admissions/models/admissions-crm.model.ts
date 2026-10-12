@@ -14,7 +14,7 @@ export type ApplicationStatus =
   | 'DOCUMENTS_PENDING' | 'FEE_PENDING'
   | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'ENROLLED';
 
-export type FollowUpType = 'CALL' | 'WHATSAPP' | 'EMAIL' | 'WALK_IN' | 'SMS' | 'OTHER';
+export type FollowUpType = 'CALL' | 'WHATSAPP' | 'EMAIL' | 'WALK_IN' | 'SMS' | 'BROCHURE' | 'ENTRANCE_TEST' | 'OTHER';
 export type FollowUpLifecycleStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
 export type DocumentCheckStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'MISSING';
 export type FeePaymentStatus = 'PENDING' | 'PAID' | 'WAIVED';
@@ -62,6 +62,7 @@ export interface LeadSearchRequest {
   counselorId?: number | null;
   source?: LeadSource | null;
   inquirySource?: LeadSource | null;
+  sources?: LeadSource[] | null;
   classInterestedIn?: string | null;
   classInterested?: string | null;
   academicYearId?: number | null;
@@ -230,6 +231,7 @@ export interface LeadFullDetail {
   applicationId?: number | null;
   applicationNumber?: string | null;
   applicationStatus?: string | null;
+  applicationFeeStatus?: string | null;
   studentId?: number | null;
   studentCode?: string | null;
   admissionNumber?: string | null;

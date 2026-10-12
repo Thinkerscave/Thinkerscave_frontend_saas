@@ -3,6 +3,8 @@ import {
   ACADEMICS_PAGES, ACADEMICS_ROOT,
   ACCESS_MGMT_ROOT, ACCESS_PAGES,
   ADMISSIONS_PAGES, ADMISSIONS_ROOT,
+  DOCUMENTATION_PAGES, DOCUMENTATION_ROOT,
+  FRONT_DESK_PAGES, FRONT_DESK_ROOT,
   ATTENDANCE_PAGES, ATTENDANCE_ROOT,
   EXPENSES_PAGES, EXPENSES_ROOT,
   FEES_PAGES, FEES_ROOT,
@@ -313,6 +315,48 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'manage', pathMatch: 'full', redirectTo: '/app/admissions/leads' },
       { path: 'followup', pathMatch: 'full', redirectTo: '/app/admissions/follow-ups' },
       { path: 'detail/:id', pathMatch: 'full', redirectTo: '/app/admissions/lead/:id' }
+    ]
+  },
+  {
+    path: 'front-desk',
+    data: { ...FRONT_DESK_ROOT },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./front-desk/front-desk-workspace.component').then(m => m.FrontDeskWorkspaceComponent),
+        children: [
+          { path: '', data: { ...FRONT_DESK_PAGES.overview }, loadComponent: () => import('./front-desk/pages/overview/front-desk-overview.component').then(m => m.FrontDeskOverviewComponent) },
+          { path: 'visitors', data: { ...FRONT_DESK_PAGES.visitors }, loadComponent: () => import('./front-desk/pages/visitors/visitor-pass.component').then(m => m.VisitorPassComponent) },
+          { path: 'visitors/active', data: { ...FRONT_DESK_PAGES.activeVisitors }, loadComponent: () => import('./front-desk/pages/visitors/active-visitors.component').then(m => m.ActiveVisitorsComponent) },
+          { path: 'inquiries', data: { ...FRONT_DESK_PAGES.inquiries }, loadComponent: () => import('./front-desk/pages/inquiries/front-desk-inquiries.component').then(m => m.FrontDeskInquiriesComponent) },
+          { path: 'inquiries/online', data: { ...FRONT_DESK_PAGES.onlineInquiries, online: true }, loadComponent: () => import('./front-desk/pages/inquiries/front-desk-inquiries.component').then(m => m.FrontDeskInquiriesComponent) },
+          { path: 'inquiries/:id', data: { ...FRONT_DESK_PAGES.inquiry }, loadComponent: () => import('./front-desk/pages/inquiries/front-desk-inquiry-detail.component').then(m => m.FrontDeskInquiryDetailComponent) },
+          { path: 'appointments', data: { ...FRONT_DESK_PAGES.appointments, deskKind: 'appointments' }, loadComponent: () => import('./front-desk/pages/records/desk-record-page.component').then(m => m.DeskRecordPageComponent) },
+          { path: 'postal/inward', data: { ...FRONT_DESK_PAGES.inward, deskKind: 'inward' }, loadComponent: () => import('./front-desk/pages/records/desk-record-page.component').then(m => m.DeskRecordPageComponent) },
+          { path: 'postal/outward', data: { ...FRONT_DESK_PAGES.outward, deskKind: 'outward' }, loadComponent: () => import('./front-desk/pages/records/desk-record-page.component').then(m => m.DeskRecordPageComponent) },
+          { path: 'calls', data: { ...FRONT_DESK_PAGES.calls, deskKind: 'calls' }, loadComponent: () => import('./front-desk/pages/records/desk-record-page.component').then(m => m.DeskRecordPageComponent) },
+          { path: 'grievances', data: { ...FRONT_DESK_PAGES.grievances, deskKind: 'grievances' }, loadComponent: () => import('./front-desk/pages/records/desk-record-page.component').then(m => m.DeskRecordPageComponent) },
+          { path: 'certificates', data: { ...FRONT_DESK_PAGES.certificates }, loadComponent: () => import('./front-desk/pages/certificates/certificate-requests.component').then(m => m.CertificateRequestsComponent) },
+          { path: 'gate-pass', data: { ...FRONT_DESK_PAGES.gatePass }, loadComponent: () => import('./front-desk/pages/gate-pass/gate-pass-page.component').then(m => m.GatePassPageComponent) }
+        ]
+      }
+    ]
+  },
+  {
+    path: 'documentation',
+    data: { ...DOCUMENTATION_ROOT },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./documentation/documentation-workspace.component').then(m => m.DocumentationWorkspaceComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'collection-masters' },
+          { path: 'collection-masters', data: { ...DOCUMENTATION_PAGES.collectionMasters, masterKind: 'collection' }, loadComponent: () => import('./documentation/pages/master-page.component').then(m => m.DocumentationMasterPageComponent) },
+          { path: 'material-masters', data: { ...DOCUMENTATION_PAGES.materialMasters, masterKind: 'material' }, loadComponent: () => import('./documentation/pages/master-page.component').then(m => m.DocumentationMasterPageComponent) },
+          { path: 'collections', data: { ...DOCUMENTATION_PAGES.collections }, loadComponent: () => import('./documentation/pages/collection-page.component').then(m => m.DocumentCollectionPageComponent) },
+          { path: 'handovers', data: { ...DOCUMENTATION_PAGES.handovers }, loadComponent: () => import('./documentation/pages/handover-page.component').then(m => m.StudyMaterialHandoverPageComponent) }
+        ]
+      }
     ]
   },
   {

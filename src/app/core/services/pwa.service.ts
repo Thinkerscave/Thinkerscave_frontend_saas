@@ -55,15 +55,15 @@ export class PwaService {
     const syncInstalled = () => this.zone.run(() => this.installedSignal.set(this.detectInstalled()));
     media.addEventListener?.('change', syncInstalled);
 
-    if (this.swUpdate?.isEnabled) {
-      this.swUpdate.versionUpdates
+    if ((this.swUpdate as any)?.isEnabled) {
+      this.swUpdate!.versionUpdates
         .pipe(filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'))
         .subscribe(() => this.zone.run(() => this.updateReadySignal.set(true)));
 
       // Periodic check while the app is open.
-      void this.swUpdate.checkForUpdate().catch(() => undefined);
+      void (this.swUpdate as any)?.checkForUpdate().catch(() => undefined);
       setInterval(() => {
-        void this.swUpdate?.checkForUpdate().catch(() => undefined);
+        void (this.swUpdate as any)?.checkForUpdate().catch(() => undefined);
       }, 60 * 60 * 1000);
     }
   }
@@ -96,12 +96,12 @@ export class PwaService {
   }
 
   async applyUpdate(): Promise<void> {
-    if (!this.swUpdate?.isEnabled) {
+    if (!(this.swUpdate as any)?.isEnabled) {
       window.location.reload();
       return;
     }
     try {
-      await this.swUpdate.activateUpdate();
+      await (this.swUpdate as any).activateUpdate();
     } finally {
       document.location.reload();
     }

@@ -4,6 +4,8 @@ import { environment } from '../../environments/environment';
 
 export interface PublicInquirySubmitRequest {
   studentName?: string;
+  parentName?: string;
+  email?: string;
   mobileNumber: string;
   classId: number;
   consent: boolean;
