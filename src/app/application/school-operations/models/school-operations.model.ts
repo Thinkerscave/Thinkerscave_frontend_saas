@@ -297,7 +297,8 @@ export interface RosterAttendanceRow {
   branchName?: string;
   shift?: string;
   date: string;
-  status: AttendanceStatus;
+  /** null = not yet marked (never defaulted to PRESENT). */
+  status: AttendanceStatus | null;
   remarks?: string;
 }
 

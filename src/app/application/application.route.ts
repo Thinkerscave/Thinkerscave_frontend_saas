@@ -14,7 +14,7 @@ import {
   USER_PROFILE_PAGE
 } from '../core/config/page-route-meta';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
-import { PROMOTION_MANAGEMENT_ROUTES } from './promotion-management/promotion-management.routes';
+import { TRANSFER_MANAGEMENT_ROUTES } from './transfer-management/transfer-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
 
 export const APPLICATION_ROUTES: Routes = [
@@ -45,7 +45,6 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'subscription-plans/:planId', pathMatch: 'full', redirectTo: 'subscription-plans' },
       { path: 'promotions', data: { ...TENANT_PAGES.promotions }, loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
       { path: 'menus', data: { ...TENANT_PAGES.menuManagement }, loadComponent: () => import('./tenant-management/pages/menu-management/menu-management.component').then(m => m.MenuManagementComponent) },
-      { path: 'roles', data: { ...TENANT_PAGES.roleManagement }, loadComponent: () => import('./tenant-management/pages/platform-roles/platform-roles.component').then(m => m.PlatformRolesComponent) },
       { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog, catalogMode: 'platform' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'tenant-health', data: { ...TENANT_PAGES.tenantHealth }, loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
       { path: 'platform-health', pathMatch: 'full', redirectTo: 'tenant-health' },
@@ -336,7 +335,6 @@ export const APPLICATION_ROUTES: Routes = [
           { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
-          { path: 'promotion', pathMatch: 'full', redirectTo: 'academic-movement' },
           { path: 'student-movement', pathMatch: 'full', redirectTo: 'transfers' },
           { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
           { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
@@ -418,7 +416,7 @@ export const APPLICATION_ROUTES: Routes = [
   },
   {
     path: '',
-    children: PROMOTION_MANAGEMENT_ROUTES
+    children: TRANSFER_MANAGEMENT_ROUTES
   },
   {
     path: '',

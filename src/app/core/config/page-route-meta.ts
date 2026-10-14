@@ -270,13 +270,6 @@ export const TENANT_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
-  roleManagement: {
-    breadcrumb: 'Role Management',
-    pageTitle: 'Role Management',
-    pageSubtitle: 'Platform roles used across tenants.',
-    pageKind: 'main',
-    hideBack: true
-  },
   featureCatalog: {
     breadcrumb: 'Feature Catalog',
     pageTitle: 'Feature Catalog',
@@ -793,22 +786,7 @@ export const USER_PROFILE_PAGE = {
   backFallback: '/app'
 } as const;
 
-export const PROMOTION_PAGES = {
-  batches: {
-    breadcrumb: 'Promotion Batches',
-    pageTitle: 'Promotion Batches',
-    pageSubtitle: 'Promote students from one academic year to the next.',
-    pageKind: 'main',
-    hideBack: true
-  },
-  batchNew: {
-    breadcrumb: 'New Promotion Batch',
-    pageTitle: 'New Promotion Batch',
-    pageSubtitle: 'Create a draft batch, then preview and execute from the list.',
-    pageKind: 'detail',
-    showBack: true,
-    backFallback: '/app/promotions'
-  },
+export const TRANSFER_PAGES = {
   transfers: {
     breadcrumb: 'Transfer Requests',
     pageTitle: 'Transfer Requests',

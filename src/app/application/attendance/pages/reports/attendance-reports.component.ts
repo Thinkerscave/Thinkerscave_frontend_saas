@@ -13,6 +13,7 @@ import {
   SaasPillComponent
 } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
+import { StudentAttendanceApiService } from '../../services/student-attendance-api.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   AttendanceClassSummaryRow,
@@ -20,8 +21,10 @@ import {
   AttendanceMonthlyTrendRow,
   AttendanceSummaryReport,
   ClassRecord,
+  SectionRecord,
   StaffAttendanceReportRow
 } from '../../../school-operations/models/school-operations.model';
+import { AcademicLookupItem } from '../../models/student-attendance.model';
 
 interface SelectOption { label: string; value: string; }
 
@@ -46,10 +49,12 @@ export class AttendanceReportsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dataService = inject(SchoolOperationsDataService);
+  private readonly api = inject(StudentAttendanceApiService);
 
   loading = true;
   errorMessage = '';
   classes: ClassRecord[] = [];
+  sections: SectionRecord[] = [];
   report: AttendanceSummaryReport | null = null;
   staffRows: StaffAttendanceReportRow[] = [];
 
@@ -58,7 +63,7 @@ export class AttendanceReportsComponent implements OnInit {
     fromDate: this.dataService.dateBeforeDays(30),
     toDate: this.dataService.today(),
     classId: 'all',
-    sectionName: 'all'
+    sectionId: 'all'
   };
 
   readonly reportTypeOptions: SelectOption[] = [
@@ -78,16 +83,22 @@ export class AttendanceReportsComponent implements OnInit {
   defaulterThreshold = 75;
 
   ngOnInit(): void {
-    this.dataService.loadAttendanceWorkspace()
+    this.loadLookups();
+    this.refresh();
+  }
+
+  private loadLookups(): void {
+    this.api.getYears()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: data => {
-          this.classes = data.classes ?? [];
-          this.cdr.markForCheck();
+        next: years => {
+          const current = years.find(y => (y.status ?? '').toUpperCase() === 'CURRENT');
+          const yearId = current?.id ?? years[0]?.id ?? null;
+          if (yearId != null) { this.loadClasses(yearId); }
+          else { this.cdr.markForCheck(); }
         },
-        error: () => { this.classes = []; }
+        error: () => { this.cdr.markForCheck(); }
       });
-    this.refresh();
   }
 
   get classSelectOptions(): SelectOption[] {
@@ -98,17 +109,54 @@ export class AttendanceReportsComponent implements OnInit {
   }
 
   get sectionSelectOptions(): SelectOption[] {
-    return [{ label: 'All Sections', value: 'all' }];
+    return [
+      { label: 'All Sections', value: 'all' },
+      ...this.sections.map(s => ({ label: s.sectionName, value: String(s.sectionId) }))
+    ];
+  }
+
+  onClassChanged(): void {
+    this.filters.sectionId = 'all';
+    this.sections = [];
+    const classId = this.filters.classId !== 'all' ? Number(this.filters.classId) : null;
+    if (classId != null) { this.loadSections(classId); }
+    this.refresh();
+  }
+
+  private loadClasses(yearId: number): void {
+    this.api.getClassesByYear(yearId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: items => {
+          this.classes = (items ?? []).map((i: AcademicLookupItem) => ({ classId: i.id, className: i.name }));
+          this.cdr.markForCheck();
+        },
+        error: () => { this.classes = []; this.cdr.markForCheck(); }
+      });
+  }
+
+  private loadSections(classId: number): void {
+    this.api.getSectionsByClass(classId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: items => {
+          this.sections = (items ?? []).map((i: AcademicLookupItem) => ({ sectionId: i.id, sectionName: i.name }));
+          this.cdr.markForCheck();
+        },
+        error: () => { this.sections = []; this.cdr.markForCheck(); }
+      });
   }
 
   refresh(): void {
     this.loading = true;
     this.errorMessage = '';
     const classId = this.filters.classId !== 'all' ? Number(this.filters.classId) : null;
+    const sectionId = this.filters.sectionId !== 'all' ? Number(this.filters.sectionId) : null;
     const payload = {
       fromDate: this.filters.fromDate,
       toDate: this.filters.toDate,
       classId,
+      sectionId,
       defaulterThreshold: this.defaulterThreshold
     };
 
@@ -140,8 +188,9 @@ export class AttendanceReportsComponent implements OnInit {
       fromDate: this.dataService.dateBeforeDays(30),
       toDate: this.dataService.today(),
       classId: 'all',
-      sectionName: 'all'
+      sectionId: 'all'
     };
+    this.sections = [];
     this.defaulterThreshold = 75;
     this.refresh();
   }

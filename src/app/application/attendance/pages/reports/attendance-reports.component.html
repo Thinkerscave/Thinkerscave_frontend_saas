@@ -26,15 +26,18 @@
         optionValue="value"
         [filter]="true"
         filterBy="label"
-        appendTo="body">
+        appendTo="body"
+        (onChange)="onClassChanged()">
       </p-dropdown>
     </label>
     <label class="saas-field"><span>Section</span>
       <p-dropdown
         [options]="sectionSelectOptions"
-        [(ngModel)]="filters.sectionName"
+        [(ngModel)]="filters.sectionId"
         optionLabel="label"
         optionValue="value"
+        [filter]="true"
+        filterBy="label"
         appendTo="body">
       </p-dropdown>
     </label>

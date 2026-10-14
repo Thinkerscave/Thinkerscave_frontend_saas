@@ -161,6 +161,12 @@ export const passwordApi = {
   reset: `${PASS_BASE}/auth/reset-password`,
 };
 
+export const academicsLookupApi = {
+  years: `${BASE}/academics/lookup/years`,
+  classesByYear: (yearId: number) => `${BASE}/academics/lookup/years/${yearId}/classes`,
+  sectionsByClass: (classId: number) => `${BASE}/academics/lookup/classes/${classId}/sections`,
+};
+
 export const attendanceApi = {
   base: `${BASE}/attendance`,
   byDateAndType: (date: string, type: string) => `${BASE}/attendance?date=${date}&type=${type}`,
@@ -173,6 +179,25 @@ export const attendanceApi = {
   copyPrevious: (classId: number, targetDate: string, sectionId?: number | null) => {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
     return `${BASE}/attendance/students/copy-previous?classId=${classId}&targetDate=${targetDate}${sec}`;
+  },
+  studentRoster: (classId: number, sectionId: number | null, date: string) => {
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/students/roster?classId=${classId}${sec}&date=${date}`;
+  },
+  studentSessions: (from: string, to: string, classId: number | null, sectionId: number | null) => {
+    const cls = classId != null ? `&classId=${classId}` : '';
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/students/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${cls}${sec}`;
+  },
+  studentDaily: `${BASE}/attendance/students/daily`,
+  studentClass: (classId: number, sectionId: number | null, date: string) => {
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/students/class?classId=${classId}${sec}&date=${date}`;
+  },
+  calendar: (year: number, month: number, classId: number | null, sectionId: number | null) => {
+    const cls = classId != null ? `&classId=${classId}` : '';
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/calendar?year=${year}&month=${month}${cls}${sec}`;
   },
   reports: {
     summary: `${BASE}/attendance/reports/summary`,

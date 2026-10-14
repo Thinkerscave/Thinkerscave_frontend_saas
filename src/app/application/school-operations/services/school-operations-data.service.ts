@@ -96,7 +96,9 @@ export class SchoolOperationsDataService {
   }
 
   saveAttendanceBatch(rows: RosterAttendanceRow[], type: Exclude<AttendanceType, 'HOSTEL'>): Observable<AttendanceRecord[]> {
-    const requests = rows.map(row => {
+    // Unmarked rows (status === null) are never persisted — attendance is opt-in, not defaulted to PRESENT.
+    const markedRows = rows.filter((row): row is RosterAttendanceRow & { status: AttendanceStatus } => !!row.status);
+    const requests = markedRows.map(row => {
       const payload: AttendanceRecord = {
         attendanceType: type,
         referenceId: row.referenceId,
@@ -336,7 +338,7 @@ export class SchoolOperationsDataService {
       className: student.className,
       sectionName: student.sectionName,
       date,
-      status: record?.status ?? 'PRESENT',
+      status: record?.status ?? null,
       remarks: record?.remarks ?? ''
     };
   }
@@ -354,7 +356,7 @@ export class SchoolOperationsDataService {
       branchName: staff.branchName,
       shift: record?.shift ?? shift,
       date,
-      status: record?.status ?? 'PRESENT',
+      status: record?.status ?? null,
       remarks: record?.remarks ?? ''
     };
   }

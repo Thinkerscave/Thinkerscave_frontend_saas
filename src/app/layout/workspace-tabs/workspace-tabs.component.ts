@@ -105,10 +105,9 @@ export class WorkspaceTabsComponent implements OnInit {
       label: 'Platform Catalog',
       eyebrow: 'Catalogue',
       icon: 'pi pi-th-large',
-      matcher: /^\/app\/tenant-management\/(menus|roles|feature-catalog)(?:\/|$)/,
+      matcher: /^\/app\/tenant-management\/(menus|feature-catalog)(?:\/|$)/,
       tabs: [
         { label: 'Menu Management', icon: 'pi pi-sitemap', route: '/app/tenant-management/menus' },
-        { label: 'Role Management', icon: 'pi pi-user-edit', route: '/app/tenant-management/roles' },
         { label: 'Feature Catalog', icon: 'pi pi-box', route: '/app/tenant-management/feature-catalog' }
       ]
     },

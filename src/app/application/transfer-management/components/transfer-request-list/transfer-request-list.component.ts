@@ -11,7 +11,7 @@ import { StatusBadgeComponent } from '../../../../shared/components/status-badge
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 import { KpiCardComponent } from '../../../../shared/components/kpi-card/kpi-card.component';
-import { TransferRequest, TransferRequestService, TransferStatus } from '../../services/promotion.service';
+import { TransferRequest, TransferRequestService, TransferStatus } from '../../services/transfer.service';
 
 /**
  * Lists transfer requests with workflow KPIs. Inline actions move a request
