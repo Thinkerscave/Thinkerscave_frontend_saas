@@ -309,16 +309,16 @@ export const ACCESS_PAGES = {
     hideBack: true
   },
   roles: {
-    breadcrumb: 'Roles & Responsibilities',
-    pageTitle: 'Roles & Responsibilities',
-    pageSubtitle: 'Define organizational roles and assign menu permissions',
+    breadcrumb: 'Roles',
+    pageTitle: 'Roles',
+    pageSubtitle: 'Define global roles and assign default menu permissions across all organizations',
     pageKind: 'main',
     hideBack: true
   },
   roleWorkspace: {
     breadcrumb: 'Role Workspace',
     pageTitle: 'Role Workspace',
-    pageSubtitle: 'Role details and menu/submenu assignment for this organization.',
+    pageSubtitle: 'Configure default menu permissions for this role across all organizations.',
     pageKind: 'detail',
     showBack: true,
     backFallback: '/app/access-management/roles'

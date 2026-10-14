@@ -109,10 +109,10 @@ export const accessApi = {
   roleSearch: `${ACCESS_BASE}/roles/search`,
   activateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/activate`,
   deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
-  rolePermissions: (roleId: number, organizationId: number) =>
-    `${ACCESS_BASE}/roles/${roleId}/permissions?organizationId=${organizationId}`,
-  rolePermissionByMenu: (roleId: number, menuId: number, organizationId: number) =>
-    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}?organizationId=${organizationId}`,
+  rolePermissions: (roleId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions`,
+  rolePermissionByMenu: (roleId: number, menuId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}`,
   menus: `${ACCESS_BASE}/menus`,
   menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
   menuTree: `${ACCESS_BASE}/menus/tree`,

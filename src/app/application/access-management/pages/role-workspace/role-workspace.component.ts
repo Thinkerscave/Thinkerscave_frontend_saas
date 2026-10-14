@@ -12,9 +12,8 @@ import { AccessManagementService } from '../../services/access-management.servic
 import { roleTypeLabel } from '../../utils/access-display.util';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
 import { LoginService } from '../../../../core/services/login.service';
+import { CanComponentDeactivate } from '../../../../core/guard/unsaved-changes.guard';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
-import { OrganizationSummary } from '../../../tenant-management/models/platform.model';
-import { PlatformManagementService } from '../../../tenant-management/services/platform-management.service';
 import {
   SaasPageHeaderComponent,
   SaasPanelComponent,
@@ -41,7 +40,7 @@ type Privilege = 'canView' | 'canManage' | 'canApprove';
   templateUrl: './role-workspace.component.html',
   styleUrl: './role-workspace.component.scss'
 })
-export class RoleWorkspaceComponent implements OnInit {
+export class RoleWorkspaceComponent implements OnInit, CanComponentDeactivate {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(AccessManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -49,7 +48,6 @@ export class RoleWorkspaceComponent implements OnInit {
   private readonly messages = inject(MessageService);
   private readonly pageHeader = inject(BreadCrumbService);
   private readonly login = inject(LoginService);
-  private readonly platformApi = inject(PlatformManagementService);
 
   loading = true;
   saving = false;
@@ -57,8 +55,6 @@ export class RoleWorkspaceComponent implements OnInit {
   errorMessage = '';
   roleId = 0;
   role: AccessRole | null = null;
-  targetOrganizations: OrganizationSummary[] = [];
-  selectedOrganizationId = 0;
   rows: PermissionMatrixRow[] = [];
   modules: MenuAssignNode[] = [];
   search = '';
@@ -69,11 +65,16 @@ export class RoleWorkspaceComponent implements OnInit {
 
   get canConfigure(): boolean {
     if (this.login.getLoginContext() === 'PLATFORM') {
-      return this.selectedOrganizationId > 0;
+      return true;
     }
     const roles = this.login.getUserRole() ?? [];
     return roles.some(role => this.normalizeRoleToken(role) === 'SUPER_ADMIN');
   }
+
+  hasUnsavedChanges = (): boolean => this.editingMenus && !this.saving;
+
+  confirmLeaveMessage = (): string =>
+    'Menu permissions have not been saved. Discard your changes and leave?';
 
   get assignedMenuCount(): number {
     return this.rows.filter(row => this.granted(row)).length;
@@ -89,35 +90,7 @@ export class RoleWorkspaceComponent implements OnInit {
 
   ngOnInit(): void {
     this.roleId = Number(this.route.snapshot.paramMap.get('roleId'));
-    if (this.login.getLoginContext() !== 'PLATFORM') {
-      this.selectedOrganizationId = this.api.organizationId();
-      this.load();
-      return;
-    }
-
-    this.loading = true;
-    this.platformApi.getOrganizations({
-      status: 'ACTIVE',
-      page: 0,
-      size: 100,
-      sort: 'organizationName,asc'
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: page => {
-        this.targetOrganizations = (page.content ?? [])
-          .filter(organization => !!organization.tenantIdentifier);
-        const requestedId = Number(this.route.snapshot.queryParamMap.get('organizationId') ?? 0);
-        const currentId = this.api.organizationId();
-        this.selectedOrganizationId = this.targetOrganizations.some(org => org.id === requestedId)
-          ? requestedId
-          : this.targetOrganizations.some(org => org.id === currentId) ? currentId : 0;
-        this.load();
-      },
-      error: () => {
-        this.errorMessage = 'Unable to load provisioned organizations.';
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+    this.load();
   }
 
   load(): void {
@@ -130,24 +103,9 @@ export class RoleWorkspaceComponent implements OnInit {
     this.errorMessage = '';
     this.editingMenus = false;
     this.search = '';
-    if (!this.selectedOrganizationId) {
-      this.api.getRole(this.roleId).pipe(
-        finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
-        takeUntilDestroyed(this.destroyRef)
-      ).subscribe({
-        next: role => {
-          this.role = role;
-          this.rows = [];
-          this.modules = [];
-          this.pageHeader.setPageSubtitle(role?.roleCode || 'Role menu assignment');
-        },
-        error: () => this.errorMessage = 'Unable to load role workspace.'
-      });
-      return;
-    }
     forkJoin({
       role: this.api.getRole(this.roleId),
-      matrix: this.api.getPermissionMatrix(this.roleId, this.selectedOrganizationId)
+      matrix: this.api.getPermissionMatrix(this.roleId)
     }).pipe(
       finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef)
@@ -156,7 +114,7 @@ export class RoleWorkspaceComponent implements OnInit {
         this.role = role;
         this.rows = (matrix.rows ?? []).map(r => ({ ...r }));
         this.modules = this.buildTree(this.rows);
-        this.pageHeader.setPageSubtitle(role?.roleCode || 'Role menu assignment');
+        this.pageHeader.setPageSubtitle(role?.roleCode || 'Global role menu assignment');
       },
       error: () => {
         this.errorMessage = 'Unable to load role workspace.';
@@ -165,11 +123,6 @@ export class RoleWorkspaceComponent implements OnInit {
         this.modules = [];
       }
     });
-  }
-
-  onOrganizationChange(): void {
-    this.editingMenus = false;
-    this.load();
   }
 
   startEditMenus(): void {
@@ -230,7 +183,7 @@ export class RoleWorkspaceComponent implements OnInit {
       canView: !!r.canView,
       canManage: !!r.canManage,
       canApprove: !!r.canApprove
-    })), this.selectedOrganizationId).pipe(
+    }))).pipe(
       finalize(() => { this.saving = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
@@ -239,14 +192,14 @@ export class RoleWorkspaceComponent implements OnInit {
         this.messages.add({
           severity: 'success',
           summary: 'Menus saved',
-          detail: 'Role menu and submenu assignment updated.'
+          detail: 'Global role menu permissions updated and synced to all tenants.'
         });
         this.load();
       },
       error: () => this.messages.add({
         severity: 'error',
         summary: 'Save failed',
-        detail: 'Could not update role menu assignment.'
+        detail: 'Could not update global role menu permissions.'
       })
     });
   }

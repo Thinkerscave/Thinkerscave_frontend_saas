@@ -16,6 +16,7 @@ import {
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { TRANSFER_MANAGEMENT_ROUTES } from './transfer-management/transfer-management.routes';
 import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
+import { unsavedChangesGuard } from '../core/guard/unsaved-changes.guard';
 
 export const APPLICATION_ROUTES: Routes = [
   {
@@ -74,7 +75,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
       { path: 'dashboard', pathMatch: 'full', redirectTo: 'users' },
       { path: 'roles', data: { ...ACCESS_PAGES.roles }, loadComponent: () => import('./access-management/pages/roles-list/roles-list.component').then(m => m.RolesListComponent) },
-      { path: 'roles/:roleId', data: { ...ACCESS_PAGES.roleWorkspace }, loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
+      { path: 'roles/:roleId', data: { ...ACCESS_PAGES.roleWorkspace }, canDeactivate: [unsavedChangesGuard], loadComponent: () => import('./access-management/pages/role-workspace/role-workspace.component').then(m => m.RoleWorkspaceComponent) },
       { path: 'feature-catalog', data: { ...ACCESS_PAGES.featureCatalog, catalogMode: 'organization' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
       { path: 'menus', pathMatch: 'full', redirectTo: 'feature-catalog' },
       { path: 'responsibilities', data: { ...ACCESS_PAGES.responsibilities }, loadComponent: () => import('./access-management/pages/responsibilities-list/responsibilities-list.component').then(m => m.ResponsibilitiesListComponent) },
