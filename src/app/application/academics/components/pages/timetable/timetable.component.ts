@@ -264,6 +264,10 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
+  openTeacherArrangements(): void {
+    void this.router.navigate(['/app/academics/teacher-arrangement']);
+  }
+
   reload(): void {
     if (!this.selectedYearId) return;
     const yearId = this.selectedYearId;

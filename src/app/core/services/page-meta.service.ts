@@ -111,7 +111,10 @@ export class PageMetaService {
     while (route.firstChild) {
       route = route.firstChild;
       const snap = route.snapshot;
-      pathParts.push(...snap.url.map(segment => segment.path));
+      if (!snap) {
+        break;
+      }
+      pathParts.push(...(snap.url ?? []).map(segment => segment.path));
 
       const label = snap.data['breadcrumb'] as string | undefined;
       if (label) {

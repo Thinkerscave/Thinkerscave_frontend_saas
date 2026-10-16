@@ -133,6 +133,13 @@ export const ACADEMICS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
+  teacherArrangement: {
+    breadcrumb: 'Teacher Arrangements',
+    pageTitle: 'Teacher Arrangements',
+    pageSubtitle: 'Assign and approve substitutes for scheduled teaching periods.',
+    pageKind: 'main',
+    hideBack: true
+  },
   academicCalendar: {
     breadcrumb: 'Academic Calendar',
     pageTitle: 'Academic Calendar',

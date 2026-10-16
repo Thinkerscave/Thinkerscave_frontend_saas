@@ -272,7 +272,7 @@ export class StudentsWorkspaceService {
       .pipe(map(() => void 0));
   }
 
-  createStudentWizard(payload: StudentWizardRequest): Observable<void> {
+  createStudentWizard(payload: StudentWizardRequest, photo?: File | null): Observable<void> {
     const primary = payload.parents?.[0];
     const secondary = payload.parents?.[1];
     const body: Record<string, unknown> = {
@@ -334,7 +334,12 @@ export class StudentsWorkspaceService {
       body['secondaryParentEmail'] = secondary.email ?? null;
       body['secondaryParentOccupation'] = secondary.occupation ?? null;
     }
-    return this.http.post<ApiEnvelope<unknown>>(this.studentsBase, body).pipe(map(() => void 0));
+    const formData = new FormData();
+    formData.append('studentData', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+    if (photo) formData.append('photo', photo, photo.name);
+    return this.http
+      .post<ApiEnvelope<unknown>>(`${this.studentsBase}/registerStudent`, formData)
+      .pipe(map(() => void 0));
   }
 
   updateStudentStatus(studentId: number, status: StudentStatus): Observable<void> {

@@ -81,10 +81,22 @@ export class AttendanceReportsComponent implements OnInit {
   ];
 
   defaulterThreshold = 75;
+  private organizationThreshold = 75;
+  private customThreshold = false;
 
   ngOnInit(): void {
     this.loadLookups();
-    this.refresh();
+    this.dataService.getAttendanceSettings()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: settings => {
+          this.organizationThreshold = settings.minStudentAttendancePercent;
+          this.defaulterThreshold = this.organizationThreshold;
+          this.refresh();
+          this.cdr.markForCheck();
+        },
+        error: () => this.refresh()
+      });
   }
 
   private loadLookups(): void {
@@ -157,7 +169,7 @@ export class AttendanceReportsComponent implements OnInit {
       toDate: this.filters.toDate,
       classId,
       sectionId,
-      defaulterThreshold: this.defaulterThreshold
+      ...(this.customThreshold ? { defaulterThreshold: this.defaulterThreshold } : {})
     };
 
     forkJoin({
@@ -191,7 +203,8 @@ export class AttendanceReportsComponent implements OnInit {
       sectionId: 'all'
     };
     this.sections = [];
-    this.defaulterThreshold = 75;
+    this.defaulterThreshold = this.organizationThreshold;
+    this.customThreshold = false;
     this.refresh();
   }
 
@@ -267,6 +280,7 @@ export class AttendanceReportsComponent implements OnInit {
   exportPdf(): void { window.print(); }
 
   onThresholdChange(): void {
+    this.customThreshold = true;
     this.refresh();
   }
 }

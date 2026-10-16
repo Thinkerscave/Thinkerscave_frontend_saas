@@ -22,6 +22,34 @@
             description="Identity captured at admission."
             icon="pi pi-id-card">
           </app-section-header>
+          <div class="stu-add-photo">
+            <div class="stu-add-photo__preview">
+              <img *ngIf="photoPreviewUrl; else emptyPhoto" [src]="photoPreviewUrl" alt="Student profile preview">
+              <ng-template #emptyPhoto><i class="pi pi-user" aria-hidden="true"></i></ng-template>
+            </div>
+            <div class="stu-add-photo__field">
+              <label class="app-field__label" for="student-profile-photo">Profile photo</label>
+              <input
+                #photoInput
+                id="student-profile-photo"
+                class="stu-add-photo__input"
+                type="file"
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                (change)="onPhotoSelected($event)">
+              <small>JPG or PNG, up to 2 MB. The photo is saved with this student record.</small>
+              <small *ngIf="photoFile">Selected: {{ photoFile.name }}</small>
+              <app-validation-message [message]="photoError"></app-validation-message>
+            </div>
+            <button
+              *ngIf="photoFile"
+              type="button"
+              class="stu-add-photo__remove"
+              aria-label="Remove profile photo"
+              title="Remove profile photo"
+              (click)="removePhoto()">
+              <i class="pi pi-times" aria-hidden="true"></i>
+            </button>
+          </div>
           <div class="stu-add-form__grid">
             <app-input
               label="Admission Number"

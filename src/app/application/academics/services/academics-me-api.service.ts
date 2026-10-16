@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { academicsApi } from '../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../shared/models/auth.model';
 import {
+  AcademicStructureTreeStage,
   MyTimetable,
   StudentMyAcademics,
   TeacherAcademicStructure,
@@ -35,6 +36,12 @@ export class AcademicsMeApiService {
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
       .get<ApiResponse<TeacherAcademicStructure>>(academicsApi.meStructure, { params })
+      .pipe(map((r) => r.data));
+  }
+
+  structureByYear(academicYearId: number): Observable<AcademicStructureTreeStage[]> {
+    return this.http
+      .get<ApiResponse<AcademicStructureTreeStage[]>>(academicsApi.structureByYear(academicYearId))
       .pipe(map((r) => r.data));
   }
 

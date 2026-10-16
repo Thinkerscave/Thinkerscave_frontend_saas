@@ -14,6 +14,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
+import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
+import { UI_PAGINATION } from '../../../../../shared/config/ui-standards';
+import { AppPageChangeEvent } from '../../../../../shared/utils/paged-result.util';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
@@ -47,7 +50,8 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     SaasPageHeaderComponent,
     TcAcademicYearSelectorComponent,
     ConfirmDialogModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    AppPaginatorComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './teacher-allocation.component.html',
@@ -85,6 +89,8 @@ export class TeacherAllocationPageComponent implements OnInit {
   subjectFilter: number | null = null;
   statusFilter: TeacherAllocationStatus | null = null;
   dashboard: TeacherAllocationDashboard | null = null;
+  page = 0;
+  pageSize = UI_PAGINATION.defaultSize;
 
   showAssign = false;
   assignTarget: TeacherAllocationRow | null = null;
@@ -126,6 +132,7 @@ export class TeacherAllocationPageComponent implements OnInit {
     this.classFilter = null;
     this.sectionFilter = null;
     this.subjectFilter = null;
+    this.page = 0;
     if (yearId == null) {
       this.dashboard = null;
       this.loading = false;
@@ -148,7 +155,9 @@ export class TeacherAllocationPageComponent implements OnInit {
         classId: this.classFilter,
         sectionId: this.sectionFilter,
         subjectId: this.subjectFilter,
-        status: this.statusFilter
+        status: this.statusFilter,
+        page: this.page,
+        size: this.pageSize
       })
       .pipe(finalize(() => {
         this.loading = false;
@@ -158,6 +167,8 @@ export class TeacherAllocationPageComponent implements OnInit {
       .subscribe({
         next: (dash) => {
           this.dashboard = dash;
+          this.page = dash.page ?? this.page;
+          this.pageSize = dash.size ?? this.pageSize;
           this.refreshFilterOptions(dash);
           this.loadClasses();
         },
@@ -171,7 +182,25 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   onClassChange(): void {
     this.sectionFilter = null;
+    this.onFilterChange();
+  }
+
+  onFilterChange(): void {
+    this.page = 0;
     this.reload();
+  }
+
+  onPageChange(event: AppPageChangeEvent): void {
+    this.page = event.page;
+    if (event.rows && event.rows !== this.pageSize) {
+      this.pageSize = event.rows;
+      this.page = 0;
+    }
+    this.reload();
+  }
+
+  get pageSizeOptions(): number[] {
+    return UI_PAGINATION.options;
   }
 
   openAssign(row: TeacherAllocationRow): void {
@@ -277,19 +306,9 @@ export class TeacherAllocationPageComponent implements OnInit {
   }
 
   private refreshFilterOptions(dash: TeacherAllocationDashboard): void {
-    const sectionOpts: { label: string; value: number | null }[] = [];
     const subjectSeen = new Map<number, string>();
-    const seenSections = new Set<number>();
-    for (const row of dash.rows) {
-      if (!seenSections.has(row.sectionId)) {
-        seenSections.add(row.sectionId);
-        if (!this.classFilter || row.classId === this.classFilter) {
-          sectionOpts.push({ label: `${row.className}-${row.sectionName}`, value: row.sectionId });
-        }
-      }
-      subjectSeen.set(row.subjectId, row.subjectName);
-    }
-    this.sections = [{ label: 'All Sections', value: null }, ...sectionOpts];
+    const subjectOptions = dash.subjectOptions ?? dash.rows.map(row => ({ id: row.subjectId, name: row.subjectName }));
+    for (const subject of subjectOptions) subjectSeen.set(subject.id, subject.name);
     this.subjects = [
       { label: 'All Subjects', value: null },
       ...[...subjectSeen.entries()].map(([value, label]) => ({ label, value }))

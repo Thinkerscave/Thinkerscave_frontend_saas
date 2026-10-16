@@ -4,9 +4,10 @@ import { RouterLink } from '@angular/router';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
-import { finalize } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
-import { ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE, TeacherAcademicStructure } from '../../../models/academics-me.model';
+import { LoginService } from '../../../../../core/services/login.service';
+import { ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE, AcademicStructureTreeStage, TeacherAcademicStructure } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
@@ -22,10 +23,14 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class AcademicStructurePageComponent {
   private readonly api = inject(AcademicsMeApiService);
+  private readonly login = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE;
+  readonly isAdminView = this.login.getUserRole().some(role =>
+    ['ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER'].includes(String(role))
+  );
   loading = true;
   selectedYearId: number | null = null;
   selectedClassId: number | null = null;
@@ -46,7 +51,10 @@ export class AcademicStructurePageComponent {
   reload(): void {
     if (!this.selectedYearId) return;
     this.loading = true;
-    this.api.myStructure(this.selectedYearId)
+    const request = this.isAdminView
+      ? this.api.structureByYear(this.selectedYearId).pipe(map(stages => this.toStructure(stages, this.selectedYearId!)))
+      : this.api.myStructure(this.selectedYearId);
+    request
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: (d) => {
@@ -55,6 +63,25 @@ export class AcademicStructurePageComponent {
         },
         error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load structure', detail: err?.error?.message })
       });
+  }
+
+  private toStructure(stages: AcademicStructureTreeStage[], academicYearId: number): TeacherAcademicStructure {
+    return {
+      academicYearId,
+      academicYearName: '',
+      classes: stages.flatMap(stage => stage.classes ?? []).filter(c => c.active !== false).map(c => ({
+        classId: c.classId,
+        className: c.className,
+        classCode: c.classCode,
+        sections: (c.sections ?? []).filter(s => s.active !== false).map(s => ({
+          sectionId: s.sectionId,
+          sectionName: s.sectionName,
+          sectionCode: s.sectionCode,
+          capacity: s.capacity,
+          subjects: []
+        }))
+      }))
+    };
   }
 
   get selectedClass() {

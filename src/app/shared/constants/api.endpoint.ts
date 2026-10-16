@@ -87,6 +87,8 @@ export const academicsApi = {
   arrangementById: (id: number) => `${BASE}/academics/arrangements/${id}`,
   approveArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/approve`,
   rejectArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/reject`,
+  arrangementTeachers: `${BASE}/academics/arrangements/teachers`,
+  arrangementEligibleSlots: `${BASE}/academics/arrangements/eligible-slots`,
   syllabus: `${BASE}/academics/syllabus`,
   syllabusById: (id: number) => `${BASE}/academics/syllabus/${id}`,
   syllabusProgress: (id: number) => `${BASE}/academics/syllabus/${id}/progress`,
@@ -174,8 +176,6 @@ export const attendanceApi = {
   history: (referenceId: number, type: string) => `${BASE}/attendance/history/${referenceId}?type=${type}`,
   update: (id: number) => `${BASE}/attendance/${id}`,
   delete: (id: number) => `${BASE}/attendance/${id}`,
-  settings: `${BASE}/attendance/settings`,
-  settingsReset: `${BASE}/attendance/settings/reset`,
   copyPrevious: (classId: number, targetDate: string, sectionId?: number | null) => {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
     return `${BASE}/attendance/students/copy-previous?classId=${classId}&targetDate=${targetDate}${sec}`;
@@ -204,6 +204,11 @@ export const attendanceApi = {
     staff: `${BASE}/attendance/reports/staff`,
     student: (studentId: number) => `${BASE}/attendance/reports/student/${studentId}`
   }
+};
+
+export const moduleSettingsApi = {
+  module: (moduleCode: string) => `${BASE}/settings/${encodeURIComponent(moduleCode)}`,
+  reset: (moduleCode: string) => `${BASE}/settings/${encodeURIComponent(moduleCode)}/reset`
 };
 
 // ─── Staff attendance (sign-in / sign-out) ───────────────────────────────────

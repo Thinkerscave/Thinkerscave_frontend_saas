@@ -282,7 +282,8 @@ export class LoginService {
     if (organizations && organizations.length > 0) {
       store.setItem('organizations', JSON.stringify(organizations));
       const primaryOrg = organizations[0] as Partial<UserOrganization> & { organizationId?: number | string; id?: number | string };
-      const currentOrgId = this.toPositiveOrgId(primaryOrg?.orgId ?? primaryOrg?.organizationId ?? primaryOrg?.id);
+      const currentOrgId = this.toPositiveOrgId(this.getOrgIdFromAccessToken(accessToken))
+        ?? this.toPositiveOrgId(primaryOrg?.orgId ?? primaryOrg?.organizationId ?? primaryOrg?.id);
       if (currentOrgId != null) {
         store.setItem('currentOrgId', String(currentOrgId));
         this.currentOrgId$.next(String(currentOrgId));

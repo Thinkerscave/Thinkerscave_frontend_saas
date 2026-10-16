@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { attendanceApi } from '../../../shared/constants/api.endpoint';
+import { attendanceApi, moduleSettingsApi } from '../../../shared/constants/api.endpoint';
 import {
   AttendanceOrgSettings,
   AttendanceRecord,
@@ -122,21 +122,26 @@ export class SchoolOperationsDataService {
   }
 
   getAttendanceSettings(): Observable<AttendanceOrgSettings> {
-    return this.http.get<any>(attendanceApi.settings).pipe(
-      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response))),
-      catchError(() => of(this.defaultAttendanceSettings()))
+    return this.http.get<any>(moduleSettingsApi.module('ATTENDANCE')).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<any>(response)))
     );
   }
 
   saveAttendanceSettings(payload: Partial<AttendanceOrgSettings>): Observable<AttendanceOrgSettings> {
-    return this.http.put<any>(attendanceApi.settings, payload).pipe(
-      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response)))
+    const settings: Record<string, unknown> = {};
+    if (payload.attendanceMode !== undefined) settings['ATTENDANCE_MODE'] = payload.attendanceMode;
+    if (payload.minStudentAttendancePercent !== undefined) settings['LOW_ATTENDANCE_THRESHOLD'] = payload.minStudentAttendancePercent;
+    if (payload.attendanceEditingPolicy !== undefined) settings['ATTENDANCE_EDITING_POLICY'] = payload.attendanceEditingPolicy;
+    if (payload.staffLateGraceMinutes !== undefined) settings['STAFF_LATE_GRACE_MINUTES'] = payload.staffLateGraceMinutes;
+    if (payload.minStaffWorkingHours !== undefined) settings['MINIMUM_WORKING_HOURS'] = payload.minStaffWorkingHours;
+    return this.http.put<any>(moduleSettingsApi.module('ATTENDANCE'), { settings }).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<any>(response)))
     );
   }
 
   resetAttendanceSettings(): Observable<AttendanceOrgSettings> {
-    return this.http.post<any>(attendanceApi.settingsReset, {}).pipe(
-      map(response => this.normalizeAttendanceSettings(this.unwrap<Partial<AttendanceOrgSettings>>(response)))
+    return this.http.post<any>(moduleSettingsApi.reset('ATTENDANCE'), {}).pipe(
+      map(response => this.normalizeAttendanceSettings(this.unwrap<any>(response)))
     );
   }
 
@@ -394,42 +399,34 @@ export class SchoolOperationsDataService {
     return (response?.data ?? response) as T;
   }
 
-  private normalizeAttendanceSettings(raw?: Partial<AttendanceOrgSettings> | null): AttendanceOrgSettings {
+  private normalizeAttendanceSettings(raw?: any): AttendanceOrgSettings {
     const defaults = this.defaultAttendanceSettings();
-    const src = raw ?? {};
+    const src = raw?.settings ?? raw ?? {};
     return {
-      ...defaults,
-      ...src,
-      attendanceMode: (src.attendanceMode === 'PERIOD' ? 'PERIOD' : 'DAILY'),
-      lateAfterTime: this.toTimeInput(src.lateAfterTime) || defaults.lateAfterTime,
-      windowStartTime: this.toTimeInput(src.windowStartTime) || defaults.windowStartTime,
-      windowEndTime: this.toTimeInput(src.windowEndTime) || defaults.windowEndTime,
-      allowCopyPrevious: src.allowCopyPrevious !== false,
-      minStudentAttendancePercent: Number(src.minStudentAttendancePercent ?? defaults.minStudentAttendancePercent),
-      studentAlertThresholdPercent: Number(src.studentAlertThresholdPercent ?? defaults.studentAlertThresholdPercent),
-      sendSmsOnAbsent: !!src.sendSmsOnAbsent,
-      sendEmailOnAbsent: !!src.sendEmailOnAbsent,
-      freezeAfterDays: Number(src.freezeAfterDays ?? 0),
-      minStaffWorkingHours: Number(src.minStaffWorkingHours ?? defaults.minStaffWorkingHours),
-      staffLateGraceMinutes: Number(src.staffLateGraceMinutes ?? defaults.staffLateGraceMinutes)
+      attendanceMode: src.ATTENDANCE_MODE === 'PERIOD_WISE' ? 'PERIOD_WISE' : 'DAILY',
+      attendanceEditingPolicy: ['SAME_DAY', 'SAME_WEEK', 'SAME_MONTH'].includes(src.ATTENDANCE_EDITING_POLICY)
+        ? src.ATTENDANCE_EDITING_POLICY : defaults.attendanceEditingPolicy,
+      windowStartTime: this.toTimeInput(src.ATTENDANCE_WINDOW_START) || defaults.windowStartTime,
+      windowEndTime: this.toTimeInput(src.ATTENDANCE_WINDOW_END) || defaults.windowEndTime,
+      allowCopyPrevious: src.ALLOW_COPY_PREVIOUS !== false,
+      minStudentAttendancePercent: Number(src.LOW_ATTENDANCE_THRESHOLD ?? defaults.minStudentAttendancePercent),
+      minStaffWorkingHours: Number(src.MINIMUM_WORKING_HOURS ?? defaults.minStaffWorkingHours),
+      staffLateGraceMinutes: Number(src.STAFF_LATE_GRACE_MINUTES ?? defaults.staffLateGraceMinutes),
+      freezeAfterDays: Number(src.FREEZE_AFTER_DAYS ?? defaults.freezeAfterDays)
     };
   }
 
   private defaultAttendanceSettings(): AttendanceOrgSettings {
     return {
       attendanceMode: 'DAILY',
-      lateAfterTime: '08:15',
-      windowStartTime: '07:00',
-      windowEndTime: '09:00',
+      attendanceEditingPolicy: 'SAME_DAY',
+      windowStartTime: '09:00',
+      windowEndTime: '17:00',
       allowCopyPrevious: true,
       minStudentAttendancePercent: 75,
-      studentAlertThresholdPercent: 80,
-      sendSmsOnAbsent: false,
-      sendEmailOnAbsent: false,
       minStaffWorkingHours: 8,
       staffLateGraceMinutes: 15,
-      freezeAfterDays: 0,
-      active: true
+      freezeAfterDays: 0
     };
   }
 

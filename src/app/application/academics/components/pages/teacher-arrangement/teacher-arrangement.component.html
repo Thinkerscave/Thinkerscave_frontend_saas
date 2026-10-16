@@ -1,0 +1,110 @@
+<div class="arrangement-page">
+  <tc-saas-page-header>
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+  </tc-saas-page-header>
+
+  <ng-container *ngIf="selectedYearId; else selectYear">
+    <section class="arrangement-section" *ngIf="canManage">
+      <header class="section-heading">
+        <div>
+          <h2>Record teacher absence</h2>
+          <p>Choose a date and cover every scheduled teaching period.</p>
+        </div>
+      </header>
+
+      <div class="form-grid">
+        <label>
+          <span>Absence date</span>
+          <input type="date" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()" />
+        </label>
+        <label>
+          <span>Absent teacher</span>
+          <select [(ngModel)]="selectedTeacherId">
+            <option [ngValue]="null">Select a teacher</option>
+            <option *ngFor="let teacher of teachers" [ngValue]="teacher.staffId">{{ teacher.name }}</option>
+          </select>
+        </label>
+        <label class="reason-field">
+          <span>Reason</span>
+          <input type="text" maxlength="500" [(ngModel)]="reason" placeholder="Reason for absence" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="tc-btn tc-btn--secondary" [disabled]="loadingSlots || !selectedDate || !selectedTeacherId" (click)="checkSchedule()">
+          {{ loadingSlots ? 'Checking…' : 'Check scheduled periods' }}
+        </button>
+      </div>
+
+      <div class="slot-list" *ngIf="slots.length">
+        <article class="slot-row" *ngFor="let slot of slots; trackBy: trackBySlot">
+          <div class="slot-detail">
+            <strong>{{ slot.className }} · {{ slot.sectionName }} · {{ slot.subjectName }}</strong>
+            <span>Period {{ slot.periodNumber }} · {{ slot.startTime }}–{{ slot.endTime }}</span>
+          </div>
+          <label class="substitute-field">
+            <span>Substitute teacher</span>
+            <select [(ngModel)]="slot.substituteStaffId">
+              <option [ngValue]="null">Select an available teacher</option>
+              <option *ngFor="let candidate of slot.candidates" [ngValue]="candidate.staffId">{{ candidate.name }}</option>
+            </select>
+            <small *ngIf="!slot.candidates.length">No available assigned teacher for this period.</small>
+          </label>
+        </article>
+        <div class="form-actions">
+          <button type="button" class="tc-btn tc-btn--primary" [disabled]="!canSubmit" (click)="submit()">
+            {{ saving ? 'Submitting…' : 'Submit for approval' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="arrangement-section date-preview" *ngIf="selectedDate">
+      <header class="section-heading">
+        <div>
+          <h2>Approved coverage</h2>
+          <p>{{ selectedDate }}</p>
+        </div>
+      </header>
+      <p class="empty-state" *ngIf="!approvedForDate.length">No approved substitute arrangements for this date.</p>
+      <article class="approved-arrangement" *ngFor="let arrangement of approvedForDate; trackBy: trackByArrangement">
+        <strong>{{ arrangement.absentTeacherName }} · {{ arrangement.reason }}</strong>
+        <div class="approved-slot" *ngFor="let slot of arrangement.slots">
+          <span>{{ slot.className }} · {{ slot.sectionName }} · {{ slot.subjectName }}</span>
+          <span>Period {{ slot.periodNumber }} · {{ slot.startTime }}–{{ slot.endTime }} · {{ slot.substituteTeacherName }}</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="arrangement-section">
+      <header class="section-heading">
+        <div>
+          <h2>Absence requests</h2>
+          <p>Pending requests reserve their substitute periods until approved or rejected.</p>
+        </div>
+      </header>
+      <p class="empty-state" *ngIf="!arrangements.length">No teacher absence requests for this academic year.</p>
+      <article class="request-row" *ngFor="let arrangement of arrangements; trackBy: trackByArrangement">
+        <div class="request-summary">
+          <strong>{{ arrangement.absentTeacherName }} · {{ arrangement.absenceDate }}</strong>
+          <span>{{ arrangement.reason }} · {{ arrangement.slots.length }} periods</span>
+          <span class="status" [attr.data-status]="arrangement.status">{{ statusLabel(arrangement.status) }}</span>
+        </div>
+        <div class="request-slots">
+          <span *ngFor="let slot of arrangement.slots">
+            {{ slot.className }} {{ slot.sectionName }} · P{{ slot.periodNumber }} · {{ slot.substituteTeacherName }}
+          </span>
+        </div>
+        <div class="review-actions" *ngIf="canApprove && arrangement.status === 'PENDING'">
+          <input type="text" maxlength="500" [(ngModel)]="reviewNotes[arrangement.arrangementId]" placeholder="Review note (optional)" />
+          <button type="button" class="tc-btn tc-btn--primary" [disabled]="reviewingId === arrangement.arrangementId" (click)="approve(arrangement)">Approve</button>
+          <button type="button" class="tc-btn tc-btn--secondary" [disabled]="reviewingId === arrangement.arrangementId" (click)="reject(arrangement, reviewNotes[arrangement.arrangementId] || '')">Reject</button>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+
+  <ng-template #selectYear>
+    <p class="empty-state">Select an academic year to manage teacher arrangements.</p>
+  </ng-template>
+</div>
