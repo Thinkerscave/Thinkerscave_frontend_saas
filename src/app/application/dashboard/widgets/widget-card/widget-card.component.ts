@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { DataMode, WidgetState } from '../../models/dashboard.model';
 
@@ -12,7 +13,7 @@ import { DataMode, WidgetState } from '../../models/dashboard.model';
 @Component({
   selector: 'tc-widget-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-card.component.html',
   styleUrl: './widget-card.component.scss'
@@ -28,6 +29,8 @@ export class WidgetCardComponent {
   @Input() emptyIcon = 'pi pi-inbox';
   @Input() skeletonRows = 3;
   @Input() bodyClass = '';
+  @Input() actionLabel?: string;
+  @Input() actionRoute?: string | null;
   @Output() retry = new EventEmitter<void>();
 
   get isSample(): boolean {

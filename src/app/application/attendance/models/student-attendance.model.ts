@@ -13,6 +13,10 @@ export interface RosterStudent {
   studentName: string;
   rollNumber?: string | null;
   admissionNumber?: string | null;
+  /** PHOTO document id; the image is fetched through the authenticated download endpoint. */
+  photoDocumentId?: number | null;
+  /** Client-only object URL created from the downloaded photo blob. */
+  photoObjectUrl?: string | null;
   /** null means the student is not marked yet (Not Marked). */
   status: StudentStatus | null;
   remarks?: string | null;
@@ -32,6 +36,9 @@ export interface StudentRoster {
   holidayName?: string | null;
   dayReason?: string | null;
   frozen: boolean;
+  /** Backend decision from ATTENDANCE_EDITING_POLICY; false blocks all writes. */
+  editable: boolean;
+  editabilityReason?: string | null;
   students: RosterStudent[];
 }
 
@@ -101,6 +108,13 @@ export interface MarkDailyAttendanceRequest {
   sectionId?: number | null;
   attendanceDate: string;
   entries: MarkAttendanceEntry[];
+}
+
+export interface MarkPeriodAttendanceRequest extends MarkDailyAttendanceRequest {
+  periodId: number;
+  periodNumber?: number | null;
+  periodName?: string | null;
+  subjectName?: string | null;
 }
 
 export interface AttendanceSummaryReportPayload {

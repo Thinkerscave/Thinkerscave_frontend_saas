@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -7,17 +7,14 @@ import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 import { MessageService } from 'primeng/api';
 
-import {
-  SaasPageHeaderComponent,
-  SaasStatGridComponent,
-  SaasPanelComponent,
-  SaasFilterRowComponent,
-  SaasStat
-} from '../../../../shared/ui/saas';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { LoginService } from '../../../../core/services/login.service';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
+import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
+import { AcademicsMeApiService } from '../../../academics/services/academics-me-api.service';
 import { StudentAttendanceApiService } from '../../services/student-attendance-api.service';
 import {
   AcademicLookupItem,
@@ -34,21 +31,24 @@ interface SelectOption { label: string; value: number | null; }
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent,
-    TcPageSkeletonComponent, SaasStatGridComponent, SaasPanelComponent, SaasFilterRowComponent,
-    AppToastComponent],
+    TcPageSkeletonComponent, AppToastComponent, AvatarComponent],
   providers: [MessageService],
   templateUrl: './attendance-student.component.html',
   styleUrl: './attendance-student.component.scss'
 })
-export class AttendanceStudentComponent implements OnInit {
+export class AttendanceStudentComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(StudentAttendanceApiService);
+  private readonly academicsMe = inject(AcademicsMeApiService);
+  private readonly login = inject(LoginService);
   private readonly permissions = inject(PermissionService);
   private readonly messages = inject(MessageService);
 
   readonly menuCode = 'ATTENDANCE';
+
+  readonly todayIso = this.todayLocal();
 
   years: AcademicLookupItem[] = [];
   classes: AcademicLookupItem[] = [];
@@ -58,8 +58,14 @@ export class AttendanceStudentComponent implements OnInit {
     academicYearId: null as number | null,
     classId: null as number | null,
     sectionId: null as number | null,
+    periodId: null as number | null,
+    periodNumber: null as number | null,
+    periodName: null as string | null,
+    subjectName: null as string | null,
     date: this.todayLocal()
   };
+
+  private prefilledFromSchedule = false;
 
   roster: StudentRoster | null = null;
   rows: RosterStudent[] = [];
@@ -75,15 +81,16 @@ export class AttendanceStudentComponent implements OnInit {
   showConfirm = false;
   saveError: string | null = null;
   copyError: string | null = null;
+  rosterError: string | null = null;
+  bulkOverwrite: { status: 'PRESENT' | 'ABSENT'; count: number } | null = null;
 
   ngOnInit(): void {
     this.prefillFromRoute();
     this.loadLookups();
-    this.loadSessions();
   }
 
-  get yearSelectOptions(): SelectOption[] {
-    return this.years.map(y => ({ label: y.name, value: y.id }));
+  ngOnDestroy(): void {
+    this.revokePhotos(this.rows);
   }
 
   get classSelectOptions(): SelectOption[] {
@@ -94,34 +101,24 @@ export class AttendanceStudentComponent implements OnInit {
     return this.sections.map(s => ({ label: s.name, value: s.id }));
   }
 
-  onYearChanged(): void {
-    this.filters.classId = null;
-    this.filters.sectionId = null;
-    this.sections = [];
-    this.resetRoster();
-    this.loadClasses();
-    this.loadSessions();
-  }
-
   onClassChanged(): void {
     this.filters.sectionId = null;
+    this.clearPeriodContext();
+    this.prefilledFromSchedule = false;
     this.sections = [];
+    this.recentSessions = [];
     this.resetRoster();
     this.loadSections();
-    this.loadRoster();
-    this.loadSessions();
   }
 
   onSectionChanged(): void {
+    this.clearPeriodContext();
+    this.prefilledFromSchedule = false;
     this.resetRoster();
-    this.loadRoster();
-    this.loadSessions();
   }
 
   onDateChanged(): void {
     this.resetRoster();
-    this.loadRoster();
-    this.loadSessions();
   }
 
   loadLookups(): void {
@@ -138,7 +135,7 @@ export class AttendanceStudentComponent implements OnInit {
             return;
           }
           const preferred = years.find(y => (y.status ?? '').toUpperCase() === 'CURRENT') ?? years[0];
-          this.filters.academicYearId = preferred.id;
+          this.filters.academicYearId ??= preferred.id;
           this.loadClasses();
         },
         error: () => { this.loading = false; this.cdr.markForCheck(); }
@@ -153,11 +150,12 @@ export class AttendanceStudentComponent implements OnInit {
       .subscribe({
         next: classes => {
           this.classes = classes;
-          if (classes.length && this.filters.classId == null) {
-            this.filters.classId = classes[0].id;
+          if (this.filters.classId == null) {
+            this.selectAssignedClass(yearId);
+          } else if (this.prefilledFromSchedule) {
+            this.loadSections(true);
+          } else {
             this.loadSections();
-            this.loadRoster();
-            this.loadSessions();
           }
           this.loading = false;
           this.cdr.markForCheck();
@@ -166,7 +164,24 @@ export class AttendanceStudentComponent implements OnInit {
       });
   }
 
-  private loadSections(): void {
+  /** Defaults to the first class/section assigned to the signed-in teacher; users without assignments pick manually. */
+  private selectAssignedClass(yearId: number): void {
+    this.academicsMe.myClasses(yearId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: data => {
+          const first = data?.classes?.[0];
+          if (!first || this.filters.classId != null) { return; }
+          this.filters.classId = first.classId;
+          this.filters.sectionId = first.sectionId;
+          this.loadSections(true);
+          this.cdr.markForCheck();
+        },
+        error: () => { /* no teacher assignments: selection stays manual */ }
+      });
+  }
+
+  private loadSections(loadPrefilledRoster = false): void {
     const classId = this.filters.classId;
     if (classId == null) { this.sections = []; this.cdr.markForCheck(); return; }
     this.api.getSectionsByClass(classId)
@@ -174,6 +189,10 @@ export class AttendanceStudentComponent implements OnInit {
       .subscribe({
         next: sections => {
           this.sections = sections;
+          if (loadPrefilledRoster && this.filters.sectionId != null
+              && sections.some(section => section.id === this.filters.sectionId)) {
+            this.loadRoster();
+          }
           this.cdr.markForCheck();
         },
         error: () => { this.sections = []; this.cdr.markForCheck(); }
@@ -184,29 +203,41 @@ export class AttendanceStudentComponent implements OnInit {
     const classId = this.filters.classId;
     if (classId == null || !this.filters.date) { this.resetRoster(); return; }
     this.rosterLoading = true;
+    this.rosterError = null;
     this.saveError = null;
-    this.api.getRoster(classId, this.filters.sectionId, this.filters.date)
+    this.api.getRoster(classId, this.filters.sectionId, this.filters.date, this.filters.periodId)
       .pipe(finalize(() => { this.rosterLoading = false; this.cdr.markForCheck(); }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: roster => {
+          this.revokePhotos(this.rows);
           this.roster = roster;
           this.rows = roster?.students ?? [];
+          this.bulkOverwrite = null;
+          this.loadPhotos(this.rows);
+          this.loadHistory();
           this.cdr.markForCheck();
         },
         error: err => {
+          this.revokePhotos(this.rows);
           this.roster = null;
           this.rows = [];
-          this.saveError = extractApiError(err, 'Unable to load the attendance roster.').message;
+          this.recentSessions = [];
+          this.rosterError = err?.status === 403 && this.isTeachingStaff()
+            ? this.scheduleAccessMessage()
+            : extractApiError(err, 'Unable to load the attendance roster.').message;
           this.cdr.markForCheck();
         }
       });
   }
 
-  loadSessions(): void {
-    const from = this.monthStart(this.filters.date);
-    const to = this.monthEnd(this.filters.date);
+  /** Five most recent attendance records for the loaded class (newest first). */
+  loadHistory(): void {
+    const classId = this.filters.classId;
+    if (classId == null) { this.recentSessions = []; this.cdr.markForCheck(); return; }
+    const to = this.todayLocal();
+    const from = this.daysBefore(to, 120);
     this.sessionsLoading = true;
-    this.api.getSessions(from, to, this.filters.classId, this.filters.sectionId)
+    this.api.getSessions(from, to, classId, this.filters.sectionId, 5)
       .pipe(finalize(() => { this.sessionsLoading = false; this.cdr.markForCheck(); }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: sessions => { this.recentSessions = sessions ?? []; this.cdr.markForCheck(); },
@@ -214,19 +245,13 @@ export class AttendanceStudentComponent implements OnInit {
       });
   }
 
-  get stats(): SaasStat[] {
+  /** Totals for the Mark Attendance tiles and class donut (LATE counts as present, matching the saved record). */
+  get markCounts(): { total: number; present: number; absent: number; rate: number } {
     const total = this.rows.length;
     const present = this.rows.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length;
     const absent = this.rows.filter(r => r.status === 'ABSENT').length;
-    const leave = this.rows.filter(r => r.status === 'EXCUSED' || r.status === 'ON_LEAVE').length;
-    const unmarked = total - present - absent - leave;
-    const pct = total ? Math.round((present / total) * 100) : 0;
-    return [
-      { key: 'total', label: 'Total Students', value: total.toLocaleString(), helper: this.roster?.sectionName ?? 'Selected class', icon: 'pi pi-users', tone: 'primary' },
-      { key: 'present', label: 'Present', value: present.toLocaleString(), helper: `${pct}%`, icon: 'pi pi-check-circle', tone: 'success' },
-      { key: 'absent', label: 'Absent', value: absent.toLocaleString(), helper: total ? `${Math.round((absent / total) * 100)}%` : '0%', icon: 'pi pi-user-minus', tone: 'danger' },
-      { key: 'unmarked', label: 'Not Marked', value: unmarked.toLocaleString(), helper: 'Awaiting entry', icon: 'pi pi-hourglass', tone: 'info' }
-    ];
+    const rate = total ? Math.round((present / total) * 100) : 0;
+    return { total, present, absent, rate };
   }
 
   get rosterSummary(): { present: number; absent: number; leave: number; late: number; unmarked: number } {
@@ -245,22 +270,13 @@ export class AttendanceStudentComponent implements OnInit {
     return { present, absent, leave, late, unmarked };
   }
 
-  get monthLabel(): string {
-    const parts = this.filters.date.split('-');
-    const y = Number(parts[0]);
-    const m = Number(parts[1]);
-    const names = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    if (!y || !m || m < 1 || m > 12) { return ''; }
-    return `${names[m - 1]} ${y}`;
-  }
-
   get canMarkAttendance(): boolean {
     if (this.readOnly) { return false; }
-    if (!this.roster) { return true; }
+    if (!this.roster) { return false; }
     if (this.roster.frozen) { return false; }
     if (!this.roster.attendanceRequired) { return false; }
-    return this.roster.attendanceMode === 'DAILY';
+    if (!this.roster.editable) { return false; }
+    return this.roster.attendanceMode === 'DAILY' || this.filters.periodId != null;
   }
 
   get markingBlockReason(): string | null {
@@ -271,8 +287,11 @@ export class AttendanceStudentComponent implements OnInit {
       const reason = r.holiday ? (r.holidayName ? `holiday — ${r.holidayName}` : 'holiday') : 'weekend';
       return `This date is a ${reason}. Attendance cannot be marked.`;
     }
-    if (r.attendanceMode !== 'DAILY') {
-      return 'This organization uses period-wise attendance. Marking for periods is not available on this screen yet.';
+    if (!r.editable) {
+      return r.editabilityReason || 'This date can no longer be edited under the attendance editing policy.';
+    }
+    if (r.attendanceMode === 'PERIOD_WISE' && this.filters.periodId == null) {
+      return 'Choose a scheduled period from your timetable before marking attendance.';
     }
     return null;
   }
@@ -281,13 +300,38 @@ export class AttendanceStudentComponent implements OnInit {
     return this.permissions.isLoaded() && !this.permissions.canManage(this.menuCode);
   }
 
-  markAllPresent(): void {
-    this.rows.forEach(r => { if (!r.status) { r.status = 'PRESENT'; } });
+  private isTeachingStaff(): boolean {
+    return (this.login.getUser()?.roles ?? []).some(role =>
+      ['STAFF', 'TEACHER'].includes(role.replace(/^ROLE_/, '').toUpperCase())
+    );
+  }
+
+  /** Marks every row; rows already marked with a different status require overwrite confirmation. */
+  requestMarkAll(status: 'PRESENT' | 'ABSENT'): void {
+    if (!this.canMarkAttendance || !this.rows.length) { return; }
+    const overwriteCount = this.rows.filter(r => r.status && r.status !== status).length;
+    if (overwriteCount > 0) {
+      this.bulkOverwrite = { status, count: overwriteCount };
+      this.cdr.markForCheck();
+      return;
+    }
+    this.applyMarkAll(status);
+  }
+
+  confirmMarkAll(): void {
+    if (!this.bulkOverwrite) { return; }
+    this.applyMarkAll(this.bulkOverwrite.status);
+  }
+
+  cancelMarkAll(): void {
+    this.bulkOverwrite = null;
     this.cdr.markForCheck();
   }
 
-  markAllAbsent(): void {
-    this.rows.forEach(r => { if (!r.status) { r.status = 'ABSENT'; } });
+  private applyMarkAll(status: 'PRESENT' | 'ABSENT'): void {
+    this.rows.forEach(r => { r.status = status; });
+    this.bulkOverwrite = null;
+    this.saveError = null;
     this.cdr.markForCheck();
   }
 
@@ -357,7 +401,7 @@ export class AttendanceStudentComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.confirmSummary.total === 0 || this.filters.classId == null) { return; }
+    if (this.saving || this.confirmSummary.total === 0 || this.filters.classId == null) { return; }
     const entries = this.rows
       .filter(r => r.status)
       .map(r => ({
@@ -371,19 +415,28 @@ export class AttendanceStudentComponent implements OnInit {
 
     this.saving = true;
     this.saveError = null;
-    this.api.markDaily({
+    const payload = {
       academicYearId: this.filters.academicYearId,
       classId: this.filters.classId,
       sectionId: this.filters.sectionId,
       attendanceDate: this.filters.date,
       entries
-    })
+    };
+    const request$ = this.roster?.attendanceMode === 'PERIOD_WISE'
+      ? this.api.markPeriod({
+        ...payload,
+        periodId: this.filters.periodId!,
+        periodNumber: this.filters.periodNumber,
+        periodName: this.filters.periodName,
+        subjectName: this.filters.subjectName
+      })
+      : this.api.markDaily(payload);
+    request$
       .pipe(finalize(() => { this.saving = false; this.showConfirm = false; this.cdr.markForCheck(); }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.messages.add({ severity: 'success', summary: 'Saved', detail: `Attendance marked for ${entries.length} students.` });
           this.loadRoster();
-          this.loadSessions();
         },
         error: (err) => {
           this.saveError = extractApiError(err, 'Attendance could not be saved. Your entries were kept.').message;
@@ -393,18 +446,17 @@ export class AttendanceStudentComponent implements OnInit {
       });
   }
 
-  selectSession(session: StudentSession): void {
+  /** Loads a history record's date into the roster; editability comes from the backend policy. */
+  viewSession(session: StudentSession): void {
     this.filters.date = session.date;
     this.filters.classId = session.classId;
     this.filters.sectionId = session.sectionId ?? null;
-    // Keep the class dropdown consistent when the session belongs to a class outside the loaded year.
     if (session.className && !this.classes.some(c => c.id === session.classId)) {
       this.classes = [...this.classes, { id: session.classId, name: session.className }];
     }
     this.resetRoster();
     this.loadSections();
     this.loadRoster();
-    this.loadSessions();
   }
 
   exportCsv(): void {
@@ -438,12 +490,59 @@ export class AttendanceStudentComponent implements OnInit {
   trackByStudent(_: number, row: RosterStudent): number { return row.studentId; }
   trackBySession(_: number, s: StudentSession): string { return `${s.date}-${s.classId}-${s.sectionId ?? 'X'}`; }
 
+  photoFor(row: RosterStudent): string | null {
+    return row.photoObjectUrl ?? null;
+  }
+
+  /** Loads each student's PHOTO through the authenticated download endpoint (blob → object URL). */
+  private loadPhotos(rows: RosterStudent[]): void {
+    for (const row of rows) {
+      if (row.photoDocumentId == null) { continue; }
+      this.api.downloadStudentPhoto(row.photoDocumentId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: blob => {
+            if (!this.rows.includes(row)) { return; }
+            row.photoObjectUrl = URL.createObjectURL(blob);
+            this.cdr.markForCheck();
+          },
+          error: () => { row.photoObjectUrl = null; }
+        });
+    }
+  }
+
+  private revokePhotos(rows: RosterStudent[]): void {
+    for (const row of rows) {
+      if (row.photoObjectUrl) {
+        URL.revokeObjectURL(row.photoObjectUrl);
+        row.photoObjectUrl = null;
+      }
+    }
+  }
+
   private resetRoster(): void {
+    this.revokePhotos(this.rows);
     this.roster = null;
     this.rows = [];
     this.showConfirm = false;
     this.saveError = null;
     this.copyError = null;
+    this.rosterError = null;
+    this.bulkOverwrite = null;
+  }
+
+  private clearPeriodContext(): void {
+    this.filters.periodId = null;
+    this.filters.periodNumber = null;
+    this.filters.periodName = null;
+    this.filters.subjectName = null;
+  }
+
+  private scheduleAccessMessage(): string {
+    const className = this.classes.find(item => item.id === this.filters.classId)?.name ?? 'this class';
+    const sectionName = this.sections.find(item => item.id === this.filters.sectionId)?.name;
+    const section = sectionName ? `-${sectionName}` : '';
+    return `Your timetable does not authorize attendance for ${className}${section} on this date. Choose one of today's assigned classes from your dashboard or contact your administrator.`;
   }
 
   private prefillFromRoute(): void {
@@ -451,6 +550,10 @@ export class AttendanceStudentComponent implements OnInit {
     const date = params.get('date');
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
       this.filters.date = date;
+    }
+    const academicYearId = params.get('academicYearId');
+    if (academicYearId && !Number.isNaN(Number(academicYearId))) {
+      this.filters.academicYearId = Number(academicYearId);
     }
     const classId = params.get('classId');
     if (classId && !Number.isNaN(Number(classId))) {
@@ -460,6 +563,17 @@ export class AttendanceStudentComponent implements OnInit {
     if (sectionId && !Number.isNaN(Number(sectionId))) {
       this.filters.sectionId = Number(sectionId);
     }
+    const periodId = params.get('periodId');
+    if (periodId && !Number.isNaN(Number(periodId))) {
+      this.filters.periodId = Number(periodId);
+    }
+    const periodNumber = params.get('periodNumber');
+    if (periodNumber && !Number.isNaN(Number(periodNumber))) {
+      this.filters.periodNumber = Number(periodNumber);
+    }
+    this.filters.periodName = params.get('periodName');
+    this.filters.subjectName = params.get('subjectName');
+    this.prefilledFromSchedule = this.filters.classId != null && this.filters.sectionId != null;
   }
 
   private todayLocal(): string {
@@ -468,13 +582,10 @@ export class AttendanceStudentComponent implements OnInit {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private monthStart(date: string): string {
-    return `${date.slice(0, 7)}-01`;
-  }
-
-  private monthEnd(date: string): string {
-    const [y, m] = date.split('-').map(Number);
-    const last = new Date(y, m, 0).getDate();
-    return `${y}-${String(m).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
+  private daysBefore(date: string, days: number): string {
+    const [y, m, d] = date.split('-').map(Number);
+    const dt = new Date(y, m - 1, d - days);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
   }
 }

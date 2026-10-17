@@ -1,0 +1,86 @@
+.staff-week {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  align-items: center;
+  gap: 14px;
+  min-height: 116px;
+}
+
+.staff-week__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.staff-week__day {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 4px;
+  border: 1px solid var(--saas-border);
+  border-radius: 10px;
+  background: var(--saas-surface);
+  color: var(--saas-text-muted);
+  font-size: 0.72rem;
+
+  strong { color: var(--saas-text); font-size: 0.75rem; }
+  time { white-space: nowrap; }
+
+  // Today's tile is the only highlighted day, matching the reference design.
+  &[data-status="NOT_STARTED"] { background: var(--saas-primary-soft); border-color: var(--saas-primary); }
+}
+
+.staff-week__status-icon,
+.staff-week__status-dash {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--saas-text-muted);
+  font-size: 1rem;
+}
+
+.staff-week__day[data-status="PRESENT"] .staff-week__status-icon,
+.staff-week__day[data-status="LATE"] .staff-week__status-icon,
+.staff-week__day[data-status="WFH"] .staff-week__status-icon { color: var(--saas-success); }
+.staff-week__day[data-status="ABSENT"] .staff-week__status-icon { color: var(--saas-danger); }
+.staff-week__day[data-status="NOT_STARTED"] .staff-week__status-icon { color: var(--saas-primary); }
+.staff-week__day[data-status="HALF_DAY"] .staff-week__status-icon { color: var(--saas-warning); }
+
+.staff-week__summary {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  text-align: center;
+
+  p { margin: 0; color: var(--saas-text-muted); font-size: 0.72rem; }
+}
+
+.staff-week__ring {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--saas-success) var(--attendance-percent), var(--saas-border) 0);
+
+  &::before {
+    content: '';
+    grid-area: 1 / 1;
+    width: 58px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--saas-surface);
+  }
+
+  strong { grid-area: 1 / 1; z-index: 1; color: var(--saas-text); font-size: 1rem; }
+}
+
+@media (max-width: 620px) {
+  .staff-week { grid-template-columns: minmax(0, 1fr); }
+  .staff-week__days { gap: 4px; }
+  .staff-week__day { padding: 8px 2px; font-size: 0.67rem; }
+  .staff-week__summary { grid-template-columns: auto minmax(0, 1fr); justify-items: start; text-align: left; }
+  .staff-week__ring { width: 62px; &::before { width: 48px; } }
+}

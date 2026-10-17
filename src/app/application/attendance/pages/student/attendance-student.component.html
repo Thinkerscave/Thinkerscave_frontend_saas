@@ -1,71 +1,84 @@
 <div class="saas-page attendance-student">
   <tc-saas-page-header>
-    <a routerLink="/attendance/calendar" class="tc-btn"><i class="pi pi-calendar"></i>Attendance Calendar</a>
     <button type="button" class="tc-btn" (click)="exportCsv()" [disabled]="!rows.length"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
   <app-toast></app-toast>
 
-  <tc-saas-stat-grid [stats]="stats"></tc-saas-stat-grid>
+  <section class="att-card att-filter-card">
+    <div class="att-filter-grid">
+      <label class="saas-field"><span>Class</span>
+        <p-dropdown
+          [options]="classSelectOptions"
+          [(ngModel)]="filters.classId"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="att-filter-dropdown"
+          (onChange)="onClassChanged()">
+        </p-dropdown>
+      </label>
+      <label class="saas-field"><span>Section</span>
+        <p-dropdown
+          [options]="sectionSelectOptions"
+          [(ngModel)]="filters.sectionId"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="att-filter-dropdown"
+          (onChange)="onSectionChanged()">
+        </p-dropdown>
+      </label>
+      <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="filters.date" (change)="onDateChanged()" [max]="todayIso"></label>
+      <button type="button" class="tc-btn tc-btn--primary att-load-btn" (click)="loadRoster()" [disabled]="filters.classId == null || rosterLoading"><i class="pi" [ngClass]="rosterLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>Load Students</button>
+    </div>
+    <div class="att-info-banner" role="note">
+      <i class="pi pi-info-circle"></i>
+      <span>The roster for your assigned class loads automatically. Mark each student Present or Absent, then submit attendance for the day.</span>
+    </div>
+  </section>
 
-  <tc-saas-filter-row>
-    <label class="saas-field"><span>Academic Year</span>
-      <p-dropdown
-        [options]="yearSelectOptions"
-        [(ngModel)]="filters.academicYearId"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body"
-        styleClass="att-filter-dropdown"
-        (onChange)="onYearChanged()">
-      </p-dropdown>
-    </label>
-    <label class="saas-field"><span>Class</span>
-      <p-dropdown
-        [options]="classSelectOptions"
-        [(ngModel)]="filters.classId"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterBy="label"
-        appendTo="body"
-        styleClass="att-filter-dropdown"
-        (onChange)="onClassChanged()">
-      </p-dropdown>
-    </label>
-    <label class="saas-field"><span>Section</span>
-      <p-dropdown
-        [options]="sectionSelectOptions"
-        [(ngModel)]="filters.sectionId"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterBy="label"
-        appendTo="body"
-        styleClass="att-filter-dropdown"
-        (onChange)="onSectionChanged()">
-      </p-dropdown>
-    </label>
-    <label class="saas-field"><span>Date</span><input type="date" [(ngModel)]="filters.date" (change)="onDateChanged()"></label>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="loadRoster()" [disabled]="filters.classId == null"><i class="pi pi-search"></i>Load</button>
-  </tc-saas-filter-row>
+  <div class="att-layout">
+    <section class="att-card att-mark">
+      <header class="att-card__header">
+        <div>
+          <h2>Mark Attendance</h2>
+          <p>{{ roster ? (roster.className ?? 'Class') + (roster.sectionName ? ' · ' + roster.sectionName : '') + (roster.attendanceMode === 'PERIOD_WISE' ? ' · ' + (filters.periodName || ('Period ' + filters.periodNumber)) : '') + ' — ' + roster.attendanceDate : 'Choose a class and date, then click Load Students.' }}</p>
+        </div>
+        <span *ngIf="roster && filters.date === todayIso" class="att-today-badge"><i class="pi pi-calendar"></i>Today's Attendance</span>
+      </header>
 
-  <div class="attendance-student__layout">
-    <tc-saas-panel
-      [title]="filters.classId == null ? 'Class Attendance' : 'Class Roster'"
-      [subtitle]="roster ? (roster.className ?? 'Class') + (roster.sectionName ? ' · ' + roster.sectionName : '') + ' — ' + roster.attendanceDate : 'Choose a class and date, then load.'">
-      <ng-container panel-actions>
-        <button type="button" class="tc-btn" (click)="markAllPresent()" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-check"></i>Mark All Present</button>
-        <button type="button" class="tc-btn" (click)="markAllAbsent()" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-times"></i>Mark All Absent</button>
+      <div class="att-actions">
+        <button type="button" class="tc-btn" (click)="requestMarkAll('PRESENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-check"></i>Mark All Present</button>
+        <button type="button" class="tc-btn" (click)="requestMarkAll('ABSENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-times"></i>Mark All Absent</button>
         <button
           type="button"
           class="tc-btn"
           (click)="copyPrevious()"
           [disabled]="!canCopyPrevious"
-          [title]="canCopyPrevious ? 'Copy the previous working day status into this date' : 'Copy is available on a non-frozen working day'">
+          [title]="canCopyPrevious ? 'Copy the previous working day status into this date' : 'Copy is available on an editable working day'">
           <i class="pi" [ngClass]="copying ? 'pi-spin pi-spinner' : 'pi-copy'"></i>Copy Previous
         </button>
-      </ng-container>
+      </div>
+
+      <div *ngIf="rows.length" class="att-tiles" aria-live="polite">
+        <div class="att-tile">
+          <span class="att-tile__icon att-tile__icon--total"><i class="pi pi-users"></i></span>
+          <div><small>Total Students</small><strong>{{ markCounts.total }}</strong></div>
+        </div>
+        <div class="att-tile">
+          <span class="att-tile__icon att-tile__icon--present"><i class="pi pi-check-circle"></i></span>
+          <div><small>Present</small><strong>{{ markCounts.present }}</strong></div>
+        </div>
+        <div class="att-tile">
+          <span class="att-tile__icon att-tile__icon--absent"><i class="pi pi-user-minus"></i></span>
+          <div><small>Absent</small><strong>{{ markCounts.absent }}</strong></div>
+        </div>
+      </div>
 
       <div *ngIf="readOnly" class="saas-empty att-banner att-banner--muted">
         <i class="pi pi-lock"></i>
@@ -73,9 +86,23 @@
         <p>You have view access to attendance. Marking is available to users with manage permission.</p>
       </div>
 
-      <div *ngIf="markingBlockReason" class="saas-empty att-banner att-banner--warn">
+      <div *ngIf="markingBlockReason && rows.length" class="saas-empty att-banner att-banner--warn" role="status">
         <i class="pi pi-calendar-times"></i>
         <strong>{{ markingBlockReason }}</strong>
+      </div>
+
+      <div *ngIf="bulkOverwrite" class="att-confirm" role="alertdialog" aria-live="assertive">
+        <div class="att-confirm__body">
+          <strong><i class="pi pi-exclamation-triangle"></i> Overwrite existing entries?</strong>
+          <p>
+            <strong>{{ bulkOverwrite.count }}</strong> student(s) already have a different status.
+            Marking all as <strong>{{ bulkOverwrite.status === 'PRESENT' ? 'Present' : 'Absent' }}</strong> will replace them. Nothing is saved until you submit.
+          </p>
+        </div>
+        <div class="att-confirm__actions">
+          <button type="button" class="tc-btn" (click)="cancelMarkAll()">Cancel</button>
+          <button type="button" class="tc-btn tc-btn--primary" (click)="confirmMarkAll()">Overwrite and mark all</button>
+        </div>
       </div>
 
       <div *ngIf="saveError && !rosterLoading" class="saas-empty att-copy-error">
@@ -90,16 +117,22 @@
 
       <tc-page-skeleton *ngIf="loading || lookupsLoading || rosterLoading" layout="table-only" [rows]="8" [columns]="5"></tc-page-skeleton>
 
-      <div *ngIf="!loading && !lookupsLoading && !rosterLoading && !rows.length" class="saas-empty">
+      <div *ngIf="!loading && !lookupsLoading && !rosterLoading && rosterError" class="saas-empty att-copy-error">
+        <i class="pi pi-exclamation-triangle"></i>
+        <strong>{{ rosterError }}</strong>
+        <p><button type="button" class="tc-btn" (click)="loadRoster()"><i class="pi pi-refresh"></i>Retry</button></p>
+      </div>
+
+      <div *ngIf="!loading && !lookupsLoading && !rosterLoading && !rosterError && !rows.length" class="saas-empty">
         <i class="pi pi-users"></i>
         <strong>No roster loaded</strong>
-        <p>Select a class, section, and date, then click Load.</p>
+        <p>Select a class, section, and date, then click Load Students.</p>
       </div>
 
       <div *ngIf="!rosterLoading && rows.length" class="attendance-student__roster-summary" aria-live="polite">
         <span class="att-chip att-chip--present"><strong>{{ rosterSummary.present }}</strong> Present</span>
         <span class="att-chip att-chip--absent"><strong>{{ rosterSummary.absent }}</strong> Absent</span>
-        <span class="att-chip att-chip--leave"><strong>{{ rosterSummary.leave }}</strong> Leave</span>
+        <span class="att-chip att-chip--leave" *ngIf="rosterSummary.leave"><strong>{{ rosterSummary.leave }}</strong> Leave</span>
         <span class="att-chip att-chip--late" *ngIf="rosterSummary.late"><strong>{{ rosterSummary.late }}</strong> Late</span>
         <span class="att-chip att-chip--muted"><strong>{{ rosterSummary.unmarked }}</strong> Not Marked</span>
       </div>
@@ -107,7 +140,7 @@
       <div *ngIf="showConfirm && rows.length" class="att-confirm" role="dialog" aria-live="polite">
         <div class="att-confirm__body">
           <strong><i class="pi pi-info-circle"></i> Confirm before saving</strong>
-          <p>You are about to mark attendance for <strong>{{ confirmSummary.total }}</strong> students on <strong>{{ filters.date }}</strong>.</p>
+          <p>You are about to mark attendance for <strong>{{ confirmSummary.total }}</strong> students on <strong>{{ filters.date }}</strong><span *ngIf="roster?.attendanceMode === 'PERIOD_WISE'"> in <strong>{{ filters.periodName || ('Period ' + filters.periodNumber) }}</strong></span>.</p>
           <div class="att-confirm__chips">
             <span class="att-chip att-chip--present"><strong>{{ confirmSummary.present }}</strong> Present</span>
             <span class="att-chip att-chip--absent"><strong>{{ confirmSummary.absent }}</strong> Absent</span>
@@ -123,59 +156,51 @@
         </div>
       </div>
 
-      <div *ngIf="!rosterLoading && rows.length" class="saas-table-wrap">
+      <div *ngIf="!rosterLoading && rows.length" class="saas-table-wrap att-table-wrap">
         <table class="saas-data-table attendance-student__table">
           <thead>
             <tr>
               <th class="attendance-student__col-roll">Roll No.</th>
-              <th class="attendance-student__col-avatar"></th>
-              <th>Student Name</th>
-              <th class="attendance-student__col-status">Status</th>
+              <th>Student</th>
+              <th class="attendance-student__col-status">Attendance</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let row of rows; let i = index; trackBy: trackByStudent">
-              <td>{{ row.rollNumber || ('#' + (i + 1)) }}</td>
+              <td><span class="att-roll">{{ row.rollNumber || ('#' + (i + 1)) }}</span></td>
               <td>
-                <span class="attendance-student__avatar">{{ (row.studentName || '?').charAt(0).toUpperCase() }}</span>
-              </td>
-              <td>
-                <div class="cell-main">
-                  <strong>{{ row.studentName }}</strong>
-                  <small *ngIf="roster">{{ roster.className }}<span *ngIf="roster.sectionName"> · {{ roster.sectionName }}</span></small>
+                <div class="att-student">
+                  <tc-avatar [name]="row.studentName" [imageUrl]="photoFor(row)" size="sm"></tc-avatar>
+                  <div class="cell-main">
+                    <strong>{{ row.studentName }}</strong>
+                    <small *ngIf="roster">{{ roster.className }}<span *ngIf="roster.sectionName"> · {{ roster.sectionName }}</span></small>
+                    <small *ngIf="row.status === 'LATE' || row.status === 'EXCUSED' || row.status === 'ON_LEAVE'" class="attendance-student__saved-status">
+                      Saved as {{ row.status === 'LATE' ? 'Late' : 'Leave' }}
+                    </small>
+                  </div>
                 </div>
               </td>
               <td>
-                <div class="att-toggle" role="group" [class.is-disabled]="!canMarkAttendance" [attr.aria-label]="'Attendance for ' + row.studentName">
+                <div class="att-radio-group" role="radiogroup" [class.is-disabled]="!canMarkAttendance" [attr.aria-label]="'Attendance for ' + row.studentName">
                   <button
                     type="button"
-                    class="att-toggle__btn att-toggle__btn--present"
+                    role="radio"
+                    class="att-radio att-radio--present"
                     [class.is-active]="row.status === 'PRESENT'"
+                    [attr.aria-checked]="row.status === 'PRESENT'"
                     (click)="setStatus(row, 'PRESENT')"
-                    [disabled]="!canMarkAttendance"
-                    title="Present">
-                    <i class="pi pi-check"></i>
-                    <span>P</span>
+                    [disabled]="!canMarkAttendance">
+                    <span class="att-radio__dot"></span>Present
                   </button>
                   <button
                     type="button"
-                    class="att-toggle__btn att-toggle__btn--absent"
+                    role="radio"
+                    class="att-radio att-radio--absent"
                     [class.is-active]="row.status === 'ABSENT'"
+                    [attr.aria-checked]="row.status === 'ABSENT'"
                     (click)="setStatus(row, 'ABSENT')"
-                    [disabled]="!canMarkAttendance"
-                    title="Absent">
-                    <i class="pi pi-times"></i>
-                    <span>A</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="att-toggle__btn att-toggle__btn--leave"
-                    [class.is-active]="row.status === 'EXCUSED' || row.status === 'ON_LEAVE'"
-                    (click)="setStatus(row, 'EXCUSED')"
-                    [disabled]="!canMarkAttendance"
-                    title="Leave (Excused)">
-                    <i class="pi pi-calendar"></i>
-                    <span>L</span>
+                    [disabled]="!canMarkAttendance">
+                    <span class="att-radio__dot"></span>Absent
                   </button>
                 </div>
               </td>
@@ -184,36 +209,75 @@
         </table>
       </div>
 
-      <footer *ngIf="rows.length" class="attendance-student__footer">
-        <span>{{ rows.length }} students · {{ rosterSummary.unmarked }} not marked</span>
-        <div>
-          <button type="button" class="tc-btn" (click)="cancelSave()" [disabled]="saving">Cancel</button>
-          <button type="button" class="tc-btn tc-btn--primary" (click)="requestSave()" [disabled]="saving || !canMarkAttendance || confirmSummary.total === 0">
-            <i class="pi pi-save"></i>Save Attendance
-          </button>
-        </div>
+      <footer *ngIf="rows.length" class="att-footer">
+        <span>Showing 1 - {{ rows.length }} of {{ rows.length }} students<span class="att-footer__unmarked"> · {{ rosterSummary.unmarked }} not marked</span></span>
+        <button type="button" class="tc-btn tc-btn--primary" (click)="requestSave()" [disabled]="saving || rosterLoading || !canMarkAttendance || confirmSummary.total === 0">
+          <i class="pi pi-save"></i>Submit Attendance
+        </button>
       </footer>
-    </tc-saas-panel>
+    </section>
 
-    <aside class="attendance-student__side">
-      <tc-saas-panel title="Sessions" [subtitle]="'Attendance activity in ' + monthLabel">
-        <div *ngIf="sessionsLoading" class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading sessions…</strong></div>
+    <aside class="att-side">
+      <section class="att-card">
+        <header class="att-card__header">
+          <div>
+            <h3>Class Attendance</h3>
+            <p>{{ roster?.className ?? 'Selected class' }}<span *ngIf="roster?.sectionName"> · {{ roster?.sectionName }}</span></p>
+          </div>
+        </header>
+        <div class="att-donut-wrap">
+          <div class="att-donut">
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+              <circle class="att-donut__track" cx="18" cy="18" r="15.9155"></circle>
+              <circle
+                class="att-donut__value"
+                cx="18"
+                cy="18"
+                r="15.9155"
+                pathLength="100"
+                [attr.stroke-dasharray]="markCounts.rate + ' ' + (100 - markCounts.rate)"></circle>
+            </svg>
+            <div class="att-donut__label"><strong>{{ markCounts.rate }}%</strong><small>Present</small></div>
+          </div>
+          <ul class="att-legend">
+            <li><span class="att-dot att-dot--present"></span>Present <strong>{{ markCounts.present }}</strong></li>
+            <li><span class="att-dot att-dot--absent"></span>Absent <strong>{{ markCounts.absent }}</strong></li>
+            <li><span class="att-dot att-dot--muted"></span>Not Marked <strong>{{ rosterSummary.unmarked }}</strong></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="att-card">
+        <header class="att-card__header">
+          <div>
+            <h3>Attendance History</h3>
+            <p>Recent records for the loaded class</p>
+          </div>
+          <a routerLink="/attendance/calendar" class="att-link">View All</a>
+        </header>
+        <div *ngIf="sessionsLoading" class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading records…</strong></div>
         <div *ngIf="!sessionsLoading && !recentSessions.length" class="saas-empty">
           <i class="pi pi-calendar"></i>
-          <strong>No sessions recorded</strong>
-          <p>No attendance was recorded for the selected month and class.</p>
+          <strong>No records yet</strong>
+          <p>Attendance records for the loaded class appear here after they are submitted.</p>
         </div>
-        <article class="pending-row" *ngFor="let session of recentSessions; trackBy: trackBySession" (click)="selectSession(session)" role="button" tabindex="0">
-          <div>
-            <strong>{{ session.className }}{{ session.sectionName ? ' — ' + session.sectionName : '' }}</strong>
-            <small>{{ session.date }} · {{ session.totalMarked }}/{{ session.expectedStudents }} marked {{ session.status === 'COMPLETED' ? '· Complete' : '' }}</small>
+        <article class="att-history-row" *ngFor="let session of recentSessions; trackBy: trackBySession">
+          <div class="att-history-row__main">
+            <strong>{{ session.date }}{{ session.sectionName ? ' · ' + session.sectionName : '' }}</strong>
+            <small>P {{ session.present }} · A {{ session.absent }} · {{ session.totalMarked }}/{{ session.expectedStudents }} marked {{ session.status === 'COMPLETED' ? '· Complete' : '· Partial' }}</small>
           </div>
-          <div class="pending-row__pct">
-            <strong [attr.data-tone]="pctTone(session.attendancePercent)">{{ session.attendancePercent }}%</strong>
-            <div class="pending-row__bar"><span [style.width.%]="session.attendancePercent" [attr.data-tone]="pctTone(session.attendancePercent)"></span></div>
-          </div>
+          <span class="att-history-row__pct" [attr.data-tone]="pctTone(session.attendancePercent)">{{ session.attendancePercent }}%</span>
+          <button type="button" class="tc-btn att-view-btn" (click)="viewSession(session)" [disabled]="rosterLoading">
+            <i class="pi pi-eye"></i>View
+          </button>
         </article>
-      </tc-saas-panel>
+      </section>
+
+      <section class="att-card att-policy">
+        <h3><i class="pi pi-shield"></i>Editing Policy</h3>
+        <p>Attendance is saved under the school's editing policy. Dates outside the editable window are locked.</p>
+        <p *ngIf="roster && !roster.editable" class="att-policy__note">{{ roster.editabilityReason || 'This date is locked for editing.' }}</p>
+      </section>
     </aside>
   </div>
 </div>

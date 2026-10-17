@@ -18,6 +18,8 @@ export interface ResolvedPageMeta {
   showBack: boolean;
   hideBack: boolean;
   backFallback: string | string[] | null;
+  hideBreadcrumb: boolean;
+  rightLabel: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -48,7 +50,9 @@ export class PageMetaService {
       pageKind: route.pageKind,
       hideBack: route.hideBack || route.pageKind === 'main',
       showBack: this.resolveShowBack(route, hasPrevious),
-      backFallback: route.backFallback
+      backFallback: route.backFallback,
+      hideBreadcrumb: override?.hideBreadcrumb ?? false,
+      rightLabel: override?.rightLabel ?? null
     };
   }
 
@@ -58,6 +62,9 @@ export class PageMetaService {
     override: AppPageHeader | null,
     pageKind: PageKind | null
   ): string {
+    if (override?.pageTitle) {
+      return override.pageTitle;
+    }
     const fromRoute = pageTitle ?? crumbs.at(-1)?.label ?? 'Dashboard';
     if (pageKind === 'main' || pageKind === 'detail') {
       return fromRoute;

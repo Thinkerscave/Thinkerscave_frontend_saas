@@ -4,6 +4,9 @@
       <h1 class="tc-page-header__title">{{ title }}</h1>
       <p *ngIf="subtitle" class="tc-page-header__subtitle">{{ subtitle }}</p>
     </div>
-    <p-breadcrumb class="tc-page-header__trail" [home]="home" [model]="items"></p-breadcrumb>
+    <div class="tc-page-header__right" *ngIf="rightLabel || !hideBreadcrumb">
+      <span *ngIf="rightLabel" class="tc-page-header__right-label"><i class="pi pi-calendar" aria-hidden="true"></i>{{ rightLabel }}</span>
+      <p-breadcrumb *ngIf="!hideBreadcrumb" class="tc-page-header__trail" [home]="home" [model]="items"></p-breadcrumb>
+    </div>
   </div>
 </header>

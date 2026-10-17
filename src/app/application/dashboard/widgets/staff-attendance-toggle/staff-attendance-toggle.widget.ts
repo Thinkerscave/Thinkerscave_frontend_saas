@@ -4,10 +4,12 @@ import {
   ChangeDetectorRef,
   Component,
   HostListener,
+  EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   inject
 } from '@angular/core';
@@ -29,28 +31,20 @@ import {
 @Component({
   selector: 'tc-staff-attendance-toggle-widget',
   standalone: true,
-  imports: [AppToastComponent, CommonModule, MenuModule, DatePipe],
+  imports: [AppToastComponent, CommonModule, DatePipe, MenuModule],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './staff-attendance-toggle.widget.scss',
   template: `
     <app-toast key="attendance"></app-toast>
-    <article class="w-att" [attr.data-state]="widgetState">
+    <article class="w-att" [class.w-att--staff-dashboard]="compact" [attr.data-state]="widgetState">
       <header class="w-att__header">
-        <h3>Today's Attendance</h3>
-        <div class="w-att__header-actions">
-          <button type="button" class="w-att__icon-btn" title="About attendance" aria-label="About attendance">
-            <i class="pi pi-question-circle"></i>
-          </button>
-          <button
-            type="button"
-            class="w-att__icon-btn"
-            title="More actions"
-            aria-label="More actions"
-            (click)="menu.toggle($event)">
-            <i class="pi pi-ellipsis-v"></i>
-          </button>
-          <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
-        </div>
+        <h3>{{ compact ? 'My Staff Attendance' : "Today's Attendance" }}</h3>
+        <button *ngIf="!compact" type="button" class="w-att__icon-btn" title="More actions"
+          aria-label="More attendance actions" (click)="menu.toggle($event)">
+          <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+        </button>
+        <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
       </header>
 
       <div class="w-att__body" *ngIf="!loading; else loadingTpl">
@@ -129,7 +123,7 @@ import {
             <span class="w-att__muted">Total Working Hours</span>
             <strong>{{ formatWorkingHours(state.workingMinutesSoFar) }}</strong>
           </div>
-          <div class="w-att__note w-att__note--info" *ngIf="!state.autoClosed">
+          <div class="w-att__note w-att__note--info" *ngIf="!state.autoClosed && !compact">
             <i class="pi pi-chart-bar"></i>
             <span>Great job! Keep up the good work.</span>
           </div>
@@ -153,7 +147,7 @@ import {
         </div>
       </ng-template>
 
-      <footer class="w-att__footer">
+      <footer class="w-att__footer" *ngIf="!compact">
         <span><i class="pi pi-calendar"></i>{{ footerDateLabel }}</span>
         <span *ngIf="state.organizationName"><i class="pi pi-map-marker"></i>{{ state.organizationName }}</span>
       </footer>
@@ -162,11 +156,17 @@ import {
 })
 export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, OnDestroy {
   @Input() data?: StaffAttendanceToggleData;
+  @Input() compact = false;
+  @Output() attendanceChanged = new EventEmitter<void>();
 
   private readonly api = inject(StaffAttendanceApiService);
   private readonly messages = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+
+  readonly menuItems: MenuItem[] = [
+    { label: 'View Attendance', icon: 'pi pi-calendar', command: () => void this.router.navigateByUrl('/app/attendance/staff') }
+  ];
 
   state: StaffAttendanceToggleData = {
     signedIn: false,
@@ -180,21 +180,13 @@ export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, 
   loading = false;
   elapsed = { hours: '00', minutes: '00', seconds: '00' };
 
-  readonly menuItems: MenuItem[] = [
-    {
-      label: 'View Attendance',
-      icon: 'pi pi-calendar',
-      command: () => void this.router.navigateByUrl('/app/attendance/staff')
-    }
-  ];
-
   private timerId: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     if (this.data) {
       this.applyToggleData(this.data);
     }
-    this.refreshFromApi(false);
+    if (!this.data) this.refreshFromApi(false);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -224,7 +216,7 @@ export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, 
   }
 
   get showTimer(): boolean {
-    return this.widgetState === 'NOT_STARTED' || this.widgetState === 'ACTIVE';
+    return this.widgetState === 'ACTIVE' || (!this.compact && this.widgetState === 'NOT_STARTED');
   }
 
   get statusIcon(): string {
@@ -334,6 +326,7 @@ export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, 
           summary: 'Signed in',
           detail: 'Your attendance has been recorded.'
         });
+        this.attendanceChanged.emit();
         this.cdr.markForCheck();
       },
       error: err => {
@@ -348,6 +341,7 @@ export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, 
           summary: 'Unable to sign in',
           detail: err?.error?.message || 'Please try again.'
         });
+        this.attendanceChanged.emit();
         this.cdr.markForCheck();
       }
     });
@@ -435,14 +429,11 @@ export class StaffAttendanceToggleWidgetComponent implements OnInit, OnChanges, 
     });
   }
 
-  /**
-   * Backend stores LocalDateTime in UTC (JVM) without an offset.
-   * Append Z so Date / DatePipe treat it as UTC instead of local wall time.
-   */
+  /** Backend LocalDateTime values are UTC without an explicit offset. */
   private normalizeServerDateTime(value?: string | null): string | undefined {
     if (!value) return undefined;
     if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)) return value;
-    return value + 'Z';
+    return `${value}Z`;
   }
 
   private parseServerDateTime(value: string): number | null {

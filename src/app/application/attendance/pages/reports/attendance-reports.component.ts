@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 
 import {
@@ -14,6 +14,7 @@ import {
 } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
 import { StudentAttendanceApiService } from '../../services/student-attendance-api.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   AttendanceClassSummaryRow,
@@ -50,6 +51,14 @@ export class AttendanceReportsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly api = inject(StudentAttendanceApiService);
+  private readonly loginService = inject(LoginService);
+  readonly canViewStaffReport = this.loginService.getUserRole().some((role) => {
+    const roleName = typeof role === 'string'
+      ? role
+      : String((role as any)?.roleCode ?? (role as any)?.roleName ?? (role as any)?.name ?? '');
+    return ['SUPER_ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
+      .includes(roleName.toUpperCase().replace(/^ROLE_/, ''));
+  });
 
   loading = true;
   errorMessage = '';
@@ -66,13 +75,15 @@ export class AttendanceReportsComponent implements OnInit {
     sectionId: 'all'
   };
 
-  readonly reportTypeOptions: SelectOption[] = [
-    { label: 'Student Attendance', value: 'student' },
-    { label: 'Staff Attendance', value: 'staff' }
-  ];
+  readonly reportTypeOptions: SelectOption[] = this.canViewStaffReport
+    ? [
+        { label: 'Student Attendance', value: 'student' },
+        { label: 'Staff Attendance', value: 'staff' }
+      ]
+    : [{ label: 'Student Attendance', value: 'student' }];
 
   activeTab = 'summary';
-  readonly tabs = [
+  private readonly reportTabs = [
     { key: 'summary', label: 'Summary' },
     { key: 'trend', label: 'Monthly Trend' },
     { key: 'comparison', label: 'Class Comparison' },
@@ -80,12 +91,20 @@ export class AttendanceReportsComponent implements OnInit {
     { key: 'staff', label: 'Staff Attendance' }
   ];
 
+  get tabs() {
+    return this.canViewStaffReport ? this.reportTabs : this.reportTabs.filter(tab => tab.key !== 'staff');
+  }
+
   defaulterThreshold = 75;
   private organizationThreshold = 75;
   private customThreshold = false;
 
   ngOnInit(): void {
     this.loadLookups();
+    if (!this.canViewStaffReport) {
+      this.refresh();
+      return;
+    }
     this.dataService.getAttendanceSettings()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -172,9 +191,12 @@ export class AttendanceReportsComponent implements OnInit {
       ...(this.customThreshold ? { defaulterThreshold: this.defaulterThreshold } : {})
     };
 
+    const staffReport$ = this.canViewStaffReport
+      ? this.dataService.getStaffAttendanceReport(payload)
+      : of([] as StaffAttendanceReportRow[]);
     forkJoin({
       summary: this.dataService.getAttendanceSummaryReport(payload),
-      staff: this.dataService.getStaffAttendanceReport(payload)
+      staff: staffReport$
     }).pipe(
       finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef)

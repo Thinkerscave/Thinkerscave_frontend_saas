@@ -25,6 +25,8 @@ export class BreadcrumbComponent implements OnInit {
   home: MenuItem = { icon: 'pi pi-home', routerLink: ['/app'] };
   title = 'Dashboard';
   subtitle: string | null = null;
+  hideBreadcrumb = false;
+  rightLabel: string | null = null;
 
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -76,6 +78,8 @@ export class BreadcrumbComponent implements OnInit {
     const meta = this.pageMeta.resolve(this.pageOverride, this.history.hasPrevious());
     this.title = meta.title;
     this.subtitle = meta.subtitle;
+    this.hideBreadcrumb = meta.hideBreadcrumb;
+    this.rightLabel = meta.rightLabel;
     this.items = meta.crumbs.map(crumb =>
       crumb.link ? { label: crumb.label, routerLink: crumb.link } : { label: crumb.label }
     );

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { academicsLookupApi, attendanceApi } from '../../../shared/constants/api.endpoint';
+import { academicsLookupApi, attendanceApi, studentApi } from '../../../shared/constants/api.endpoint';
 import { unwrapApiResponse } from '../../../shared/utils/api-response.util';
 import {
   AcademicLookupItem,
@@ -9,6 +9,7 @@ import {
   AttendanceSummaryReportPayload,
   ClassAttendanceSummary,
   MarkDailyAttendanceRequest,
+  MarkPeriodAttendanceRequest,
   StudentRoster,
   StudentSession
 } from '../models/student-attendance.model';
@@ -42,8 +43,8 @@ export class StudentAttendanceApiService {
     );
   }
 
-  getRoster(classId: number, sectionId: number | null, date: string): Observable<StudentRoster> {
-    return this.http.get<unknown>(attendanceApi.studentRoster(classId, sectionId, date)).pipe(
+  getRoster(classId: number, sectionId: number | null, date: string, periodId?: number | null): Observable<StudentRoster> {
+    return this.http.get<unknown>(attendanceApi.studentRoster(classId, sectionId, date, periodId)).pipe(
       map(response => unwrapApiResponse<StudentRoster>(response, {
         attendanceDate: date,
         classId,
@@ -53,13 +54,20 @@ export class StudentAttendanceApiService {
         holiday: false,
         weekend: false,
         frozen: false,
+        editable: false,
+        editabilityReason: null,
         students: []
       }))
     );
   }
 
-  getSessions(from: string, to: string, classId: number | null, sectionId: number | null): Observable<StudentSession[]> {
-    return this.http.get<unknown>(attendanceApi.studentSessions(from, to, classId, sectionId)).pipe(
+  /** Student photo via the authenticated PHOTO document download endpoint. */
+  downloadStudentPhoto(docId: number): Observable<Blob> {
+    return this.http.get(studentApi.downloadDoc(docId), { responseType: 'blob' });
+  }
+
+  getSessions(from: string, to: string, classId: number | null, sectionId: number | null, limit?: number): Observable<StudentSession[]> {
+    return this.http.get<unknown>(attendanceApi.studentSessions(from, to, classId, sectionId, limit)).pipe(
       map(response => unwrapApiResponse<StudentSession[]>(response, []))
     );
   }
@@ -88,6 +96,22 @@ export class StudentAttendanceApiService {
 
   markDaily(payload: MarkDailyAttendanceRequest): Observable<ClassAttendanceSummary> {
     return this.http.post<unknown>(attendanceApi.studentDaily, payload).pipe(
+      map(response => unwrapApiResponse<ClassAttendanceSummary>(response, {
+        attendanceDate: payload.attendanceDate,
+        classId: payload.classId,
+        sectionId: payload.sectionId ?? null,
+        totalStudents: payload.entries.length,
+        presentCount: 0,
+        absentCount: 0,
+        lateCount: 0,
+        excusedCount: 0,
+        attendancePercent: 0
+      }))
+    );
+  }
+
+  markPeriod(payload: MarkPeriodAttendanceRequest): Observable<ClassAttendanceSummary> {
+    return this.http.post<unknown>(attendanceApi.studentPeriod, payload).pipe(
       map(response => unwrapApiResponse<ClassAttendanceSummary>(response, {
         attendanceDate: payload.attendanceDate,
         classId: payload.classId,

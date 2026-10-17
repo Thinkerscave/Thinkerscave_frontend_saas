@@ -1,0 +1,78 @@
+.staff-events {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .staff-events {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.staff-events__card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--saas-border);
+  border-radius: 10px;
+  background: var(--saas-surface);
+}
+
+.staff-events__date {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--saas-primary-soft);
+  color: var(--saas-primary);
+  line-height: 1.1;
+
+  strong { font-size: 1.15rem; }
+  span { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+}
+
+.staff-events__main {
+  min-width: 0;
+}
+
+.staff-events__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.staff-events__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--saas-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-events__tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--saas-success-soft);
+  color: var(--saas-success);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.staff-events__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--saas-text-muted);
+
+  i { font-size: 0.75rem; }
+}

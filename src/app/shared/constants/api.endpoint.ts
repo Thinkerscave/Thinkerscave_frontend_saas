@@ -180,16 +180,19 @@ export const attendanceApi = {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
     return `${BASE}/attendance/students/copy-previous?classId=${classId}&targetDate=${targetDate}${sec}`;
   },
-  studentRoster: (classId: number, sectionId: number | null, date: string) => {
+  studentRoster: (classId: number, sectionId: number | null, date: string, periodId?: number | null) => {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
-    return `${BASE}/attendance/students/roster?classId=${classId}${sec}&date=${date}`;
+    const period = periodId != null ? `&periodId=${periodId}` : '';
+    return `${BASE}/attendance/students/roster?classId=${classId}${sec}&date=${date}${period}`;
   },
-  studentSessions: (from: string, to: string, classId: number | null, sectionId: number | null) => {
+  studentSessions: (from: string, to: string, classId: number | null, sectionId: number | null, limit?: number) => {
     const cls = classId != null ? `&classId=${classId}` : '';
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
-    return `${BASE}/attendance/students/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${cls}${sec}`;
+    const lim = limit != null ? `&limit=${limit}` : '';
+    return `${BASE}/attendance/students/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${cls}${sec}${lim}`;
   },
   studentDaily: `${BASE}/attendance/students/daily`,
+  studentPeriod: `${BASE}/attendance/students/period`,
   studentClass: (classId: number, sectionId: number | null, date: string) => {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
     return `${BASE}/attendance/students/class?classId=${classId}${sec}&date=${date}`;
