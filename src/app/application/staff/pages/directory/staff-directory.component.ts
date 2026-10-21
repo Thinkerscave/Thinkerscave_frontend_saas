@@ -20,7 +20,7 @@ import {
   StaffSummary,
   StaffType
 } from '../../models/staff.model';
-import { StaffService } from '../../services/staff.service';
+import { StaffService, saveBlobAsFile } from '../../services/staff.service';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
@@ -28,7 +28,6 @@ import { ViewPreferenceService } from '../../../services/view-preference.service
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { CreateStaffComponent } from '../create-staff/create-staff.component';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
@@ -61,7 +60,6 @@ const LIST_KEY = 'staff.directory.view';
     AppPaginatorComponent,
     AvatarComponent,
     EmptyStateComponent,
-    CreateStaffComponent,
     KpiCardComponent,
     KpiGroupComponent,
     SaasPageHeaderComponent,
@@ -86,7 +84,7 @@ export class StaffDirectoryComponent implements OnInit {
   hasLoaded = false;
   searching = false;
   errorMessage = '';
-  showAddDrawer = false;
+  private readonly photoUrls = new Map<number, string | null>();
 
   view: AppListViewMode = this.viewPrefs.globalDefault();
 
@@ -228,6 +226,7 @@ export class StaffDirectoryComponent implements OnInit {
           }
           this.staffPage = page;
           this.errorMessage = '';
+          this.loadPhotos(page.content);
           this.snapshots.set(LIST_KEY, { staffPage: this.staffPage, dashboard: this.dashboard });
         },
         error: () => {
@@ -285,25 +284,38 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   addStaff(): void {
-    this.showAddDrawer = true;
-  }
-
-  importStaff(): void {
-    this.feedback.info('Import', 'Staff import will be available soon.');
+    this.router.navigate(['/app/staff/create']);
   }
 
   exportStaff(): void {
-    this.feedback.info('Export', 'Staff export will be available soon.');
+    const request: StaffFilterParams = {
+      ...this.appliedFilters,
+      keyword: this.filters.keyword
+    };
+    this.api.exportStaff(request).subscribe({
+      next: ({ blob, fileName }) => saveBlobAsFile(blob, fileName),
+      error: () => this.feedback.error('Export failed', 'Unable to export staff. Please try again.')
+    });
   }
 
-  closeAddDrawer(): void {
-    this.showAddDrawer = false;
+  /** Returns the blob object URL for a staff photo, or null when none is loaded. */
+  photoFor(staff: StaffSummary): string | null {
+    return this.photoUrls.get(staff.staffId) ?? null;
   }
 
-  onStaffAdded(): void {
-    this.showAddDrawer = false;
-    this.loadStaff();
-    this.loadDashboard();
+  private loadPhotos(items: StaffSummary[]): void {
+    for (const staff of items) {
+      if (this.photoUrls.has(staff.staffId)) {
+        continue;
+      }
+      this.api.getPhotoObjectUrl(staff.staffId).subscribe({
+        next: url => {
+          this.photoUrls.set(staff.staffId, url);
+          this.cdr.markForCheck();
+        },
+        error: () => this.photoUrls.set(staff.staffId, null)
+      });
+    }
   }
 
   editStaff(staff: StaffSummary, event?: Event): void {

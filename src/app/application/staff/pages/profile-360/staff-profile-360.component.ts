@@ -4,23 +4,32 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  ViewChild,
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
-import { finalize } from 'rxjs';
+import { finalize, map } from 'rxjs';
 
 import {
   ResponsibilityAssignment,
   ResponsibilityAssignmentRequest,
   Responsibility,
-  StaffDetail
+  STAFF_DOCUMENT_TYPES,
+  StaffActivity,
+  StaffAddress,
+  StaffDetail,
+  StaffDocumentResponse
 } from '../../models/staff.model';
-import { StaffService } from '../../services/staff.service';
+import { StaffService, saveBlobAsFile } from '../../services/staff.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
+import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { DocumentPreviewDialogComponent } from '../../../admissions/components/document-preview-dialog/document-preview-dialog.component';
+import { KpiCardComponent, KpiGroupComponent } from '../../../../shared/ui/kpi';
 
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 type ProfileTab = 'overview' | 'responsibilities' | 'documents' | 'activity';
@@ -32,9 +41,10 @@ interface TabConfig { id: ProfileTab; label: string; icon: string; }
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DropdownModule, AvatarComponent, SaasPageHeaderComponent,
-    TcPageSkeletonComponent
+    TcPageSkeletonComponent, AppToastComponent, DocumentPreviewDialogComponent, KpiCardComponent, KpiGroupComponent
   ],
-  styleUrls: ['../../staff.shared.scss'],
+  providers: [MessageService],
+  styleUrls: ['../../staff.shared.scss', './staff-profile-360.component.scss'],
   templateUrl: './staff-profile-360.component.html'
 })
 export class StaffProfile360Component implements OnInit {
@@ -50,8 +60,21 @@ export class StaffProfile360Component implements OnInit {
 
   staffId = 0;
   profile?: StaffDetail;
+  photoUrl: string | null = null;
+  @ViewChild(DocumentPreviewDialogComponent) private previewDialog?: DocumentPreviewDialogComponent;
+
+  // ── Documents ────────────────────────────────────────────────────────────────
+  readonly documentTypes = STAFF_DOCUMENT_TYPES;
+  documentType = 'OTHER';
+  documentBusy = false;
+  documentError = '';
 
   activeTab: ProfileTab = 'overview';
+
+  // ── Activity ─────────────────────────────────────────────────────────────────
+  activity: StaffActivity[] = [];
+  activityLoading = false;
+  activityError = '';
 
   readonly tabs: TabConfig[] = [
     { id: 'overview',         label: 'Overview',         icon: 'pi-user' },
@@ -95,6 +118,8 @@ export class StaffProfile360Component implements OnInit {
       .subscribe({
         next: profile => {
           this.profile = profile;
+          this.loadPhoto();
+          if (this.activeTab === 'activity') { this.loadActivity(); }
           this.pageHeader.setPageHeader({
             subtitle: [profile.staffCode, profile.designation].filter(Boolean).join(' · ')
           });
@@ -105,16 +130,57 @@ export class StaffProfile360Component implements OnInit {
 
   setTab(tab: ProfileTab): void {
     this.activeTab = tab;
+    if (tab === 'activity') { this.loadActivity(); }
+  }
+
+  loadActivity(): void {
+    if (!this.staffId) { return; }
+    this.activityLoading = true;
+    this.activityError = '';
+    this.api.getActivity(this.staffId)
+      .pipe(finalize(() => { this.activityLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: items => { this.activity = items; },
+        error: () => { this.activityError = 'Unable to load activity.'; }
+      });
+  }
+
+  trackByActivityId(_: number, item: StaffActivity): number {
+    return item.activityId;
+  }
+
+  activityIcon(actionType: string): string {
+    switch (actionType) {
+      case 'CREATED': return 'pi-plus-circle';
+      case 'PROFILE_UPDATED': return 'pi-pencil';
+      case 'STATUS_CHANGED': return 'pi-power-off';
+      case 'BANK_DETAILS_UPDATED': return 'pi-wallet';
+      case 'PHOTO_UPDATED':
+      case 'PHOTO_REMOVED': return 'pi-image';
+      case 'DOCUMENT_UPLOADED':
+      case 'DOCUMENT_REPLACED':
+      case 'DOCUMENT_REMOVED': return 'pi-file';
+      case 'RESPONSIBILITY_ADDED':
+      case 'RESPONSIBILITY_UPDATED':
+      case 'RESPONSIBILITY_REMOVED': return 'pi-sitemap';
+      default: return 'pi-history';
+    }
   }
 
   get activeResponsibilityCount(): number {
     return (this.profile?.responsibilities ?? []).filter(r => r.active).length;
   }
 
-  /** Whether the tab-contextual sidebar has anything meaningful to show for the active tab. */
-  get hasContextualSidebar(): boolean {
-    if (!this.profile) { return false; }
-    return this.activeTab === 'responsibilities';
+  get yearsInService(): number | null {
+    return this.yearsSince(this.profile?.joiningDate);
+  }
+
+  get age(): number | null {
+    return this.yearsSince(this.profile?.dateOfBirth);
+  }
+
+  get activeDocumentCount(): number {
+    return this.documents.length;
   }
 
   // ── Quick Actions ────────────────────────────────────────────────────────────
@@ -181,5 +247,94 @@ export class StaffProfile360Component implements OnInit {
   }
 
   trackByIdx(i: number): number { return i; }
+
+  formatAddress(a?: StaffAddress | null): string {
+    if (!a) { return ''; }
+    return [a.addressLine1, a.addressLine2, a.landmark, a.city, a.district, a.state, a.postalCode, a.country]
+      .map(v => v?.trim())
+      .filter((v): v is string => !!v)
+      .join(', ');
+  }
+
+  get documents(): StaffDocumentResponse[] {
+    return (this.profile?.documents ?? []).filter(d => d.active);
+  }
+
+  documentTypeLabel(code: string): string {
+    return STAFF_DOCUMENT_TYPES.find(t => t.value === code)?.label ?? code;
+  }
+
+  onDocumentSelected(event: Event, documentId?: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) { return; }
+    this.documentBusy = true;
+    this.documentError = '';
+    const request$ = documentId
+      ? this.api.replaceStaffDocument(this.staffId, documentId, file)
+      : this.api.uploadStaffDocument(this.staffId, file, this.documentType);
+    request$.pipe(finalize(() => { this.documentBusy = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: () => this.refreshDocuments(),
+        error: () => { this.documentError = 'Unable to save the document. Please try again.'; }
+      });
+  }
+
+  viewDocument(doc: StaffDocumentResponse): void {
+    const source$ = this.api.downloadStaffDocument(this.staffId, doc.documentId).pipe(
+      map(({ blob, fileName }) => ({ blob, fileName, contentType: blob.type }))
+    );
+    this.previewDialog?.openSource(doc.fileName || doc.documentName, source$);
+  }
+
+  formatFileSize(bytes?: number): string {
+    if (!bytes) { return '—'; }
+    if (bytes < 1024) { return `${bytes} B`; }
+    if (bytes < 1024 * 1024) { return `${Math.round(bytes / 1024)} KB`; }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  downloadDocument(doc: StaffDocumentResponse): void {
+    this.api.downloadStaffDocument(this.staffId, doc.documentId).subscribe({
+      next: ({ blob, fileName }) => saveBlobAsFile(blob, fileName),
+      error: () => { this.documentError = 'Unable to download the document.'; }
+    });
+  }
+
+  removeDocument(doc: StaffDocumentResponse): void {
+    if (!confirm(`Remove document "${doc.documentName}"?`)) { return; }
+    this.documentBusy = true;
+    this.api.deactivateStaffDocument(this.staffId, doc.documentId)
+      .pipe(finalize(() => { this.documentBusy = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: () => this.refreshDocuments(),
+        error: () => { this.documentError = 'Unable to remove the document.'; }
+      });
+  }
+
+  trackByDocId(_: number, d: StaffDocumentResponse): number { return d.documentId; }
+
+  private loadPhoto(): void {
+    this.api.getPhotoObjectUrl(this.staffId).subscribe({
+      next: url => { this.photoUrl = url; this.cdr.markForCheck(); },
+      error: () => { this.photoUrl = null; }
+    });
+  }
+
+  private refreshDocuments(): void {
+    this.api.listStaffDocuments(this.staffId).subscribe({
+      next: docs => {
+        if (this.profile) { this.profile.documents = docs; }
+        this.cdr.markForCheck();
+      }
+    });
+  }
   trackByAssignId(_: number, a: ResponsibilityAssignment): number { return a.assignmentId; }
+
+  private yearsSince(date?: string): number | null {
+    if (!date) { return null; }
+    const ms = Date.now() - new Date(date).getTime();
+    return Math.max(0, Math.floor(ms / (365.25 * 24 * 3600 * 1000)));
+  }
 }

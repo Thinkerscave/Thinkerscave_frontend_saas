@@ -44,9 +44,28 @@ export class StaffDocumentsComponent implements OnInit {
         next: (page) => {
           this.staff = page.content;
           this.errorMessage = '';
+          this.loadPhotos(this.staff);
         },
         error: () => { this.errorMessage = 'Unable to load staff for document management.'; }
       });
+  }
+
+  private readonly photoUrls = new Map<number, string | null>();
+
+  photoFor(s: StaffSummary): string | null {
+    return this.photoUrls.get(s.staffId) ?? null;
+  }
+
+  private loadPhotos(items: StaffSummary[]): void {
+    for (const s of items) {
+      if (this.photoUrls.has(s.staffId)) {
+        continue;
+      }
+      this.api.getPhotoObjectUrl(s.staffId).subscribe({
+        next: url => { this.photoUrls.set(s.staffId, url); this.cdr.markForCheck(); },
+        error: () => this.photoUrls.set(s.staffId, null)
+      });
+    }
   }
 
   filteredStaff(): StaffSummary[] {

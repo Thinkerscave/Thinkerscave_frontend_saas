@@ -31,8 +31,8 @@
       @for (s of pagedAlumni(); track trackByStaff($index, s)) {
         <article class="sd-card" (click)="openProfile(s)">
           <div class="sd-card__avatar">
-            @if (s.photoUrl) {
-              <img [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar" />
+            @if (photoFor(s)) {
+              <img [src]="photoFor(s)" [alt]="s.fullName" class="sd-avatar" />
             } @else {
               <div class="sd-avatar sd-avatar--initials">{{ initials(s.fullName) }}</div>
             }

@@ -1,9 +1,6 @@
 <section class="tc-page-shell tc-directory-page stf-directory-page" (click)="closeMenu()">
 
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="importStaff()">
-      <i class="pi pi-upload"></i> Import
-    </button>
     <button type="button" class="tc-btn" (click)="exportStaff()">
       <i class="pi pi-download"></i> Export
     </button>
@@ -104,7 +101,7 @@
                    [style.animation-delay.ms]="i * 40"
                    (click)="openProfile(s)">
             <header class="tc-card__header">
-              <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
+              <tc-avatar [name]="s.fullName" [imageUrl]="photoFor(s)" size="lg"></tc-avatar>
               <div class="tc-card__title">
                 <strong>{{ s.fullName }}</strong>
                 <small>{{ s.staffCode }} · {{ s.designation || '—' }}</small>
@@ -171,7 +168,7 @@
                   (click)="openProfile(s)">
                 <td>
                   <div class="tc-table__avatar-cell">
-                    <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
+                    <tc-avatar [name]="s.fullName" [imageUrl]="photoFor(s)" size="sm"></tc-avatar>
                     <div class="info">
                       <strong>{{ s.fullName }}</strong>
                       <small>{{ s.email }}</small>
@@ -231,14 +228,5 @@
       </div>
     </div>
   </div>
-
-  <ng-container *ngIf="showAddDrawer">
-    <div class="sd-drawer-overlay" (click)="closeAddDrawer()"></div>
-    <app-create-staff
-      [drawerMode]="true"
-      (closed)="closeAddDrawer()"
-      (saved)="onStaffAdded()">
-    </app-create-staff>
-  </ng-container>
 
 </section>

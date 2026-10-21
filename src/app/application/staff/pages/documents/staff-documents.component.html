@@ -40,8 +40,8 @@
             <tr>
               <td>
                 <div class="sd-table-staff">
-                  @if (s.photoUrl) {
-                    <img [src]="s.photoUrl" [alt]="s.fullName" class="sd-avatar sd-avatar--sm" />
+                  @if (photoFor(s)) {
+                    <img [src]="photoFor(s)" [alt]="s.fullName" class="sd-avatar sd-avatar--sm" />
                   } @else {
                     <div class="sd-avatar sd-avatar--sm sd-avatar--initials">{{ initials(s.fullName) }}</div>
                   }

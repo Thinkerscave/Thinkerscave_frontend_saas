@@ -93,6 +93,8 @@ export interface StaffDetail {
   employmentCategory: EmploymentCategory;
   employmentStatus: EmploymentStatus;
   joiningDate: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
   highestQualification?: string;
   experienceYears?: number;
 
@@ -106,10 +108,46 @@ export interface StaffDetail {
   createdOn?: string;
   updatedOn?: string;
 
+  presentAddress?: StaffAddress;
+  permanentAddress?: StaffAddress;
+  sameAsPresentAddress?: boolean;
+  /** Masked bank details (account number is never returned). */
+  bankDetails?: StaffBankDetails | null;
+
   salarySummary?: SalarySummary;
   responsibilities?: ResponsibilityAssignment[];
   payrollSummary?: PayrollSummaryDetail;
-  documents?: StaffDocument[];
+  documents?: StaffDocumentResponse[];
+}
+
+// ─── Address / Bank ──────────────────────────────────────────────────────────
+
+export interface StaffAddress {
+  addressLine1?: string;
+  addressLine2?: string;
+  landmark?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+}
+
+export interface StaffBankDetailsRequest {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+}
+
+/** Masked view returned by GET /staff/{id}/bank-details. Account number is never returned in full. */
+export interface StaffBankDetails {
+  staffId: number;
+  bankName?: string;
+  accountHolderName?: string;
+  maskedAccountNumber?: string;
+  ifscCode?: string;
+  updatedOn?: string;
 }
 
 // ─── Staff Create / Update Requests ─────────────────────────────────────────
@@ -135,14 +173,16 @@ export interface StaffCreateRequest {
   emergencyContactName?: string;
   emergencyContactRelation?: string;
   emergencyContactNumber?: string;
-  photoUrl?: string;
-  remarks?: string;
-}
-
-export interface StaffUpdateRequest extends StaffCreateRequest {
   contractStartDate?: string;
   contractEndDate?: string;
+  remarks?: string;
+  presentAddress?: StaffAddress;
+  permanentAddress?: StaffAddress;
+  sameAsPresentAddress?: boolean;
+  bankDetails?: StaffBankDetailsRequest;
 }
+
+export type StaffUpdateRequest = StaffCreateRequest;
 
 // ─── Responsibility ───────────────────────────────────────────────────────────
 
@@ -249,12 +289,36 @@ export interface SalaryStructureRequest {
 
 // ─── Document ─────────────────────────────────────────────────────────────────
 
-export interface StaffDocument {
-  documentId?: number;
+export interface StaffActivity {
+  activityId: number;
+  actionType: string;
+  section?: string;
+  description: string;
+  performedBy?: string;
+  performedOn: string;
+}
+
+/** Document types accepted by POST /staff/{id}/documents. Profile photo is managed separately. */
+export const STAFF_DOCUMENT_TYPES: { value: string; label: string }[] = [
+  { value: 'AADHAR', label: 'Aadhaar' },
+  { value: 'PAN', label: 'PAN' },
+  { value: 'RESUME', label: 'Resume / CV' },
+  { value: 'QUALIFICATION', label: 'Qualification Certificate' },
+  { value: 'EXPERIENCE', label: 'Experience Letter' },
+  { value: 'OTHER', label: 'Other' }
+];
+
+export interface StaffDocumentResponse {
+  documentId: number;
+  ownerType: string;
+  ownerId: number;
   documentType: string;
+  documentName: string;
   fileName: string;
-  fileUrl?: string;
-  status?: string;
+  fileExtension?: string;
+  fileSize?: number;
+  mimeType?: string;
+  active: boolean;
 }
 
 // ─── Payroll ──────────────────────────────────────────────────────────────────

@@ -1,54 +1,26 @@
-<div class="sw-wizard-page" [class.sd-drawer]="drawerMode">
+<div class="sw-wizard-page">
 
-  <!-- Drawer header -->
-  <div *ngIf="drawerMode" class="sd-drawer__header">
-    <div>
-      <h2>{{ isEditMode ? 'Edit Staff Profile' : 'Add New Staff' }}</h2>
-      <p>Step {{ activeStepIndex + 1 }} of 2 — {{ steps[activeStepIndex].label }}</p>
-    </div>
-    <button type="button" class="sd-drawer__close" (click)="cancel()" aria-label="Close">
-      <i class="pi pi-times"></i>
+  <nav class="sw-step-tabs" aria-label="Staff form sections">
+    <button *ngFor="let step of steps; let i = index"
+            type="button"
+            class="sw-step-tab"
+            [class.is-active]="activeStep === step.id"
+            [class.is-done]="i < activeStepIndex"
+            (click)="setStep(step.id)">
+      <span class="sw-step-tab__num">
+        <i *ngIf="i < activeStepIndex" class="pi pi-check"></i>
+        <span *ngIf="i >= activeStepIndex">{{ step.num }}</span>
+      </span>
+      {{ step.label }}
     </button>
-  </div>
-
-  <!-- Page actions -->
-  <div *ngIf="!drawerMode" class="sw-wizard-header">
-    <div class="sw-wizard-header__actions">
-      <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
-      <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
-        <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
-        {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
-      </button>
-    </div>
-  </div>
+  </nav>
 
   <!-- Error Banner -->
   <div *ngIf="errorMessage" class="sw-error">
     <i class="pi pi-exclamation-circle"></i> {{ errorMessage }}
   </div>
 
-  <div class="sw-wizard-body" [class.sd-drawer__body]="drawerMode">
-
-    <!-- ──── Step Sidebar ──── -->
-    <aside class="sw-step-sidebar" [class.sd-drawer__steps]="drawerMode">
-      <button *ngFor="let step of steps; let i = index"
-              type="button"
-              class="sw-step-item"
-              [class.is-active]="activeStep === step.id"
-              [class.is-done]="i < activeStepIndex"
-              (click)="setStep(step.id)">
-        <div class="sw-step-item__num">
-          <i *ngIf="i < activeStepIndex" class="pi pi-check"></i>
-          <span *ngIf="i >= activeStepIndex">{{ step.num }}</span>
-        </div>
-        <div class="sw-step-item__info">
-          <span class="sw-step-item__label">{{ step.label }}</span>
-        </div>
-        <i class="pi pi-chevron-right sw-step-item__arrow"></i>
-      </button>
-    </aside>
-
-    <!-- ──── Form Panel ──── -->
+  <div class="sw-wizard-body">
     <div class="sw-form-panel">
 
       <!-- PERSONAL INFORMATION -->
@@ -58,16 +30,19 @@
         <!-- Photo -->
         <div class="sw-photo-row">
           <div class="sw-photo-preview">
-            <img *ngIf="photoUrl" [src]="photoUrl" alt="Photo"/>
-            <div *ngIf="!photoUrl" class="sw-photo-placeholder">
+            <img *ngIf="photoPreviewUrl" [src]="photoPreviewUrl" alt="Profile photo"/>
+            <div *ngIf="!photoPreviewUrl" class="sw-photo-placeholder">
               <i class="pi pi-camera"></i>
             </div>
           </div>
           <div class="sw-photo-upload">
             <label class="sw-label">Profile Photo</label>
-            <input id="photo-url-input" type="text" [(ngModel)]="photoUrl"
-                   placeholder="Paste photo URL or upload..."/>
-            <small>JPG, PNG up to 2MB</small>
+            <input id="input-photo" type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)"/>
+            <small>JPG, PNG or WEBP up to 2 MB</small>
+            <div>
+              <button *ngIf="photoPreviewUrl" type="button" class="sd-btn sd-btn--ghost" (click)="clearPhoto()">Remove photo</button>
+            </div>
+            <small *ngIf="photoError" style="color:#d92d20;">{{ photoError }}</small>
           </div>
         </div>
 
@@ -75,6 +50,7 @@
           <div class="sw-field">
             <label class="sw-label">First Name <span class="req">*</span></label>
             <input id="input-first-name" type="text" [(ngModel)]="firstName" placeholder="Arjun"/>
+            <small *ngIf="err('firstName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('firstName') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Middle Name</label>
@@ -83,6 +59,7 @@
           <div class="sw-field">
             <label class="sw-label">Last Name <span class="req">*</span></label>
             <input id="input-last-name" type="text" [(ngModel)]="lastName" placeholder="Sharma"/>
+            <small *ngIf="err('lastName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('lastName') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Gender <span class="req">*</span></label>
@@ -94,10 +71,12 @@
                         appendTo="body"
                         styleClass="w-full">
             </p-dropdown>
+            <small *ngIf="err('gender')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('gender') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Date of Birth <span class="req">*</span></label>
             <input id="input-dob" type="date" [(ngModel)]="dateOfBirth"/>
+            <small *ngIf="err('dateOfBirth')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('dateOfBirth') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Blood Group</label>
@@ -135,10 +114,12 @@
           <div class="sw-field">
             <label class="sw-label">Mobile Number <span class="req">*</span></label>
             <input id="input-mobile" type="tel" [(ngModel)]="mobileNumber" placeholder="+91 98765 43210"/>
+            <small *ngIf="err('mobileNumber')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('mobileNumber') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Email <span class="req">*</span></label>
             <input id="input-email" type="email" [(ngModel)]="email" placeholder="arjun.sharma@school.com"/>
+            <small *ngIf="err('email')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('email') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Highest Qualification</label>
@@ -148,6 +129,7 @@
           <div class="sw-field">
             <label class="sw-label">Experience (Years)</label>
             <input id="input-experience" type="number" [(ngModel)]="experienceYears" min="0" placeholder="5"/>
+            <small *ngIf="err('experienceYears')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('experienceYears') }}</small>
           </div>
           <div class="sw-field sw-field--full">
             <label class="sw-label">Remarks</label>
@@ -172,12 +154,13 @@
             <label class="sw-label">Phone Number</label>
             <input id="input-emergency-phone" type="tel" [(ngModel)]="emergencyContactNumber"
                    placeholder="+91 99887 76655"/>
+            <small *ngIf="err('emergencyContactNumber')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('emergencyContactNumber') }}</small>
           </div>
         </div>
       </div>
 
       <!-- EMPLOYMENT & PAY -->
-      <div *ngIf="activeStep === 'employment'" class="sw-form-section">
+      <div *ngIf="activeStep === 'personal'" class="sw-form-section">
         <h2 class="sw-form-section__title">Employment Information</h2>
         <div class="sw-form-grid">
           <div class="sw-field">
@@ -195,6 +178,7 @@
             <label class="sw-label">Designation <span class="req">*</span></label>
             <input id="input-designation" type="text" [(ngModel)]="designation"
                    placeholder="Mathematics Teacher"/>
+            <small *ngIf="err('designation')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('designation') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Employment Category <span class="req">*</span></label>
@@ -221,6 +205,7 @@
           <div class="sw-field">
             <label class="sw-label">Joining Date <span class="req">*</span></label>
             <input id="input-joining-date" type="date" [(ngModel)]="joiningDate"/>
+            <small *ngIf="err('joiningDate')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('joiningDate') }}</small>
           </div>
           <div class="sw-field" *ngIf="employmentCategory === 'CONTRACT'">
             <label class="sw-label">Contract Start Date</label>
@@ -229,26 +214,92 @@
           <div class="sw-field" *ngIf="employmentCategory === 'CONTRACT'">
             <label class="sw-label">Contract End Date</label>
             <input id="input-contract-end" type="date" [(ngModel)]="contractEndDate"/>
+            <small *ngIf="err('contractEndDate')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('contractEndDate') }}</small>
           </div>
         </div>
 
+      </div>
+
+      <!-- ADDRESS & BANK -->
+      <div *ngIf="activeStep === 'address'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Address &amp; Bank Details</h2>
+
+        <ng-template #addressFields let-addr let-prefix="prefix">
+          <div class="sw-form-grid">
+            <div class="sw-field sw-field--full">
+              <label class="sw-label">Address Line 1</label>
+              <input type="text" [(ngModel)]="addr.addressLine1" placeholder="House / flat, street"/>
+            </div>
+            <div class="sw-field sw-field--full">
+              <label class="sw-label">Address Line 2</label>
+              <input type="text" [(ngModel)]="addr.addressLine2"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">Landmark</label>
+              <input type="text" [(ngModel)]="addr.landmark"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">City</label>
+              <input type="text" [(ngModel)]="addr.city"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">District</label>
+              <input type="text" [(ngModel)]="addr.district"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">State</label>
+              <input type="text" [(ngModel)]="addr.state"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">Country</label>
+              <input type="text" [(ngModel)]="addr.country"/>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label">Postal Code</label>
+              <input type="text" [(ngModel)]="addr.postalCode"/>
+              <small *ngIf="err(prefix + 'PostalCode')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err(prefix + 'PostalCode') }}</small>
+            </div>
+          </div>
+        </ng-template>
+
+        <h3 class="sw-form-section__sub">Present Address</h3>
+        <ng-container *ngTemplateOutlet="addressFields; context: { $implicit: presentAddress, prefix: 'present' }"></ng-container>
+
+        <h3 class="sw-form-section__sub">Permanent Address</h3>
+        <label class="sw-checkbox" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;">
+          <input type="checkbox" [ngModel]="sameAsPresentAddress" (ngModelChange)="onSameAddressToggle($event)"/>
+          Same as present address
+        </label>
+        <ng-container *ngIf="!sameAsPresentAddress">
+          <ng-container *ngTemplateOutlet="addressFields; context: { $implicit: permanentAddress, prefix: 'permanent' }"></ng-container>
+        </ng-container>
+
         <h3 class="sw-form-section__sub">Bank Details</h3>
+        <p class="sw-helper" style="margin:0 0 .75rem;">
+          Account number is encrypted at rest and shown masked afterwards. Leave all fields empty to skip.
+        </p>
         <div class="sw-form-grid">
           <div class="sw-field">
             <label class="sw-label">Bank Name</label>
             <input id="input-bank-name" type="text" [(ngModel)]="bankName" placeholder="State Bank of India"/>
+            <small *ngIf="err('bankName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('bankName') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Account Holder Name</label>
             <input id="input-account-holder" type="text" [(ngModel)]="accountHolderName"/>
+            <small *ngIf="err('accountHolderName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('accountHolderName') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Account Number</label>
-            <input id="input-account-number" type="text" [(ngModel)]="accountNumber"/>
+            <input id="input-account-number" type="text" [(ngModel)]="accountNumber"
+                   [placeholder]="maskedAccountNumber || ''"/>
+            <small *ngIf="isEditMode && maskedAccountNumber">Saved: {{ maskedAccountNumber }}. Enter a number only to replace it.</small>
+            <small *ngIf="err('accountNumber')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('accountNumber') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">IFSC Code</label>
             <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="SBIN0001234"/>
+            <small *ngIf="err('ifscCode')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('ifscCode') }}</small>
           </div>
         </div>
 
@@ -256,37 +307,62 @@
           Salary is configured later in Finance → Payroll.
         </p>
 
-        <div class="sw-final-box">
-          <i class="pi pi-check-circle"></i>
-          <div>
-            <strong>Ready to {{ isEditMode ? 'update' : 'create' }}</strong>
-            <p>Review all information and click <em>{{ isEditMode ? 'Update Staff' : 'Create Staff' }}</em> when ready.</p>
+      </div>
+
+      <!-- DOCUMENTS -->
+      <div *ngIf="activeStep === 'documents'" class="sw-form-section">
+        <h2 class="sw-form-section__title">Documents</h2>
+        <p class="sw-helper">
+          Optional. Files are uploaded after the staff record is saved. Maximum 5 MB per file (PDF, image, Excel or CSV).
+        </p>
+
+        <div class="sw-form-grid">
+          <div class="sw-field">
+            <label class="sw-label">Document Type</label>
+            <p-dropdown inputId="select-doc-type"
+                        [options]="documentTypeOptions"
+                        [(ngModel)]="docType"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        styleClass="w-full">
+            </p-dropdown>
           </div>
+          <div class="sw-field">
+            <label class="sw-label">Document Name</label>
+            <input id="input-doc-name" type="text" [(ngModel)]="docName" placeholder="Defaults to file name"/>
+          </div>
+          <div class="sw-field sw-field--full">
+            <label class="sw-label">File</label>
+            <input id="input-doc-file" type="file" [accept]="allowedDocumentExtensions" (change)="onDocumentSelected($event)"/>
+          </div>
+        </div>
+
+        <ul *ngIf="queuedDocuments.length" style="list-style:none;padding:0;margin:.75rem 0;display:flex;flex-direction:column;gap:.5rem;">
+          <li *ngFor="let doc of queuedDocuments; let i = index" style="display:flex;gap:.75rem;align-items:center;">
+            <span>{{ documentTypeLabel(doc.documentType) }}</span>
+            <strong>{{ doc.documentName }}</strong>
+            <small>{{ doc.file.name }}</small>
+            <button type="button" class="sd-btn sd-btn--ghost" (click)="removeQueuedDocument(i)">Remove</button>
+          </li>
+        </ul>
+
+      </div>
+
+      <div class="sw-action-bar">
+        <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
+        <div class="sw-action-bar__right">
+          <button type="button" class="sd-btn sd-btn--ghost" *ngIf="activeStepIndex > 0" (click)="prevStep()">
+            <i class="pi pi-arrow-left"></i> Back
+          </button>
+          <button type="button" class="sd-btn sd-btn--ghost" *ngIf="activeStepIndex < steps.length - 1" (click)="nextStep()">
+            Continue <i class="pi pi-arrow-right"></i>
+          </button>
           <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
             <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
             {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
           </button>
         </div>
-      </div>
-
-      <!-- Step navigation buttons -->
-      <div class="sw-step-nav">
-        <button type="button" class="sd-btn sd-btn--ghost"
-                *ngIf="activeStepIndex > 0"
-                (click)="prevStep()">
-          <i class="pi pi-arrow-left"></i> Back
-        </button>
-        <button type="button" class="sd-btn sd-btn--primary"
-                *ngIf="activeStepIndex < steps.length - 1"
-                (click)="nextStep()">
-          Continue <i class="pi pi-arrow-right"></i>
-        </button>
-        <button *ngIf="drawerMode && activeStepIndex === steps.length - 1"
-                type="button" class="sd-btn sd-btn--primary"
-                (click)="submit()" [disabled]="saving">
-          <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
-          {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
-        </button>
       </div>
     </div>
   </div>

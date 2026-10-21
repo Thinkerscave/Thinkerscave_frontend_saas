@@ -59,9 +59,28 @@ export class StaffAlumniComponent implements OnInit {
           this.alumni = page.content.filter((s) => ALUMNI_STATUSES.includes(s.employmentStatus));
           this.page = 0;
           this.errorMessage = '';
+          this.loadPhotos(this.alumni);
         },
         error: () => { this.errorMessage = 'Unable to load alumni staff records.'; }
       });
+  }
+
+  private readonly photoUrls = new Map<number, string | null>();
+
+  photoFor(s: StaffSummary): string | null {
+    return this.photoUrls.get(s.staffId) ?? null;
+  }
+
+  private loadPhotos(items: StaffSummary[]): void {
+    for (const s of items) {
+      if (this.photoUrls.has(s.staffId)) {
+        continue;
+      }
+      this.api.getPhotoObjectUrl(s.staffId).subscribe({
+        next: url => { this.photoUrls.set(s.staffId, url); this.cdr.markForCheck(); },
+        error: () => this.photoUrls.set(s.staffId, null)
+      });
+    }
   }
 
   filteredAlumni(): StaffSummary[] {
