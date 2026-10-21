@@ -3,7 +3,7 @@
 <div class="ta-page acad-page">
 <tc-saas-page-header>
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
-    <span class="ta-badge" *ngIf="dashboard as dash" [class.ta-badge--success]="dash.academicYearStatus === 'CURRENT'">
+    <span class="row-badge" *ngIf="dashboard as dash" [attr.data-tone]="dash.academicYearStatus === 'CURRENT' ? 'success' : 'neutral'">
       {{ dash.academicYearStatus }}
     </span>
     <span class="ta-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
@@ -86,77 +86,77 @@
 
   <div class="ta-layout" *ngIf="dashboard as dash">
     <div class="ta-main" *ngIf="activeTab === 'allocation'">
-      <table class="ta-table" *ngIf="dash.rows.length; else emptyTpl">
-        <thead>
-          <tr>
-            <th>Class</th>
-            <th>Section</th>
-            <th>Subject</th>
-            <th>Weekly Periods</th>
-            <th>Assigned Teacher</th>
-            <th>Workload</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of dash.rows">
-            <td><strong>{{ row.className }}</strong></td>
-            <td>{{ row.sectionName }}</td>
-            <td>
-              <strong>{{ row.subjectName }}</strong>
-              <div><code>{{ row.subjectCode }}</code></div>
-            </td>
-            <td>{{ row.weeklyPeriods }}</td>
-            <td>
-              <ng-container *ngIf="row.primaryStaffName; else noTeacher">
-                <button type="button" class="ta-link" (click)="viewStaff(row.primaryStaffId)">
-                  {{ row.primaryStaffName }}
+      <div class="saas-table-wrap" *ngIf="dash.rows.length; else emptyTpl">
+        <table class="ta-table">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Section</th>
+              <th>Subject</th>
+              <th>Weekly Periods</th>
+              <th>Assigned Teacher</th>
+              <th>Workload</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of dash.rows">
+              <td><strong>{{ row.className }}</strong></td>
+              <td>{{ row.sectionName }}</td>
+              <td>
+                <strong>{{ row.subjectName }}</strong>
+                <div><code>{{ row.subjectCode }}</code></div>
+              </td>
+              <td>{{ row.weeklyPeriods }}</td>
+              <td>
+                <ng-container *ngIf="row.primaryStaffName; else noTeacher">
+                  <button type="button" class="ta-link" (click)="viewStaff(row.primaryStaffId)">
+                    {{ row.primaryStaffName }}
+                  </button>
+                </ng-container>
+                <ng-template #noTeacher>—</ng-template>
+              </td>
+              <td>
+                <ng-container *ngIf="row.primaryStaffId; else noLoad">
+                  {{ row.primaryWorkloadAssigned }}/{{ row.primaryWorkloadMax }}
+                  <div class="ta-muted">{{ workloadLabel(row.primaryWorkloadStatus) }}</div>
+                </ng-container>
+                <ng-template #noLoad>—</ng-template>
+              </td>
+              <td>
+                <span
+                  class="row-badge"
+                  [attr.data-tone]="row.status === 'ASSIGNED' ? 'success' : row.status === 'UNASSIGNED' ? 'warning' : 'danger'">
+                  {{ statusLabel(row.status) }}
+                </span>
+              </td>
+              <td class="ta-actions">
+                <button
+                  type="button"
+                  class="tc-btn tc-btn--primary"
+                  *tcHasPerm="resource; action: 'manage'"
+                  [disabled]="readOnly"
+                  (click)="openAssign(row)">
+                  {{ row.primaryStaffId ? 'Change' : 'Assign' }}
                 </button>
-              </ng-container>
-              <ng-template #noTeacher>—</ng-template>
-            </td>
-            <td>
-              <ng-container *ngIf="row.primaryStaffId; else noLoad">
-                {{ row.primaryWorkloadAssigned }}/{{ row.primaryWorkloadMax }}
-                <div class="ta-muted">{{ workloadLabel(row.primaryWorkloadStatus) }}</div>
-              </ng-container>
-              <ng-template #noLoad>—</ng-template>
-            </td>
-            <td>
-              <span
-                class="ta-badge"
-                [class.ta-badge--success]="row.status === 'ASSIGNED'"
-                [class.ta-badge--warn]="row.status === 'UNASSIGNED'"
-                [class.ta-badge--danger]="row.status === 'CONFLICT'">
-                {{ statusLabel(row.status) }}
-              </span>
-            </td>
-            <td class="ta-actions">
-              <button
-                type="button"
-                class="ta-btn ta-btn--primary"
-                *tcHasPerm="resource; action: 'manage'"
-                [disabled]="readOnly"
-                (click)="openAssign(row)">
-                {{ row.primaryStaffId ? 'Change' : 'Assign' }}
-              </button>
-              <button
-                type="button"
-                class="ta-link"
-                *ngIf="canManage && row.teacherAllocationId && row.primaryStaffId"
-                (click)="unassign(row)">
-                Unassign
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                <button
+                  type="button"
+                  class="ta-link"
+                  *ngIf="canManage && row.teacherAllocationId && row.primaryStaffId"
+                  (click)="unassign(row)">
+                  Unassign
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <ng-template #emptyTpl>
         <div class="ta-empty">
           <h3>No allocation slots yet</h3>
           <p>Map subjects to classes first, then assign teachers here.</p>
-          <a class="ta-btn ta-btn--primary" routerLink="/app/academics/subjects-mapping">Go to Subjects</a>
+          <a class="tc-btn tc-btn--primary" routerLink="/app/academics/subjects-mapping">Go to Subjects</a>
         </div>
       </ng-template>
       <app-paginator
@@ -224,7 +224,7 @@
             Workload {{ rec.assignedWeeklyPeriods }}/{{ rec.maxWeeklyPeriods }} · {{ rec.reason }}
           </div>
         </div>
-        <span class="ta-badge" [class.ta-badge--success]="rec.recommended" [class.ta-badge--warn]="!rec.recommended">
+        <span class="row-badge" [attr.data-tone]="rec.recommended ? 'success' : 'warning'">
           {{ rec.recommended ? 'Recommended' : 'Over capacity' }}
         </span>
       </label>
@@ -232,8 +232,8 @@
     </div>
 
     <div class="ta-form-actions">
-      <button type="button" class="ta-btn ta-btn--ghost" (click)="showAssign = false">Cancel</button>
-      <button type="button" class="ta-btn ta-btn--primary" [disabled]="saving || !selectedStaffId" (click)="confirmAssign()">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="showAssign = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving || !selectedStaffId" (click)="confirmAssign()">
         {{ saving ? 'Saving…' : 'Assign' }}
       </button>
     </div>

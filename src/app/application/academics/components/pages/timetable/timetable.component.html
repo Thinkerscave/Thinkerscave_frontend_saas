@@ -7,7 +7,7 @@
       {{ dash.academicYearStatus }}
     </span>
     <span class="tt-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
-    <button type="button" class="tt-btn tt-btn--secondary" *tcHasPerm="resource; action: 'manage'" (click)="openTeacherArrangements()">
+    <button type="button" class="tc-btn tc-btn--outline" *tcHasPerm="resource; action: 'manage'" (click)="openTeacherArrangements()">
       <i class="pi pi-users" aria-hidden="true"></i>
       Teacher arrangements
     </button>

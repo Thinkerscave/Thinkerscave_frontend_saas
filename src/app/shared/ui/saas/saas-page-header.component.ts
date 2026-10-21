@@ -31,15 +31,15 @@ export interface SaasBreadcrumb { label: string; route?: string; }
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="saas-page-header saas-page-header--toolbar">
-      <button
-        *ngIf="showBack"
-        type="button"
-        class="tc-btn tc-btn--back"
-        (click)="goBack()">
-        <i class="pi pi-arrow-left" aria-hidden="true"></i>
-        Back
-      </button>
       <div class="saas-page-header__actions">
+        <button
+          *ngIf="showBack"
+          type="button"
+          class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back"
+          (click)="goBack()">
+          <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          Back
+        </button>
         <ng-content></ng-content>
       </div>
     </div>

@@ -1,5 +1,5 @@
 <app-toast></app-toast>
-<section class="saas-page att-page">
+<section class="tc-page-shell tc-directory-page saas-page att-page">
   <tc-saas-page-header
     title="Staff Attendance"
     subtitle="View your attendance history, submit regularization requests, and manage approvals.">
@@ -149,42 +149,44 @@
 
       <!-- List view -->
       <div class="att-list" *ngIf="!historyLoading && historyView === 'list'">
-        <table class="att-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Day</th>
-              <th>Sign In</th>
-              <th>Sign Out</th>
-              <th>Working Hours</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of listRows">
-              <td>{{ formatDate(row.date) }}</td>
-              <td>{{ formatDay(row.date) }}</td>
-              <td>{{ formatTime(row.signInTime) }}</td>
-              <td>{{ formatTime(row.signOutTime) }}</td>
-              <td>{{ formatMinutes(row.workingMinutes) }}</td>
-              <td><tc-saas-pill [label]="(row.displayStatus || '—') | titlecase" [tone]="statusTone(row.displayStatus)"></tc-saas-pill></td>
-              <td>
-                <button
-                  *ngIf="actionLabel(row) !== '—'"
-                  type="button"
-                  class="att-link-btn"
-                  (click)="onListAction(row)">
-                  {{ actionLabel(row) }}
-                </button>
-                <span *ngIf="actionLabel(row) === '—'">—</span>
-              </td>
-            </tr>
-            <tr *ngIf="!listRows.length">
-              <td colspan="7" class="att-empty">No attendance records for this month.</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="saas-table-wrap">
+          <table class="att-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Sign In</th>
+                <th>Sign Out</th>
+                <th>Working Hours</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of listRows">
+                <td>{{ formatDate(row.date) }}</td>
+                <td>{{ formatDay(row.date) }}</td>
+                <td>{{ formatTime(row.signInTime) }}</td>
+                <td>{{ formatTime(row.signOutTime) }}</td>
+                <td>{{ formatMinutes(row.workingMinutes) }}</td>
+                <td><tc-saas-pill [label]="(row.displayStatus || '—') | titlecase" [tone]="statusTone(row.displayStatus)"></tc-saas-pill></td>
+                <td>
+                  <button
+                    *ngIf="actionLabel(row) !== '—'"
+                    type="button"
+                    class="att-link-btn"
+                    (click)="onListAction(row)">
+                    {{ actionLabel(row) }}
+                  </button>
+                  <span *ngIf="actionLabel(row) === '—'">—</span>
+                </td>
+              </tr>
+              <tr *ngIf="!listRows.length">
+                <td colspan="7" class="att-empty">No attendance records for this month.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </tc-saas-panel>
   </ng-container>
@@ -213,35 +215,37 @@
       </tc-saas-filter-row>
 
       <div class="att-history__loading" *ngIf="regLoading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
-      <table class="att-table" *ngIf="!regLoading">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Day</th>
-            <th>Requested Time</th>
-            <th>Requested Status</th>
-            <th>Reason</th>
-            <th>Status</th>
-            <th>Requested On</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let req of filteredMyRequests">
-            <td>{{ formatDate(req.attendanceDate) }}</td>
-            <td>{{ formatDay(req.attendanceDate) }}</td>
-            <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
-            <td>{{ req.requestedStatus | titlecase }}</td>
-            <td>{{ req.reason }}</td>
-            <td><tc-saas-pill [label]="req.status | titlecase" [tone]="statusTone(req.status)"></tc-saas-pill></td>
-            <td>{{ formatDate(req.requestedAt) }}</td>
-            <td><button type="button" class="att-link-btn" (click)="viewMyRequest(req)">View</button></td>
-          </tr>
-          <tr *ngIf="!filteredMyRequests.length">
-            <td colspan="8" class="att-empty">No regularization requests yet.</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="saas-table-wrap" *ngIf="!regLoading">
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Requested Time</th>
+              <th>Requested Status</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Requested On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of filteredMyRequests">
+              <td>{{ formatDate(req.attendanceDate) }}</td>
+              <td>{{ formatDay(req.attendanceDate) }}</td>
+              <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
+              <td>{{ req.requestedStatus | titlecase }}</td>
+              <td>{{ req.reason }}</td>
+              <td><tc-saas-pill [label]="req.status | titlecase" [tone]="statusTone(req.status)"></tc-saas-pill></td>
+              <td>{{ formatDate(req.requestedAt) }}</td>
+              <td><button type="button" class="att-link-btn" (click)="viewMyRequest(req)">View</button></td>
+            </tr>
+            <tr *ngIf="!filteredMyRequests.length">
+              <td colspan="8" class="att-empty">No regularization requests yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </tc-saas-panel>
   </ng-container>
 
@@ -249,33 +253,35 @@
   <ng-container *ngIf="activeTab === 'approvers' && canApprove">
     <tc-saas-panel title="Pending Regularization Requests" subtitle="Review and take action on attendance correction requests.">
       <div class="att-history__loading" *ngIf="approverLoading"><i class="pi pi-spin pi-spinner"></i> Loading…</div>
-      <table class="att-table" *ngIf="!approverLoading">
-        <thead>
-          <tr>
-            <th>Employee</th>
-            <th>Department</th>
-            <th>Date</th>
-            <th>Requested Time</th>
-            <th>Reason</th>
-            <th>Requested On</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let req of pendingRequests">
-            <td>{{ req.staffName }}</td>
-            <td>{{ req.department || '—' }}</td>
-            <td>{{ formatDate(req.attendanceDate) }}</td>
-            <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
-            <td>{{ req.reason }}</td>
-            <td>{{ formatDate(req.requestedAt) }}</td>
-            <td><button type="button" class="att-link-btn" (click)="openReview(req)">Review</button></td>
-          </tr>
-          <tr *ngIf="!pendingRequests.length">
-            <td colspan="7" class="att-empty">No pending requests.</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="saas-table-wrap" *ngIf="!approverLoading">
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Date</th>
+              <th>Requested Time</th>
+              <th>Reason</th>
+              <th>Requested On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of pendingRequests">
+              <td>{{ req.staffName }}</td>
+              <td>{{ req.department || '—' }}</td>
+              <td>{{ formatDate(req.attendanceDate) }}</td>
+              <td>{{ formatTimeRange(req.requestedSignInTime, req.requestedSignOutTime) }}</td>
+              <td>{{ req.reason }}</td>
+              <td>{{ formatDate(req.requestedAt) }}</td>
+              <td><button type="button" class="att-link-btn" (click)="openReview(req)">Review</button></td>
+            </tr>
+            <tr *ngIf="!pendingRequests.length">
+              <td colspan="7" class="att-empty">No pending requests.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </tc-saas-panel>
   </ng-container>
 </section>

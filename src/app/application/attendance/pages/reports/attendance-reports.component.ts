@@ -258,7 +258,7 @@ export class AttendanceReportsComponent implements OnInit {
 
   get donutGradient(): string {
     const p = Math.min(100, Math.max(0, this.summary.presentPct));
-    return `conic-gradient(var(--saas-success) 0 ${p}%, var(--saas-danger) ${p}% 100%)`;
+    return `conic-gradient(var(--tc-success) 0 ${p}%, var(--tc-danger) ${p}% 100%)`;
   }
 
   get trendPoints(): { label: string; v: number }[] {

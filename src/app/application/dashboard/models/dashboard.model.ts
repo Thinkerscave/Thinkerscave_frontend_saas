@@ -80,21 +80,13 @@ export interface WelcomeHeaderData {
   greeting?: string;
   avatarUrl?: string;
   todayLabel?: string;
+  /** Organization Setup card is shown while mandatory setup is incomplete. */
   showSetupGuide?: boolean;
+  setupCompletedCount?: number;
+  setupTotalCount?: number;
   setupProgressPercent?: number;
-  recommendedNextLabel?: string;
-  recommendedNextRoute?: string;
-  setupChecklist?: SetupChecklistItem[];
   setupComplete?: boolean;
-}
-
-export interface SetupChecklistItem {
-  key: string;
-  label: string;
-  completed: boolean;
-  requiredForCompletion?: boolean;
-  available?: boolean;
-  route?: string | null;
+  setupError?: boolean;
 }
 
 export interface KpiItem {

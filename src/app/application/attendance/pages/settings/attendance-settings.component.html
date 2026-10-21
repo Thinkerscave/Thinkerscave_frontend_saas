@@ -1,4 +1,4 @@
-<div class="saas-page attendance-settings">
+<div class="tc-page-shell tc-directory-page saas-page attendance-settings">
   <tc-saas-page-header><button *ngIf="canManageSettings" type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="loading || saving || !isValid()"><i class="pi pi-save"></i>{{ saving ? 'Saving...' : 'Save Changes' }}</button></tc-saas-page-header>
   <div *ngIf="saved" class="attendance-settings__toast" role="status"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
   <div *ngIf="errorMessage" class="attendance-settings__toast attendance-settings__toast--error" role="alert"><i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}</div>

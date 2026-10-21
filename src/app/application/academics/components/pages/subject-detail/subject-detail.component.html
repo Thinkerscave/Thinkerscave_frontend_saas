@@ -5,7 +5,7 @@
   <tc-saas-page-header>
     <button
       type="button"
-      class="tc-btn"
+      class="tc-btn tc-btn--outline tc-btn--sm"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage"
       (click)="openEditSubject()">
@@ -13,7 +13,7 @@
     </button>
     <button
       type="button"
-      class="tc-btn tc-btn--primary"
+      class="tc-btn tc-btn--primary tc-btn--sm"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage || !availableClasses.length"
       (click)="openMapDialog()">

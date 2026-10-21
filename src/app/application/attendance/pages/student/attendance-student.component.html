@@ -1,10 +1,13 @@
-<div class="saas-page attendance-student">
+<div class="tc-page-shell tc-directory-page saas-page attendance-student">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="exportCsv()" [disabled]="!rows.length"><i class="pi pi-download"></i>Export</button>
+    <button type="button" class="tc-btn tc-btn--outline" (click)="exportCsv()" [disabled]="!rows.length"><i class="pi pi-download"></i>Export</button>
   </tc-saas-page-header>
 
   <app-toast></app-toast>
 
+  <tc-page-skeleton *ngIf="loading || lookupsLoading" layout="directory-table" [cards]="0" [rows]="6" [columns]="4" [showKpis]="false" [showFilter]="true"></tc-page-skeleton>
+
+  <ng-container *ngIf="!loading && !lookupsLoading">
   <section class="att-card att-filter-card">
     <div class="att-filter-grid">
       <label class="saas-field"><span>Class</span>
@@ -53,11 +56,11 @@
       </header>
 
       <div class="att-actions">
-        <button type="button" class="tc-btn" (click)="requestMarkAll('PRESENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-check"></i>Mark All Present</button>
-        <button type="button" class="tc-btn" (click)="requestMarkAll('ABSENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-times"></i>Mark All Absent</button>
+        <button type="button" class="tc-btn tc-btn--outline" (click)="requestMarkAll('PRESENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-check"></i>Mark All Present</button>
+        <button type="button" class="tc-btn tc-btn--outline" (click)="requestMarkAll('ABSENT')" [disabled]="!rows.length || !canMarkAttendance"><i class="pi pi-times"></i>Mark All Absent</button>
         <button
           type="button"
-          class="tc-btn"
+          class="tc-btn tc-btn--outline"
           (click)="copyPrevious()"
           [disabled]="!canCopyPrevious"
           [title]="canCopyPrevious ? 'Copy the previous working day status into this date' : 'Copy is available on an editable working day'">
@@ -100,7 +103,7 @@
           </p>
         </div>
         <div class="att-confirm__actions">
-          <button type="button" class="tc-btn" (click)="cancelMarkAll()">Cancel</button>
+          <button type="button" class="tc-btn tc-btn--outline" (click)="cancelMarkAll()">Cancel</button>
           <button type="button" class="tc-btn tc-btn--primary" (click)="confirmMarkAll()">Overwrite and mark all</button>
         </div>
       </div>
@@ -120,7 +123,7 @@
       <div *ngIf="!loading && !lookupsLoading && !rosterLoading && rosterError" class="saas-empty att-copy-error">
         <i class="pi pi-exclamation-triangle"></i>
         <strong>{{ rosterError }}</strong>
-        <p><button type="button" class="tc-btn" (click)="loadRoster()"><i class="pi pi-refresh"></i>Retry</button></p>
+        <p><button type="button" class="tc-btn tc-btn--outline" (click)="loadRoster()"><i class="pi pi-refresh"></i>Retry</button></p>
       </div>
 
       <div *ngIf="!loading && !lookupsLoading && !rosterLoading && !rosterError && !rows.length" class="saas-empty">
@@ -149,7 +152,7 @@
           </div>
         </div>
         <div class="att-confirm__actions">
-          <button type="button" class="tc-btn" (click)="cancelSave()" [disabled]="saving">Cancel</button>
+          <button type="button" class="tc-btn tc-btn--outline" (click)="cancelSave()" [disabled]="saving">Cancel</button>
           <button type="button" class="tc-btn tc-btn--primary" (click)="submit()" [disabled]="saving">
             <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>{{ saving ? 'Saving…' : 'Save Attendance' }}
           </button>
@@ -267,7 +270,7 @@
             <small>P {{ session.present }} · A {{ session.absent }} · {{ session.totalMarked }}/{{ session.expectedStudents }} marked {{ session.status === 'COMPLETED' ? '· Complete' : '· Partial' }}</small>
           </div>
           <span class="att-history-row__pct" [attr.data-tone]="pctTone(session.attendancePercent)">{{ session.attendancePercent }}%</span>
-          <button type="button" class="tc-btn att-view-btn" (click)="viewSession(session)" [disabled]="rosterLoading">
+          <button type="button" class="tc-btn tc-btn--outline att-view-btn" (click)="viewSession(session)" [disabled]="rosterLoading">
             <i class="pi pi-eye"></i>View
           </button>
         </article>
@@ -280,4 +283,5 @@
       </section>
     </aside>
   </div>
+  </ng-container>
 </div>

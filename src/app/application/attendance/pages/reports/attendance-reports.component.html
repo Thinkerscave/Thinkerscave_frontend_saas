@@ -1,6 +1,6 @@
-<div class="saas-page attendance-reports">
+<div class="tc-page-shell tc-directory-page saas-page attendance-reports">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="exportPdf()" title="Opens the browser print dialog (not a generated PDF file)">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="exportPdf()" title="Opens the browser print dialog (not a generated PDF file)">
       <i class="pi pi-print"></i>Print
     </button>
   </tc-saas-page-header>
@@ -44,7 +44,7 @@
     <button type="button" class="tc-btn tc-btn--primary" (click)="refresh()" [disabled]="loading">
       <i class="pi pi-filter"></i>Apply Filter
     </button>
-    <button type="button" class="tc-btn" (click)="reset()" [disabled]="loading">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="reset()" [disabled]="loading">
       <i class="pi pi-refresh"></i>Reset
     </button>
   </tc-saas-filter-row>
@@ -84,12 +84,12 @@
             <div class="saas-empty"><i class="pi pi-chart-line"></i><strong>No trend data</strong></div>
           } @else {
             <svg viewBox="0 0 600 200" class="trend-svg" preserveAspectRatio="none">
-              <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
-              <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
-              <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
-              <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <line x1="20" y1="20"  x2="600" y2="20"  stroke="var(--tc-border)"/>
+              <line x1="20" y1="80"  x2="600" y2="80"  stroke="var(--tc-border)"/>
+              <line x1="20" y1="140" x2="600" y2="140" stroke="var(--tc-border)"/>
+              <path [attr.d]="trendPath" fill="none" stroke="var(--tc-accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
               <g *ngFor="let p of trendPoints; let i = index">
-                <circle [attr.cx]="20 + (560 / (trendPoints.length - 1 || 1)) * i" [attr.cy]="160 - ((p.v / 100) * 120)" r="3.5" fill="#2C5BFF"/>
+                <circle [attr.cx]="20 + (560 / (trendPoints.length - 1 || 1)) * i" [attr.cy]="160 - ((p.v / 100) * 120)" r="3.5" fill="var(--tc-accent)"/>
               </g>
             </svg>
             <div class="trend-axis">
@@ -105,10 +105,10 @@
             <div class="saas-empty"><i class="pi pi-chart-line"></i><strong>No trend data for this range</strong></div>
           } @else {
             <svg viewBox="0 0 600 220" class="trend-svg" preserveAspectRatio="none">
-              <line x1="20" y1="20"  x2="600" y2="20"  stroke="#E5E9F2"/>
-              <line x1="20" y1="80"  x2="600" y2="80"  stroke="#E5E9F2"/>
-              <line x1="20" y1="140" x2="600" y2="140" stroke="#E5E9F2"/>
-              <path [attr.d]="trendPath" fill="none" stroke="#2C5BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <line x1="20" y1="20"  x2="600" y2="20"  stroke="var(--tc-border)"/>
+              <line x1="20" y1="80"  x2="600" y2="80"  stroke="var(--tc-border)"/>
+              <line x1="20" y1="140" x2="600" y2="140" stroke="var(--tc-border)"/>
+              <path [attr.d]="trendPath" fill="none" stroke="var(--tc-accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
             </svg>
             <div class="trend-axis">
               <small *ngFor="let p of trendPoints">{{ p.label }} — {{ p.v }}%</small>

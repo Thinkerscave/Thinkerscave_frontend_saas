@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core
 import { Router, RouterModule } from '@angular/router';
 import { WelcomeHeaderData, WidgetState } from '../../models/dashboard.model';
 
+export type SetupCardMode = 'hidden' | 'loading' | 'error' | 'ready';
+
 /**
- * Hero banner — deliberately not wrapped in `tc-widget-card` since it acts
- * as the page's greeting strip rather than a data widget, but still honors
- * the loading/error contract so it never flashes broken content.
+ * Greeting strip plus the compact Organization Setup card. The card is
+ * shown only while mandatory setup is incomplete (backend `showSetupGuide`).
  */
 @Component({
   selector: 'tc-welcome-header-widget',
@@ -27,8 +28,25 @@ export class WelcomeHeaderWidgetComponent {
     return name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase()).join('');
   }
 
+  get setupMode(): SetupCardMode {
+    if (this.state === 'LOADING') return 'loading';
+    if (this.state === 'ERROR' || this.data?.setupError) return 'error';
+    return this.data?.showSetupGuide ? 'ready' : 'hidden';
+  }
+
+  get completedCount(): number {
+    return this.data?.setupCompletedCount ?? 0;
+  }
+
+  get totalCount(): number {
+    return this.data?.setupTotalCount ?? 0;
+  }
+
+  get progressPercent(): number {
+    return Math.min(100, Math.max(0, this.data?.setupProgressPercent ?? 0));
+  }
+
   continueSetup(): void {
-    const route = this.data?.recommendedNextRoute || '/app/onboarding';
-    void this.router.navigateByUrl(route);
+    void this.router.navigateByUrl('/app/onboarding');
   }
 }

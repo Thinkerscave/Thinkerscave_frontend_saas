@@ -1,8 +1,7 @@
 :host { display: block; }
 
 .ta-page {
-  /* spacing from .acad-page */
-  color: #0f172a;
+  /* Inherits spacing and flow from .acad-page */
 }
 
 .ta-header {
@@ -13,19 +12,20 @@
   display: flex;
   gap: 0.4rem;
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--tc-text-muted);
   margin-bottom: 0.35rem;
 }
-.ta-breadcrumb a { color: #64748b; text-decoration: none; }
+.ta-breadcrumb a { color: var(--tc-text-muted); text-decoration: none; }
 .ta-header h1 {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: var(--tc-heading);
 }
 .ta-header p {
   margin: 0.35rem 0 0;
-  color: #64748b;
+  color: var(--tc-text-muted);
   max-width: 42rem;
 }
 
@@ -35,10 +35,11 @@
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card);
   margin-bottom: 1rem;
+  box-shadow: var(--tc-shadow-xs);
 }
 .ta-context__left {
   display: flex;
@@ -48,11 +49,11 @@
 }
 .ta-context__left label {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--tc-text-muted);
   font-weight: 600;
 }
-.ta-context__meta { color: #64748b; font-size: 0.875rem; }
-.ta-readonly { color: #b45309; font-size: 0.8rem; font-weight: 600; }
+.ta-context__meta { color: var(--tc-text-muted); font-size: 0.875rem; }
+.ta-readonly { color: var(--tc-warning); font-size: 0.8rem; font-weight: 600; }
 
 .ta-readiness {
   display: flex;
@@ -60,55 +61,58 @@
   gap: 1rem;
   align-items: center;
   padding: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card);
   margin-bottom: 1rem;
   flex-wrap: wrap;
+  box-shadow: var(--tc-shadow-xs);
 }
 .ta-readiness__metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(110px, 1fr));
-  gap: .65rem;
+  gap: 0.65rem;
   flex: 1;
 }
 .ta-readiness__metrics > div {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: .7rem .8rem;
+  background: var(--tc-surface-50);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
+  padding: 0.7rem 0.8rem;
 }
-.ta-readiness__metrics strong { display: block; font-size: 1.25rem; }
-.ta-readiness__metrics span { color: #64748b; font-size: .78rem; }
-.ta-readiness__metrics .warn strong { color: #c2410c; }
-.ta-readiness__metrics .danger strong { color: #b91c1c; }
-.ta-gauge { display: grid; justify-items: center; gap: .45rem; }
+.ta-readiness__metrics strong { display: block; font-size: 1.25rem; color: var(--tc-heading); }
+.ta-readiness__metrics span { color: var(--tc-text-muted); font-size: 0.78rem; }
+.ta-readiness__metrics .warn strong { color: var(--tc-warning); }
+.ta-readiness__metrics .danger strong { color: var(--tc-danger); }
+
+.ta-gauge { display: grid; justify-items: center; gap: 0.45rem; }
 .ta-gauge__ring {
   --p: 0%;
   width: 96px; height: 96px; border-radius: 50%;
-  background: conic-gradient(#16a34a var(--p), #e2e8f0 0);
+  background: conic-gradient(var(--tc-success) var(--p), var(--tc-surface-200) 0);
   display: grid; place-items: center; position: relative;
 }
 .ta-gauge__ring::before {
-  content: ''; position: absolute; inset: 10px; border-radius: 50%; background: #fff;
+  content: ''; position: absolute; inset: 10px; border-radius: 50%; background: var(--tc-surface-card);
 }
 .ta-gauge__ring strong, .ta-gauge__ring span { position: relative; z-index: 1; text-align: center; }
-.ta-gauge__ring strong { font-size: 1.05rem; }
-.ta-gauge__ring span { display: block; font-size: .68rem; color: #64748b; }
+.ta-gauge__ring strong { font-size: 1.05rem; color: var(--tc-heading); }
+.ta-gauge__ring span { display: block; font-size: 0.68rem; color: var(--tc-text-muted); }
 
 .ta-tabs {
-  display: flex; gap: .4rem; margin-bottom: .85rem;
+  display: flex; gap: 0.4rem; margin-bottom: 0.85rem;
 }
 .ta-tabs button {
-  border: 0; background: #f1f5f9; color: #475569; border-radius: 8px;
-  padding: .45rem .85rem; cursor: pointer; font-weight: 600;
+  border: 0; background: var(--tc-surface-100); color: var(--tc-text-muted); border-radius: var(--tc-radius-sm);
+  padding: 0.45rem 0.85rem; cursor: pointer; font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.ta-tabs button.active { background: rgba(37,99,235,.12); color: #1d4ed8; }
+.ta-tabs button.active { background: color-mix(in srgb, var(--tc-accent) 12%, transparent); color: var(--tc-accent); }
 
 .ta-workload-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: .75rem;
+  gap: 0.75rem;
 }
 
 .ta-toolbar {
@@ -129,27 +133,26 @@
 .ta-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
+  background: var(--tc-surface-card);
   font-size: 0.875rem;
 }
 .ta-table th,
 .ta-table td {
   text-align: left;
   padding: 0.75rem 0.65rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--tc-border);
   vertical-align: middle;
+  color: var(--tc-text);
 }
 .ta-table th {
-  background: #f8fafc;
+  background: var(--tc-surface-50);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #64748b;
+  color: var(--tc-text-muted);
 }
-.ta-table code { color: #64748b; font-size: 0.78rem; }
+.ta-table tbody tr:last-child td { border-bottom: none; }
+.ta-table code { color: var(--tc-text-muted); font-size: 0.78rem; }
 
 .ta-actions {
   display: flex;
@@ -159,19 +162,21 @@
 }
 
 .ta-side {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-card);
   padding: 1rem;
+  box-shadow: var(--tc-shadow-xs);
 }
 .ta-side h3 {
   margin: 0 0 0.85rem;
   font-size: 0.95rem;
+  color: var(--tc-heading);
 }
 
 .ta-workload {
   padding: 0.65rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--tc-border);
 }
 .ta-workload:last-child { border-bottom: 0; }
 .ta-workload__top {
@@ -181,55 +186,26 @@
   margin-bottom: 0.35rem;
   font-size: 0.85rem;
 }
-.ta-workload small { color: #64748b; }
-
-.ta-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.15rem 0.55rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
-}
-.ta-badge--success { background: #dcfce7; color: #166534; }
-.ta-badge--warn { background: #ffedd5; color: #c2410c; }
-.ta-badge--danger { background: #fee2e2; color: #b91c1c; }
-
-.ta-btn {
-  border: 0;
-  border-radius: 10px;
-  padding: 0.45rem 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  text-decoration: none;
-}
-.ta-btn--primary { background: #2563eb; color: #fff; }
-.ta-btn--ghost { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; }
-.ta-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ta-workload small { color: var(--tc-text-muted); }
 
 .ta-link {
   border: 0;
   background: transparent;
-  color: #2563eb;
+  color: var(--tc-accent);
   font-weight: 600;
   cursor: pointer;
   padding: 0;
   text-align: left;
 }
 
-.ta-muted { color: #64748b; font-size: 0.85rem; }
-.ta-danger { color: #b91c1c; }
+.ta-muted { color: var(--tc-text-muted); font-size: 0.85rem; }
+.ta-danger { color: var(--tc-danger); }
 
 .ta-empty,
 .ta-loading {
   text-align: center;
   padding: 3rem 1rem;
-  color: #64748b;
+  color: var(--tc-text-muted);
 }
 
 .ta-rec-list {
@@ -245,14 +221,16 @@
   grid-template-columns: auto 1fr auto;
   gap: 0.65rem;
   align-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
   padding: 0.75rem;
   cursor: pointer;
+  background: var(--tc-surface-card);
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .ta-rec--selected {
-  border-color: #93c5fd;
-  background: #eff6ff;
+  border-color: var(--tc-accent);
+  background: var(--tc-accent-soft);
 }
 
 .ta-form-actions {
