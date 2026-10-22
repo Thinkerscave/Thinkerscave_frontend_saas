@@ -9,8 +9,6 @@
 export type StaffType = 'TEACHING' | 'NON_TEACHING';
 export type EmploymentCategory = 'PERMANENT' | 'CONTRACT' | 'TEMPORARY' | 'PART_TIME' | 'VISITING_FACULTY';
 export type EmploymentStatus = 'ACTIVE' | 'PROBATION' | 'NOTICE_PERIOD' | 'RESIGNED' | 'RETIRED' | 'CONTRACT_COMPLETED';
-export type SalaryType = 'MONTHLY' | 'DAILY_WAGE';
-export type PayrollStatus = 'GENERATED' | 'PAID' | 'PENDING' | 'CANCELLED';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
@@ -58,19 +56,6 @@ export interface StaffSummary {
 
 // ─── Staff Detail (360 profile) ──────────────────────────────────────────────
 
-export interface SalarySummary {
-  salaryStructureId: number;
-  salaryType: SalaryType;
-  grossSalary: number;
-  effectiveFrom: string;
-}
-
-export interface PayrollSummaryDetail {
-  lastPayrollMonth: string;
-  lastNetSalary: number;
-  lastPayrollStatus: PayrollStatus;
-}
-
 export interface StaffDetail {
   staffId: number;
   staffCode: string;
@@ -114,10 +99,15 @@ export interface StaffDetail {
   /** Masked bank details (account number is never returned). */
   bankDetails?: StaffBankDetails | null;
 
-  salarySummary?: SalarySummary;
   responsibilities?: ResponsibilityAssignment[];
-  payrollSummary?: PayrollSummaryDetail;
   documents?: StaffDocumentResponse[];
+  primarySubject?: StaffSubjectRef | null;
+  secondarySubject?: StaffSubjectRef | null;
+}
+
+export interface StaffSubjectRef {
+  subjectId: number;
+  name: string;
 }
 
 // ─── Address / Bank ──────────────────────────────────────────────────────────
@@ -159,7 +149,6 @@ export interface StaffCreateRequest {
   gender: string;
   dateOfBirth: string;
   bloodGroup?: string;
-  religion?: string;
   nationality?: string;
   mobileNumber: string;
   email: string;
@@ -180,9 +169,14 @@ export interface StaffCreateRequest {
   permanentAddress?: StaffAddress;
   sameAsPresentAddress?: boolean;
   bankDetails?: StaffBankDetailsRequest;
+  primarySubjectId?: number;
+  secondarySubjectId?: number;
 }
 
-export type StaffUpdateRequest = StaffCreateRequest;
+/** Religion stays on existing records for edits even though the create form no longer shows it. */
+export interface StaffUpdateRequest extends StaffCreateRequest {
+  religion?: string;
+}
 
 // ─── Responsibility ───────────────────────────────────────────────────────────
 
@@ -237,56 +231,6 @@ export interface ResponsibilityAssignmentRequest {
   remarks?: string;
 }
 
-// ─── Salary Structure ─────────────────────────────────────────────────────────
-
-export interface SalaryStructure {
-  salaryStructureId: number;
-  staffId: number;
-  staffName?: string;
-  staffCode?: string;
-  salaryType: SalaryType;
-  basicPay?: number;
-  hra?: number;
-  da?: number;
-  specialAllowance?: number;
-  transportAllowance?: number;
-  otherAllowance?: number;
-  pfEmployee?: number;
-  esiEmployee?: number;
-  professionalTax?: number;
-  otherDeduction?: number;
-  totalStatutoryDeductions?: number;
-  grossSalary: number;
-  bankName?: string;
-  accountHolderName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
-  effectiveFrom: string;
-  effectiveTo?: string;
-  active: boolean;
-  createdOn?: string;
-}
-
-export interface SalaryStructureRequest {
-  staffId: number;
-  salaryType: SalaryType;
-  basicPay?: number;
-  hra?: number;
-  da?: number;
-  specialAllowance?: number;
-  transportAllowance?: number;
-  otherAllowance?: number;
-  pfEmployee?: number;
-  esiEmployee?: number;
-  professionalTax?: number;
-  otherDeduction?: number;
-  bankName?: string;
-  accountHolderName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
-  effectiveFrom: string;
-}
-
 // ─── Document ─────────────────────────────────────────────────────────────────
 
 export interface StaffActivity {
@@ -321,57 +265,6 @@ export interface StaffDocumentResponse {
   active: boolean;
 }
 
-// ─── Payroll ──────────────────────────────────────────────────────────────────
-
-export interface PayrollDashboard {
-  currentMonth?: string;
-  totalStaff: number;
-  generatedPayroll: number;
-  pendingPayroll: number;
-  paidPayroll: number;
-  /** Computed client-side from payroll list when not returned by API */
-  totalAmount?: number;
-}
-
-export interface Payroll {
-  payrollId: number;
-  staffId: number;
-  staffName: string;
-  staffCode: string;
-  payrollYear: number;
-  payrollMonth: number;
-  workingDays?: number;
-  presentDays?: number;
-  leaveWithoutPayDays?: number;
-  grossSalary: number;
-  pfAmount?: number;
-  esiAmount?: number;
-  professionalTaxAmount?: number;
-  otherDeductionAmount?: number;
-  totalDeductions: number;
-  netSalary: number;
-  status: PayrollStatus;
-  generatedOn?: string;
-  paidOn?: string;
-  remarks?: string;
-}
-
-export interface PayrollGenerateRequest {
-  year: number;
-  month: number;
-}
-
-export interface PayrollGenerateResult {
-  generatedRecords: number;
-  skippedAlreadyExists: number;
-  skippedNoSalaryStructure: string[];
-  tenantIdentifier?: string;
-}
-
-export interface BulkMarkPaidRequest {
-  payrollIds: number[];
-}
-
 // ─── Filter/Search Params ─────────────────────────────────────────────────────
 
 export interface StaffFilterParams {
@@ -385,16 +278,7 @@ export interface StaffFilterParams {
   sort?: string;
 }
 
-export interface PayrollFilterParams {
-  year?: number;
-  month?: number;
-  status?: PayrollStatus;
-  staffId?: number;
-  page?: number;
-  size?: number;
-}
-
-// ─── Create Response ──────────────────────────────────────────────────────────
+// ─── Create Response ───────────────────────────────────────────────────────────────
 
 export interface StaffCreateResponse {
   staffId: number;

@@ -14,8 +14,8 @@ import {
   USER_PROFILE_PAGE
 } from '../core/config/page-route-meta';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
+import { STAFF_ROUTES } from './staff/staff.routes';
 import { TRANSFER_MANAGEMENT_ROUTES } from './transfer-management/transfer-management.routes';
-import { RESPONSIBILITY_MANAGEMENT_ROUTES } from './responsibility-management/responsibility-management.routes';
 import { unsavedChangesGuard } from '../core/guard/unsaved-changes.guard';
 
 export const APPLICATION_ROUTES: Routes = [
@@ -168,27 +168,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'staff',
     data: { ...STAFF_ROOT },
-    children: [
-      { path: 'create', data: { ...STAFF_PAGES.create }, loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
-      { path: 'edit/:id', data: { ...STAFF_PAGES.edit }, loadComponent: () => import('./staff/pages/create-staff/create-staff.component').then(m => m.CreateStaffComponent) },
-      { path: 'profile/:id', data: { ...STAFF_PAGES.profile }, loadComponent: () => import('./staff/pages/profile-360/staff-profile-360.component').then(m => m.StaffProfile360Component) },
-      { path: 'my-payroll', pathMatch: 'full', redirectTo: '/app/payroll/me' },
-      {
-        path: '',
-        loadComponent: () => import('./staff/components/staff-workspace/staff-workspace.component').then(m => m.StaffWorkspaceComponent),
-        children: [
-          { path: '', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'directory', data: { workspacePage: 'directory', ...STAFF_PAGES.directory }, loadComponent: () => import('./staff/pages/directory/staff-directory.component').then(m => m.StaffDirectoryComponent) },
-          { path: 'responsibilities', pathMatch: 'full', redirectTo: '/app/access-management/responsibilities' },
-          { path: 'payroll', pathMatch: 'full', redirectTo: '/app/payroll' },
-          { path: 'leave-availability', data: { workspacePage: 'leave', ...STAFF_PAGES.leave }, loadComponent: () => import('./staff/pages/leave-availability/staff-leave-availability.component').then(m => m.StaffLeaveAvailabilityComponent) },
-          { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'alumni', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'operations', pathMatch: 'full', redirectTo: 'leave-availability' }
-        ]
-      }
-    ]
+    children: STAFF_ROUTES
   },
   {
     path: 'payroll',
@@ -235,7 +215,7 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: 'leave',
     pathMatch: 'full',
-    redirectTo: 'staff/operations'
+    redirectTo: 'staff/leave-availability'
   },
   {
     path: 'attendance',
@@ -419,19 +399,15 @@ export const APPLICATION_ROUTES: Routes = [
     path: '',
     children: TRANSFER_MANAGEMENT_ROUTES
   },
-  {
-    path: '',
-    children: RESPONSIBILITY_MANAGEMENT_ROUTES
-  },
   // ━━━ Master Data ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     path: 'manage-branch',
-    redirectTo: 'staff/operations',
+    redirectTo: 'staff/directory',
     pathMatch: 'full'
   },
   {
     path: 'manage-department',
-    redirectTo: 'staff/operations',
+    redirectTo: 'staff/directory',
     pathMatch: 'full'
   },
   {

@@ -10,6 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 import { Observable, concatMap, finalize, from, map, of, tap, toArray } from 'rxjs';
 import { SoftRefreshKeys, SoftRefreshService } from '../../../../shared/ui/loading';
 
@@ -22,8 +23,8 @@ import {
   StaffCreateRequest,
   StaffDetail,
   StaffType
-} from '../../models/staff.model';
-import { StaffService } from '../../services/staff.service';
+} from '../../shared/models/staff.model';
+import { StaffService } from '../../shared/services/staff.service';
 import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 
 type WizardStep = 'personal' | 'address' | 'documents';
@@ -47,18 +48,18 @@ interface QueuedDocument {
 }
 
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xlsx', 'xls', 'csv'];
+const DISCARD_DOCUMENT_MESSAGE = 'Discard this document? The entered details will be lost.';
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PHONE_PATTERN = /^\+?[0-9][0-9 ()-]*$/;
+const PHONE_PATTERN = /^[0-9+\- ]{7,15}$/;
 const ACCOUNT_PATTERN = /^[0-9]{6,18}$/;
 const IFSC_PATTERN = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 const POSTAL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 -]{1,9}$/;
 
 function isValidPhone(value: string): boolean {
-  const text = value.trim();
-  const digits = text.replace(/\D/g, '').length;
-  return PHONE_PATTERN.test(text) && digits >= 7 && digits <= 15;
+  return PHONE_PATTERN.test(value.trim());
 }
 
 function todayIso(): string {
@@ -71,8 +72,8 @@ function todayIso(): string {
   selector: 'app-create-staff',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule],
-  styleUrls: ['../../staff.shared.scss'],
+  imports: [CommonModule, FormsModule, DropdownModule, DialogModule],
+  styleUrls: ['../../shared/styles/staff.shared.scss'],
   templateUrl: './create-staff.component.html'
 })
 export class CreateStaffComponent implements OnInit, OnDestroy {
@@ -148,11 +149,26 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
   // ── Documents (queued here, uploaded after the staff record is saved) ─────
   readonly documentTypeOptions = STAFF_DOCUMENT_TYPES;
   readonly allowedDocumentExtensions = '.pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv';
-  docType = 'AADHAR';
+  docType: string | null = null;
   docName = '';
+  docDialogOpen = false;
+  docFile: File | null = null;
+  docFileError = '';
+  docNameTouched = false;
   queuedDocuments: QueuedDocument[] = [];
   /** Set once the staff record exists, so a failed upload can be retried without creating a duplicate. */
   createdStaffId: number | null = null;
+
+  // ── Subject slots (teaching staff: primary required, secondary optional) ──
+  primarySubjectId: number | null = null;
+  secondarySubjectId: number | null = null;
+  subjectOptionList: SelectOption<number>[] = [];
+  primarySubjectOptions: SelectOption<number>[] = [];
+  secondarySubjectOptions: SelectOption<number>[] = [];
+  /** Subjects already on the staff record; kept selectable even outside the current academic year. */
+  private savedSubjects: SelectOption<number>[] = [];
+  subjectsLoading = false;
+  subjectsLoadError = '';
 
   // ── Emergency ─────────────────────────────────────────────────────────────
   emergencyContactName = '';
@@ -177,16 +193,6 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     { label: 'O-', value: 'O-' },
     { label: 'AB+', value: 'AB+' },
     { label: 'AB-', value: 'AB-' }
-  ];
-  readonly religionOptions: SelectOption[] = [
-    { label: 'Select religion', value: '' },
-    { label: 'Hindu', value: 'Hindu' },
-    { label: 'Muslim', value: 'Muslim' },
-    { label: 'Christian', value: 'Christian' },
-    { label: 'Sikh', value: 'Sikh' },
-    { label: 'Buddhist', value: 'Buddhist' },
-    { label: 'Jain', value: 'Jain' },
-    { label: 'Other', value: 'Other' }
   ];
   readonly nationalityOptions: SelectOption[] = [
     { label: 'Select nationality', value: '' },
@@ -224,6 +230,10 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     return this.steps.findIndex(s => s.id === this.activeStep);
   }
 
+  get isLastStep(): boolean {
+    return this.activeStepIndex === this.steps.length - 1;
+  }
+
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -234,6 +244,7 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
       // Set today as default joining date
       this.joiningDate = todayIso();
     }
+    this.loadSubjectOptions();
   }
 
   loadExisting(staffId: number): void {
@@ -243,7 +254,7 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
       .subscribe({
         next: staff => {
           this.populateForm(staff);
-          this.loadExistingPhoto(staffId);
+          if (staff.photoUrl) { this.loadExistingPhoto(staffId); }
         },
         error: () => { this.errorMessage = 'Could not load staff details.'; this.cdr.markForCheck(); }
       });
@@ -274,6 +285,10 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     this.remarks              = s.remarks ?? '';
     this.highestQualification = s.highestQualification ?? '';
     this.experienceYears      = s.experienceYears ?? null;
+    this.primarySubjectId     = s.primarySubject?.subjectId ?? null;
+    this.secondarySubjectId   = s.secondarySubject?.subjectId ?? null;
+    this.savedSubjects = [s.primarySubject, s.secondarySubject].flatMap(r => r ? [{ label: r.name, value: r.subjectId }] : []);
+    this.refreshSubjectOptions();
 
     this.staffType            = s.staffType;
     this.designation          = s.designation;
@@ -353,7 +368,6 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
       gender:                this.gender,
       dateOfBirth:           this.dateOfBirth,
       bloodGroup:            this.bloodGroup || undefined,
-      religion:              this.religion || undefined,
       nationality:           this.nationality || undefined,
       mobileNumber:          this.mobileNumber.trim(),
       email:                 this.email.trim(),
@@ -378,7 +392,11 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     let save$: Observable<number>;
     if (this.isEditMode && this.editStaffId) {
       const id = this.editStaffId;
-      save$ = this.api.updateStaff(id, request).pipe(
+      save$ = this.api.updateStaff(id, {
+        ...request,
+        religion: this.religion || undefined,
+        ...this.subjectPayload()
+      }).pipe(
         concatMap(() => this.saveBankIfEntered(id)),
         map(() => id)
       );
@@ -388,6 +406,7 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     } else {
       const createRequest: StaffCreateRequest = {
         ...request,
+        ...this.subjectPayload(),
         bankDetails: this.bankEntered() ? this.bankPayload() : undefined
       };
       save$ = this.api.createStaff(createRequest).pipe(
@@ -478,11 +497,11 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     else if (this.dateOfBirth >= today) e['dateOfBirth'] = 'Date of birth must be in the past.';
 
     if (!this.mobileNumber.trim()) e['mobileNumber'] = 'Mobile number is required.';
-    else if (!isValidPhone(this.mobileNumber)) e['mobileNumber'] = 'Enter 7 to 15 digits, optionally starting with +.';
+    else if (!isValidPhone(this.mobileNumber)) e['mobileNumber'] = 'Enter 7 to 15 characters: digits, spaces, dashes or a leading +.';
     if (!this.email.trim()) e['email'] = 'Email is required.';
     else if (!EMAIL_PATTERN.test(this.email.trim())) e['email'] = 'Enter a valid email address.';
     if (this.emergencyContactNumber.trim() && !isValidPhone(this.emergencyContactNumber)) {
-      e['emergencyContactNumber'] = 'Enter 7 to 15 digits, optionally starting with +.';
+      e['emergencyContactNumber'] = 'Enter 7 to 15 characters: digits, spaces, dashes or a leading +.';
     }
 
     if (this.experienceYears !== null && (this.experienceYears < 0 || !Number.isInteger(Number(this.experienceYears)))) {
@@ -502,6 +521,18 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     if (!this.sameAsPresentAddress && this.permanentAddress.postalCode?.trim()
       && !POSTAL_PATTERN.test(this.permanentAddress.postalCode.trim())) {
       e['permanentPostalCode'] = 'Enter a valid postal code.';
+    }
+
+    if (this.staffType === 'TEACHING') {
+      if (this.subjectsLoadError) {
+        e['primarySubject'] = this.subjectsLoadError;
+      } else if (this.subjectsLoading) {
+        e['primarySubject'] = 'Subjects are still loading. Please wait a moment.';
+      } else if (!this.primarySubjectId) {
+        e['primarySubject'] = this.subjectOptionList.length === 0
+          ? 'No subjects exist yet. Add subjects in Academics first.'
+          : 'Select a primary subject for a teaching staff member.';
+      }
     }
 
     if (this.bankEntered()) {
@@ -568,31 +599,155 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     return Object.keys(out).length ? (out as StaffAddress) : undefined;
   }
 
+  // ── Subject specialization helpers ──
+
+  private loadSubjectOptions(): void {
+    this.subjectsLoading = true;
+    this.api.getSubjectOptions()
+      .pipe(finalize(() => { this.subjectsLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: subjects => {
+          this.subjectOptionList = subjects.map(s => ({ label: s.name, value: s.id }));
+          this.refreshSubjectOptions();
+        },
+        error: () => { this.subjectsLoadError = 'Subjects could not be loaded. Refresh the page to try again.'; }
+      });
+  }
+
+  /** Non-teaching staff send no slots, which clears any earlier subjects on the server. */
+  private subjectPayload(): Pick<StaffCreateRequest, 'primarySubjectId' | 'secondarySubjectId'> {
+    if (this.staffType !== 'TEACHING') {
+      return {};
+    }
+    return {
+      primarySubjectId: this.primarySubjectId ?? undefined,
+      secondarySubjectId: this.secondarySubjectId ?? undefined
+    };
+  }
+
+  /** Keeps each slot from repeating the other slot's subject. */
+  onSubjectSlotChange(): void {
+    this.refreshSubjectOptions();
+    this.cdr.markForCheck();
+  }
+
+  private refreshSubjectOptions(): void {
+    const choices = [...this.subjectOptionList];
+    for (const saved of this.savedSubjects) {
+      if (!choices.some(o => o.value === saved.value)) choices.push(saved);
+    }
+    this.primarySubjectOptions   = choices.filter(o => o.value !== this.secondarySubjectId);
+    this.secondarySubjectOptions = choices.filter(o => o.value !== this.primarySubjectId);
+  }
+
   // ── Document helpers ──
 
-  onDocumentSelected(event: Event): void {
+  openDocDialog(): void {
+    this.resetDocForm();
+    this.docDialogOpen = true;
+  }
+
+  get docNameError(): string {
+    return this.docNameTouched && !this.docName.trim() ? 'Document name is required.' : '';
+  }
+
+  get canAddDocument(): boolean {
+    return !!this.docName.trim() && !!this.docType && !!this.docFile && !this.docFileError;
+  }
+
+  /** Lists the required document fields still missing, or null when complete. */
+  get docMissing(): string | null {
+    const missing: string[] = [];
+    if (!this.docName.trim()) { missing.push('document name'); }
+    if (!this.docType) { missing.push('document type'); }
+    if (!this.docFile) { missing.push('file'); }
+    return missing.length ? `Still needed: ${missing.join(', ')}.` : null;
+  }
+
+  onDocFileChosen(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) {
       return;
     }
-    if (file.size > MAX_DOCUMENT_BYTES) {
-      this.errorMessage = `${file.name} is larger than 5 MB.`;
-      this.cdr.markForCheck();
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(ext)) {
+      this.docFileError = 'Choose a PDF, image, Excel or CSV file.';
       return;
     }
-    this.errorMessage = '';
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      this.docFileError = 'File must be 5 MB or smaller.';
+      return;
+    }
+    this.docFile = file;
+    this.docFileError = '';
+  }
+
+  addQueuedDocument(): void {
+    if (!this.canAddDocument || !this.docFile || !this.docType) {
+      this.docNameTouched = true;
+      return;
+    }
     this.queuedDocuments = [
       ...this.queuedDocuments,
-      { file, documentType: this.docType, documentName: this.docName.trim() || file.name }
+      { file: this.docFile, documentType: this.docType, documentName: this.docName.trim() }
     ];
-    this.docName = '';
+    this.docDialogOpen = false;
+    this.resetDocForm();
     this.cdr.markForCheck();
+  }
+
+  requestCloseDocDialog(): void {
+    if (this.docDirty && !confirm(DISCARD_DOCUMENT_MESSAGE)) {
+      return;
+    }
+    this.docDialogOpen = false;
+    this.resetDocForm();
+  }
+
+  onDocDialogVisibleChange(visible: boolean): void {
+    if (visible) {
+      return;
+    }
+    if (this.docDirty && !confirm(DISCARD_DOCUMENT_MESSAGE)) {
+      this.reopenDocDialog();
+      return;
+    }
+    this.docDialogOpen = false;
+    this.resetDocForm();
+  }
+
+  private get docDirty(): boolean {
+    return !!this.docName.trim() || !!this.docType || !!this.docFile;
+  }
+
+  /** Re-opens the dialog after a rejected close; the timeout makes Angular see the flag change again. */
+  private reopenDocDialog(): void {
+    this.docDialogOpen = false;
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.docDialogOpen = true;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private resetDocForm(): void {
+    this.docName = '';
+    this.docType = null;
+    this.docFile = null;
+    this.docFileError = '';
+    this.docNameTouched = false;
   }
 
   removeQueuedDocument(index: number): void {
     this.queuedDocuments = this.queuedDocuments.filter((_, i) => i !== index);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) { return `${bytes} B`; }
+    if (bytes < 1024 * 1024) { return `${Math.round(bytes / 1024)} KB`; }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   documentTypeLabel(value: string): string {

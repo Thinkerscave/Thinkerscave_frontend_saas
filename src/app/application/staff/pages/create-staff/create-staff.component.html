@@ -90,17 +90,6 @@
             </p-dropdown>
           </div>
           <div class="sw-field">
-            <label class="sw-label">Religion</label>
-            <p-dropdown inputId="select-religion"
-                        [options]="religionOptions"
-                        [(ngModel)]="religion"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="body"
-                        styleClass="w-full">
-            </p-dropdown>
-          </div>
-          <div class="sw-field">
             <label class="sw-label">Nationality</label>
             <p-dropdown inputId="select-nationality"
                         [options]="nationalityOptions"
@@ -216,6 +205,41 @@
             <input id="input-contract-end" type="date" [(ngModel)]="contractEndDate"/>
             <small *ngIf="err('contractEndDate')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('contractEndDate') }}</small>
           </div>
+          <div class="sw-field--full" *ngIf="staffType === 'TEACHING'"
+               style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+            <div class="sw-field">
+              <label class="sw-label" for="select-primary-subject">Primary Subject <span class="req">*</span></label>
+              <p-dropdown inputId="select-primary-subject"
+                          [options]="primarySubjectOptions"
+                          [(ngModel)]="primarySubjectId"
+                          (ngModelChange)="onSubjectSlotChange()"
+                          optionLabel="label"
+                          optionValue="value"
+                          placeholder="Select primary subject"
+                          [disabled]="subjectsLoading || primarySubjectOptions.length === 0"
+                          appendTo="body"
+                          styleClass="w-full">
+              </p-dropdown>
+              <small *ngIf="err('primarySubject')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('primarySubject') }}</small>
+              <small *ngIf="!subjectsLoading && subjectOptionList.length === 0 && !subjectsLoadError" class="sw-helper" style="margin:0;">No subjects exist yet. Add subjects in Academics before assigning a teaching subject.</small>
+            </div>
+            <div class="sw-field">
+              <label class="sw-label" for="select-secondary-subject">Secondary Subject</label>
+              <p-dropdown inputId="select-secondary-subject"
+                          [options]="secondarySubjectOptions"
+                          [(ngModel)]="secondarySubjectId"
+                          (ngModelChange)="onSubjectSlotChange()"
+                          optionLabel="label"
+                          optionValue="value"
+                          placeholder="Optional"
+                          [showClear]="true"
+                          [disabled]="subjectsLoading || subjectOptionList.length === 0"
+                          appendTo="body"
+                          styleClass="w-full">
+              </p-dropdown>
+            </div>
+            <small class="sw-helper" style="grid-column:1 / -1;margin:0;">Primary is required. Secondary is optional; each subject can be used once.</small>
+          </div>
         </div>
 
       </div>
@@ -311,56 +335,113 @@
 
       <!-- DOCUMENTS -->
       <div *ngIf="activeStep === 'documents'" class="sw-form-section">
-        <h2 class="sw-form-section__title">Documents</h2>
-        <p class="sw-helper">
-          Optional. Files are uploaded after the staff record is saved. Maximum 5 MB per file (PDF, image, Excel or CSV).
-        </p>
-
-        <div class="sw-form-grid">
-          <div class="sw-field">
-            <label class="sw-label">Document Type</label>
-            <p-dropdown inputId="select-doc-type"
-                        [options]="documentTypeOptions"
-                        [(ngModel)]="docType"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="body"
-                        styleClass="w-full">
-            </p-dropdown>
+        <div class="sw-doc-header">
+          <div>
+            <h2 class="sw-form-section__title">Documents</h2>
+            <p class="sw-helper">Optional. Documents are uploaded after the staff record is saved. Each file must be 5 MB or smaller.</p>
           </div>
-          <div class="sw-field">
-            <label class="sw-label">Document Name</label>
-            <input id="input-doc-name" type="text" [(ngModel)]="docName" placeholder="Defaults to file name"/>
-          </div>
-          <div class="sw-field sw-field--full">
-            <label class="sw-label">File</label>
-            <input id="input-doc-file" type="file" [accept]="allowedDocumentExtensions" (change)="onDocumentSelected($event)"/>
-          </div>
+          <button type="button" class="sd-btn sd-btn--primary" (click)="openDocDialog()">
+            <i class="pi pi-plus"></i> Add Document
+          </button>
         </div>
 
-        <ul *ngIf="queuedDocuments.length" style="list-style:none;padding:0;margin:.75rem 0;display:flex;flex-direction:column;gap:.5rem;">
-          <li *ngFor="let doc of queuedDocuments; let i = index" style="display:flex;gap:.75rem;align-items:center;">
-            <span>{{ documentTypeLabel(doc.documentType) }}</span>
-            <strong>{{ doc.documentName }}</strong>
-            <small>{{ doc.file.name }}</small>
-            <button type="button" class="sd-btn sd-btn--ghost" (click)="removeQueuedDocument(i)">Remove</button>
+        <div *ngIf="queuedDocuments.length === 0" class="sw-doc-empty">
+          <i class="pi pi-folder-open" aria-hidden="true"></i>
+          <p>No documents added yet. You can add them now or later from the staff profile.</p>
+        </div>
+
+        <ul *ngIf="queuedDocuments.length > 0" class="sw-doc-list" aria-label="Documents to upload">
+          <li *ngFor="let doc of queuedDocuments; let i = index" class="sw-doc-list__item">
+            <i class="pi pi-file sw-doc-list__icon" aria-hidden="true"></i>
+            <div class="sw-doc-list__text">
+              <strong>{{ doc.documentName }}</strong>
+              <small>{{ documentTypeLabel(doc.documentType) }} · {{ doc.file.name }}</small>
+            </div>
+            <button type="button" class="sd-btn sd-btn--ghost" (click)="removeQueuedDocument(i)"
+                    [attr.aria-label]="'Remove ' + doc.documentName">
+              <i class="pi pi-trash" aria-hidden="true"></i> Remove
+            </button>
           </li>
         </ul>
 
-      </div>
+        <p-dialog
+          header="Add Document"
+          [visible]="docDialogOpen"
+          (visibleChange)="onDocDialogVisibleChange($event)"
+          [modal]="true"
+          [draggable]="false"
+          [resizable]="false"
+          maskStyleClass="tc-mask-plain"
+          [style]="{ width: '480px', maxWidth: '94vw' }"
+          appendTo="body">
+          <form class="sw-dialog-form" novalidate (ngSubmit)="addQueuedDocument()">
+            <p class="sw-dialog-intro">Add a document to this staff member's profile.</p>
 
+            <div class="tc-form-group">
+              <label class="tc-form-label" for="sw-doc-name">Document name <span class="required">*</span></label>
+              <input id="sw-doc-name" name="docName" type="text" class="tc-form-control" maxlength="255"
+                     placeholder="For example: Aadhaar card (front)"
+                     [class.has-error]="!!docNameError" [(ngModel)]="docName" (blur)="docNameTouched = true" />
+              <small *ngIf="docNameError" class="tc-form-error">{{ docNameError }}</small>
+            </div>
+
+            <div class="tc-form-group">
+              <label class="tc-form-label" for="sw-doc-type">Document type <span class="required">*</span></label>
+              <p-dropdown inputId="sw-doc-type" name="docType"
+                          [options]="documentTypeOptions"
+                          [(ngModel)]="docType"
+                          optionLabel="label"
+                          optionValue="value"
+                          placeholder="Select a document type"
+                          appendTo="body"
+                          styleClass="w-full">
+              </p-dropdown>
+            </div>
+
+            <div class="tc-form-group">
+              <span class="tc-form-label">File <span class="required">*</span></span>
+              <div class="sw-file-drop" [class.is-filled]="!!docFile" [class.has-error]="!!docFileError">
+                <i class="pi" [ngClass]="docFile ? 'pi-file' : 'pi-cloud-upload'" aria-hidden="true"></i>
+                <div *ngIf="docFile; else noDocFile" class="sw-file-drop__text">
+                  <strong [title]="docFile.name">{{ docFile.name }}</strong>
+                  <small>{{ formatFileSize(docFile.size) }}</small>
+                </div>
+                <ng-template #noDocFile>
+                  <div class="sw-file-drop__text">
+                    <strong>No file selected</strong>
+                    <small>PDF, image, Excel or CSV, up to 5 MB</small>
+                  </div>
+                </ng-template>
+                <button type="button" class="sd-btn sd-btn--ghost" (click)="docFileInput.click()">
+                  {{ docFile ? 'Change file' : 'Browse file' }}
+                </button>
+                <input #docFileInput type="file" hidden [attr.accept]="allowedDocumentExtensions"
+                       (change)="onDocFileChosen($event)" />
+              </div>
+              <small *ngIf="docFileError" class="tc-form-error">{{ docFileError }}</small>
+            </div>
+
+            <p *ngIf="docMissing" class="sw-dialog-hint">{{ docMissing }}</p>
+
+            <div class="sw-dialog-actions">
+              <button type="button" class="sd-btn sd-btn--ghost" (click)="requestCloseDocDialog()">Cancel</button>
+              <button type="submit" class="sd-btn sd-btn--primary" [disabled]="!canAddDocument">Add Document</button>
+            </div>
+          </form>
+        </p-dialog>
+      </div>
       <div class="sw-action-bar">
         <button type="button" class="sd-btn sd-btn--ghost" (click)="cancel()">Cancel</button>
         <div class="sw-action-bar__right">
           <button type="button" class="sd-btn sd-btn--ghost" *ngIf="activeStepIndex > 0" (click)="prevStep()">
             <i class="pi pi-arrow-left"></i> Back
           </button>
-          <button type="button" class="sd-btn sd-btn--ghost" *ngIf="activeStepIndex < steps.length - 1" (click)="nextStep()">
+          <button type="button" class="sd-btn sd-btn--ghost" *ngIf="!isLastStep" (click)="nextStep()">
             Continue <i class="pi pi-arrow-right"></i>
           </button>
-          <button type="button" class="sd-btn sd-btn--primary" (click)="submit()" [disabled]="saving">
+          <button type="button" class="sd-btn sd-btn--primary" *ngIf="isLastStep || isEditMode" (click)="submit()" [disabled]="saving">
             <i *ngIf="saving" class="pi pi-spin pi-spinner"></i>
-            {{ isEditMode ? 'Update Staff' : 'Create Staff' }}
+            {{ isEditMode ? 'Update Staff' : (createdStaffId ? 'Retry Remaining Steps' : 'Create Staff') }}
           </button>
         </div>
       </div>

@@ -23,8 +23,8 @@ import { AccessManagementService } from '../../services/access-management.servic
 import { formatDate } from '../../utils/access-display.util';
 import { ACCESS_RESOURCES, accessCanManage } from '../../utils/access-resources';
 import { BreadCrumbService } from '../../../../core/services/bread-crumb.service';
-import { StaffService } from '../../../staff/services/staff.service';
-import { StaffSummary } from '../../../staff/models/staff.model';
+import { StaffService } from '../../../staff/shared/services/staff.service';
+import { StaffSummary } from '../../../staff/shared/models/staff.model';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,

@@ -249,14 +249,6 @@ export const leaveApi = {
   cancel: (id: number) => `${BASE}/leave/${id}`,
 };
 
-/** @deprecated Legacy school-ops payroll endpoints — use financePayrollApi */
-export const payrollApi = {
-  all: `${BASE}/payroll`,
-  byStaff: (staffId: number) => `${BASE}/payroll/${staffId}`,
-  saveOrUpdate: `${BASE}/payroll`,
-  run: `${BASE}/payroll/run`,
-};
-
 /** Finance → Payroll (admin) */
 export const financePayrollApi = {
   base: `${BASE}/payroll`,
@@ -295,30 +287,10 @@ export const tenantApi = {
 
 // ─── Staff, Branch, Department (previously /api/* — now /api/v1/*) ──────────
 export const staffApi = {
-  base: `${BASE}/staff`,
-  dashboard: `${BASE}/staff/dashboard`,
-  byId: (id: number) => `${BASE}/staff/${id}`,
-  activate: (id: number) => `${BASE}/staff/${id}/activate`,
-  deactivate: (id: number) => `${BASE}/staff/${id}/deactivate`,
   responsibilities: `${BASE}/staff/responsibilities`,
   responsibilityById: (id: number) => `${BASE}/staff/responsibilities/${id}`,
   responsibilityAssignments: (id: number) => `${BASE}/staff/responsibilities/${id}/assignments`,
-  responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
   staffResponsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
-  staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
-  /** @deprecated Legacy Staff salary structure APIs — use Finance payroll structures / employee salary */
-  salaryStructures: `${BASE}/staff/salary-structures`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryStructureForStaff: (staffId: number) => `${BASE}/staff/${staffId}/salary-structure`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryHistory: (staffId: number) => `${BASE}/staff/${staffId}/salary-history`,
-  /** @deprecated legacy endpoints — do not use */
-  saveOrUpdate: `${BASE}/staff/saveOrUpdateStaff`,
-  getAll: `${BASE}/staff/getAllStaff`,
-  getByCode: (code: string) => `${BASE}/staff/getStaffByCode/${code}`,
-  toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
 };
 
 export const branchApi = {

@@ -7,9 +7,7 @@ import {
   ApiResponse,
   PageResponse,
   Responsibility,
-  ResponsibilityAssignment,
   ResponsibilityAssignmentRequest,
-  ResponsibilityRequest,
   StaffBankDetails,
   StaffActivity,
   StaffBankDetailsRequest,
@@ -84,6 +82,13 @@ export class StaffService {
       })));
   }
 
+  /** Active subjects of the current academic year (academics subject master). */
+  getSubjectOptions(): Observable<{ id: number; name: string }[]> {
+    return this.http
+      .get<ApiResponse<{ id: number; name: string }[]>>(`${environment.baseUrl}/academics/lookup/subjects`)
+      .pipe(map(r => r.data ?? []));
+  }
+
   createStaff(request: StaffCreateRequest): Observable<StaffCreateResponse> {
     return this.http
       .post<ApiResponse<StaffCreateResponse>>(`${this.base}/staff`, request)
@@ -114,12 +119,6 @@ export class StaffService {
       .pipe(map(() => void 0));
   }
 
-  getBankDetails(staffId: number): Observable<StaffBankDetails | null> {
-    return this.http
-      .get<ApiResponse<StaffBankDetails | null>>(`${this.base}/staff/${staffId}/bank-details`)
-      .pipe(map(r => r.data ?? null));
-  }
-
   saveBankDetails(staffId: number, request: StaffBankDetailsRequest): Observable<StaffBankDetails> {
     return this.http
       .put<ApiResponse<StaffBankDetails>>(`${this.base}/staff/${staffId}/bank-details`, request)
@@ -147,7 +146,9 @@ export class StaffService {
     form.append('documentType', documentType);
     if (documentName) { form.append('documentName', documentName); }
     return this.http
-      .post<ApiResponse<StaffDocumentResponse>>(`${this.base}/staff/${staffId}/documents`, form)
+      .post<ApiResponse<StaffDocumentResponse>>(`${this.base}/staff/${staffId}/documents`, form, {
+        headers: { 'X-Skip-Error-Toast': '1' }
+      })
       .pipe(map(r => r.data));
   }
 
@@ -252,45 +253,9 @@ export class StaffService {
       .pipe(map(r => r.data ?? []));
   }
 
-  getResponsibilityById(id: number): Observable<Responsibility> {
-    return this.http
-      .get<ApiResponse<Responsibility>>(`${this.base}/staff/responsibilities/${id}`)
-      .pipe(map(r => r.data));
-  }
-
-  createResponsibility(request: ResponsibilityRequest): Observable<{ responsibilityId: number }> {
-    return this.http
-      .post<ApiResponse<{ responsibilityId: number }>>(`${this.base}/staff/responsibilities`, request)
-      .pipe(map(r => r.data));
-  }
-
-  updateResponsibility(id: number, request: ResponsibilityRequest): Observable<void> {
-    return this.http
-      .put<ApiResponse<void>>(`${this.base}/staff/responsibilities/${id}`, request)
-      .pipe(map(() => void 0));
-  }
-
-  activateResponsibility(id: number): Observable<void> {
-    return this.http
-      .patch<ApiResponse<void>>(`${this.base}/staff/responsibilities/${id}/activate`, {})
-      .pipe(map(() => void 0));
-  }
-
-  deactivateResponsibility(id: number): Observable<void> {
-    return this.http
-      .patch<ApiResponse<void>>(`${this.base}/staff/responsibilities/${id}/deactivate`, {})
-      .pipe(map(() => void 0));
-  }
-
   // ──────────────────────────────────────────────────────────────────────────
   // Responsibility Assignments
   // ──────────────────────────────────────────────────────────────────────────
-
-  getStaffResponsibilities(staffId: number): Observable<ResponsibilityAssignment[]> {
-    return this.http
-      .get<ApiResponse<ResponsibilityAssignment[]>>(`${this.base}/staff/${staffId}/responsibilities`)
-      .pipe(map(r => r.data ?? []));
-  }
 
   assignResponsibility(request: ResponsibilityAssignmentRequest): Observable<{ assignmentId: number }> {
     return this.http

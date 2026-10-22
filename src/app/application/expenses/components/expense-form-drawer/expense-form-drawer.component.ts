@@ -9,7 +9,7 @@ import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { finalizeBusy } from '../../../../shared/ui/loading';
 import { DrawerFormComponent } from '../../../../shared/ui/drawer-form/drawer-form.component';
 import { FeesApiService } from '../../../fees/services/fees-api.service';
-import { StaffService } from '../../../staff/services/staff.service';
+import { StaffService } from '../../../staff/shared/services/staff.service';
 import {
   EXPENSE_RESOURCES,
   ExpenseDetail,

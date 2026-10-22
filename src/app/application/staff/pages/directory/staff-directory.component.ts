@@ -19,8 +19,10 @@ import {
   StaffFilterParams,
   StaffSummary,
   StaffType
-} from '../../models/staff.model';
-import { StaffService, saveBlobAsFile } from '../../services/staff.service';
+} from '../../shared/models/staff.model';
+import { StaffService, saveBlobAsFile } from '../../shared/services/staff.service';
+import { PermissionService } from '../../../../core/services/permission.service';
+import { canWriteStaff } from '../../shared/permissions/staff-permissions';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
@@ -65,13 +67,14 @@ const LIST_KEY = 'staff.directory.view';
     SaasPageHeaderComponent,
     TcPageSkeletonComponent
   ],
-  styleUrls: ['../../staff.shared.scss'],
+  styleUrls: ['../../shared/styles/staff.shared.scss'],
   templateUrl: './staff-directory.component.html'
 })
 export class StaffDirectoryComponent implements OnInit {
   private readonly api = inject(StaffService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly permissions = inject(PermissionService);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly feedback = inject(UiFeedbackService);
@@ -283,7 +286,13 @@ export class StaffDirectoryComponent implements OnInit {
     this.router.navigate(['/app/staff/profile', staff.staffId]);
   }
 
+  /** True when the user can create, edit, activate/deactivate or delete staff. */
+  get canWrite(): boolean {
+    return canWriteStaff(this.permissions);
+  }
+
   addStaff(): void {
+    if (!this.canWrite) return;
     this.router.navigate(['/app/staff/create']);
   }
 
@@ -305,6 +314,10 @@ export class StaffDirectoryComponent implements OnInit {
 
   private loadPhotos(items: StaffSummary[]): void {
     for (const staff of items) {
+      if (!staff.photoUrl) {
+        this.photoUrls.set(staff.staffId, null);
+        continue;
+      }
       if (this.photoUrls.has(staff.staffId)) {
         continue;
       }
@@ -319,6 +332,7 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   editStaff(staff: StaffSummary, event?: Event): void {
+    if (!this.canWrite) return;
     event?.stopPropagation();
     this.closeMenu();
     this.persistListContext();
@@ -334,6 +348,7 @@ export class StaffDirectoryComponent implements OnInit {
   closeMenu(): void { this.openMenuId = null; }
 
   toggleActive(staff: StaffSummary, event?: Event): void {
+    if (!this.canWrite) return;
     event?.stopPropagation();
     this.closeMenu();
     this.actionLoading = staff.staffId;
@@ -348,6 +363,7 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   deleteStaff(staff: StaffSummary, event?: Event): void {
+    if (!this.canWrite) return;
     event?.stopPropagation();
     this.closeMenu();
     if (!confirm(`Delete ${staff.fullName}? This action cannot be undone.`)) return;

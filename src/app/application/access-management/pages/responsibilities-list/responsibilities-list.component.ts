@@ -21,8 +21,8 @@ import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
-import { StaffService } from '../../../staff/services/staff.service';
-import { StaffSummary } from '../../../staff/models/staff.model';
+import { StaffService } from '../../../staff/shared/services/staff.service';
+import { StaffSummary } from '../../../staff/shared/models/staff.model';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   SaasPageHeaderComponent,
