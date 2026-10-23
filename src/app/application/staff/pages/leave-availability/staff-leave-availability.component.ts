@@ -8,7 +8,7 @@ import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterLink, SaasPageHeaderComponent],
-  styleUrls: ['../../staff.shared.scss'],
+  styleUrls: ['../../shared/styles/staff.shared.scss'],
   templateUrl: './staff-leave-availability.component.html'
 })
 export class StaffLeaveAvailabilityComponent {

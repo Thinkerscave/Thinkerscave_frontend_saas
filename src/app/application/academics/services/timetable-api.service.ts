@@ -34,6 +34,13 @@ export class TimetableApiService {
       .pipe(map(r => r.data));
   }
 
+  /** Unsaved configuration prefilled from the latest other year, or a standard school day. */
+  getConfigurationTemplate(yearId: number): Observable<TimetableConfiguration> {
+    return this.http
+      .get<ApiResponse<TimetableConfiguration>>(academicsApi.timetableConfigurationTemplate(yearId))
+      .pipe(map(r => r.data));
+  }
+
   saveConfiguration(yearId: number, body: TimetableConfigurationRequest): Observable<TimetableConfiguration> {
     return this.http
       .put<ApiResponse<TimetableConfiguration>>(academicsApi.timetableConfiguration(yearId), body)

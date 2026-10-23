@@ -23,6 +23,8 @@ export class TeacherAllocationApiService {
       sectionId?: number | null;
       subjectId?: number | null;
       status?: TeacherAllocationStatus | null;
+      page?: number;
+      size?: number;
     }
   ): Observable<TeacherAllocationDashboard> {
     let params = new HttpParams();
@@ -30,6 +32,8 @@ export class TeacherAllocationApiService {
     if (opts?.sectionId) params = params.set('sectionId', opts.sectionId);
     if (opts?.subjectId) params = params.set('subjectId', opts.subjectId);
     if (opts?.status) params = params.set('status', opts.status);
+    if (opts?.page != null) params = params.set('page', opts.page);
+    if (opts?.size != null) params = params.set('size', opts.size);
     return this.http
       .get<ApiResponse<TeacherAllocationDashboard>>(academicsApi.teacherAllocationsDashboard(yearId), { params })
       .pipe(map((res) => res.data));

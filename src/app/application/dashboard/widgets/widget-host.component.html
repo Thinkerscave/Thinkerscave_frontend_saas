@@ -4,7 +4,11 @@
 
 <ng-template #afterWelcome>
   <ng-container *ngIf="widget.widgetType === 'STAFF_ATTENDANCE_TOGGLE'; else cardWidget">
-    <tc-staff-attendance-toggle-widget [data]="widget.data"></tc-staff-attendance-toggle-widget>
+    <tc-staff-attendance-toggle-widget
+      [data]="widget.data"
+      [compact]="compactAttendance"
+      (attendanceChanged)="attendanceChanged.emit()">
+    </tc-staff-attendance-toggle-widget>
   </ng-container>
 </ng-template>
 
@@ -18,6 +22,8 @@
     [errorMessage]="widget.errorMessage"
     [emptyMessage]="chrome.emptyMessage"
     [emptyIcon]="chrome.emptyIcon"
+    [actionLabel]="widget.actionLabel"
+    [actionRoute]="widget.actionRoute"
     (retry)="retry.emit(widget)">
     <!-- Projected ng-content is created even when the card hides it. Do not
          instantiate bodies until a payload exists — null `data.items` was
@@ -33,6 +39,7 @@
       <tc-calendar-widget *ngSwitchCase="'CALENDAR'" [data]="data"></tc-calendar-widget>
       <tc-calendar-widget *ngSwitchCase="'EVENTS'" [data]="data"></tc-calendar-widget>
       <tc-attendance-summary-widget *ngSwitchCase="'ATTENDANCE_SUMMARY'" [data]="data"></tc-attendance-summary-widget>
+      <tc-staff-attendance-week-widget *ngSwitchCase="'STAFF_ATTENDANCE_WEEK'" [data]="data"></tc-staff-attendance-week-widget>
       <tc-timetable-widget *ngSwitchCase="'TIMETABLE'" [data]="data"></tc-timetable-widget>
       <tc-profile-summary-widget *ngSwitchCase="'PROFILE_SUMMARY'" [data]="data"></tc-profile-summary-widget>
       <tc-child-profile-widget *ngSwitchCase="'CHILD_PROFILE'" [data]="data"></tc-child-profile-widget>

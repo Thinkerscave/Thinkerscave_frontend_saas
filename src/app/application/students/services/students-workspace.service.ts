@@ -15,8 +15,6 @@ import {
   DocumentVaultKpi,
   DocumentVaultRequest,
   MedicalSnapshot,
-  PromotionBatch,
-  PromotionRecord,
   SectionOption,
   StudentCreateRequest,
   StudentDirectoryCard,
@@ -183,7 +181,6 @@ export class StudentsWorkspaceService {
   private readonly http = inject(HttpClient);
   private readonly studentsBase = `${environment.baseUrl}/students`;
   private readonly documentsBase = `${environment.baseUrl}/documents`;
-  private readonly promotionsBase = `${environment.baseUrl}/promotions`;
   private readonly transfersBase = `${environment.baseUrl}/students/transfers`;
 
   private academicYearCache: ClassOption[] = [];
@@ -275,7 +272,7 @@ export class StudentsWorkspaceService {
       .pipe(map(() => void 0));
   }
 
-  createStudentWizard(payload: StudentWizardRequest): Observable<void> {
+  createStudentWizard(payload: StudentWizardRequest, photo?: File | null): Observable<void> {
     const primary = payload.parents?.[0];
     const secondary = payload.parents?.[1];
     const body: Record<string, unknown> = {
@@ -337,7 +334,12 @@ export class StudentsWorkspaceService {
       body['secondaryParentEmail'] = secondary.email ?? null;
       body['secondaryParentOccupation'] = secondary.occupation ?? null;
     }
-    return this.http.post<ApiEnvelope<unknown>>(this.studentsBase, body).pipe(map(() => void 0));
+    const formData = new FormData();
+    formData.append('studentData', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+    if (photo) formData.append('photo', photo, photo.name);
+    return this.http
+      .post<ApiEnvelope<unknown>>(`${this.studentsBase}/registerStudent`, formData)
+      .pipe(map(() => void 0));
   }
 
   updateStudentStatus(studentId: number, status: StudentStatus): Observable<void> {
@@ -623,43 +625,6 @@ export class StudentsWorkspaceService {
 
   downloadImportErrors(jobId: string): Observable<Blob> {
     return this.http.get(`${this.studentsBase}/import/${jobId}/errors`, { responseType: 'blob' });
-  }
-
-  // ---------- Promotion ----------
-  listPromotions(): Observable<PromotionBatch[]> {
-    return this.http
-      .get<ApiEnvelope<SpringPage<PromotionBatch>>>(`${this.promotionsBase}?page=0&size=50&sort=id,desc`)
-      .pipe(map(r => r.data?.content ?? []));
-  }
-
-  createPromotion(payload: PromotionBatch): Observable<PromotionBatch> {
-    return this.http
-      .post<ApiEnvelope<PromotionBatch>>(this.promotionsBase, payload)
-      .pipe(map(r => r.data));
-  }
-
-  previewPromotion(batchId: number): Observable<PromotionRecord[]> {
-    return this.http
-      .post<ApiEnvelope<PromotionRecord[]>>(`${this.promotionsBase}/${batchId}/preview`, {})
-      .pipe(map(r => r.data ?? []));
-  }
-
-  promotionRecords(batchId: number): Observable<PromotionRecord[]> {
-    return this.http
-      .get<ApiEnvelope<PromotionRecord[]>>(`${this.promotionsBase}/${batchId}/records`)
-      .pipe(map(r => r.data ?? []));
-  }
-
-  updatePromotionRecord(recordId: number, payload: PromotionRecord): Observable<PromotionRecord> {
-    return this.http
-      .put<ApiEnvelope<PromotionRecord>>(`${this.promotionsBase}/records/${recordId}`, payload)
-      .pipe(map(r => r.data));
-  }
-
-  executePromotion(batchId: number): Observable<PromotionBatch> {
-    return this.http
-      .post<ApiEnvelope<PromotionBatch>>(`${this.promotionsBase}/${batchId}/execute`, {})
-      .pipe(map(r => r.data));
   }
 
   // ---------- Transfer ----------

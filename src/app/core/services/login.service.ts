@@ -1,6 +1,6 @@
 ﻿import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, Injector, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError, map } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, switchMap, tap, catchError, map, finalize, share } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { loginApi, passwordApi, profileApi } from '../../shared/constants/api.endpoint';
 import { Router } from '@angular/router';
@@ -27,6 +27,7 @@ export class LoginService {
   private readonly injector = inject(Injector);
 
   public loginStatusSubject = new Subject<boolean>();
+  private refreshInFlight$: Observable<string> | null = null;
 
   /** Emits the current organization ID whenever it changes. Components subscribe to this. */
   public currentOrgId$ = new BehaviorSubject<string | null>(null);
@@ -282,7 +283,8 @@ export class LoginService {
     if (organizations && organizations.length > 0) {
       store.setItem('organizations', JSON.stringify(organizations));
       const primaryOrg = organizations[0] as Partial<UserOrganization> & { organizationId?: number | string; id?: number | string };
-      const currentOrgId = this.toPositiveOrgId(primaryOrg?.orgId ?? primaryOrg?.organizationId ?? primaryOrg?.id);
+      const currentOrgId = this.toPositiveOrgId(this.getOrgIdFromAccessToken(accessToken))
+        ?? this.toPositiveOrgId(primaryOrg?.orgId ?? primaryOrg?.organizationId ?? primaryOrg?.id);
       if (currentOrgId != null) {
         store.setItem('currentOrgId', String(currentOrgId));
         this.currentOrgId$.next(String(currentOrgId));
@@ -509,8 +511,18 @@ export class LoginService {
     this.router.navigate(['/']);
   }
 
-  /** Refresh access token using HttpOnly cookie (preferred) or legacy query param. */
-  public refreshAccessToken(_unusedRefreshToken?: string): Observable<string> {
+  /** Refresh access token using HttpOnly cookie (preferred) or legacy query param. Concurrent callers share one request. */
+  public refreshAccessToken(): Observable<string> {
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.requestAccessTokenRefresh().pipe(
+        finalize(() => { this.refreshInFlight$ = null; }),
+        share()
+      );
+    }
+    return this.refreshInFlight$;
+  }
+
+  private requestAccessTokenRefresh(): Observable<string> {
     const options: { withCredentials: boolean; params?: HttpParams } = {
       withCredentials: environment.authUseHttpOnlyRefresh
     };

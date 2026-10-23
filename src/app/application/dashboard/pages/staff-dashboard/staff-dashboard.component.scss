@@ -1,0 +1,97 @@
+.staff-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.staff-dashboard__page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+
+  h1 {
+    margin: 0;
+    color: var(--saas-text);
+    font-size: 1.55rem;
+    font-weight: 750;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 5px 0 0;
+    color: var(--saas-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .staff-dashboard__organization { margin-top: 7px; font-size: 0.82rem; font-weight: 650; }
+
+  time {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    color: var(--saas-text-muted);
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+}
+
+.staff-dashboard__top-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 16px;
+  align-items: stretch;
+
+  // Both top cards share one height, matching the reference layout.
+  > * { display: flex; flex-direction: column; min-width: 0; }
+  tc-widget-host { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+  ::ng-deep tc-widget-host > *,
+  ::ng-deep tc-widget-host > * > * { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  ::ng-deep .widget-card { flex: 1; }
+  ::ng-deep tc-staff-attendance-toggle-widget { display: flex; flex-direction: column; }
+  ::ng-deep .w-att { flex: 1; }
+}
+
+.staff-dashboard__quick-actions,
+.staff-dashboard__events {
+  min-width: 0;
+}
+
+.staff-dashboard__work-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.9fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .staff-dashboard__work-row {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .staff-dashboard__top-row,
+  .staff-dashboard__work-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .staff-dashboard {
+    gap: 14px;
+  }
+
+  .staff-dashboard__page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+
+    h1 { font-size: 1.3rem; }
+  }
+}

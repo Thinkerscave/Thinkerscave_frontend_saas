@@ -14,6 +14,7 @@ import { AnnouncementsWidgetComponent } from './announcements/announcements.widg
 import { CalendarWidgetComponent } from './calendar/calendar.widget';
 import { AttendanceSummaryWidgetComponent } from './attendance-summary/attendance-summary.widget';
 import { StaffAttendanceToggleWidgetComponent } from './staff-attendance-toggle/staff-attendance-toggle.widget';
+import { StaffAttendanceWeekWidgetComponent } from './staff-attendance-week/staff-attendance-week.widget';
 import { TimetableWidgetComponent } from './timetable/timetable.widget';
 import { ProfileSummaryWidgetComponent } from './profile-summary/profile-summary.widget';
 import { ChildProfileWidgetComponent } from './child-profile/child-profile.widget';
@@ -49,6 +50,7 @@ import { SupportTicketsWidgetComponent } from './support-tickets/support-tickets
     CalendarWidgetComponent,
     AttendanceSummaryWidgetComponent,
     StaffAttendanceToggleWidgetComponent,
+    StaffAttendanceWeekWidgetComponent,
     TimetableWidgetComponent,
     ProfileSummaryWidgetComponent,
     ChildProfileWidgetComponent,
@@ -66,7 +68,9 @@ import { SupportTicketsWidgetComponent } from './support-tickets/support-tickets
 })
 export class WidgetHostComponent {
   @Input({ required: true }) widget!: WidgetDTO<any>;
+  @Input() compactAttendance = false;
   @Output() retry = new EventEmitter<WidgetDTO<any>>();
+  @Output() attendanceChanged = new EventEmitter<void>();
 
   get chrome() {
     return chromeFor(this.widget.widgetType);

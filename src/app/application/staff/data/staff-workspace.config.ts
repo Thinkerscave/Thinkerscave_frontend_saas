@@ -1,4 +1,4 @@
-import { StaffPageConfig, StaffWorkspacePage } from '../models/staff-workspace.model';
+import { StaffPageConfig } from '../models/staff-workspace.model';
 
 export const STAFF_PAGES: StaffPageConfig[] = [
   {
@@ -18,7 +18,3 @@ export const STAFF_PAGES: StaffPageConfig[] = [
     route: '/app/staff/leave-availability'
   }
 ];
-
-export function staffPageConfig(page: StaffWorkspacePage): StaffPageConfig {
-  return STAFF_PAGES.find((p) => p.page === page) ?? STAFF_PAGES[0];
-}

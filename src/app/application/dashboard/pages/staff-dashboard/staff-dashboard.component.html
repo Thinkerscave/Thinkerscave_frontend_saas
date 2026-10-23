@@ -1,0 +1,45 @@
+<div class="staff-dashboard">
+  <section class="staff-dashboard__top-row" aria-label="Staff attendance">
+    <tc-widget-host
+      *ngIf="widget('staff-attendance-toggle') as attendance"
+      [widget]="attendance"
+      [compactAttendance]="true"
+      (retry)="trackRetry($event)"
+      (attendanceChanged)="refreshRequested.emit()">
+    </tc-widget-host>
+    <tc-widget-host
+      *ngIf="widget('staff-attendance-week') as week"
+      [widget]="week"
+      (retry)="trackRetry($event)">
+    </tc-widget-host>
+  </section>
+
+  <section class="staff-dashboard__quick-actions" aria-label="Quick actions">
+    <tc-widget-host
+      *ngIf="widget('quick-actions') as actions"
+      [widget]="actions"
+      (retry)="trackRetry($event)">
+    </tc-widget-host>
+  </section>
+
+  <section class="staff-dashboard__work-row" aria-label="Today's work and announcements">
+    <tc-widget-host
+      *ngIf="widget('todays-timetable') as timetable"
+      [widget]="timetable"
+      (retry)="trackRetry($event)">
+    </tc-widget-host>
+    <tc-widget-host
+      *ngIf="widget('announcements') as announcements"
+      [widget]="announcements"
+      (retry)="trackRetry($event)">
+    </tc-widget-host>
+  </section>
+
+  <section class="staff-dashboard__events" aria-label="Upcoming events">
+    <tc-widget-host
+      *ngIf="widget('upcoming-events') as events"
+      [widget]="events"
+      (retry)="trackRetry($event)">
+    </tc-widget-host>
+  </section>
+</div>

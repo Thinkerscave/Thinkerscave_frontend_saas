@@ -1,0 +1,166 @@
+:host {
+  display: block;
+  min-height: 100%;
+  color: var(--tc-heading, #172033);
+}
+
+.arrangement-page {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.arrangement-section {
+  min-width: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--tc-border, #dbe2ea);
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.section-heading p,
+.empty-state {
+  margin: 4px 0 0;
+  color: var(--tc-text-muted, #5d6878);
+  font-size: 0.875rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(200px, 280px) minmax(220px, 1fr);
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--tc-text, #253348);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--tc-border, #cbd5e1);
+  border-radius: 6px;
+  background: var(--tc-surface-card, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.slot-list,
+.request-row,
+.approved-arrangement {
+  margin-top: 12px;
+}
+
+.slot-row,
+.request-row,
+.approved-arrangement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+  gap: 12px 20px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--tc-border, #e2e8f0);
+}
+
+.slot-detail,
+.request-summary,
+.substitute-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.slot-detail span,
+.request-summary span,
+.request-slots,
+.approved-slot span {
+  color: var(--tc-text-muted, #5d6878);
+  font-size: 0.84rem;
+}
+
+.substitute-field small {
+  color: #b42318;
+  font-size: 0.78rem;
+}
+
+.request-row {
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) auto;
+}
+
+.request-slots,
+.approved-slot {
+  display: grid;
+  gap: 5px;
+}
+
+.status {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #fff2cc;
+  color: #704b00 !important;
+  font-weight: 700;
+}
+
+.status[data-status='APPROVED'] {
+  background: #dcfce7;
+  color: #17663a !important;
+}
+
+.status[data-status='REJECTED'] {
+  background: #fee2e2;
+  color: #9b1c1c !important;
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.review-actions input {
+  flex: 1 1 180px;
+}
+
+@media (max-width: 760px) {
+  .form-grid,
+  .slot-row,
+  .request-row,
+  .approved-arrangement {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

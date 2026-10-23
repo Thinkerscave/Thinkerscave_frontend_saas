@@ -9,7 +9,11 @@ export interface AppPageCrumb {
 export interface AppPageHeader {
   /** @deprecated Shell title comes from route pageTitle, not the selected entity. */
   title?: string;
+  /** Explicit runtime title for role-specific pages whose route title is not user-specific. */
+  pageTitle?: string;
   subtitle?: string;
+  hideBreadcrumb?: boolean;
+  rightLabel?: string;
   /** Optional fully-resolved trail. Last item is the current page. */
   crumbs?: AppPageCrumb[];
 }

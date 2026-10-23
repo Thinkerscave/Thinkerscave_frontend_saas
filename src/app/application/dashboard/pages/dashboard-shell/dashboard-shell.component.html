@@ -1,5 +1,5 @@
 <div class="saas-page dash-page">
-  <tc-saas-page-header>
+  <tc-saas-page-header *ngIf="loading || loadError || workspace?.dashboardType !== 'STAFF'">
     <span class="dash-updated" *ngIf="!loading && workspace">{{ updatedAgoLabel }}</span>
     <button type="button" class="dash-refresh" (click)="refresh()" [disabled]="loading || refreshing">
       <i class="pi" [ngClass]="refreshing ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
@@ -24,9 +24,18 @@
     </button>
   </div>
 
+  <app-staff-dashboard
+    *ngIf="!loading && !loadError && workspace?.dashboardType === 'STAFF'; else standardDashboard"
+    [workspace]="workspace!"
+    (refreshRequested)="refresh()"
+    (retry)="refresh()">
+  </app-staff-dashboard>
+
+  <ng-template #standardDashboard>
   <div class="dash-grid" *ngIf="!loading && !loadError && workspace">
     <div class="dash-grid__item" *ngFor="let widget of workspace.widgets; trackBy: trackWidget" [style.--span]="widget.span || 1">
       <tc-widget-host [widget]="widget" (retry)="onWidgetRetry($event)"></tc-widget-host>
     </div>
   </div>
+  </ng-template>
 </div>

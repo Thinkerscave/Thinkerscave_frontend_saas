@@ -74,114 +74,123 @@
   white-space: nowrap;
 }
 
-.hero__setup {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.hero__setup-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.hero__setup-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.hero__setup-next {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  opacity: 0.9;
-}
-
-.hero__setup-progress {
-  min-width: 140px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-end;
-}
-
-.hero__setup-percent {
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.hero__setup-bar {
-  width: 140px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  overflow: hidden;
-
-  span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: #fff;
-    transition: width 0.3s ease;
-  }
-}
-
-.hero__checklist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px 12px;
-}
-
-.hero__checklist li {
+/* ---------------- Organization Setup card (compact) ---------------- */
+.setup-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.82rem;
-  opacity: 0.92;
-
-  i { font-size: 0.95rem; }
-  small {
-    margin-left: auto;
-    font-size: 0.7rem;
-    opacity: 0.8;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  &.is-done {
-    opacity: 0.7;
-    text-decoration: line-through;
-  }
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: var(--saas-radius);
+  border: 1px solid var(--saas-border);
+  background: var(--saas-surface);
+  box-shadow: var(--saas-shadow-sm);
+  color: var(--saas-text);
+  margin-top: 16px;
 }
 
-.hero__cta {
-  align-self: flex-start;
+.setup-card__main {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.setup-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--saas-text);
+}
+
+.setup-card__subtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--saas-text-muted);
+}
+
+.setup-card__progress {
+  flex: 0 1 260px;
+  min-width: 180px;
+}
+
+.setup-card__count {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--saas-text);
+}
+
+.setup-card__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--saas-surface-muted);
+  overflow: hidden;
+}
+
+.setup-card__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--saas-primary);
+  transition: width 0.4s ease;
+}
+
+.setup-card__cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--saas-radius-sm);
   padding: 10px 16px;
-  background: #fff;
-  color: var(--saas-primary-dark, #1e3a8a);
+  background: var(--saas-primary);
+  color: #fff;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  transition: background 0.15s ease;
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  &:hover { background: var(--saas-primary-dark); }
+  &:focus-visible { outline: 2px solid var(--saas-primary); outline-offset: 2px; }
+}
+
+.setup-card__state {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--saas-danger);
+}
+
+.setup-card--skeleton {
+  display: block;
+}
+
+.setup-card__skeleton-line {
+  height: 12px;
+  width: 100%;
+  border-radius: 6px;
+  background: var(--saas-border);
+  animation: hero-pulse 1.4s ease infinite;
+
+  &--title { width: 40%; height: 16px; }
+  &--short { width: 25%; }
+}
+
+@media (max-width: 640px) {
+  .setup-card {
+    padding: 14px 16px;
+  }
+
+  .setup-card__progress {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .setup-card__cta {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -233,18 +242,8 @@
     padding: 16px 18px;
   }
 
-  .hero__today,
-  .hero__cta {
+  .hero__today {
     width: 100%;
     justify-content: center;
-  }
-
-  .hero__setup-progress {
-    width: 100%;
-    align-items: stretch;
-  }
-
-  .hero__setup-bar {
-    width: 100%;
   }
 }

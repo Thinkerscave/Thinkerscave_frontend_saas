@@ -133,6 +133,13 @@ export const ACADEMICS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
+  teacherArrangement: {
+    breadcrumb: 'Teacher Arrangements',
+    pageTitle: 'Teacher Arrangements',
+    pageSubtitle: 'Assign and approve substitutes for scheduled teaching periods.',
+    pageKind: 'main',
+    hideBack: true
+  },
   academicCalendar: {
     breadcrumb: 'Academic Calendar',
     pageTitle: 'Academic Calendar',
@@ -270,13 +277,6 @@ export const TENANT_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
-  roleManagement: {
-    breadcrumb: 'Role Management',
-    pageTitle: 'Role Management',
-    pageSubtitle: 'Platform roles used across tenants.',
-    pageKind: 'main',
-    hideBack: true
-  },
   featureCatalog: {
     breadcrumb: 'Feature Catalog',
     pageTitle: 'Feature Catalog',
@@ -316,16 +316,16 @@ export const ACCESS_PAGES = {
     hideBack: true
   },
   roles: {
-    breadcrumb: 'Roles & Responsibilities',
-    pageTitle: 'Roles & Responsibilities',
-    pageSubtitle: 'Define organizational roles and assign menu permissions',
+    breadcrumb: 'Roles',
+    pageTitle: 'Roles',
+    pageSubtitle: 'Define global roles and assign default menu permissions across all organizations',
     pageKind: 'main',
     hideBack: true
   },
   roleWorkspace: {
     breadcrumb: 'Role Workspace',
     pageTitle: 'Role Workspace',
-    pageSubtitle: 'Role details and menu/submenu assignment for this organization.',
+    pageSubtitle: 'Configure default menu permissions for this role across all organizations.',
     pageKind: 'detail',
     showBack: true,
     backFallback: '/app/access-management/roles'
@@ -793,22 +793,7 @@ export const USER_PROFILE_PAGE = {
   backFallback: '/app'
 } as const;
 
-export const PROMOTION_PAGES = {
-  batches: {
-    breadcrumb: 'Promotion Batches',
-    pageTitle: 'Promotion Batches',
-    pageSubtitle: 'Promote students from one academic year to the next.',
-    pageKind: 'main',
-    hideBack: true
-  },
-  batchNew: {
-    breadcrumb: 'New Promotion Batch',
-    pageTitle: 'New Promotion Batch',
-    pageSubtitle: 'Create a draft batch, then preview and execute from the list.',
-    pageKind: 'detail',
-    showBack: true,
-    backFallback: '/app/promotions'
-  },
+export const TRANSFER_PAGES = {
   transfers: {
     breadcrumb: 'Transfer Requests',
     pageTitle: 'Transfer Requests',

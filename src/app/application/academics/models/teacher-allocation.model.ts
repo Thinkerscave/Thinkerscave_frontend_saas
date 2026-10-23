@@ -64,7 +64,12 @@ export interface TeacherAllocationDashboard {
   assignedSlots: number;
   missingSlots: number;
   conflictSlots: number;
+  page?: number;
+  size?: number;
+  totalPages?: number;
+  totalRows?: number;
   rows: TeacherAllocationRow[];
+  subjectOptions?: { id: number; name: string }[];
   workloads: TeacherWorkload[];
 }
 

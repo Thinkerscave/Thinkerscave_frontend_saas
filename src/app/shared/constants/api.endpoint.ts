@@ -55,6 +55,7 @@ export const academicsApi = {
   timetableSlotById: (id: number) => `${BASE}/academics/timetable/slots/${id}`,
   timetableDashboard: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/dashboard`,
   timetableConfiguration: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/configuration`,
+  timetableConfigurationTemplate: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/configuration/template`,
   timetableGenerate: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/generate`,
   timetableReadiness: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/readiness`,
   timetableGenerations: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/generations`,
@@ -86,6 +87,8 @@ export const academicsApi = {
   arrangementById: (id: number) => `${BASE}/academics/arrangements/${id}`,
   approveArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/approve`,
   rejectArrangement: (id: number) => `${BASE}/academics/arrangements/${id}/reject`,
+  arrangementTeachers: `${BASE}/academics/arrangements/teachers`,
+  arrangementEligibleSlots: `${BASE}/academics/arrangements/eligible-slots`,
   syllabus: `${BASE}/academics/syllabus`,
   syllabusById: (id: number) => `${BASE}/academics/syllabus/${id}`,
   syllabusProgress: (id: number) => `${BASE}/academics/syllabus/${id}/progress`,
@@ -108,10 +111,10 @@ export const accessApi = {
   roleSearch: `${ACCESS_BASE}/roles/search`,
   activateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/activate`,
   deactivateRole: (id: number) => `${ACCESS_BASE}/roles/${id}/deactivate`,
-  rolePermissions: (roleId: number, organizationId: number) =>
-    `${ACCESS_BASE}/roles/${roleId}/permissions?organizationId=${organizationId}`,
-  rolePermissionByMenu: (roleId: number, menuId: number, organizationId: number) =>
-    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}?organizationId=${organizationId}`,
+  rolePermissions: (roleId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions`,
+  rolePermissionByMenu: (roleId: number, menuId: number) =>
+    `${ACCESS_BASE}/roles/${roleId}/permissions/${menuId}`,
   menus: `${ACCESS_BASE}/menus`,
   menuById: (id: number) => `${ACCESS_BASE}/menus/${id}`,
   menuTree: `${ACCESS_BASE}/menus/tree`,
@@ -160,6 +163,12 @@ export const passwordApi = {
   reset: `${PASS_BASE}/auth/reset-password`,
 };
 
+export const academicsLookupApi = {
+  years: `${BASE}/academics/lookup/years`,
+  classesByYear: (yearId: number) => `${BASE}/academics/lookup/years/${yearId}/classes`,
+  sectionsByClass: (classId: number) => `${BASE}/academics/lookup/classes/${classId}/sections`,
+};
+
 export const attendanceApi = {
   base: `${BASE}/attendance`,
   byDateAndType: (date: string, type: string) => `${BASE}/attendance?date=${date}&type=${type}`,
@@ -167,17 +176,42 @@ export const attendanceApi = {
   history: (referenceId: number, type: string) => `${BASE}/attendance/history/${referenceId}?type=${type}`,
   update: (id: number) => `${BASE}/attendance/${id}`,
   delete: (id: number) => `${BASE}/attendance/${id}`,
-  settings: `${BASE}/attendance/settings`,
-  settingsReset: `${BASE}/attendance/settings/reset`,
   copyPrevious: (classId: number, targetDate: string, sectionId?: number | null) => {
     const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
     return `${BASE}/attendance/students/copy-previous?classId=${classId}&targetDate=${targetDate}${sec}`;
+  },
+  studentRoster: (classId: number, sectionId: number | null, date: string, periodId?: number | null) => {
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    const period = periodId != null ? `&periodId=${periodId}` : '';
+    return `${BASE}/attendance/students/roster?classId=${classId}${sec}&date=${date}${period}`;
+  },
+  studentSessions: (from: string, to: string, classId: number | null, sectionId: number | null, limit?: number) => {
+    const cls = classId != null ? `&classId=${classId}` : '';
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    const lim = limit != null ? `&limit=${limit}` : '';
+    return `${BASE}/attendance/students/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${cls}${sec}${lim}`;
+  },
+  studentDaily: `${BASE}/attendance/students/daily`,
+  studentPeriod: `${BASE}/attendance/students/period`,
+  studentClass: (classId: number, sectionId: number | null, date: string) => {
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/students/class?classId=${classId}${sec}&date=${date}`;
+  },
+  calendar: (year: number, month: number, classId: number | null, sectionId: number | null) => {
+    const cls = classId != null ? `&classId=${classId}` : '';
+    const sec = sectionId != null ? `&sectionId=${sectionId}` : '';
+    return `${BASE}/attendance/calendar?year=${year}&month=${month}${cls}${sec}`;
   },
   reports: {
     summary: `${BASE}/attendance/reports/summary`,
     staff: `${BASE}/attendance/reports/staff`,
     student: (studentId: number) => `${BASE}/attendance/reports/student/${studentId}`
   }
+};
+
+export const moduleSettingsApi = {
+  module: (moduleCode: string) => `${BASE}/settings/${encodeURIComponent(moduleCode)}`,
+  reset: (moduleCode: string) => `${BASE}/settings/${encodeURIComponent(moduleCode)}/reset`
 };
 
 // ─── Staff attendance (sign-in / sign-out) ───────────────────────────────────
@@ -213,14 +247,6 @@ export const leaveApi = {
   approve: (id: number) => `${BASE}/leave/${id}/approve`,
   reject: (id: number) => `${BASE}/leave/${id}/reject`,
   cancel: (id: number) => `${BASE}/leave/${id}`,
-};
-
-/** @deprecated Legacy school-ops payroll endpoints — use financePayrollApi */
-export const payrollApi = {
-  all: `${BASE}/payroll`,
-  byStaff: (staffId: number) => `${BASE}/payroll/${staffId}`,
-  saveOrUpdate: `${BASE}/payroll`,
-  run: `${BASE}/payroll/run`,
 };
 
 /** Finance → Payroll (admin) */
@@ -261,30 +287,10 @@ export const tenantApi = {
 
 // ─── Staff, Branch, Department (previously /api/* — now /api/v1/*) ──────────
 export const staffApi = {
-  base: `${BASE}/staff`,
-  dashboard: `${BASE}/staff/dashboard`,
-  byId: (id: number) => `${BASE}/staff/${id}`,
-  activate: (id: number) => `${BASE}/staff/${id}/activate`,
-  deactivate: (id: number) => `${BASE}/staff/${id}/deactivate`,
   responsibilities: `${BASE}/staff/responsibilities`,
   responsibilityById: (id: number) => `${BASE}/staff/responsibilities/${id}`,
   responsibilityAssignments: (id: number) => `${BASE}/staff/responsibilities/${id}/assignments`,
-  responsibilityPermissions: (id: number) => `${BASE}/staff/responsibilities/${id}/permissions`,
   staffResponsibilityAssignments: `${BASE}/staff/responsibility-assignments`,
-  staffResponsibilities: (staffId: number) => `${BASE}/staff/${staffId}/responsibilities`,
-  /** @deprecated Legacy Staff salary structure APIs — use Finance payroll structures / employee salary */
-  salaryStructures: `${BASE}/staff/salary-structures`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryStructureById: (id: number) => `${BASE}/staff/salary-structures/${id}`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryStructureForStaff: (staffId: number) => `${BASE}/staff/${staffId}/salary-structure`,
-  /** @deprecated Legacy — use Finance payroll */
-  salaryHistory: (staffId: number) => `${BASE}/staff/${staffId}/salary-history`,
-  /** @deprecated legacy endpoints — do not use */
-  saveOrUpdate: `${BASE}/staff/saveOrUpdateStaff`,
-  getAll: `${BASE}/staff/getAllStaff`,
-  getByCode: (code: string) => `${BASE}/staff/getStaffByCode/${code}`,
-  toggleStatus: (code: string) => `${BASE}/staff/staffActiveStatus/${code}`,
 };
 
 export const branchApi = {

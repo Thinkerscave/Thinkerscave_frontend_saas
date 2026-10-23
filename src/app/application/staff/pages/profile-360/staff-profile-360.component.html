@@ -1,58 +1,82 @@
-﻿<section class="sp-page tc-detail-page">
-  <tc-saas-page-header></tc-saas-page-header>
+<section class="sp-page tc-detail-page">
+  <tc-saas-page-header>
+    <div class="sp-actions" *ngIf="profile && canWrite">
+      <button type="button" class="tc-btn tc-btn--primary tc-btn--sm sp-actions__trigger"
+              aria-haspopup="menu" [attr.aria-expanded]="actionsOpen" (click)="toggleActionsMenu()">
+        Actions <i class="pi pi-chevron-down" aria-hidden="true"></i>
+      </button>
+      <div *ngIf="actionsOpen" class="sp-actions__menu" role="menu">
+        <button type="button" role="menuitem" class="sp-actions__item" (click)="editProfile()">
+          <i class="pi pi-pencil" aria-hidden="true"></i> Edit Staff
+        </button>
+        <button type="button" role="menuitem" class="sp-actions__item"
+                [class.is-danger]="profile.active" [disabled]="actionLoading" (click)="toggleActive()">
+          <i class="pi" [ngClass]="profile.active ? 'pi-ban' : 'pi-check-circle'" aria-hidden="true"></i>
+          {{ profile.active ? 'Deactivate' : 'Activate' }}
+        </button>
+      </div>
+    </div>
+  </tc-saas-page-header>
+  <app-toast />
+  <div *ngIf="photoPreviewOpen && photoUrl" class="sp-photo-modal" (click)="photoPreviewOpen = false" (document:keydown.escape)="photoPreviewOpen = false">
+    <div class="sp-photo-modal__panel" role="dialog" aria-modal="true" [attr.aria-label]="'Photo of ' + (profile?.fullName || 'staff member')" (click)="$event.stopPropagation()">
+      <button type="button" class="sp-photo-modal__close" aria-label="Close photo" (click)="photoPreviewOpen = false">
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <img class="sp-photo-preview" [src]="photoUrl" [alt]="'Photo of ' + (profile?.fullName || 'staff member')" />
+    </div>
+  </div>
 
   <ng-container *ngIf="!loading && profile">
 
-  <!-- Compact identity header -->
-  <header class="tc-detail-hero tc-detail-page__hero">
-    <div class="tc-detail-hero__identity">
-      <tc-avatar [name]="profile.fullName" [imageUrl]="profile.photoUrl" size="xl"></tc-avatar>
-      <div class="tc-detail-hero__meta">
-        <div class="tc-detail-hero__title-row">
-          <h1>{{ profile.fullName }}</h1>
-          <span class="tc-badge" [attr.data-status]="profile.active ? 'ACTIVE' : 'INACTIVE'">
-            {{ profile.active ? 'Active' : 'Inactive' }}
-          </span>
-        </div>
-        <p class="tc-detail-hero__code">{{ profile.staffCode }} · {{ profile.designation }}</p>
-        <div class="tc-detail-hero__chips">
-          <span class="tc-detail-hero__chip">
-            <i class="pi" [class.pi-graduation-cap]="profile.staffType === 'TEACHING'"
-               [class.pi-briefcase]="profile.staffType !== 'TEACHING'"></i>
-            {{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}
-          </span>
-          <span class="tc-detail-hero__chip">
-            <i class="pi pi-id-card"></i> {{ profile.employmentCategory | titlecase }}
-          </span>
-          <span class="tc-detail-hero__chip">
-            <i class="pi pi-calendar"></i>
-            Joined {{ profile.joiningDate | date:'d MMM yyyy' }}
-          </span>
-        </div>
+  <!-- Identity card: staff information only; page actions live in the toolbar -->
+  <section class="sp-identity">
+    <button *ngIf="photoUrl; else plainAvatar" type="button" class="sp-avatar-btn"
+            aria-label="View profile photo" (click)="photoPreviewOpen = true">
+      <tc-avatar [name]="profile.fullName" [imageUrl]="photoUrl" size="lg"></tc-avatar>
+    </button>
+    <ng-template #plainAvatar>
+      <tc-avatar [name]="profile.fullName" [imageUrl]="photoUrl" size="lg"></tc-avatar>
+    </ng-template>
+    <div class="sp-identity__body">
+      <div class="sp-identity__title">
+        <h1>{{ profile.fullName }}</h1>
+        <span class="tc-badge" [attr.data-status]="profile.active ? 'ACTIVE' : 'INACTIVE'">
+          {{ profile.active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+      <p class="sp-identity__meta">{{ profile.staffCode }} · {{ profile.designation }}</p>
+      <div class="sp-identity__chips">
+        <span class="sp-chip">
+          <i class="pi" [ngClass]="profile.staffType === 'TEACHING' ? 'pi-book' : 'pi-briefcase'" aria-hidden="true"></i>
+          {{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}
+        </span>
+        <span class="sp-chip">
+          <i class="pi pi-id-card" aria-hidden="true"></i> {{ profile.employmentCategory | titlecase }}
+        </span>
+        <span class="sp-chip">
+          <i class="pi pi-calendar" aria-hidden="true"></i> Joined {{ profile.joiningDate | date:'d MMM yyyy' }}
+        </span>
       </div>
     </div>
-
-    <div class="tc-detail-hero__actions">
-      <button id="btn-edit-profile" type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="editProfile()">
-        <i class="pi pi-pencil"></i> Edit Profile
-      </button>
-      <button type="button" class="tc-btn tc-btn--sm"
-              [class.tc-btn--danger]="profile.active"
-              [class.tc-btn--outline]="!profile.active"
-              (click)="toggleActive()" [disabled]="actionLoading">
-        <i class="pi" [class.pi-spin]="actionLoading" [class.pi-spinner]="actionLoading"
-           [class.pi-ban]="!actionLoading && profile.active"
-           [class.pi-check-circle]="!actionLoading && !profile.active"></i>
-        {{ profile.active ? 'Deactivate' : 'Activate' }}
-      </button>
-    </div>
-  </header>
+  </section>
 
   <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ WORKSPACE â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-  <div class="tc-detail-layout" [class.tc-detail-layout--full]="!hasContextualSidebar">
+  <tc-kpi-group ariaLabel="Staff summary" mode="equal" [columns]="4">
+    <tc-kpi-card label="Staff Type"
+                 [value]="profile.staffType === 'TEACHING' ? 'Teaching' : 'Non-Teaching'"
+                 icon="pi pi-users" tone="primary"></tc-kpi-card>
+    <tc-kpi-card label="Years in Service" [value]="serviceKpiValue"
+                 icon="pi pi-calendar" tone="info"></tc-kpi-card>
+    <tc-kpi-card label="Active Responsibilities" [value]="activeResponsibilityCount"
+                 icon="pi pi-sitemap" tone="success" hint="Open Responsibilities"
+                 [clickable]="true" (select)="setTab('responsibilities')"></tc-kpi-card>
+    <tc-kpi-card label="Documents" [value]="activeDocumentCount"
+                 icon="pi pi-folder-open" tone="neutral" hint="Open Documents"
+                 [clickable]="true" (select)="setTab('documents')"></tc-kpi-card>
+  </tc-kpi-group>
 
-    <!-- Main content -->
-    <div class="sp-main">
+  <div class="sp-main pd-section">
 
       <!-- Tabs -->
       <div class="sp-tabs tc-detail-page__tabs">
@@ -68,103 +92,140 @@
 
       <!-- â•â•â•â•â•â• OVERVIEW TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'overview'" class="sp-tab-content tc-detail-page__content">
-        <div class="tc-detail-info-grid">
+        <ng-template #notProvided><span class="pd-empty">{{ emptyMark }}</span></ng-template>
+        <div class="pd-grid">
 
-          <!-- Personal Information -->
-          <div class="sp-info-card">
-            <h3 class="sp-info-card__title">Personal Information</h3>
-            <div class="sp-info-rows">
-              <div class="sp-info-row">
-                <span>Date of Birth</span>
-                <strong>{{ profile.dateOfBirth | date:'d MMM yyyy' }}</strong>
+          <section class="pd-panel pd-panel--personal">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-user"></i> Personal Information</h3>
+            </header>
+            <dl class="pd-dl">
+              <div>
+                <dt>Mobile Number</dt>
+                <dd><a *ngIf="profile.mobileNumber; else notProvided" class="pd-link" [href]="'tel:' + profile.mobileNumber">{{ profile.mobileNumber }}</a></dd>
               </div>
-              <div class="sp-info-row">
-                <span>Gender</span>
-                <strong>{{ profile.gender }}</strong>
+              <div>
+                <dt>Email</dt>
+                <dd><a *ngIf="profile.email; else notProvided" class="pd-link" [href]="'mailto:' + profile.email">{{ profile.email }}</a></dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.bloodGroup">
-                <span>Blood Group</span>
-                <strong>{{ profile.bloodGroup }}</strong>
+              <div>
+                <dt>Date of Birth</dt>
+                <dd [class.pd-empty]="!profile.dateOfBirth">{{ profile.dateOfBirth ? (profile.dateOfBirth | date:'d MMM yyyy') : emptyMark }}</dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.religion">
-                <span>Religion</span>
-                <strong>{{ profile.religion }}</strong>
+              <div>
+                <dt>Age</dt>
+                <dd [class.pd-empty]="age === null">{{ age !== null ? age + ' yrs' : emptyMark }}</dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.nationality">
-                <span>Nationality</span>
-                <strong>{{ profile.nationality }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Mobile</span>
-                <strong>{{ profile.mobileNumber }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Email</span>
-                <strong>{{ profile.email }}</strong>
-              </div>
-            </div>
-          </div>
+              <div><dt>Gender</dt><dd [class.pd-empty]="!profile.gender">{{ profile.gender || emptyMark }}</dd></div>
+              <div><dt>Nationality</dt><dd [class.pd-empty]="!profile.nationality">{{ profile.nationality || emptyMark }}</dd></div>
+              <div><dt>Blood Group</dt><dd [class.pd-empty]="!profile.bloodGroup">{{ profile.bloodGroup || emptyMark }}</dd></div>
+            </dl>
+          </section>
 
-          <!-- Professional Information -->
-          <div class="sp-info-card">
-            <h3 class="sp-info-card__title">Professional Information</h3>
-            <div class="sp-info-rows">
-              <div class="sp-info-row" *ngIf="profile.highestQualification">
-                <span>Qualification</span>
-                <strong>{{ profile.highestQualification }}</strong>
+          <section class="pd-panel pd-panel--emergency">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-heart"></i> Emergency Contact</h3>
+            </header>
+            <dl class="pd-dl">
+              <div><dt>Contact Name</dt><dd [class.pd-empty]="!profile.emergencyContactName">{{ profile.emergencyContactName || emptyMark }}</dd></div>
+              <div><dt>Relationship</dt><dd [class.pd-empty]="!profile.emergencyContactRelation">{{ profile.emergencyContactRelation || emptyMark }}</dd></div>
+              <div>
+                <dt>Phone Number</dt>
+                <dd><a *ngIf="profile.emergencyContactNumber; else notProvided" class="pd-link" [href]="'tel:' + profile.emergencyContactNumber">{{ profile.emergencyContactNumber }}</a></dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.experienceYears !== null">
-                <span>Experience</span>
-                <strong>{{ profile.experienceYears }} Years</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Staff Type</span>
-                <strong>{{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Employment Category</span>
-                <strong>{{ profile.employmentCategory | titlecase }}</strong>
-              </div>
-              <div class="sp-info-row">
-                <span>Employment Status</span>
-                <span class="sd-status-pill" [attr.data-status]="profile.employmentStatus">
-                  {{ profile.employmentStatus | titlecase }}
-                </span>
-              </div>
-              <div class="sp-info-row">
-                <span>Joining Date</span>
-                <strong>{{ profile.joiningDate | date:'d MMM yyyy' }}</strong>
-              </div>
-            </div>
-          </div>
+            </dl>
+          </section>
 
-          <!-- Emergency Contact -->
-          <div class="sp-info-card" *ngIf="profile.emergencyContactName">
-            <h3 class="sp-info-card__title">Emergency Contact</h3>
-            <div class="sp-info-rows">
-              <div class="sp-info-row">
-                <span>Name</span>
-                <strong>{{ profile.emergencyContactName }}</strong>
+          <section class="pd-panel pd-panel--address">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-map-marker"></i> Address Information</h3>
+            </header>
+            <dl class="pd-dl">
+              <div>
+                <dt>Present Address</dt>
+                <dd>
+                  <span *ngFor="let line of addressLines(profile.presentAddress)" class="pd-address-line">{{ line }}</span>
+                  <span *ngIf="addressLines(profile.presentAddress).length === 0" class="pd-empty">{{ emptyMark }}</span>
+                </dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.emergencyContactRelation">
-                <span>Relation</span>
-                <strong>{{ profile.emergencyContactRelation }}</strong>
+              <div>
+                <dt>Permanent Address</dt>
+                <dd>
+                  <ng-container *ngIf="profile.sameAsPresentAddress; else permanentLines">Same as present address</ng-container>
+                  <ng-template #permanentLines>
+                    <span *ngFor="let line of addressLines(profile.permanentAddress)" class="pd-address-line">{{ line }}</span>
+                    <span *ngIf="addressLines(profile.permanentAddress).length === 0" class="pd-empty">{{ emptyMark }}</span>
+                  </ng-template>
+                </dd>
               </div>
-              <div class="sp-info-row" *ngIf="profile.emergencyContactNumber">
-                <span>Phone</span>
-                <strong>{{ profile.emergencyContactNumber }}</strong>
+            </dl>
+            <p *ngIf="profile.sameAsPresentAddress" class="pd-note">
+              <i class="pi pi-info-circle" aria-hidden="true"></i> Permanent address is same as present address.
+            </p>
+          </section>
+
+          <section class="pd-panel pd-panel--employment">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-briefcase"></i> Employment Information</h3>
+            </header>
+            <dl class="pd-dl">
+              <div><dt>Designation</dt><dd [class.pd-empty]="!profile.designation">{{ profile.designation || emptyMark }}</dd></div>
+              <div>
+                <dt>Staff Type</dt>
+                <dd>{{ profile.staffType === 'TEACHING' ? 'Teaching Staff' : 'Non-Teaching Staff' }}</dd>
               </div>
-            </div>
-          </div>
+              <div><dt>Employment Category</dt><dd>{{ profile.employmentCategory | titlecase }}</dd></div>
+              <div>
+                <dt>Employment Status</dt>
+                <dd>
+                  <span class="sd-status-pill" [attr.data-status]="profile.employmentStatus">
+                    {{ profile.employmentStatus | titlecase }}
+                  </span>
+                </dd>
+              </div>
+              <div><dt>Joining Date</dt><dd>{{ profile.joiningDate | date:'d MMM yyyy' }}</dd></div>
+              <div>
+                <dt>Contract Start Date</dt>
+                <dd [class.pd-empty]="!profile.contractStartDate">{{ profile.contractStartDate ? (profile.contractStartDate | date:'d MMM yyyy') : emptyMark }}</dd>
+              </div>
+              <div>
+                <dt>Contract End Date</dt>
+                <dd [class.pd-empty]="!profile.contractEndDate">{{ profile.contractEndDate ? (profile.contractEndDate | date:'d MMM yyyy') : emptyMark }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="pd-panel pd-panel--qualifications">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-graduation-cap"></i> Qualifications &amp; Expertise</h3>
+            </header>
+            <dl class="pd-dl">
+              <div><dt>Highest Qualification</dt><dd [class.pd-empty]="!profile.highestQualification">{{ profile.highestQualification || emptyMark }}</dd></div>
+              <div><dt>Experience Years</dt><dd [class.pd-empty]="profile.experienceYears == null">{{ profile.experienceYears != null ? profile.experienceYears + ' years' : emptyMark }}</dd></div>
+              <div><dt>Primary Subject</dt><dd [class.pd-empty]="!profile.primarySubject">{{ profile.primarySubject?.name || emptyMark }}</dd></div>
+              <div><dt>Secondary Subject</dt><dd [class.pd-empty]="!profile.secondarySubject">{{ profile.secondarySubject?.name || emptyMark }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="pd-panel pd-panel--bank">
+            <header class="pd-panel__head">
+              <h3 class="pd-panel__title"><i class="pi pi-wallet"></i> Bank Details</h3>
+            </header>
+            <dl class="pd-dl">
+              <div><dt>Bank Name</dt><dd [class.pd-empty]="!profile.bankDetails?.bankName">{{ profile.bankDetails?.bankName || emptyMark }}</dd></div>
+              <div><dt>Account Holder</dt><dd [class.pd-empty]="!profile.bankDetails?.accountHolderName">{{ profile.bankDetails?.accountHolderName || emptyMark }}</dd></div>
+              <div><dt>Account Number</dt><dd [class.pd-empty]="!profile.bankDetails?.maskedAccountNumber">{{ profile.bankDetails?.maskedAccountNumber || emptyMark }}</dd></div>
+              <div><dt>IFSC Code</dt><dd [class.pd-empty]="!profile.bankDetails?.ifscCode">{{ profile.bankDetails?.ifscCode || emptyMark }}</dd></div>
+            </dl>
+          </section>
 
         </div>
       </div>
-
       <!-- â•â•â•â•â•â• RESPONSIBILITIES TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'responsibilities'" class="sp-tab-content tc-detail-page__content">
         <div class="tc-detail-tab-bar">
           <h3>Assigned Responsibilities</h3>
-          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openAssignModal()">
+          <button *ngIf="canWrite" type="button" class="tc-btn tc-btn--primary tc-btn--sm" (click)="openAssignModal()">
             <i class="pi pi-plus"></i> Assign Responsibility
           </button>
         </div>
@@ -190,7 +251,7 @@
               <tr *ngFor="let r of profile.responsibilities; trackBy: trackByAssignId">
                 <td><strong>{{ r.responsibilityName }}</strong></td>
                 <td><code>{{ r.responsibilityCode }}</code></td>
-                <td>{{ r.scope || 'â€”' }}</td>
+                <td>{{ r.scope || '—' }}</td>
                 <td>{{ r.effectiveFrom | date:'d MMM yyyy' }}</td>
                 <td>
                   <span class="sd-status-pill" [attr.data-status]="r.active ? 'ACTIVE' : 'INACTIVE'">
@@ -198,7 +259,7 @@
                   </span>
                 </td>
                 <td>
-                  <button type="button" class="sd-icon-btn danger" (click)="removeAssignment(r)">
+                  <button *ngIf="canWrite" type="button" class="sd-icon-btn danger" (click)="removeAssignment(r)">
                     <i class="pi pi-times"></i>
                   </button>
                 </td>
@@ -210,48 +271,225 @@
 
       <!-- â•â•â•â•â•â• DOCUMENTS TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'documents'" class="sp-tab-content tc-detail-page__content">
-        <div class="sp-empty-state">
-          <i class="pi pi-folder-open"></i>
-          <h3>Documents</h3>
-          <p>Document management will be available in the next release.</p>
+        <div class="tc-detail-tab-bar sp-doc-bar">
+          <div class="sp-doc-bar__title">
+            <h3>Documents</h3>
+            <span class="sp-doc-count">{{ documents.length }} {{ documents.length === 1 ? 'document' : 'documents' }}</span>
+          </div>
+          <div class="sp-doc-upload">
+            <p-dropdown
+              inputId="filter-document-type"
+              [options]="documentFilterOptions"
+              [(ngModel)]="documentFilter"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="All types"
+              [showClear]="!!documentFilter"
+              appendTo="body"
+              styleClass="att-filter-dropdown">
+            </p-dropdown>
+            <button *ngIf="canWrite" type="button" class="tc-btn tc-btn--primary tc-btn--sm"
+                    [disabled]="documentBusy" (click)="openUploadDialog()">
+              <i class="pi pi-upload" aria-hidden="true"></i> Upload Document
+            </button>
+          </div>
+        </div>
+
+        <p *ngIf="documentError" class="sp-doc-error" role="alert">{{ documentError }}</p>
+        <p *ngIf="documentBusy" class="pd-muted" role="status">Updating documents...</p>
+
+        <div *ngIf="documents.length === 0" class="sp-empty-state sp-empty-state--docs">
+          <i class="pi pi-folder-open" aria-hidden="true"></i>
+          <p class="sp-empty-state__title">No documents uploaded yet</p>
+          <p class="pd-muted">Upload identity documents, certificates, or other files associated with this staff member.</p>
+          <button *ngIf="canWrite" type="button" class="tc-btn tc-btn--primary tc-btn--sm"
+                  [disabled]="documentBusy" (click)="openUploadDialog()">
+            <i class="pi pi-upload" aria-hidden="true"></i> Upload Document
+          </button>
+        </div>
+
+        <div *ngIf="documents.length > 0 && filteredDocuments.length === 0" class="sp-empty-state">
+          <i class="pi pi-filter" aria-hidden="true"></i>
+          <p>No documents match the selected type.</p>
+        </div>
+
+        <div class="sd-table-wrap" *ngIf="filteredDocuments.length > 0">
+          <table class="sd-table sp-doc-table">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th class="sp-doc-table__actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of filteredDocuments; trackBy: trackByDocId">
+                <td>
+                  <div class="sp-doc-name">
+                    <i class="sp-doc-name__icon" [ngClass]="fileIcon(d)" aria-hidden="true"></i>
+                    <div class="pd-doc-name">
+                      <strong>{{ d.documentName }}</strong>
+                      <small *ngIf="d.fileName && d.fileName !== d.documentName">{{ d.fileName }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ documentTypeLabel(d.documentType) }}</td>
+                <td>{{ formatFileSize(d.fileSize) }}</td>
+                <td>
+                  <div class="pd-doc-actions">
+                    <input #replaceInput type="file" hidden [attr.accept]="uploadAccept"
+                           (change)="replaceDocumentFile($event, d.documentId)"/>
+                    <button type="button" class="sd-icon-btn" title="Preview" [attr.aria-label]="'Preview ' + d.documentName"
+                            (click)="viewDocument(d)">
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    <button type="button" class="sd-icon-btn" title="Download" [attr.aria-label]="'Download ' + d.documentName"
+                            (click)="downloadDocument(d)">
+                      <i class="pi pi-download"></i>
+                    </button>
+                    <button *ngIf="canWrite" type="button" class="sd-icon-btn" title="Replace file" [attr.aria-label]="'Replace file of ' + d.documentName"
+                            [disabled]="documentBusy" (click)="replaceInput.click()">
+                      <i class="pi pi-sync"></i>
+                    </button>
+                    <button *ngIf="canWrite" type="button" class="sd-icon-btn danger" title="Delete" [attr.aria-label]="'Delete ' + d.documentName"
+                            [disabled]="documentBusy" (click)="removeDocument(d)">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- â•â•â•â•â•â• ACTIVITY TAB â•â•â•â•â•â• -->
       <div *ngIf="activeTab === 'activity'" class="sp-tab-content tc-detail-page__content">
-        <div class="sp-empty-state">
-          <i class="pi pi-history"></i>
-          <h3>Activity Log</h3>
-          <p>Activity tracking will be available in the next release.</p>
-        </div>
+        <section class="pd-panel pd-panel--wide">
+          <h3 class="pd-panel__title"><i class="pi pi-history"></i> Activity Log</h3>
+          <div class="pd-activity-meta">
+            <span>Created {{ profile.createdOn | date: 'mediumDate' }}</span>
+            <span>Last updated {{ profile.updatedOn | date: 'mediumDate' }}</span>
+          </div>
+          <p class="pd-muted" *ngIf="activityLoading">Loading activity...</p>
+          <p class="pd-muted" *ngIf="!activityLoading && activityError">{{ activityError }}</p>
+          <ng-container *ngIf="!activityLoading && !activityError">
+            <p class="pd-muted" *ngIf="activity.length === 0">No activity recorded yet.</p>
+            <ol class="pd-timeline" *ngIf="activity.length > 0">
+              <li class="pd-timeline__item" *ngFor="let a of activity; trackBy: trackByActivityId">
+                <span class="pd-timeline__icon"><i class="pi" [ngClass]="activityIcon(a.actionType)"></i></span>
+                <div class="pd-timeline__text">
+                  <strong>{{ a.description }}</strong>
+                  <span class="pd-muted">{{ a.performedOn | date: 'medium' }} · {{ a.performedBy || 'System' }}</span>
+                </div>
+              </li>
+            </ol>
+          </ng-container>
+        </section>
       </div>
 
     </div>
 
     <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ CONTEXTUAL SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-    <aside class="tc-detail-sidebar" *ngIf="hasContextualSidebar">
-
-      <!-- Responsibilities tab context -->
-      <div class="tc-detail-sidebar-card" *ngIf="activeTab === 'responsibilities'">
-        <h4 class="tc-detail-sidebar-card__title">Responsibility Summary</h4>
-        <div class="sp-sidebar-stat">
-          <span>Total Assigned</span>
-          <strong>{{ profile.responsibilities?.length ?? 0 }}</strong>
-        </div>
-        <div class="sp-sidebar-stat">
-          <span>Currently Active</span>
-          <strong>{{ activeResponsibilityCount }}</strong>
-        </div>
-      </div>
-
-    </aside>
-  </div>
   </ng-container>
 
 <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ LOADING â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="5"></tc-page-skeleton>
 
 <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€ ERROR â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- Upload Staff Document dialog: the file picker opens only from Browse file -->
+<p-dialog
+  header="Upload Staff Document"
+  [visible]="uploadDialogOpen"
+  (visibleChange)="onUploadDialogVisibleChange($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!uploadBusy"
+  [closeOnEscape]="!uploadBusy"
+  maskStyleClass="tc-mask-plain"
+  [style]="{ width: '480px', maxWidth: '94vw' }"
+  appendTo="body">
+  <form class="sp-upload-form" novalidate (ngSubmit)="submitUpload()">
+    <p class="sp-upload-form__intro">Add a document to this staff member's profile.</p>
+
+    <div *ngIf="uploadError" class="sp-upload-alert" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <div>
+        <strong>Document not uploaded</strong>
+        <p>{{ uploadError }}</p>
+      </div>
+    </div>
+
+    <div class="tc-form-group">
+      <label class="tc-form-label" for="sp-upload-name">Document name <span class="required">*</span></label>
+      <input id="sp-upload-name" name="uploadName" type="text" class="tc-form-control"
+             maxlength="255" placeholder="For example: Aadhaar card (front)"
+             [class.has-error]="!!uploadNameError" [disabled]="uploadBusy"
+             [(ngModel)]="uploadName" (ngModelChange)="uploadError = ''"
+             (blur)="uploadNameTouched = true" />
+      <small *ngIf="uploadNameError" class="tc-form-error">{{ uploadNameError }}</small>
+      <small *ngIf="!uploadNameError" class="tc-form-hint">This is the name shown in the document list.</small>
+    </div>
+
+    <div class="tc-form-group">
+      <label class="tc-form-label" for="sp-upload-type">Document type <span class="required">*</span></label>
+      <p-dropdown
+        inputId="sp-upload-type"
+        name="uploadType"
+        [options]="documentTypes"
+        [(ngModel)]="uploadType"
+        (ngModelChange)="uploadError = ''"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select a document type"
+        [disabled]="uploadBusy"
+        appendTo="body"
+        styleClass="sp-upload-dropdown">
+      </p-dropdown>
+    </div>
+
+    <div class="tc-form-group">
+      <span class="tc-form-label">File <span class="required">*</span></span>
+      <div class="sp-file-drop" [class.is-filled]="!!uploadFile" [class.has-error]="!!uploadFileError">
+        <span class="sp-file-drop__icon" aria-hidden="true">
+          <i class="pi" [ngClass]="uploadFile ? 'pi-file' : 'pi-cloud-upload'"></i>
+        </span>
+        <div *ngIf="uploadFile; else noFileChosen" class="sp-file-drop__text">
+          <strong class="sp-file-drop__name" [title]="uploadFile.name">{{ uploadFile.name }}</strong>
+          <small>{{ formatFileSize(uploadFile.size) }}</small>
+        </div>
+        <ng-template #noFileChosen>
+          <div class="sp-file-drop__text">
+            <strong>No file selected</strong>
+            <small>PDF, JPG, PNG, DOC or DOCX, up to 5 MB</small>
+          </div>
+        </ng-template>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm"
+                [disabled]="uploadBusy" (click)="uploadFileInput.click()">
+          <i class="pi pi-folder-open" aria-hidden="true"></i>
+          {{ uploadFile ? 'Change file' : 'Browse file' }}
+        </button>
+        <input #uploadFileInput type="file" hidden [attr.accept]="uploadAccept"
+               (change)="onUploadFileChosen($event)" />
+      </div>
+      <small *ngIf="uploadFileError" class="tc-form-error">{{ uploadFileError }}</small>
+    </div>
+
+    <p *ngIf="uploadMissing && !uploadBusy" class="sp-upload-hint">{{ uploadMissing }}</p>
+
+    <div class="sp-upload-actions">
+      <button type="button" class="tc-btn tc-btn--outline" [disabled]="uploadBusy" (click)="requestCloseUpload()">
+        Cancel
+      </button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="!canSubmitUpload">
+        <i class="pi" [ngClass]="uploadBusy ? 'pi-spin pi-spinner' : 'pi-upload'" aria-hidden="true"></i>
+        {{ uploadBusy ? 'Uploading...' : 'Upload document' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>
 <div *ngIf="errorMessage && !loading" class="sd-error-banner">
   <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
 </div>
@@ -306,6 +544,8 @@
     </div>
   </div>
 </div>
+
+<app-document-preview-dialog />
 
 </section>
 

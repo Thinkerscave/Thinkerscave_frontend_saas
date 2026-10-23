@@ -1,72 +1,22 @@
-<div class="saas-page attendance-settings">
-  <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="reset()" [disabled]="loading || saving">
-      <i class="pi pi-refresh"></i>Reset defaults
-    </button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="loading || saving">
-      <i class="pi pi-save"></i>{{ saving ? 'Saving…' : 'Save Settings' }}
-    </button>
-  </tc-saas-page-header>
-
-  <div *ngIf="saved" class="attendance-settings__toast"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
-  <div *ngIf="errorMessage" class="attendance-settings__toast attendance-settings__toast--error">
-    <i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}
-  </div>
-
-  <tc-page-skeleton *ngIf="loading" layout="form" [sections]="6"></tc-page-skeleton>
-
-  <div class="attendance-settings__grid" *ngIf="!loading">
-    <tc-saas-panel title="Attendance Mode" subtitle="Choose how attendance is captured">
-      <div class="settings-radio-group">
-        <label class="settings-radio">
-          <input type="radio" name="mode" [(ngModel)]="settings.attendanceMode" value="DAILY">
-          <div><strong>Daily</strong><small>Mark attendance once a day per student.</small></div>
-        </label>
-        <label class="settings-radio">
-          <input type="radio" name="mode" [(ngModel)]="settings.attendanceMode" value="PERIOD">
-          <div><strong>Period-wise</strong><small>Mark attendance per period for granular tracking.</small></div>
-        </label>
-      </div>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="School Timings" subtitle="Operating hours for attendance window">
-      <div class="settings-row">
-        <label class="saas-field"><span>Start Time</span><input type="time" [(ngModel)]="settings.windowStartTime"></label>
-        <label class="saas-field"><span>End Time</span><input type="time" [(ngModel)]="settings.windowEndTime"></label>
-      </div>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Late Arrival Rule" subtitle="Mark students late after this time">
-      <label class="saas-field"><span>Late After</span><input type="time" [(ngModel)]="settings.lateAfterTime"></label>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Defaulter Threshold" subtitle="Below this percent students appear as defaulters">
-      <label class="saas-field"><span>Min Attendance %</span><input type="number" min="0" max="100" [(ngModel)]="settings.minStudentAttendancePercent"></label>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Attendance Freeze" subtitle="Prevent edits after the cut-off">
-      <label class="settings-toggle">
-        <input type="checkbox" [(ngModel)]="settings.allowCopyPrevious">
-        <span>Allow Copy Previous Day on student roster</span>
-      </label>
-      <label class="saas-field att-freeze-field">
-        <span>Enable freeze after</span>
-        <p-dropdown
-          [options]="freezeAfterOptions"
-          [(ngModel)]="settings.freezeAfterDays"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          styleClass="att-filter-dropdown">
-        </p-dropdown>
-      </label>
-      <small class="att-note att-note--tight">0 = no automatic freeze. Manual freeze periods remain available via API.</small>
-    </tc-saas-panel>
-
-    <tc-saas-panel title="Notifications" subtitle="Preference flags (dispatch is platform-managed; see Communication workflow)">
-      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.sendSmsOnAbsent"><span>SMS on absent</span></label>
-      <label class="settings-toggle"><input type="checkbox" [(ngModel)]="settings.sendEmailOnAbsent"><span>Email on absent</span></label>
-      <small class="att-note">WhatsApp / Push are not persisted yet - Future Enhancement.</small>
-    </tc-saas-panel>
+<div class="tc-page-shell tc-directory-page saas-page attendance-settings">
+  <tc-saas-page-header><button *ngIf="canManageSettings" type="button" class="tc-btn tc-btn--primary" (click)="save()" [disabled]="loading || saving || !isValid()"><i class="pi pi-save"></i>{{ saving ? 'Saving...' : 'Save Changes' }}</button></tc-saas-page-header>
+  <div *ngIf="saved" class="attendance-settings__toast" role="status"><i class="pi pi-check-circle"></i>Settings saved successfully</div>
+  <div *ngIf="errorMessage" class="attendance-settings__toast attendance-settings__toast--error" role="alert"><i class="pi pi-exclamation-triangle"></i>{{ errorMessage }}</div>
+  <tc-page-skeleton *ngIf="loading" layout="form" [sections]="5"></tc-page-skeleton>
+  <div class="attendance-settings__sections" *ngIf="!loading && loaded">
+    <section class="attendance-settings__section attendance-settings__section--student" aria-labelledby="student-attendance-title">
+      <header class="attendance-settings__section-header"><span class="attendance-settings__section-icon"><i class="pi pi-graduation-cap"></i></span><div><h2 id="student-attendance-title">Student Attendance</h2><p>Configure how student attendance is recorded and managed.</p></div></header>
+      <div class="attendance-settings__row attendance-settings__row--mode"><div class="attendance-settings__copy"><h3>Attendance Mode</h3><p>Determines how student attendance is recorded.</p></div><div class="settings-radio-group settings-radio-group--inline">
+        <label class="settings-radio" [class.is-selected]="settings.attendanceMode === 'DAILY'"><input type="radio" name="mode" [(ngModel)]="settings.attendanceMode" value="DAILY"><span class="settings-radio__content"><strong>Daily Attendance</strong><small>One attendance record per student per instructional day.</small></span></label>
+        <label class="settings-radio settings-radio--disabled"><input type="radio" name="mode" value="PERIOD_WISE" disabled><span class="settings-radio__content"><strong>Period / Session-wise Attendance <em>Coming soon</em></strong><small>Separate attendance for each scheduled period or session.</small></span></label>
+      </div></div>
+      <div class="attendance-settings__row"><div class="attendance-settings__copy"><h3>Low Attendance Threshold</h3><p>Percentage used to identify students who fall below the institution's attendance requirement.</p></div><div class="settings-number-field"><div class="settings-number-field__input"><input type="number" min="0" max="100" step="1" [(ngModel)]="settings.minStudentAttendancePercent" aria-label="Low attendance threshold percentage"><span>%</span></div><small>Students below this percentage appear in defaulter reports.</small></div></div>
+      <div class="attendance-settings__row"><div class="attendance-settings__copy"><h3>Attendance Editing Policy</h3><p>Sets the allowed correction window for submitted attendance.</p></div><div class="settings-control-column"><p-dropdown [options]="editingPolicyOptions" [(ngModel)]="settings.attendanceEditingPolicy" optionLabel="label" optionValue="value" appendTo="body" styleClass="settings-dropdown" ariaLabel="Attendance editing policy"></p-dropdown><div class="settings-info"><i class="pi pi-info-circle"></i><span>Choose whether corrections are permitted on the same day, during the same week, or during the same month.</span></div></div></div>
+    </section>
+    <section class="attendance-settings__section attendance-settings__section--staff" aria-labelledby="staff-attendance-title">
+      <header class="attendance-settings__section-header"><span class="attendance-settings__section-icon"><i class="pi pi-users"></i></span><div><h2 id="staff-attendance-title">Staff Attendance</h2><p>Configure employee arrival and working duration policies.</p></div></header>
+      <div class="attendance-settings__row"><div class="attendance-settings__copy"><h3>Late Arrival Grace Period</h3><p>Defines how many minutes after the configured staff start time an employee can sign in before being classified as late.</p></div><div class="settings-number-field settings-number-field--unit"><div class="settings-number-field__input"><input type="number" min="0" max="120" step="1" [(ngModel)]="settings.staffLateGraceMinutes" aria-label="Late arrival grace period in minutes"><span>minutes</span></div><small>Staff will be marked late after the grace period.</small></div></div>
+      <div class="attendance-settings__row"><div class="attendance-settings__copy"><h3>Minimum Working Hours</h3><p>Defines the minimum daily duration expected from staff. This is optional and used for attendance reports and analysis.</p></div><div class="settings-number-field settings-number-field--unit"><div class="settings-number-field__input"><input type="number" min="1" max="24" step="0.5" [(ngModel)]="settings.minStaffWorkingHours" aria-label="Minimum working hours"><span>hours</span></div><small>Used for attendance reports and working-duration analysis.</small></div></div>
+    </section>
   </div>
 </div>

@@ -394,7 +394,7 @@
   background: color-mix(in srgb, var(--tc-surface-card, #fff) 70%, transparent);
 }
 
-.sm-empty i {
+.sm-empty > i {
   font-size: 1.6rem;
   opacity: 0.45;
   display: block;

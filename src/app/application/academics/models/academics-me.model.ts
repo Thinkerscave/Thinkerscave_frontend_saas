@@ -40,12 +40,30 @@ export interface TeacherAcademicStructure {
       sectionId: number;
       sectionName: string;
       sectionCode?: string;
+      capacity?: number;
       subjects: {
         subjectId: number;
         subjectName: string;
         subjectCode?: string;
         weeklyPeriods: number;
       }[];
+    }[];
+  }[];
+}
+
+export interface AcademicStructureTreeStage {
+  stage: string;
+  classes: {
+    classId: number;
+    className: string;
+    classCode?: string;
+    active?: boolean;
+    sections: {
+      sectionId: number;
+      sectionName: string;
+      sectionCode?: string;
+      capacity?: number;
+      active?: boolean;
     }[];
   }[];
 }

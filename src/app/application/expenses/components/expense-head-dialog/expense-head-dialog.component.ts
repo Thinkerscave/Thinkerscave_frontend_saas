@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angu
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { forkJoin } from 'rxjs';
-import { StaffService } from '../../../staff/services/staff.service';
+import { StaffService } from '../../../staff/shared/services/staff.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { finalizeBusy } from '../../../../shared/ui/loading';

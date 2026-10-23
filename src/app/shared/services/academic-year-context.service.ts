@@ -39,27 +39,37 @@ export class AcademicYearContextService {
     if (this.ready() && this.years().length) {
       return of(this.years());
     }
-    if (!this.load$) {
-      this.loading.set(true);
-      this.load$ = this.yearApi.search().pipe(
-        tap({
-          next: (years) => {
-            this.years.set(years ?? []);
-            this.resolveInitialSelection(years ?? []);
-            this.loading.set(false);
-            this.ready.set(true);
-          },
-          error: () => {
-            this.years.set([]);
-            this.selectedYearId.set(null);
-            this.loading.set(false);
-            this.ready.set(true);
-          }
-        }),
-        catchError(() => of([] as AcademicYearDto[])),
-        shareReplay(1)
-      );
+    if (!this.load$ || this.ready()) {
+      return this.fetch();
     }
+    return this.load$;
+  }
+
+  /** Re-fetches years, e.g. after an academic year is created, activated or deactivated. */
+  refresh(): Observable<AcademicYearDto[]> {
+    return this.fetch();
+  }
+
+  private fetch(): Observable<AcademicYearDto[]> {
+    this.loading.set(true);
+    this.load$ = this.yearApi.search().pipe(
+      tap({
+        next: (years) => {
+          this.years.set(years ?? []);
+          this.resolveInitialSelection(years ?? []);
+          this.loading.set(false);
+          this.ready.set(true);
+        },
+        error: () => {
+          this.years.set([]);
+          this.selectedYearId.set(null);
+          this.loading.set(false);
+          this.ready.set(true);
+        }
+      }),
+      catchError(() => of([] as AcademicYearDto[])),
+      shareReplay(1)
+    );
     return this.load$;
   }
 

@@ -8,30 +8,30 @@ import { CalendarData } from '../../models/dashboard.model';
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './calendar.widget.scss',
   template: `
-    <div class="w-list">
-      <div class="w-list__row" *ngFor="let item of data?.items || []">
-        <span class="w-list__icon"><i [class]="iconFor(item.eventType)"></i></span>
-        <div class="w-list__main">
-          <p class="w-list__title">{{ item.title }}</p>
-          <p class="w-list__meta" *ngIf="item.eventType">{{ item.eventType }}</p>
+    <div class="staff-events">
+      <article class="staff-events__card" *ngFor="let item of data?.items || []">
+        <div class="staff-events__date">
+          <strong>{{ item.startDate | date:'d' }}</strong>
+          <span>{{ item.startDate | date:'MMM' }}</span>
         </div>
-        <span class="w-list__trail">
-          {{ item.startDate | date:'MMM d' }}
-          <ng-container *ngIf="item.endDate && item.endDate !== item.startDate"> - {{ item.endDate | date:'MMM d' }}</ng-container>
-        </span>
-      </div>
+        <div class="staff-events__main">
+          <div class="staff-events__head">
+            <p class="staff-events__title">{{ item.title }}</p>
+            <span class="staff-events__tag" *ngIf="item.eventType">{{ item.eventType }}</span>
+          </div>
+          <p class="staff-events__meta" *ngIf="item.startTime">
+            <i class="pi pi-clock"></i>{{ item.startTime }}<ng-container *ngIf="item.endTime">–{{ item.endTime }}</ng-container>
+          </p>
+          <p class="staff-events__meta" *ngIf="item.location">
+            <i class="pi pi-map-marker"></i>{{ item.location }}
+          </p>
+        </div>
+      </article>
     </div>
   `
 })
 export class CalendarWidgetComponent {
   @Input({ required: true }) data!: CalendarData;
-
-  iconFor(eventType?: string): string {
-    const type = (eventType || '').toLowerCase();
-    if (type.includes('holiday')) return 'pi pi-sun';
-    if (type.includes('exam')) return 'pi pi-pencil';
-    if (type.includes('meeting')) return 'pi pi-users';
-    return 'pi pi-calendar';
-  }
 }

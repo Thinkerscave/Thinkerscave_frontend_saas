@@ -1,0 +1,88 @@
+.staff-schedule { display: flex; flex-direction: column; }
+
+.staff-schedule__row {
+  display: grid;
+  grid-template-columns: 58px 42px minmax(0, 1fr) 88px 82px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--saas-border);
+
+  &:last-child { border-bottom: 0; }
+}
+
+.staff-schedule__time {
+  display: grid;
+  gap: 2px;
+  color: var(--saas-text-muted);
+  font-size: 0.68rem;
+  text-align: center;
+  strong { color: var(--saas-text); font-size: 0.78rem; }
+}
+
+.staff-schedule__period {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: var(--saas-primary-soft);
+  color: var(--saas-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.staff-schedule__subject {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  strong { overflow: hidden; color: var(--saas-text); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
+  > span { overflow: hidden; color: var(--saas-text-muted); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+  .staff-schedule__substitute { color: var(--saas-warning); font-weight: 650; }
+}
+
+.staff-schedule__status {
+  justify-self: start;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--saas-info-soft);
+  color: var(--saas-info);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  &[data-status="COMPLETED"] { background: var(--saas-success-soft); color: var(--saas-success); }
+  &[data-status="IN_PROGRESS"] { background: var(--saas-warning-soft); color: var(--saas-warning); }
+  &[data-status="PENDING"] { background: var(--saas-warning-soft); color: var(--saas-warning); }
+  &[data-status="NO_STUDENTS"] { background: var(--saas-surface-muted); color: var(--saas-text-muted); }
+}
+
+.staff-schedule__action {
+  display: inline-grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--saas-border-strong);
+  border-radius: 7px;
+  color: var(--saas-text);
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-decoration: none;
+  &:hover { border-color: var(--saas-primary); color: var(--saas-primary); }
+  &--primary { border-color: var(--saas-primary); background: var(--saas-primary); color: #fff; }
+  &--primary:hover { background: var(--saas-primary-dark); color: #fff; }
+}
+
+.staff-schedule__hint {
+  grid-column: 3 / -1;
+  color: var(--saas-text-muted);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 640px) {
+  .staff-schedule__row { grid-template-columns: 48px 38px minmax(0, 1fr) 68px; gap: 7px; }
+  .staff-schedule__status { grid-column: 3; grid-row: 2; }
+  .staff-schedule__action { grid-column: 4; grid-row: 1 / span 2; }
+  .staff-schedule__hint { grid-column: 3 / -1; grid-row: 3; }
+}

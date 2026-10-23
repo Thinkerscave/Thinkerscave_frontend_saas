@@ -27,6 +27,7 @@ export type WidgetType =
   | 'EVENTS'
   | 'ATTENDANCE_SUMMARY'
   | 'STAFF_ATTENDANCE_TOGGLE'
+  | 'STAFF_ATTENDANCE_WEEK'
   | 'ACADEMIC_SUMMARY'
   | 'TIMETABLE'
   | 'PROFILE_SUMMARY'
@@ -59,6 +60,8 @@ export interface WidgetDTO<T = unknown> {
   state: WidgetState;
   errorMessage?: string;
   data: T;
+  actionLabel?: string;
+  actionRoute?: string | null;
 }
 
 export interface DashboardResponse {
@@ -77,21 +80,13 @@ export interface WelcomeHeaderData {
   greeting?: string;
   avatarUrl?: string;
   todayLabel?: string;
+  /** Organization Setup card is shown while mandatory setup is incomplete. */
   showSetupGuide?: boolean;
+  setupCompletedCount?: number;
+  setupTotalCount?: number;
   setupProgressPercent?: number;
-  recommendedNextLabel?: string;
-  recommendedNextRoute?: string;
-  setupChecklist?: SetupChecklistItem[];
   setupComplete?: boolean;
-}
-
-export interface SetupChecklistItem {
-  key: string;
-  label: string;
-  completed: boolean;
-  requiredForCompletion?: boolean;
-  available?: boolean;
-  route?: string | null;
+  setupError?: boolean;
 }
 
 export interface KpiItem {
@@ -182,12 +177,17 @@ export interface AnnouncementItem {
 
 export interface AnnouncementsData {
   items: AnnouncementItem[];
+  viewAllRoute?: string | null;
 }
 
 export interface CalendarEventItem {
+  eventId?: number;
   title: string;
   startDate: string;
   endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
   eventType?: string;
   allDay?: boolean;
 }
@@ -195,6 +195,23 @@ export interface CalendarEventItem {
 /** Shared payload shape for both the CALENDAR and EVENTS widget types. */
 export interface CalendarData {
   items: CalendarEventItem[];
+  viewAllRoute?: string | null;
+}
+
+export interface StaffAttendanceWeekDay {
+  date: string;
+  dayLabel: string;
+  displayStatus: string;
+  applicable: boolean;
+}
+
+export interface StaffAttendanceWeekData {
+  weekStart: string;
+  weekEnd: string;
+  attendedDayEquivalent: number;
+  applicableDays: number;
+  attendancePercent: number;
+  days: StaffAttendanceWeekDay[];
 }
 
 export interface AttendanceSummaryData {
@@ -257,6 +274,11 @@ export interface StaffAttendanceTodayResponse {
 }
 
 export interface TimetableSlotItem {
+  timetableEntryId?: number;
+  academicYearId?: number;
+  classId?: number;
+  sectionId?: number;
+  periodId?: number;
   periodNumber?: number;
   periodName?: string;
   startTime?: string;
@@ -265,10 +287,19 @@ export interface TimetableSlotItem {
   teacherName?: string;
   className?: string;
   roomLabel?: string;
+  attendanceMode?: 'DAILY' | 'PERIOD_WISE';
+  attendanceAllowed?: boolean;
+  substitute?: boolean;
+  attendanceStatus?: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING' | 'UPCOMING' | 'NO_STUDENTS' | string;
+  expectedStudents?: number;
+  markedStudents?: number;
+  canViewAttendance?: boolean;
+  canMarkAttendance?: boolean;
 }
 
 export interface TimetableData {
   dayLabel?: string;
+  date?: string;
   slots: TimetableSlotItem[];
 }
 

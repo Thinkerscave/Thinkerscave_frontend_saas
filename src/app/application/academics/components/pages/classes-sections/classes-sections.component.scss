@@ -275,37 +275,37 @@
 .cs-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--tc-radius-pill);
   padding: 0.12rem 0.5rem;
   font-size: 0.7rem;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--tc-surface-100);
+  color: var(--tc-text-muted);
   white-space: nowrap;
 }
 
 .cs-badge--success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--tc-success-soft);
+  color: var(--tc-success);
 }
 
 .cs-badge--neutral {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--tc-surface-100);
+  color: var(--tc-text-muted);
 }
 
 .cs-icon-btn {
   border: 0;
   background: transparent;
-  color: var(--tc-text-muted, #64748b);
+  color: var(--tc-text-muted);
   cursor: pointer;
   padding: 0.3rem;
-  border-radius: 6px;
+  border-radius: var(--tc-radius-xs);
 }
 
 .cs-icon-btn:hover {
-  background: color-mix(in srgb, var(--tc-border, #e2e8f0) 65%, #fff);
-  color: var(--tc-heading, #0f172a);
+  background: var(--tc-surface-hover);
+  color: var(--tc-heading);
 }
 
 /* ── Pagination ── */
@@ -374,7 +374,7 @@
   background: color-mix(in srgb, var(--tc-surface-card, #fff) 70%, transparent);
 }
 
-.cs-empty i {
+.cs-empty > i {
   font-size: 1.6rem;
   opacity: 0.45;
   display: block;

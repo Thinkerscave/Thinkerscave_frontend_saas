@@ -6,6 +6,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { DashboardResponse, DashboardType, WidgetDTO } from '../../models/dashboard.model';
 import { WidgetHostComponent } from '../../widgets/widget-host.component';
 import { WidgetCardComponent } from '../../widgets/widget-card/widget-card.component';
+import { StaffDashboardComponent } from '../staff-dashboard/staff-dashboard.component';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
 
@@ -25,7 +26,7 @@ const DASHBOARD_TYPE_LABEL: Record<DashboardType, string> = {
 @Component({
   selector: 'app-dashboard-shell',
   standalone: true,
-  imports: [CommonModule, WidgetHostComponent, WidgetCardComponent, SaasPageHeaderComponent, TcTranslatePipe],
+  imports: [CommonModule, WidgetHostComponent, WidgetCardComponent, StaffDashboardComponent, SaasPageHeaderComponent, TcTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-shell.component.html',
   styleUrl: './dashboard-shell.component.scss'

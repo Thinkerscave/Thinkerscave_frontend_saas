@@ -3,7 +3,10 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
+  OnDestroy,
   OnInit,
+  ViewChild,
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -62,7 +65,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   styleUrls: ['../../../admissions/admissions.shared.scss', '../../students.shared.scss'],
   templateUrl: './add-student.component.html'
 })
-export class AddStudentComponent implements OnInit {
+export class AddStudentComponent implements OnInit, OnDestroy {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -75,6 +78,10 @@ export class AddStudentComponent implements OnInit {
   saving = false;
   apiError = '';
   lookupWarning = '';
+  photoFile: File | null = null;
+  photoPreviewUrl: string | null = null;
+  photoError = '';
+  @ViewChild('photoInput') private photoInput?: ElementRef<HTMLInputElement>;
   sameAddress = false;
   classIdValue: string | null = null;
   sectionIdValue: string | null = null;
@@ -156,6 +163,48 @@ export class AddStudentComponent implements OnInit {
   ngOnInit(): void {
     this.loadAcademicYears();
     this.loadClasses();
+  }
+
+  ngOnDestroy(): void {
+    this.clearPhotoPreview();
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      this.photoError = 'Choose a JPG or PNG image.';
+      input.value = '';
+      this.cdr.markForCheck();
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      this.photoError = 'The profile photo must be 2 MB or smaller.';
+      input.value = '';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.clearPhotoPreview();
+    this.photoFile = file;
+    this.photoPreviewUrl = URL.createObjectURL(file);
+    this.photoError = '';
+    this.cdr.markForCheck();
+  }
+
+  removePhoto(): void {
+    this.clearPhotoPreview();
+    this.photoFile = null;
+    this.photoError = '';
+    if (this.photoInput) this.photoInput.nativeElement.value = '';
+    this.cdr.markForCheck();
+  }
+
+  private clearPhotoPreview(): void {
+    if (this.photoPreviewUrl) URL.revokeObjectURL(this.photoPreviewUrl);
+    this.photoPreviewUrl = null;
   }
 
   get activeTab(): string {
@@ -335,7 +384,7 @@ export class AddStudentComponent implements OnInit {
       return;
     }
     this.saving = true;
-    this.api.createStudentWizard(this.form)
+    this.api.createStudentWizard(this.form, this.photoFile)
       .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: () => {

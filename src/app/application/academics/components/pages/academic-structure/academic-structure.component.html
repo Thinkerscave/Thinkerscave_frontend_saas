@@ -8,7 +8,7 @@
 <div class="as-summary" *ngIf="data as d">
     <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>
     <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
-    <div><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
+    <div *ngIf="!isAdminView"><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
   </div>
 
   <div class="as-layout" *ngIf="data as d">
@@ -17,25 +17,29 @@
         <div class="as-class__top">
           <h3>{{ c.className }}</h3>
           <code *ngIf="c.classCode">{{ c.classCode }}</code>
-          <span class="as-star" title="You teach here">★</span>
+          <span class="as-star" title="You teach here" *ngIf="!isAdminView">★</span>
         </div>
-        <p>{{ c.sections.length }} sections · {{ subjectCountFor(c) }} subjects</p>
+        <p>{{ c.sections.length }} sections<span *ngIf="!isAdminView"> · {{ subjectCountFor(c) }} subjects</span></p>
       </article>
-      <div class="as-empty" *ngIf="!d.classes?.length">No structure linked to your allocations.</div>
+      <div class="as-empty" *ngIf="!d.classes?.length">{{ isAdminView ? 'No classes in this academic year.' : 'No structure linked to your allocations.' }}</div>
     </div>
 
     <aside class="as-detail" *ngIf="selectedClass as cls">
       <div class="as-detail__head">
         <h2>{{ cls.className }}</h2>
-        <span class="as-star">★ You teach here</span>
+        <span class="as-star" *ngIf="!isAdminView">★ You teach here</span>
       </div>
       <div class="as-section" *ngFor="let s of cls.sections">
         <strong>Section {{ s.sectionName }}</strong>
-        <div class="as-subjects">
+        <div class="as-subjects" *ngIf="!isAdminView">
           <span *ngFor="let sub of s.subjects">{{ sub.subjectName }} · {{ sub.weeklyPeriods }}/wk</span>
         </div>
+        <div class="as-subjects" *ngIf="isAdminView">
+          <span *ngIf="s.sectionCode">Code {{ s.sectionCode }}</span>
+          <span *ngIf="s.capacity != null">Capacity {{ s.capacity }}</span>
+        </div>
       </div>
-      <div class="as-actions">
+      <div class="as-actions" *ngIf="!isAdminView">
         <a routerLink="/app/academics/my-classes">My Classes</a>
         <a routerLink="/app/academics/my-timetable">My Timetable</a>
       </div>

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 
 import {
@@ -13,6 +13,8 @@ import {
   SaasPillComponent
 } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
+import { StudentAttendanceApiService } from '../../services/student-attendance-api.service';
+import { LoginService } from '../../../../core/services/login.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 import {
   AttendanceClassSummaryRow,
@@ -20,8 +22,10 @@ import {
   AttendanceMonthlyTrendRow,
   AttendanceSummaryReport,
   ClassRecord,
+  SectionRecord,
   StaffAttendanceReportRow
 } from '../../../school-operations/models/school-operations.model';
+import { AcademicLookupItem } from '../../models/student-attendance.model';
 
 interface SelectOption { label: string; value: string; }
 
@@ -46,10 +50,20 @@ export class AttendanceReportsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dataService = inject(SchoolOperationsDataService);
+  private readonly api = inject(StudentAttendanceApiService);
+  private readonly loginService = inject(LoginService);
+  readonly canViewStaffReport = this.loginService.getUserRole().some((role) => {
+    const roleName = typeof role === 'string'
+      ? role
+      : String((role as any)?.roleCode ?? (role as any)?.roleName ?? (role as any)?.name ?? '');
+    return ['SUPER_ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER']
+      .includes(roleName.toUpperCase().replace(/^ROLE_/, ''));
+  });
 
   loading = true;
   errorMessage = '';
   classes: ClassRecord[] = [];
+  sections: SectionRecord[] = [];
   report: AttendanceSummaryReport | null = null;
   staffRows: StaffAttendanceReportRow[] = [];
 
@@ -58,16 +72,18 @@ export class AttendanceReportsComponent implements OnInit {
     fromDate: this.dataService.dateBeforeDays(30),
     toDate: this.dataService.today(),
     classId: 'all',
-    sectionName: 'all'
+    sectionId: 'all'
   };
 
-  readonly reportTypeOptions: SelectOption[] = [
-    { label: 'Student Attendance', value: 'student' },
-    { label: 'Staff Attendance', value: 'staff' }
-  ];
+  readonly reportTypeOptions: SelectOption[] = this.canViewStaffReport
+    ? [
+        { label: 'Student Attendance', value: 'student' },
+        { label: 'Staff Attendance', value: 'staff' }
+      ]
+    : [{ label: 'Student Attendance', value: 'student' }];
 
   activeTab = 'summary';
-  readonly tabs = [
+  private readonly reportTabs = [
     { key: 'summary', label: 'Summary' },
     { key: 'trend', label: 'Monthly Trend' },
     { key: 'comparison', label: 'Class Comparison' },
@@ -75,19 +91,45 @@ export class AttendanceReportsComponent implements OnInit {
     { key: 'staff', label: 'Staff Attendance' }
   ];
 
+  get tabs() {
+    return this.canViewStaffReport ? this.reportTabs : this.reportTabs.filter(tab => tab.key !== 'staff');
+  }
+
   defaulterThreshold = 75;
+  private organizationThreshold = 75;
+  private customThreshold = false;
 
   ngOnInit(): void {
-    this.dataService.loadAttendanceWorkspace()
+    this.loadLookups();
+    if (!this.canViewStaffReport) {
+      this.refresh();
+      return;
+    }
+    this.dataService.getAttendanceSettings()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: data => {
-          this.classes = data.classes ?? [];
+        next: settings => {
+          this.organizationThreshold = settings.minStudentAttendancePercent;
+          this.defaulterThreshold = this.organizationThreshold;
+          this.refresh();
           this.cdr.markForCheck();
         },
-        error: () => { this.classes = []; }
+        error: () => this.refresh()
       });
-    this.refresh();
+  }
+
+  private loadLookups(): void {
+    this.api.getYears()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: years => {
+          const current = years.find(y => (y.status ?? '').toUpperCase() === 'CURRENT');
+          const yearId = current?.id ?? years[0]?.id ?? null;
+          if (yearId != null) { this.loadClasses(yearId); }
+          else { this.cdr.markForCheck(); }
+        },
+        error: () => { this.cdr.markForCheck(); }
+      });
   }
 
   get classSelectOptions(): SelectOption[] {
@@ -98,23 +140,63 @@ export class AttendanceReportsComponent implements OnInit {
   }
 
   get sectionSelectOptions(): SelectOption[] {
-    return [{ label: 'All Sections', value: 'all' }];
+    return [
+      { label: 'All Sections', value: 'all' },
+      ...this.sections.map(s => ({ label: s.sectionName, value: String(s.sectionId) }))
+    ];
+  }
+
+  onClassChanged(): void {
+    this.filters.sectionId = 'all';
+    this.sections = [];
+    const classId = this.filters.classId !== 'all' ? Number(this.filters.classId) : null;
+    if (classId != null) { this.loadSections(classId); }
+    this.refresh();
+  }
+
+  private loadClasses(yearId: number): void {
+    this.api.getClassesByYear(yearId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: items => {
+          this.classes = (items ?? []).map((i: AcademicLookupItem) => ({ classId: i.id, className: i.name }));
+          this.cdr.markForCheck();
+        },
+        error: () => { this.classes = []; this.cdr.markForCheck(); }
+      });
+  }
+
+  private loadSections(classId: number): void {
+    this.api.getSectionsByClass(classId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: items => {
+          this.sections = (items ?? []).map((i: AcademicLookupItem) => ({ sectionId: i.id, sectionName: i.name }));
+          this.cdr.markForCheck();
+        },
+        error: () => { this.sections = []; this.cdr.markForCheck(); }
+      });
   }
 
   refresh(): void {
     this.loading = true;
     this.errorMessage = '';
     const classId = this.filters.classId !== 'all' ? Number(this.filters.classId) : null;
+    const sectionId = this.filters.sectionId !== 'all' ? Number(this.filters.sectionId) : null;
     const payload = {
       fromDate: this.filters.fromDate,
       toDate: this.filters.toDate,
       classId,
-      defaulterThreshold: this.defaulterThreshold
+      sectionId,
+      ...(this.customThreshold ? { defaulterThreshold: this.defaulterThreshold } : {})
     };
 
+    const staffReport$ = this.canViewStaffReport
+      ? this.dataService.getStaffAttendanceReport(payload)
+      : of([] as StaffAttendanceReportRow[]);
     forkJoin({
       summary: this.dataService.getAttendanceSummaryReport(payload),
-      staff: this.dataService.getStaffAttendanceReport(payload)
+      staff: staffReport$
     }).pipe(
       finalize(() => { this.loading = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef)
@@ -140,9 +222,11 @@ export class AttendanceReportsComponent implements OnInit {
       fromDate: this.dataService.dateBeforeDays(30),
       toDate: this.dataService.today(),
       classId: 'all',
-      sectionName: 'all'
+      sectionId: 'all'
     };
-    this.defaulterThreshold = 75;
+    this.sections = [];
+    this.defaulterThreshold = this.organizationThreshold;
+    this.customThreshold = false;
     this.refresh();
   }
 
@@ -174,7 +258,7 @@ export class AttendanceReportsComponent implements OnInit {
 
   get donutGradient(): string {
     const p = Math.min(100, Math.max(0, this.summary.presentPct));
-    return `conic-gradient(var(--saas-success) 0 ${p}%, var(--saas-danger) ${p}% 100%)`;
+    return `conic-gradient(var(--tc-success) 0 ${p}%, var(--tc-danger) ${p}% 100%)`;
   }
 
   get trendPoints(): { label: string; v: number }[] {
@@ -218,6 +302,7 @@ export class AttendanceReportsComponent implements OnInit {
   exportPdf(): void { window.print(); }
 
   onThresholdChange(): void {
+    this.customThreshold = true;
     this.refresh();
   }
 }

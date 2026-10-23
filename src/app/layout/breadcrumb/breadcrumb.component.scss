@@ -50,6 +50,25 @@
   text-align: right;
 }
 
+.tc-page-header__right {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.tc-page-header__right-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tc-text-muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 :host ::ng-deep .p-breadcrumb {
   background: transparent;
   border: 0;
@@ -93,6 +112,8 @@
     padding-top: 0;
     max-width: 100%;
   }
+
+  .tc-page-header__right { max-width: 100%; }
 
   :host ::ng-deep .p-breadcrumb-list {
     justify-content: flex-end;

@@ -1,6 +1,6 @@
 <div class="customer-form-page">
 <div class="customer-form-page__shell">
-    <tc-saas-page-header>
+    <tc-saas-page-header class="customer-form-page__toolbar">
       <app-button
         variant="primary"
         [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
@@ -178,7 +178,7 @@
           </div>
         </section>
 
-        <section class="customer-form__section customer-form__section--notes">
+        <section class="customer-form__section">
           <app-section-header
             title="4. Notes (Optional)"
             description="Add any internal notes for future reference."

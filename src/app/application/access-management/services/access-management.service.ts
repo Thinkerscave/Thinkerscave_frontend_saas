@@ -124,14 +124,18 @@ export class AccessManagementService {
     return this.http.patch<unknown>(accessApi.deactivateRole(id), {}).pipe(map(() => undefined));
   }
 
-  getPermissionMatrix(roleId: number, organizationId = this.organizationId()): Observable<PermissionMatrix> {
-    return this.http.get<unknown>(accessApi.rolePermissions(roleId, organizationId)).pipe(
-      map(r => unwrapApiResponse<PermissionMatrix>(r, { roleId, organizationId, roleCode: '', roleName: '', rows: [] }))
+  getPermissionMatrix(roleId: number): Observable<PermissionMatrix> {
+    return this.http.get<unknown>(accessApi.rolePermissions(roleId)).pipe(
+      map(r => unwrapApiResponse<PermissionMatrix>(r, { roleId, roleCode: '', roleName: '', rows: [] }))
     );
   }
 
-  updatePermissionMatrix(roleId: number, permissions: PermissionUpdateRow[], organizationId = this.organizationId()): Observable<void> {
-    return this.http.put<unknown>(accessApi.rolePermissions(roleId, organizationId), { permissions }).pipe(map(() => undefined));
+  updatePermissionMatrix(roleId: number, permissions: PermissionUpdateRow[]): Observable<void> {
+    return this.http.put<unknown>(accessApi.rolePermissions(roleId), { permissions }).pipe(map(() => undefined));
+  }
+
+  removeRolePermission(roleId: number, menuId: number): Observable<void> {
+    return this.http.delete<unknown>(accessApi.rolePermissionByMenu(roleId, menuId)).pipe(map(() => undefined));
   }
 
   removeRolePermission(roleId: number, menuId: number, organizationId = this.organizationId()): Observable<void> {

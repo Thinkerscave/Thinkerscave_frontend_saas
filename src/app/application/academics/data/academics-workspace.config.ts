@@ -14,6 +14,7 @@ export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   'subjects-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
+  'teacher-arrangement': 'ACADEMICS_TIMETABLE',
   'academic-calendar': 'ACADEMICS_CALENDAR',
   'my-classes': 'ACADEMICS_MY_CLASSES',
   'my-timetable': 'ACADEMICS_MY_TIMETABLE',
@@ -89,6 +90,17 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'timetable'
   },
   {
+    page: 'teacher-arrangement',
+    label: 'Teacher Arrangements',
+    title: 'Teacher Arrangements',
+    eyebrow: 'Absence coverage',
+    description: 'Assign and approve substitutes for scheduled teaching periods.',
+    icon: 'pi pi-users',
+    route: '/app/academics/teacher-arrangement',
+    primaryAction: 'Record absence',
+    actionMode: 'teacher-absence'
+  },
+  {
     page: 'academic-calendar',
     label: 'Academic Calendar',
     title: 'Academic Calendar',
@@ -156,6 +168,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'subjects-mapping',
       'teacher-allocation',
       'timetable',
+      'teacher-arrangement',
       'academic-calendar',
       'my-classes',
       'my-timetable',

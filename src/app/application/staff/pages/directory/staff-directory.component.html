@@ -1,13 +1,10 @@
 <section class="tc-page-shell tc-directory-page stf-directory-page" (click)="closeMenu()">
 
   <tc-saas-page-header>
-    <button type="button" class="tc-btn" (click)="importStaff()">
-      <i class="pi pi-upload"></i> Import
-    </button>
     <button type="button" class="tc-btn" (click)="exportStaff()">
       <i class="pi pi-download"></i> Export
     </button>
-    <button type="button" class="tc-btn tc-btn--primary" (click)="addStaff()">
+    <button *ngIf="canWrite" type="button" class="tc-btn tc-btn--primary" (click)="addStaff()">
       <i class="pi pi-plus"></i> Add Staff
     </button>
   </tc-saas-page-header>
@@ -93,7 +90,7 @@
           illustration="staff"
           title="No staff found"
           message="Try adjusting your filters or add a new staff member."
-          actionLabel="Add Staff"
+          [actionLabel]="canWrite ? 'Add Staff' : null"
           actionIcon="pi pi-plus"
           (action)="addStaff()">
         </app-empty-state>
@@ -104,7 +101,7 @@
                    [style.animation-delay.ms]="i * 40"
                    (click)="openProfile(s)">
             <header class="tc-card__header">
-              <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="lg"></tc-avatar>
+              <tc-avatar [name]="s.fullName" [imageUrl]="photoFor(s)" size="lg"></tc-avatar>
               <div class="tc-card__title">
                 <strong>{{ s.fullName }}</strong>
                 <small>{{ s.staffCode }} · {{ s.designation || '—' }}</small>
@@ -134,16 +131,18 @@
                     <button type="button" class="stf-more-menu__item" (click)="openProfile(s)">
                       <i class="pi pi-eye"></i> View Profile
                     </button>
-                    <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
-                      <i class="pi pi-pencil"></i> Edit
-                    </button>
-                    <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
-                      <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
-                      {{ s.active ? 'Deactivate' : 'Activate' }}
-                    </button>
-                    <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
-                      <i class="pi pi-trash"></i> Delete
-                    </button>
+                    <ng-container *ngIf="canWrite">
+                      <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
+                        <i class="pi pi-pencil"></i> Edit
+                      </button>
+                      <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
+                        <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+                        {{ s.active ? 'Deactivate' : 'Activate' }}
+                      </button>
+                      <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
+                        <i class="pi pi-trash"></i> Delete
+                      </button>
+                    </ng-container>
                   </div>
                 </div>
               </div>
@@ -171,7 +170,7 @@
                   (click)="openProfile(s)">
                 <td>
                   <div class="tc-table__avatar-cell">
-                    <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
+                    <tc-avatar [name]="s.fullName" [imageUrl]="photoFor(s)" size="sm"></tc-avatar>
                     <div class="info">
                       <strong>{{ s.fullName }}</strong>
                       <small>{{ s.email }}</small>
@@ -199,16 +198,18 @@
                         <button type="button" class="stf-more-menu__item" (click)="openProfile(s)">
                           <i class="pi pi-eye"></i> View
                         </button>
-                        <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
-                          <i class="pi pi-pencil"></i> Edit
-                        </button>
-                        <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
-                          <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
-                          {{ s.active ? 'Deactivate' : 'Activate' }}
-                        </button>
-                        <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
-                          <i class="pi pi-trash"></i> Delete
-                        </button>
+                        <ng-container *ngIf="canWrite">
+                          <button type="button" class="stf-more-menu__item" (click)="editStaff(s, $event)">
+                            <i class="pi pi-pencil"></i> Edit
+                          </button>
+                          <button type="button" class="stf-more-menu__item" (click)="toggleActive(s, $event)">
+                            <i class="pi" [class.pi-check]="!s.active" [class.pi-ban]="s.active"></i>
+                            {{ s.active ? 'Deactivate' : 'Activate' }}
+                          </button>
+                          <button type="button" class="stf-more-menu__item is-danger" (click)="deleteStaff(s, $event)">
+                            <i class="pi pi-trash"></i> Delete
+                          </button>
+                        </ng-container>
                       </div>
                     </div>
                   </div>
@@ -231,14 +232,5 @@
       </div>
     </div>
   </div>
-
-  <ng-container *ngIf="showAddDrawer">
-    <div class="sd-drawer-overlay" (click)="closeAddDrawer()"></div>
-    <app-create-staff
-      [drawerMode]="true"
-      (closed)="closeAddDrawer()"
-      (saved)="onStaffAdded()">
-    </app-create-staff>
-  </ng-container>
 
 </section>

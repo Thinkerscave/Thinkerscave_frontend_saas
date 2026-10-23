@@ -1,0 +1,97 @@
+.w-att--staff-dashboard {
+  min-height: 0;
+  border-radius: 8px;
+  box-shadow: none;
+
+  .w-att__header { padding: 12px 16px 8px; }
+
+  .w-att__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
+    align-items: center;
+    gap: 10px 16px;
+    padding: 10px 16px 14px;
+    text-align: left;
+  }
+
+  .w-att__status {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas: "icon title" "icon subtitle" "icon detail";
+    align-items: center;
+    gap: 2px 10px;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .w-att__icon-wrap {
+    grid-area: icon;
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    border-radius: 8px;
+    i { font-size: 1rem; }
+  }
+
+  .w-att__title { grid-area: title; font-size: 0.92rem; }
+  .w-att__subtitle { grid-area: subtitle; max-width: none; font-size: 0.74rem; }
+  .w-att__detail { grid-area: detail; font-size: 0.72rem; }
+
+  .w-att__btn {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-height: 44px;
+    max-width: none;
+    padding: 9px 14px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+  }
+
+  .w-att__timer {
+    grid-column: 1;
+    grid-row: 2;
+    align-items: flex-start;
+    margin: 0 0 0 54px;
+  }
+
+  .w-att__timer-digits { font-size: 1.25rem; }
+  .w-att__timer-labels { gap: 8px; font-size: 0.62rem; }
+
+  .w-att__live {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: none;
+    padding: 8px 10px;
+    border-radius: 7px;
+  }
+
+  .w-att__completed {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    max-width: none;
+    gap: 7px;
+  }
+
+  .w-att__times { gap: 8px; padding: 8px 10px; border-radius: 7px; }
+  .w-att__times strong { font-size: 0.82rem; }
+  .w-att__total { align-items: flex-start; }
+  .w-att__total strong { font-size: 1rem; }
+  .w-att__note { max-width: none; padding: 7px 9px; border-radius: 7px; font-size: 0.72rem; }
+
+  .w-att__footer {
+    padding: 8px 16px 10px;
+    font-size: 0.68rem;
+    span:last-child { justify-content: flex-end; }
+  }
+
+  @media (max-width: 520px) {
+    .w-att__body { grid-template-columns: minmax(0, 1fr); }
+    .w-att__btn,
+    .w-att__live,
+    .w-att__completed { grid-column: 1; grid-row: auto; }
+    .w-att__timer { grid-column: 1; grid-row: auto; }
+    .w-att__footer { flex-direction: column; align-items: flex-start; }
+    .w-att__footer span:last-child { justify-content: flex-start; }
+  }
+}

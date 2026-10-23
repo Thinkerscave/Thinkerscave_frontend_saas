@@ -51,7 +51,7 @@ describe('MenuMappingService', () => {
     const backendMenus: MenuItem[] = [
       { label: 'Staff', icon: 'pi pi-id-card', routerLink: '/app/staff', items: [
         { label: 'Directory', routerLink: '/app/staff/directory' },
-        { label: 'Responsibilities', routerLink: '/app/staff/responsibilities' }
+        { label: 'Responsibilities', routerLink: '/app/access-management/responsibilities' }
       ] }
     ];
 

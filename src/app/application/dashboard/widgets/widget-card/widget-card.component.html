@@ -10,6 +10,9 @@
     <span class="widget-card__preview" *ngIf="isSample && state === 'SUCCESS'">
       <i class="pi pi-eye"></i>Preview
     </span>
+    <a *ngIf="actionLabel && actionRoute" class="widget-card__action" [routerLink]="actionRoute">
+      {{ actionLabel }} <i class="pi pi-arrow-right" aria-hidden="true"></i>
+    </a>
     <ng-content select="[widget-actions]"></ng-content>
   </header>
 

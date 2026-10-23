@@ -430,34 +430,7 @@ export interface DocumentVaultRequest {
   remarks?: string | null;
 }
 
-// --- Promotion / Transfer (existing endpoints) ---
-
-export type PromotionStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ROLLED_BACK';
-export type PromotionDecision = 'PROMOTED' | 'RETAINED' | 'GRADUATED' | 'TRANSFERRED_OUT' | 'WITHHELD';
-
-export interface PromotionBatch {
-  id?: number;
-  batchCode?: string | null;
-  fromAcademicYearId?: number | null;
-  toAcademicYearId?: number | null;
-  fromClassId?: number | null;
-  toClassId?: number | null;
-  status?: PromotionStatus | null;
-  plannedCount?: number | null;
-  processedCount?: number | null;
-  executedOn?: string | null;
-  remarks?: string | null;
-}
-
-export interface PromotionRecord {
-  id?: number;
-  promotionBatchId?: number | null;
-  studentId?: number | null;
-  fromEnrollmentId?: number | null;
-  toEnrollmentId?: number | null;
-  decision?: PromotionDecision | null;
-  reason?: string | null;
-}
+// --- Transfer (existing endpoints) ---
 
 /** Simplified spec-aligned transfer status (REQUESTED → APPROVED → COMPLETED or REJECTED) */
 export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'CERTIFICATE_ISSUED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';

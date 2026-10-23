@@ -1,20 +1,9 @@
 <div class="saas-page attendance-calendar">
   <tc-saas-page-header>
-    <button type="button" class="tc-btn"><i class="pi pi-download"></i>Export</button>
+    <a routerLink="/attendance/students" class="tc-btn"><i class="pi pi-user-edit"></i>Mark Attendance</a>
   </tc-saas-page-header>
 
   <tc-saas-filter-row>
-    <label class="saas-field"><span>Student</span>
-      <p-dropdown
-        [options]="studentSelectOptions"
-        [(ngModel)]="filters.studentName"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterBy="label"
-        appendTo="body">
-      </p-dropdown>
-    </label>
     <label class="saas-field"><span>Class</span>
       <p-dropdown
         [options]="classSelectOptions"
@@ -23,51 +12,66 @@
         optionValue="value"
         [filter]="true"
         filterBy="label"
-        appendTo="body">
+        appendTo="body"
+        (onChange)="onClassChanged()">
       </p-dropdown>
     </label>
     <label class="saas-field"><span>Section</span>
       <p-dropdown
         [options]="sectionSelectOptions"
-        [(ngModel)]="filters.sectionName"
+        [(ngModel)]="filters.sectionId"
         optionLabel="label"
         optionValue="value"
-        appendTo="body">
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        (onChange)="onSectionChanged()">
       </p-dropdown>
     </label>
   </tc-saas-filter-row>
 
-  <tc-saas-panel [title]="monthLabel" subtitle="Daily attendance visualization">
+  <tc-saas-panel [title]="monthLabel" subtitle="Daily attendance by class / section — click a day to mark">
     <ng-container panel-actions>
       <button type="button" class="saas-icon-btn" (click)="prev()"><i class="pi pi-chevron-left"></i></button>
       <button type="button" class="saas-icon-btn" (click)="next()"><i class="pi pi-chevron-right"></i></button>
       <ul class="calendar-legend">
-        <li><span class="dot dot--p"></span>Present</li>
-        <li><span class="dot dot--a"></span>Absent</li>
-        <li><span class="dot dot--l"></span>Late</li>
-        <li><span class="dot dot--h"></span>No Attendance</li>
+        <li><span class="dot dot--p"></span>≥85%</li>
+        <li><span class="dot dot--l"></span>70–85%</li>
+        <li><span class="dot dot--a"></span>&lt;70%</li>
+        <li><span class="dot dot--h"></span>Holiday/Weekend</li>
+        <li><span class="dot dot--n"></span>Not marked</li>
       </ul>
     </ng-container>
 
     <div class="calendar-grid calendar-grid--head">
       <span *ngFor="let d of weekDays">{{ d }}</span>
     </div>
-    <div class="calendar-grid">
-      <div *ngFor="let cell of days; trackBy: trackByDay" class="calendar-day"
+    <div *ngIf="!loading" class="calendar-grid">
+      <div *ngFor="let cell of days; trackBy: trackByDay"
+           class="calendar-day"
            [class.is-other]="cell.otherMonth"
-           [class.is-today]="cell.today"
-           [class.is-weekend]="cell.weekend">
+           [class.is-today]="!cell.otherMonth && cell.date === todayIso"
+           [class.is-working]="!cell.otherMonth && cell.dayType === 'WORKING'"
+           [class.is-weekend]="!cell.otherMonth && cell.dayType === 'WEEKEND'"
+           [class.is-holiday]="!cell.otherMonth && cell.dayType === 'HOLIDAY'"
+           [class.is-good]="!cell.otherMonth && cell.status === 'GOOD'"
+           [class.is-average]="!cell.otherMonth && cell.status === 'AVERAGE'"
+           [class.is-low]="!cell.otherMonth && cell.status === 'LOW'"
+           (click)="openDay(cell)"
+           role="button"
+           tabindex="0"
+           [attr.title]="cell.otherMonth ? '' : cellDateLabel(cell)">
         <ng-container *ngIf="!cell.otherMonth">
           <span class="calendar-day__num">{{ cell.day }}</span>
-          <span class="calendar-day__dot" [attr.data-status]="cell.status" *ngIf="cell.status"></span>
+          <span *ngIf="cell.status && cell.dayType === 'WORKING'" class="calendar-day__pct">{{ cell.attendancePercent }}%</span>
+          <span *ngIf="!cell.status && cell.dayType === 'WORKING'" class="calendar-day__pct calendar-day__pct--muted">—</span>
         </ng-container>
       </div>
     </div>
+    <div *ngIf="loading" class="saas-empty"><i class="pi pi-spin pi-spinner"></i><strong>Loading calendar…</strong></div>
   </tc-saas-panel>
 
-  <tc-saas-panel title="Attendance Summary" subtitle="Statistics for the current month">
+  <tc-saas-panel title="Month Summary" subtitle="Statistics for the selected month">
     <tc-saas-stat-grid [stats]="summary"></tc-saas-stat-grid>
   </tc-saas-panel>
 </div>
-
-

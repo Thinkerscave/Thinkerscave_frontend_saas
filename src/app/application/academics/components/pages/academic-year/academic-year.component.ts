@@ -19,6 +19,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicYearTransitionApiService } from '../../../services/academic-year-transition-api.service';
 import {
@@ -68,6 +69,7 @@ export class AcademicYearPageComponent implements OnInit {
   readonly permissions = inject(PermissionService);
 
   private readonly transitionApi = inject(AcademicYearTransitionApiService);
+  private readonly yearContext = inject(AcademicYearContextService);
   readonly resource = ACADEMIC_YEAR_RESOURCE;
   readonly transitionResource = ACADEMICS_TRANSITION_RESOURCE;
 
@@ -137,6 +139,7 @@ export class AcademicYearPageComponent implements OnInit {
           this.dashboard = dash;
           this.history = dash.history ?? [];
           this.applyLocalFilter();
+          this.yearContext.refresh().subscribe();
         },
         error: (err) => {
           this.messages.add({
@@ -146,6 +149,10 @@ export class AcademicYearPageComponent implements OnInit {
           });
         }
       });
+  }
+
+  get hasAnyYear(): boolean {
+    return !!(this.dashboard?.currentYear || this.dashboard?.upcomingYear || this.dashboard?.history?.length);
   }
 
   applyLocalFilter(): void {
@@ -193,7 +200,9 @@ export class AcademicYearPageComponent implements OnInit {
       }))
       .subscribe({
         next: () => {
+          this.saving = false;
           this.showCreate = false;
+          this.cdr.markForCheck();
           this.messages.add({ severity: 'success', summary: 'Academic year created' });
           this.reload();
         },

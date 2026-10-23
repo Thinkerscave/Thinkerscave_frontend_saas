@@ -266,23 +266,17 @@ export interface StaffAttendanceReportRow {
   avgWorkingHours: number;
 }
 
-/** Org-scoped attendance configuration (GET/PUT /api/v1/attendance/settings). */
+/** Attendance settings returned by the shared module settings API. */
 export interface AttendanceOrgSettings {
-  settingId?: number | null;
-  organizationId?: number | null;
-  attendanceMode: 'DAILY' | 'PERIOD';
-  lateAfterTime: string;
+  attendanceMode: 'DAILY' | 'PERIOD_WISE';
+  attendanceEditingPolicy: 'SAME_DAY' | 'SAME_WEEK' | 'SAME_MONTH';
   windowStartTime: string;
   windowEndTime: string;
   allowCopyPrevious: boolean;
   minStudentAttendancePercent: number;
-  studentAlertThresholdPercent?: number;
-  sendSmsOnAbsent: boolean;
-  sendEmailOnAbsent: boolean;
-  minStaffWorkingHours?: number;
-  staffLateGraceMinutes?: number;
+  minStaffWorkingHours: number;
+  staffLateGraceMinutes: number;
   freezeAfterDays: number;
-  active?: boolean;
 }
 
 export interface RosterAttendanceRow {
@@ -297,7 +291,8 @@ export interface RosterAttendanceRow {
   branchName?: string;
   shift?: string;
   date: string;
-  status: AttendanceStatus;
+  /** null = not yet marked (never defaulted to PRESENT). */
+  status: AttendanceStatus | null;
   remarks?: string;
 }
 

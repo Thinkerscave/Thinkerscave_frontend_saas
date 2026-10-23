@@ -75,7 +75,7 @@ export interface PermissionMatrix {
   roleName?: string;
   responsibilityCode?: string;
   responsibilityName?: string;
-  organizationId: number;
+  organizationId?: number;
   rows: PermissionMatrixRow[];
 }
 

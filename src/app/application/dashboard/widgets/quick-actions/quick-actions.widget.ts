@@ -9,18 +9,22 @@ import { QuickActionsData } from '../../models/dashboard.model';
   imports: [CommonModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="w-actions w-actions--bar" role="list">
+    <div class="staff-actions" role="list">
       <a
         *ngFor="let action of data?.items || []; let i = index"
-        class="w-actions__btn"
+        class="staff-actions__card"
         role="listitem"
         [style.animation-delay.ms]="i * 45"
-        [routerLink]="action.route || null">
-        <span class="w-actions__icon"><i class="pi" [ngClass]="action.icon || 'pi-bolt'"></i></span>
-        <span class="w-actions__label">{{ action.label }}</span>
+        [attr.data-tone]="action.tone || 'primary'"
+        [routerLink]="action.route || null"
+        [attr.aria-label]="action.label">
+        <span class="staff-actions__icon"><i class="pi" [ngClass]="action.icon || 'pi-bolt'" aria-hidden="true"></i></span>
+        <span class="staff-actions__label">{{ action.label }}</span>
+        <i class="pi pi-chevron-right staff-actions__arrow" aria-hidden="true"></i>
       </a>
     </div>
-  `
+  `,
+  styleUrl: './quick-actions.widget.scss'
 })
 export class QuickActionsWidgetComponent {
   @Input({ required: true }) data!: QuickActionsData;
