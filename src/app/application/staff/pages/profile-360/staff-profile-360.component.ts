@@ -220,10 +220,6 @@ export class StaffProfile360Component implements OnInit {
     return `${value} ${value === 1 ? 'year' : 'years'}`;
   }
 
-  get hasQualificationDetails(): boolean {
-    return !!this.profile?.highestQualification || this.profile?.experienceYears != null || this.profile?.staffType === 'TEACHING';
-  }
-
   get documentFilterOptions(): { label: string; value: string | null }[] {
     return [{ label: 'All types', value: null }, ...this.documentTypes];
   }

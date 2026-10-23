@@ -122,7 +122,6 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
   nationality = '';
   mobileNumber = '';
   email = '';
-  remarks = '';
   highestQualification = '';
   experienceYears: number | null = null;
 
@@ -282,7 +281,6 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
     this.nationality          = s.nationality ?? '';
     this.mobileNumber         = s.mobileNumber;
     this.email                = s.email;
-    this.remarks              = s.remarks ?? '';
     this.highestQualification = s.highestQualification ?? '';
     this.experienceYears      = s.experienceYears ?? null;
     this.primarySubjectId     = s.primarySubject?.subjectId ?? null;
@@ -383,7 +381,6 @@ export class CreateStaffComponent implements OnInit, OnDestroy {
       emergencyContactName:  this.emergencyContactName || undefined,
       emergencyContactRelation: this.emergencyContactRelation || undefined,
       emergencyContactNumber: this.emergencyContactNumber.trim() || undefined,
-      remarks:               this.remarks.trim() || undefined,
       presentAddress:        this.cleanAddress(this.presentAddress),
       sameAsPresentAddress:  this.sameAsPresentAddress,
       permanentAddress:      this.sameAsPresentAddress ? undefined : this.cleanAddress(this.permanentAddress)

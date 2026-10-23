@@ -112,10 +112,13 @@
                 <dt>Date of Birth</dt>
                 <dd [class.pd-empty]="!profile.dateOfBirth">{{ profile.dateOfBirth ? (profile.dateOfBirth | date:'d MMM yyyy') : emptyMark }}</dd>
               </div>
-              <div *ngIf="age !== null"><dt>Age</dt><dd>{{ age }} yrs</dd></div>
+              <div>
+                <dt>Age</dt>
+                <dd [class.pd-empty]="age === null">{{ age !== null ? age + ' yrs' : emptyMark }}</dd>
+              </div>
               <div><dt>Gender</dt><dd [class.pd-empty]="!profile.gender">{{ profile.gender || emptyMark }}</dd></div>
-              <div *ngIf="profile.nationality"><dt>Nationality</dt><dd>{{ profile.nationality }}</dd></div>
-              <div *ngIf="profile.bloodGroup"><dt>Blood Group</dt><dd>{{ profile.bloodGroup }}</dd></div>
+              <div><dt>Nationality</dt><dd [class.pd-empty]="!profile.nationality">{{ profile.nationality || emptyMark }}</dd></div>
+              <div><dt>Blood Group</dt><dd [class.pd-empty]="!profile.bloodGroup">{{ profile.bloodGroup || emptyMark }}</dd></div>
             </dl>
           </section>
 
@@ -125,7 +128,7 @@
             </header>
             <dl class="pd-dl">
               <div><dt>Contact Name</dt><dd [class.pd-empty]="!profile.emergencyContactName">{{ profile.emergencyContactName || emptyMark }}</dd></div>
-              <div *ngIf="profile.emergencyContactRelation"><dt>Relationship</dt><dd>{{ profile.emergencyContactRelation }}</dd></div>
+              <div><dt>Relationship</dt><dd [class.pd-empty]="!profile.emergencyContactRelation">{{ profile.emergencyContactRelation || emptyMark }}</dd></div>
               <div>
                 <dt>Phone Number</dt>
                 <dd><a *ngIf="profile.emergencyContactNumber; else notProvided" class="pd-link" [href]="'tel:' + profile.emergencyContactNumber">{{ profile.emergencyContactNumber }}</a></dd>
@@ -181,22 +184,26 @@
                 </dd>
               </div>
               <div><dt>Joining Date</dt><dd>{{ profile.joiningDate | date:'d MMM yyyy' }}</dd></div>
-              <div *ngIf="profile.contractStartDate"><dt>Contract Start Date</dt><dd>{{ profile.contractStartDate | date:'d MMM yyyy' }}</dd></div>
-              <div *ngIf="profile.contractEndDate"><dt>Contract End Date</dt><dd>{{ profile.contractEndDate | date:'d MMM yyyy' }}</dd></div>
+              <div>
+                <dt>Contract Start Date</dt>
+                <dd [class.pd-empty]="!profile.contractStartDate">{{ profile.contractStartDate ? (profile.contractStartDate | date:'d MMM yyyy') : emptyMark }}</dd>
+              </div>
+              <div>
+                <dt>Contract End Date</dt>
+                <dd [class.pd-empty]="!profile.contractEndDate">{{ profile.contractEndDate ? (profile.contractEndDate | date:'d MMM yyyy') : emptyMark }}</dd>
+              </div>
             </dl>
           </section>
 
-          <section class="pd-panel pd-panel--qualifications" *ngIf="hasQualificationDetails">
+          <section class="pd-panel pd-panel--qualifications">
             <header class="pd-panel__head">
               <h3 class="pd-panel__title"><i class="pi pi-graduation-cap"></i> Qualifications &amp; Expertise</h3>
             </header>
             <dl class="pd-dl">
-              <div *ngIf="profile.highestQualification"><dt>Highest Qualification</dt><dd>{{ profile.highestQualification }}</dd></div>
-              <div *ngIf="profile.experienceYears != null"><dt>Experience Years</dt><dd>{{ profile.experienceYears }} years</dd></div>
-              <ng-container *ngIf="profile.staffType === 'TEACHING'">
-                <div><dt>Primary Subject</dt><dd [class.pd-empty]="!profile.primarySubject">{{ profile.primarySubject?.name || emptyMark }}</dd></div>
-                <div *ngIf="profile.secondarySubject"><dt>Secondary Subject</dt><dd>{{ profile.secondarySubject.name }}</dd></div>
-              </ng-container>
+              <div><dt>Highest Qualification</dt><dd [class.pd-empty]="!profile.highestQualification">{{ profile.highestQualification || emptyMark }}</dd></div>
+              <div><dt>Experience Years</dt><dd [class.pd-empty]="profile.experienceYears == null">{{ profile.experienceYears != null ? profile.experienceYears + ' years' : emptyMark }}</dd></div>
+              <div><dt>Primary Subject</dt><dd [class.pd-empty]="!profile.primarySubject">{{ profile.primarySubject?.name || emptyMark }}</dd></div>
+              <div><dt>Secondary Subject</dt><dd [class.pd-empty]="!profile.secondarySubject">{{ profile.secondarySubject?.name || emptyMark }}</dd></div>
             </dl>
           </section>
 
@@ -210,12 +217,6 @@
               <div><dt>Account Number</dt><dd [class.pd-empty]="!profile.bankDetails?.maskedAccountNumber">{{ profile.bankDetails?.maskedAccountNumber || emptyMark }}</dd></div>
               <div><dt>IFSC Code</dt><dd [class.pd-empty]="!profile.bankDetails?.ifscCode">{{ profile.bankDetails?.ifscCode || emptyMark }}</dd></div>
             </dl>
-          </section>
-
-          <!-- Remarks -->
-          <section class="pd-panel pd-panel--remarks" *ngIf="profile.remarks">
-            <h3 class="pd-panel__title"><i class="pi pi-comment"></i> Remarks</h3>
-            <p class="pd-muted">{{ profile.remarks }}</p>
           </section>
 
         </div>

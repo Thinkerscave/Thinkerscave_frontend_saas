@@ -88,7 +88,6 @@ export interface StaffDetail {
   emergencyContactNumber?: string;
 
   active: boolean;
-  remarks?: string;
 
   createdOn?: string;
   updatedOn?: string;
@@ -164,7 +163,6 @@ export interface StaffCreateRequest {
   emergencyContactNumber?: string;
   contractStartDate?: string;
   contractEndDate?: string;
-  remarks?: string;
   presentAddress?: StaffAddress;
   permanentAddress?: StaffAddress;
   sameAsPresentAddress?: boolean;

@@ -177,7 +177,7 @@
                 <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" (change)="onLogoSelected($event)" aria-label="Upload organization logo" [disabled]="logoProcessing" />
                 <i class="pi pi-cloud-upload" aria-hidden="true"></i>
                 <strong>{{ logoProcessing ? 'Processing logo…' : 'Drop logo here or click to upload' }}</strong>
-                <small>PNG, JPG or WebP · Max 2 MB source Auto-compressed for upload</small>
+                <small>PNG, JPG, WebP or SVG · Max 2 MB · Auto-compressed for upload</small>
               </div>
 
               <div *ngIf="form.logoUrl" class="org-form__logo-preview">

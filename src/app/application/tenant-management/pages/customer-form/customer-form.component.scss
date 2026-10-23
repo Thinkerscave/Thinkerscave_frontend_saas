@@ -1,12 +1,9 @@
 .customer-form-page {
   min-height: calc(100vh - 7.5rem);
-  display: flex;
-  justify-content: center;
   padding: 0.25rem 0 2rem;
 
   &__shell {
     width: 100%;
-    max-width: 1320px;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -20,7 +17,7 @@
     border-radius: 14px;
     font-size: 0.875rem;
     background: var(--tc-danger-soft, #fef2f2);
-    border: 1px solid rgba(239, 68, 68, 0.22);
+    border: 1px solid color-mix(in srgb, var(--tc-danger, #dc2626) 22%, transparent);
     color: var(--tc-danger, #dc2626);
   }
 
@@ -51,6 +48,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem 1.5rem;
+
+    > * {
+      min-width: 0;
+    }
   }
 }
 
@@ -70,7 +71,7 @@
   }
 
   .app-field__required {
-    color: #ef4444;
+    color: var(--tc-danger, #ef4444);
   }
 }
 
@@ -84,6 +85,15 @@
   .customer-form-page {
     padding-bottom: 1.25rem;
 
+    &__toolbar ::ng-deep .saas-page-header__actions {
+      width: 100%;
+      justify-content: stretch;
+
+      .app-btn {
+        flex: 1 1 auto;
+      }
+    }
+
     &__footer {
       flex-direction: column-reverse;
       align-items: stretch;
@@ -92,5 +102,21 @@
         width: 100%;
       }
     }
+  }
+
+  .customer-form {
+    gap: 1.5rem;
+
+    &__section + &__section {
+      padding-top: 1.25rem;
+    }
+
+    &__grid {
+      gap: 1rem;
+    }
+  }
+
+  :host ::ng-deep .app-card {
+    padding: 1.125rem;
   }
 }

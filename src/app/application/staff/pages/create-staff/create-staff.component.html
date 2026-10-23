@@ -120,11 +120,6 @@
             <input id="input-experience" type="number" [(ngModel)]="experienceYears" min="0" placeholder="5"/>
             <small *ngIf="err('experienceYears')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('experienceYears') }}</small>
           </div>
-          <div class="sw-field sw-field--full">
-            <label class="sw-label">Remarks</label>
-            <textarea id="input-remarks" [(ngModel)]="remarks" rows="3"
-                      placeholder="Additional notes..."></textarea>
-          </div>
         </div>
 
         <h3 class="sw-form-section__sub">Emergency Contact</h3>
@@ -436,7 +431,7 @@
           <button type="button" class="sd-btn sd-btn--ghost" *ngIf="activeStepIndex > 0" (click)="prevStep()">
             <i class="pi pi-arrow-left"></i> Back
           </button>
-          <button type="button" class="sd-btn sd-btn--ghost" *ngIf="!isLastStep" (click)="nextStep()">
+          <button type="button" class="sd-btn sd-btn--primary" *ngIf="!isLastStep" (click)="nextStep()">
             Continue <i class="pi pi-arrow-right"></i>
           </button>
           <button type="button" class="sd-btn sd-btn--primary" *ngIf="isLastStep || isEditMode" (click)="submit()" [disabled]="saving">
