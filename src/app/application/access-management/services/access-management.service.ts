@@ -138,10 +138,6 @@ export class AccessManagementService {
     return this.http.delete<unknown>(accessApi.rolePermissionByMenu(roleId, menuId)).pipe(map(() => undefined));
   }
 
-  removeRolePermission(roleId: number, menuId: number, organizationId = this.organizationId()): Observable<void> {
-    return this.http.delete<unknown>(accessApi.rolePermissionByMenu(roleId, menuId, organizationId)).pipe(map(() => undefined));
-  }
-
   getMenuTree(includeInactive = false): Observable<AccessMenu[]> {
     const params = includeInactive ? new HttpParams().set('includeInactive', 'true') : undefined;
     return this.http.get<unknown>(accessApi.menuTree, { params }).pipe(
