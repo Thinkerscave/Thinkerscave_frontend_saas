@@ -48,20 +48,7 @@ jobs:
       packages: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Upload host nginx config
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: deploy/host-nginx-thinkerscave.conf
-          target: /tmp/thinkerscave-deploy
-          strip_components: 1
-
-      - name: Pull, restart & publish via host nginx
+      - name: Pull & restart on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -71,52 +58,18 @@ jobs:
           script: |
             set -e
 
-            SUDO=""
-            [ "$(id -u)" -ne 0 ] && SUDO="sudo -n"
-
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-
-            # Shared network used by frontend -> backend (idempotent; survives `docker system prune`)
-            docker network inspect web >/dev/null 2>&1 || docker network create web
 
             docker pull "$IMAGE:latest"
 
             docker stop thinkerscave-frontend || true
             docker rm   thinkerscave-frontend || true
 
-            # Published on loopback only; the host nginx is the single public entry point.
             docker run -d \
               --name thinkerscave-frontend \
               --restart unless-stopped \
               --network web \
-              -p 127.0.0.1:8081:80 \
               "$IMAGE:latest"
-
-            echo "Waiting for frontend container..."
-            for i in $(seq 1 15); do
-              curl -fsS http://127.0.0.1:8081/healthz >/dev/null 2>&1 && break
-              [ "$i" -eq 15 ] && { echo "Frontend container did not become healthy"; docker logs --tail 50 thinkerscave-frontend; exit 1; }
-              sleep 2
-            done
-
-            # Install the host nginx site, validate it, and roll back on failure.
-            SITE=/etc/nginx/sites-available/thinkerscave
-            ENABLED=/etc/nginx/sites-enabled/thinkerscave
-            $SUDO cp -a "$SITE" "$SITE.bak" 2>/dev/null || true
-            $SUDO install -m 644 /tmp/thinkerscave-deploy/host-nginx-thinkerscave.conf "$SITE"
-            $SUDO ln -sf "$SITE" "$ENABLED"
-            $SUDO rm -f /etc/nginx/sites-enabled/default
-            if ! $SUDO nginx -t; then
-              echo "nginx config invalid - rolling back"
-              if [ -f "$SITE.bak" ]; then $SUDO mv -f "$SITE.bak" "$SITE"; else $SUDO rm -f "$ENABLED" "$SITE"; fi
-              exit 1
-            fi
-            $SUDO systemctl reload nginx
-            $SUDO rm -f "$SITE.bak"
-            rm -rf /tmp/thinkerscave-deploy
-
-            # Smoke test through the public entry point on port 80.
-            curl -fsS http://127.0.0.1/healthz
 
             docker image prune -f
             echo "Frontend deployed: $IMAGE:latest"
