@@ -1,0 +1,93 @@
+<section class="tc-page-shell desk-page doc-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openNew()">
+      <i class="pi pi-plus" aria-hidden="true"></i>
+      Add master
+    </button>
+  </tc-saas-page-header>
+
+  <tc-saas-panel [title]="listTitle + ' · ' + total">
+    <p class="desk-intro">{{ listIntro }}</p>
+    <app-list-toolbar
+      [search]="keyword"
+      searchPlaceholder="Search master name"
+      [searching]="busy"
+      (searchChange)="keyword = $event"
+      (searchDebounced)="load(0)"
+      (submitted)="load(0)"
+      (reset)="keyword = ''; status = ''; load(0)">
+      <select [(ngModel)]="status" name="status" (ngModelChange)="load(0)">
+        <option value="">All statuses</option>
+        <option value="DRAFT">Draft</option>
+        <option value="PENDING_APPROVAL">Pending approval</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </app-list-toolbar>
+    <app-list-results [busy]="busy">
+      @if (!rows.length && !busy) {
+        <app-empty-state title="No masters" [message]="emptyMessage" />
+      } @else {
+        <div class="tc-table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Type</th><th>Classes</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              @for (row of rows; track row.id) {
+                <tr>
+                  <td>{{ row.masterName }}</td>
+                  <td>{{ row.collectionType || row.materialType }}</td>
+                  <td>{{ row.classIds }}</td>
+                  <td>
+                    <span class="desk-badge" [class.desk-badge--success]="row.status === 'APPROVED'">
+                      {{ row.status }}
+                    </span>
+                    @if (row.rejectionReason) {
+                      <span class="desk-meta-block__muted"> · {{ row.rejectionReason }}</span>
+                    }
+                  </td>
+                  <td class="desk-row-actions">
+                    <button type="button" class="tc-btn" title="Sends this master to the principal for approval." [disabled]="row.status === 'APPROVED'" (click)="submit(row)">Submit</button>
+                    <button type="button" class="tc-btn" title="Principal approval — requires approve permission." (click)="approve(row)">Approve</button>
+                    <button type="button" class="tc-btn" (click)="reject(row)">Reject</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </app-list-results>
+    <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+  </tc-saas-panel>
+
+  <tc-drawer-form
+    [open]="drawer"
+    [title]="form.id ? 'Edit master' : 'Add master'"
+    [description]="drawerIntro"
+    size="lg"
+    (closed)="drawer = false">
+    <app-form-section [columns]="2">
+      <app-input label="Master name" [required]="true" [(ngModel)]="form.masterName" name="masterName" />
+      <app-input [label]="typeLabel" [required]="true" [(ngModel)]="typeValue" [name]="typeLabel" />
+      <div class="app-form-section__full">
+        <app-textarea label="Description" [rows]="3" [(ngModel)]="form.description" name="description" />
+      </div>
+      <div class="app-form-section__full">
+        <span class="app-field__label">Applicable classes</span>
+        <div class="desk-class-checklist">
+          @for (cls of classes; track cls.id) {
+            <label>
+              <input type="checkbox" [checked]="selectedClasses.has(cls.id)" (change)="toggleClass(cls.id)" />
+              {{ cls.label }}
+            </label>
+          }
+        </div>
+      </div>
+    </app-form-section>
+    <div drawer-actions class="desk-drawer-actions">
+      <button type="button" class="tc-btn" (click)="drawer = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="save()">Save</button>
+    </div>
+  </tc-drawer-form>
+  <app-toast />
+</section>

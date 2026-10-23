@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppEmptyStateComponent } from '../../../../shared/ui/app-form/app-empty-state.component';
@@ -22,49 +23,14 @@ import { FrontDeskApiService } from '../../front-desk-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DatePipe, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, AppListToolbarComponent, AppListResultsComponent, AppPaginatorComponent, AppEmptyStateComponent, TcPageSkeletonComponent, AppToastComponent],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <a class="tc-btn tc-btn--primary" routerLink="/app/front-desk/visitors">Check in</a>
-      </tc-saas-page-header>
-      @if (firstLoad) {
-        <tc-page-skeleton layout="directory-table" />
-      } @else {
-        <tc-saas-panel [title]="'On campus · ' + total">
-          <app-list-toolbar [search]="keyword" searchPlaceholder="Search visitor, badge, mobile" [searching]="busy" (searchChange)="keyword = $event" (searchDebounced)="reload(0)" (submitted)="reload(0)" (reset)="reset()" />
-          <app-list-results [busy]="busy">
-            @if (!rows.length) {
-              <app-empty-state title="No visitors on campus" message="Checked-in visitors appear here until they leave." />
-            } @else {
-              <div class="tc-table-wrap">
-                <table>
-                  <thead><tr><th>Visitor</th><th>Purpose</th><th>Meeting</th><th>In</th><th></th></tr></thead>
-                  <tbody>
-                    @for (row of rows; track row['id']) {
-                      <tr>
-                        <td>{{ row['visitorName'] }}<div>{{ row['mobileNumber'] }}</div></td>
-                        <td>{{ row['purpose'] }} @if (row['overstay']) { <span class="adm-badge adm-badge--danger">Overstay</span> }</td>
-                        <td>{{ row['meetPersonName'] }}</td>
-                        <td>{{ asDate(row['inTime']) | date:'short' }}</td>
-                        <td><button type="button" class="tc-btn" title="Records the out-time and closes this campus visit" (click)="checkOut(row)">Check out</button></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </app-list-results>
-          <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
-        </tc-saas-panel>
-      }
-      <app-toast />
-    </section>
-  `
+  templateUrl: './active-visitors.component.html',
+  styleUrls: ['../../front-desk.shared.scss']
 })
 export class ActiveVisitorsComponent implements OnInit {
   private readonly api = inject(FrontDeskApiService);
   private readonly lists = inject(ListContextService);
   private readonly messages = inject(MessageService);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly key = 'front-desk-active-visitors';
 
@@ -121,8 +87,13 @@ export class ActiveVisitorsComponent implements OnInit {
     return typeof value === 'string' ? value : null;
   }
 
-  checkOut(row: Record<string, unknown>): void {
-    if (!confirm('Record the out-time and close this campus visit?')) return;
+  async checkOut(row: Record<string, unknown>): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      header: 'Check out visitor?',
+      message: `Record the out-time for ${row['visitorName'] ?? 'this visitor'} and close the campus visit.`,
+      acceptLabel: 'Check out'
+    });
+    if (!ok) return;
     this.api.postAction(`visitors/${row['id']}/check-out`).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Visitor checked out' });

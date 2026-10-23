@@ -24,6 +24,7 @@ import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { defaultPageSizeForView, pageSizeOptionsForView } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
 const LIST_KEY = 'tc-customers-archive';
@@ -51,6 +52,7 @@ export class CustomersArchiveComponent implements OnInit {
   private readonly api = inject(PlatformManagementService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly listContext = inject(ListContextService);
@@ -151,15 +153,26 @@ export class CustomersArchiveComponent implements OnInit {
     void this.router.navigate(['/app/tenant-management/customers', customer.id]);
   }
 
-  restore(customer: CustomerListItem, event: Event): void {
+  async restore(customer: CustomerListItem, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`Restore "${customer.customerName}" to active customers?`)) return;
+    const ok = await this.dialogs.confirm({
+      header: 'Restore customer?',
+      message: `${customer.customerName} moves back to active customers.`,
+      acceptLabel: 'Restore'
+    });
+    if (!ok) return;
     this.runAction(customer.id, () => this.api.restoreCustomer(customer.id), 'Restored', 'Customer restored successfully.');
   }
 
-  permanentDelete(customer: CustomerListItem, event: Event): void {
+  async permanentDelete(customer: CustomerListItem, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`Permanently delete "${customer.customerName}"? This cannot be undone.`)) return;
+    const ok = await this.dialogs.confirm({
+      header: 'Delete customer permanently?',
+      message: `${customer.customerName} will be permanently deleted. This cannot be undone.`,
+      acceptLabel: 'Delete permanently',
+      tone: 'danger'
+    });
+    if (!ok) return;
     this.runAction(
       customer.id,
       () => this.api.permanentlyDeleteCustomer(customer.id),

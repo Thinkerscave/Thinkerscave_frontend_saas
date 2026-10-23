@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
@@ -35,6 +36,7 @@ interface KpiTile {
 export class DocumentVaultComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
 
   loading = true;
   refreshing = false;
@@ -215,8 +217,14 @@ export class DocumentVaultComponent implements OnInit {
     });
   }
 
-  deleteDocument(d: DocumentVaultEntry): void {
-    if (!window.confirm(`Delete ${d.documentType} for ${d.studentName}?`)) return;
+  async deleteDocument(d: DocumentVaultEntry): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      header: 'Delete document?',
+      message: `${d.documentType} for ${d.studentName} will be deleted.`,
+      acceptLabel: 'Delete',
+      tone: 'danger'
+    });
+    if (!ok) return;
     this.api.deleteDocument(d.documentId).subscribe({
       next: () => {
         this.successMessage = 'Document deleted.';

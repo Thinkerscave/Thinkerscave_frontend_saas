@@ -11,6 +11,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize } from 'rxjs';
 
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
+
 import {
   ResponsibilityAssignment,
   ResponsibilityAssignmentRequest,
@@ -42,6 +44,7 @@ export class StaffProfile360Component implements OnInit {
   readonly router = inject(Router);
   private readonly api = inject(StaffService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly pageHeader = inject(BreadCrumbService);
 
   loading = true;
@@ -167,8 +170,14 @@ export class StaffProfile360Component implements OnInit {
       });
   }
 
-  removeAssignment(assignment: ResponsibilityAssignment): void {
-    if (!confirm(`Remove responsibility "${assignment.responsibilityName}"?`)) { return; }
+  async removeAssignment(assignment: ResponsibilityAssignment): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      header: 'Remove responsibility?',
+      message: `"${assignment.responsibilityName}" will be removed from this staff member.`,
+      acceptLabel: 'Remove',
+      tone: 'danger'
+    });
+    if (!ok) { return; }
     this.api.removeAssignment(assignment.assignmentId)
       .subscribe({ next: () => { this.load(); } });
   }

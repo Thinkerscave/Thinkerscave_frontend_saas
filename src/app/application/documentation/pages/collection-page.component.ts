@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { AppToastComponent } from '../../../core/feedback/app-toast.component';
+import {
+  AppEmptyStateComponent,
+  AppSectionHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption
+} from '../../../shared/ui/app-form';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../shared/ui/saas/saas-primitives';
 import { StudentsWorkspaceService } from '../../students/services/students-workspace.service';
 import { ClassOption } from '../../students/models/students-workspace.model';
@@ -21,51 +27,19 @@ interface CollectionRow {
   selector: 'app-document-collection-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent, AppToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    AppSectionHeaderComponent,
+    AppSelectComponent,
+    AppEmptyStateComponent,
+    AppToastComponent
+  ],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="save()">Save collection</button>
-      </tc-saas-page-header>
-      <tc-saas-panel title="Document collection">
-        <label>Class
-          <select [(ngModel)]="classId" name="classId" (ngModelChange)="loadStudents($event)">
-            <option [ngValue]="null">Select class</option>
-            @for (cls of classes; track cls.id) { <option [ngValue]="cls.id">{{ cls.label }}</option> }
-          </select>
-        </label>
-        <label>Approved type
-          <select [(ngModel)]="masterId" name="masterId">
-            <option [ngValue]="null">Select type</option>
-            @for (master of masters; track master.id) { <option [ngValue]="master.id">{{ master.masterName }}</option> }
-          </select>
-        </label>
-        <label><input type="checkbox" [(ngModel)]="allStudents" name="allStudents" /> All students</label>
-        <div class="tc-table-wrap">
-          <table>
-            <thead><tr><th></th><th>Student</th><th>Document</th><th>Files</th></tr></thead>
-            <tbody>
-              @for (row of rows; track row.studentId) {
-                <tr>
-                  <td><input type="checkbox" [checked]="picked.has(row.studentId)" (change)="toggle(row.studentId)" /></td>
-                  <td>{{ row.studentName }}</td>
-                  <td><input [(ngModel)]="row.documentName" [name]="'doc' + row.studentId" /></td>
-                  <td>
-                    @for (file of row.files; track file.filePath) { <div>{{ file.fileName }}</div> }
-                    @if (row.error) { <div>{{ row.error }}</div> }
-                    <input type="file" (change)="addFile(row, $event)" />
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </tc-saas-panel>
-      <app-toast />
-    </section>
-  `,
-  styles: [`label { display: grid; gap: 0.25rem; margin: 0.7rem 0; }`]
+  templateUrl: './collection-page.component.html',
+  styleUrls: ['../../front-desk/front-desk.shared.scss', '../documentation.shared.scss', './collection-page.component.scss']
 })
 export class DocumentCollectionPageComponent implements OnInit {
   private readonly api = inject(DocumentationApiService);
@@ -75,8 +49,9 @@ export class DocumentCollectionPageComponent implements OnInit {
 
   classes: ClassOption[] = [];
   masters: DocMaster[] = [];
-  classId: number | null = null;
-  masterId: number | null = null;
+  /** Bound to app-select (string values). */
+  classId: string | null = null;
+  masterId: string | null = null;
   allStudents = true;
   rows: CollectionRow[] = [];
   picked = new Set<number>();
@@ -85,51 +60,105 @@ export class DocumentCollectionPageComponent implements OnInit {
   ngOnInit(): void {
     this.students.listAcademicYears().subscribe(years => {
       const yearId = years[0]?.id;
-      if (yearId) this.students.listClasses(yearId).subscribe(rows => { this.classes = rows; this.cdr.markForCheck(); });
+      if (yearId) {
+        this.students.listClasses(yearId).subscribe(rows => {
+          this.classes = rows;
+          this.cdr.markForCheck();
+        });
+      }
     });
     this.api.approved('collection-masters').subscribe({
-      next: rows => { this.masters = rows; this.cdr.markForCheck(); },
+      next: rows => {
+        this.masters = rows;
+        this.cdr.markForCheck();
+      },
       error: () => this.messages.add({ severity: 'error', summary: 'Approved collection types could not be loaded' })
     });
   }
 
-  loadStudents(classId: number | null): void {
-    if (!classId) return;
+  get classOptions(): AppSelectOption[] {
+    return this.classes.map(c => ({ value: String(c.id), label: c.label }));
+  }
+
+  get masterOptions(): AppSelectOption[] {
+    return this.masters
+      .filter(m => m.id != null)
+      .map(m => ({ value: String(m.id), label: m.masterName ?? '' }));
+  }
+
+  loadStudents(classKey: string | null): void {
+    const classId = classKey ? Number(classKey) : null;
+    if (!classId) {
+      this.rows = [];
+      this.cdr.markForCheck();
+      return;
+    }
     this.api.classStudents(classId).subscribe(rows => {
-      this.rows = rows.map((row: ClassStudentRow) => ({ studentId: row.studentId, studentName: row.studentName, documentName: '', files: [], error: '' }));
+      this.rows = rows.map((row: ClassStudentRow) => ({
+        studentId: row.studentId,
+        studentName: row.studentName,
+        documentName: '',
+        files: [],
+        error: ''
+      }));
       this.picked = new Set(rows.map(row => row.studentId));
       this.cdr.markForCheck();
     });
   }
 
   toggle(id: number): void {
-    if (this.picked.has(id)) this.picked.delete(id);
-    else this.picked.add(id);
+    if (this.picked.has(id)) {
+      this.picked.delete(id);
+    } else {
+      this.picked.add(id);
+    }
   }
 
   addFile(row: CollectionRow, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     this.api.upload(file).subscribe({
-      next: stored => { row.files = [...row.files, stored]; row.error = ''; this.cdr.markForCheck(); },
-      error: () => { row.error = 'This file was not stored'; this.cdr.markForCheck(); }
+      next: stored => {
+        row.files = [...row.files, stored];
+        row.error = '';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        row.error = 'File was not stored';
+        this.cdr.markForCheck();
+      }
     });
     input.value = '';
   }
 
   save(): void {
     const audience = this.allStudents ? this.rows : this.rows.filter(row => this.picked.has(row.studentId));
-    if (!this.classId || !this.masterId || !audience.length) return;
+    const classId = this.classId ? Number(this.classId) : null;
+    const masterId = this.masterId ? Number(this.masterId) : null;
+    if (!classId || !masterId || !audience.length) {
+      this.messages.add({ severity: 'warn', summary: 'Select class, approved type, and at least one student' });
+      return;
+    }
     this.saving = true;
     this.api.saveCollection({
-      classId: this.classId,
-      masterId: this.masterId,
+      classId,
+      masterId,
       allStudents: this.allStudents,
       items: audience.map(row => ({ studentId: row.studentId, documentName: row.documentName, files: row.files }))
     }).subscribe({
-      next: () => { this.saving = false; this.messages.add({ severity: 'success', summary: 'Collection saved' }); this.cdr.markForCheck(); },
-      error: () => { this.saving = false; this.messages.add({ severity: 'error', summary: 'Collection was not saved' }); this.cdr.markForCheck(); }
+      next: () => {
+        this.saving = false;
+        this.messages.add({ severity: 'success', summary: 'Collection saved' });
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.saving = false;
+        this.messages.add({ severity: 'error', summary: 'Collection was not saved' });
+        this.cdr.markForCheck();
+      }
     });
   }
 }

@@ -5,7 +5,15 @@ import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 import { AppToastComponent } from '../../../core/feedback/app-toast.component';
+import { UiConfirmService } from '../../../core/feedback/ui-confirm.service';
 import { UI_PAGINATION } from '../../../shared/config/ui-standards';
+import {
+  AppEmptyStateComponent,
+  AppFormSectionComponent,
+  AppInputComponent,
+  AppTextareaComponent
+} from '../../../shared/ui/app-form';
+import { AppListResultsComponent } from '../../../shared/ui/app-list/app-list-results.component';
 import { AppListToolbarComponent } from '../../../shared/ui/app-list/app-list-toolbar.component';
 import { AppPaginatorComponent } from '../../../shared/ui/app-list/app-paginator.component';
 import { DrawerFormComponent } from '../../../shared/ui/drawer-form/drawer-form.component';
@@ -19,70 +27,31 @@ import { DocMaster, DocumentationApiService } from '../documentation-api.service
   selector: 'app-documentation-master-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent, AppListToolbarComponent, AppPaginatorComponent, DrawerFormComponent, AppToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
+    AppEmptyStateComponent,
+    DrawerFormComponent,
+    AppFormSectionComponent,
+    AppInputComponent,
+    AppTextareaComponent,
+    AppToastComponent
+  ],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <button type="button" class="tc-btn tc-btn--primary" (click)="openNew()">Add</button>
-      </tc-saas-page-header>
-      <tc-saas-panel [title]="total + ''">
-        <app-list-toolbar [search]="keyword" searchPlaceholder="Search master" [searching]="busy" (searchChange)="keyword = $event" (searchDebounced)="load(0)" (submitted)="load(0)" (reset)="keyword = ''; status = ''; load(0)">
-          <select [(ngModel)]="status" name="status">
-            <option value="">Status</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PENDING_APPROVAL">Pending approval</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
-        </app-list-toolbar>
-        <div class="tc-table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Type</th><th>Classes</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              @for (row of rows; track row.id) {
-                <tr>
-                  <td>{{ row.masterName }}</td>
-                  <td>{{ row.collectionType || row.materialType }}</td>
-                  <td>{{ row.classIds }}</td>
-                  <td>{{ row.status }} @if (row.rejectionReason) { · {{ row.rejectionReason }} }</td>
-                  <td>
-                    <button type="button" class="tc-btn" title="Sends this master to the principal. It can be used for a class only after approval." [disabled]="row.status === 'APPROVED'" (click)="submit(row)">Submit</button>
-                    <button type="button" class="tc-btn" (click)="approve(row)">Approve</button>
-                    <button type="button" class="tc-btn" (click)="reject(row)">Reject</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
-      </tc-saas-panel>
-      <tc-drawer-form [open]="drawer" [title]="form.id ? 'Edit' : 'Add'" (closed)="drawer = false">
-        <form class="desk-form">
-          <label>Name <input [(ngModel)]="form.masterName" name="masterName" /></label>
-          <label>Type <input [(ngModel)]="typeValue" name="typeValue" /></label>
-          <label>Description <textarea [(ngModel)]="form.description" name="description"></textarea></label>
-          <label>Classes
-            @for (cls of classes; track cls.id) {
-              <span><input type="checkbox" [checked]="selectedClasses.has(cls.id)" (change)="toggleClass(cls.id)" /> {{ cls.label }}</span>
-            }
-          </label>
-        </form>
-        <div drawer-actions>
-          <button type="button" class="tc-btn tc-btn--primary" (click)="save()">Save</button>
-        </div>
-      </tc-drawer-form>
-      <app-toast />
-    </section>
-  `,
-  styles: [`.desk-form { display: grid; gap: 0.7rem; } label { display: grid; gap: 0.25rem; }`]
+  templateUrl: './master-page.component.html',
+  styleUrls: ['../../front-desk/front-desk.shared.scss', '../documentation.shared.scss']
 })
 export class DocumentationMasterPageComponent implements OnInit {
   private readonly api = inject(DocumentationApiService);
   private readonly students = inject(StudentsWorkspaceService);
   private readonly route = inject(ActivatedRoute);
   private readonly messages = inject(MessageService);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   kind: 'collection-masters' | 'material-masters' = 'collection-masters';
@@ -103,17 +72,52 @@ export class DocumentationMasterPageComponent implements OnInit {
     this.kind = this.route.snapshot.data['masterKind'] === 'material' ? 'material-masters' : 'collection-masters';
     this.students.listAcademicYears().subscribe(years => {
       const yearId = years[0]?.id;
-      if (yearId) this.students.listClasses(yearId).subscribe(rows => { this.classes = rows; this.cdr.markForCheck(); });
+      if (yearId) {
+        this.students.listClasses(yearId).subscribe(rows => {
+          this.classes = rows;
+          this.cdr.markForCheck();
+        });
+      }
     });
     this.load(0);
+  }
+
+  get listTitle(): string {
+    return this.kind === 'material-masters' ? 'Material masters' : 'Collection masters';
+  }
+
+  get listIntro(): string {
+    return this.kind === 'material-masters'
+      ? 'Define study material types per class. Principal must approve before handover runs.'
+      : 'Define document collection types per class. Principal must approve before collection runs.';
+  }
+
+  get emptyMessage(): string {
+    return 'Create a master, submit for approval, then use it in class collection or handover.';
+  }
+
+  get drawerIntro(): string {
+    return 'Draft masters can be edited until submitted to the principal.';
+  }
+
+  get typeLabel(): string {
+    return this.kind === 'material-masters' ? 'Material type' : 'Collection type';
   }
 
   load(page: number): void {
     this.page = page;
     this.busy = true;
     this.api.masters(this.kind, page, this.size, this.keyword, this.status).subscribe({
-      next: result => { this.rows = result.content ?? []; this.total = result.totalElements ?? 0; this.busy = false; this.cdr.markForCheck(); },
-      error: () => { this.busy = false; this.cdr.markForCheck(); }
+      next: result => {
+        this.rows = result.content ?? [];
+        this.total = result.totalElements ?? 0;
+        this.busy = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.busy = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -130,8 +134,11 @@ export class DocumentationMasterPageComponent implements OnInit {
   }
 
   toggleClass(id: number): void {
-    if (this.selectedClasses.has(id)) this.selectedClasses.delete(id);
-    else this.selectedClasses.add(id);
+    if (this.selectedClasses.has(id)) {
+      this.selectedClasses.delete(id);
+    } else {
+      this.selectedClasses.add(id);
+    }
   }
 
   save(): void {
@@ -142,28 +149,48 @@ export class DocumentationMasterPageComponent implements OnInit {
       materialType: this.kind === 'material-masters' ? this.typeValue : undefined
     };
     this.api.saveMaster(this.kind, body).subscribe({
-      next: () => { this.drawer = false; this.messages.add({ severity: 'success', summary: 'Master saved' }); this.load(0); },
+      next: () => {
+        this.drawer = false;
+        this.messages.add({ severity: 'success', summary: 'Master saved' });
+        this.load(0);
+      },
       error: () => this.messages.add({ severity: 'error', summary: 'Master could not be saved' })
     });
   }
 
-  submit(row: DocMaster): void {
-    if (!row.id || !confirm('Send this master to the principal?')) return;
+  async submit(row: DocMaster): Promise<void> {
+    if (!row.id) {
+      return;
+    }
+    const ok = await this.dialogs.confirm({
+      header: 'Submit for approval?',
+      message: 'Send this master to the principal for approval.',
+      acceptLabel: 'Submit'
+    });
+    if (!ok) {
+      return;
+    }
     this.api.masterAction(this.kind, row.id, 'submit').subscribe({ next: () => this.load(this.page) });
   }
 
   approve(row: DocMaster): void {
-    if (!row.id) return;
+    if (!row.id) {
+      return;
+    }
     this.api.masterAction(this.kind, row.id, 'approve').subscribe({
       next: () => this.load(this.page),
-      error: () => this.messages.add({ severity: 'error', summary: 'Approval needs the principal permission' })
+      error: () => this.messages.add({ severity: 'error', summary: 'Approval needs principal permission' })
     });
   }
 
   reject(row: DocMaster): void {
-    if (!row.id) return;
+    if (!row.id) {
+      return;
+    }
     const reason = prompt('Rejection reason');
-    if (!reason?.trim()) return;
+    if (!reason?.trim()) {
+      return;
+    }
     this.api.masterAction(this.kind, row.id, 'reject', reason.trim()).subscribe({ next: () => this.load(this.page) });
   }
 }

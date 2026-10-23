@@ -34,6 +34,37 @@ in `src/app/core/config/ui-toast.config.ts` (`UI_TOAST_CONFIG.position`, default
 Do **not** add per-page `providers: [MessageService]` — that shadows the root
 service and breaks global/interceptor toasts.
 
+## Confirm and alert modals
+
+Use `UiConfirmService`. Never call `window.confirm()` / `window.alert()`, and do not
+add a page-level `<p-confirmDialog>` or `providers: [ConfirmationService]` for new work.
+`<app-confirm-dialog>` is mounted once in `app.component.html` next to `<app-toast>`.
+
+```ts
+import { UiConfirmService } from '../../core/feedback/ui-confirm.service';
+
+readonly dialogs = inject(UiConfirmService);
+
+async deleteStaff(staff: StaffSummary): Promise<void> {
+  const ok = await this.dialogs.confirm({
+    header: 'Delete staff member?',
+    message: `${staff.fullName} will be deleted. This action cannot be undone.`,
+    acceptLabel: 'Delete',
+    tone: 'danger'
+  });
+  if (!ok) return;
+  // call the API, then this.feedback.success(...)
+}
+```
+
+- **Header** asks the question; **message** says what happens to the record, in plain words.
+- **acceptLabel** is the verb (Delete, Archive, Issue pass) — never "Yes" / "OK".
+- **tone**: `primary` (default) for normal actions, `warn` for overwrites/resets,
+  `danger` for delete, archive, deactivate, suspend. `danger` focuses Cancel.
+- `dialogs.alert({ header, message, tone })` is only for information the user must
+  acknowledge before continuing. Routine outcomes ("Saved", "Export started") are toasts.
+- Messages are plain text; HTML is escaped.
+
 ## Error parsing
 
 Use `extractApiError()` from `shared/utils/api-error.util.ts` so Hibernate /

@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { AppToastComponent } from '../../../core/feedback/app-toast.component';
+import {
+  AppEmptyStateComponent,
+  AppSectionHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption
+} from '../../../shared/ui/app-form';
 import { AppListToolbarComponent } from '../../../shared/ui/app-list/app-list-toolbar.component';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../shared/ui/saas/saas-primitives';
 import { StudentsWorkspaceService } from '../../students/services/students-workspace.service';
@@ -23,62 +29,24 @@ interface HandoverRow {
   selector: 'app-study-material-handover-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent, AppListToolbarComponent, AppToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    AppListToolbarComponent,
+    AppSectionHeaderComponent,
+    AppSelectComponent,
+    AppEmptyStateComponent,
+    AppToastComponent
+  ],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <button type="button" class="tc-btn tc-btn--primary" (click)="save()">Save handover</button>
-      </tc-saas-page-header>
-      <tc-saas-panel title="Study material handover">
-        <label>Class
-          <select [(ngModel)]="classId" name="classId" (ngModelChange)="loadStudents($event)">
-            <option [ngValue]="null">Select class</option>
-            @for (cls of classes; track cls.id) { <option [ngValue]="cls.id">{{ cls.label }}</option> }
-          </select>
-        </label>
-        <label>Approved material
-          <select [(ngModel)]="masterId" name="masterId">
-            <option [ngValue]="null">Select material</option>
-            @for (master of masters; track master.id) { <option [ngValue]="master.id">{{ master.masterName }}</option> }
-          </select>
-        </label>
-        <label><input type="checkbox" [(ngModel)]="allStudents" name="allStudents" /> All students</label>
-        <app-list-toolbar [showSearch]="false" [search]="''" (submitted)="applyFilter()" (reset)="statusFilter = ''; applyFilter()">
-          <select [(ngModel)]="statusFilter" name="statusFilter">
-            <option value="">All statuses</option>
-            <option value="ALL">All handed over</option>
-            <option value="PARTIALLY">Partially</option>
-            <option value="NOT_HANDEDOVER">Not handed over</option>
-          </select>
-        </app-list-toolbar>
-        <div class="tc-table-wrap">
-          <table>
-            <thead><tr><th>Student</th><th>Description</th><th>Handed over</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              @for (row of visible; track row.studentId) {
-                <tr>
-                  <td>{{ row.studentName }}</td>
-                  <td><input [(ngModel)]="row.description" [name]="'d' + row.studentId" /></td>
-                  <td><input type="checkbox" [(ngModel)]="row.handedOver" [name]="'h' + row.studentId" /></td>
-                  <td>
-                    <select [(ngModel)]="row.status" [name]="'s' + row.studentId">
-                      <option value="ALL">ALL</option>
-                      <option value="PARTIALLY">PARTIALLY</option>
-                      <option value="NOT_HANDEDOVER">NOT_HANDEDOVER</option>
-                    </select>
-                  </td>
-                  <td>@if (row.id) { <button type="button" class="tc-btn" title="Saves this student's handover without changing the other rows" (click)="updateOne(row)">Save row</button> }</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </tc-saas-panel>
-      <app-toast />
-    </section>
-  `,
-  styles: [`label { display: grid; gap: 0.25rem; margin: 0.7rem 0; }`]
+  templateUrl: './handover-page.component.html',
+  styleUrls: [
+    '../../front-desk/front-desk.shared.scss',
+    '../documentation.shared.scss',
+    './collection-page.component.scss'
+  ]
 })
 export class StudyMaterialHandoverPageComponent implements OnInit {
   private readonly api = inject(DocumentationApiService);
@@ -86,10 +54,16 @@ export class StudyMaterialHandoverPageComponent implements OnInit {
   private readonly messages = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  readonly handoverStatusOptions: AppSelectOption[] = [
+    { value: 'ALL', label: 'Fully handed over' },
+    { value: 'PARTIALLY', label: 'Partially' },
+    { value: 'NOT_HANDEDOVER', label: 'Not handed over' }
+  ];
+
   classes: ClassOption[] = [];
   masters: DocMaster[] = [];
-  classId: number | null = null;
-  masterId: number | null = null;
+  classId: string | null = null;
+  masterId: string | null = null;
   allStudents = true;
   statusFilter = '';
   rows: HandoverRow[] = [];
@@ -99,16 +73,46 @@ export class StudyMaterialHandoverPageComponent implements OnInit {
   ngOnInit(): void {
     this.students.listAcademicYears().subscribe(years => {
       const yearId = years[0]?.id;
-      if (yearId) this.students.listClasses(yearId).subscribe(rows => { this.classes = rows; this.cdr.markForCheck(); });
+      if (yearId) {
+        this.students.listClasses(yearId).subscribe(rows => {
+          this.classes = rows;
+          this.cdr.markForCheck();
+        });
+      }
     });
-    this.api.approved('material-masters').subscribe(rows => { this.masters = rows; this.cdr.markForCheck(); });
+    this.api.approved('material-masters').subscribe(rows => {
+      this.masters = rows;
+      this.cdr.markForCheck();
+    });
   }
 
-  loadStudents(classId: number | null): void {
-    if (!classId) return;
+  get classOptions(): AppSelectOption[] {
+    return this.classes.map(c => ({ value: String(c.id), label: c.label }));
+  }
+
+  get masterOptions(): AppSelectOption[] {
+    return this.masters
+      .filter(m => m.id != null)
+      .map(m => ({ value: String(m.id), label: m.masterName ?? '' }));
+  }
+
+  loadStudents(classKey: string | null): void {
+    const classId = classKey ? Number(classKey) : null;
+    if (!classId) {
+      this.rows = [];
+      this.visible = [];
+      this.cdr.markForCheck();
+      return;
+    }
     this.handoverId = null;
     this.api.classStudents(classId).subscribe(rows => {
-      this.rows = rows.map((row: ClassStudentRow) => ({ studentId: row.studentId, studentName: row.studentName, description: '', handedOver: false, status: 'NOT_HANDEDOVER' }));
+      this.rows = rows.map((row: ClassStudentRow) => ({
+        studentId: row.studentId,
+        studentName: row.studentName,
+        description: '',
+        handedOver: false,
+        status: 'NOT_HANDEDOVER'
+      }));
       this.applyFilter();
     });
   }
@@ -119,12 +123,22 @@ export class StudyMaterialHandoverPageComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.classId || !this.masterId) return;
+    const classId = this.classId ? Number(this.classId) : null;
+    const masterId = this.masterId ? Number(this.masterId) : null;
+    if (!classId || !masterId) {
+      this.messages.add({ severity: 'warn', summary: 'Select class and approved material' });
+      return;
+    }
     this.api.saveHandover({
-      classId: this.classId,
-      masterId: this.masterId,
+      classId,
+      masterId,
       allStudents: this.allStudents,
-      items: this.rows.map(row => ({ studentId: row.studentId, description: row.description, handedOver: row.handedOver, status: row.status }))
+      items: this.rows.map(row => ({
+        studentId: row.studentId,
+        description: row.description,
+        handedOver: row.handedOver,
+        status: row.status
+      }))
     }).subscribe({
       next: saved => {
         this.handoverId = Number(saved['id']);
@@ -146,8 +160,15 @@ export class StudyMaterialHandoverPageComponent implements OnInit {
   }
 
   updateOne(row: HandoverRow): void {
-    if (!row.id) return;
-    this.api.updateHandoverItem(row.id, { studentId: row.studentId, description: row.description, handedOver: row.handedOver, status: row.status }).subscribe({
+    if (!row.id) {
+      return;
+    }
+    this.api.updateHandoverItem(row.id, {
+      studentId: row.studentId,
+      description: row.description,
+      handedOver: row.handedOver,
+      status: row.status
+    }).subscribe({
       next: () => this.messages.add({ severity: 'success', summary: 'Student row saved' }),
       error: () => this.messages.add({ severity: 'error', summary: 'This row was not saved' })
     });

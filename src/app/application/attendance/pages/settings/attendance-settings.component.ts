@@ -5,6 +5,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
+
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
 import { AttendanceOrgSettings } from '../../../school-operations/models/school-operations.model';
@@ -22,6 +24,7 @@ import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 export class AttendanceSettingsComponent implements OnInit {
   private readonly dataService = inject(SchoolOperationsDataService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly destroyRef = inject(DestroyRef);
 
   settings: AttendanceOrgSettings = {
@@ -102,9 +105,15 @@ export class AttendanceSettingsComponent implements OnInit {
       });
   }
 
-  reset(): void {
+  async reset(): Promise<void> {
     if (this.saving) return;
-    if (!window.confirm('Reset attendance settings to platform defaults?')) return;
+    const ok = await this.dialogs.confirm({
+      header: 'Reset attendance settings?',
+      message: 'All attendance settings for this school go back to platform defaults. Your current values will be replaced.',
+      acceptLabel: 'Reset',
+      tone: 'warn'
+    });
+    if (!ok || this.saving) return;
     this.saving = true;
     this.errorMessage = '';
     this.dataService.resetAttendanceSettings()

@@ -32,6 +32,7 @@ import { CreateStaffComponent } from '../create-staff/create-staff.component';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
 
 import { SoftRefreshKeys, SoftRefreshService, TcPageSkeletonComponent, ListSnapshotCache } from '../../../../shared/ui/loading';
 interface KpiTile {
@@ -74,6 +75,7 @@ export class StaffDirectoryComponent implements OnInit {
   private readonly api = inject(StaffService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly feedback = inject(UiFeedbackService);
@@ -335,10 +337,16 @@ export class StaffDirectoryComponent implements OnInit {
       });
   }
 
-  deleteStaff(staff: StaffSummary, event?: Event): void {
+  async deleteStaff(staff: StaffSummary, event?: Event): Promise<void> {
     event?.stopPropagation();
     this.closeMenu();
-    if (!confirm(`Delete ${staff.fullName}? This action cannot be undone.`)) return;
+    const ok = await this.dialogs.confirm({
+      header: 'Delete staff member?',
+      message: `${staff.fullName} will be deleted. This action cannot be undone.`,
+      acceptLabel: 'Delete',
+      tone: 'danger'
+    });
+    if (!ok) return;
     this.actionLoading = staff.staffId;
     this.api.deleteStaff(staff.staffId)
       .pipe(finalize(() => { this.actionLoading = null; this.cdr.markForCheck(); }))

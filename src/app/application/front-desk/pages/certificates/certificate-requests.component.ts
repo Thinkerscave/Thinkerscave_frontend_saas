@@ -6,83 +6,76 @@ import { MessageService } from 'primeng/api';
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { WorkspaceSwitcherService } from '../../../../core/services/workspace-switcher.service';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
+import {
+  AppEmptyStateComponent,
+  AppFormSectionComponent,
+  AppInputComponent,
+  AppSectionHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption
+} from '../../../../shared/ui/app-form';
+import { AppListResultsComponent } from '../../../../shared/ui/app-list/app-list-results.component';
 import { AppListToolbarComponent } from '../../../../shared/ui/app-list/app-list-toolbar.component';
 import { AppPaginatorComponent } from '../../../../shared/ui/app-list/app-paginator.component';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas/saas-primitives';
 import { AppPageChangeEvent } from '../../../../shared/utils/paged-result.util';
 import { FrontDeskApiService, StudentDirectoryRow } from '../../front-desk-api.service';
 
+const CERT_LABEL: Record<string, string> = {
+  BONAFIDE: 'Bonafide',
+  FEE_ESTIMATE: 'Fee estimate',
+  CHARACTER: 'Character',
+  TRANSFER_STATUS: 'Transfer status'
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  ISSUED: 'Issued'
+};
+
 @Component({
   selector: 'app-certificate-requests',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SaasPageHeaderComponent, SaasPanelComponent, AppListToolbarComponent, AppPaginatorComponent, AppToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    AppListToolbarComponent,
+    AppListResultsComponent,
+    AppPaginatorComponent,
+    AppEmptyStateComponent,
+    AppFormSectionComponent,
+    AppSectionHeaderComponent,
+    AppInputComponent,
+    AppSelectComponent,
+    AppToastComponent
+  ],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header></tc-saas-page-header>
-      <tc-saas-panel title="New request">
-        <div class="desk-form">
-        <label>Student <input [(ngModel)]="lookup" name="lookup" (ngModelChange)="search($event)" /></label>
-        <ul>
-          @for (student of students; track student.studentId) {
-            <li><button type="button" class="tc-btn" (click)="pick(student)">{{ student.studentName }} · {{ student.className }} · {{ student.rollNumber }} · {{ student.parentName }} · {{ student.parentMobile }}</button></li>
-          }
-        </ul>
-        <label>Type
-          <select [(ngModel)]="certificateType" name="certificateType">
-            <option value="BONAFIDE">Bonafide</option>
-            <option value="FEE_ESTIMATE">Fee estimate</option>
-            <option value="CHARACTER">Character</option>
-            <option value="TRANSFER_STATUS">Transfer status</option>
-          </select>
-        </label>
-        <button type="button" class="tc-btn tc-btn--primary" [disabled]="!selected" (click)="create()">Request</button>
-        </div>
-      </tc-saas-panel>
-      <tc-saas-panel [title]="'Requests · ' + total">
-        <app-list-toolbar [search]="keyword" searchPlaceholder="Search student" [searching]="busy" (searchChange)="keyword = $event" (searchDebounced)="load(0)" (submitted)="load(0)" (reset)="keyword = ''; load(0)" />
-        <div class="tc-table-wrap">
-          <table>
-            <thead><tr><th>Student</th><th>Type</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              @for (row of rows; track row['id']) {
-                <tr>
-                  <td>{{ row['studentName'] }} · {{ row['className'] }} · {{ row['rollNumber'] }}</td>
-                  <td>{{ row['certificateType'] }}</td>
-                  <td>{{ row['issuanceStatus'] }} @if (row['tcNumber']) { · {{ row['tcNumber'] }} · {{ row['tcIssuedOn'] }} }</td>
-                  <td>
-                    <button type="button" class="tc-btn" title="Prints the saved certificate. It stays disabled until the request is approved." [disabled]="row['issuanceStatus'] !== 'APPROVED'" (click)="print(row)">Print</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
-      </tc-saas-panel>
-      @if (printable) {
-        <article class="desk-print" id="certificate-print">
-          <h1>{{ orgName }}</h1>
-          <p>{{ printable['studentName'] }} · {{ printable['className'] }} · {{ printable['rollNumber'] }}</p>
-          <p>{{ printable['certificateType'] }}</p>
-          @if (printable['tcNumber']) { <p>Transfer certificate {{ printable['tcNumber'] }} issued {{ printable['tcIssuedOn'] }}</p> }
-        </article>
-      }
-      <app-toast />
-    </section>
-  `,
-  styles: [`@media print { .tc-page-shell > :not(.desk-print) { display: none; } }`]
+  templateUrl: './certificate-requests.component.html',
+  styleUrls: ['../../front-desk.shared.scss', './certificate-requests.component.scss']
 })
 export class CertificateRequestsComponent implements OnInit {
   private readonly api = inject(FrontDeskApiService);
   private readonly workspaces = inject(WorkspaceSwitcherService);
   private readonly messages = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private searchTimer?: ReturnType<typeof setTimeout>;
+
+  readonly certificateOptions: AppSelectOption[] = [
+    { value: 'BONAFIDE', label: 'Bonafide' },
+    { value: 'FEE_ESTIMATE', label: 'Fee estimate' },
+    { value: 'CHARACTER', label: 'Character' },
+    { value: 'TRANSFER_STATUS', label: 'Transfer status' }
+  ];
 
   lookup = '';
   students: StudentDirectoryRow[] = [];
   selected: StudentDirectoryRow | null = null;
+  searching = false;
   certificateType = 'BONAFIDE';
   keyword = '';
   page = 0;
@@ -94,21 +87,68 @@ export class CertificateRequestsComponent implements OnInit {
   orgName = '';
 
   ngOnInit(): void {
-    this.workspaces.listOrganizations().subscribe({ next: rows => { this.orgName = rows.find(row => row.current)?.organizationName || ''; this.cdr.markForCheck(); } });
+    this.workspaces.listOrganizations().subscribe({
+      next: rows => {
+        this.orgName = rows.find(row => row.current)?.organizationName || '';
+        this.cdr.markForCheck();
+      }
+    });
     this.load(0);
   }
 
+  typeLabel(value: unknown): string {
+    return CERT_LABEL[String(value ?? '')] || String(value ?? '');
+  }
+
+  statusLabel(value: unknown): string {
+    return STATUS_LABEL[String(value ?? '')] || String(value ?? '');
+  }
+
   search(value: string): void {
-    this.api.students(value).subscribe(rows => { this.students = rows; this.cdr.markForCheck(); });
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    const term = (value ?? '').trim();
+    if (term.length < 2) {
+      this.students = [];
+      this.searching = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.searching = true;
+    this.searchTimer = setTimeout(() => {
+      this.api.students(term).subscribe({
+        next: rows => {
+          this.students = rows;
+          this.searching = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.students = [];
+          this.searching = false;
+          this.cdr.markForCheck();
+        }
+      });
+    }, 280);
   }
 
   pick(student: StudentDirectoryRow): void {
     this.selected = student;
     this.lookup = student.studentName;
+    this.students = [];
+    this.cdr.markForCheck();
+  }
+
+  clearStudent(): void {
+    this.selected = null;
+    this.lookup = '';
+    this.cdr.markForCheck();
   }
 
   create(): void {
-    if (!this.selected) return;
+    if (!this.selected) {
+      return;
+    }
     this.api.create('certificate-requests', {
       studentId: this.selected.studentId,
       studentName: this.selected.studentName,
@@ -116,7 +156,10 @@ export class CertificateRequestsComponent implements OnInit {
       rollNumber: this.selected.rollNumber,
       certificateType: this.certificateType
     }).subscribe({
-      next: () => { this.messages.add({ severity: 'success', summary: 'Request saved' }); this.load(0); },
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Request saved' });
+        this.load(0);
+      },
       error: () => this.messages.add({ severity: 'error', summary: 'Request could not be saved' })
     });
   }
@@ -125,8 +168,16 @@ export class CertificateRequestsComponent implements OnInit {
     this.page = page;
     this.busy = true;
     this.api.list('certificate-requests', page, this.size, this.keyword).subscribe({
-      next: result => { this.rows = result.content ?? []; this.total = result.totalElements ?? 0; this.busy = false; this.cdr.markForCheck(); },
-      error: () => { this.busy = false; this.cdr.markForCheck(); }
+      next: result => {
+        this.rows = result.content ?? [];
+        this.total = result.totalElements ?? 0;
+        this.busy = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.busy = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 

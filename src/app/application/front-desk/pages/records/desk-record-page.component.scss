@@ -1,0 +1,53 @@
+.desk-drawer-intro {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.desk-drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.desk-page .tc-form-field input[type='number'] {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-surface-0);
+  color: var(--tc-text);
+  font: inherit;
+  padding: 8px 12px;
+}
+
+.desk-page .tc-form-field input:focus {
+  outline: none;
+  border-color: var(--tc-primary-500);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tc-primary-500) 20%, transparent);
+}
+
+.desk-reschedule {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.desk-reschedule__summary {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+}
+
+.desk-reschedule__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.desk-page .app-field__error {
+  margin: 0.25rem 0 0;
+  font-size: var(--tc-font-size-xs);
+  color: var(--tc-danger-600, #dc2626);
+}

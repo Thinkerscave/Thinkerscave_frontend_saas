@@ -1,0 +1,164 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header>
+    <a class="tc-btn" routerLink="/app/front-desk/visitors/active" title="View visitors currently on campus">
+      <i class="pi pi-users" aria-hidden="true"></i>
+      Active visitors
+    </a>
+  </tc-saas-page-header>
+
+  <form class="desk-pass-form" (ngSubmit)="save()">
+    <tc-saas-panel title="Check in visitor">
+      <p class="desk-intro">
+        Record walk-in details, link the host, and optionally capture a photo before issuing the pass.
+      </p>
+
+      <app-section-header
+        title="Visitor identity"
+        description="Name, contact, and ID shown on the visitor slip."
+        icon="pi pi-id-card" />
+
+      <app-form-section [columns]="2">
+        <app-input
+          label="Visitor name"
+          placeholder="Full name as on ID"
+          [required]="true"
+          [(ngModel)]="form.visitorName"
+          name="visitorName"
+          [error]="nameError ? 'Visitor name is required.' : ''"
+          (ngModelChange)="nameError = false" />
+
+        <app-phone-input
+          label="Mobile number"
+          placeholder="10-digit mobile"
+          [required]="true"
+          [(ngModel)]="form.mobileNumber"
+          name="mobileNumber"
+          [error]="mobileError ? mobileErrorMessage : ''"
+          (ngModelChange)="mobileError = false" />
+
+        <app-select
+          label="ID type"
+          placeholder="Select ID type"
+          [options]="idTypeOptions"
+          [(ngModel)]="form.idType"
+          name="idType" />
+
+        <app-input
+          label="ID number"
+          placeholder="As on selected ID"
+          [(ngModel)]="form.idNumber"
+          name="idNumber" />
+      </app-form-section>
+
+      <app-section-header
+        title="Visit details"
+        description="Purpose and optional vehicle or badge reference."
+        icon="pi pi-map-marker" />
+
+      <app-form-section [columns]="2">
+        <app-select
+          label="Purpose of visit"
+          placeholder="Select purpose"
+          [options]="purposeOptions"
+          [(ngModel)]="form.purpose"
+          name="purpose" />
+
+        <app-input
+          label="Vehicle number"
+          placeholder="Optional"
+          [(ngModel)]="form.vehicleNumber"
+          name="vehicleNumber"
+          hint="Leave blank if not applicable." />
+
+        <app-input
+          label="Badge number"
+          placeholder="Optional physical badge"
+          [(ngModel)]="form.badgeNumber"
+          name="badgeNumber" />
+      </app-form-section>
+
+      <app-section-header
+        title="Person to meet"
+        description="Search staff or student directory — reception does not open full profiles."
+        icon="pi pi-user" />
+
+      <app-form-section [columns]="2">
+        <app-select
+          label="Host type"
+          [options]="meetKindOptions"
+          [(ngModel)]="meetKind"
+          name="meetKind"
+          (ngModelChange)="onMeetKindChange()" />
+
+        <div class="app-form-section__full desk-lookup">
+          <app-input
+            label="Search host"
+            placeholder="Name, mobile, class, or roll number"
+            [(ngModel)]="lookup"
+            name="lookup"
+            (ngModelChange)="searchPeople($event)" />
+
+          @if (meetPersonName) {
+            <div class="desk-selected-host" role="status">
+              <span class="desk-selected-host__label">Selected</span>
+              <strong>{{ meetPersonName }}</strong>
+              <button type="button" class="tc-btn tc-btn--sm" (click)="clearHost()">Clear</button>
+            </div>
+          }
+
+          @if (lookup.trim().length >= 2 && !people.length && !searchingPeople) {
+            <p class="desk-help-text">No matches. Try a different spelling or switch host type.</p>
+          }
+
+          @if (people.length) {
+            <ul class="desk-lookup-list" role="listbox" aria-label="Search results">
+              @for (person of people; track person.id) {
+                <li>
+                  <button type="button" class="desk-lookup-list__item" (click)="pick(person)">
+                    {{ person.label }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </app-form-section>
+
+      <app-section-header
+        title="Visitor photo"
+        description="Optional — capture from webcam for the active visitors board."
+        icon="pi pi-camera" />
+
+      <div class="desk-capture app-form-section__full">
+        <div class="desk-capture__preview">
+          @if (photoUrl) {
+            <img [src]="photoUrl" alt="Captured visitor photo" class="desk-capture__photo" />
+          } @else {
+            <video #video class="desk-capture__video" autoplay playsinline muted aria-label="Camera preview"></video>
+          }
+          <canvas #canvas hidden></canvas>
+        </div>
+        <div class="desk-capture__actions">
+          <button type="button" class="tc-btn" (click)="capture()">
+            <i class="pi pi-camera" aria-hidden="true"></i>
+            {{ photoUrl ? 'Recapture' : 'Start camera / Capture' }}
+          </button>
+          @if (photoUrl) {
+            <button type="button" class="tc-btn" (click)="retake()">Remove photo</button>
+          }
+        </div>
+      </div>
+
+      <footer class="desk-form-actions">
+        <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+          @if (saving) {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          }
+          Check in visitor
+        </button>
+      </footer>
+    </tc-saas-panel>
+  </form>
+
+  <app-toast />
+</section>

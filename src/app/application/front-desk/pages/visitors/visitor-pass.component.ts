@@ -5,11 +5,17 @@ import { Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
-import { AppValidationMessageComponent } from '../../../../shared/ui/app-form/app-validation-message.component';
+import {
+  AppFormSectionComponent,
+  AppInputComponent,
+  AppPhoneInputComponent,
+  AppSectionHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption
+} from '../../../../shared/ui/app-form';
+import { phoneErrorMessage } from '../../../../shared/ui/app-form/app-phone-input.component';
 import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas/saas-primitives';
 import { FrontDeskApiService, StaffDirectoryRow, StudentDirectoryRow } from '../../front-desk-api.service';
-
-const MOBILE = /^(?:\+91[\s-]?)?[6-9]\d{9}$/;
 
 interface VisitorForm {
   visitorName: string;
@@ -25,66 +31,22 @@ interface VisitorForm {
   selector: 'app-visitor-pass',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, SaasPanelComponent, AppValidationMessageComponent, AppToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    SaasPageHeaderComponent,
+    SaasPanelComponent,
+    AppFormSectionComponent,
+    AppSectionHeaderComponent,
+    AppInputComponent,
+    AppSelectComponent,
+    AppPhoneInputComponent,
+    AppToastComponent
+  ],
   providers: [MessageService],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <a class="tc-btn" routerLink="/app/front-desk/visitors/active">Active visitors</a>
-      </tc-saas-page-header>
-      <tc-saas-panel title="Visitor pass">
-        <form class="desk-form" (ngSubmit)="save()">
-          <label>Name <input [(ngModel)]="form.visitorName" name="visitorName" required /></label>
-          <label>Mobile <input [(ngModel)]="form.mobileNumber" name="mobileNumber" required /></label>
-          <app-validation-message *ngIf="mobileError" message="Enter a valid Indian mobile number" />
-          <label>ID type
-            <select [(ngModel)]="form.idType" name="idType">
-              <option value="AADHAAR">Aadhaar</option>
-              <option value="PAN">PAN</option>
-              <option value="DRIVING_LICENCE">Driving licence</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </label>
-          <label>ID number <input [(ngModel)]="form.idNumber" name="idNumber" /></label>
-          <label>Purpose
-            <select [(ngModel)]="form.purpose" name="purpose">
-              <option value="MEETING">Meeting</option>
-              <option value="INQUIRY">Inquiry</option>
-              <option value="MAINTENANCE">Maintenance</option>
-              <option value="DELIVERY">Delivery</option>
-            </select>
-          </label>
-          <label>Person to meet
-            <select [(ngModel)]="meetKind" name="meetKind">
-              <option value="STAFF">Staff</option>
-              <option value="STUDENT">Student</option>
-            </select>
-          </label>
-          <label>Search
-            <input [(ngModel)]="lookup" name="lookup" (ngModelChange)="searchPeople($event)" />
-          </label>
-          <ul>
-            @for (person of people; track person.id) {
-              <li><button type="button" class="tc-btn" (click)="pick(person)">{{ person.label }}</button></li>
-            }
-          </ul>
-          <label>Vehicle <input [(ngModel)]="form.vehicleNumber" name="vehicleNumber" /></label>
-          <label>Badge <input [(ngModel)]="form.badgeNumber" name="badgeNumber" /></label>
-          <div class="desk-capture">
-            <video #video autoplay playsinline></video>
-            <canvas #canvas hidden></canvas>
-            @if (photoUrl) { <img [src]="photoUrl" alt="Visitor photo" /> }
-            <div class="desk-capture__actions">
-              <button type="button" class="tc-btn" (click)="capture()">Capture</button>
-              <button type="button" class="tc-btn" (click)="retake()">Retake</button>
-            </div>
-          </div>
-          <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">Check in</button>
-        </form>
-      </tc-saas-panel>
-      <app-toast />
-    </section>
-  `,
+  templateUrl: './visitor-pass.component.html',
+  styleUrls: ['../../front-desk.shared.scss', './visitor-pass.component.scss']
 })
 export class VisitorPassComponent implements OnDestroy {
   @ViewChild('video') video?: ElementRef<HTMLVideoElement>;
@@ -95,76 +57,163 @@ export class VisitorPassComponent implements OnDestroy {
   private readonly messages = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private stream?: MediaStream;
+  private searchTimer?: ReturnType<typeof setTimeout>;
 
-  form: VisitorForm = { visitorName: '', mobileNumber: '', idType: 'AADHAAR', idNumber: '', purpose: 'MEETING', vehicleNumber: '', badgeNumber: '' };
+  readonly idTypeOptions: AppSelectOption[] = [
+    { value: 'AADHAAR', label: 'Aadhaar' },
+    { value: 'PAN', label: 'PAN' },
+    { value: 'DRIVING_LICENCE', label: 'Driving licence' },
+    { value: 'OTHER', label: 'Other' }
+  ];
+
+  readonly purposeOptions: AppSelectOption[] = [
+    { value: 'MEETING', label: 'Meeting' },
+    { value: 'INQUIRY', label: 'Inquiry' },
+    { value: 'MAINTENANCE', label: 'Maintenance' },
+    { value: 'DELIVERY', label: 'Delivery' }
+  ];
+
+  readonly meetKindOptions: AppSelectOption<'STAFF' | 'STUDENT'>[] = [
+    { value: 'STAFF', label: 'Staff' },
+    { value: 'STUDENT', label: 'Student' }
+  ];
+
+  form: VisitorForm = {
+    visitorName: '',
+    mobileNumber: '',
+    idType: 'AADHAAR',
+    idNumber: '',
+    purpose: 'MEETING',
+    vehicleNumber: '',
+    badgeNumber: ''
+  };
+
   meetKind: 'STAFF' | 'STUDENT' = 'STAFF';
   meetPersonId: number | null = null;
   meetPersonName = '';
   lookup = '';
   people: { id: number; label: string }[] = [];
+  searchingPeople = false;
   photoUrl = '';
   photoBlob: Blob | null = null;
   saving = false;
+  nameError = false;
   mobileError = false;
+  mobileErrorMessage = '';
 
   ngOnDestroy(): void {
     this.stream?.getTracks().forEach(track => track.stop());
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+  }
+
+  onMeetKindChange(): void {
+    this.lookup = '';
+    this.people = [];
+    this.clearHost();
+    this.cdr.markForCheck();
+  }
+
+  clearHost(): void {
+    this.meetPersonId = null;
+    this.meetPersonName = '';
+    this.cdr.markForCheck();
   }
 
   searchPeople(value: string): void {
-    const done = (rows: { id: number; label: string }[]) => {
-      this.people = rows;
-      this.cdr.markForCheck();
-    };
-    if (this.meetKind === 'STAFF') {
-      this.api.staff(value).subscribe(rows => done(rows.map((row: StaffDirectoryRow) => ({
-        id: row.staffId,
-        label: [row.name, row.designation, row.mobile].filter(Boolean).join(' · ')
-      }))));
-    } else {
-      this.api.students(value).subscribe(rows => done(rows.map((row: StudentDirectoryRow) => ({
-        id: row.studentId,
-        label: [row.studentName, row.className, row.rollNumber].filter(Boolean).join(' · ')
-      }))));
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
     }
+    const term = (value ?? '').trim();
+    if (term.length < 2) {
+      this.people = [];
+      this.searchingPeople = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.searchingPeople = true;
+    this.searchTimer = setTimeout(() => {
+      const done = (rows: { id: number; label: string }[]) => {
+        this.people = rows;
+        this.searchingPeople = false;
+        this.cdr.markForCheck();
+      };
+      if (this.meetKind === 'STAFF') {
+        this.api.staff(term).subscribe({
+          next: rows => done(rows.map((row: StaffDirectoryRow) => ({
+            id: row.staffId,
+            label: [row.name, row.designation, row.mobile].filter(Boolean).join(' · ')
+          }))),
+          error: () => done([])
+        });
+      } else {
+        this.api.students(term).subscribe({
+          next: rows => done(rows.map((row: StudentDirectoryRow) => ({
+            id: row.studentId,
+            label: [row.studentName, row.className, row.rollNumber].filter(Boolean).join(' · ')
+          }))),
+          error: () => done([])
+        });
+      }
+    }, 280);
   }
 
   pick(person: { id: number; label: string }): void {
     this.meetPersonId = person.id;
     this.meetPersonName = person.label;
+    this.people = [];
+    this.lookup = person.label.split(' · ')[0] ?? person.label;
+    this.cdr.markForCheck();
   }
 
   async capture(): Promise<void> {
     if (!this.stream) {
-      this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (this.video) this.video.nativeElement.srcObject = this.stream;
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        if (this.video) {
+          this.video.nativeElement.srcObject = this.stream;
+        }
+      } catch {
+        this.messages.add({ severity: 'warn', summary: 'Camera unavailable', detail: 'Check browser permissions or use check-in without photo.' });
+      }
+      this.cdr.markForCheck();
       return;
     }
     const video = this.video?.nativeElement;
     const canvas = this.canvas?.nativeElement;
-    if (!video || !canvas) return;
+    if (!video || !canvas) {
+      return;
+    }
     canvas.width = video.videoWidth || 320;
     canvas.height = video.videoHeight || 240;
     canvas.getContext('2d')?.drawImage(video, 0, 0);
     this.photoBlob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85));
     this.photoUrl = canvas.toDataURL('image/jpeg');
+    this.stream.getTracks().forEach(track => track.stop());
+    this.stream = undefined;
     this.cdr.markForCheck();
   }
 
   retake(): void {
     this.photoBlob = null;
     this.photoUrl = '';
+    this.cdr.markForCheck();
   }
 
   save(): void {
-    this.mobileError = !MOBILE.test(this.form['mobileNumber'].trim());
-    if (this.mobileError || !this.form['visitorName'].trim()) {
+    this.nameError = !this.form.visitorName.trim();
+    const phoneErr = phoneErrorMessage(this.form.mobileNumber);
+    this.mobileError = !!phoneErr;
+    this.mobileErrorMessage = phoneErr ?? '';
+    if (this.nameError || this.mobileError) {
       this.cdr.markForCheck();
       return;
     }
     this.saving = true;
     const body = {
       ...this.form,
+      mobileNumber: this.form.mobileNumber.trim(),
       meetPersonType: this.meetKind,
       meetPersonId: this.meetPersonId,
       meetPersonName: this.meetPersonName || null

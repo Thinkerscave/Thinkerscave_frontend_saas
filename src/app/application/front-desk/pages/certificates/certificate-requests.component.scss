@@ -1,0 +1,5 @@
+@media print {
+  .tc-page-shell > :not(.desk-print) {
+    display: none;
+  }
+}

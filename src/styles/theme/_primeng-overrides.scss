@@ -670,6 +670,56 @@
   padding: 0 1.25rem 1.25rem;
 }
 
+/* Confirm / alert modals (UiConfirmService and page-level p-confirmDialog). */
+.p-confirmdialog .p-dialog-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.25rem 1.25rem 1.25rem;
+}
+
+.p-confirmdialog .p-confirmdialog-icon {
+  flex: 0 0 auto;
+  font-size: 1.5rem;
+  color: var(--tc-primary-600);
+}
+
+.p-confirmdialog .app-confirm__icon--info,
+.p-confirmdialog .app-confirm__icon--primary {
+  color: var(--tc-primary-600);
+}
+
+.p-confirmdialog .app-confirm__icon--success {
+  color: var(--tc-success, #16a34a);
+}
+
+.p-confirmdialog .app-confirm__icon--warn {
+  color: var(--tc-warning, #d97706);
+}
+
+.p-confirmdialog .app-confirm__icon--danger {
+  color: var(--tc-danger, #dc2626);
+}
+
+.p-confirmdialog .p-confirmdialog-message {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--tc-text);
+  overflow-wrap: anywhere;
+}
+
+.p-confirmdialog .p-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1.1rem;
+}
+
+.p-confirmdialog .p-dialog-footer .p-button {
+  margin: 0;
+  min-width: 6rem;
+}
+
 .p-dialog-mask {
   backdrop-filter: blur(4px);
   background: rgba(15, 23, 42, 0.4);

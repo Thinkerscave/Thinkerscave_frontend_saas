@@ -1,4 +1,5 @@
 export * from './app-input.component';
+export * from './app-datetime.component';
 export * from './app-textarea.component';
 export * from './app-phone-input.component';
 export * from './app-button.component';

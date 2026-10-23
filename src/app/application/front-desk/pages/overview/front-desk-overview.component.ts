@@ -12,21 +12,8 @@ import { FrontDeskApiService } from '../../front-desk-api.service';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterLink, SaasPageHeaderComponent, SaasStatGridComponent, TcPageSkeletonComponent, AppToastComponent],
-  template: `
-    <section class="tc-page-shell">
-      <tc-saas-page-header>
-        <a class="tc-btn tc-btn--primary" routerLink="/app/front-desk/visitors" title="Check a visitor in and print a pass">Check in</a>
-      </tc-saas-page-header>
-      @if (loading) {
-        <tc-page-skeleton layout="directory-table" />
-      } @else if (error) {
-        <p role="alert">{{ error }}</p>
-      } @else {
-        <tc-saas-stat-grid [stats]="stats" (statSelect)="open($event)" />
-      }
-      <app-toast />
-    </section>
-  `
+  templateUrl: './front-desk-overview.component.html',
+  styleUrls: ['../../front-desk.shared.scss', './front-desk-overview.component.scss']
 })
 export class FrontDeskOverviewComponent implements OnInit {
   private readonly api = inject(FrontDeskApiService);

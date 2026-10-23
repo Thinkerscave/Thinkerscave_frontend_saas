@@ -1,0 +1,116 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header />
+
+  <tc-saas-panel title="New certificate request">
+    <p class="desk-intro">Search a student and submit a slip request. Printing stays disabled until the request is approved.</p>
+
+    <app-section-header title="Student" description="Directory search only — no full student profile." icon="pi pi-user" />
+    <app-form-section [columns]="1">
+      <div class="desk-lookup">
+        <app-input
+          label="Search student"
+          placeholder="Name, class, roll number, or parent mobile"
+          [(ngModel)]="lookup"
+          name="lookup"
+          (ngModelChange)="search($event)" />
+
+        @if (selected) {
+          <div class="desk-selected-host" role="status">
+            <span class="desk-selected-host__label">Selected</span>
+            <strong>{{ selected.studentName }} · {{ selected.className }} · {{ selected.rollNumber }}</strong>
+            <button type="button" class="tc-btn tc-btn--sm" (click)="clearStudent()">Clear</button>
+          </div>
+        }
+
+        @if (lookup.trim().length >= 2 && !students.length && !searching) {
+          <p class="desk-help-text">No students found.</p>
+        }
+
+        @if (students.length) {
+          <ul class="desk-lookup-list" role="listbox" aria-label="Student search results">
+            @for (student of students; track student.studentId) {
+              <li>
+                <button type="button" class="desk-lookup-list__item" (click)="pick(student)">
+                  {{ student.studentName }} · {{ student.className }} · {{ student.rollNumber }} · {{ student.parentName }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <app-select
+        label="Certificate type"
+        [options]="certificateOptions"
+        [(ngModel)]="certificateType"
+        name="certificateType" />
+    </app-form-section>
+
+    <div class="desk-panel-actions">
+      <button type="button" class="tc-btn tc-btn--primary" [disabled]="!selected" (click)="create()">
+        Submit request
+      </button>
+    </div>
+  </tc-saas-panel>
+
+  <tc-saas-panel [title]="'Certificate requests · ' + total">
+    <app-list-toolbar
+      [search]="keyword"
+      searchPlaceholder="Search student or type"
+      [searching]="busy"
+      (searchChange)="keyword = $event"
+      (searchDebounced)="load(0)"
+      (submitted)="load(0)"
+      (reset)="keyword = ''; load(0)" />
+    <app-list-results [busy]="busy">
+      @if (!rows.length && !busy) {
+        <app-empty-state title="No requests" message="Submitted certificate slips appear here with approval status." />
+      } @else {
+        <div class="tc-table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Type</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              @for (row of rows; track row['id']) {
+                <tr>
+                  <td>{{ row['studentName'] }} · {{ row['className'] }} · {{ row['rollNumber'] }}</td>
+                  <td>{{ typeLabel(row['certificateType']) }}</td>
+                  <td>
+                    <span class="desk-badge" [class.desk-badge--success]="row['issuanceStatus'] === 'APPROVED'">
+                      {{ statusLabel(row['issuanceStatus']) }}
+                    </span>
+                    @if (row['tcNumber']) {
+                      <span class="desk-meta-block__muted"> · TC {{ row['tcNumber'] }} · {{ row['tcIssuedOn'] }}</span>
+                    }
+                  </td>
+                  <td class="desk-row-actions">
+                    <button
+                      type="button"
+                      class="tc-btn"
+                      title="Prints the saved certificate. Disabled until the request is approved."
+                      [disabled]="row['issuanceStatus'] !== 'APPROVED'"
+                      (click)="print(row)">
+                      Print
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </app-list-results>
+    <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+  </tc-saas-panel>
+
+  @if (printable) {
+    <article class="desk-print" id="certificate-print">
+      <h1>{{ orgName }}</h1>
+      <p>{{ printable['studentName'] }} · {{ printable['className'] }} · {{ printable['rollNumber'] }}</p>
+      <p>{{ typeLabel(printable['certificateType']) }}</p>
+      @if (printable['tcNumber']) {
+        <p>Transfer certificate {{ printable['tcNumber'] }} issued {{ printable['tcIssuedOn'] }}</p>
+      }
+    </article>
+  }
+  <app-toast />
+</section>

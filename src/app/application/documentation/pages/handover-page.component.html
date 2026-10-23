@@ -1,0 +1,74 @@
+<section class="tc-page-shell desk-page doc-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="save()">Save handover run</button>
+  </tc-saas-page-header>
+
+  <tc-saas-panel title="Study material handover">
+    <p class="desk-intro">Record material issued to students using an approved material master.</p>
+
+    <app-section-header title="Class & material" icon="pi pi-filter" />
+    <div class="desk-filter-row">
+      <app-select
+        label="Class"
+        placeholder="Select class"
+        [options]="classOptions"
+        [(ngModel)]="classId"
+        name="classId"
+        (ngModelChange)="loadStudents($event)" />
+      <app-select
+        label="Approved material"
+        placeholder="Select material"
+        [options]="masterOptions"
+        [(ngModel)]="masterId"
+        name="masterId" />
+      <div class="tc-form-field">
+        <label class="desk-class-checklist">
+          <input type="checkbox" [(ngModel)]="allStudents" name="allStudents" />
+          All students in class
+        </label>
+      </div>
+    </div>
+
+    <app-list-toolbar [showSearch]="false" [search]="''" (submitted)="applyFilter()" (reset)="statusFilter = ''; applyFilter()">
+      <select [(ngModel)]="statusFilter" name="statusFilter">
+        <option value="">All statuses</option>
+        <option value="ALL">Fully handed over</option>
+        <option value="PARTIALLY">Partially</option>
+        <option value="NOT_HANDEDOVER">Not handed over</option>
+      </select>
+    </app-list-toolbar>
+
+    @if (!visible.length) {
+      <app-empty-state title="No students" message="Select a class to load students for handover." />
+    } @else {
+      <div class="tc-table-wrap">
+        <table>
+          <thead><tr><th>Student</th><th>Description</th><th>Handed over</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            @for (row of visible; track row.studentId) {
+              <tr>
+                <td>{{ row.studentName }}</td>
+                <td>
+                  <input class="desk-table-input" [(ngModel)]="row.description" [name]="'d' + row.studentId" placeholder="What was given" />
+                </td>
+                <td><input type="checkbox" [(ngModel)]="row.handedOver" [name]="'h' + row.studentId" /></td>
+                <td>
+                  <app-select
+                    [options]="handoverStatusOptions"
+                    [(ngModel)]="row.status"
+                    [name]="'s' + row.studentId" />
+                </td>
+                <td>
+                  @if (row.id) {
+                    <button type="button" class="tc-btn" title="Save only this student row" (click)="updateOne(row)">Save row</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </tc-saas-panel>
+  <app-toast />
+</section>

@@ -11,7 +11,7 @@ import { tenantInterceptor } from './core/interceptor/tenant.interceptor';
 import { NgxUiLoaderModule } from 'ngx-ui-loader';
 import { authInterceptor } from './core/interceptor/auth.interceptor';
 import { httpErrorInterceptor } from './core/interceptor/http-error.interceptor';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { GlobalErrorHandler } from './core/error/global-error-handler';
 import { GlobalSearchProvider } from './shared/components/global-search/global-search.provider';
 import { ApplicationGlobalSearchProvider } from './application/services/application-global-search.provider';
@@ -69,6 +69,7 @@ export const appConfig: ApplicationConfig = {
     // mask the application shell with a stale full-screen overlay.
     importProvidersFrom(NgxUiLoaderModule),
     MessageService,
+    ConfirmationService,
     { provide: GlobalSearchProvider, useClass: ApplicationGlobalSearchProvider },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideServiceWorker('ngsw-worker.js', {
