@@ -1,0 +1,298 @@
+<tc-saas-page-header>
+  <button
+    *ngIf="canManage"
+    type="button"
+    class="tc-btn tc-btn--primary"
+    [disabled]="!editable || !hasPending"
+    (click)="requestSave()"
+    aria-label="Save allocation">
+    <i class="pi pi-save" aria-hidden="true"></i>
+    {{ saving ? 'Saving…' : 'Save Allocation' }}
+  </button>
+</tc-saas-page-header>
+
+<section class="ta-context" aria-label="Allocation context">
+  <div class="ta-field">
+    <label class="ta-label" for="ta-year">Academic Year <span aria-hidden="true">*</span></label>
+    <p-dropdown
+      inputId="ta-year"
+      [options]="yearOptions"
+      [(ngModel)]="yearId"
+      (onChange)="onYearChange()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select academic year"
+      appendTo="body"
+      styleClass="ta-dd">
+    </p-dropdown>
+  </div>
+  <div class="ta-field">
+    <label class="ta-label" for="ta-group">Academic Group <span aria-hidden="true">*</span></label>
+    <p-dropdown
+      inputId="ta-group"
+      [options]="groupOptions"
+      [(ngModel)]="groupId"
+      (onChange)="onGroupChange()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select academic group"
+      [disabled]="!yearId"
+      appendTo="body"
+      styleClass="ta-dd">
+    </p-dropdown>
+  </div>
+  <fieldset class="ta-scope" *ngIf="board?.hasSections; else noSectionsTpl">
+    <legend class="ta-label">Section Scope</legend>
+    <div class="ta-scope__cards" role="radiogroup" aria-label="Section scope">
+      <button type="button" role="radio" class="ta-scope__card" [attr.aria-checked]="scope === 'ALL_SECTIONS'"
+        [class.is-active]="scope === 'ALL_SECTIONS'" (click)="setScope('ALL_SECTIONS')">
+        <span class="ta-scope__dot" aria-hidden="true"></span>
+        <span><strong>All Sections</strong><small>Assign one teacher to every section</small></span>
+      </button>
+      <button type="button" role="radio" class="ta-scope__card" [attr.aria-checked]="scope === 'SELECTED_SECTIONS'"
+        [class.is-active]="scope === 'SELECTED_SECTIONS'" (click)="setScope('SELECTED_SECTIONS')">
+        <span class="ta-scope__dot" aria-hidden="true"></span>
+        <span><strong>Selected Sections</strong><small>Choose specific sections</small></span>
+      </button>
+    </div>
+    <div class="ta-scope__sections" *ngIf="scope === 'SELECTED_SECTIONS'">
+      <button type="button" class="ta-chip" *ngFor="let s of sectionOptions"
+        [class.is-on]="selectedSectionIds.includes(s.sectionId)"
+        [attr.aria-pressed]="selectedSectionIds.includes(s.sectionId)"
+        (click)="toggleSelectedSection(s.sectionId)">{{ s.name }}</button>
+    </div>
+  </fieldset>
+  <ng-template #noSectionsTpl>
+    <p class="ta-note" *ngIf="board">This group has no sections. Teachers are allocated for the whole group.</p>
+  </ng-template>
+</section>
+
+<div class="ta-alert ta-alert--warn" role="status" *ngIf="board?.yearReadOnly">
+  This academic year is historical. Teacher allocation is read only.
+</div>
+<div class="ta-alert ta-alert--info" role="status" *ngIf="board && !canManage">
+  You have view-only access. Teacher allocation can be reviewed but not changed.
+</div>
+<div class="ta-alert" role="alert" *ngIf="formError">{{ formError }}</div>
+
+<div class="ta-pending" role="status" *ngIf="hasPending">
+  <p><strong>{{ changeCount }} unsaved change{{ changeCount === 1 ? '' : 's' }}</strong> — nothing is saved until you choose Save Allocation.</p>
+  <ul>
+    <li *ngFor="let change of pending; let i = index">
+      {{ describeChange(change) }}
+      <button type="button" class="ta-link" (click)="removePending(i)" [attr.aria-label]="'Remove change ' + (i + 1)">Remove</button>
+    </li>
+  </ul>
+  <div class="ta-pending__actions">
+    <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="discardPending()">Discard changes</button>
+    <button type="button" class="tc-btn tc-btn--primary tc-btn--sm" [disabled]="!editable" (click)="requestSave()">Save Allocation</button>
+  </div>
+</div>
+
+<div class="ta-state" *ngIf="loading" role="status">Loading teacher allocation…</div>
+<div class="ta-alert" role="alert" *ngIf="boardError">
+  {{ boardError }}
+  <button type="button" class="ta-link" (click)="onGroupChange()">Retry</button>
+</div>
+<div class="ta-state" *ngIf="!groupId && !loading">Select an academic year and academic group to load teacher allocation.</div>
+
+<ng-container *ngIf="board && !loading">
+  <div class="ta-metrics" role="group" aria-label="Allocation summary">
+    <button type="button" class="ta-metric" [class.is-active]="metricFilter === 'REQUIRING'" (click)="selectMetric('REQUIRING')"
+      [attr.aria-pressed]="metricFilter === 'REQUIRING'">
+      <span class="ta-metric__icon ta-metric__icon--violet"><i class="pi pi-user" aria-hidden="true"></i></span>
+      <span><small>Subjects Requiring Teachers</small><strong>{{ board.summary.subjectsRequiringTeachers }}</strong></span>
+      <i class="pi pi-chevron-right ta-metric__go" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ta-metric" [class.is-active]="metricFilter === 'FULL'" (click)="selectMetric('FULL')"
+      [attr.aria-pressed]="metricFilter === 'FULL'">
+      <span class="ta-metric__icon ta-metric__icon--green"><i class="pi pi-verified" aria-hidden="true"></i></span>
+      <span><small>Fully Allocated</small><strong>{{ board.summary.fullyAllocated }}</strong></span>
+      <i class="pi pi-chevron-right ta-metric__go" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ta-metric" [class.is-active]="metricFilter === 'WARNINGS'" (click)="selectMetric('WARNINGS')"
+      [attr.aria-pressed]="metricFilter === 'WARNINGS'">
+      <span class="ta-metric__icon ta-metric__icon--amber"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i></span>
+      <span><small>Workload Warnings</small><strong>{{ board.summary.workloadWarnings }}</strong></span>
+      <i class="pi pi-chevron-right ta-metric__go" aria-hidden="true"></i>
+    </button>
+    <div class="ta-metric ta-metric--static" aria-disabled="true">
+      <span class="ta-metric__icon ta-metric__icon--red"><i class="pi pi-calendar-times" aria-hidden="true"></i></span>
+      <span>
+        <small>Timetable Conflicts</small>
+        <strong *ngIf="board.summary.timetableConflicts !== null; else notAvailable">{{ board.summary.timetableConflicts }}</strong>
+        <ng-template #notAvailable><strong class="ta-muted">Not available yet</strong></ng-template>
+      </span>
+    </div>
+  </div>
+
+  <div class="ta-toolbar">
+    <input class="ta-search" type="search" placeholder="Search subjects…" aria-label="Search subjects"
+      [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()" />
+    <p-dropdown [options]="subjectOptions" [(ngModel)]="subjectFilter" (onChange)="onFilterChange()" optionLabel="label"
+      optionValue="value" placeholder="All Subjects" [showClear]="true" appendTo="body" styleClass="ta-dd ta-dd--sm"></p-dropdown>
+    <p-dropdown [options]="[{label: 'Assigned', value: 'ASSIGNED'}, {label: 'Partially assigned', value: 'PARTIAL'}, {label: 'Unassigned', value: 'UNASSIGNED'}]"
+      [(ngModel)]="statusFilter" (onChange)="onFilterChange()" optionLabel="label" optionValue="value"
+      placeholder="All Status" appendTo="body" styleClass="ta-dd ta-dd--sm"></p-dropdown>
+    <p-dropdown [options]="teacherOptions" [(ngModel)]="teacherFilter" (onChange)="onFilterChange()" optionLabel="label"
+      optionValue="value" placeholder="All Teachers" [showClear]="true" appendTo="body" styleClass="ta-dd ta-dd--sm"></p-dropdown>
+    <button type="button" class="ta-link" *ngIf="hasFilters" (click)="clearFilters()">Clear Filters</button>
+  </div>
+
+  <div class="ta-table-wrap" *ngIf="board.rows.length; else emptyTpl">
+    <table class="ta-table">
+      <thead>
+        <tr>
+          <th scope="col">Subject</th>
+          <th scope="col">Code</th>
+          <th scope="col">Weekly Periods</th>
+          <th scope="col">Section Scope</th>
+          <th scope="col">Assigned Teacher</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of pagedRows; trackBy: trackRow">
+          <td class="ta-subject"><span class="ta-subject__icon" aria-hidden="true"><i class="pi pi-book"></i></span>{{ row.subjectName }}</td>
+          <td class="ta-code">{{ row.subjectCode }}</td>
+          <td>{{ row.weeklyPeriods }}</td>
+          <td>{{ sectionScopeLabel(row) }}</td>
+          <td>
+            <div class="ta-teacher" *ngIf="row.assignedTeacher; else noTeacher">
+              <span class="ta-avatar" aria-hidden="true">{{ initials(row.assignedTeacher.name) }}</span>
+              <span>
+                <strong>{{ row.assignedTeacher.name }}</strong>
+                <small>{{ row.assignedTeacher.staffCode }}<ng-container *ngIf="row.workloadStatus"> · {{ workloadLabel(row.workloadStatus) }}</ng-container></small>
+              </span>
+            </div>
+            <ng-template #noTeacher>
+              <div class="ta-teacher">
+                <span class="ta-avatar ta-avatar--empty" aria-hidden="true"><i class="pi pi-user"></i></span>
+                <span>
+                  <strong>{{ row.multipleTeachers ? 'Several teachers' : 'Not assigned' }}</strong>
+                  <small>{{ row.multipleTeachers ? 'Sections use different teachers' : 'Requires assignment' }}</small>
+                </span>
+              </div>
+            </ng-template>
+          </td>
+          <td>
+            <span class="ta-status" [class.ta-status--ok]="row.status === 'ASSIGNED'"
+              [class.ta-status--warn]="row.status === 'PARTIAL'" [class.ta-status--bad]="row.status === 'UNASSIGNED'">
+              {{ statusLabel(row.status) }}
+            </span>
+          </td>
+          <td class="ta-actions">
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && row.status !== 'ASSIGNED'"
+              (click)="openAssign(row)">Assign Teacher</button>
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && row.status === 'ASSIGNED'"
+              (click)="openAssign(row)">Edit</button>
+            <button type="button" class="ta-kebab" *ngIf="editable && row.groupTeacher" (click)="clearGroupTeacher(row)"
+              [attr.aria-label]="'Clear group teacher for ' + row.subjectName" title="Clear group teacher">
+              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="ta-pager">
+      <span>Showing {{ filteredRows.length ? (page - 1) * pageSize + 1 : 0 }}–{{ (page - 1) * pageSize + pagedRows.length }} of {{ filteredRows.length }} subjects</span>
+      <div class="ta-pager__controls">
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" [disabled]="page <= 1" (click)="setPage(page - 1)">Previous</button>
+        <span>Page {{ page }} of {{ pageCount }}</span>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" [disabled]="page >= pageCount" (click)="setPage(page + 1)">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyTpl>
+    <div class="ta-state">
+      <p>No subjects are mapped to this academic group yet.</p>
+      <p class="ta-note">Map subjects in Subject Mapping first, then assign teachers here.</p>
+    </div>
+  </ng-template>
+</ng-container>
+
+<p-dialog header="Assign Teacher" [(visible)]="assignOpen" [modal]="true" [style]="{ width: 'min(640px, 96vw)' }"
+  [draggable]="false" styleClass="ta-dialog" (onHide)="assignError = null">
+  <ng-container *ngIf="assignRow">
+    <p class="ta-dialog__subject"><strong>{{ assignRow.subjectName }}</strong> · {{ assignRow.subjectCode }} · {{ assignRow.weeklyPeriods }} weekly periods</p>
+
+    <fieldset class="ta-dialog__scope" *ngIf="board?.hasSections">
+      <legend class="ta-label">Assignment scope</legend>
+      <label><input type="radio" name="assignScope" value="ALL_SECTIONS" [(ngModel)]="assignScope" /> All Sections</label>
+      <label><input type="radio" name="assignScope" value="SELECTED_SECTIONS" [(ngModel)]="assignScope" /> Selected Sections</label>
+      <div class="ta-scope__sections" *ngIf="assignScope === 'SELECTED_SECTIONS'">
+        <button type="button" class="ta-chip" *ngFor="let s of sectionOptions"
+          [class.is-on]="assignSectionIds.includes(s.sectionId)" [attr.aria-pressed]="assignSectionIds.includes(s.sectionId)"
+          (click)="toggleAssignSection(s.sectionId)">{{ s.name }}</button>
+      </div>
+      <label class="ta-dialog__replace" *ngIf="assignScope === 'ALL_SECTIONS' && overriddenSectionsForAssign.length">
+        <input type="checkbox" [(ngModel)]="replaceOverrides" />
+        Also replace the section-specific teachers ({{ overriddenSectionsForAssign.join(', ') }})
+      </label>
+      <p class="ta-note" *ngIf="assignScope === 'ALL_SECTIONS' && overriddenSectionsForAssign.length && !replaceOverrides">
+        Sections with their own teacher keep it: {{ overriddenSectionsForAssign.join(', ') }}.
+      </p>
+    </fieldset>
+
+    <h3 class="ta-dialog__heading">Eligible teachers</h3>
+    <p class="ta-note">Ranked by subject preference, then by current workload. Preference does not replace the workload check.</p>
+    <div class="ta-state" *ngIf="candidatesLoading">Loading teachers…</div>
+    <ul class="ta-candidates" *ngIf="!candidatesLoading" role="radiogroup" aria-label="Teachers">
+      <li *ngFor="let c of candidates" class="ta-candidate" [class.is-selected]="selectedCandidateId === c.staffId">
+        <label>
+          <input type="radio" name="candidate" [value]="c.staffId" [(ngModel)]="selectedCandidateId" />
+          <span class="ta-avatar" aria-hidden="true">{{ initials(c.name) }}</span>
+          <span class="ta-candidate__body">
+            <strong>{{ c.name }}</strong>
+            <small>{{ c.staffCode }}
+              <ng-container *ngIf="c.primarySubjectName"> · Primary: {{ c.primarySubjectName }}</ng-container>
+              <ng-container *ngIf="c.secondarySubjectName"> · Secondary: {{ c.secondarySubjectName }}</ng-container>
+            </small>
+          </span>
+          <span class="ta-rank" [class.ta-rank--1]="c.preferenceRank === 1" [class.ta-rank--2]="c.preferenceRank === 2">
+            {{ c.preferenceRank === 1 ? 'Primary subject' : c.preferenceRank === 2 ? 'Secondary subject' : 'Other teacher' }}
+          </span>
+          <span class="ta-load" [class.ta-load--warn]="c.workloadStatus === 'EXCEEDS_LIMIT'">
+            {{ c.projectedPeriods }}/{{ c.maxPeriods }} periods · {{ workloadLabel(c.workloadStatus) }}
+          </span>
+        </label>
+      </li>
+    </ul>
+    <p class="ta-state" *ngIf="!candidatesLoading && !candidates.length">No active teaching staff are available.</p>
+    <div class="ta-alert" role="alert" *ngIf="assignError">{{ assignError }}</div>
+  </ng-container>
+  <div class="ta-dialog__footer">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="assignOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="selectedCandidateId === null" (click)="confirmAssign()">
+      Stage Assignment
+    </button>
+  </div>
+</p-dialog>
+
+<p-dialog header="Review impact before saving" [(visible)]="previewOpen" [modal]="true" [style]="{ width: 'min(640px, 96vw)' }"
+  [draggable]="false" styleClass="ta-dialog">
+  <ng-container *ngIf="preview">
+    <div class="ta-alert ta-alert--warn" *ngFor="let w of preview.workloadWarnings" role="status">
+      <strong>{{ w.staffName }}</strong> would teach {{ w.projectedPeriods }} periods a week, above the limit of {{ w.maxPeriods }}.
+    </div>
+    <h3 class="ta-dialog__heading">Sections that will change ({{ preview.affectedSections.length }})</h3>
+    <ul class="ta-impacts" *ngIf="preview.affectedSections.length; else noSections">
+      <li *ngFor="let a of preview.affectedSections">
+        <strong>{{ a.subjectName }}</strong> · {{ a.sectionName }}: {{ a.fromTeacher || 'Not assigned' }} → {{ a.toTeacher || 'Not assigned' }}
+      </li>
+    </ul>
+    <ng-template #noSections><p class="ta-note">No section teacher changes.</p></ng-template>
+    <ul class="ta-impacts" *ngIf="preview.impacts.length">
+      <li *ngFor="let i of preview.impacts">
+        <strong>{{ i.subjectName }}</strong>: {{ i.message }}
+      </li>
+    </ul>
+    <p class="ta-note" *ngIf="!preview.impacts.length">No timetable lessons or over-capacity teachers are affected.</p>
+  </ng-container>
+  <div class="ta-dialog__footer">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="previewOpen = false">Go back</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="confirmPreview()">Confirm and save</button>
+  </div>
+</p-dialog>
