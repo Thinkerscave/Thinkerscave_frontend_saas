@@ -2,7 +2,8 @@ export type AcademicsWorkspacePage =
   | 'overview'
   | 'academic-year'
   | 'academicGroups'
-  | 'subjects-mapping'
+  | 'subjects'
+  | 'subject-mapping'
   | 'teacher-allocation'
   | 'timetable'
   | 'teacher-arrangement'
@@ -66,12 +67,10 @@ export interface SubjectModel {
   subjectName: string;
   description?: string;
   subjectType?: string;
-  category?: string;
   credits?: number;
   theoryHours?: number;
   labHours?: number;
   practicalHours?: number;
-  weeklyPeriods?: number;
   applicableLevels?: string;
   isActive?: boolean;
 }

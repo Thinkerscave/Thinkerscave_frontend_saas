@@ -392,8 +392,8 @@ export class AcademicGroupsPageComponent implements OnInit {
         label: 'View Subject Mapping',
         icon: 'pi pi-book',
         command: () => void this.router.navigate(
-          ['/app/academics/academic-groups', cls.academicGroupId, 'subjects'],
-          { queryParams: { from: 'academicGroups' } }
+          ['/app/academics/subject-mapping'],
+          { queryParams: { academicYearId: cls.academicYearId, academicGroupId: cls.academicGroupId } }
         )
       });
     }

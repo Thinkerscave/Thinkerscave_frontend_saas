@@ -9,7 +9,7 @@ export class AcademicsNavService {
 
   private readonly fromMap: Record<string, string> = {
     overview: '/app/academics/overview',
-    subjects: '/app/academics/subjects-mapping',
+    subjects: '/app/academics/subjects',
     academicGroups: '/app/academics/academic-groups',
     calendar: '/app/academics/academic-calendar'
   };

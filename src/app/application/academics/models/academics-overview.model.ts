@@ -52,9 +52,8 @@ export interface AcademicsOverview {
     subjectId: number;
     subjectName: string;
     code?: string;
-    category?: string;
+    subjectType?: string;
     mappedAcademicGroupCount?: number;
-    defaultWeeklyPeriods?: number;
     teacherStatus?: string;
   }[];
   setupCompletePercent?: number;

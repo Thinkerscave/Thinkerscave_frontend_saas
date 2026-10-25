@@ -60,13 +60,13 @@
         <span>Students</span>
         <small>All Active</small>
       </a>
-      <a class="ov-card" routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }">
+      <a class="ov-card" routerLink="/app/academics/subjects" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-book ov-card__icon"></i>
         <strong>{{ ov.structureCounts.subjectsTotal }}</strong>
         <span>Subjects</span>
         <small>{{ ov.structureCounts.subjectsActive }} Active · {{ ov.structureCounts.subjectsTotal - ov.structureCounts.subjectsActive }} Inactive</small>
       </a>
-      <a class="ov-card" routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }">
+      <a class="ov-card" routerLink="/app/academics/subject-mapping" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-link ov-card__icon"></i>
         <strong>{{ ov.mapping.subjectsMapped }}/{{ ov.mapping.subjectsTotal }}</strong>
         <span>Subject Mapping</span>
@@ -114,17 +114,16 @@
         </table>
         <table class="ov-table" *ngIf="snapshotTab === 'subjects'">
           <thead>
-            <tr><th>Subject</th><th>Category</th><th>Academic Groups</th><th>Periods</th><th>Teacher</th></tr>
+            <tr><th>Subject</th><th>Type</th><th>Academic Groups</th><th>Teacher</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let s of ov.topSubjects">
               <td><strong>{{ s.subjectName }}</strong> <code *ngIf="s.code">{{ s.code }}</code></td>
-              <td>{{ s.category || '—' }}</td>
+              <td>{{ subjectTypeLabel(s.subjectType) || '—' }}</td>
               <td>{{ s.mappedAcademicGroupCount ?? '—' }}</td>
-              <td>{{ s.defaultWeeklyPeriods ?? '—' }}</td>
               <td>{{ s.teacherStatus || '—' }}</td>
             </tr>
-            <tr *ngIf="!ov.topSubjects?.length"><td colspan="5" class="ov-muted">No subjects yet</td></tr>
+            <tr *ngIf="!ov.topSubjects?.length"><td colspan="4" class="ov-muted">No subjects yet</td></tr>
           </tbody>
         </table>
       </article>
@@ -226,8 +225,8 @@
       <a routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
       <a routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }"><i class="pi pi-th-large"></i> Create Academic Group</a>
       <a routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }"><i class="pi pi-sitemap"></i> Add Section</a>
-      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-book"></i> Add Subject</a>
-      <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-link"></i> Map Subjects</a>
+      <a routerLink="/app/academics/subjects" [queryParams]="{ from: 'overview' }"><i class="pi pi-book"></i> Add Subject</a>
+      <a routerLink="/app/academics/subject-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-link"></i> Map Subjects</a>
       <a routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'overview' }"><i class="pi pi-user-edit"></i> Assign Teachers</a>
       <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-cog"></i> Configure Timetable</a>
       <a routerLink="/app/academics/timetable" [queryParams]="{ from: 'overview' }"><i class="pi pi-sparkles"></i> Generate Timetable</a>

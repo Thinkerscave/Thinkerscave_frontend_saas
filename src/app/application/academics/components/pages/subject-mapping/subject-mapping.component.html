@@ -1,0 +1,433 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #rowMenu [popup]="true" [model]="rowMenuItems"></p-menu>
+
+<div class="sub-page sub-map acad-page">
+  <tc-saas-page-header>
+    <div class="sub-header-actions">
+      <span class="sub-unsaved" *ngIf="changeCount > 0" role="status">
+        You have {{ changeCount }} unsaved change{{ changeCount === 1 ? '' : 's' }}
+      </span>
+      <button type="button" class="tc-btn tc-btn--outline" (click)="backToDirectory()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i> Back
+      </button>
+      <button
+        *ngIf="showMutations"
+        type="button"
+        class="tc-btn tc-btn--primary"
+        [disabled]="!canSave"
+        (click)="save()">
+        <i class="pi pi-save" aria-hidden="true"></i>
+        {{ saving ? 'Saving…' : 'Save Mapping' }}
+      </button>
+    </div>
+  </tc-saas-page-header>
+
+  <div class="sub-alert" role="alert" *ngIf="formError">
+    <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+    <span>{{ formError }}</span>
+  </div>
+
+  <div class="sub-alert sub-alert--warn" *ngIf="board?.yearReadOnly" role="status">
+    <i class="pi pi-lock" aria-hidden="true"></i>
+    <span>This academic year is historical. Subject mapping is read only.</span>
+  </div>
+  <div class="sub-alert sub-alert--info" *ngIf="board && !canManage" role="status">
+    <i class="pi pi-eye" aria-hidden="true"></i>
+    <span>You have view-only access. Subject mapping can be reviewed but not changed.</span>
+  </div>
+
+  <section class="sub-context" aria-label="Mapping context">
+    <div class="sub-field">
+      <label class="sub-field__label" for="sub-map-year">Academic Year <span class="sub-req" aria-hidden="true">*</span></label>
+      <p-dropdown
+        inputId="sub-map-year"
+        [options]="yearOptions"
+        [(ngModel)]="yearId"
+        (onChange)="onYearChange($event.value)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select academic year"
+        [disabled]="saving"
+        appendTo="body"
+        styleClass="sub-context__dropdown">
+      </p-dropdown>
+    </div>
+
+    <div class="sub-field">
+      <label class="sub-field__label" for="sub-map-group">Academic Group <span class="sub-req" aria-hidden="true">*</span></label>
+      <p-dropdown
+        inputId="sub-map-group"
+        [options]="groupOptions"
+        [(ngModel)]="groupId"
+        (onChange)="onGroupChange($event.value)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select academic group"
+        [disabled]="yearId == null || saving"
+        appendTo="body"
+        styleClass="sub-context__dropdown">
+      </p-dropdown>
+    </div>
+
+    <div class="sub-scope" *ngIf="!board || board.hasSections; else noSectionsTpl">
+      <span class="sub-field__label" id="sub-scope-label">Section Scope</span>
+      <div class="sub-scope__options" role="radiogroup" aria-labelledby="sub-scope-label">
+        <button
+          type="button"
+          role="radio"
+          class="sub-scope__card"
+          [class.is-selected]="scope === scopeAll"
+          [attr.aria-checked]="scope === scopeAll"
+          [disabled]="!editable"
+          (click)="onScopeSelect(scopeAll)">
+          <strong>All Sections</strong>
+          <span>Apply subjects to all sections</span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          class="sub-scope__card"
+          [class.is-selected]="scope === scopeSelected"
+          [attr.aria-checked]="scope === scopeSelected"
+          [disabled]="!editable"
+          (click)="onScopeSelect(scopeSelected)">
+          <strong>Selected Sections</strong>
+          <span>Choose specific sections</span>
+        </button>
+      </div>
+      <div class="sub-chip-list" *ngIf="scope === scopeSelected && hasSections" aria-label="Sections for new subjects">
+        <button
+          type="button"
+          class="sub-chip"
+          *ngFor="let section of activeSections"
+          [class.is-on]="isSectionSelected(section.sectionId)"
+          [attr.aria-pressed]="isSectionSelected(section.sectionId)"
+          [disabled]="!editable"
+          (click)="toggleSelectedSection(section.sectionId)">
+          {{ section.name }}
+        </button>
+      </div>
+    </div>
+    <ng-template #noSectionsTpl>
+      <div class="sub-scope sub-scope--note">
+        <span class="sub-field__label">Section Scope</span>
+        <p class="sub-muted">This group has no sections. The curriculum applies to the whole group.</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <div class="sub-empty sub-empty--gate" *ngIf="!contextReady">
+    <i class="pi pi-sitemap" aria-hidden="true"></i>
+    <p>Select an academic year and academic group to load subject mapping.</p>
+  </div>
+
+  <div class="sub-alert" role="alert" *ngIf="contextReady && boardError">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <span>{{ boardError }}</span>
+    <button type="button" class="tc-btn tc-btn--sm" (click)="loadBoard()">Retry</button>
+  </div>
+
+  <div class="sub-empty" *ngIf="contextReady && boardLoading && !board">
+    <p>Loading subject mapping…</p>
+  </div>
+
+  <div class="sub-map-grid" *ngIf="contextReady && board">
+    <section class="sub-panel sub-avail" aria-labelledby="sub-avail-heading">
+      <div class="sub-panel__head">
+        <div>
+          <h2 id="sub-avail-heading">Available Subjects</h2>
+          <p>Select subjects to add to this academic group.</p>
+        </div>
+      </div>
+
+      <div class="sub-avail__tools">
+        <input
+          class="sub-search"
+          type="search"
+          placeholder="Search subjects..."
+          [ngModel]="availableQuery"
+          (ngModelChange)="availableQuery = $event; onAvailableQueryChange($event)"
+          aria-label="Search available subjects" />
+        <p-dropdown
+          [options]="typeOptions"
+          [(ngModel)]="availableType"
+          (onChange)="loadAvailable(true)"
+          optionLabel="label"
+          optionValue="value"
+          ariaLabel="Filter by subject type"
+          styleClass="sub-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+
+      <div class="sub-alert" role="alert" *ngIf="availableError">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <span>{{ availableError }}</span>
+        <button type="button" class="tc-btn tc-btn--sm" (click)="loadAvailable()">Retry</button>
+      </div>
+
+      <ul class="sub-avail-list" *ngIf="availableRows.length > 0; else availableEmptyTpl" [class.sub-results--refreshing]="availableLoading">
+        <li class="sub-avail-row" *ngFor="let item of availableRows" [class.is-mapped]="item.mapped">
+          <input
+            type="checkbox"
+            class="sub-avail-row__check"
+            [id]="'sub-avail-' + item.subjectId"
+            [checked]="isChecked(item)"
+            [disabled]="!canToggle(item)"
+            (change)="onAvailableToggle(item, $any($event.target).checked)" />
+          <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(item.subjectType)" aria-hidden="true">
+            <i [class]="typeIcon(item.subjectType)"></i>
+          </span>
+          <label class="sub-avail-row__text" [attr.for]="'sub-avail-' + item.subjectId">
+            <strong>{{ item.subjectName }}</strong>
+            <span class="sub-muted sub-small">{{ item.subjectCode }} | {{ typeLabel(item.subjectType) }}</span>
+          </label>
+          <span class="sub-avail-row__badges">
+            <span class="sub-badge" [class.sub-badge--active]="item.subjectActive" [class.sub-badge--inactive]="!item.subjectActive">
+              {{ item.subjectActive ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="sub-badge sub-badge--mapped" *ngIf="item.mapped">Mapped</span>
+          </span>
+        </li>
+      </ul>
+      <ng-template #availableEmptyTpl>
+        <div class="sub-empty sub-empty--compact" *ngIf="!availableLoading">
+          <p>No subjects match your search.</p>
+        </div>
+      </ng-template>
+
+      <app-paginator
+        *ngIf="availableTotal > 0"
+        [page]="availablePage"
+        [rows]="availablePageSize"
+        [totalRecords]="availableTotal"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="subjects"
+        ariaLabel="Available subjects pagination"
+        (pageChange)="onAvailablePageChange($event)">
+      </app-paginator>
+    </section>
+
+    <section class="sub-panel sub-mapped" aria-labelledby="sub-mapped-heading">
+      <div class="sub-panel__head">
+        <div>
+          <h2 id="sub-mapped-heading">Mapped Subjects ({{ mappedCount }})</h2>
+          <p>Configure curriculum details for the selected subjects.</p>
+        </div>
+        <button
+          *ngIf="showMutations"
+          type="button"
+          class="tc-btn tc-btn--primary tc-btn--sm"
+          [disabled]="stagedCount === 0 || saving || !editable"
+          (click)="addSelectedSubjects()">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          Add Selected Subjects<span *ngIf="stagedCount > 0"> ({{ stagedCount }})</span>
+        </button>
+      </div>
+
+      <div class="sub-table-wrap" *ngIf="rows.length > 0; else noRowsTpl">
+        <table class="sub-table sub-mapped-table">
+          <thead>
+            <tr>
+              <th scope="col">Subject</th>
+              <th scope="col">Requirement</th>
+              <th scope="col">Weekly Periods</th>
+              <th scope="col">Sections</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="sub-table__actions" aria-label="Actions" *ngIf="showMutations"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows" [class.sub-row--removed]="row.removed">
+              <td>
+                <div class="sub-table__name">
+                  <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(row.subjectType)" aria-hidden="true">
+                    <i [class]="typeIcon(row.subjectType)"></i>
+                  </span>
+                  <div>
+                    <strong>{{ row.subjectName }}</strong>
+                    <div class="sub-muted sub-small">
+                      {{ row.subjectCode }}<ng-container *ngIf="!row.subjectActive"> · Inactive</ng-container>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <p-dropdown
+                  [options]="requirementOptions"
+                  [ngModel]="row.requirement"
+                  (ngModelChange)="row.requirement = $event; markRowChanged()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [disabled]="!editable || row.removed"
+                  [ariaLabel]="'Requirement for ' + row.subjectName"
+                  appendTo="body"
+                  styleClass="sub-req-dd">
+                </p-dropdown>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="sub-weekly"
+                  [min]="weeklyMin"
+                  [max]="weeklyMax"
+                  step="1"
+                  [ngModel]="row.weeklyPeriods"
+                  (ngModelChange)="row.weeklyPeriods = $event; markRowChanged()"
+                  [disabled]="!editable || row.removed"
+                  [attr.aria-invalid]="!isValidWeekly(row)"
+                  [attr.aria-label]="'Weekly periods for ' + row.subjectName" />
+                <span class="sub-field__error" *ngIf="!isValidWeekly(row) && !row.removed">
+                  Enter {{ weeklyMin }}–{{ weeklyMax }}
+                </span>
+              </td>
+              <td>
+                <div>{{ sectionsLabel(row, totalSections) }}</div>
+                <div class="sub-muted sub-small" *ngIf="row.scope === scopeSelected && hasSections && row.sectionIds.length < totalSections">
+                  {{ sectionNamesFor(row) }}
+                </div>
+              </td>
+              <td>
+                <span class="sub-badge" [ngClass]="statusClass(row)">{{ statusLabel(row) }}</span>
+                <div class="sub-muted sub-small" *ngIf="row.saved && (row.saved.teacherAllocationCount || row.saved.timetableEntryCount)">
+                  {{ row.saved.teacherAllocationCount }} teacher · {{ row.saved.timetableEntryCount }} timetable
+                </div>
+              </td>
+              <td class="sub-table__actions" *ngIf="showMutations">
+                <button
+                  type="button"
+                  class="sub-icon-btn"
+                  (click)="buildRowMenu(row); rowMenu.toggle($event)"
+                  [attr.aria-label]="'More actions for ' + row.subjectName">
+                  <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noRowsTpl>
+        <div class="sub-empty sub-empty--compact">
+          <i class="pi pi-book" aria-hidden="true"></i>
+          <p>No subjects are mapped yet. Select subjects in Available Subjects, then choose Add Selected Subjects.</p>
+        </div>
+      </ng-template>
+
+      <div class="sub-alert sub-alert--info sub-info-box" *ngIf="hasSections && scope === scopeAll">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <div>
+          <strong>Section Mapping Information</strong>
+          <p>
+            Subjects added here apply to all sections of {{ board.academicGroupName }}.
+            If you want different subjects for specific sections, choose Selected Sections above.
+          </p>
+        </div>
+      </div>
+
+      <footer class="sub-map-footer" *ngIf="showMutations">
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          [disabled]="!canSave"
+          (click)="save()">
+          <i class="pi pi-save" aria-hidden="true"></i>
+          {{ saving ? 'Saving…' : 'Save Mapping' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+</div>
+
+<p-dialog
+  header="Edit sections"
+  [(visible)]="sectionsDialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(520px, 94vw)' }">
+  <p class="sub-muted sub-dialog__lead">
+    Choose the sections of {{ sectionsEditingRow?.subjectName }} that receive this subject. This changes this subject only.
+  </p>
+  <div class="sub-scope__options" role="radiogroup" aria-label="Section coverage">
+    <button
+      type="button"
+      role="radio"
+      class="sub-scope__card"
+      [class.is-selected]="sectionsDraftScope === scopeAll"
+      [attr.aria-checked]="sectionsDraftScope === scopeAll"
+      (click)="setSectionsDraftScope(scopeAll)">
+      <strong>All Sections</strong>
+      <span>Every active section of the group</span>
+    </button>
+    <button
+      type="button"
+      role="radio"
+      class="sub-scope__card"
+      [class.is-selected]="sectionsDraftScope === scopeSelected"
+      [attr.aria-checked]="sectionsDraftScope === scopeSelected"
+      (click)="setSectionsDraftScope(scopeSelected)">
+      <strong>Selected Sections</strong>
+      <span>Choose specific sections</span>
+    </button>
+  </div>
+  <div class="sub-chip-list sub-dialog__chips" *ngIf="sectionsDraftScope === scopeSelected" aria-label="Sections">
+    <button
+      type="button"
+      class="sub-chip"
+      *ngFor="let section of activeSections"
+      [class.is-on]="isSectionsDraftSelected(section.sectionId)"
+      [attr.aria-pressed]="isSectionsDraftSelected(section.sectionId)"
+      (click)="toggleSectionsDraft(section.sectionId)">
+      {{ section.name }}
+    </button>
+  </div>
+  <div class="sub-alert" role="alert" *ngIf="sectionsError">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <span>{{ sectionsError }}</span>
+  </div>
+  <div class="sub-form__actions">
+    <button type="button" class="tc-btn" (click)="sectionsDialogOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="applySectionsDraft()">Apply sections</button>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Confirm mapping changes"
+  [(visible)]="impactDialogOpen"
+  (onHide)="cancelImpact()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(640px, 94vw)' }">
+  <p class="sub-muted sub-dialog__lead">
+    These changes affect existing teacher allocations or timetable entries. Review them before saving.
+  </p>
+  <div class="sub-table-wrap">
+    <table class="sub-table">
+      <thead>
+        <tr>
+          <th scope="col">Subject</th>
+          <th scope="col">Impact</th>
+          <th scope="col">Teacher allocations</th>
+          <th scope="col">Timetable entries</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let impact of impacts">
+          <td>
+            <strong>{{ impact.subjectName }}</strong>
+            <div class="sub-muted sub-small">{{ impact.message }}</div>
+          </td>
+          <td>{{ impact.type === 'REMOVAL' ? 'Removed from mapping' : 'Schedule change' }}</td>
+          <td>{{ impact.teacherAllocationCount }}</td>
+          <td>{{ impact.timetableEntryCount }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sub-form__actions">
+    <button type="button" class="tc-btn" (click)="cancelImpact()" [disabled]="saving">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="confirmImpactSave()" [disabled]="saving">
+      {{ saving ? 'Saving…' : 'Confirm and save' }}
+    </button>
+  </div>
+</p-dialog>

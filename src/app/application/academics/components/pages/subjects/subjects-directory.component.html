@@ -1,0 +1,231 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #subjectMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="sub-page acad-page">
+  <tc-saas-page-header>
+    <div class="sub-header-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="openMapping()">
+        <i class="pi pi-book" aria-hidden="true"></i>
+        Subject Mapping
+      </button>
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        *tcHasPerm="resource; action: 'manage'"
+        (click)="openCreate()">
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        Add Subject
+      </button>
+    </div>
+  </tc-saas-page-header>
+
+  <tc-page-skeleton
+    *ngIf="loading && !loadedOnce"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="5">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="loadedOnce || loadError">
+    <div class="acad-toolbar" *ngIf="loadedOnce">
+      <input
+        class="acad-toolbar__search"
+        type="search"
+        placeholder="Search subjects by name or code..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search subjects by name or code" />
+      <div class="acad-toolbar__filters">
+        <p-dropdown
+          [options]="typeOptions"
+          [(ngModel)]="typeFilter"
+          (onChange)="onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          ariaLabel="Subject type"
+          styleClass="sub-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="statusFilter"
+          (onChange)="onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          ariaLabel="Status"
+          styleClass="sub-filter-dd"
+          appendTo="body">
+        </p-dropdown>
+        <button type="button" class="tc-btn tc-btn--sm" *ngIf="hasFilters" (click)="clearFilters()">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+          Clear filters
+        </button>
+      </div>
+      <div class="acad-toolbar__end">
+        <app-grid-table-toggle
+          [mode]="viewMode"
+          (modeChange)="onViewModeChange($event)"
+          ariaLabel="View mode">
+        </app-grid-table-toggle>
+      </div>
+    </div>
+
+    <div class="sub-alert" role="alert" *ngIf="loadError && !loading">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ loadError }}</span>
+      <button type="button" class="tc-btn tc-btn--sm" (click)="reload()">Retry</button>
+    </div>
+
+    <div class="sub-empty" *ngIf="!loading && !loadError && totalElements === 0">
+      <ng-container *ngIf="hasFilters; else noSubjectsTpl">
+        <i class="pi pi-filter-slash" aria-hidden="true"></i>
+        <h3>No subjects match your filters</h3>
+        <p>Try a different search or change the filters.</p>
+        <button type="button" class="tc-btn" (click)="clearFilters()">Clear filters</button>
+      </ng-container>
+      <ng-template #noSubjectsTpl>
+        <i class="pi pi-book" aria-hidden="true"></i>
+        <h3>No subjects yet</h3>
+        <p>Create reusable subjects, then map them to academic groups.</p>
+        <button
+          type="button"
+          class="tc-btn tc-btn--primary"
+          *tcHasPerm="resource; action: 'manage'"
+          (click)="openCreate()">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          Add Subject
+        </button>
+      </ng-template>
+    </div>
+
+    <ng-container *ngIf="subjects.length > 0">
+      <div class="sub-results" [class.sub-results--refreshing]="refreshing">
+        <div class="sub-grid acad-stagger" *ngIf="viewMode === 'grid'; else tableTpl">
+          <article
+            class="sub-card acad-card-clickable"
+            *ngFor="let s of subjects"
+            [class.sub-card--inactive]="!s.active"
+            (click)="openDetails(s)"
+            (keydown.enter)="openDetails(s)"
+            tabindex="0"
+            role="link"
+            [attr.aria-label]="'View details for ' + s.name">
+            <div class="sub-card__top">
+              <div class="sub-card__identity">
+                <span class="sub-icon" [ngClass]="'sub-icon--' + typeTone(s.subjectType)" aria-hidden="true">
+                  <i [class]="typeIcon(s.subjectType)"></i>
+                </span>
+                <div style="min-width: 0">
+                  <h2>{{ s.name }}</h2>
+                  <p class="sub-card__meta">
+                    <code class="sub-code">{{ s.code }}</code>
+                    <span aria-hidden="true">|</span>
+                    <span>{{ typeLabel(s.subjectType) }}</span>
+                  </p>
+                </div>
+              </div>
+              <span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">
+                {{ s.active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <div class="sub-card__usage">
+              <i class="pi pi-users sub-muted" aria-hidden="true"></i>
+              <span>{{ usageLabel(s.mappedAcademicGroupCount) }}</span>
+            </div>
+
+            <div class="sub-card__footer" (click)="$event.stopPropagation()">
+              <button type="button" class="sub-link" (click)="openDetails(s)">
+                View Details <span aria-hidden="true">→</span>
+              </button>
+              <button
+                *ngIf="canManage"
+                type="button"
+                class="sub-icon-btn"
+                (click)="buildMenu(s); subjectMenu.toggle($event)"
+                [attr.aria-label]="'More actions for ' + s.name">
+                <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #tableTpl>
+          <div class="sub-table-wrap">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th scope="col">Subject</th>
+                  <th scope="col">Code</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Academic Groups</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="sub-table__actions" aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of subjects" [class.sub-row--removed]="!s.active">
+                  <td>
+                    <div class="sub-table__name">
+                      <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(s.subjectType)" aria-hidden="true">
+                        <i [class]="typeIcon(s.subjectType)"></i>
+                      </span>
+                      <button type="button" class="sub-link" (click)="openDetails(s)">{{ s.name }}</button>
+                    </div>
+                  </td>
+                  <td><code class="sub-code">{{ s.code }}</code></td>
+                  <td>
+                    <span class="sub-type" [ngClass]="'sub-type--' + typeTone(s.subjectType)">{{ typeLabel(s.subjectType) }}</span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="sub-link"
+                      (click)="openMapping(s)"
+                      [attr.aria-label]="'Open subject mapping for ' + s.name">
+                      {{ s.mappedAcademicGroupCount }}
+                    </button>
+                  </td>
+                  <td>
+                    <span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">
+                      {{ s.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="sub-table__actions">
+                    <button
+                      *ngIf="canManage"
+                      type="button"
+                      class="sub-icon-btn"
+                      (click)="buildMenu(s); subjectMenu.toggle($event)"
+                      [attr.aria-label]="'More actions for ' + s.name">
+                      <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-template>
+      </div>
+
+      <app-paginator
+        [page]="page"
+        [rows]="pageSize"
+        [totalRecords]="totalElements"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="subjects"
+        (pageChange)="onPageChange($event)">
+      </app-paginator>
+    </ng-container>
+  </ng-container>
+</div>
+
+<app-subject-form-dialog
+  [visible]="formOpen"
+  (visibleChange)="formOpen = $event"
+  [subject]="editingSubject"
+  (saved)="onFormSaved($event)">
+</app-subject-form-dialog>

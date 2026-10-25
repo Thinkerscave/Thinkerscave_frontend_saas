@@ -11,7 +11,8 @@ export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   overview: 'ACADEMICS_OVERVIEW',
   'academic-year': 'ACADEMICS_ACADEMIC_YEAR',
   'academicGroups': 'ACADEMICS_CLASSES',
-  'subjects-mapping': 'ACADEMICS_SUBJECTS',
+  'subjects': 'ACADEMICS_SUBJECTS',
+  'subject-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
   'teacher-arrangement': 'ACADEMICS_TIMETABLE',
@@ -57,14 +58,25 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'academic-group'
   },
   {
-    page: 'subjects-mapping',
+    page: 'subjects',
     label: 'Subjects',
     title: 'Subjects',
     eyebrow: 'Curriculum configuration',
-    description: 'Create subjects and map them to Academic Groups from the subject or group view.',
+    description: 'Manage reusable subjects and learning activities, then map them to academic groups.',
     icon: 'pi pi-book',
-    route: '/app/academics/subjects-mapping',
+    route: '/app/academics/subjects',
     primaryAction: 'Add Subject',
+    actionMode: 'subject'
+  },
+  {
+    page: 'subject-mapping',
+    label: 'Subject Mapping',
+    title: 'Subject Mapping',
+    eyebrow: 'Curriculum configuration',
+    description: 'Assign subjects to an academic group and configure curriculum details.',
+    icon: 'pi pi-book',
+    route: '/app/academics/subject-mapping',
+    primaryAction: 'Save Mapping',
     actionMode: 'subject'
   },
   {
@@ -165,7 +177,8 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'overview',
       'academic-year',
       'academicGroups',
-      'subjects-mapping',
+      'subjects',
+      'subject-mapping',
       'teacher-allocation',
       'timetable',
       'teacher-arrangement',
@@ -181,7 +194,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
 export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
   { id: 'create-academic-group', label: 'Create Academic Group', helper: 'Add a new Academic Group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'academic-group', pages: ['academicGroups'] },
   { id: 'add-section', label: 'Add section', helper: 'Add a section to a group', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['academicGroups'] },
-  { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects-mapping'] },
+  { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects'] },
   { id: 'assign-teacher', label: 'Assign teacher', helper: 'Fill missing allocations', icon: 'pi pi-user-edit', tone: 'primary', actionMode: 'allocation', pages: ['teacher-allocation'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },

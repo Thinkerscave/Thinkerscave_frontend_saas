@@ -23,7 +23,7 @@ export interface TeacherAllocationRow {
   subjectId: number;
   subjectName: string;
   subjectCode?: string;
-  subjectCategory?: string;
+  subjectType?: string;
   weeklyPeriods: number;
   primaryStaffId?: number | null;
   primaryStaffName?: string | null;

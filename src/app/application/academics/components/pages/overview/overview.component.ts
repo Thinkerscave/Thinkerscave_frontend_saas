@@ -8,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicsOverviewApiService } from '../../../services/academics-overview-api.service';
 import { AcademicsOverview, ACADEMICS_OVERVIEW_RESOURCE } from '../../../models/academics-overview.model';
+import { subjectTypeLabel, SubjectType } from '../../../models/subjects-mapping.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
@@ -27,6 +28,7 @@ export class AcademicsOverviewPageComponent {
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_OVERVIEW_RESOURCE;
+  readonly subjectTypeLabel = (type: string | undefined) => subjectTypeLabel(type as SubjectType | undefined);
   loading = true;
   selectedYearId: number | null = null;
   overview: AcademicsOverview | null = null;

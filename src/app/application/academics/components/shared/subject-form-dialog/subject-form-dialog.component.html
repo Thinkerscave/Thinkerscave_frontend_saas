@@ -1,0 +1,88 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="onDialogVisibleChange($event)"
+  [header]="isEdit ? 'Edit Subject' : 'Add Subject'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!saving"
+  [closeOnEscape]="!saving"
+  [style]="{ width: 'min(520px, 94vw)' }">
+  <p class="sub-muted sub-dialog__subtitle">
+    {{ isEdit
+      ? 'Update the subject details. Existing academic group mappings are not changed.'
+      : 'Create a subject that can be reused across academic groups.' }}
+  </p>
+
+  <form class="sub-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="sub-alert" role="alert" *ngIf="formError">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <span>{{ formError }}</span>
+    </div>
+
+    <div class="sub-field" [class.sub-field--invalid]="fieldError('name')">
+      <label class="sub-field__label" for="sub-name">Subject Name <span class="sub-req" aria-hidden="true">*</span></label>
+      <input
+        id="sub-name"
+        type="text"
+        formControlName="name"
+        placeholder="e.g. Mathematics"
+        [attr.maxlength]="nameMax"
+        [attr.aria-invalid]="!!fieldError('name')" />
+      <span class="sub-field__error" *ngIf="fieldError('name') as msg">{{ msg }}</span>
+    </div>
+
+    <div class="sub-field" [class.sub-field--invalid]="fieldError('code')">
+      <label class="sub-field__label" for="sub-code">
+        Subject Code
+        <i class="pi pi-info-circle" aria-hidden="true" title="Leave blank to generate a unique code"></i>
+      </label>
+      <input
+        id="sub-code"
+        type="text"
+        formControlName="code"
+        placeholder="Auto-generate or enter manually"
+        [attr.maxlength]="codeMax"
+        [attr.aria-invalid]="!!fieldError('code')" />
+      <span class="sub-field__hint">If left blank, a unique code will be generated automatically.</span>
+      <span class="sub-field__error" *ngIf="fieldError('code') as msg">{{ msg }}</span>
+    </div>
+
+    <div class="sub-field" [class.sub-field--invalid]="fieldError('subjectType')">
+      <label class="sub-field__label" for="sub-type">Subject Type <span class="sub-req" aria-hidden="true">*</span></label>
+      <p-dropdown
+        inputId="sub-type"
+        formControlName="subjectType"
+        [options]="typeOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select subject type"
+        appendTo="body"
+        styleClass="sub-dialog__dropdown">
+      </p-dropdown>
+      <span class="sub-field__hint">Examples: Academic Subject, Practical / Lab, Activity</span>
+      <span class="sub-field__error" *ngIf="fieldError('subjectType') as msg">{{ msg }}</span>
+    </div>
+
+    <div class="sub-field" [class.sub-field--invalid]="fieldError('description')">
+      <label class="sub-field__label" for="sub-description">Description</label>
+      <textarea
+        id="sub-description"
+        formControlName="description"
+        rows="3"
+        placeholder="Optional description about this subject"
+        [attr.maxlength]="descriptionMax"></textarea>
+      <div class="sub-field__meta">
+        <span class="sub-field__error" *ngIf="fieldError('description') as msg">{{ msg }}</span>
+        <span class="sub-counter">{{ descriptionLength }}/{{ descriptionMax }}</span>
+      </div>
+    </div>
+
+    <div class="sub-form__actions">
+      <button type="button" class="tc-btn" (click)="close()" [disabled]="saving">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Create Subject') }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

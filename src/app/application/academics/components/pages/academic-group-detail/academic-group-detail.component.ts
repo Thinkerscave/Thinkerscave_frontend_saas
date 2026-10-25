@@ -21,6 +21,8 @@ import { HasPermissionDirective } from '../../../../../shared/directives/has-per
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
+import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
+import { SubjectMappingBoard, SubjectMappingRow } from '../../../models/subjects-mapping.model';
 import {
   ACADEMIC_STAGE_OPTIONS,
   ACADEMICS_ACADEMIC_GROUPS_RESOURCE,
@@ -59,6 +61,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(AcademicGroupsApiService);
+  private readonly subjectsApi = inject(SubjectsMappingApiService);
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -80,6 +83,8 @@ export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
   academicGroupId: number | null = null;
   summary: AcademicGroupSummary | null = null;
   summaryError = false;
+  subjectBoard: SubjectMappingBoard | null = null;
+  subjectsError = false;
   groupMenuItems: MenuItem[] = [];
   formError: string | null = null;
   private wantsAddSection = false;
@@ -110,6 +115,29 @@ export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
 
   get sectionCount(): number {
     return this.cls?.sectionCount ?? this.cls?.sections?.length ?? 0;
+  }
+
+  get subjectPreview(): SubjectMappingRow[] {
+    return (this.subjectBoard?.mappings ?? []).slice(0, 5);
+  }
+
+  get subjectsMoreCount(): number {
+    return Math.max(0, (this.subjectBoard?.mappedCount ?? 0) - this.subjectPreview.length);
+  }
+
+  private loadSubjects(academicGroupId: number): void {
+    this.subjectsError = false;
+    this.subjectsApi.getMappingBoard(academicGroupId).subscribe({
+      next: (board) => {
+        this.subjectBoard = board;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.subjectBoard = null;
+        this.subjectsError = true;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   get studentCount(): number {
@@ -168,6 +196,7 @@ export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
   }
 
   private loadSummary(academicGroupId: number): void {
+    this.loadSubjects(academicGroupId);
     this.api.getGroupSummary(academicGroupId).subscribe({
       next: (summary) => {
         this.summary = summary;

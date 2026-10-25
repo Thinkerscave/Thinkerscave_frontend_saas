@@ -5,6 +5,19 @@
 
 :host { display: block; }
 
+.cd-subjects__hint { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--tc-text-muted, #64748b); }
+.cd-subjects__count { margin: 0 0 0.5rem; font-size: 0.86rem; color: var(--tc-text, #334155); }
+.cd-subjects__list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cd-subjects__list li {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--tc-bg-muted, #f1f5f9);
+  color: var(--tc-heading, #0f172a);
+}
+.cd-subjects__list .cd-subjects__more { color: var(--tc-text-muted, #64748b); }
+.cd-subjects__empty { margin: 0; font-size: 0.84rem; color: var(--tc-text-muted, #64748b); }
+
 .cd-page.acad-page {
   /* gap / padding from _page-rhythm.scss */
 }

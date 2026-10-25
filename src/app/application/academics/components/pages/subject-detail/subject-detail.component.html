@@ -1,281 +1,204 @@
 <p-confirmDialog></p-confirmDialog>
-<p-menu #mapMenu [popup]="true" [model]="menuItems"></p-menu>
+<p-menu #headerMenu [popup]="true" [model]="menuItems"></p-menu>
+<p-menu #usageMenu [popup]="true" [model]="usageMenuItems"></p-menu>
 
-<div class="sd-page acad-page" *ngIf="!loading && !loadError && subject as s; else bootTpl">
-  <tc-saas-page-header>
-    <button
-      type="button"
-      class="tc-btn tc-btn--outline tc-btn--sm"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage"
-      (click)="openEditSubject()">
-      <i class="pi pi-pencil"></i> Edit Subject
-    </button>
-    <button
-      type="button"
-      class="tc-btn tc-btn--primary tc-btn--sm"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage || !availableAcademicGroups.length"
-      (click)="openMapDialog()">
-      <i class="pi pi-plus"></i> Map to Academic Group
-    </button>
-  </tc-saas-page-header>
-
-  <header class="sd-identity">
-    <div class="sd-identity__title">
-      <p class="sd-identity__year">{{ s.academicYearName || 'Academic year' }}</p>
-      <p class="sd-identity__meta">
-        <code>{{ s.code }}</code>
-        <span aria-hidden="true">·</span>
-        <span>{{ categoryLabel(s.category) }}</span>
-        <span aria-hidden="true">·</span>
-        <span class="sd-status" [class.sd-status--active]="s.active" [class.sd-status--inactive]="!s.active">
-          {{ s.active ? 'Active' : 'Inactive' }}
-        </span>
-        <span class="sd-readonly" *ngIf="s.yearReadOnly">· Historical · Read only</span>
-      </p>
-    </div>
-    <p class="sd-summary">
-      {{ mappedAcademicGroups.length }} {{ mappedAcademicGroups.length === 1 ? 'Academic Group' : 'Academic Groups' }} mapped
-      <span aria-hidden="true">·</span>
-      {{ s.defaultWeeklyPeriods }} weekly periods
-    </p>
-  </header>
-
-  <div class="sd-prompt" *ngIf="offerMap && canManage">
-    <p>Subject created. Map it to an Academic Group so it can be taught and scheduled.</p>
-    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!availableAcademicGroups.length" (click)="openMapDialog()">
-      Map to Academic Group
-    </button>
-    <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
-  </div>
-
-  <section class="sd-sections" aria-labelledby="sd-info-heading">
-    <div class="sd-sections__head">
-      <div>
-        <h2 id="sd-info-heading">Subject Information</h2>
-        <p>Core details used across academic groups and timetable setup.</p>
+<div class="sub-page sub-detail acad-page" *ngIf="subject as s; else stateTpl">
+  <header class="sub-hero">
+    <div class="sub-hero__identity">
+      <span class="sub-icon sub-icon--lg" [ngClass]="'sub-icon--' + typeTone(s.subjectType)" aria-hidden="true">
+        <i [class]="typeIcon(s.subjectType)"></i>
+      </span>
+      <div class="sub-hero__text">
+        <h1 class="sub-hero__name">
+          {{ s.name }}
+          <span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">
+            {{ s.active ? 'Active' : 'Inactive' }}
+          </span>
+        </h1>
+        <p class="sub-card__meta">
+          <code class="sub-code">{{ s.code }}</code>
+          <span aria-hidden="true">|</span>
+          <span>{{ typeLabel(s.subjectType) }}</span>
+        </p>
+        <p class="sub-muted sub-hero__desc" *ngIf="s.description">{{ s.description }}</p>
       </div>
-      <button
-        type="button"
-        class="tc-btn"
-        *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage"
-        (click)="openEditSubject()">
-        Edit
+    </div>
+    <div class="sub-header-actions">
+      <button type="button" class="tc-btn tc-btn--outline" (click)="back()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i> Back
       </button>
-    </div>
-
-    <div class="sd-info-grid">
-      <div>
-        <span>Code</span>
-        <strong>{{ s.code || '—' }}</strong>
-      </div>
-      <div>
-        <span>Category</span>
-        <strong>{{ categoryLabel(s.category) }}</strong>
-      </div>
-      <div>
-        <span>Default Weekly Periods</span>
-        <strong>{{ s.defaultWeeklyPeriods }}</strong>
-      </div>
-      <div>
-        <span>Timetable Preference</span>
-        <strong>{{ preferenceLabel(s.timetablePreference) }}</strong>
-      </div>
-      <div>
-        <span>Status</span>
-        <strong>{{ s.active ? 'Active' : 'Inactive' }}</strong>
-      </div>
-      <div class="sd-info-grid__wide" *ngIf="s.description">
-        <span>Description</span>
-        <strong>{{ s.description }}</strong>
-      </div>
-    </div>
-  </section>
-
-  <section class="sd-sections" aria-labelledby="sd-mapped-heading">
-    <div class="sd-sections__head">
-      <div>
-        <h2 id="sd-mapped-heading">Mapped Academic Groups</h2>
-        <p>Academic Groups where this subject is taught.</p>
-      </div>
       <button
         type="button"
         class="tc-btn tc-btn--primary"
         *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage || !availableAcademicGroups.length"
-        (click)="openMapDialog()">
-        <i class="pi pi-plus"></i> Map to Academic Group
+        (click)="editOpen = true">
+        <i class="pi pi-pencil" aria-hidden="true"></i> Edit Subject
+      </button>
+      <button
+        *ngIf="canManage"
+        type="button"
+        class="tc-btn tc-btn--outline"
+        (click)="buildMenu(s); headerMenu.toggle($event)"
+        aria-label="More subject actions">
+        <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
       </button>
     </div>
+  </header>
 
-    <div class="sd-table-wrap" *ngIf="mappedAcademicGroups.length; else noMapped">
-      <table class="sd-table">
-        <thead>
-          <tr>
-            <th>Academic Group</th>
-            <th>Stage</th>
-            <th>Sections</th>
-            <th>Weekly Periods</th>
-            <th>Status</th>
-            <th class="sd-table__actions" aria-label="Actions"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of mappedAcademicGroups">
-            <td>
-              <strong>{{ row.academicGroupName || 'Academic Group' }}</strong>
-              <code *ngIf="row.academicGroupCode">{{ row.academicGroupCode }}</code>
-            </td>
-            <td>{{ row.classStage || '—' }}</td>
-            <td>{{ row.sectionCount ?? '—' }}</td>
-            <td>{{ row.weeklyPeriods }}</td>
-            <td>
-              <span class="sd-badge sd-badge--success">Mapped</span>
-            </td>
-            <td class="sd-table__actions">
-              <button
-                type="button"
-                class="sd-icon-btn"
-                (click)="buildMenu(row); mapMenu.toggle($event)"
-                aria-label="Mapping actions">
-                <i class="pi pi-ellipsis-v"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <section class="sub-kpis" aria-label="Subject usage">
+    <div class="sub-kpi">
+      <span class="sub-icon" aria-hidden="true"><i class="pi pi-users"></i></span>
+      <div>
+        <p class="sub-kpi__label">Academic Groups</p>
+        <p class="sub-kpi__value">
+          {{ s.mappedAcademicGroupCount }}
+          <button
+            type="button"
+            class="sub-icon-btn"
+            (click)="openMapping()"
+            aria-label="Open subject mapping for this subject">
+            <i class="pi pi-external-link" aria-hidden="true"></i>
+          </button>
+        </p>
+        <button type="button" class="sub-link" (click)="openMapping()">View and manage mappings →</button>
+      </div>
+    </div>
+    <div class="sub-kpi">
+      <span class="sub-icon sub-icon--activity" aria-hidden="true"><i class="pi pi-book"></i></span>
+      <div>
+        <p class="sub-kpi__label">Total Sections (Mapped)</p>
+        <p class="sub-kpi__value">{{ s.mappedSectionCount }}</p>
+        <p class="sub-kpi__hint">Across all academic groups</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="sub-detail-grid">
+    <section class="sub-panel" aria-labelledby="sub-info-heading">
+      <div class="sub-panel__head">
+        <h2 id="sub-info-heading">Subject Information</h2>
+      </div>
+      <dl class="sub-info">
+        <div><dt>Subject Name</dt><dd>{{ s.name }}</dd></div>
+        <div><dt>Subject Code</dt><dd><code class="sub-code">{{ s.code }}</code></dd></div>
+        <div><dt>Subject Type</dt><dd><span class="sub-type" [ngClass]="'sub-type--' + typeTone(s.subjectType)">{{ typeLabel(s.subjectType) }}</span></dd></div>
+        <div><dt>Status</dt><dd><span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">{{ s.active ? 'Active' : 'Inactive' }}</span></dd></div>
+        <div *ngIf="s.description"><dt>Description</dt><dd>{{ s.description }}</dd></div>
+      </dl>
+    </section>
+
+    <aside class="sub-panel sub-about" aria-labelledby="sub-about-heading">
+      <div class="sub-about__body">
+        <h2 id="sub-about-heading">About Subjects</h2>
+        <p>
+          This is a reusable subject record. You can map this subject to academic groups and sections from the Subject Mapping page.
+        </p>
+        <button type="button" class="tc-btn" (click)="openMapping()">
+          <i class="pi pi-book" aria-hidden="true"></i> Go to Subject Mapping
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <section class="sub-panel" aria-labelledby="sub-mapped-heading">
+    <div class="sub-panel__head">
+      <div>
+        <h2 id="sub-mapped-heading">Mapped Academic Groups ({{ s.mappedAcademicGroupCount }})</h2>
+        <p>Academic groups where this subject is currently mapped.</p>
+      </div>
+      <input
+        class="sub-search"
+        type="search"
+        placeholder="Search academic groups..."
+        [ngModel]="usageQuery"
+        (ngModelChange)="usageQuery = $event; onUsageQueryChange($event)"
+        aria-label="Search mapped academic groups" />
     </div>
 
-    <ng-template #noMapped>
-      <div class="sd-empty-sections">
-        <i class="pi pi-link" aria-hidden="true"></i>
-        <h3>No academic groups mapped yet</h3>
-        <p>Map this subject to one or more academic groups to include it in teaching and timetable planning.</p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage || !availableAcademicGroups.length"
-          (click)="openMapDialog()">
-          <i class="pi pi-plus"></i> Map to Academic Group
-        </button>
+    <div class="sub-alert" role="alert" *ngIf="usageError">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ usageError }}</span>
+      <button type="button" class="tc-btn tc-btn--sm" (click)="loadUsage()">Retry</button>
+    </div>
+
+    <ng-container *ngIf="usageRows.length > 0; else usageEmptyTpl">
+      <div class="sub-table-wrap" [class.sub-results--refreshing]="usageLoading">
+        <table class="sub-table">
+          <thead>
+            <tr>
+              <th scope="col">Academic Group</th>
+              <th scope="col">Code</th>
+              <th scope="col">Academic Year</th>
+              <th scope="col">Weekly Periods</th>
+              <th scope="col">Sections</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="sub-table__actions" aria-label="Actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of usageRows">
+              <td><strong>{{ m.academicGroupName }}</strong></td>
+              <td><code class="sub-code">{{ m.academicGroupCode }}</code></td>
+              <td>{{ m.academicYearName }}</td>
+              <td>{{ m.weeklyPeriods }}</td>
+              <td>{{ sectionsLabel(m) }}</td>
+              <td><span class="sub-badge sub-badge--mapped">Mapped</span></td>
+              <td class="sub-table__actions">
+                <button
+                  type="button"
+                  class="sub-icon-btn"
+                  (click)="buildUsageMenu(m); usageMenu.toggle($event)"
+                  [attr.aria-label]="'More actions for ' + m.academicGroupName">
+                  <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <app-paginator
+        *ngIf="usageTotal > 0"
+        [page]="usagePage"
+        [rows]="usagePageSize"
+        [totalRecords]="usageTotal"
+        [pageSizeOptions]="pageSizeOptions"
+        noun="mappings"
+        (pageChange)="onUsagePageChange($event)">
+      </app-paginator>
+    </ng-container>
+
+    <ng-template #usageEmptyTpl>
+      <div class="sub-empty" *ngIf="!usageLoading && !usageError">
+        <i class="pi pi-sitemap" aria-hidden="true"></i>
+        <ng-container *ngIf="usageQuery.trim(); else notMappedTpl">
+          <h3>No academic groups match your search</h3>
+        </ng-container>
+        <ng-template #notMappedTpl>
+          <p>This subject is not mapped to any academic groups yet.</p>
+        </ng-template>
       </div>
     </ng-template>
   </section>
 </div>
 
-<ng-template #bootTpl>
-  <div class="sd-page acad-page" *ngIf="loadError; else loadingTpl">
-    <div class="sd-error">
-      <h2>Unable to load subject</h2>
-      <p>We couldn't load this subject information right now.</p>
-      <div class="sd-error__actions">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
-        <button type="button" class="tc-btn" (click)="back()">Go back</button>
-      </div>
-    </div>
+<ng-template #stateTpl>
+  <tc-page-skeleton *ngIf="loading" variant="dashboard" [kpis]="4"></tc-page-skeleton>
+  <div class="sub-empty" *ngIf="!loading && notFound" role="status">
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <h3>Subject not found</h3>
+    <p>It may have been removed, or you may not have access to it.</p>
+    <button type="button" class="tc-btn" (click)="back()">Back to Subjects</button>
   </div>
-  <ng-template #loadingTpl>
-    <div class="sd-page acad-page" aria-busy="true">
-      <tc-saas-page-header></tc-saas-page-header>
-      <tc-page-skeleton variant="detail"></tc-page-skeleton>
-    </div>
-  </ng-template>
+  <div class="sub-alert" role="alert" *ngIf="!loading && loadError">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <span>{{ loadError }}</span>
+    <button type="button" class="tc-btn tc-btn--sm" (click)="loadSubject()">Retry</button>
+  </div>
 </ng-template>
 
-<p-dialog
-  header="Edit Subject"
-  [(visible)]="showSubjectDialog"
-  [modal]="true"
-  [style]="{ width: 'min(520px, 94vw)' }"
-  [draggable]="false">
-  <form class="sd-form" [formGroup]="subjectForm" (ngSubmit)="saveSubject()">
-    <label>
-      Subject Name *
-      <input type="text" formControlName="name" (blur)="suggestCode()" />
-    </label>
-    <label>
-      Subject Code
-      <input type="text" formControlName="code" />
-    </label>
-    <label>
-      Category *
-      <p-dropdown
-        [options]="subjectCategoryOptions"
-        formControlName="category"
-        (onChange)="onCategoryChange()"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body">
-      </p-dropdown>
-    </label>
-    <label>
-      Default Weekly Periods *
-      <input type="number" formControlName="defaultWeeklyPeriods" min="1" />
-    </label>
-    <label>
-      Timetable Preference *
-      <p-dropdown
-        [options]="preferenceOptions"
-        formControlName="timetablePreference"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body">
-      </p-dropdown>
-    </label>
-    <label>
-      Description
-      <input type="text" formControlName="description" />
-    </label>
-    <div class="sd-form__actions">
-      <button type="button" class="tc-btn" (click)="showSubjectDialog = false">Cancel</button>
-      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
-        {{ saving ? 'Saving…' : 'Save' }}
-      </button>
-    </div>
-  </form>
-</p-dialog>
-
-<p-dialog
-  header="Map Subject to Academic Group"
-  [(visible)]="showMapDialog"
-  [modal]="true"
-  [style]="{ width: 'min(480px, 94vw)' }"
-  [draggable]="false">
-  <div class="sd-form" *ngIf="subject as mapSubject">
-    <label>
-      Subject
-      <input type="text" [value]="mapSubject.name + ' (' + mapSubject.code + ')'" readonly />
-    </label>
-    <label>
-      Academic Year
-      <input type="text" [value]="mapSubject.academicYearName || '—'" readonly />
-    </label>
-    <label>
-      Select Academic Group *
-      <p-dropdown
-        [options]="academicGroupOptions"
-        [(ngModel)]="mapAcademicGroupId"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Choose an Academic Group"
-        [filter]="true"
-        filterBy="label"
-        appendTo="body"
-        styleClass="sd-map-dd">
-      </p-dropdown>
-    </label>
-    <div class="sd-form__actions">
-      <button type="button" class="tc-btn" (click)="showMapDialog = false">Cancel</button>
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        [disabled]="mapping || !mapAcademicGroupId"
-        (click)="mapToAcademicGroup()">
-        {{ mapping ? 'Mapping…' : 'Map Subject' }}
-      </button>
-    </div>
-  </div>
-</p-dialog>
+<app-subject-form-dialog
+  [visible]="editOpen"
+  (visibleChange)="editOpen = $event"
+  [subject]="subject"
+  (saved)="onSaved($event)">
+</app-subject-form-dialog>

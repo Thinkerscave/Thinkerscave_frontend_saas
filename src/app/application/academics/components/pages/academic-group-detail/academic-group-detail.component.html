@@ -54,10 +54,10 @@
       <strong class="cd-metric__value">{{ studentCount }}</strong>
     </button>
     <a class="cd-metric"
-      [routerLink]="['/app/academics/academic-groups', c.academicGroupId, 'subjects']"
-      [queryParams]="{ from: 'academicGroups' }">
+      routerLink="/app/academics/subject-mapping"
+      [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
       <span class="cd-metric__label">Subjects / Curriculum</span>
-      <strong class="cd-metric__value">{{ summary?.subjectCount ?? '—' }}</strong>
+      <strong class="cd-metric__value">{{ subjectBoard?.mappedCount ?? '—' }}</strong>
     </a>
     <a class="cd-metric"
       routerLink="/app/academics/teacher-allocation"
@@ -109,8 +109,8 @@
           <span>Student directory filtered to this group</span>
         </button>
         <a class="cd-quick__item"
-          [routerLink]="['/app/academics/academic-groups', c.academicGroupId, 'subjects']"
-          [queryParams]="{ from: 'academicGroups' }">
+          routerLink="/app/academics/subject-mapping"
+          [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
           <strong>Manage Subjects</strong>
           <span>Curriculum mapping for this group</span>
         </a>
@@ -129,6 +129,30 @@
       </div>
     </section>
   </div>
+
+  <section class="cd-panel cd-subjects" aria-labelledby="cd-subjects-heading">
+    <div class="cd-panel__head">
+      <div>
+        <h2 id="cd-subjects-heading">Subjects</h2>
+        <p class="cd-subjects__hint">Active subjects mapped to this academic group.</p>
+      </div>
+      <a
+        class="tc-btn tc-btn--outline tc-btn--sm"
+        routerLink="/app/academics/subject-mapping"
+        [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+        <i class="pi pi-book" aria-hidden="true"></i> Manage Subjects
+      </a>
+    </div>
+    <p class="cd-subjects__count" *ngIf="subjectBoard as board">
+      <strong>{{ board.mappedCount }}</strong> mapped subject{{ board.mappedCount === 1 ? '' : 's' }}
+    </p>
+    <ul class="cd-subjects__list" *ngIf="subjectPreview.length">
+      <li *ngFor="let m of subjectPreview">{{ m.subjectName }}</li>
+      <li class="cd-subjects__more" *ngIf="subjectsMoreCount > 0">+{{ subjectsMoreCount }} more</li>
+    </ul>
+    <p class="cd-subjects__empty" *ngIf="subjectBoard && !subjectPreview.length">No subjects mapped to this group yet.</p>
+    <p class="cd-error-line" role="status" *ngIf="subjectsError">Subjects could not be loaded.</p>
+  </section>
 
   <section class="cd-sections" id="cd-sections" aria-labelledby="cd-sections-heading">
     <div class="cd-sections__head">
