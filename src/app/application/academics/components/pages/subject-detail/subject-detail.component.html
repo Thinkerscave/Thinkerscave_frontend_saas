@@ -15,9 +15,9 @@
       type="button"
       class="tc-btn tc-btn--primary tc-btn--sm"
       *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage || !availableClasses.length"
+      [disabled]="!canManage || !availableAcademicGroups.length"
       (click)="openMapDialog()">
-      <i class="pi pi-plus"></i> Map to Class
+      <i class="pi pi-plus"></i> Map to Academic Group
     </button>
   </tc-saas-page-header>
 
@@ -36,16 +36,16 @@
       </p>
     </div>
     <p class="sd-summary">
-      {{ mappedClasses.length }} {{ mappedClasses.length === 1 ? 'Class' : 'Classes' }} mapped
+      {{ mappedAcademicGroups.length }} {{ mappedAcademicGroups.length === 1 ? 'Academic Group' : 'Academic Groups' }} mapped
       <span aria-hidden="true">·</span>
       {{ s.defaultWeeklyPeriods }} weekly periods
     </p>
   </header>
 
   <div class="sd-prompt" *ngIf="offerMap && canManage">
-    <p>Subject created. Map it to a class so it can be taught and scheduled.</p>
-    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!availableClasses.length" (click)="openMapDialog()">
-      Map to Class
+    <p>Subject created. Map it to an Academic Group so it can be taught and scheduled.</p>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!availableAcademicGroups.length" (click)="openMapDialog()">
+      Map to Academic Group
     </button>
     <button type="button" class="tc-btn" (click)="dismissOffer()">Later</button>
   </div>
@@ -54,7 +54,7 @@
     <div class="sd-sections__head">
       <div>
         <h2 id="sd-info-heading">Subject Information</h2>
-        <p>Core details used across classes and timetable setup.</p>
+        <p>Core details used across academic groups and timetable setup.</p>
       </div>
       <button
         type="button"
@@ -97,24 +97,24 @@
   <section class="sd-sections" aria-labelledby="sd-mapped-heading">
     <div class="sd-sections__head">
       <div>
-        <h2 id="sd-mapped-heading">Mapped Classes</h2>
-        <p>Classes where this subject is taught.</p>
+        <h2 id="sd-mapped-heading">Mapped Academic Groups</h2>
+        <p>Academic Groups where this subject is taught.</p>
       </div>
       <button
         type="button"
         class="tc-btn tc-btn--primary"
         *tcHasPerm="resource; action: 'manage'"
-        [disabled]="!canManage || !availableClasses.length"
+        [disabled]="!canManage || !availableAcademicGroups.length"
         (click)="openMapDialog()">
-        <i class="pi pi-plus"></i> Map to Class
+        <i class="pi pi-plus"></i> Map to Academic Group
       </button>
     </div>
 
-    <div class="sd-table-wrap" *ngIf="mappedClasses.length; else noMapped">
+    <div class="sd-table-wrap" *ngIf="mappedAcademicGroups.length; else noMapped">
       <table class="sd-table">
         <thead>
           <tr>
-            <th>Class</th>
+            <th>Academic Group</th>
             <th>Stage</th>
             <th>Sections</th>
             <th>Weekly Periods</th>
@@ -123,10 +123,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of mappedClasses">
+          <tr *ngFor="let row of mappedAcademicGroups">
             <td>
-              <strong>{{ row.className || 'Class' }}</strong>
-              <code *ngIf="row.classCode">{{ row.classCode }}</code>
+              <strong>{{ row.academicGroupName || 'Academic Group' }}</strong>
+              <code *ngIf="row.academicGroupCode">{{ row.academicGroupCode }}</code>
             </td>
             <td>{{ row.classStage || '—' }}</td>
             <td>{{ row.sectionCount ?? '—' }}</td>
@@ -151,15 +151,15 @@
     <ng-template #noMapped>
       <div class="sd-empty-sections">
         <i class="pi pi-link" aria-hidden="true"></i>
-        <h3>No classes mapped yet</h3>
-        <p>Map this subject to one or more classes to include it in teaching and timetable planning.</p>
+        <h3>No academic groups mapped yet</h3>
+        <p>Map this subject to one or more academic groups to include it in teaching and timetable planning.</p>
         <button
           type="button"
           class="tc-btn tc-btn--primary"
           *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage || !availableClasses.length"
+          [disabled]="!canManage || !availableAcademicGroups.length"
           (click)="openMapDialog()">
-          <i class="pi pi-plus"></i> Map to Class
+          <i class="pi pi-plus"></i> Map to Academic Group
         </button>
       </div>
     </ng-template>
@@ -239,7 +239,7 @@
 </p-dialog>
 
 <p-dialog
-  header="Map Subject to Class"
+  header="Map Subject to Academic Group"
   [(visible)]="showMapDialog"
   [modal]="true"
   [style]="{ width: 'min(480px, 94vw)' }"
@@ -254,13 +254,13 @@
       <input type="text" [value]="mapSubject.academicYearName || '—'" readonly />
     </label>
     <label>
-      Select Class *
+      Select Academic Group *
       <p-dropdown
-        [options]="classOptions"
-        [(ngModel)]="mapClassId"
+        [options]="academicGroupOptions"
+        [(ngModel)]="mapAcademicGroupId"
         optionLabel="label"
         optionValue="value"
-        placeholder="Choose a class"
+        placeholder="Choose an Academic Group"
         [filter]="true"
         filterBy="label"
         appendTo="body"
@@ -272,8 +272,8 @@
       <button
         type="button"
         class="tc-btn tc-btn--primary"
-        [disabled]="mapping || !mapClassId"
-        (click)="mapToClass()">
+        [disabled]="mapping || !mapAcademicGroupId"
+        (click)="mapToAcademicGroup()">
         {{ mapping ? 'Mapping…' : 'Map Subject' }}
       </button>
     </div>

@@ -22,7 +22,7 @@ import { HasPermissionDirective } from '../../../../../shared/directives/has-per
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 import { AcademicCalendarApiService } from '../../../services/academic-calendar-api.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import {
   ACADEMICS_CALENDAR_RESOURCE,
@@ -62,7 +62,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(AcademicCalendarApiService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly academicGroupsApi = inject(AcademicGroupsApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -83,7 +83,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
   private eventId: number | null = null;
   showEventDialog = false;
   menuItems: MenuItem[] = [];
-  classOptions: { label: string; value: number }[] = [];
+  academicGroupOptions: { label: string; value: number }[] = [];
   sectionOptions: { label: string; value: number }[] = [];
 
   eventForm = this.fb.group({
@@ -97,7 +97,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
     endTime: [''],
     location: [''],
     audienceType: ['EVERYONE' as CalendarAudienceType, Validators.required],
-    classIds: [[] as number[]],
+    academicGroupIds: [[] as number[]],
     sectionIds: [[] as number[]]
   });
 
@@ -143,7 +143,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
         this.pageHeader.setPageHeader({
           subtitle: this.formatDateRange(event)
         });
-        this.loadClassOptions(event.academicYearId);
+        this.loadAcademicGroupOptions(event.academicYearId);
       },
       error: () => {
         this.event = null;
@@ -152,15 +152,15 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadClassOptions(yearId: number): void {
-    this.classesApi.getDashboard(yearId, { active: true }).subscribe({
+  private loadAcademicGroupOptions(yearId: number): void {
+    this.academicGroupsApi.getDashboard(yearId, { active: true }).subscribe({
       next: (dash) => {
-        const classes = dash.classes || [];
-        this.classOptions = classes.map((c) => ({
+        const academicGroups = dash.academicGroups || [];
+        this.academicGroupOptions = academicGroups.map((c) => ({
           label: c.name,
-          value: c.classId
+          value: c.academicGroupId
         }));
-        this.sectionOptions = classes.flatMap((c) =>
+        this.sectionOptions = academicGroups.flatMap((c) =>
           (c.sections || [])
             .filter((s) => s.active !== false)
             .map((s) => ({
@@ -171,7 +171,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.classOptions = [];
+        this.academicGroupOptions = [];
         this.sectionOptions = [];
       }
     });
@@ -190,7 +190,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
       endTime: this.toTimeInput(this.event.endTime),
       location: this.event.location || '',
       audienceType: this.event.audienceType,
-      classIds: (this.event.classes || []).map((c) => c.classId),
+      academicGroupIds: (this.event.academicGroups || []).map((c) => c.academicGroupId),
       sectionIds: (this.event.sections || []).map((s) => s.sectionId)
     });
     this.showEventDialog = true;
@@ -222,8 +222,8 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
 
   private validateAudience(): boolean {
     const audience = this.eventForm.value.audienceType;
-    if (audience === 'CLASS' && !(this.eventForm.value.classIds?.length)) {
-      this.messages.add({ severity: 'warn', summary: 'Select at least one class' });
+    if (audience === 'ACADEMIC_GROUP' && !(this.eventForm.value.academicGroupIds?.length)) {
+      this.messages.add({ severity: 'warn', summary: 'Select at least one Academic Group' });
       return false;
     }
     if (audience === 'SECTION' && !(this.eventForm.value.sectionIds?.length)) {
@@ -254,7 +254,7 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
       endTime: allDay ? null : this.toApiTime(value.endTime),
       location: value.location?.trim() || undefined,
       audienceType: value.audienceType!,
-      classIds: value.audienceType === 'CLASS' ? (value.classIds || []) : undefined,
+      academicGroupIds: value.audienceType === 'ACADEMIC_GROUP' ? (value.academicGroupIds || []) : undefined,
       sectionIds: value.audienceType === 'SECTION' ? (value.sectionIds || []) : undefined,
       publish: publish || undefined
     };
@@ -398,12 +398,12 @@ export class CalendarEventDetailPageComponent implements OnInit, OnDestroy {
 
   appliesToLabel(event: AcademicCalendarEventDto): string {
     if (event.audienceType === 'EVERYONE') return 'Everyone';
-    if (event.audienceType === 'CLASS') {
-      const names = (event.classes || []).map((c) => c.name).filter(Boolean);
-      return names.length ? names.join(', ') : 'Specific classes';
+    if (event.audienceType === 'ACADEMIC_GROUP') {
+      const names = (event.academicGroups || []).map((c) => c.name).filter(Boolean);
+      return names.length ? names.join(', ') : 'Specific Academic Groups';
     }
     const names = (event.sections || []).map((s) =>
-      s.className ? `${s.className} - ${s.name}` : s.name
+      s.academicGroupName ? `${s.academicGroupName} - ${s.name}` : s.name
     ).filter(Boolean);
     return names.length ? names.join(', ') : 'Specific sections';
   }

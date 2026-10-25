@@ -6,10 +6,10 @@
     <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
   <ng-container *ngIf="!loading">
 <div class="mt-summary" *ngIf="data">
-    <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>
+    <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Lessons Today</span></div>
     <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
     <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
-    <div class="orange"><strong>{{ summary.classes }}</strong><span>Classes / Sections</span></div>
+    <div class="orange"><strong>{{ summary.academicGroups }}</strong><span>Academic Groups / Sections</span></div>
     <div class="pink"><strong>{{ summary.subjects }}</strong><span>Subjects</span></div>
   </div>
 
@@ -18,9 +18,9 @@
       <button type="button" [class.active]="viewMode === 'week'" (click)="viewMode = 'week'">Week</button>
       <button type="button" [class.active]="viewMode === 'day'" (click)="viewMode = 'day'">Day</button>
     </div>
-    <select [(ngModel)]="classFilter">
-      <option value="">All My Classes</option>
-      <option *ngFor="let c of classOptions" [value]="c">{{ c }}</option>
+    <select [(ngModel)]="academicGroupFilter">
+      <option value="">All My Academic Groups</option>
+      <option *ngFor="let c of academicGroupOptions" [value]="c">{{ c }}</option>
     </select>
     <select [(ngModel)]="subjectFilter">
       <option value="">All Subjects</option>
@@ -53,7 +53,7 @@
                 <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
                   <strong>{{ c.subjectName || '—' }}</strong>
                   <span *ngIf="d.role === 'STAFF'">
-                    {{ c.className }}{{ c.sectionName ? '-' + c.sectionName : '' }}
+                    {{ c.academicGroupName }}{{ c.sectionName ? '-' + c.sectionName : '' }}
                   </span>
                   <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
                   <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
@@ -72,15 +72,15 @@
         <div class="mt-today__time">{{ t.startTime }}–{{ t.endTime }}</div>
         <div>
           <strong>{{ t.subjectName || t.periodLabel || ('Period ' + t.periodNumber) }}</strong>
-          <div>{{ t.className }}{{ t.sectionName ? '-' + t.sectionName : '' }}</div>
+          <div>{{ t.academicGroupName }}{{ t.sectionName ? '-' + t.sectionName : '' }}</div>
           <small>{{ t.roomName || '—' }}</small>
         </div>
         <span class="mt-now" *ngIf="isCurrent(t.startTime, t.endTime)">CURRENT</span>
       </article>
-      <p class="mt-muted" *ngIf="!d.todaySchedule.length">No classes scheduled today.</p>
+      <p class="mt-muted" *ngIf="!d.todaySchedule.length">No academic groups scheduled today.</p>
 
       <div class="mt-actions">
-        <a routerLink="/app/academics/my-classes">My Classes</a>
+        <a routerLink="/app/academics/my-academic-groups">My Academic Groups</a>
         <a routerLink="/app/academics/academic-structure">Academic Structure</a>
         <a routerLink="/app/academics/my-academics">My Academics</a>
       </div>

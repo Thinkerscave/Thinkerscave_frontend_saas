@@ -1,20 +1,20 @@
-export const ACADEMICS_MY_CLASSES_RESOURCE = 'ACADEMICS_MY_CLASSES';
+export const ACADEMICS_MY_ACADEMIC_GROUPS_RESOURCE = 'ACADEMICS_MY_CLASSES';
 export const ACADEMICS_MY_TIMETABLE_RESOURCE = 'ACADEMICS_MY_TIMETABLE';
 export const ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE = 'ACADEMICS_ACADEMIC_STRUCTURE';
 export const ACADEMICS_MY_ACADEMICS_RESOURCE = 'ACADEMICS_MY_ACADEMICS';
 
-export interface TeacherMyClasses {
+export interface TeacherMyAcademicGroups {
   summary: {
-    classCount: number;
+    academicGroupCount: number;
     sectionCount: number;
     subjectCount: number;
     weeklyPeriods: number;
     studentCount?: number;
   };
-  classes: {
-    classId: number;
-    className: string;
-    classCode?: string;
+  academicGroups: {
+    academicGroupId: number;
+    academicGroupName: string;
+    academicGroupCode?: string;
     sectionId: number;
     sectionName: string;
     studentCount?: number;
@@ -25,17 +25,17 @@ export interface TeacherMyClasses {
       weeklyPeriods: number;
       allocationId?: number;
     }[];
-    classTeacher: boolean;
+    sectionTeacher: boolean;
   }[];
 }
 
 export interface TeacherAcademicStructure {
   academicYearId: number;
   academicYearName: string;
-  classes: {
-    classId: number;
-    className: string;
-    classCode?: string;
+  academicGroups: {
+    academicGroupId: number;
+    academicGroupName: string;
+    academicGroupCode?: string;
     sections: {
       sectionId: number;
       sectionName: string;
@@ -53,10 +53,10 @@ export interface TeacherAcademicStructure {
 
 export interface AcademicStructureTreeStage {
   stage: string;
-  classes: {
-    classId: number;
-    className: string;
-    classCode?: string;
+  academicGroups: {
+    academicGroupId: number;
+    academicGroupName: string;
+    academicGroupCode?: string;
     active?: boolean;
     sections: {
       sectionId: number;
@@ -71,8 +71,8 @@ export interface AcademicStructureTreeStage {
 export interface StudentMyAcademics {
   studentName: string;
   admissionNumber?: string;
-  classId?: number;
-  className?: string;
+  academicGroupId?: number;
+  academicGroupName?: string;
   sectionId?: number;
   sectionName?: string;
   rollNumber?: string;
@@ -84,7 +84,7 @@ export interface StudentMyAcademics {
     subjectCode?: string;
     weeklyPeriods: number;
   }[];
-  classTeacher?: { staffId: number; staffName: string } | null;
+  sectionTeacher?: { staffId: number; staffName: string } | null;
   publishedTimetableExists: boolean;
 }
 
@@ -101,7 +101,7 @@ export interface MyTimetable {
       periodId: number;
       periodNumber: number;
       subjectName?: string;
-      className?: string;
+      academicGroupName?: string;
       sectionName?: string;
       staffName?: string;
       resourceName?: string;
@@ -114,7 +114,7 @@ export interface MyTimetable {
     startTime?: string;
     endTime?: string;
     subjectName?: string;
-    className?: string;
+    academicGroupName?: string;
     sectionName?: string;
     roomName?: string;
   }[];

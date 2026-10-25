@@ -19,7 +19,7 @@ export class TeacherAllocationApiService {
   getDashboard(
     yearId: number,
     opts?: {
-      classId?: number | null;
+      academicGroupId?: number | null;
       sectionId?: number | null;
       subjectId?: number | null;
       status?: TeacherAllocationStatus | null;
@@ -28,7 +28,7 @@ export class TeacherAllocationApiService {
     }
   ): Observable<TeacherAllocationDashboard> {
     let params = new HttpParams();
-    if (opts?.classId) params = params.set('classId', opts.classId);
+    if (opts?.academicGroupId) params = params.set('academicGroupId', opts.academicGroupId);
     if (opts?.sectionId) params = params.set('sectionId', opts.sectionId);
     if (opts?.subjectId) params = params.set('subjectId', opts.subjectId);
     if (opts?.status) params = params.set('status', opts.status);
@@ -51,10 +51,10 @@ export class TeacherAllocationApiService {
       .pipe(map((res) => res.data));
   }
 
-  recommendations(sectionId: number, classSubjectMappingId: number): Observable<TeacherRecommendation[]> {
+  recommendations(sectionId: number, academicGroupSubjectMappingId: number): Observable<TeacherRecommendation[]> {
     const params = new HttpParams()
       .set('sectionId', sectionId)
-      .set('classSubjectMappingId', classSubjectMappingId);
+      .set('academicGroupSubjectMappingId', academicGroupSubjectMappingId);
     return this.http
       .get<ApiResponse<TeacherRecommendation[]>>(academicsApi.teacherAllocationRecommendations, { params })
       .pipe(map((res) => res.data));

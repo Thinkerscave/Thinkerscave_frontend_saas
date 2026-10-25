@@ -14,8 +14,8 @@ export interface AcademicsOverview {
     totalDays?: number;
   };
   structureCounts: {
-    classesActive: number;
-    classesTotal: number;
+    academicGroupsActive: number;
+    academicGroupsTotal: number;
     sectionsActive: number;
     sectionsTotal: number;
     subjectsActive: number;
@@ -41,23 +41,23 @@ export interface AcademicsOverview {
   };
   readinessSteps: { code: string; label: string; state: string; detail?: string }[];
   alerts: { severity: string; code: string; message: string; route?: string }[];
-  topClasses: {
-    classId: number;
-    className: string;
+  topAcademicGroups: {
+    academicGroupId: number;
+    academicGroupName: string;
     sectionCount: number;
     studentCount?: number;
-    classTeacherName?: string | null;
+    sectionTeacherName?: string | null;
   }[];
   topSubjects: {
     subjectId: number;
     subjectName: string;
     code?: string;
     category?: string;
-    mappedClassCount?: number;
+    mappedAcademicGroupCount?: number;
     defaultWeeklyPeriods?: number;
     teacherStatus?: string;
   }[];
   setupCompletePercent?: number;
   importantDates?: { label: string; date: string; endDate?: string; code?: string }[];
-  studentsByClass?: { classId?: number | null; className: string; studentCount: number; percent: number }[];
+  studentsByAcademicGroup?: { academicGroupId?: number | null; academicGroupName: string; studentCount: number; percent: number }[];
 }

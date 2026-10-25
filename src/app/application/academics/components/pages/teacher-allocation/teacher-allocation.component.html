@@ -45,18 +45,18 @@
   </section>
 
   <div class="ta-tabs">
-    <button type="button" [class.active]="activeTab === 'allocation'" (click)="activeTab = 'allocation'">Class Allocation</button>
+    <button type="button" [class.active]="activeTab === 'allocation'" (click)="activeTab = 'allocation'">Academic Group Allocation</button>
     <button type="button" [class.active]="activeTab === 'workload'" (click)="activeTab = 'workload'">Teacher Workload</button>
   </div>
 
   <div class="ta-toolbar">
     <p-dropdown
-      [options]="classOptions"
-      [(ngModel)]="classFilter"
-      (onChange)="onClassChange()"
+      [options]="academicGroupOptions"
+      [(ngModel)]="academicGroupFilter"
+      (onChange)="onFilterChange()"
       optionLabel="label"
       optionValue="value"
-      placeholder="All Classes">
+      placeholder="All Academic Groups">
     </p-dropdown>
     <p-dropdown
       [options]="sections"
@@ -90,7 +90,7 @@
         <table class="ta-table">
           <thead>
             <tr>
-              <th>Class</th>
+              <th>Academic Group</th>
               <th>Section</th>
               <th>Subject</th>
               <th>Weekly Periods</th>
@@ -102,7 +102,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let row of dash.rows">
-              <td><strong>{{ row.className }}</strong></td>
+              <td><strong>{{ row.academicGroupName }}</strong></td>
               <td>{{ row.sectionName }}</td>
               <td>
                 <strong>{{ row.subjectName }}</strong>
@@ -155,7 +155,7 @@
       <ng-template #emptyTpl>
         <div class="ta-empty">
           <h3>No allocation slots yet</h3>
-          <p>Map subjects to classes first, then assign teachers here.</p>
+          <p>Map subjects to academic groups first, then assign teachers here.</p>
           <a class="tc-btn tc-btn--primary" routerLink="/app/academics/subjects-mapping">Go to Subjects</a>
         </div>
       </ng-template>
@@ -211,7 +211,7 @@
   [draggable]="false">
   <ng-container *ngIf="assignTarget as target">
     <p class="ta-muted">
-      {{ target.subjectName }} · {{ target.className }}-{{ target.sectionName }} · {{ target.weeklyPeriods }} periods/week
+      {{ target.subjectName }} · {{ target.academicGroupName }}-{{ target.sectionName }} · {{ target.weeklyPeriods }} periods/week
     </p>
 
     <h4>Recommended Teachers</h4>

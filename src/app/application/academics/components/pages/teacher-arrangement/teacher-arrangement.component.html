@@ -39,7 +39,7 @@
       <div class="slot-list" *ngIf="slots.length">
         <article class="slot-row" *ngFor="let slot of slots; trackBy: trackBySlot">
           <div class="slot-detail">
-            <strong>{{ slot.className }} · {{ slot.sectionName }} · {{ slot.subjectName }}</strong>
+            <strong>{{ slot.academicGroupName }} · {{ slot.sectionName }} · {{ slot.subjectName }}</strong>
             <span>Period {{ slot.periodNumber }} · {{ slot.startTime }}–{{ slot.endTime }}</span>
           </div>
           <label class="substitute-field">
@@ -70,7 +70,7 @@
       <article class="approved-arrangement" *ngFor="let arrangement of approvedForDate; trackBy: trackByArrangement">
         <strong>{{ arrangement.absentTeacherName }} · {{ arrangement.reason }}</strong>
         <div class="approved-slot" *ngFor="let slot of arrangement.slots">
-          <span>{{ slot.className }} · {{ slot.sectionName }} · {{ slot.subjectName }}</span>
+          <span>{{ slot.academicGroupName }} · {{ slot.sectionName }} · {{ slot.subjectName }}</span>
           <span>Period {{ slot.periodNumber }} · {{ slot.startTime }}–{{ slot.endTime }} · {{ slot.substituteTeacherName }}</span>
         </div>
       </article>
@@ -92,7 +92,7 @@
         </div>
         <div class="request-slots">
           <span *ngFor="let slot of arrangement.slots">
-            {{ slot.className }} {{ slot.sectionName }} · P{{ slot.periodNumber }} · {{ slot.substituteTeacherName }}
+            {{ slot.academicGroupName }} {{ slot.sectionName }} · P{{ slot.periodNumber }} · {{ slot.substituteTeacherName }}
           </span>
         </div>
         <div class="review-actions" *ngIf="canApprove && arrangement.status === 'PENDING'">

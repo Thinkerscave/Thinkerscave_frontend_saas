@@ -95,18 +95,18 @@
 
   <section
     class="ced-sections"
-    *ngIf="e.audienceType === 'CLASS' && e.classes?.length"
-    aria-labelledby="ced-classes-heading">
+    *ngIf="e.audienceType === 'ACADEMIC_GROUP' && e.academicGroups?.length"
+    aria-labelledby="ced-academic-groups-heading">
     <div class="ced-sections__head">
       <div>
-        <h2 id="ced-classes-heading">Applicable Classes</h2>
-        <p>Classes included in this event.</p>
+        <h2 id="ced-academic-groups-heading">Applicable Academic Groups</h2>
+        <p>Academic Groups included in this event.</p>
       </div>
     </div>
     <ul class="ced-list">
-      <li *ngFor="let cls of e.classes">
-        <strong>{{ cls.name }}</strong>
-        <code *ngIf="cls.code">{{ cls.code }}</code>
+      <li *ngFor="let group of e.academicGroups">
+        <strong>{{ group.name }}</strong>
+        <code *ngIf="group.code">{{ group.code }}</code>
       </li>
     </ul>
   </section>
@@ -123,7 +123,7 @@
     </div>
     <ul class="ced-list">
       <li *ngFor="let section of e.sections">
-        <strong>{{ section.className ? (section.className + ' - ' + section.name) : section.name }}</strong>
+        <strong>{{ section.academicGroupName ? (section.academicGroupName + ' - ' + section.name) : section.name }}</strong>
         <code *ngIf="section.code">{{ section.code }}</code>
       </li>
     </ul>
@@ -265,14 +265,14 @@
           styleClass="ced-form-dd">
         </p-dropdown>
       </label>
-      <label *ngIf="eventForm.value.audienceType === 'CLASS'">
-        Classes *
+          <label *ngIf="eventForm.value.audienceType === 'ACADEMIC_GROUP'">
+        Academic Groups *
         <p-multiSelect
-          [options]="classOptions"
-          formControlName="classIds"
+          [options]="academicGroupOptions"
+          formControlName="academicGroupIds"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select classes"
+          placeholder="Select academic groups"
           [filter]="true"
           appendTo="body"
           styleClass="ced-form-dd"

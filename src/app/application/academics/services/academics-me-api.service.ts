@@ -8,19 +8,28 @@ import {
   MyTimetable,
   StudentMyAcademics,
   TeacherAcademicStructure,
-  TeacherMyClasses
+  TeacherMyAcademicGroups
 } from '../models/academics-me.model';
 
 @Injectable({ providedIn: 'root' })
 export class AcademicsMeApiService {
   private readonly http = inject(HttpClient);
 
-  myClasses(academicYearId?: number | null): Observable<TeacherMyClasses> {
+  myAcademicGroups(academicYearId?: number | null): Observable<TeacherMyAcademicGroups> {
     let params = new HttpParams();
     if (academicYearId) params = params.set('academicYearId', academicYearId);
     return this.http
-      .get<ApiResponse<TeacherMyClasses>>(academicsApi.meClasses, { params })
+      .get<ApiResponse<TeacherMyAcademicGroups>>(academicsApi.meAcademicGroups, { params })
       .pipe(map((r) => r.data));
+  }
+
+  myClasses(academicYearId?: number | null): Observable<{ classes: { classId: number; sectionId: number }[] }> {
+    return this.myAcademicGroups(academicYearId).pipe(map((data) => ({
+      classes: data.academicGroups.map((group) => ({
+        classId: group.academicGroupId,
+        sectionId: group.sectionId
+      }))
+    })));
   }
 
   myTimetable(academicYearId?: number | null): Observable<MyTimetable> {

@@ -18,9 +18,9 @@ export type AcademicYearStatusLite =
 
 export interface ClassSectionDto {
   sectionId: number;
-  classId: number;
-  className?: string;
-  classCode?: string;
+  academicGroupId: number;
+  academicGroupName?: string;
+  academicGroupCode?: string;
   name: string;
   code: string;
   capacity?: number | null;
@@ -32,15 +32,17 @@ export interface ClassSectionDto {
   classTeacherStaffId?: number | null;
 }
 
-export interface AcademicClassDto {
-  classId: number;
+export interface AcademicGroupDto {
+  academicGroupId: number;
   academicYearId: number;
   academicYearName?: string;
   academicYearStatus?: AcademicYearStatusLite;
   yearReadOnly?: boolean;
   name: string;
   code: string;
-  stage: AcademicStage;
+  /** Optional classification; null for organizations that do not use stages. */
+  stage?: AcademicStage | null;
+  description?: string | null;
   displayOrder?: number;
   active: boolean;
   sectionCount?: number;
@@ -53,25 +55,39 @@ export interface AcademicClassDto {
   sections?: ClassSectionDto[];
 }
 
+export interface AcademicGroupSummary {
+  academicGroupId: number;
+  sectionCount: number;
+  activeSectionCount: number;
+  studentCount: number;
+  subjectCount: number;
+  teacherCount: number;
+  /** Year-level timetable state. */
+  timetableStatus: 'PUBLISHED' | 'DRAFT' | 'NOT_GENERATED';
+}
+
 export interface ClassesSectionsDashboard {
   academicYearId: number;
   academicYearName: string;
   academicYearStatus: AcademicYearStatusLite;
   yearReadOnly: boolean;
-  classCount: number;
-  classesActive: number;
+  academicGroupCount: number;
+  academicGroupsActive: number;
   sectionCount: number;
   sectionsActive: number;
   studentCount: number;
-  classes: AcademicClassDto[];
+  academicGroups: AcademicGroupDto[];
 }
 
-export interface AcademicClassCreateRequest {
+export interface AcademicGroupCreateRequest {
   academicYearId: number;
   name: string;
   code?: string;
-  stage: AcademicStage;
+  stage?: AcademicStage | null;
+  description?: string;
   displayOrder?: number;
+  /** Sections created in the same request as the group. Omit for a group without sections. */
+  sections?: AcademicSectionCreateRequest[];
 }
 
 export interface AcademicSectionCreateRequest {

@@ -6,27 +6,27 @@
     <tc-page-skeleton *ngIf="loading" variant="list" [rows]="6" [columns]="3" [showKpis]="false"></tc-page-skeleton>
   <ng-container *ngIf="!loading">
 <div class="as-summary" *ngIf="data as d">
-    <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>
+    <div><strong>{{ d.academicGroups.length }}</strong><span>Academic Groups</span></div>
     <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
     <div *ngIf="!isAdminView"><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
   </div>
 
   <div class="as-layout" *ngIf="data as d">
     <div class="as-list">
-      <article class="as-class" *ngFor="let c of d.classes" [class.active]="selectedClassId === c.classId" (click)="selectedClassId = c.classId">
+      <article class="as-class" *ngFor="let c of d.academicGroups" [class.active]="selectedAcademicGroupId === c.academicGroupId" (click)="selectedAcademicGroupId = c.academicGroupId">
         <div class="as-class__top">
-          <h3>{{ c.className }}</h3>
-          <code *ngIf="c.classCode">{{ c.classCode }}</code>
+          <h3>{{ c.academicGroupName }}</h3>
+          <code *ngIf="c.academicGroupCode">{{ c.academicGroupCode }}</code>
           <span class="as-star" title="You teach here" *ngIf="!isAdminView">★</span>
         </div>
         <p>{{ c.sections.length }} sections<span *ngIf="!isAdminView"> · {{ subjectCountFor(c) }} subjects</span></p>
       </article>
-      <div class="as-empty" *ngIf="!d.classes?.length">{{ isAdminView ? 'No classes in this academic year.' : 'No structure linked to your allocations.' }}</div>
+      <div class="as-empty" *ngIf="!d.academicGroups.length">{{ isAdminView ? 'No academic groups in this academic year.' : 'No structure linked to your allocations.' }}</div>
     </div>
 
     <aside class="as-detail" *ngIf="selectedClass as cls">
       <div class="as-detail__head">
-        <h2>{{ cls.className }}</h2>
+        <h2>{{ cls.academicGroupName }}</h2>
         <span class="as-star" *ngIf="!isAdminView">★ You teach here</span>
       </div>
       <div class="as-section" *ngFor="let s of cls.sections">
@@ -40,7 +40,7 @@
         </div>
       </div>
       <div class="as-actions" *ngIf="!isAdminView">
-        <a routerLink="/app/academics/my-classes">My Classes</a>
+        <a routerLink="/app/academics/my-academic-groups">My Academic Groups</a>
         <a routerLink="/app/academics/my-timetable">My Timetable</a>
       </div>
     </aside>

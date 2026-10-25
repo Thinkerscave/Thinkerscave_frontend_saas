@@ -33,7 +33,7 @@ export interface ReadinessCheckItem {
   severity: ReadinessCheckSeverity;
   message: string;
   reference?: string;
-  /** Specific classes/sections/subjects/teachers/periods that need attention. */
+  /** Specific academicGroups/sections/subjects/teachers/periods that need attention. */
   details?: string[];
   actionLabel?: string | null;
   /** App route, or `tab:<name>` for a tab on the timetable page. */
@@ -93,7 +93,7 @@ export type VersionStatus =
 export type ConflictStatus = 'OPEN' | 'RESOLVED' | 'IGNORED';
 export type ConflictType =
   | 'TEACHER_CONFLICT'
-  | 'CLASS_CONFLICT'
+  | 'ACADEMIC_GROUP_CONFLICT'
   | 'SECTION_CONFLICT'
   | 'ROOM_CONFLICT'
   | 'RESOURCE_CONFLICT'
@@ -104,7 +104,7 @@ export type ConflictType =
   | 'SUBJECT_ALLOCATION_CONFLICT'
   | 'SUBJECT_PREFERENCE_CONFLICT'
   | string;
-export type GridView = 'CLASS' | 'TEACHER' | 'ROOM';
+export type GridView = 'ACADEMIC_GROUP' | 'TEACHER' | 'ROOM';
 export type ResourceType = 'CLASSROOM' | 'LABORATORY' | 'ACTIVITY_ROOM' | 'AUDITORIUM' | 'OTHER';
 
 export interface ReadinessCheck {
@@ -137,13 +137,13 @@ export interface TimetableFilterOption {
 }
 
 export interface TimetableFilterClass {
-  classId: number;
+  academicGroupId: number;
   name: string;
   sections: TimetableFilterOption[];
 }
 
 export interface TimetableFilters {
-  classes: TimetableFilterClass[];
+  academicGroups: TimetableFilterClass[];
   teachers: TimetableFilterOption[];
   rooms: TimetableFilterOption[];
 }
@@ -223,7 +223,7 @@ export interface TimetableGridCell {
   entryType?: string;
   sectionId?: number;
   sectionName?: string;
-  className?: string;
+  academicGroupName?: string;
   subjectName?: string;
   staffId?: number;
   staffName?: string;
@@ -248,7 +248,7 @@ export interface TimetableConflict {
   message: string;
   sectionId?: number;
   sectionName?: string;
-  className?: string;
+  academicGroupName?: string;
   dayOfWeek?: DayOfWeek;
   periodId?: number;
   periodName?: string;

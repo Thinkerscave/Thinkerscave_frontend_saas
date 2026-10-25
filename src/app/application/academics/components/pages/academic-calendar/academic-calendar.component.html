@@ -326,7 +326,7 @@
         <h3>No events found</h3>
         <p>
           There are no calendar events for
-          {{ dashboard?.name || 'this academic year' }}.
+          {{ dashboard.name || 'this academic year' }}.
         </p>
         <button
           type="button"
@@ -423,14 +423,14 @@
           styleClass="ac-form-dd">
         </p-dropdown>
       </label>
-      <label *ngIf="eventForm.value.audienceType === 'CLASS'">
-        Classes *
+      <label *ngIf="eventForm.value.audienceType === 'ACADEMIC_GROUP'">
+        Academic Groups *
         <p-multiSelect
-          [options]="classOptions"
-          formControlName="classIds"
+          [options]="academicGroupOptions"
+          formControlName="academicGroupIds"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select classes"
+          placeholder="Select academic groups"
           [filter]="true"
           appendTo="body"
           styleClass="ac-form-dd"

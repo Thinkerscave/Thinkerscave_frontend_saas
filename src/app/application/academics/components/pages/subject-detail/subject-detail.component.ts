@@ -19,13 +19,13 @@ import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-prim
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
-import { AcademicClassDto } from '../../../models/classes-sections.model';
+import { AcademicGroupDto } from '../../../models/academic-groups.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
-  ClassSubjectMappingDto,
+  AcademicGroupSubjectMappingDto,
   SUBJECT_CATEGORY_OPTIONS,
   SubjectCategory,
   SubjectDto,
@@ -57,7 +57,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class SubjectDetailPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(SubjectsMappingApiService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly academicGroupsApi = inject(AcademicGroupsApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -81,8 +81,8 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
   offerMap = false;
   showSubjectDialog = false;
   showMapDialog = false;
-  classes: AcademicClassDto[] = [];
-  mapClassId: number | null = null;
+  academicGroups: AcademicGroupDto[] = [];
+  mapAcademicGroupId: number | null = null;
   menuItems: MenuItem[] = [];
 
   subjectForm = this.fb.group({
@@ -98,19 +98,19 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     return this.permissions.canManage(this.resource) && !this.subject?.yearReadOnly;
   }
 
-  get mappedClasses(): ClassSubjectMappingDto[] {
+  get mappedAcademicGroups(): AcademicGroupSubjectMappingDto[] {
     return (this.subject?.mappings || []).filter((m) => m.included);
   }
 
-  get availableClasses(): AcademicClassDto[] {
-    const mappedIds = new Set(this.mappedClasses.map((m) => m.classId));
-    return this.classes.filter((c) => c.active && !mappedIds.has(c.classId));
+  get availableAcademicGroups(): AcademicGroupDto[] {
+    const mappedIds = new Set(this.mappedAcademicGroups.map((m) => m.academicGroupId));
+    return this.academicGroups.filter((c) => c.active && !mappedIds.has(c.academicGroupId));
   }
 
-  get classOptions(): { label: string; value: number }[] {
-    return this.availableClasses.map((c) => ({
+  get academicGroupOptions(): { label: string; value: number }[] {
+    return this.availableAcademicGroups.map((c) => ({
       label: `${c.name}${c.code ? ` (${c.code})` : ''}`,
-      value: c.classId
+      value: c.academicGroupId
     }));
   }
 
@@ -172,13 +172,13 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
   }
 
   private loadClasses(yearId: number): void {
-    this.classesApi.getDashboard(yearId, { active: true }).subscribe({
+    this.academicGroupsApi.getDashboard(yearId, { active: true }).subscribe({
       next: (dash) => {
-        this.classes = dash.classes || [];
+        this.academicGroups = dash.academicGroups || [];
         this.cdr.markForCheck();
       },
       error: () => {
-        this.classes = [];
+        this.academicGroups = [];
       }
     });
   }
@@ -260,15 +260,15 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
 
   openMapDialog(): void {
     if (!this.canManage) return;
-    this.mapClassId = this.classOptions[0]?.value ?? null;
+    this.mapAcademicGroupId = this.academicGroupOptions[0]?.value ?? null;
     this.showMapDialog = true;
     this.offerMap = false;
   }
 
-  mapToClass(): void {
-    if (!this.subject || !this.mapClassId || !this.canManage) return;
+  mapToAcademicGroup(): void {
+    if (!this.subject || !this.mapAcademicGroupId || !this.canManage) return;
     this.mapping = true;
-    this.api.upsertMapping(this.mapClassId, {
+    this.api.upsertMapping(this.mapAcademicGroupId, {
       subjectId: this.subject.subjectId,
       included: true,
       weeklyPeriods: this.subject.defaultWeeklyPeriods,
@@ -279,7 +279,7 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     })).subscribe({
       next: () => {
         this.showMapDialog = false;
-        this.messages.add({ severity: 'success', summary: 'Subject mapped to class' });
+        this.messages.add({ severity: 'success', summary: 'Subject mapped to Academic Group' });
         this.dismissOffer();
         this.load(this.subject!.subjectId);
       },
@@ -291,14 +291,14 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  buildMenu(row: ClassSubjectMappingDto): void {
+  buildMenu(row: AcademicGroupSubjectMappingDto): void {
     const items: MenuItem[] = [
       {
-        label: 'Open Class Mapping',
+        label: 'Open Academic Group Mapping',
         icon: 'pi pi-external-link',
         command: () => {
           void this.router.navigate(
-            ['/app/academics/classes-sections', row.classId, 'subjects'],
+            ['/app/academics/academic-groups', row.academicGroupId, 'subjects'],
             { queryParams: { from: 'subjects' } }
           );
         }
@@ -314,15 +314,15 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     this.menuItems = items;
   }
 
-  removeMapping(row: ClassSubjectMappingDto): void {
+  removeMapping(row: AcademicGroupSubjectMappingDto): void {
     if (!this.subject || !this.canManage) return;
     this.confirm.confirm({
-      header: `Remove from ${row.className || 'class'}?`,
-      message: `${this.subject.name} will no longer be taught in ${row.className || 'this class'}.`,
+      header: `Remove from ${row.academicGroupName || 'class'}?`,
+      message: `${this.subject.name} will no longer be taught in ${row.academicGroupName || 'this Academic Group'}.`,
       acceptLabel: 'Remove',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.api.upsertMapping(row.classId, {
+        this.api.upsertMapping(row.academicGroupId, {
           subjectId: this.subject!.subjectId,
           included: false
         }).subscribe({

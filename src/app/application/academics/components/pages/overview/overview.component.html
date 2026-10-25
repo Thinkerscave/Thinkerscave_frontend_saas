@@ -42,13 +42,13 @@
     </section>
 
     <section class="ov-cards acad-stagger">
-      <a class="ov-card" routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">
+      <a class="ov-card" routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-th-large ov-card__icon"></i>
-        <strong>{{ ov.structureCounts.classesTotal }}</strong>
-        <span>Classes</span>
-        <small>{{ ov.structureCounts.classesActive }} Active</small>
+        <strong>{{ ov.structureCounts.academicGroupsTotal }}</strong>
+        <span>Academic Groups</span>
+        <small>{{ ov.structureCounts.academicGroupsActive }} Active</small>
       </a>
-      <a class="ov-card" routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">
+      <a class="ov-card" routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }">
         <i class="pi pi-sitemap ov-card__icon"></i>
         <strong>{{ ov.structureCounts.sectionsTotal }}</strong>
         <span>Sections</span>
@@ -93,34 +93,34 @@
       <article class="ov-panel">
         <div class="ov-panel__head">
           <h3>Academic Structure Snapshot</h3>
-          <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }">View All →</a>
+          <a routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }">View All →</a>
         </div>
         <div class="ov-tabs">
-          <button type="button" [class.active]="snapshotTab === 'classes'" (click)="snapshotTab = 'classes'">Classes</button>
+          <button type="button" [class.active]="snapshotTab === 'academicGroups'" (click)="snapshotTab = 'academicGroups'">Academic Groups</button>
           <button type="button" [class.active]="snapshotTab === 'subjects'" (click)="snapshotTab = 'subjects'">Subjects</button>
         </div>
-        <table class="ov-table" *ngIf="snapshotTab === 'classes'">
+        <table class="ov-table" *ngIf="snapshotTab === 'academicGroups'">
           <thead>
-            <tr><th>Class</th><th>Sections</th><th>Students</th></tr>
+            <tr><th>Academic Group</th><th>Sections</th><th>Students</th></tr>
           </thead>
           <tbody>
-            <tr *ngFor="let c of ov.topClasses">
-              <td><strong>{{ c.className }}</strong></td>
+            <tr *ngFor="let c of ov.topAcademicGroups">
+              <td><strong>{{ c.academicGroupName }}</strong></td>
               <td>{{ c.sectionCount }}</td>
               <td>{{ c.studentCount ?? '—' }}</td>
             </tr>
-            <tr *ngIf="!ov.topClasses?.length"><td colspan="3" class="ov-muted">No classes yet</td></tr>
+            <tr *ngIf="!ov.topAcademicGroups?.length"><td colspan="3" class="ov-muted">No academic groups yet</td></tr>
           </tbody>
         </table>
         <table class="ov-table" *ngIf="snapshotTab === 'subjects'">
           <thead>
-            <tr><th>Subject</th><th>Category</th><th>Classes</th><th>Periods</th><th>Teacher</th></tr>
+            <tr><th>Subject</th><th>Category</th><th>Academic Groups</th><th>Periods</th><th>Teacher</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let s of ov.topSubjects">
               <td><strong>{{ s.subjectName }}</strong> <code *ngIf="s.code">{{ s.code }}</code></td>
               <td>{{ s.category || '—' }}</td>
-              <td>{{ s.mappedClassCount ?? '—' }}</td>
+              <td>{{ s.mappedAcademicGroupCount ?? '—' }}</td>
               <td>{{ s.defaultWeeklyPeriods ?? '—' }}</td>
               <td>{{ s.teacherStatus || '—' }}</td>
             </tr>
@@ -131,10 +131,10 @@
 
       <article class="ov-panel">
         <div class="ov-panel__head">
-          <h3>Students by Class</h3>
+          <h3>Students by Academic Group</h3>
           <a routerLink="/app/students/directory">View Report →</a>
         </div>
-        <div class="ov-donut-wrap" *ngIf="ov.studentsByClass?.length; else noStudents">
+        <div class="ov-donut-wrap" *ngIf="ov.studentsByAcademicGroup?.length; else noStudents">
           <div class="ov-donut" [ngStyle]="donutStyle(ov)">
             <div class="ov-donut__center">
               <strong>{{ ov.structureCounts.studentsActive }}</strong>
@@ -142,8 +142,8 @@
             </div>
           </div>
           <ul class="ov-legend">
-            <li *ngFor="let r of ov.studentsByClass">
-              <span>{{ r.className }}</span>
+            <li *ngFor="let r of ov.studentsByAcademicGroup">
+              <span>{{ r.academicGroupName }}</span>
               <strong>{{ r.studentCount }}</strong>
               <small>{{ r.percent }}%</small>
             </li>
@@ -164,7 +164,7 @@
           <div>
             <strong>{{ timetableHeadline(ov) }}</strong>
             <p *ngIf="ov.timetable.publishedVersion">Published version {{ ov.timetable.publishedVersion }}</p>
-            <p *ngIf="!ov.timetable.publishedVersion">The timetable has not been finalized for all classes.</p>
+            <p *ngIf="!ov.timetable.publishedVersion">The timetable has not been finalized for all academic groups.</p>
           </div>
         </div>
         <div class="ov-tt-metrics">
@@ -224,8 +224,8 @@
 
     <section class="ov-actions">
       <a routerLink="/app/academics/academic-year" [queryParams]="{ from: 'overview' }"><i class="pi pi-calendar-plus"></i> Create Academic Year</a>
-      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-th-large"></i> Add Class</a>
-      <a routerLink="/app/academics/classes-sections" [queryParams]="{ from: 'overview' }"><i class="pi pi-sitemap"></i> Add Section</a>
+      <a routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }"><i class="pi pi-th-large"></i> Create Academic Group</a>
+      <a routerLink="/app/academics/academic-groups" [queryParams]="{ from: 'overview' }"><i class="pi pi-sitemap"></i> Add Section</a>
       <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-book"></i> Add Subject</a>
       <a routerLink="/app/academics/subjects-mapping" [queryParams]="{ from: 'overview' }"><i class="pi pi-link"></i> Map Subjects</a>
       <a routerLink="/app/academics/teacher-allocation" [queryParams]="{ from: 'overview' }"><i class="pi pi-user-edit"></i> Assign Teachers</a>

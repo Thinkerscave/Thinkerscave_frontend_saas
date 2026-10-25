@@ -153,11 +153,11 @@ export class SubjectsMappingPageComponent implements OnInit {
     const from = this.route.snapshot.queryParamMap.get('from');
 
     // Legacy deep-link from Class Detail: send users to the class-scoped mapping page.
-    const classId = Number(this.route.snapshot.queryParamMap.get('classId'));
-    if (classId) {
+    const academicGroupId = Number(this.route.snapshot.queryParamMap.get('academicGroupId'));
+    if (academicGroupId) {
       void this.router.navigate(
-        ['/app/academics/classes-sections', classId, 'subjects'],
-        { queryParams: { from: from || 'classes' }, replaceUrl: true }
+        ['/app/academics/academic-groups', academicGroupId, 'subjects'],
+        { queryParams: { from: from || 'academicGroups' }, replaceUrl: true }
       );
       return;
     }
@@ -388,7 +388,7 @@ export class SubjectsMappingPageComponent implements OnInit {
 
       if (subject.active) {
         items.push({
-          label: 'Map to Class',
+          label: 'Map to Academic Group',
           icon: 'pi pi-link',
           command: () => this.openDetails(subject.subjectId, true)
         });

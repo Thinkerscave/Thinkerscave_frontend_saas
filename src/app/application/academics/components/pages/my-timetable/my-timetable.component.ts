@@ -31,7 +31,7 @@ export class MyTimetablePageComponent {
   selectedYearId: number | null = null;
   data: MyTimetable | null = null;
   viewMode: 'week' | 'day' = 'week';
-  classFilter = '';
+  academicGroupFilter = '';
   subjectFilter = '';
 
   private readonly palette = ['#dbeafe', '#dcfce7', '#fce7f3', '#ffedd5', '#ede9fe', '#e0f2fe', '#fef3c7'];
@@ -62,9 +62,9 @@ export class MyTimetablePageComponent {
     return new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   }
 
-  get classOptions(): string[] {
+  get academicGroupOptions(): string[] {
     const cells = this.data?.grid?.cells || [];
-    return [...new Set(cells.map((c) => [c.className, c.sectionName].filter(Boolean).join('-')).filter(Boolean))];
+    return [...new Set(cells.map((c) => [c.academicGroupName, c.sectionName].filter(Boolean).join('-')).filter(Boolean))];
   }
 
   get subjectOptions(): string[] {
@@ -75,14 +75,14 @@ export class MyTimetablePageComponent {
   get summary() {
     const today = this.data?.todaySchedule || [];
     const teaching = today.filter((t) => !!t.subjectName).length;
-    const classes = new Set((this.data?.grid?.cells || []).map((c) => `${c.className}-${c.sectionName}`)).size;
+    const academicGroups = new Set((this.data?.grid?.cells || []).map((c) => `${c.academicGroupName}-${c.sectionName}`)).size;
     const subjects = new Set((this.data?.grid?.cells || []).map((c) => c.subjectName).filter(Boolean)).size;
     const periods = this.data?.grid?.periods?.filter((p) => p.slotKind !== 'BREAK').length || 0;
     return {
       classesToday: teaching,
       teachingPeriods: `${teaching} / ${periods || teaching || 0}`,
       freePeriods: Math.max(0, periods - teaching),
-      classes,
+      academicGroups,
       subjects
     };
   }
@@ -105,9 +105,9 @@ export class MyTimetablePageComponent {
       (c) => c.dayOfWeek === day && c.periodNumber === periodNumber
     );
     if (!cell) return null;
-    if (this.classFilter) {
-      const label = [cell.className, cell.sectionName].filter(Boolean).join('-');
-      if (label !== this.classFilter) return null;
+    if (this.academicGroupFilter) {
+      const label = [cell.academicGroupName, cell.sectionName].filter(Boolean).join('-');
+      if (label !== this.academicGroupFilter) return null;
     }
     if (this.subjectFilter && cell.subjectName !== this.subjectFilter) return null;
     return cell;

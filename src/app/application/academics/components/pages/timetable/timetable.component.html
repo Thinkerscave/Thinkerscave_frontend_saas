@@ -94,7 +94,7 @@
         </div>
         <div class="tt-summary-card">
           <span class="tt-summary-card__value">{{ r.summary.subjects }}</span>
-          <span class="tt-summary-card__label">Class subjects</span>
+          <span class="tt-summary-card__label">Academic Group subjects</span>
         </div>
         <div class="tt-summary-card">
           <span class="tt-summary-card__value">{{ r.summary.requirements }}</span>
@@ -256,14 +256,14 @@
         </p-dropdown>
 
         <div class="tt-view-tabs" *ngIf="versions.length">
-          <button class="tt-view-tab" [class.active]="gridView === 'CLASS'" (click)="setGridView('CLASS')">Class</button>
+          <button class="tt-view-tab" [class.active]="gridView === 'ACADEMIC_GROUP'" (click)="setGridView('ACADEMIC_GROUP')">Academic Group</button>
           <button class="tt-view-tab" [class.active]="gridView === 'TEACHER'" (click)="setGridView('TEACHER')">Teacher</button>
           <button class="tt-view-tab" [class.active]="gridView === 'ROOM'" (click)="setGridView('ROOM')">Room</button>
         </div>
 
-        <ng-container *ngIf="versions.length && gridView === 'CLASS'">
-          <p-dropdown [options]="classOptions" [(ngModel)]="gridClassId" (onChange)="onGridClassChange()"
-            optionLabel="label" optionValue="value" placeholder="Class" [filter]="classOptions.length > 8"></p-dropdown>
+        <ng-container *ngIf="versions.length && gridView === 'ACADEMIC_GROUP'">
+          <p-dropdown [options]="academicGroupOptions" [(ngModel)]="gridAcademicGroupId" (onChange)="onGridAcademicGroupChange()"
+            optionLabel="label" optionValue="value" placeholder="Academic Group" [filter]="academicGroupOptions.length > 8"></p-dropdown>
           <p-dropdown [options]="sectionOptions" [(ngModel)]="gridSectionId" (onChange)="loadGrid()"
             optionLabel="label" optionValue="value" placeholder="Section"></p-dropdown>
         </ng-container>
@@ -309,7 +309,7 @@
                   <div class="tt-slot" *ngFor="let cell of getCells(day, period.periodNumber)">
                     <strong>{{ cell.subjectName || '—' }}</strong>
                     <span *ngIf="gridView !== 'TEACHER'">{{ cell.staffName || 'Teacher not assigned' }}</span>
-                    <span *ngIf="gridView !== 'CLASS'">{{ cell.className }} - {{ cell.sectionName }}</span>
+                    <span *ngIf="gridView !== 'ACADEMIC_GROUP'">{{ cell.academicGroupName }} - {{ cell.sectionName }}</span>
                     <small *ngIf="cell.resourceName && gridView !== 'ROOM'">{{ cell.resourceName }}</small>
                   </div>
                   <div class="tt-free" *ngIf="!getCells(day, period.periodNumber).length">Free</div>
@@ -369,7 +369,7 @@
         <div class="tt-empty" *ngIf="!conflicts.length">
           <i class="pi pi-check-circle tt-text-success"></i>
           <h3>No issues</h3>
-          <p>Every required period was placed with no teacher, class or room clashes.</p>
+          <p>Every required period was placed with no teacher, Academic Group or room clashes.</p>
         </div>
       </ng-container>
 
@@ -532,7 +532,7 @@
               <i class="pi pi-plus"></i> Add room
             </button>
           </div>
-          <p class="tt-muted tt-mb">Optional. Sections with a default room (set on Classes &amp; Sections) are checked so two sections never share a room at the same time.</p>
+          <p class="tt-muted tt-mb">Optional. Sections with a default room (set on Academic Groups) are checked so two sections never share a room at the same time.</p>
           <div class="tt-resources-list" *ngIf="resources.length; else noResourcesTpl">
             <div class="tt-resource-item" *ngFor="let r of resources">
               <span class="tt-resource-item__name">{{ r.name }}</span>
@@ -573,7 +573,7 @@
     <div class="tt-form-group">
       <label>Type</label>
       <select [(ngModel)]="resourceForm.resourceType">
-        <option value="CLASSROOM">Classroom</option>
+        <option value="CLASSROOM">Academic Grouproom</option>
         <option value="LABORATORY">Laboratory</option>
         <option value="ACTIVITY_ROOM">Activity Room</option>
         <option value="AUDITORIUM">Auditorium</option>

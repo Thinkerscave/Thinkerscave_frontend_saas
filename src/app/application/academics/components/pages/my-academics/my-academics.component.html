@@ -15,11 +15,11 @@
             <span class="ma-pill">Active</span>
           </div>
           <div class="ma-grid">
-            <div><span>Class</span><strong>{{ d.className || '—' }}</strong></div>
+            <div><span>Academic Group</span><strong>{{ d.academicGroupName || '—' }}</strong></div>
             <div><span>Section</span><strong>{{ d.sectionName || '—' }}</strong></div>
             <div><span>Roll Number</span><strong>{{ d.rollNumber || '—' }}</strong></div>
             <div><span>Admission No</span><strong>{{ d.admissionNumber || '—' }}</strong></div>
-            <div><span>Class Teacher</span><strong>{{ d.classTeacher?.staffName || '—' }}</strong></div>
+            <div><span>Group Teacher</span><strong>{{ d.sectionTeacher?.staffName || '—' }}</strong></div>
             <div><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
           </div>
         </div>
@@ -27,7 +27,7 @@
       <article class="ma-quickinfo">
         <h3>Quick Info</h3>
         <div><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
-        <div><span>Class-Section</span><strong>{{ d.className }}{{ d.sectionName ? '-' + d.sectionName : '' }}</strong></div>
+        <div><span>Academic Group-Section</span><strong>{{ d.academicGroupName }}{{ d.sectionName ? '-' + d.sectionName : '' }}</strong></div>
         <div><span>Subjects</span><strong>{{ d.subjects.length || 0 }}</strong></div>
         <div><span>Timetable</span><strong>{{ d.publishedTimetableExists ? 'Published' : 'Not published' }}</strong></div>
       </article>
@@ -36,8 +36,8 @@
     <section class="ma-shortcuts">
       <a routerLink="/app/academics/my-academics"><strong>{{ d.subjects.length || 0 }}</strong><span>Subjects</span><em>View Subjects →</em></a>
       <a routerLink="/app/academics/my-timetable"><strong>{{ d.publishedTimetableExists ? 'Ready' : '—' }}</strong><span>Timetable</span><em>View Timetable →</em></a>
-      <div><strong>{{ d.classTeacher?.staffName || '—' }}</strong><span>Class Teacher</span><em>Primary contact</em></div>
-      <div><strong>{{ d.className || '—' }}</strong><span>My Class</span><em>{{ d.sectionName ? 'Section ' + d.sectionName : '—' }}</em></div>
+      <div><strong>{{ d.sectionTeacher?.staffName || '—' }}</strong><span>Group Teacher</span><em>Primary contact</em></div>
+      <div><strong>{{ d.academicGroupName || '—' }}</strong><span>My Academic Group</span><em>{{ d.sectionName ? 'Section ' + d.sectionName : '—' }}</em></div>
     </section>
 
     <section class="ma-mid">
@@ -50,22 +50,22 @@
           </div>
           <span>{{ s.weeklyPeriods }} periods/week</span>
         </div>
-        <div class="ma-empty" *ngIf="!d.subjects.length">No subjects mapped for your class.</div>
+        <div class="ma-empty" *ngIf="!d.subjects.length">No subjects mapped for your Academic Group.</div>
       </article>
 
       <article class="ma-panel">
         <h3>Academic Status</h3>
         <div class="ma-kv"><span>Enrollment Status</span><strong class="ok">Active</strong></div>
-        <div class="ma-kv"><span>Current Class</span><strong>{{ d.className }}{{ d.sectionName ? ' - ' + d.sectionName : '' }}</strong></div>
+        <div class="ma-kv"><span>Current Academic Group</span><strong>{{ d.academicGroupName }}{{ d.sectionName ? ' - ' + d.sectionName : '' }}</strong></div>
         <div class="ma-kv"><span>Academic Year</span><strong>{{ d.academicYearName || '—' }}</strong></div>
         <div class="ma-kv"><span>Promotion Status</span><strong>Not Applicable</strong></div>
       </article>
 
       <article class="ma-panel">
-        <h3>Class Information</h3>
-        <div class="ma-kv"><span>Class</span><strong>{{ d.className || '—' }}</strong></div>
+        <h3>Academic Group Information</h3>
+        <div class="ma-kv"><span>Academic Group</span><strong>{{ d.academicGroupName || '—' }}</strong></div>
         <div class="ma-kv"><span>Section</span><strong>{{ d.sectionName || '—' }}</strong></div>
-        <div class="ma-kv"><span>Class Teacher</span><strong>{{ d.classTeacher?.staffName || '—' }}</strong></div>
+        <div class="ma-kv"><span>Group Teacher</span><strong>{{ d.sectionTeacher?.staffName || '—' }}</strong></div>
         <div class="ma-kv"><span>Roll Number</span><strong>{{ d.rollNumber || '—' }}</strong></div>
         <a class="ma-link" routerLink="/app/academics/my-timetable" *ngIf="d.publishedTimetableExists">View My Timetable →</a>
       </article>
@@ -74,7 +74,7 @@
     <section class="ma-info">
       <h3>Important Information</h3>
       <div class="ma-info__grid">
-        <article><strong>Regular Classes</strong><p>Attend classes regularly and keep track of your timetable.</p></article>
+        <article><strong>Regular Academic Groups</strong><p>Attend academic groups regularly and keep track of your timetable.</p></article>
         <article><strong>Assignments</strong><p>Check homework and assignments shared by your teachers.</p></article>
         <article><strong>Performance</strong><p>Stay consistent — your academic year progress depends on daily effort.</p></article>
       </div>

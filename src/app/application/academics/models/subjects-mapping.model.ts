@@ -13,11 +13,11 @@ export type AcademicYearStatusLite =
   | 'ARCHIVED'
   | 'REJECTED';
 
-export interface ClassSubjectMappingDto {
-  classSubjectMappingId?: number | null;
-  classId: number;
-  className?: string;
-  classCode?: string;
+export interface AcademicGroupSubjectMappingDto {
+  academicGroupSubjectMappingId?: number | null;
+  academicGroupId: number;
+  academicGroupName?: string;
+  academicGroupCode?: string;
   classStage?: string;
   sectionCount?: number;
   subjectId: number;
@@ -34,13 +34,13 @@ export interface ClassSubjectMappingDto {
   teacherAllocationCount?: number;
 }
 
-export interface ClassMappingBoard {
-  classId: number;
-  className: string;
-  classCode: string;
+export interface AcademicGroupMappingBoard {
+  academicGroupId: number;
+  academicGroupName: string;
+  academicGroupCode: string;
   stage: string;
   sectionNames: string[];
-  mappings: ClassSubjectMappingDto[];
+  mappings: AcademicGroupSubjectMappingDto[];
   includedCount: number;
   missingTeacherCount: number;
 }
@@ -58,9 +58,9 @@ export interface SubjectDto {
   timetablePreference: SubjectTimetablePreference;
   description?: string | null;
   active: boolean;
-  mappedClassCount?: number;
+  mappedAcademicGroupCount?: number;
   teacherAllocationCount?: number;
-  mappings?: ClassSubjectMappingDto[];
+  mappings?: AcademicGroupSubjectMappingDto[];
 }
 
 export interface SubjectsMappingDashboard {
@@ -68,7 +68,7 @@ export interface SubjectsMappingDashboard {
   academicYearName: string;
   academicYearStatus: AcademicYearStatusLite;
   yearReadOnly: boolean;
-  classCount: number;
+  academicGroupCount: number;
   sectionCount: number;
   subjectCount: number;
   subjectsActive: number;
@@ -86,7 +86,7 @@ export interface SubjectCreateRequest {
   description?: string;
 }
 
-export interface ClassSubjectMappingUpsertRequest {
+export interface AcademicGroupSubjectMappingUpsertRequest {
   subjectId: number;
   included: boolean;
   weeklyPeriods?: number;

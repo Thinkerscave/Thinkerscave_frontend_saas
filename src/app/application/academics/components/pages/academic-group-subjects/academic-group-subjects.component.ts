@@ -19,14 +19,14 @@ import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-prim
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
-import { AcademicClassDto } from '../../../models/classes-sections.model';
+import { AcademicGroupDto } from '../../../models/academic-groups.model';
 import {
   ACADEMICS_SUBJECTS_RESOURCE,
-  ClassMappingBoard,
-  ClassSubjectMappingDto,
+  AcademicGroupMappingBoard,
+  AcademicGroupSubjectMappingDto,
   SUBJECT_CATEGORY_OPTIONS,
   SubjectCategory
 } from '../../../models/subjects-mapping.model';
@@ -34,7 +34,7 @@ import {
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
 @Component({
-  selector: 'app-class-subjects-page',
+  selector: 'app-academic-group-subjects-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -49,12 +49,12 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     HasPermissionDirective
   ],
   providers: [ConfirmationService],
-  templateUrl: './class-subjects.component.html',
-  styleUrls: ['./class-subjects.component.scss']
+  templateUrl: './academic-group-subjects.component.html',
+  styleUrls: ['./academic-group-subjects.component.scss']
 })
-export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
+export class AcademicGroupSubjectsPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(SubjectsMappingApiService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly academicGroupsApi = inject(AcademicGroupsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -69,9 +69,9 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
   loading = true;
   loadError = false;
   saving = false;
-  cls: AcademicClassDto | null = null;
-  board: ClassMappingBoard | null = null;
-  private classId: number | null = null;
+  cls: AcademicGroupDto | null = null;
+  board: AcademicGroupMappingBoard | null = null;
+  private academicGroupId: number | null = null;
 
   showAddDialog = false;
   addSearch = '';
@@ -82,15 +82,15 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
     return this.permissions.canManage(this.resource) && !this.cls?.yearReadOnly;
   }
 
-  get mappedSubjects(): ClassSubjectMappingDto[] {
+  get mappedSubjects(): AcademicGroupSubjectMappingDto[] {
     return (this.board?.mappings || []).filter((m) => m.included);
   }
 
-  get unmappedSubjects(): ClassSubjectMappingDto[] {
+  get unmappedSubjects(): AcademicGroupSubjectMappingDto[] {
     return (this.board?.mappings || []).filter((m) => !m.included);
   }
 
-  get availableSubjects(): ClassSubjectMappingDto[] {
+  get availableSubjects(): AcademicGroupSubjectMappingDto[] {
     const q = this.addSearch.trim().toLowerCase();
     return this.unmappedSubjects.filter((m) => {
       if (!q) return true;
@@ -108,9 +108,9 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get('classId'));
+      const id = Number(params.get('academicGroupId'));
       if (id) {
-        this.classId = id;
+        this.academicGroupId = id;
         this.load(id);
       }
     });
@@ -121,25 +121,25 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
   }
 
   back(): void {
-    if (this.classId) {
-      void this.router.navigate(['/app/academics/classes-sections', this.classId], {
-        queryParams: { from: 'classes' }
+    if (this.academicGroupId) {
+      void this.router.navigate(['/app/academics/academic-groups', this.academicGroupId], {
+        queryParams: { from: 'academicGroups' }
       });
       return;
     }
-    this.nav.back(this.route, ['/app/academics/classes-sections']);
+    this.nav.back(this.route, ['/app/academics/academic-groups']);
   }
 
   retry(): void {
-    if (this.classId) this.load(this.classId);
+    if (this.academicGroupId) this.load(this.academicGroupId);
   }
 
-  load(classId: number): void {
+  load(academicGroupId: number): void {
     this.loading = true;
     this.loadError = false;
     forkJoin({
-      cls: this.classesApi.getClass(classId),
-      board: this.api.getClassMappingBoard(classId)
+      cls: this.academicGroupsApi.getAcademicGroup(academicGroupId),
+      board: this.api.getAcademicGroupMappingBoard(academicGroupId)
     }).pipe(finalize(() => {
       this.loading = false;
       this.cdr.markForCheck();
@@ -160,8 +160,8 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
   }
 
   reloadBoard(): void {
-    if (!this.classId) return;
-    this.api.getClassMappingBoard(this.classId).subscribe({
+    if (!this.academicGroupId) return;
+    this.api.getAcademicGroupMappingBoard(this.academicGroupId).subscribe({
       next: (board) => {
         this.board = board;
         this.cdr.markForCheck();
@@ -211,11 +211,11 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
   }
 
   addSelectedSubjects(): void {
-    if (!this.classId || !this.canManage || !this.selectedCount) return;
+    if (!this.academicGroupId || !this.canManage || !this.selectedCount) return;
     const rows = (this.board?.mappings || []).filter((m) => this.selectedSubjectIds.has(m.subjectId));
     this.saving = true;
     forkJoin(
-      rows.map((row) => this.api.upsertMapping(this.classId!, {
+      rows.map((row) => this.api.upsertMapping(this.academicGroupId!, {
         subjectId: row.subjectId,
         included: true,
         weeklyPeriods: row.defaultWeeklyPeriods || row.weeklyPeriods,
@@ -244,11 +244,11 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
   openSubjectDetail(subjectId: number): void {
     void this.router.navigate(
       ['/app/academics/subjects-mapping', subjectId],
-      { queryParams: { from: 'classes' } }
+      { queryParams: { from: 'academicGroups' } }
     );
   }
 
-  buildMenu(row: ClassSubjectMappingDto): void {
+  buildMenu(row: AcademicGroupSubjectMappingDto): void {
     const items: MenuItem[] = [
       {
         label: 'View Subject',
@@ -258,7 +258,7 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
     ];
     if (this.canManage) {
       items.push({
-        label: 'Remove from Class',
+        label: 'Remove from Academic Group',
         icon: 'pi pi-times',
         command: () => this.removeMapping(row)
       });
@@ -266,15 +266,15 @@ export class ClassSubjectsPageComponent implements OnInit, OnDestroy {
     this.menuItems = items;
   }
 
-  removeMapping(row: ClassSubjectMappingDto): void {
-    if (!this.classId || !this.canManage) return;
+  removeMapping(row: AcademicGroupSubjectMappingDto): void {
+    if (!this.academicGroupId || !this.canManage) return;
     this.confirm.confirm({
       header: `Remove ${row.subjectName}?`,
-      message: `${row.subjectName} will no longer be taught in ${this.cls?.name || 'this class'}.`,
+      message: `${row.subjectName} will no longer be taught in ${this.cls?.name || 'this Academic Group'}.`,
       acceptLabel: 'Remove',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.api.upsertMapping(this.classId!, {
+        this.api.upsertMapping(this.academicGroupId!, {
           subjectId: row.subjectId,
           included: false
         }).subscribe({

@@ -4,13 +4,14 @@ import { Observable, map } from 'rxjs';
 import { academicsApi } from '../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../shared/models/auth.model';
 import {
-  AcademicClassCreateRequest,
-  AcademicClassDto,
+  AcademicGroupCreateRequest,
+  AcademicGroupDto,
+  AcademicGroupSummary,
   AcademicSectionCreateRequest,
   AcademicStage,
   ClassSectionDto,
   ClassesSectionsDashboard
-} from '../models/classes-sections.model';
+} from '../models/academicGroups-sections.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClassesSectionsApiService {
@@ -31,39 +32,45 @@ export class ClassesSectionsApiService {
       .pipe(map((res) => res.data));
   }
 
-  getClass(classId: number): Observable<AcademicClassDto> {
+  getClass(academicGroupId: number): Observable<AcademicGroupDto> {
     return this.http
-      .get<ApiResponse<AcademicClassDto>>(academicsApi.classById(classId))
+      .get<ApiResponse<AcademicGroupDto>>(academicsApi.classById(academicGroupId))
       .pipe(map((res) => res.data));
   }
 
-  createClass(body: AcademicClassCreateRequest): Observable<AcademicClassDto> {
+  getGroupSummary(academicGroupId: number): Observable<AcademicGroupSummary> {
     return this.http
-      .post<ApiResponse<AcademicClassDto>>(academicsApi.classes, body)
+      .get<ApiResponse<AcademicGroupSummary>>(academicsApi.classSummary(academicGroupId))
       .pipe(map((res) => res.data));
   }
 
-  updateClass(classId: number, body: AcademicClassCreateRequest): Observable<AcademicClassDto> {
+  createClass(body: AcademicGroupCreateRequest): Observable<AcademicGroupDto> {
     return this.http
-      .put<ApiResponse<AcademicClassDto>>(academicsApi.classById(classId), body)
+      .post<ApiResponse<AcademicGroupDto>>(academicsApi.academicGroups, body)
       .pipe(map((res) => res.data));
   }
 
-  deactivateClass(classId: number): Observable<AcademicClassDto> {
+  updateClass(academicGroupId: number, body: AcademicGroupCreateRequest): Observable<AcademicGroupDto> {
     return this.http
-      .patch<ApiResponse<AcademicClassDto>>(academicsApi.deactivateClass(classId), {})
+      .put<ApiResponse<AcademicGroupDto>>(academicsApi.classById(academicGroupId), body)
       .pipe(map((res) => res.data));
   }
 
-  activateClass(classId: number): Observable<AcademicClassDto> {
+  deactivateClass(academicGroupId: number): Observable<AcademicGroupDto> {
     return this.http
-      .patch<ApiResponse<AcademicClassDto>>(academicsApi.activateClass(classId), {})
+      .patch<ApiResponse<AcademicGroupDto>>(academicsApi.deactivateClass(academicGroupId), {})
       .pipe(map((res) => res.data));
   }
 
-  createSection(classId: number, body: AcademicSectionCreateRequest): Observable<ClassSectionDto> {
+  activateClass(academicGroupId: number): Observable<AcademicGroupDto> {
     return this.http
-      .post<ApiResponse<ClassSectionDto>>(academicsApi.sectionsByClass(classId), body)
+      .patch<ApiResponse<AcademicGroupDto>>(academicsApi.activateClass(academicGroupId), {})
+      .pipe(map((res) => res.data));
+  }
+
+  createSection(academicGroupId: number, body: AcademicSectionCreateRequest): Observable<ClassSectionDto> {
+    return this.http
+      .post<ApiResponse<ClassSectionDto>>(academicsApi.sectionsByClass(academicGroupId), body)
       .pipe(map((res) => res.data));
   }
 

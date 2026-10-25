@@ -68,7 +68,7 @@ const STATUS_LABELS: Record<string, string> = {
 const CONFLICT_LABELS: Record<string, string> = {
   TEACHER_CONFLICT: 'Teacher clash',
   SECTION_CONFLICT: 'Section clash',
-  CLASS_CONFLICT: 'Class clash',
+  ACADEMIC_GROUP_CONFLICT: 'Academic Group clash',
   ROOM_CONFLICT: 'Room clash',
   RESOURCE_CONFLICT: 'Room clash',
   PERIOD_CAPACITY_CONFLICT: 'Periods not placed',
@@ -140,18 +140,18 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   versions: TimetableVersion[] = [];
   selectedVersionId: number | null = null;
   versionOptions: Option<number>[] = [];
-  gridView: GridView = 'CLASS';
+  gridView: GridView = 'ACADEMIC_GROUP';
   grid: TimetableGrid | null = null;
   private cellIndex = new Map<string, TimetableGridCell[]>();
   conflicts: TimetableConflict[] = [];
   conflictsVersionId: number | null = null;
   loadingConflicts = false;
 
-  classOptions: Option<number>[] = [];
+  academicGroupOptions: Option<number>[] = [];
   sectionOptions: Option<number>[] = [];
   staffOptions: Option<number>[] = [];
   resourceOptions: Option<number>[] = [];
-  gridClassId: number | null = null;
+  gridAcademicGroupId: number | null = null;
   gridSectionId: number | null = null;
   gridStaffId: number | null = null;
   gridResourceId: number | null = null;
@@ -161,7 +161,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     name: '', code: '', resourceType: 'CLASSROOM', capacity: 40
   };
 
-  private filterClasses: TimetableFilterClass[] = [];
+  private academicGroupsFilter: TimetableFilterClass[] = [];
   private supportingDataYearId: number | null = null;
 
   get readOnly(): boolean {
@@ -223,8 +223,12 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     return this.versions.find(v => v.timetableVersionId === this.selectedVersionId);
   }
 
+  private requestedAcademicGroupId: number | null = null;
+
   ngOnInit(): void {
     const qpYear = this.route.snapshot.queryParamMap.get('academicYearId');
+    const qpClass = Number(this.route.snapshot.queryParamMap.get('academicGroupId'));
+    this.requestedAcademicGroupId = Number.isFinite(qpClass) && qpClass > 0 ? qpClass : null;
     if (qpYear) {
       const id = Number(qpYear);
       if (Number.isFinite(id)) {
@@ -251,7 +255,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.setGrid(null);
     this.conflicts = [];
     this.conflictsVersionId = null;
-    this.gridClassId = this.gridSectionId = this.gridStaffId = null;
+    this.gridAcademicGroupId = this.gridSectionId = this.gridStaffId = null;
     this.expandedChecks.clear();
     this.stopPolling();
     this.generating = false;
@@ -745,7 +749,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
     this.loadGrid();
   }
 
-  onGridClassChange(): void {
+  onGridAcademicGroupChange(): void {
     this.refreshSectionOptions();
     this.gridSectionId = this.sectionOptions[0]?.value ?? null;
     this.loadGrid();
@@ -754,7 +758,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   loadGrid(): void {
     if (!this.selectedVersionId) { this.setGrid(null); return; }
     const params: Record<string, number> = {};
-    if (this.gridView === 'CLASS') {
+    if (this.gridView === 'ACADEMIC_GROUP') {
       if (!this.gridSectionId) { this.setGrid(null); return; }
       params['sectionId'] = this.gridSectionId;
     } else if (this.gridView === 'TEACHER') {
@@ -784,7 +788,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   get gridEmptyMessage(): string {
     if (!this.versions.length) return 'No timetable has been generated for this year yet. Generate one from the Overview tab.';
-    if (this.gridView === 'CLASS' && !this.gridSectionId) return 'Choose a class and section.';
+    if (this.gridView === 'ACADEMIC_GROUP' && !this.gridSectionId) return 'Choose an Academic Group and section.';
     if (this.gridView === 'TEACHER' && !this.gridStaffId) {
       return this.staffOptions.length ? 'Choose a teacher.' : 'No teachers are allocated for this year.';
     }
@@ -805,8 +809,8 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   }
 
   private ensureGridSelection(): void {
-    if (!this.gridClassId && this.classOptions.length) {
-      this.gridClassId = this.classOptions[0].value;
+    if (!this.gridAcademicGroupId && this.academicGroupOptions.length) {
+      this.gridAcademicGroupId = this.academicGroupOptions[0].value;
     }
     this.refreshSectionOptions();
     if (!this.sectionOptions.some(o => o.value === this.gridSectionId)) {
@@ -821,7 +825,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
   }
 
   private refreshSectionOptions(): void {
-    const cls = this.filterClasses.find(c => c.classId === this.gridClassId);
+    const cls = this.academicGroupsFilter.find(c => c.academicGroupId === this.gridAcademicGroupId);
     this.sectionOptions = (cls?.sections ?? []).map(s => ({ label: s.name, value: s.id }));
   }
 
@@ -859,7 +863,7 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   conflictScope(c: TimetableConflict): string {
     const parts: string[] = [];
-    if (c.className || c.sectionName) parts.push([c.className, c.sectionName].filter(Boolean).join(' - '));
+    if (c.academicGroupName || c.sectionName) parts.push([c.academicGroupName, c.sectionName].filter(Boolean).join(' - '));
     if (c.dayOfWeek) parts.push(this.formatDay(c.dayOfWeek));
     if (c.periodName) parts.push(c.periodName);
     return parts.join(' · ');
@@ -913,9 +917,13 @@ export class TimetablePageComponent implements OnInit, OnDestroy {
 
   /** Class, section and teacher selectors come from the year's timetable planning data. */
   private applyFilters(filters: TimetableFilters | null | undefined): void {
-    this.filterClasses = filters?.classes ?? [];
-    this.classOptions = this.filterClasses.map(c => ({ label: c.name, value: c.classId }));
-    if (!this.classOptions.some(o => o.value === this.gridClassId)) this.gridClassId = null;
+    this.academicGroupsFilter = filters?.academicGroups ?? [];
+    this.academicGroupOptions = this.academicGroupsFilter.map(c => ({ label: c.name, value: c.academicGroupId }));
+    if (this.requestedAcademicGroupId != null && this.academicGroupOptions.some(o => o.value === this.requestedAcademicGroupId)) {
+      this.gridAcademicGroupId = this.requestedAcademicGroupId;
+    }
+    this.requestedAcademicGroupId = null;
+    if (!this.academicGroupOptions.some(o => o.value === this.gridAcademicGroupId)) this.gridAcademicGroupId = null;
     this.staffOptions = (filters?.teachers ?? []).map(t => ({ label: t.name, value: t.id }));
     if (!this.staffOptions.some(o => o.value === this.gridStaffId)) this.gridStaffId = null;
     this.onSelectorDataLoaded();

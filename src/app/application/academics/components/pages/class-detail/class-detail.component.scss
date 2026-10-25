@@ -1,4 +1,7 @@
 @use '../../shared/styles/academics-common' as *;
+@use '../../shared/styles/academic-groups' as *;
+
+@include academic-group-styles;
 
 :host { display: block; }
 

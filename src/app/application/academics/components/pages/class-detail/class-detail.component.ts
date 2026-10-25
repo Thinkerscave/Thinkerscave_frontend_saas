@@ -19,15 +19,17 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import {
   ACADEMIC_STAGE_OPTIONS,
   ACADEMICS_CLASSES_RESOURCE,
-  AcademicClassDto,
+  AcademicGroupCreateRequest,
+  AcademicGroupDto,
+  AcademicGroupSummary,
   AcademicStage,
-  ClassSectionDto
-} from '../../../models/classes-sections.model';
+  AcademicSectionDto
+} from '../../../models/academic-groups.model';
 import { academicsApi } from '../../../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../../../shared/models/auth.model';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
@@ -35,7 +37,7 @@ import { BreadCrumbService } from '../../../../../core/services/bread-crumb.serv
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
 @Component({
-  selector: 'app-class-detail-page',
+  selector: 'app-academic-group-detail-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -52,11 +54,11 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     HasPermissionDirective
   ],
   providers: [ConfirmationService],
-  templateUrl: './class-detail.component.html',
-  styleUrls: ['./class-detail.component.scss']
+  templateUrl: './academic-group-detail.component.html',
+  styleUrls: ['./academic-group-detail.component.scss']
 })
-export class ClassDetailPageComponent implements OnInit, OnDestroy {
-  private readonly api = inject(ClassesSectionsApiService);
+export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
+  private readonly api = inject(AcademicGroupsApiService);
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -74,9 +76,13 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   loading = true;
   loadError = false;
   saving = false;
-  cls: AcademicClassDto | null = null;
-  private classId: number | null = null;
-  offerSections = false;
+  cls: AcademicGroupDto | null = null;
+  academicGroupId: number | null = null;
+  summary: AcademicGroupSummary | null = null;
+  summaryError = false;
+  groupMenuItems: MenuItem[] = [];
+  formError: string | null = null;
+  private wantsAddSection = false;
   showClassDialog = false;
   showSectionDialog = false;
   editingSectionId: number | null = null;
@@ -86,7 +92,8 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   classForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     code: ['', Validators.maxLength(50)],
-    stage: ['PRIMARY' as AcademicStage, Validators.required]
+    stage: [null as AcademicStage | null],
+    description: ['', Validators.maxLength(500)]
   });
 
   sectionForm = this.fb.group({
@@ -110,14 +117,14 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadStaff();
     this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get('classId'));
+      const id = Number(params.get('academicGroupId'));
       if (id) {
-        this.classId = id;
+        this.academicGroupId = id;
         this.load(id);
       }
     });
     this.route.queryParamMap.subscribe((q) => {
-      this.offerSections = q.get('offerSections') === '1';
+      this.wantsAddSection = q.get('addSection') === '1';
       this.cdr.markForCheck();
     });
   }
@@ -127,33 +134,29 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
   }
 
   back(): void {
-    this.nav.back(this.route, ['/app/academics/classes-sections']);
+    this.nav.back(this.route, ['/app/academics/academic-groups']);
   }
 
   retry(): void {
-    if (this.classId) this.load(this.classId);
+    if (this.academicGroupId) this.load(this.academicGroupId);
   }
 
-  dismissOffer(): void {
-    this.offerSections = false;
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { offerSections: null },
-      queryParamsHandling: 'merge',
-      replaceUrl: true
-    });
-  }
-
-  load(classId: number): void {
+  load(academicGroupId: number): void {
     this.loading = true;
     this.loadError = false;
-    this.api.getClass(classId).pipe(finalize(() => {
+    this.summaryError = false;
+    this.api.getAcademicGroup(academicGroupId).pipe(finalize(() => {
       this.loading = false;
       this.cdr.markForCheck();
     })).subscribe({
       next: (cls) => {
         this.cls = cls;
         this.pageHeader.setPageSubtitle(cls.academicYearName || null);
+        this.loadSummary(cls.academicGroupId);
+        if (this.wantsAddSection && this.canManage) {
+          this.wantsAddSection = false;
+          this.openAddSection();
+        }
       },
       error: () => {
         this.cls = null;
@@ -162,7 +165,62 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  sectionDisplayName(section: ClassSectionDto): string {
+  private loadSummary(academicGroupId: number): void {
+    this.api.getGroupSummary(academicGroupId).subscribe({
+      next: (summary) => {
+        this.summary = summary;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.summary = null;
+        this.summaryError = true;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  buildGroupMenu(): void {
+    if (!this.cls) return;
+    const items: MenuItem[] = [];
+    if (this.canManage) {
+      items.push({ label: 'Edit Academic Group', icon: 'pi pi-pencil', command: () => this.openEditClass() });
+      items.push(this.cls.active
+        ? { label: 'Deactivate Group', icon: 'pi pi-ban', command: () => this.confirmToggleGroup(false) }
+        : { label: 'Reactivate Group', icon: 'pi pi-check', command: () => this.confirmToggleGroup(true) });
+    }
+    this.groupMenuItems = items;
+  }
+
+  confirmToggleGroup(activate: boolean): void {
+    if (!this.cls || !this.canManage) return;
+    const group = this.cls;
+    this.confirm.confirm({
+      header: activate ? `Reactivate ${group.name}?` : `Deactivate ${group.name}?`,
+      message: activate
+        ? 'This group will become active again.'
+        : 'Students are never moved by this action. Deactivation is blocked while students are enrolled.',
+      acceptLabel: activate ? 'Reactivate' : 'Deactivate',
+      acceptButtonStyleClass: activate ? undefined : 'p-button-danger',
+      accept: () => {
+        const req$ = activate
+          ? this.api.activateAcademicGroup(group.academicGroupId)
+          : this.api.deactivateAcademicGroup(group.academicGroupId);
+        req$.subscribe({
+          next: () => {
+            this.messages.add({ severity: 'success', summary: activate ? 'Academic Group reactivated' : 'Academic Group deactivated' });
+            this.load(group.academicGroupId);
+          },
+          error: (err) => this.messages.add({
+            severity: 'error',
+            summary: 'Action blocked',
+            detail: err?.error?.message || 'Unable to update the Academic Group.'
+          })
+        });
+      }
+    });
+  }
+
+  sectionDisplayName(section: AcademicSectionDto): string {
     const name = (section.name || '').trim();
     if (!name) return 'Section';
     return /^section\b/i.test(name) ? name : `Section ${name}`;
@@ -170,7 +228,13 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
 
   openEditClass(): void {
     if (!this.cls) return;
-    this.classForm.reset({ name: this.cls.name, code: this.cls.code, stage: this.cls.stage });
+    this.classForm.reset({
+      name: this.cls.name,
+      code: this.cls.code,
+      stage: this.cls.stage ?? null,
+      description: this.cls.description ?? ''
+    });
+    this.formError = null;
     this.showClassDialog = true;
   }
 
@@ -180,26 +244,28 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
       return;
     }
     const value = this.classForm.getRawValue();
-    this.saving = true;
-    this.api.updateClass(this.cls.classId, {
+    const body: AcademicGroupCreateRequest = {
       academicYearId: this.cls.academicYearId,
       name: value.name!.trim(),
       code: value.code?.trim() || undefined,
-      stage: value.stage!
-    }).pipe(finalize(() => {
+      stage: value.stage ?? null,
+      description: value.description?.trim() || undefined
+    };
+    this.saving = true;
+    this.formError = null;
+    this.api.updateAcademicGroup(this.cls.academicGroupId, body).pipe(finalize(() => {
       this.saving = false;
       this.cdr.markForCheck();
     })).subscribe({
       next: () => {
         this.showClassDialog = false;
-        this.messages.add({ severity: 'success', summary: 'Class updated' });
-        this.load(this.cls!.classId);
+        this.messages.add({ severity: 'success', summary: 'Academic Group updated' });
+        this.load(this.cls!.academicGroupId);
       },
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Save failed',
-        detail: err?.error?.message || 'Unable to save class'
-      })
+      error: (err) => {
+        this.formError = err?.error?.message || 'Unable to save the Academic Group.';
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -207,10 +273,9 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.editingSectionId = null;
     this.sectionForm.reset({ name: '', code: '', classTeacherStaffId: null });
     this.showSectionDialog = true;
-    this.offerSections = false;
   }
 
-  openEditSection(section: ClassSectionDto): void {
+  openEditSection(section: AcademicSectionDto): void {
     this.editingSectionId = section.sectionId;
     this.sectionForm.reset({
       name: section.name,
@@ -220,7 +285,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.showSectionDialog = true;
   }
 
-  openAssignTeacher(section: ClassSectionDto): void {
+  openAssignTeacher(section: AcademicSectionDto): void {
     if (!this.canManage) return;
     this.openEditSection(section);
   }
@@ -247,7 +312,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.saving = true;
     const req$ = this.editingSectionId
       ? this.api.updateSection(this.editingSectionId, body)
-      : this.api.createSection(this.cls.classId, body);
+      : this.api.createSection(this.cls.academicGroupId, body);
 
     req$.pipe(finalize(() => {
       this.saving = false;
@@ -259,7 +324,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
           severity: 'success',
           summary: this.editingSectionId ? 'Section updated' : 'Section created'
         });
-        this.load(this.cls!.classId);
+        this.load(this.cls!.academicGroupId);
       },
       error: (err) => this.messages.add({
         severity: 'error',
@@ -269,7 +334,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  buildMenu(section: ClassSectionDto): void {
+  buildMenu(section: AcademicSectionDto): void {
     const items: MenuItem[] = [
       {
         label: 'View Students',
@@ -299,7 +364,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     this.menuItems = items;
   }
 
-  confirmToggleSection(section: ClassSectionDto, activate: boolean): void {
+  confirmToggleSection(section: AcademicSectionDto, activate: boolean): void {
     if (!this.canManage || !this.cls) return;
     this.confirm.confirm({
       header: activate ? `Reactivate ${this.sectionDisplayName(section)}?` : `Deactivate ${this.sectionDisplayName(section)}?`,
@@ -312,7 +377,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleSectionActive(section: ClassSectionDto, activate: boolean): void {
+  toggleSectionActive(section: AcademicSectionDto, activate: boolean): void {
     if (!this.canManage || !this.cls) return;
     const req$ = activate
       ? this.api.activateSection(section.sectionId)
@@ -323,7 +388,7 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
           severity: 'success',
           summary: activate ? 'Section reactivated' : 'Section deactivated'
         });
-        this.load(this.cls!.classId);
+        this.load(this.cls!.academicGroupId);
       },
       error: (err) => this.messages.add({
         severity: 'error',
@@ -333,18 +398,32 @@ export class ClassDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  viewStudents(section?: ClassSectionDto): void {
+  viewStudents(section?: AcademicSectionDto): void {
     if (!this.cls) return;
     const queryParams: Record<string, string | number> = {
       academicYearId: this.cls.academicYearId,
-      classId: this.cls.classId
+      academicGroupId: this.cls.academicGroupId
     };
     if (section) queryParams['sectionId'] = section.sectionId;
     void this.router.navigate(['/app/students/directory'], { queryParams });
   }
 
-  stageLabel(stage: AcademicStage): string {
+  stageLabel(stage: AcademicStage | null | undefined): string {
+    if (!stage) return '';
     return ACADEMIC_STAGE_OPTIONS.find((s) => s.value === stage)?.label || stage;
+  }
+
+  get timetableLabel(): string {
+    switch (this.summary?.timetableStatus) {
+      case 'PUBLISHED': return 'Published';
+      case 'DRAFT': return 'Draft';
+      case 'NOT_GENERATED': return 'Not generated';
+      default: return '—';
+    }
+  }
+
+  focusSections(): void {
+    document.getElementById('cd-sections')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private loadStaff(): void {

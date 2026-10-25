@@ -4,9 +4,9 @@ import { Observable, map } from 'rxjs';
 import { academicsApi } from '../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../shared/models/auth.model';
 import {
-  ClassMappingBoard,
-  ClassSubjectMappingDto,
-  ClassSubjectMappingUpsertRequest,
+  AcademicGroupMappingBoard,
+  AcademicGroupSubjectMappingDto,
+  AcademicGroupSubjectMappingUpsertRequest,
   SubjectCategory,
   SubjectCreateRequest,
   SubjectDto,
@@ -62,15 +62,15 @@ export class SubjectsMappingApiService {
       .pipe(map((res) => res.data));
   }
 
-  getClassMappingBoard(classId: number): Observable<ClassMappingBoard> {
+  getAcademicGroupMappingBoard(academicGroupId: number): Observable<AcademicGroupMappingBoard> {
     return this.http
-      .get<ApiResponse<ClassMappingBoard>>(academicsApi.classSubjectMappings(classId))
+      .get<ApiResponse<AcademicGroupMappingBoard>>(academicsApi.academicGroupSubjectMappings(academicGroupId))
       .pipe(map((res) => res.data));
   }
 
-  upsertMapping(classId: number, body: ClassSubjectMappingUpsertRequest): Observable<ClassSubjectMappingDto> {
+  upsertMapping(academicGroupId: number, body: AcademicGroupSubjectMappingUpsertRequest): Observable<AcademicGroupSubjectMappingDto> {
     return this.http
-      .put<ApiResponse<ClassSubjectMappingDto>>(academicsApi.classSubjectMappings(classId), body)
+      .put<ApiResponse<AcademicGroupSubjectMappingDto>>(academicsApi.academicGroupSubjectMappings(academicGroupId), body)
       .pipe(map((res) => res.data));
   }
 }

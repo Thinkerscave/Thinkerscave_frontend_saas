@@ -90,7 +90,7 @@ export class AcademicYearPageComponent implements OnInit {
   transitions: AcademicYearTransitionDto[] = [];
   transitionYears: AcademicYearDto[] = [];
   transitionTargetYearId: number | null = null;
-  transitionCopyClasses = true;
+  transitionCopyAcademicGroups = true;
   transitionCopySections = true;
   transitionCopySubjects = true;
   transitionCopyMappings = true;
@@ -286,11 +286,11 @@ export class AcademicYearPageComponent implements OnInit {
           this.messages.add({ severity: 'success', summary: 'Marked ready for approval' });
           this.reload();
         },
-        error: () =>           this.router.navigate(['/app/academics/classes-sections'])
+        error: () =>           this.router.navigate(['/app/academics/academic-groups'])
       });
       return;
     }
-    this.router.navigate(['/app/academics/classes-sections']);
+    this.router.navigate(['/app/academics/academic-groups']);
   }
 
   submitForApproval(year: AcademicYearDto): void {
@@ -398,7 +398,7 @@ export class AcademicYearPageComponent implements OnInit {
       (y) => y.academicYearId !== current.academicYearId && !['COMPLETED', 'ARCHIVED', 'CURRENT'].includes(y.status)
     );
     this.transitionTargetYearId = this.transitionYears[0]?.academicYearId ?? null;
-    this.transitionCopyClasses = true;
+    this.transitionCopyAcademicGroups = true;
     this.transitionCopySections = true;
     this.transitionCopySubjects = true;
     this.transitionCopyMappings = true;
@@ -430,7 +430,7 @@ export class AcademicYearPageComponent implements OnInit {
     this.transitionApi
       .create(sourceId, {
         targetAcademicYearId: this.transitionTargetYearId,
-        copyClasses: this.transitionCopyClasses,
+        copyAcademicGroups: this.transitionCopyAcademicGroups,
         copySections: this.transitionCopySections,
         copySubjects: this.transitionCopySubjects,
         copyMappings: this.transitionCopyMappings,

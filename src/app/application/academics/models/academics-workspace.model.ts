@@ -1,13 +1,13 @@
 export type AcademicsWorkspacePage =
   | 'overview'
   | 'academic-year'
-  | 'classes-sections'
+  | 'academicGroups'
   | 'subjects-mapping'
   | 'teacher-allocation'
   | 'timetable'
   | 'teacher-arrangement'
   | 'academic-calendar'
-  | 'my-classes'
+  | 'my-academicGroups'
   | 'my-timetable'
   | 'academic-structure'
   | 'my-academics';
@@ -24,7 +24,7 @@ export interface AcademicsPageConfig {
   actionMode: AcademicsActionMode;
 }
 
-export type AcademicsActionMode = 'year' | 'class' | 'section' | 'subject' | 'allocation' | 'class-teacher' | 'timetable' | 'calendar-event' | 'settings' | 'shift' | 'template' | 'teacher-absence' | 'syllabus-progress';
+export type AcademicsActionMode = 'year' | 'academic-group' | 'section' | 'subject' | 'allocation' | 'section-teacher' | 'timetable' | 'calendar-event' | 'settings' | 'shift' | 'template' | 'teacher-absence' | 'syllabus-progress';
 
 export type AcademicsTone = 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -41,9 +41,9 @@ export interface AcademicYear {
   description?: string;
 }
 
-export interface AcademicClass {
-  classId?: number | string;
-  className: string;
+export interface AcademicGroup {
+  academicGroupId?: number | string;
+  academicGroupName: string;
   displayOrder?: number;
   academicStage?: string;
   isActive?: boolean;
@@ -52,10 +52,10 @@ export interface AcademicClass {
 export interface AcademicSection {
   sectionId?: number | string;
   sectionName: string;
-  classId?: number | string;
-  classEntity?: AcademicClass;
+  academicGroupId?: number | string;
+  academicGroupEntity?: AcademicGroup;
   capacity?: number;
-  classTeacher?: string;
+  sectionTeacher?: string;
   studentCount?: number;
   isActive?: boolean;
 }
@@ -90,8 +90,8 @@ export interface StaffModel {
 
 export interface TeacherAllocationModel {
   allocationId?: number;
-  classId?: number;
-  className?: string;
+  academicGroupId?: number;
+  academicGroupName?: string;
   sectionId?: number;
   sectionName?: string;
   subjectId?: number;
@@ -110,12 +110,12 @@ export interface TeacherAllocationModel {
   isActive?: boolean;
 }
 
-export interface ClassTeacherAssignmentModel {
+export interface SectionTeacherAssignmentModel {
   assignmentId?: number;
   organizationId?: number;
   academicYearId?: number;
-  classId?: number;
-  className?: string;
+  academicGroupId?: number;
+  academicGroupName?: string;
   sectionId?: number;
   sectionName?: string;
   teacherId?: number;
@@ -130,8 +130,8 @@ export interface TimetableSlotModel {
   slotId?: number;
   organizationId?: number;
   academicYearId?: number;
-  classId?: number;
-  className?: string;
+  academicGroupId?: number;
+  academicGroupName?: string;
   sectionId?: number;
   sectionName?: string;
   subjectId?: number;
@@ -242,8 +242,8 @@ export interface SyllabusModel {
   subjectName?: string;
   academicYear?: string;
   academicYearId?: number;
-  classId?: number;
-  className?: string;
+  academicGroupId?: number;
+  academicGroupName?: string;
   sectionId?: number;
   sectionName?: string;
   units?: SyllabusUnitModel[];
@@ -279,12 +279,12 @@ export interface TimetableConflictModel {
 export interface AcademicsWorkspaceData {
   academicYears: AcademicYear[];
   currentYear: AcademicYear | null;
-  classes: AcademicClass[];
+  academicGroups: AcademicGroup[];
   sections: AcademicSection[];
   subjects: SubjectModel[];
   staff: StaffModel[];
   teacherAllocations: TeacherAllocationModel[];
-  classTeacherAssignments: ClassTeacherAssignmentModel[];
+  sectionTeacherAssignments: SectionTeacherAssignmentModel[];
   timetableSlots: TimetableSlotModel[];
   calendarEvents: AcademicCalendarEventModel[];
   academicSettings: AcademicSettingModel[];

@@ -30,7 +30,7 @@ export class AcademicsOverviewPageComponent {
   loading = true;
   selectedYearId: number | null = null;
   overview: AcademicsOverview | null = null;
-  snapshotTab: 'classes' | 'subjects' = 'classes';
+  snapshotTab: 'academicGroups' | 'subjects' = 'academicGroups';
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
@@ -101,7 +101,7 @@ export class AcademicsOverviewPageComponent {
   }
 
   donutStyle(ov: AcademicsOverview): Record<string, string> {
-    const rows = ov.studentsByClass || [];
+    const rows = ov.studentsByAcademicGroup || [];
     if (!rows.length) return { background: '#e2e8f0' };
     const colors = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#db2777', '#0891b2', '#64748b'];
     let cursor = 0;

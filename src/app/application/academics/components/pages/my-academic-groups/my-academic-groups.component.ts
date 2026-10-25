@@ -7,31 +7,31 @@ import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academ
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
-import { ACADEMICS_MY_CLASSES_RESOURCE, TeacherMyClasses } from '../../../models/academics-me.model';
+import { ACADEMICS_MY_ACADEMIC_GROUPS_RESOURCE, TeacherMyAcademicGroups } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
 @Component({
-  selector: 'app-my-classes-page',
+  selector: 'app-my-academic-groups-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterLink, SaasPageHeaderComponent, TcAcademicYearSelectorComponent, TcPageSkeletonComponent
   ],
-  templateUrl: './my-classes.component.html',
-  styleUrls: ['./my-classes.component.scss']
+  templateUrl: './my-academic-groups.component.html',
+  styleUrls: ['./my-academic-groups.component.scss']
 })
-export class MyClassesPageComponent {
+export class MyAcademicGroupsPageComponent {
   private readonly api = inject(AcademicsMeApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
-  readonly resource = ACADEMICS_MY_CLASSES_RESOURCE;
+  readonly resource = ACADEMICS_MY_ACADEMIC_GROUPS_RESOURCE;
   loading = true;
   refreshing = false;
   hasLoaded = false;
   selectedYearId: number | null = null;
-  data: TeacherMyClasses | null = null;
+  data: TeacherMyAcademicGroups | null = null;
   q = '';
   viewMode: 'list' | 'grid' = 'list';
 
@@ -54,7 +54,7 @@ export class MyClassesPageComponent {
     } else {
       this.loading = true;
     }
-    this.api.myClasses(this.selectedYearId)
+    this.api.myAcademicGroups(this.selectedYearId)
       .pipe(finalize(() => {
         this.loading = false;
         this.refreshing = false;
@@ -67,26 +67,26 @@ export class MyClassesPageComponent {
         },
         error: (err) => {
           this.hasLoaded = true;
-          this.messages.add({ severity: 'error', summary: 'Unable to load classes', detail: err?.error?.message });
+          this.messages.add({ severity: 'error', summary: 'Unable to load Academic Groups', detail: err?.error?.message });
         }
       });
   }
 
-  get filteredClasses() {
-    const list = this.data?.classes || [];
+  get filteredAcademicGroups() {
+    const list = this.data?.academicGroups || [];
     const q = this.q.trim().toLowerCase();
     if (!q) return list;
     return list.filter((c) =>
-      `${c.className} ${c.sectionName} ${c.classCode || ''} ${c.subjects.map((s) => s.subjectName).join(' ')}`.toLowerCase().includes(q));
+      `${c.academicGroupName} ${c.sectionName} ${c.academicGroupCode || ''} ${c.subjects.map((s) => s.subjectName).join(' ')}`.toLowerCase().includes(q));
   }
 
-  shortCode(c: TeacherMyClasses['classes'][number]): string {
-    if (c.classCode) return c.classCode;
-    const cls = (c.className || '').replace(/class\s*/i, '').trim();
-    return `${cls || '?'}-${c.sectionName || ''}`.slice(0, 6);
+  shortCode(c: TeacherMyAcademicGroups['academicGroups'][number]): string {
+    if (c.academicGroupCode) return c.academicGroupCode;
+    const groupName = (c.academicGroupName || '').trim();
+    return `${groupName || '?'}-${c.sectionName || ''}`.slice(0, 6);
   }
 
-  periodSum(c: TeacherMyClasses['classes'][number]): number {
+  periodSum(c: TeacherMyAcademicGroups['academicGroups'][number]): number {
     return (c.subjects || []).reduce((sum, s) => sum + (s.weeklyPeriods || 0), 0);
   }
 }

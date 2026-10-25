@@ -20,7 +20,7 @@
     <div class="ay-main">
       <article class="ay-card ay-card--onboarding" *ngIf="!hasAnyYear">
         <h2>Set up your first academic year</h2>
-        <p class="ay-muted">Classes, subjects, timetables and attendance are scoped to an academic year. Create one to start.</p>
+        <p class="ay-muted">Academic Groups, subjects, timetables and attendance are scoped to an academic year. Create one to start.</p>
         <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
           <i class="pi pi-plus"></i>
           Create Academic Year
@@ -54,9 +54,9 @@
 
           <div class="ay-stats" *ngIf="current.structureStats as stats">
             <div>
-              <strong>{{ stats.classesTotal }}</strong>
-              <span>Classes</span>
-              <small>{{ stats.classesActive }} Active</small>
+              <strong>{{ stats.academicGroupsTotal }}</strong>
+              <span>Academic Groups</span>
+              <small>{{ stats.academicGroupsActive }} Active</small>
             </div>
             <div>
               <strong>{{ stats.sectionsTotal }}</strong>
@@ -76,7 +76,7 @@
           </div>
 
           <div class="ay-card__actions">
-            <a class="tc-btn tc-btn--outline" routerLink="/app/academics/classes-sections">View Academic Structure →</a>
+            <a class="tc-btn tc-btn--outline" routerLink="/app/academics/academic-groups">View Academic Structure →</a>
             <a class="tc-btn tc-btn--primary" routerLink="/app/academics">View Academics Overview →</a>
           </div>
         </article>
@@ -191,7 +191,7 @@
                 <th>Academic Year</th>
                 <th>Period</th>
                 <th>Status</th>
-                <th>Classes</th>
+                <th>Academic Groups</th>
                 <th>Students</th>
                 <th>Setup</th>
                 <th>Last Updated</th>
@@ -203,7 +203,7 @@
                 <td><strong>{{ year.name }}</strong></td>
                 <td>{{ formatRange(year) }}</td>
                 <td><span class="row-badge" [attr.data-tone]="statusTone(year.status)">{{ statusLabel(year.status) }}</span></td>
-                <td>{{ year.structureStats?.classesTotal ?? '—' }}</td>
+                <td>{{ year.structureStats?.academicGroupsTotal ?? '—' }}</td>
                 <td>{{ year.structureStats?.studentsActive ?? '—' }}</td>
                 <td>{{ year.readinessPercent != null ? (year.readinessPercent + '%') : '—' }}</td>
                 <td>
@@ -237,7 +237,7 @@
     <aside class="ay-side">
       <div class="ay-side-card">
         <h4>Quick Actions</h4>
-        <a class="ay-side-link" routerLink="/app/academics/classes-sections">
+        <a class="ay-side-link" routerLink="/app/academics/academic-groups">
           <i class="pi pi-sitemap"></i> View Academic Structure
         </a>
         <button type="button" class="ay-side-link" *tcHasPerm="resource; action: 'manage'" (click)="openTransition()">
@@ -328,7 +328,7 @@
       </p-dropdown>
     </label>
     <div class="ay-checkboxes">
-      <label><input type="checkbox" [(ngModel)]="transitionCopyClasses" /> Classes</label>
+      <label><input type="checkbox" [(ngModel)]="transitionCopyAcademicGroups" /> Academic Groups</label>
       <label><input type="checkbox" [(ngModel)]="transitionCopySections" /> Sections</label>
       <label><input type="checkbox" [(ngModel)]="transitionCopySubjects" /> Subjects</label>
       <label><input type="checkbox" [(ngModel)]="transitionCopyMappings" /> Subject mappings</label>

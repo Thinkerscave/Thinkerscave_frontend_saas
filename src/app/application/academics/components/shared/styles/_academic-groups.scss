@@ -1,0 +1,303 @@
+// Academic Groups: directory and details page styles shared by both components.
+// Colors come from --tc-* theme tokens so light and dark themes both apply.
+
+@mixin academic-group-styles {
+  .cd-identity__name {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  .cd-identity__desc {
+    margin: 0.35rem 0 0;
+    color: var(--tc-text-muted, #64748b);
+    max-width: 70ch;
+  }
+
+  .cd-error-line {
+    margin: 0.5rem 0 0;
+    color: var(--tc-danger-600, #b91c1c);
+    font-size: 0.875rem;
+  }
+
+  .cd-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .cd-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--tc-border, #e2e8f0);
+    border-radius: 12px;
+    background: var(--tc-surface-card, #fff);
+    color: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--tc-primary-600, #2563eb);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-primary-600, #2563eb) 15%, transparent);
+      outline: none;
+    }
+  }
+
+  .cd-metric__label {
+    font-size: 0.8125rem;
+    color: var(--tc-text-muted, #64748b);
+  }
+
+  .cd-metric__value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  .cd-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .cd-panel {
+    padding: 1rem 1.125rem;
+    border: 1px solid var(--tc-border, #e2e8f0);
+    border-radius: 14px;
+    background: var(--tc-surface-card, #fff);
+  }
+
+  .cd-panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--tc-heading, #0f172a);
+    }
+  }
+
+  .cd-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+    margin: 0;
+
+    div {
+      min-width: 0;
+    }
+
+    dt {
+      font-size: 0.75rem;
+      color: var(--tc-text-muted, #64748b);
+    }
+
+    dd {
+      margin: 0.125rem 0 0;
+      color: var(--tc-text, #0f172a);
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .cd-quick {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .cd-quick__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--tc-border, #e2e8f0);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    strong {
+      color: var(--tc-heading, #0f172a);
+    }
+
+    span {
+      font-size: 0.8125rem;
+      color: var(--tc-text-muted, #64748b);
+    }
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--tc-primary-600, #2563eb);
+      outline: none;
+    }
+  }
+
+  .cd-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .cd-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--tc-border, #e2e8f0);
+      text-align: left;
+      vertical-align: middle;
+      color: var(--tc-text, #0f172a);
+      white-space: nowrap;
+    }
+
+    th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--tc-text-muted, #64748b);
+    }
+
+    tbody tr:hover {
+      background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 5%, transparent);
+    }
+  }
+
+  .cd-row--inactive td {
+    opacity: 0.6;
+  }
+
+  .cd-table__actions {
+    width: 3rem;
+    text-align: right;
+  }
+
+  .cd-link {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--tc-primary-600, #2563eb);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cd-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .cd-form__alert {
+    padding: 0.625rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--tc-danger-600, #b91c1c);
+    color: var(--tc-danger-600, #b91c1c);
+    background: color-mix(in srgb, var(--tc-danger-600, #b91c1c) 8%, transparent);
+    font-size: 0.875rem;
+  }
+
+  .cs-form__year {
+    margin: 0 0 0.75rem;
+    color: var(--tc-text-muted, #64748b);
+  }
+
+  .cs-form__hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--tc-text-muted, #64748b);
+  }
+
+  .cs-form__error {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--tc-danger-600, #b91c1c);
+  }
+
+  .cs-form__sections {
+    margin: 0.5rem 0 0;
+    padding: 0.75rem;
+    border: 1px solid var(--tc-border, #e2e8f0);
+    border-radius: 12px;
+
+    legend {
+      padding: 0 0.25rem;
+      font-weight: 600;
+      color: var(--tc-heading, #0f172a);
+    }
+  }
+
+  .cs-choice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .cs-choice__option {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.625rem;
+    border: 1px solid var(--tc-border, #e2e8f0);
+    border-radius: 10px;
+    cursor: pointer;
+
+    span {
+      display: flex;
+      flex-direction: column;
+    }
+
+    small {
+      color: var(--tc-text-muted, #64748b);
+    }
+  }
+
+  .cs-choice__option--selected {
+    border-color: var(--tc-primary-600, #2563eb);
+    background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 8%, transparent);
+  }
+
+  .cs-form__section-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  @media (max-width: 900px) {
+    .cd-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .cd-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cd-info,
+    .cs-choice {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cs-form__section-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

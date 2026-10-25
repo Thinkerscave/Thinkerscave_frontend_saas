@@ -22,9 +22,9 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
-import { AcademicClassDto } from '../../../models/classes-sections.model';
+import { AcademicGroupDto } from '../../../models/academic-groups.model';
 import {
   ACADEMICS_TEACHER_ALLOCATION_RESOURCE,
   TeacherAllocationDashboard,
@@ -60,7 +60,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 export class TeacherAllocationPageComponent implements OnInit {
   private readonly api = inject(TeacherAllocationApiService);
   private readonly yearCtx = inject(AcademicYearContextService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly academicGroupsApi = inject(AcademicGroupsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -79,12 +79,12 @@ export class TeacherAllocationPageComponent implements OnInit {
   loading = true;
   refreshing = false;
   saving = false;
-  classes: AcademicClassDto[] = [];
-  classOptions: { label: string; value: number | null }[] = [{ label: 'All Classes', value: null }];
+  academicGroups: AcademicGroupDto[] = [];
+  academicGroupOptions: { label: string; value: number | null }[] = [{ label: 'All Academic Groups', value: null }];
   sections: { label: string; value: number | null }[] = [{ label: 'All Sections', value: null }];
   subjects: { label: string; value: number | null }[] = [{ label: 'All Subjects', value: null }];
   selectedYearId: number | null = null;
-  classFilter: number | null = null;
+  academicGroupFilter: number | null = null;
   sectionFilter: number | null = null;
   subjectFilter: number | null = null;
   statusFilter: TeacherAllocationStatus | null = null;
@@ -114,10 +114,10 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
-    const qpClass = qp.get('classId');
+    const qpClass = qp.get('academicGroupId');
     const qpSubject = qp.get('subjectId');
     const qpYear = qp.get('academicYearId');
-    if (qpClass) this.classFilter = Number(qpClass);
+    if (qpClass) this.academicGroupFilter = Number(qpClass);
     if (qpSubject) this.subjectFilter = Number(qpSubject);
     if (qpYear) {
       const id = Number(qpYear);
@@ -129,7 +129,7 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
-    this.classFilter = null;
+    this.academicGroupFilter = null;
     this.sectionFilter = null;
     this.subjectFilter = null;
     this.page = 0;
@@ -152,7 +152,7 @@ export class TeacherAllocationPageComponent implements OnInit {
     }
     this.api
       .getDashboard(this.selectedYearId, {
-        classId: this.classFilter,
+        academicGroupId: this.academicGroupFilter,
         sectionId: this.sectionFilter,
         subjectId: this.subjectFilter,
         status: this.statusFilter,
@@ -209,7 +209,7 @@ export class TeacherAllocationPageComponent implements OnInit {
     this.selectedStaffId = row.primaryStaffId ?? null;
     this.showAssign = true;
     this.recommendations = [];
-    this.api.recommendations(row.sectionId, row.classSubjectMappingId).subscribe({
+    this.api.recommendations(row.sectionId, row.academicGroupSubjectMappingId).subscribe({
       next: (list) => {
         this.recommendations = list;
         if (!this.selectedStaffId && list.length) {
@@ -234,7 +234,7 @@ export class TeacherAllocationPageComponent implements OnInit {
     this.api
       .assign({
         sectionId: this.assignTarget.sectionId,
-        classSubjectMappingId: this.assignTarget.classSubjectMappingId,
+        academicGroupSubjectMappingId: this.assignTarget.academicGroupSubjectMappingId,
         staffId,
         role: 'PRIMARY'
       })
@@ -260,7 +260,7 @@ export class TeacherAllocationPageComponent implements OnInit {
     if (!this.canManage || !row.teacherAllocationId) return;
     this.confirm.confirm({
       header: 'Unassign teacher?',
-      message: `Remove teacher from ${row.subjectName} · ${row.className}-${row.sectionName}?`,
+      message: `Remove teacher from ${row.subjectName} · ${row.academicGroupName}-${row.sectionName}?`,
       acceptLabel: 'Unassign',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
@@ -317,17 +317,17 @@ export class TeacherAllocationPageComponent implements OnInit {
 
   private loadClasses(): void {
     if (!this.selectedYearId) return;
-    this.classesApi.getDashboard(this.selectedYearId, { active: true }).subscribe({
+    this.academicGroupsApi.getDashboard(this.selectedYearId, { active: true }).subscribe({
       next: (dash) => {
-        this.classes = dash.classes || [];
-        this.classOptions = [
-          { label: 'All Classes', value: null },
-          ...this.classes.map((cls) => ({ label: cls.name, value: cls.classId }))
+        this.academicGroups = dash.academicGroups || [];
+        this.academicGroupOptions = [
+          { label: 'All Academic Groups', value: null },
+          ...this.academicGroups.map((cls) => ({ label: cls.name, value: cls.academicGroupId }))
         ];
 
         const sectionOpts: { label: string; value: number | null }[] = [];
-        for (const cls of this.classes) {
-          if (this.classFilter && cls.classId !== this.classFilter) continue;
+        for (const cls of this.academicGroups) {
+          if (this.academicGroupFilter && cls.academicGroupId !== this.academicGroupFilter) continue;
           for (const section of cls.sections || []) {
             sectionOpts.push({
               label: `${cls.name}-${section.name}`,
@@ -341,8 +341,8 @@ export class TeacherAllocationPageComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.classes = [];
-        this.classOptions = [{ label: 'All Classes', value: null }];
+        this.academicGroups = [];
+        this.academicGroupOptions = [{ label: 'All Academic Groups', value: null }];
       }
     });
   }

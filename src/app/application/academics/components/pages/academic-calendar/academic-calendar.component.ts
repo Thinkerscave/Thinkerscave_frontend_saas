@@ -26,7 +26,7 @@ import { AppPageChangeEvent, clampPage, slicePage } from '../../../../../shared/
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicCalendarApiService } from '../../../services/academic-calendar-api.service';
-import { ClassesSectionsApiService } from '../../../services/classes-sections-api.service';
+import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import {
   ACADEMICS_CALENDAR_RESOURCE,
   AcademicCalendarDashboard,
@@ -77,7 +77,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class AcademicCalendarPageComponent implements OnInit {
   private readonly api = inject(AcademicCalendarApiService);
-  private readonly classesApi = inject(ClassesSectionsApiService);
+  private readonly academicGroupsApi = inject(AcademicGroupsApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -135,7 +135,7 @@ export class AcademicCalendarPageComponent implements OnInit {
   editingEventId: number | null = null;
   editingStatus: CalendarEventStatus | null = null;
   menuItems: MenuItem[] = [];
-  classOptions: { label: string; value: number }[] = [];
+  academicGroupOptions: { label: string; value: number }[] = [];
   sectionOptions: { label: string; value: number }[] = [];
 
   eventForm = this.fb.group({
@@ -149,7 +149,7 @@ export class AcademicCalendarPageComponent implements OnInit {
     endTime: [''],
     location: [''],
     audienceType: ['EVERYONE' as CalendarAudienceType, Validators.required],
-    classIds: [[] as number[]],
+    academicGroupIds: [[] as number[]],
     sectionIds: [[] as number[]]
   });
 
@@ -234,7 +234,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       this.cdr.markForCheck();
       return;
     }
-    this.loadClassOptions(yearId);
+    this.loadAcademicGroupOptions(yearId);
     this.reload();
   }
 
@@ -415,15 +415,15 @@ export class AcademicCalendarPageComponent implements OnInit {
       });
   }
 
-  private loadClassOptions(yearId: number): void {
-    this.classesApi.getDashboard(yearId, { active: true }).subscribe({
+  private loadAcademicGroupOptions(yearId: number): void {
+    this.academicGroupsApi.getDashboard(yearId, { active: true }).subscribe({
       next: (dash) => {
-        const classes = dash.classes || [];
-        this.classOptions = classes.map((c) => ({
+        const academicGroups = dash.academicGroups || [];
+        this.academicGroupOptions = academicGroups.map((c) => ({
           label: c.name,
-          value: c.classId
+          value: c.academicGroupId
         }));
-        this.sectionOptions = classes.flatMap((c) =>
+        this.sectionOptions = academicGroups.flatMap((c) =>
           (c.sections || [])
             .filter((s) => s.active !== false)
             .map((s) => ({
@@ -434,7 +434,7 @@ export class AcademicCalendarPageComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.classOptions = [];
+        this.academicGroupOptions = [];
         this.sectionOptions = [];
         this.cdr.markForCheck();
       }
@@ -456,7 +456,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       endTime: '',
       location: '',
       audienceType: 'EVERYONE',
-      classIds: [],
+      academicGroupIds: [],
       sectionIds: []
     });
     this.showEventDialog = true;
@@ -476,7 +476,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       endTime: this.toTimeInput(event.endTime),
       location: event.location || '',
       audienceType: event.audienceType,
-      classIds: (event.classes || []).map((c) => c.classId),
+      academicGroupIds: (event.academicGroups || []).map((c) => c.academicGroupId),
       sectionIds: (event.sections || []).map((s) => s.sectionId)
     });
     this.showEventDialog = true;
@@ -538,8 +538,8 @@ export class AcademicCalendarPageComponent implements OnInit {
 
   private validateAudience(): boolean {
     const audience = this.eventForm.value.audienceType;
-    if (audience === 'CLASS' && !(this.eventForm.value.classIds?.length)) {
-      this.messages.add({ severity: 'warn', summary: 'Select at least one class' });
+    if (audience === 'ACADEMIC_GROUP' && !(this.eventForm.value.academicGroupIds?.length)) {
+      this.messages.add({ severity: 'warn', summary: 'Select at least one Academic Group' });
       return false;
     }
     if (audience === 'SECTION' && !(this.eventForm.value.sectionIds?.length)) {
@@ -570,7 +570,7 @@ export class AcademicCalendarPageComponent implements OnInit {
       endTime: allDay ? null : this.toApiTime(value.endTime),
       location: value.location?.trim() || undefined,
       audienceType: value.audienceType!,
-      classIds: value.audienceType === 'CLASS' ? (value.classIds || []) : undefined,
+      academicGroupIds: value.audienceType === 'ACADEMIC_GROUP' ? (value.academicGroupIds || []) : undefined,
       sectionIds: value.audienceType === 'SECTION' ? (value.sectionIds || []) : undefined,
       publish: publish || undefined
     };
@@ -740,12 +740,12 @@ export class AcademicCalendarPageComponent implements OnInit {
 
   audienceLabel(event: AcademicCalendarEventDto): string {
     if (event.audienceType === 'EVERYONE') return 'Everyone';
-    if (event.audienceType === 'CLASS') {
-      const names = (event.classes || []).map((c) => c.name).filter(Boolean);
-      return names.length ? names.join(', ') : 'Specific classes';
+    if (event.audienceType === 'ACADEMIC_GROUP') {
+      const names = (event.academicGroups || []).map((c) => c.name).filter(Boolean);
+      return names.length ? names.join(', ') : 'Specific Academic Groups';
     }
     const names = (event.sections || []).map((s) =>
-      s.className ? `${s.className} - ${s.name}` : s.name
+      s.academicGroupName ? `${s.academicGroupName} - ${s.name}` : s.name
     ).filter(Boolean);
     return names.length ? names.join(', ') : 'Specific sections';
   }

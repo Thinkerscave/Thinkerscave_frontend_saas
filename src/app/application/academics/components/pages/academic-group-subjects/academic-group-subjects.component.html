@@ -33,7 +33,7 @@
   <section class="csub-sections" aria-labelledby="csub-mapped-heading">
     <div class="csub-sections__head">
       <div>
-        <h2 id="csub-mapped-heading">Subjects Taught in This Class</h2>
+        <h2 id="csub-mapped-heading">Subjects Taught in This Academic Group</h2>
         <p>Manage which subjects are included for {{ c.name }}.</p>
       </div>
       <button
@@ -91,7 +91,7 @@
       <div class="csub-empty-sections">
         <i class="pi pi-book" aria-hidden="true"></i>
         <h3>No subjects mapped yet</h3>
-        <p>Add subjects to define what is taught in this class.</p>
+        <p>Add subjects to define what is taught in this Academic Group.</p>
         <button
           type="button"
           class="tc-btn tc-btn--primary"
@@ -109,7 +109,7 @@
   <div class="csub-page acad-page" *ngIf="loadError; else loadingTpl">
     <div class="csub-error">
       <h2>Unable to load subject mapping</h2>
-      <p>We couldn't load subjects for this class right now.</p>
+      <p>We couldn't load subjects for this Academic Group right now.</p>
       <div class="csub-error__actions">
         <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
         <button type="button" class="tc-btn" (click)="back()">Back</button>
@@ -125,7 +125,7 @@
 </ng-template>
 
 <p-dialog
-  [header]="'Add Subjects to ' + (cls?.name || 'Class')"
+  [header]="'Add Subjects to ' + (cls?.name || 'Academic Group')"
   [(visible)]="showAddDialog"
   [modal]="true"
   [style]="{ width: 'min(720px, 96vw)' }"
@@ -177,7 +177,7 @@
         <h3>No more subjects to add</h3>
         <p *ngIf="addSearch.trim(); else allMapped">No subjects match your search.</p>
         <ng-template #allMapped>
-          <p>All available subjects are already mapped to this class.</p>
+          <p>All available subjects are already mapped to this Academic Group.</p>
         </ng-template>
       </div>
     </ng-template>

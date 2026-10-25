@@ -115,8 +115,8 @@
 
           <div class="sm-card__stats">
             <div>
-              <strong>{{ subject.mappedClassCount || 0 }}</strong>
-              <span>Classes</span>
+              <strong>{{ subject.mappedAcademicGroupCount || 0 }}</strong>
+              <span>Academic Groups</span>
             </div>
             <div>
               <strong>{{ subject.defaultWeeklyPeriods || 0 }}</strong>
@@ -147,7 +147,7 @@
                 <th>Subject</th>
                 <th>Code</th>
                 <th>Category</th>
-                <th>Classes</th>
+                <th>Academic Groups</th>
                 <th>Default Weekly Periods</th>
                 <th>Status</th>
                 <th class="sm-table__actions" aria-label="Actions"></th>
@@ -168,7 +168,7 @@
                     {{ categoryLabel(subject.category) }}
                   </span>
                 </td>
-                <td>{{ subject.mappedClassCount || 0 }}</td>
+                <td>{{ subject.mappedAcademicGroupCount || 0 }}</td>
                 <td>{{ subject.defaultWeeklyPeriods || 0 }}</td>
                 <td>
                   <span class="sm-badge" [class.sm-badge--success]="subject.active" [class.sm-badge--neutral]="!subject.active">
@@ -215,7 +215,7 @@
         <h3>No subjects found</h3>
         <p>
           There are no subjects configured for
-          {{ dashboard?.academicYearName || 'this academic year' }}.
+          {{ dashboard.academicYearName || 'this academic year' }}.
         </p>
         <button
           type="button"
