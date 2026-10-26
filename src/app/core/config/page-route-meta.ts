@@ -133,6 +133,13 @@ export const ACADEMICS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
+  timetableConfiguration: {
+    breadcrumb: 'Timetable Configuration',
+    pageTitle: 'Timetable Configuration',
+    pageSubtitle: 'Manage daily schedules, assign them to academic groups and configure optional fixed activities.',
+    pageKind: 'main',
+    hideBack: true
+  },
   teacherArrangement: {
     breadcrumb: 'Teacher Arrangements',
     pageTitle: 'Teacher Arrangements',

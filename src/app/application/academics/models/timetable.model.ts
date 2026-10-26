@@ -1,19 +1,25 @@
 export const ACADEMICS_TIMETABLE_RESOURCE = 'ACADEMICS_TIMETABLE';
 
-export type ShiftType = 'MORNING' | 'REGULAR' | 'AFTERNOON';
-export type SlotKind = 'TEACHING' | 'BREAK';
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-export type ReadinessItemStatus = 'PASS' | 'FAIL' | 'WARN';
-export type OverallReadinessStatus = 'READY' | 'BLOCKED';
+export type SlotKind = 'TEACHING' | 'BREAK';
+export type ReadinessCheckStatus = 'PASSED' | 'FAILED' | 'WARNING';
+export type ReadinessCheckSeverity = 'BLOCKING' | 'WARNING';
 export type GenerationStatus =
   | 'NOT_GENERATED'
   | 'GENERATING'
   | 'GENERATED'
   | 'GENERATED_WITH_CONFLICTS'
   | 'FAILED';
-
-export type ReadinessCheckStatus = 'PASSED' | 'FAILED' | 'WARNING';
-export type ReadinessCheckSeverity = 'BLOCKING' | 'WARNING';
+export type VersionStatus =
+  | 'DRAFT'
+  | 'READY_FOR_REVIEW'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'PUBLISHED'
+  | 'SUPERSEDED'
+  | 'ARCHIVED';
+export type TimetableState = 'NOT_GENERATED' | 'DRAFT' | 'PUBLISHED';
+export type GridView = 'ACADEMIC_GROUP' | 'TEACHER';
 export type GenerationResultKind = 'SUCCESS' | 'SUCCESS_WITH_WARNINGS' | 'BLOCKED' | 'FAILED';
 
 export interface ReadinessSummary {
@@ -32,11 +38,8 @@ export interface ReadinessCheckItem {
   status: ReadinessCheckStatus;
   severity: ReadinessCheckSeverity;
   message: string;
-  reference?: string;
-  /** Specific academicGroups/sections/subjects/teachers/periods that need attention. */
   details?: string[];
   actionLabel?: string | null;
-  /** App route, or `tab:<name>` for a tab on the timetable page. */
   actionRoute?: string | null;
 }
 
@@ -50,8 +53,275 @@ export interface TimetableReadiness {
   configurationName?: string | null;
 }
 
+export interface SetupItem {
+  key: 'mapping' | 'allocation' | 'schedule' | string;
+  label: string;
+  status: 'COMPLETE' | 'IN_PROGRESS' | 'INCOMPLETE' | string;
+  summary: string;
+  completed: number;
+  total: number;
+  actionLabel?: string;
+  actionRoute?: string;
+}
+
+export interface WorkspaceIssue {
+  code: string;
+  title: string;
+  severity: 'BLOCKING' | 'WARNING' | string;
+  type?: string;
+  academicGroupName?: string;
+  sectionName?: string;
+  subjectName?: string;
+  teacherName?: string;
+  timeSlot?: string;
+  message: string;
+  actionLabel?: string;
+  actionRoute?: string;
+}
+
+export interface TimetableFilterOption { id: number; name: string; }
+export interface TimetableFilterGroup {
+  academicGroupId: number;
+  name: string;
+  sections: TimetableFilterOption[];
+}
+export interface TimetableFilters {
+  academicGroups: TimetableFilterGroup[];
+  teachers: TimetableFilterOption[];
+  rooms: TimetableFilterOption[];
+}
+
+export interface TimetableVersion {
+  timetableVersionId: number;
+  academicYearId: number;
+  timetableConfigurationId?: number | null;
+  versionNumber: number;
+  generationStatus: GenerationStatus;
+  status: VersionStatus;
+  generatedAt?: string;
+  approvedAt?: string;
+  publishedAt?: string;
+  supersededAt?: string;
+  totalEntries?: number;
+  totalConflicts?: number;
+  openBlockingConflicts?: number;
+  unplacedLessonCount?: number;
+  editable?: boolean;
+  events?: VersionEvent[];
+}
+
+export interface VersionEvent {
+  eventId: number;
+  eventType: string;
+  fromStatus?: string;
+  toStatus?: string;
+  note?: string;
+  at?: string;
+  actorUserId?: number;
+}
+
+export interface TimetableWorkspace {
+  academicYearId: number;
+  academicYearName: string;
+  academicYearStatus: string;
+  yearReadOnly: boolean;
+  state: TimetableState;
+  overallStatus: 'READY' | 'BLOCKED' | string;
+  canGenerate: boolean;
+  generateBlockedReason?: string | null;
+  readiness?: TimetableReadiness;
+  filters?: TimetableFilters;
+  setup: SetupItem[];
+  issues: WorkspaceIssue[];
+  blockingIssueCount: number;
+  warningIssueCount: number;
+  unscheduledLessonCount: number;
+  currentVersion?: TimetableVersion | null;
+  latestVersion?: TimetableVersion | null;
+  workingVersion?: TimetableVersion | null;
+  versions: TimetableVersion[];
+  referenceDate?: string;
+}
+
+export interface SchedulePatternSlot {
+  periodId?: number;
+  slotOrder: number;
+  name: string;
+  slotType: SlotKind;
+  startTime: string;
+  endTime: string;
+  durationMinutes?: number;
+}
+
+export interface SchedulePattern {
+  schedulePatternId?: number;
+  academicYearId?: number;
+  name: string;
+  description?: string | null;
+  active: boolean;
+  teachingSlotCount: number;
+  breakSlotCount: number;
+  dayStartTime?: string | null;
+  dayEndTime?: string | null;
+  totalDurationMinutes?: number;
+  assignedGroupCount: number;
+  assignedGroups: SchedulePatternGroup[];
+  slots: SchedulePatternSlot[];
+}
+
+export interface SchedulePatternGroup {
+  academicGroupId: number;
+  academicGroupName: string;
+  sectionId?: number | null;
+  sectionName?: string | null;
+}
+
+export interface SchedulePatternRequest {
+  name: string;
+  description?: string | null;
+  active: boolean;
+  slots: { name: string; slotType: SlotKind; startTime: string; endTime: string }[];
+}
+
+export interface GroupAssignmentCell {
+  dayOfWeek: DayOfWeek;
+  groupScheduleAssignmentId: number;
+  schedulePatternId: number;
+  schedulePatternName: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  active: boolean;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+}
+
+export interface GroupAssignmentRow {
+  academicGroupId: number;
+  academicGroupName: string;
+  academicGroupCode: string;
+  sectionId?: number | null;
+  sectionName?: string | null;
+  active: boolean;
+  cells: GroupAssignmentCell[];
+}
+
+export interface GroupAssignmentMatrix {
+  academicYearId: number;
+  days: DayOfWeek[];
+  rows: GroupAssignmentRow[];
+}
+
+export interface GroupAssignmentRequest {
+  schedulePatternId: number;
+  units?: { academicGroupId: number; sectionId?: number | null }[];
+  academicGroupIds?: number[];
+  days: DayOfWeek[];
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+}
+
+export interface FixedActivity {
+  fixedActivityId?: number;
+  academicYearId?: number;
+  name: string;
+  description?: string | null;
+  activityType: string;
+  appliesToAllGroups: boolean;
+  startTime: string;
+  endTime: string;
+  recurrence: string;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  active: boolean;
+  days: DayOfWeek[];
+  groups: { academicGroupId: number; academicGroupName?: string; sectionId?: number | null; sectionName?: string | null }[];
+}
+
+export interface FixedActivityRequest {
+  name: string;
+  description?: string | null;
+  activityType: string;
+  appliesToAllGroups: boolean;
+  startTime: string;
+  endTime: string;
+  recurrence: string;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  active: boolean;
+  days: DayOfWeek[];
+  groups: { academicGroupId: number; sectionId?: number | null }[];
+}
+
+export interface TimetablePeriod {
+  timetablePeriodId?: number;
+  periodNumber: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+  slotKind: SlotKind;
+  schedulePatternId?: number;
+  schedulePatternName?: string;
+  durationMinutes?: number;
+}
+
+export interface TimetableCell {
+  dayOfWeek: DayOfWeek;
+  periodId: number;
+  periodNumber: number;
+  entryId?: number;
+  entryType: 'SUBJECT' | 'FREE_PERIOD' | 'ACTIVITY' | string;
+  sectionId?: number;
+  sectionName?: string;
+  academicGroupName?: string;
+  subjectId?: number;
+  subjectName?: string;
+  academicGroupSubjectMappingId?: number;
+  staffId?: number;
+  staffName?: string;
+  teacherAllocationId?: number;
+  fixedActivityId?: number;
+  fixedActivityType?: string;
+  resourceId?: number;
+  resourceName?: string;
+  locked?: boolean;
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface TimetableGrid {
+  timetableVersionId: number;
+  view: GridView;
+  periods: TimetablePeriod[];
+  workingDays: DayOfWeek[];
+  cells: TimetableCell[];
+  academicGroupId?: number;
+  academicGroupName?: string;
+  sectionId?: number;
+  sectionName?: string;
+  staffId?: number;
+  staffName?: string;
+  editable: boolean;
+  weekStartDate?: string;
+  weekDates: { dayOfWeek: DayOfWeek; date: string }[];
+}
+
+export interface TimetableConflict {
+  timetableConflictId: number;
+  timetableVersionId?: number;
+  conflictType: string;
+  blocking: boolean;
+  status: 'OPEN' | 'RESOLVED' | 'IGNORED';
+  message: string;
+  sectionId?: number;
+  sectionName?: string;
+  academicGroupName?: string;
+  dayOfWeek?: DayOfWeek;
+  periodId?: number;
+  periodName?: string;
+}
+
 export interface GenerationStartResponse {
-  generationId: string;
+  generationId: number;
   timetableVersionId: number;
   versionNumber: number;
   status: GenerationStatus;
@@ -63,15 +333,18 @@ export interface GenerationResult {
   versionNumber: number;
   generationStatus: GenerationStatus;
   totalEntries: number;
+  totalPlacements?: number;
   totalConflicts: number;
   openBlockingConflicts: number;
   message?: string;
   algorithmVersion?: string;
   resultKind: GenerationResultKind;
+  unplacedLessons?: string[];
+  warnings?: string[];
 }
 
 export interface GenerationProgress {
-  generationId: string;
+  generationId: number;
   timetableVersionId: number;
   versionNumber: number;
   status: GenerationStatus;
@@ -82,206 +355,40 @@ export interface GenerationProgress {
   message?: string;
   algorithmVersion?: string;
 }
-export type VersionStatus =
-  | 'DRAFT'
-  | 'READY_FOR_REVIEW'
-  | 'PENDING_APPROVAL'
-  | 'APPROVED'
-  | 'PUBLISHED'
-  | 'SUPERSEDED'
-  | 'ARCHIVED';
-export type ConflictStatus = 'OPEN' | 'RESOLVED' | 'IGNORED';
-export type ConflictType =
-  | 'TEACHER_CONFLICT'
-  | 'ACADEMIC_GROUP_CONFLICT'
-  | 'SECTION_CONFLICT'
-  | 'ROOM_CONFLICT'
-  | 'RESOURCE_CONFLICT'
-  | 'TEACHER_AVAILABILITY_CONFLICT'
-  | 'ROOM_CAPACITY_CONFLICT'
-  | 'PERIOD_CAPACITY_CONFLICT'
-  | 'WORKLOAD_CONFLICT'
-  | 'SUBJECT_ALLOCATION_CONFLICT'
-  | 'SUBJECT_PREFERENCE_CONFLICT'
-  | string;
-export type GridView = 'ACADEMIC_GROUP' | 'TEACHER' | 'ROOM';
-export type ResourceType = 'CLASSROOM' | 'LABORATORY' | 'ACTIVITY_ROOM' | 'AUDITORIUM' | 'OTHER';
 
-export interface ReadinessCheck {
-  key: string;
-  label: string;
-  status: ReadinessItemStatus;
-  message: string;
-  blocking: boolean;
+export interface TimetableEntryRequest {
+  sectionId?: number | null;
+  academicGroupSubjectMappingId?: number | null;
+  teacherAllocationId?: number | null;
+  staffId?: number | null;
+  dayOfWeek?: DayOfWeek | null;
+  periodId?: number | null;
+  locked?: boolean | null;
 }
 
-export interface TimetableVersionSummary {
-  timetableVersionId: number;
-  academicYearId: number;
-  timetableConfigurationId: number;
-  versionNumber: number;
-  generationStatus: GenerationStatus;
-  status: VersionStatus;
-  generatedAt?: string;
-  approvedAt?: string;
-  publishedAt?: string;
-  supersededAt?: string;
-  totalEntries?: number;
-  totalConflicts?: number;
-  openBlockingConflicts?: number;
-}
-
-export interface TimetableFilterOption {
-  id: number;
-  name: string;
-}
-
-export interface TimetableFilterClass {
+export interface SubjectOption {
+  mappingId: number;
   academicGroupId: number;
+  subjectId?: number;
+  subjectName: string;
+  weeklyPeriods: number;
+}
+
+export interface TeacherOption {
+  staffId: number;
   name: string;
-  sections: TimetableFilterOption[];
 }
 
-export interface TimetableFilters {
-  academicGroups: TimetableFilterClass[];
-  teachers: TimetableFilterOption[];
-  rooms: TimetableFilterOption[];
-}
+export const DAY_ORDER: DayOfWeek[] = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'
+];
 
-export interface TimetableDashboard {
-  academicYearId: number;
-  academicYearName: string;
-  academicYearStatus: string;
-  yearReadOnly: boolean;
-  readinessChecks: ReadinessCheck[];
-  readiness?: TimetableReadiness;
-  filters?: TimetableFilters;
-  overallStatus: OverallReadinessStatus;
-  canGenerate: boolean;
-  configurationSummary?: TimetableConfiguration | null;
-  currentVersion?: TimetableVersionSummary | null;
-  latestVersion?: TimetableVersionSummary | null;
-  totalConflicts: number;
-  openBlockingConflicts: number;
-}
+export const DAY_LABELS: Record<DayOfWeek, string> = {
+  MONDAY: 'Monday', TUESDAY: 'Tuesday', WEDNESDAY: 'Wednesday', THURSDAY: 'Thursday',
+  FRIDAY: 'Friday', SATURDAY: 'Saturday', SUNDAY: 'Sunday'
+};
 
-export interface TimetableWorkingDay {
-  timetableWorkingDayId?: number;
-  dayOfWeek: DayOfWeek;
-  working: boolean;
-}
-
-export interface TimetablePeriod {
-  timetablePeriodId?: number;
-  periodNumber: number;
-  name: string;
-  startTime: string;
-  endTime: string;
-  slotKind: SlotKind;
-}
-
-export interface TimetableConfiguration {
-  timetableConfigurationId?: number;
-  academicYearId?: number;
-  name: string;
-  shiftType: ShiftType;
-  schoolStartTime: string;
-  schoolEndTime: string;
-  defaultPeriodDurationMin: number;
-  maxTeacherWeeklyPeriods: number;
-  status?: string;
-  isLocked?: boolean;
-  active?: boolean;
-  workingDays: TimetableWorkingDay[];
-  periods: TimetablePeriod[];
-  /** Set on unsaved templates: where the prefilled values came from. */
-  templateSource?: string | null;
-  lockedReason?: string | null;
-}
-
-export interface TimetableVersion {
-  timetableVersionId: number;
-  academicYearId: number;
-  timetableConfigurationId: number;
-  versionNumber: number;
-  generationStatus: GenerationStatus;
-  status: VersionStatus;
-  generatedAt?: string;
-  approvedAt?: string;
-  publishedAt?: string;
-  supersededAt?: string;
-  totalEntries?: number;
-  totalConflicts?: number;
-  openBlockingConflicts?: number;
-}
-
-export interface TimetableGridCell {
-  dayOfWeek: DayOfWeek;
-  periodId: number;
-  periodNumber: number;
-  entryId?: number;
-  entryType?: string;
-  sectionId?: number;
-  sectionName?: string;
-  academicGroupName?: string;
-  subjectName?: string;
-  staffId?: number;
-  staffName?: string;
-  resourceId?: number;
-  resourceName?: string;
-}
-
-export interface TimetableGrid {
-  timetableVersionId?: number;
-  view: GridView;
-  periods: TimetablePeriod[];
-  workingDays: DayOfWeek[];
-  cells: TimetableGridCell[];
-}
-
-export interface TimetableConflict {
-  timetableConflictId: number;
-  timetableVersionId?: number;
-  conflictType: ConflictType;
-  blocking: boolean;
-  status: ConflictStatus;
-  message: string;
-  sectionId?: number;
-  sectionName?: string;
-  academicGroupName?: string;
-  dayOfWeek?: DayOfWeek;
-  periodId?: number;
-  periodName?: string;
-  timetablePeriodId?: number;
-  resolvedAt?: string;
-}
-
-export interface TimetableGenerateResult {
-  timetableVersionId: number;
-  versionNumber: number;
-  generationStatus: GenerationStatus;
-  totalEntries: number;
-  totalConflicts: number;
-  openBlockingConflicts: number;
-  message?: string;
-}
-
-export interface AcademicResource {
-  academicResourceId?: number;
-  name: string;
-  code: string;
-  resourceType: ResourceType;
-  capacity?: number | null;
-  active?: boolean;
-}
-
-export interface TimetableConfigurationRequest {
-  name: string;
-  shiftType: ShiftType;
-  schoolStartTime: string;
-  schoolEndTime: string;
-  defaultPeriodDurationMin: number;
-  maxTeacherWeeklyPeriods: number;
-  workingDays: TimetableWorkingDay[];
-  periods: TimetablePeriod[];
-}
+export const DAY_SHORT: Record<DayOfWeek, string> = {
+  MONDAY: 'Mon', TUESDAY: 'Tue', WEDNESDAY: 'Wed', THURSDAY: 'Thu',
+  FRIDAY: 'Fri', SATURDAY: 'Sat', SUNDAY: 'Sun'
+};

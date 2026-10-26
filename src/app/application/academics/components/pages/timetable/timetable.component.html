@@ -1,594 +1,417 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="tt-page acad-page">
-  <tc-saas-page-header>
-    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
-    <span class="tt-badge" *ngIf="dashboard as dash" [class.tt-badge--success]="dash.academicYearStatus === 'CURRENT'">
-      {{ dash.academicYearStatus }}
-    </span>
-    <span class="tt-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read Only</span>
-    <button type="button" class="tc-btn tc-btn--outline" *tcHasPerm="resource; action: 'manage'" (click)="openTeacherArrangements()">
-      <i class="pi pi-users" aria-hidden="true"></i>
-      Teacher arrangements
-    </button>
-  </tc-saas-page-header>
-
-  <tc-page-skeleton
-    *ngIf="loading && !dashboard"
-    layout="detail-section"
-    [sections]="3"
-    [showKpis]="false"
-    [showFilter]="false">
-  </tc-page-skeleton>
-
-  <ng-container *ngIf="dashboard as dash">
-    <div class="tt-tabs" [class.tt-results--refreshing]="refreshing" role="tablist">
-      <button class="tt-tab" role="tab" [class.active]="activeTab === 'overview'" (click)="switchTab('overview')">
-        Overview
-        <span class="tt-tab__count tt-tab__count--danger" *ngIf="blockingChecks.length">{{ blockingChecks.length }}</span>
+<div class="tt-page">
+  <header class="tt-pagebar">
+    <div class="tt-pagebar__actions">
+      <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
+      <button type="button" class="tt-btn tt-btn--outline" (click)="openConfiguration()">
+        <i class="pi pi-cog" aria-hidden="true"></i>
+        Configure
       </button>
-      <button class="tt-tab" role="tab" [class.active]="activeTab === 'timetable'" (click)="switchTab('timetable')">Timetable</button>
-      <button class="tt-tab" role="tab" [class.active]="activeTab === 'conflicts'" (click)="switchTab('conflicts')">
-        Issues
-        <span class="tt-tab__count" *ngIf="openConflictCount"
-          [class.tt-tab__count--danger]="dash.openBlockingConflicts">{{ openConflictCount }}</span>
-      </button>
-      <button class="tt-tab" role="tab" [class.active]="activeTab === 'configuration'" (click)="switchTab('configuration')">School day</button>
     </div>
+  </header>
 
-    <!-- ═══ OVERVIEW ═══ -->
-    <ng-container *ngIf="activeTab === 'overview'">
-      <div class="tt-hero" *ngIf="readiness as r"
-        [class.tt-hero--ready]="r.ready"
-        [class.tt-hero--blocked]="!r.ready">
-        <div class="tt-hero__icon">
-          <i class="pi" [class.pi-check-circle]="r.ready" [class.pi-exclamation-circle]="!r.ready"></i>
+  <tc-page-skeleton *ngIf="loading && !workspace" layout="dashboard" [kpis]="0"></tc-page-skeleton>
+
+  <ng-container *ngIf="workspace as ws">
+    <!-- ═══════════════ STATE A — NOT GENERATED ═══════════════ -->
+    <ng-container *ngIf="state === 'NOT_GENERATED'">
+      <section class="tt-hero">
+        <div class="tt-hero__art" aria-hidden="true">
+          <i class="pi pi-calendar"></i>
+          <span class="tt-hero__clock"><i class="pi pi-clock"></i></span>
         </div>
-        <div class="tt-hero__body">
-          <div class="tt-hero__title">
-            <ng-container *ngIf="r.ready">Ready to generate</ng-container>
-            <ng-container *ngIf="!r.ready">{{ blockingChecks.length }} issue{{ blockingChecks.length > 1 ? 's' : '' }} to fix before generating</ng-container>
-          </div>
-          <div class="tt-hero__text">
-            <ng-container *ngIf="r.ready">
-              {{ r.summary.requirements }} weekly periods across {{ r.summary.sections }} sections will be scheduled
-              using <strong>{{ r.configurationName }}</strong>
-              ({{ r.summary.weeklySlots }} teaching slots per section per week).
-              <span *ngIf="warningChecks.length"> {{ warningChecks.length }} item{{ warningChecks.length > 1 ? 's' : '' }} below may need your attention, but won't stop generation.</span>
-            </ng-container>
-            <ng-container *ngIf="!r.ready">
-              Each issue below lists exactly what is missing and links to the page where you can fix it.
-            </ng-container>
+        <div class="tt-hero__copy">
+          <h2>Timetable not generated yet</h2>
+          <p>
+            Complete the required setup below to generate the timetable.<br>
+            This includes subject mapping, teacher allocation and schedule configuration.
+          </p>
+        </div>
+      </section>
+
+      <section class="tt-panel">
+        <div class="tt-panel__head">
+          <div>
+            <h3>Setup readiness</h3>
+            <p>Complete the required setup to enable timetable generation.</p>
           </div>
         </div>
-        <div class="tt-hero__actions">
-          <button class="tt-btn tt-btn--primary tt-btn--lg"
-            *tcHasPerm="resource; action: 'manage'"
-            [disabled]="!!generateBlockedReason"
-            [title]="generateBlockedReason || ''"
-            (click)="generateTimetable()">
-            <i class="pi" [class.pi-cog]="!generating" [class.pi-spin]="generating" [class.pi-spinner]="generating"></i>
-            {{ dash.latestVersion ? 'Generate new version' : 'Generate timetable' }}
+        <div class="tt-setup-grid">
+          <article *ngFor="let item of setupItems" class="tt-setup-card" [attr.data-status]="item.status">
+            <span class="tt-setup-card__icon" [attr.data-key]="item.key">
+              <i class="pi" [ngClass]="{
+                'pi-book': item.key === 'mapping',
+                'pi-users': item.key === 'allocation',
+                'pi-clock': item.key === 'schedule'
+              }"></i>
+            </span>
+            <div class="tt-setup-card__body">
+              <div class="tt-setup-card__title">
+                <span>{{ item.label }}</span>
+                <i class="pi pi-chevron-right"></i>
+              </div>
+              <p>{{ item.summary }}</p>
+              <span class="tt-pill" [attr.data-tone]="item.status === 'COMPLETE' ? 'success'
+                : item.status === 'IN_PROGRESS' ? 'warning' : 'danger'">
+                {{ item.status === 'COMPLETE' ? 'Completed'
+                  : item.status === 'IN_PROGRESS' ? 'Needs attention' : 'Not configured' }}
+              </span>
+            </div>
+            <button type="button" class="tt-setup-card__link" (click)="goTo(item.actionRoute)"
+              [attr.aria-label]="item.actionLabel || item.label"></button>
+          </article>
+        </div>
+      </section>
+
+      <section class="tt-panel">
+        <div class="tt-panel__head">
+          <div class="tt-panel__title-row">
+            <h3>Issues to resolve</h3>
+            <span class="tt-pill" [attr.data-tone]="blockingIssues.length ? 'danger' : 'success'">
+              {{ blockingIssues.length }} blocking
+            </span>
+          </div>
+          <p>Resolve the following issues to generate the timetable. Click an issue to go to the relevant setup.</p>
+        </div>
+
+        <div class="tt-issues" *ngIf="visibleIssues.length; else noIssues">
+          <article *ngFor="let issue of visibleIssues; let i = index" class="tt-issue"
+            [attr.data-severity]="issue.severity">
+            <span class="tt-issue__num">{{ i + 1 }}</span>
+            <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">{{ issue.title }}</div>
+              <div class="tt-issue__details">
+                <strong *ngIf="issue.academicGroupName || issue.sectionName">
+                  {{ issue.academicGroupName }}<ng-container *ngIf="issue.sectionName"> • {{ issue.sectionName }}</ng-container>
+                  <ng-container *ngIf="issue.subjectName"> • {{ issue.subjectName }}</ng-container>
+                </strong>
+                <span>{{ issue.message }}</span>
+              </div>
+            </div>
+            <span class="tt-pill" [attr.data-tone]="issue.severity === 'BLOCKING' ? 'danger' : 'warning'">
+              {{ issue.severity === 'BLOCKING' ? 'Blocking' : 'Warning' }}
+            </span>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *ngIf="issue.actionRoute"
+              (click)="goTo(issue.actionRoute)">
+              {{ issue.actionLabel || 'Resolve' }}
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </article>
+        </div>
+        <ng-template #noIssues>
+          <div class="tt-empty tt-empty--success">
+            <i class="pi pi-check-circle"></i>
+            <div>
+              <strong>All setup requirements are satisfied</strong>
+              <p>Generate the timetable when you are ready.</p>
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="tt-generate-bar">
+          <button type="button" class="tt-btn tt-btn--primary tt-btn--lg" [disabled]="generateDisabled"
+            (click)="generate()">
+            <i class="pi" [class.pi-play]="!generating" [class.pi-spin]="generating"
+              [class.pi-spinner]="generating"></i>
+            {{ generateLabel }}
           </button>
-          <div class="tt-hero__hint" *ngIf="generateBlockedReason && !generating">{{ generateBlockedReason }}</div>
+          <p class="tt-generate-hint" *ngIf="ws.generateBlockedReason; else readyHint">
+            <i class="pi pi-info-circle"></i> {{ ws.generateBlockedReason }}
+          </p>
+          <ng-template #readyHint>
+            <p class="tt-generate-hint"><i class="pi pi-check-circle"></i> All blocking requirements are satisfied.</p>
+          </ng-template>
         </div>
-      </div>
+      </section>
 
-      <!-- Generation progress -->
-      <div class="tt-generation-progress" *ngIf="generating && generationProgress as gp">
-        <div class="tt-generation-progress__header">
+      <section class="tt-progress" *ngIf="generating && generationProgress as gp">
+        <div class="tt-progress__head">
           <i class="pi pi-spin pi-spinner"></i>
-          <span>Version {{ gp.versionNumber }} · {{ gp.phaseLabel || 'Generating…' }}</span>
-          <span class="tt-muted" *ngIf="gp.progressPercent != null">{{ gp.progressPercent }}%</span>
-          <button class="tt-btn tt-btn--ghost tt-btn--sm tt-ml-auto" (click)="cancelGeneration()">
-            <i class="pi pi-times"></i> Cancel
-          </button>
+          <span>Version {{ gp.versionNumber }} • {{ gp.phaseLabel || 'Generating…' }}</span>
+          <span class="tt-muted">{{ gp.progressPercent ?? 0 }}%</span>
+          <button type="button" class="tt-btn tt-btn--ghost tt-btn--sm" (click)="cancelGeneration()">Cancel</button>
         </div>
         <p-progressBar [value]="gp.progressPercent ?? 0" [showValue]="false" [style]="{ height: '8px' }"></p-progressBar>
-      </div>
-
-      <div class="tt-summary-cards" *ngIf="readiness as r">
-        <div class="tt-summary-card">
-          <span class="tt-summary-card__value">{{ r.summary.sections }}</span>
-          <span class="tt-summary-card__label">Sections</span>
-        </div>
-        <div class="tt-summary-card">
-          <span class="tt-summary-card__value">{{ r.summary.subjects }}</span>
-          <span class="tt-summary-card__label">Academic Group subjects</span>
-        </div>
-        <div class="tt-summary-card">
-          <span class="tt-summary-card__value">{{ r.summary.requirements }}</span>
-          <span class="tt-summary-card__label">Periods to schedule</span>
-        </div>
-        <div class="tt-summary-card">
-          <span class="tt-summary-card__value">{{ r.summary.teachers }}</span>
-          <span class="tt-summary-card__label">Teachers</span>
-        </div>
-        <div class="tt-summary-card">
-          <span class="tt-summary-card__value">{{ r.summary.weeklySlots }}</span>
-          <span class="tt-summary-card__label">Slots / section / week</span>
-        </div>
-        <div class="tt-summary-card" [class.tt-summary-card--warn]="r.summary.unscheduledSubjects">
-          <span class="tt-summary-card__value">{{ r.summary.unscheduledSubjects }}</span>
-          <span class="tt-summary-card__label">Subjects without teacher</span>
-        </div>
-      </div>
-
-      <!-- Issues -->
-      <div class="tt-section" *ngIf="readiness && (blockingChecks.length || warningChecks.length)">
-        <div class="tt-section__header">
-          <span class="tt-section__title">Needs attention</span>
-        </div>
-        <div class="tt-issue-list">
-          <div class="tt-issue"
-            *ngFor="let check of blockingChecks.concat(warningChecks)"
-            [class.tt-issue--blocking]="check.status === 'FAILED'"
-            [class.tt-issue--warning]="check.status === 'WARNING'">
-            <i class="pi tt-issue__icon"
-              [class.pi-times-circle]="check.status === 'FAILED'"
-              [class.pi-exclamation-triangle]="check.status === 'WARNING'"></i>
-            <div class="tt-issue__body">
-              <div class="tt-issue__title">
-                {{ checkTitle(check) }}
-                <span class="tt-badge tt-badge--danger" *ngIf="check.status === 'FAILED'">Blocks generation</span>
-                <span class="tt-badge tt-badge--warn" *ngIf="check.status === 'WARNING'">Warning</span>
-              </div>
-              <div class="tt-issue__msg">{{ check.message }}</div>
-              <ul class="tt-issue__details" *ngIf="check.details?.length">
-                <li *ngFor="let d of visibleDetails(check)">{{ d }}</li>
-              </ul>
-              <button class="tt-link" *ngIf="hiddenDetailCount(check) || isExpanded(check)" (click)="toggleDetails(check)">
-                {{ isExpanded(check) ? 'Show less' : 'Show all ' + check.details!.length }}
-              </button>
-            </div>
-            <button class="tt-btn tt-btn--ghost tt-btn--sm" *ngIf="check.actionRoute" (click)="runCheckAction(check)">
-              {{ check.actionLabel || 'Fix' }} <i class="pi pi-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tt-passed" *ngIf="passedChecks.length">
-        <button class="tt-link" (click)="showPassedChecks = !showPassedChecks">
-          <i class="pi pi-check-circle tt-text-success"></i>
-          {{ passedChecks.length }} checks passed
-          <i class="pi" [class.pi-chevron-down]="!showPassedChecks" [class.pi-chevron-up]="showPassedChecks"></i>
-        </button>
-        <div class="tt-passed__list" *ngIf="showPassedChecks">
-          <div class="tt-passed__item" *ngFor="let check of passedChecks">
-            <i class="pi pi-check tt-text-success"></i>
-            <strong>{{ checkTitle(check) }}</strong>
-            <span class="tt-muted">{{ check.message }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Versions -->
-      <div class="tt-version-cards">
-        <div class="tt-version-card" *ngIf="dash.latestVersion as ver">
-          <div class="tt-version-card__head">
-            <span class="tt-version-card__title">Latest · Version {{ ver.versionNumber }}</span>
-            <span class="tt-badge"
-              [class.tt-badge--success]="ver.status === 'PUBLISHED' || ver.status === 'APPROVED'"
-              [class.tt-badge--info]="ver.status === 'READY_FOR_REVIEW' || ver.status === 'PENDING_APPROVAL'"
-              [class.tt-badge--danger]="ver.generationStatus === 'FAILED'">
-              {{ ver.generationStatus === 'FAILED' ? 'Failed' : statusLabel(ver.status) }}
-            </span>
-          </div>
-          <div class="tt-version-card__meta">
-            <span *ngIf="ver.generatedAt">Generated {{ serverTime(ver.generatedAt) | date:'d MMM y, h:mm a' }}</span>
-            <span>{{ ver.totalEntries ?? 0 }} periods placed</span>
-            <span *ngIf="ver.totalConflicts">{{ ver.totalConflicts }} note{{ ver.totalConflicts > 1 ? 's' : '' }}</span>
-            <span class="tt-text-danger" *ngIf="ver.openBlockingConflicts">{{ ver.openBlockingConflicts }} blocking</span>
-          </div>
-          <div class="tt-version-card__actions">
-            <button class="tt-btn tt-btn--ghost tt-btn--sm"
-              *ngIf="ver.totalEntries"
-              (click)="selectedVersionId = ver.timetableVersionId; switchTab('timetable')">
-              <i class="pi pi-table"></i> View timetable
-            </button>
-            <button class="tt-btn tt-btn--primary tt-btn--sm"
-              *ngIf="(ver.status === 'DRAFT' || ver.status === 'READY_FOR_REVIEW') && ver.totalEntries && canManage"
-              [disabled]="saving || !!ver.openBlockingConflicts"
-              [title]="ver.openBlockingConflicts ? 'Resolve blocking issues first' : ''"
-              (click)="submitVersion(ver.timetableVersionId)">
-              Submit for approval
-            </button>
-            <button class="tt-btn tt-btn--success tt-btn--sm"
-              *ngIf="ver.status === 'PENDING_APPROVAL' && canApprove"
-              [disabled]="saving"
-              (click)="approveVersion(ver.timetableVersionId)">
-              Approve
-            </button>
-            <button class="tt-btn tt-btn--danger tt-btn--sm"
-              *ngIf="ver.status === 'PENDING_APPROVAL' && canApprove"
-              [disabled]="saving"
-              (click)="rejectVersion(ver.timetableVersionId)">
-              Send back
-            </button>
-            <button class="tt-btn tt-btn--primary tt-btn--sm"
-              *ngIf="ver.status === 'APPROVED' && canApprove"
-              [disabled]="saving"
-              (click)="publishVersion(ver.timetableVersionId)">
-              <i class="pi pi-send"></i> Publish
-            </button>
-          </div>
-        </div>
-
-        <ng-container *ngIf="dash.currentVersion as pub">
-          <div class="tt-version-card tt-version-card--published"
-            *ngIf="pub.timetableVersionId !== dash.latestVersion?.timetableVersionId">
-            <div class="tt-version-card__head">
-              <span class="tt-version-card__title">In use · Version {{ pub.versionNumber }}</span>
-              <span class="tt-badge tt-badge--success">Published</span>
-            </div>
-            <div class="tt-version-card__meta">
-              <span *ngIf="pub.publishedAt">Published {{ serverTime(pub.publishedAt) | date:'d MMM y' }}</span>
-              <span>{{ pub.totalEntries ?? 0 }} periods</span>
-            </div>
-            <div class="tt-version-card__actions">
-              <button class="tt-btn tt-btn--ghost tt-btn--sm"
-                (click)="selectedVersionId = pub.timetableVersionId; switchTab('timetable')">
-                <i class="pi pi-table"></i> View timetable
-              </button>
-            </div>
-          </div>
-        </ng-container>
-
-        <div class="tt-empty tt-empty--inline" *ngIf="!dash.latestVersion">
-          <i class="pi pi-calendar"></i>
-          <p>No timetable generated yet for {{ dash.academicYearName }}.</p>
-        </div>
-      </div>
+      </section>
     </ng-container>
 
-    <!-- ═══ TIMETABLE ═══ -->
-    <ng-container *ngIf="activeTab === 'timetable'">
-      <div class="tt-grid-toolbar">
-        <p-dropdown *ngIf="versions.length"
-          [options]="versionOptions"
-          [(ngModel)]="selectedVersionId"
-          (onChange)="onVersionChange()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select version"
-          styleClass="tt-dd-version">
-        </p-dropdown>
-
-        <div class="tt-view-tabs" *ngIf="versions.length">
-          <button class="tt-view-tab" [class.active]="gridView === 'ACADEMIC_GROUP'" (click)="setGridView('ACADEMIC_GROUP')">Academic Group</button>
-          <button class="tt-view-tab" [class.active]="gridView === 'TEACHER'" (click)="setGridView('TEACHER')">Teacher</button>
-          <button class="tt-view-tab" [class.active]="gridView === 'ROOM'" (click)="setGridView('ROOM')">Room</button>
-        </div>
-
-        <ng-container *ngIf="versions.length && gridView === 'ACADEMIC_GROUP'">
-          <p-dropdown [options]="academicGroupOptions" [(ngModel)]="gridAcademicGroupId" (onChange)="onGridAcademicGroupChange()"
-            optionLabel="label" optionValue="value" placeholder="Academic Group" [filter]="academicGroupOptions.length > 8"></p-dropdown>
-          <p-dropdown [options]="sectionOptions" [(ngModel)]="gridSectionId" (onChange)="loadGrid()"
-            optionLabel="label" optionValue="value" placeholder="Section"></p-dropdown>
-        </ng-container>
-
-        <p-dropdown *ngIf="versions.length && gridView === 'TEACHER'"
-          [options]="staffOptions" [(ngModel)]="gridStaffId" (onChange)="loadGrid()"
-          optionLabel="label" optionValue="value" placeholder="Teacher" [filter]="true"></p-dropdown>
-
-        <p-dropdown *ngIf="versions.length && gridView === 'ROOM'"
-          [options]="resourceOptions" [(ngModel)]="gridResourceId" (onChange)="loadGrid()"
-          optionLabel="label" optionValue="value" placeholder="Room"></p-dropdown>
-
-        <span class="tt-muted tt-ml-auto" *ngIf="grid && !loadingGrid">
-          {{ grid.cells.length }} period{{ grid.cells.length === 1 ? '' : 's' }} this week
-        </span>
-      </div>
-
-      <div class="tt-banner tt-banner--info" *ngIf="selectedVersion as sv">
-        <i class="pi pi-info-circle"></i>
-        <span>
-          Version {{ sv.versionNumber }} is <strong>{{ statusLabel(sv.status) }}</strong>.
-          <ng-container *ngIf="sv.status !== 'PUBLISHED'">Teachers and students only see a timetable after it is published.</ng-container>
-          <ng-container *ngIf="sv.status === 'PUBLISHED'">This is the timetable teachers and students see.</ng-container>
-        </span>
-      </div>
-
-      <tc-page-skeleton *ngIf="loadingGrid" layout="table-only" [rows]="8" [columns]="6"></tc-page-skeleton>
-
-      <div class="tt-grid-container" *ngIf="grid && !loadingGrid">
-        <div class="tt-grid" [style.gridTemplateColumns]="'112px repeat(' + grid.workingDays.length + ', minmax(128px, 1fr))'">
-          <div class="tt-grid-header"></div>
-          <div class="tt-grid-header" *ngFor="let day of grid.workingDays">{{ formatDayLong(day) }}</div>
-
-          <ng-container *ngFor="let period of grid.periods">
-            <div class="tt-grid-period" [class.is-break]="period.slotKind === 'BREAK'">
-              <strong>{{ period.name }}</strong>
-              <div class="tt-muted">{{ hhmm(period.startTime) }}–{{ hhmm(period.endTime) }}</div>
-            </div>
-            <ng-container *ngFor="let day of grid.workingDays">
-              <div class="tt-grid-cell" [class.is-break]="period.slotKind === 'BREAK'">
-                <div class="tt-break-label" *ngIf="period.slotKind === 'BREAK'">{{ period.name }}</div>
-                <ng-container *ngIf="period.slotKind !== 'BREAK'">
-                  <div class="tt-slot" *ngFor="let cell of getCells(day, period.periodNumber)">
-                    <strong>{{ cell.subjectName || '—' }}</strong>
-                    <span *ngIf="gridView !== 'TEACHER'">{{ cell.staffName || 'Teacher not assigned' }}</span>
-                    <span *ngIf="gridView !== 'ACADEMIC_GROUP'">{{ cell.academicGroupName }} - {{ cell.sectionName }}</span>
-                    <small *ngIf="cell.resourceName && gridView !== 'ROOM'">{{ cell.resourceName }}</small>
-                  </div>
-                  <div class="tt-free" *ngIf="!getCells(day, period.periodNumber).length">Free</div>
-                </ng-container>
-              </div>
-            </ng-container>
-          </ng-container>
-        </div>
-      </div>
-
-      <div class="tt-empty" *ngIf="!grid && !loadingGrid">
-        <i class="pi pi-table"></i>
-        <h3>No timetable to show</h3>
-        <p>{{ gridEmptyMessage }}</p>
-        <button class="tt-btn tt-btn--primary tt-btn--sm tt-mt" *ngIf="!versions.length" (click)="switchTab('overview')">
-          Go to Overview
-        </button>
-      </div>
-    </ng-container>
-
-    <!-- ═══ ISSUES ═══ -->
-    <ng-container *ngIf="activeTab === 'conflicts'">
-      <tc-page-skeleton *ngIf="loadingConflicts && !conflictsVersionId" layout="table-only" [rows]="4" [columns]="3"></tc-page-skeleton>
-
-      <div class="tt-empty" *ngIf="!loadingConflicts && !conflictsVersionId">
-        <i class="pi pi-inbox"></i>
-        <h3>No timetable yet</h3>
-        <p>Issues found while generating a timetable appear here.</p>
-      </div>
-
-      <ng-container *ngIf="conflictsVersionId">
-        <p class="tt-muted tt-mb">Showing issues for version {{ conflictsVersionNumber }}.</p>
-
-        <div class="tt-section" *ngIf="blockingConflicts.length">
-          <div class="tt-section__header">
-            <span class="tt-section__title tt-text-danger">
-              <i class="pi pi-times-circle"></i> Must fix before approval ({{ blockingConflicts.length }})
-            </span>
-          </div>
-          <div class="tt-conflicts-list">
-            <ng-container *ngTemplateOutlet="conflictList; context: { $implicit: blockingConflicts }"></ng-container>
-          </div>
-        </div>
-
-        <div class="tt-section" *ngIf="warningConflicts.length">
-          <div class="tt-section__header">
-            <span class="tt-section__title">
-              <i class="pi pi-exclamation-triangle tt-text-warn"></i> Notes ({{ warningConflicts.length }})
-            </span>
-            <span class="tt-muted">These don't block approval.</span>
-          </div>
-          <div class="tt-conflicts-list">
-            <ng-container *ngTemplateOutlet="conflictList; context: { $implicit: warningConflicts }"></ng-container>
-          </div>
-        </div>
-
-        <div class="tt-empty" *ngIf="!conflicts.length">
-          <i class="pi pi-check-circle tt-text-success"></i>
-          <h3>No issues</h3>
-          <p>Every required period was placed with no teacher, Academic Group or room clashes.</p>
-        </div>
-      </ng-container>
-
-      <ng-template #conflictList let-items>
-        <div class="tt-conflict-card" *ngFor="let c of items" [class.blocking]="c.blocking" [class.is-closed]="c.status !== 'OPEN'">
-          <div class="tt-conflict-card__body">
-            <div class="tt-conflict-card__type">
-              {{ conflictTypeLabel(c.conflictType) }}
-              <span class="tt-muted" *ngIf="conflictScope(c)"> · {{ conflictScope(c) }}</span>
-            </div>
-            <div class="tt-conflict-card__msg">{{ c.message }}</div>
-            <div class="tt-conflict-card__actions" *ngIf="c.status === 'OPEN' && canManage">
-              <button class="tt-btn tt-btn--ghost tt-btn--sm"
-                *ngIf="c.conflictType === 'SUBJECT_ALLOCATION_CONFLICT'"
-                (click)="goToTeacherAllocation()">
-                Assign teacher <i class="pi pi-arrow-right"></i>
-              </button>
-              <button class="tt-btn tt-btn--ghost tt-btn--sm" [disabled]="saving" (click)="resolveConflict(c)">Mark resolved</button>
-              <button class="tt-btn tt-btn--ghost tt-btn--sm" [disabled]="saving" (click)="ignoreConflict(c)">Ignore</button>
-            </div>
-          </div>
-          <span class="tt-badge"
-            [class.tt-badge--danger]="c.status === 'OPEN' && c.blocking"
-            [class.tt-badge--warn]="c.status === 'OPEN' && !c.blocking"
-            [class.tt-badge--success]="c.status === 'RESOLVED'">
-            {{ c.status === 'OPEN' ? 'Open' : (c.status === 'RESOLVED' ? 'Resolved' : 'Ignored') }}
-          </span>
-        </div>
-      </ng-template>
-    </ng-container>
-
-    <!-- ═══ SCHOOL DAY (configuration) ═══ -->
-    <ng-container *ngIf="activeTab === 'configuration'">
-      <tc-page-skeleton *ngIf="loadingConfig && !configLoaded" layout="detail-section" [sections]="2" [showKpis]="false" [showFilter]="false"></tc-page-skeleton>
-
-      <ng-container *ngIf="configLoaded">
-        <div class="tt-banner tt-banner--info" *ngIf="configIsTemplate">
-          <i class="pi pi-copy"></i>
-          <span>
-            No school day is set up for {{ dash.academicYearName }} yet. We prefilled one for you
-            <strong *ngIf="config.templateSource">({{ config.templateSource }})</strong>.
-            Review it and click <strong>Save</strong> to use it.
-          </span>
-        </div>
-        <div class="tt-banner tt-banner--warn" *ngIf="config.isLocked">
-          <i class="pi pi-lock"></i>
-          <span>{{ config.lockedReason || 'This setup is locked because a timetable using it is published.' }}</span>
-        </div>
-
-        <div class="tt-section">
-          <div class="tt-section__header">
-            <span class="tt-section__title">School day</span>
-            <button class="tt-btn tt-btn--primary"
-              *tcHasPerm="resource; action: 'manage'"
-              [disabled]="readOnly || savingConfig"
-              (click)="saveConfiguration()">
-              <i class="pi pi-check"></i> {{ savingConfig ? 'Saving…' : 'Save' }}
+    <!-- ═══════════════ STATE B/C — DRAFT / PUBLISHED ═══════════════ -->
+    <ng-container *ngIf="state !== 'NOT_GENERATED'">
+      <section class="tt-panel tt-workspace">
+        <div class="tt-toolbar">
+          <div class="tt-view-tabs" role="tablist">
+            <button type="button" role="tab" [class.is-active]="view === 'ACADEMIC_GROUP'"
+              (click)="setView('ACADEMIC_GROUP')">
+              <i class="pi pi-table"></i> Class View
+            </button>
+            <button type="button" role="tab" [class.is-active]="view === 'TEACHER'"
+              (click)="setView('TEACHER')">
+              <i class="pi pi-user"></i> Teacher View
             </button>
           </div>
 
-          <div class="tt-form">
-            <div class="tt-form-group">
-              <label>Name</label>
-              <input type="text" [(ngModel)]="config.name" placeholder="e.g. Regular Shift" maxlength="100" />
-            </div>
-            <div class="tt-form-group">
-              <label>Shift</label>
-              <select [(ngModel)]="config.shiftType" [disabled]="!!config.isLocked">
-                <option value="MORNING">Morning</option>
-                <option value="REGULAR">Regular</option>
-                <option value="AFTERNOON">Afternoon</option>
+          <div class="tt-toolbar__selectors">
+            <ng-container *ngIf="view === 'ACADEMIC_GROUP'">
+              <select class="tt-select" [(ngModel)]="selectedGroupId" (ngModelChange)="onGroupChange()"
+                aria-label="Academic group">
+                <option *ngFor="let g of academicGroupOptions" [ngValue]="g.value">{{ g.label }}</option>
               </select>
-            </div>
-            <div class="tt-form-group">
-              <label>School starts</label>
-              <input type="time" [(ngModel)]="config.schoolStartTime" [disabled]="!!config.isLocked" />
-            </div>
-            <div class="tt-form-group">
-              <label>School ends</label>
-              <input type="time" [(ngModel)]="config.schoolEndTime" [disabled]="!!config.isLocked" />
-            </div>
-            <div class="tt-form-group">
-              <label>Default period length (min)</label>
-              <input type="number" [(ngModel)]="config.defaultPeriodDurationMin" min="15" max="120" />
-            </div>
-            <div class="tt-form-group">
-              <label>Max periods per teacher / week</label>
-              <input type="number" [(ngModel)]="config.maxTeacherWeeklyPeriods" min="1" max="60" />
-            </div>
+              <select class="tt-select" *ngIf="sectionOptions.length" [(ngModel)]="selectedSectionId"
+                (ngModelChange)="onSectionChange()" aria-label="Section">
+                <option *ngFor="let s of sectionOptions" [ngValue]="s.value">Section {{ s.label }}</option>
+              </select>
+            </ng-container>
+            <select class="tt-select" *ngIf="view === 'TEACHER'" [(ngModel)]="selectedStaffId"
+              (ngModelChange)="onTeacherChange()" aria-label="Teacher">
+              <option *ngFor="let t of teacherOptions" [ngValue]="t.value">{{ t.label }}</option>
+            </select>
           </div>
 
-          <div class="tt-field-block">
-            <label class="tt-field-label">Working days</label>
-            <div class="tt-days-row">
-              <label class="tt-day-chip" *ngFor="let wd of config.workingDays" [class.is-on]="wd.working" [class.is-disabled]="config.isLocked">
-                <input type="checkbox" [(ngModel)]="wd.working" [disabled]="!!config.isLocked" />
-                {{ formatDay(wd.dayOfWeek) }}
-              </label>
-            </div>
+          <div class="tt-week-nav">
+            <button type="button" class="tt-week-nav__btn" (click)="moveWeek(-1)" aria-label="Previous week">
+              <i class="pi pi-chevron-left"></i>
+            </button>
+            <button type="button" class="tt-week-nav__label" (click)="goToday()">{{ weekLabel }}</button>
+            <button type="button" class="tt-week-nav__btn" (click)="moveWeek(1)" aria-label="Next week">
+              <i class="pi pi-chevron-right"></i>
+            </button>
           </div>
 
-          <div class="tt-field-block">
-            <div class="tt-field-head">
-              <label class="tt-field-label">Periods</label>
-              <span class="tt-muted">
-                {{ teachingPeriodCount }} teaching period{{ teachingPeriodCount === 1 ? '' : 's' }} × {{ workingDayCount }} day{{ workingDayCount === 1 ? '' : 's' }}
-                = {{ teachingPeriodCount * workingDayCount }} slots per section per week
-              </span>
-              <button class="tt-btn tt-btn--ghost tt-btn--sm tt-ml-auto"
-                *tcHasPerm="resource; action: 'manage'"
-                [disabled]="readOnly || !!config.isLocked"
-                (click)="addPeriod()">
-                <i class="pi pi-plus"></i> Add period
+          <div class="tt-toolbar__actions">
+            <span class="tt-status" [attr.data-tone]="statusTone()">
+              <span class="tt-status__dot"></span>{{ statusLabel }}
+            </span>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *tcHasPerm="resource; action: 'manage'"
+              [disabled]="saving" (click)="validate()">
+              <i class="pi pi-check-square"></i> Validate
+            </button>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *tcHasPerm="resource; action: 'manage'"
+              [disabled]="generateDisabled" (click)="generate()">
+              <i class="pi pi-refresh"></i> Regenerate
+            </button>
+            <ng-container *ngIf="canPublish">
+              <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
+                *tcHasPerm="resource; action: 'approve'" [disabled]="saving" (click)="publish()">
+                <i class="pi pi-send"></i> Publish <i class="pi pi-chevron-down"></i>
               </button>
-            </div>
-            <table class="tt-periods-table" *ngIf="config.periods.length; else noPeriodsTemplate">
+            </ng-container>
+            <ng-container *ngIf="primaryVersion?.status === 'PENDING_APPROVAL' && canApprove">
+              <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
+                [disabled]="saving" (click)="approve()">
+                <i class="pi pi-check"></i> Approve
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="tt-progress" *ngIf="generating && generationProgress as gp">
+          <div class="tt-progress__head">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Version {{ gp.versionNumber }} • {{ gp.phaseLabel || 'Generating…' }}</span>
+            <span class="tt-muted">{{ gp.progressPercent ?? 0 }}%</span>
+            <button type="button" class="tt-btn tt-btn--ghost tt-btn--sm" (click)="cancelGeneration()">Cancel</button>
+          </div>
+          <p-progressBar [value]="gp.progressPercent ?? 0" [showValue]="false" [style]="{ height: '8px' }"></p-progressBar>
+        </div>
+
+        <div class="tt-grid-wrap">
+          <div class="tt-grid-scroll">
+            <table class="tt-grid" *ngIf="grid; else loadingGridTpl">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Type</th>
-                  <th></th>
+                  <th class="tt-grid__time">Time</th>
+                  <th *ngFor="let day of gridDays" scope="col">
+                    <span class="tt-grid__day">{{ dayLabels[day] }}</span>
+                    <span class="tt-grid__date">{{ dayDateLabel(day) }}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let p of config.periods; let i = index" [class.is-break]="p.slotKind === 'BREAK'">
-                  <td>{{ p.periodNumber }}</td>
-                  <td><input type="text" [(ngModel)]="p.name" maxlength="50" /></td>
-                  <td><input type="time" [(ngModel)]="p.startTime" [disabled]="!!config.isLocked" /></td>
-                  <td><input type="time" [(ngModel)]="p.endTime" [disabled]="!!config.isLocked" /></td>
-                  <td>
-                    <select [(ngModel)]="p.slotKind" [disabled]="!!config.isLocked">
-                      <option value="TEACHING">Teaching</option>
-                      <option value="BREAK">Break</option>
-                    </select>
-                  </td>
-                  <td>
-                    <button class="remove-btn" (click)="removePeriod(i)" title="Remove period" [disabled]="readOnly || !!config.isLocked">
-                      <i class="pi pi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
+                <ng-container *ngFor="let row of periodRows">
+                  <tr *ngIf="isBreak(row)" class="tt-grid__break-row">
+                    <td class="tt-grid__time">
+                      <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
+                    </td>
+                    <td [attr.colspan]="gridDays.length" class="tt-grid__break">
+                      <span>{{ row.name }}</span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!isBreak(row)">
+                    <td class="tt-grid__time">
+                      <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
+                    </td>
+                    <td *ngFor="let day of gridDays" class="tt-grid__cell"
+                      [class.is-empty]="isEmptySlot(row, day)">
+                      <button type="button" class="tt-empty-cell" *ngIf="isEmptySlot(row, day) && canEdit"
+                        (click)="openPlace(day, row)" aria-label="Place a lesson">
+                        <i class="pi pi-plus"></i>
+                      </button>
+                      <div *ngFor="let cell of cellsFor(row, day)" class="tt-lesson"
+                        [attr.data-tone]="toneFor(cell)" [class.is-activity]="cell.entryType === 'ACTIVITY'"
+                        (click)="openEdit(cell)" role="button" tabindex="0"
+                        (keydown.enter)="openEdit(cell)">
+                        <strong>{{ cell.subjectName }}</strong>
+                        <span *ngIf="cell.staffName">{{ cell.staffName }}</span>
+                        <small>{{ cell.academicGroupName }}<ng-container *ngIf="cell.sectionName">
+                          • {{ cell.sectionName }}</ng-container></small>
+                        <i class="pi pi-lock tt-lesson__lock" *ngIf="cell.locked"></i>
+                        <i class="pi pi-ellipsis-v tt-lesson__more"></i>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
               </tbody>
             </table>
-            <ng-template #noPeriodsTemplate>
-              <div class="tt-empty"><p>No periods yet. Click "Add period" to start.</p></div>
+            <ng-template #loadingGridTpl>
+              <div class="tt-grid-loading" *ngIf="loadingGrid; else emptyGrid">
+                <i class="pi pi-spin pi-spinner"></i> Loading timetable…
+              </div>
+              <ng-template #emptyGrid>
+                <div class="tt-empty">
+                  <i class="pi pi-table"></i>
+                  <div>
+                    <strong>Nothing to show yet</strong>
+                    <p *ngIf="view === 'ACADEMIC_GROUP'">Choose an academic group and section.</p>
+                    <p *ngIf="view === 'TEACHER'">Choose a teacher.</p>
+                  </div>
+                </div>
+              </ng-template>
             </ng-template>
           </div>
         </div>
 
-        <div class="tt-section tt-resources">
-          <div class="tt-section__header">
-            <span class="tt-section__title">Rooms</span>
-            <button class="tt-btn tt-btn--ghost tt-btn--sm"
-              *tcHasPerm="resource; action: 'manage'"
-              [disabled]="readOnly"
-              (click)="openResourceDialog()">
-              <i class="pi pi-plus"></i> Add room
-            </button>
-          </div>
-          <p class="tt-muted tt-mb">Optional. Sections with a default room (set on Academic Groups) are checked so two sections never share a room at the same time.</p>
-          <div class="tt-resources-list" *ngIf="resources.length; else noResourcesTpl">
-            <div class="tt-resource-item" *ngFor="let r of resources">
-              <span class="tt-resource-item__name">{{ r.name }}</span>
-              <span class="tt-badge tt-badge--info">{{ r.resourceType }}</span>
-              <span class="tt-resource-item__meta">{{ r.code }} · Capacity {{ r.capacity }}</span>
-              <button class="tt-btn tt-btn--ghost tt-btn--sm"
-                *ngIf="r.active !== false && r.academicResourceId && canManage"
-                (click)="deactivateResource(r.academicResourceId!)">
-                Deactivate
-              </button>
-              <span class="tt-badge tt-badge--warn" *ngIf="r.active === false">Inactive</span>
+        <div class="tt-bottom">
+          <article class="tt-summary">
+            <span class="tt-summary__icon tt-summary__icon--warning"><i class="pi pi-clock"></i></span>
+            <div>
+              <strong>Unscheduled Lessons</strong>
+              <p>{{ unscheduledCount }} lesson{{ unscheduledCount === 1 ? '' : 's' }} could not be scheduled</p>
             </div>
-          </div>
-          <ng-template #noResourcesTpl>
-            <div class="tt-empty"><p>No rooms added.</p></div>
-          </ng-template>
+            <i class="pi pi-chevron-right tt-summary__chevron"></i>
+          </article>
+          <article class="tt-summary" [class.is-danger]="issueCount > 0">
+            <span class="tt-summary__icon tt-summary__icon--danger"><i class="pi pi-exclamation-triangle"></i></span>
+            <div>
+              <strong>Issues</strong>
+              <p>{{ issueCount }} issue{{ issueCount === 1 ? '' : 's' }} need attention</p>
+            </div>
+            <i class="pi pi-chevron-right tt-summary__chevron"></i>
+          </article>
+          <article class="tt-summary">
+            <span class="tt-summary__icon tt-summary__icon--info"><i class="pi pi-calendar"></i></span>
+            <div>
+              <strong>Last Generated</strong>
+              <p *ngIf="primaryVersion?.generatedAt; else notGenerated">
+                {{ primaryVersion?.generatedAt | date:'d MMM y, h:mm a' }}
+              </p>
+              <ng-template #notGenerated><p>Not generated in this version</p></ng-template>
+            </div>
+            <i class="pi pi-chevron-right tt-summary__chevron"></i>
+          </article>
+          <button type="button" class="tt-btn tt-btn--outline tt-btn--lg" (click)="loadConflicts()">
+            View Details
+          </button>
         </div>
-      </ng-container>
+
+        <div class="tt-issues-inline" *ngIf="visibleIssues.length || conflicts.length">
+          <div class="tt-panel__title-row">
+            <h3>Validation &amp; issues</h3>
+            <span class="tt-pill" [attr.data-tone]="blockingIssues.length || hasOpenBlockingConflicts ? 'danger' : 'success'">
+              {{ openConflictCount }} blocking
+            </span>
+          </div>
+          <div class="tt-issue" *ngFor="let issue of visibleIssues" [attr.data-severity]="issue.severity">
+            <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">{{ issue.title }}</div>
+              <div class="tt-issue__details"><span>{{ issue.message }}</span></div>
+            </div>
+            <span class="tt-pill" [attr.data-tone]="issue.severity === 'BLOCKING' ? 'danger' : 'warning'">
+              {{ issue.severity === 'BLOCKING' ? 'Blocking' : 'Warning' }}
+            </span>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *ngIf="issue.actionRoute"
+              (click)="goTo(issue.actionRoute)">Resolve <i class="pi pi-arrow-right"></i></button>
+          </div>
+          <div class="tt-issue" *ngFor="let c of conflicts" [attr.data-severity]="c.blocking ? 'BLOCKING' : 'WARNING'">
+            <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">{{ conflictLabel(c) }}</div>
+              <div class="tt-issue__details"><span>{{ c.message }}</span></div>
+            </div>
+            <span class="tt-pill" [attr.data-tone]="c.blocking ? 'danger' : 'warning'">
+              {{ c.blocking ? 'Blocking' : 'Warning' }}
+            </span>
+            <span class="tt-pill" [attr.data-tone]="'neutral'">{{ c.status | titlecase }}</span>
+          </div>
+        </div>
+      </section>
     </ng-container>
   </ng-container>
-</div>
 
-<p-dialog
-  header="Add room"
-  [(visible)]="showResourceDialog"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  [draggable]="false">
-  <div class="tt-dialog-form">
-    <div class="tt-form-group">
-      <label>Name</label>
-      <input type="text" [(ngModel)]="resourceForm.name" placeholder="Room 101" />
+  <!-- Edit / place lesson -->
+  <p-dialog [(visible)]="showEditDialog" [modal]="true" [draggable]="false" [resizable]="false"
+    [style]="{ width: '560px' }" styleClass="tt-dialog"
+    [header]="editForm.mode === 'place' ? 'Place Lesson' : 'Edit Lesson'">
+    <div class="tt-form">
+      <label class="tt-field">
+        <span>Subject <em>*</em></span>
+        <select [(ngModel)]="editForm.mappingId" (ngModelChange)="onSubjectChange()"
+          [disabled]="editForm.mode === 'edit'">
+          <option [ngValue]="null" disabled>Choose a subject</option>
+          <option *ngFor="let s of subjectChoices" [ngValue]="s.mappingId">
+            {{ s.subjectName }}<ng-container *ngIf="s.weeklyPeriods"> · {{ s.weeklyPeriods }}/week</ng-container>
+          </option>
+        </select>
+      </label>
+      <label class="tt-field">
+        <span>Teacher</span>
+        <select [(ngModel)]="editForm.staffId">
+          <option [ngValue]="null">Use allocation teacher</option>
+          <option *ngFor="let t of teacherChoices" [ngValue]="t.value">{{ t.label }}</option>
+        </select>
+      </label>
+      <label class="tt-field">
+        <span>Day <em>*</em></span>
+        <select [(ngModel)]="editForm.dayOfWeek">
+          <option *ngFor="let d of dayOrder" [ngValue]="d">{{ dayLabels[d] }}</option>
+        </select>
+      </label>
+      <label class="tt-field">
+        <span>Time slot <em>*</em></span>
+        <select [(ngModel)]="editForm.periodId">
+          <option *ngFor="let row of editSlots" [ngValue]="row.periodIds[0]">
+            {{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }} ({{ row.name }})
+          </option>
+        </select>
+      </label>
     </div>
-    <div class="tt-form-group">
-      <label>Code</label>
-      <input type="text" [(ngModel)]="resourceForm.code" placeholder="R101" />
+    <div class="tt-dialog__note" *ngIf="editForm.mode === 'edit'">
+      <i class="pi" [class.pi-lock]="editForm.locked" [class.pi-unlock]="!editForm.locked"></i>
+      {{ editForm.locked ? 'This lesson is locked against regeneration.' : 'This lesson can be moved by regeneration.' }}
     </div>
-    <div class="tt-form-group">
-      <label>Type</label>
-      <select [(ngModel)]="resourceForm.resourceType">
-        <option value="CLASSROOM">Academic Grouproom</option>
-        <option value="LABORATORY">Laboratory</option>
-        <option value="ACTIVITY_ROOM">Activity Room</option>
-        <option value="AUDITORIUM">Auditorium</option>
-        <option value="OTHER">Other</option>
-      </select>
-    </div>
-    <div class="tt-form-group">
-      <label>Capacity</label>
-      <input type="number" [(ngModel)]="resourceForm.capacity" min="1" />
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <button class="tt-btn tt-btn--ghost" (click)="showResourceDialog = false">Cancel</button>
-    <button class="tt-btn tt-btn--primary" [disabled]="savingResource" (click)="saveResource()">
-      <i class="pi pi-check"></i> {{ savingResource ? 'Saving…' : 'Save' }}
-    </button>
-  </ng-template>
-</p-dialog>
+    <ng-template pTemplate="footer">
+      <div class="tt-dialog__footer">
+        <div class="tt-dialog__footer-left">
+          <button *ngIf="editForm.mode === 'edit'" type="button" class="tt-btn tt-btn--ghost tt-btn--sm"
+            [disabled]="saving" (click)="toggleLock()">
+            <i class="pi" [class.pi-lock]="!editForm.locked" [class.pi-unlock]="editForm.locked"></i>
+            {{ editForm.locked ? 'Unlock' : 'Lock' }}
+          </button>
+          <button *ngIf="editForm.mode === 'edit'" type="button" class="tt-btn tt-btn--danger-ghost tt-btn--sm"
+            [disabled]="saving" (click)="deleteEntry()">
+            <i class="pi pi-trash"></i> Remove
+          </button>
+        </div>
+        <div class="tt-dialog__footer-right">
+          <button type="button" class="tt-btn tt-btn--outline" (click)="showEditDialog = false">Cancel</button>
+          <button type="button" class="tt-btn tt-btn--primary" [disabled]="saving" (click)="saveEntry()">
+            <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
+            {{ editForm.mode === 'place' ? 'Place Lesson' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

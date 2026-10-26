@@ -1,0 +1,590 @@
+<p-confirmDialog></p-confirmDialog>
+
+<div class="tcfg-page">
+  <div class="tcfg-topbar">
+    <button type="button" class="tcfg-back" (click)="backToTimetable()">
+      <i class="pi pi-arrow-left"></i> Back to Timetable
+    </button>
+  </div>
+
+  <header class="tcfg-header">
+    <div class="tcfg-header__actions">
+      <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
+      <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="backToTimetable()">
+        View Timetable <i class="pi pi-external-link"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tcfg-tabs" role="tablist" aria-label="Timetable configuration">
+    <button type="button" *ngFor="let tab of tabs" role="tab"
+      [class.is-active]="activeTab === tab.key" (click)="switchTab(tab.key)">
+      <i [class]="tab.icon"></i> {{ tab.label }}
+    </button>
+  </nav>
+
+  <tc-page-skeleton *ngIf="loading" layout="table-only" [rows]="8"></tc-page-skeleton>
+
+  <ng-container *ngIf="!loading">
+    <!-- ═══════════ SCHEDULE PATTERNS ═══════════ -->
+    <section class="tcfg-split" *ngIf="activeTab === 'patterns'">
+      <div class="tcfg-panel tcfg-patterns">
+        <div class="tcfg-panel__head">
+          <div>
+            <h2>Schedule Patterns</h2>
+            <p>Create and manage reusable daily schedules with time slots and breaks.</p>
+          </div>
+          <button type="button" class="tcfg-btn tcfg-btn--primary" (click)="openCreatePattern()">
+            <i class="pi pi-plus"></i> Create Pattern
+          </button>
+        </div>
+        <div class="tcfg-filters tcfg-filters--stack">
+          <label class="tcfg-search">
+            <i class="pi pi-search"></i>
+            <input type="search" placeholder="Search patterns..." [(ngModel)]="patternSearch" />
+          </label>
+          <select class="tcfg-select" [(ngModel)]="patternStatus" aria-label="Pattern status">
+            <option value="ALL">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+        <div class="tcfg-pattern-list">
+          <button type="button" *ngFor="let pattern of filteredPatterns" class="tcfg-pattern-card"
+            [class.is-selected]="pattern.schedulePatternId === selectedPatternId"
+            (click)="selectPattern(pattern.schedulePatternId!)">
+            <span class="tcfg-pattern-card__icon"><i class="pi pi-calendar"></i></span>
+            <span class="tcfg-pattern-card__body">
+              <span class="tcfg-pattern-card__title">{{ pattern.name }}</span>
+              <span class="tcfg-pattern-card__meta">{{ patternSummary(pattern) }}</span>
+            </span>
+            <span class="tcfg-pill" [attr.data-tone]="pattern.active ? 'success' : 'danger'">
+              {{ pattern.active ? 'Active' : 'Inactive' }}
+            </span>
+            <i class="pi pi-ellipsis-v tcfg-pattern-card__more"></i>
+          </button>
+          <div class="tcfg-empty" *ngIf="!filteredPatterns.length">
+            <i class="pi pi-clock"></i>
+            <div><strong>No schedule patterns</strong><p>Create your first reusable daily timeline.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tcfg-panel tcfg-pattern-detail" *ngIf="selectedPattern as pattern; else pickPattern">
+        <div class="tcfg-pattern-detail__head">
+          <div>
+            <div class="tcfg-pattern-detail__title">
+              <h2>{{ pattern.name }}</h2>
+              <span class="tcfg-pill" [attr.data-tone]="pattern.active ? 'success' : 'danger'">
+                {{ pattern.active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <p>{{ pattern.description || 'Reusable daily schedule with teaching periods and breaks.' }}</p>
+          </div>
+          <div class="tcfg-pattern-detail__actions">
+            <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="duplicatePattern(pattern)">
+              <i class="pi pi-copy"></i> Duplicate
+            </button>
+            <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="openEditPattern(pattern)">
+              <i class="pi pi-pencil"></i> Edit
+            </button>
+            <button type="button" class="tcfg-icon-btn" (click)="togglePatternActive(pattern)"
+              [attr.title]="pattern.active ? 'Deactivate pattern' : 'Activate pattern'">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="tcfg-stats">
+          <span><i class="pi pi-clock"></i> {{ pattern.teachingSlotCount }} periods</span>
+          <span><i class="pi pi-hourglass"></i> {{ slotDuration(pattern) }} mins each</span>
+          <span><i class="pi pi-calendar"></i> {{ pattern.assignedGroupCount }} groups assigned</span>
+        </div>
+
+        <div class="tcfg-table-wrap">
+          <table class="tcfg-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Type</th><th>Name</th><th>Start Time</th><th>End Time</th><th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let slot of pattern.slots; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <span class="tcfg-type" [attr.data-type]="slot.slotType">
+                    {{ slot.slotType === 'TEACHING' ? 'Teaching' : 'Break' }}
+                  </span>
+                </td>
+                <td>{{ slot.name }}</td>
+                <td>{{ formatTime(slot.startTime) }}</td>
+                <td>{{ formatTime(slot.endTime) }}</td>
+                <td>{{ slot.durationMinutes }} mins</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tcfg-assigned">
+          <div class="tcfg-assigned__head">
+            <span class="tcfg-assigned__icon"><i class="pi pi-users"></i></span>
+            <div>
+              <strong>Assigned Academic Groups ({{ pattern.assignedGroupCount }})</strong>
+              <div class="tcfg-chips" *ngIf="pattern.assignedGroups.length">
+                <span class="tcfg-chip" *ngFor="let group of pattern.assignedGroups">
+                  {{ group.academicGroupName }}<ng-container *ngIf="group.sectionName"> - {{ group.sectionName }}</ng-container>
+                </span>
+              </div>
+              <p *ngIf="!pattern.assignedGroups.length">Not assigned to any group yet.</p>
+            </div>
+            <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="switchTab('assignments')">
+              View Assignments <i class="pi pi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #pickPattern>
+        <div class="tcfg-panel tcfg-pattern-detail tcfg-pattern-detail--empty">
+          <i class="pi pi-clock"></i>
+          <p>Select a pattern to view its slots and assignments.</p>
+        </div>
+      </ng-template>
+    </section>
+
+    <!-- ═══════════ GROUP ASSIGNMENTS ═══════════ -->
+    <section class="tcfg-panel" *ngIf="activeTab === 'assignments'">
+      <div class="tcfg-panel__head tcfg-panel__head--row">
+        <div>
+          <h2>Group Assignments</h2>
+          <p>Assign schedule patterns to academic groups and define applicable days.</p>
+        </div>
+        <button type="button" class="tcfg-btn tcfg-btn--primary" (click)="openAssign()">
+          <i class="pi pi-plus"></i> Assign Schedule Pattern
+        </button>
+      </div>
+      <div class="tcfg-filters">
+        <label class="tcfg-search">
+          <i class="pi pi-search"></i>
+          <input type="search" placeholder="Search groups..." [(ngModel)]="assignmentSearch" />
+        </label>
+        <select class="tcfg-select" [(ngModel)]="assignmentStatus" aria-label="Assignment status">
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+        <div class="tcfg-legend">
+          <span><i class="tcfg-dot" data-tone="assigned"></i> Assigned</span>
+          <span><i class="tcfg-dot" data-tone="empty"></i> Not Assigned</span>
+          <span><i class="tcfg-dot" data-tone="active"></i> Active</span>
+          <span><i class="tcfg-dot" data-tone="inactive"></i> Inactive</span>
+        </div>
+      </div>
+
+      <div class="tcfg-table-wrap tcfg-table-wrap--matrix">
+        <table class="tcfg-table tcfg-matrix">
+          <thead>
+            <tr>
+              <th class="tcfg-matrix__group">Academic Group</th>
+              <th *ngFor="let day of dayOrder">{{ dayLabels[day] }}</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of filteredRows">
+              <td class="tcfg-matrix__group">
+                <span class="tcfg-group-avatar"><i class="pi pi-users"></i></span>
+                <span>
+                  <strong>{{ rowLabel(row) }}</strong>
+                  <small>{{ rowCode(row) }}</small>
+                </span>
+              </td>
+              <td *ngFor="let day of dayOrder" class="tcfg-matrix__cell">
+                <ng-container *ngFor="let cell of cellsFor(row, day)">
+                  <button type="button" class="tcfg-day-chip"
+                    [attr.data-tone]="patternTone(cell.schedulePatternName)"
+                    [class.is-inactive]="!cell.active || !row.active"
+                    (click)="openAssign(row, day, cell)">
+                    {{ cell.schedulePatternName }}
+                    <i class="pi pi-pencil tcfg-day-chip__edit"></i>
+                  </button>
+                </ng-container>
+                <button type="button" class="tcfg-day-empty" *ngIf="!cellsFor(row, day).length"
+                  (click)="openAssign(row, day)" aria-label="Assign a pattern">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </td>
+              <td>
+                <span class="tcfg-pill" [attr.data-tone]="row.active ? 'success' : 'danger'">
+                  {{ row.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="tcfg-matrix__actions">
+                <button type="button" class="tcfg-icon-btn" (click)="openAssign(row)"
+                  aria-label="Edit assignments"><i class="pi pi-pencil"></i></button>
+                <button type="button" class="tcfg-icon-btn" *ngIf="row.cells.length"
+                  (click)="deleteAssignmentCell(row.cells[0])" aria-label="Remove first assignment">
+                  <i class="pi pi-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredRows.length">
+              <td [attr.colspan]="dayOrder.length + 3">
+                <div class="tcfg-empty"><i class="pi pi-users"></i>
+                  <div><strong>No groups found</strong><p>Adjust the filters or create academic groups first.</p></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════ FIXED ACTIVITIES ═══════════ -->
+    <section class="tcfg-panel" *ngIf="activeTab === 'fixed'">
+      <div class="tcfg-panel__head tcfg-panel__head--row">
+        <div class="tcfg-panel__title-row">
+          <h2>Fixed Activities</h2>
+          <span class="tcfg-pill" data-tone="info">Optional</span>
+        </div>
+        <div class="tcfg-fixed-head">
+          <p>View and manage fixed activities applied to academic groups. They appear in the generated timetable.</p>
+          <button type="button" class="tcfg-btn tcfg-btn--primary" (click)="openCreateActivity()">
+            <i class="pi pi-plus"></i> Add Fixed Activity
+          </button>
+        </div>
+      </div>
+      <div class="tcfg-filters">
+        <label class="tcfg-search">
+          <i class="pi pi-search"></i>
+          <input type="search" placeholder="Search activities..." [(ngModel)]="activitySearch" />
+        </label>
+        <select class="tcfg-select" [(ngModel)]="activityGroupFilter" aria-label="Group filter">
+          <option [ngValue]="null">All Groups</option>
+          <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
+        </select>
+        <select class="tcfg-select" [(ngModel)]="activityStatus" aria-label="Activity status">
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+
+      <div class="tcfg-table-wrap">
+        <table class="tcfg-table tcfg-activity-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Activity Name</th><th>Applies To</th><th>Day(s)</th>
+              <th>Time Slot</th><th>Recurrence</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let activity of filteredActivities; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>
+                <div class="tcfg-activity-name">
+                  <span class="tcfg-activity-icon" [attr.data-type]="activity.activityType">
+                    <i class="pi" [ngClass]="activityIcon(activity.activityType)"></i>
+                  </span>
+                  <strong>{{ activity.name }}</strong>
+                </div>
+              </td>
+              <td>{{ activityAppliesTo(activity) }}</td>
+              <td>
+                <div class="tcfg-day-badges">
+                  <span *ngFor="let day of activity.days">{{ dayShort[day] }}</span>
+                </div>
+              </td>
+              <td>{{ activityTime(activity) }}</td>
+              <td class="tcfg-capitalize">{{ activity.recurrence | lowercase }}</td>
+              <td>
+                <span class="tcfg-pill" [attr.data-tone]="activity.active ? 'success' : 'danger'">
+                  {{ activity.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="tcfg-matrix__actions">
+                <button type="button" class="tcfg-icon-btn" (click)="openEditActivity(activity)"
+                  aria-label="Edit activity"><i class="pi pi-pencil"></i></button>
+                <button type="button" class="tcfg-icon-btn" (click)="toggleActivityActive(activity)"
+                  [attr.title]="activity.active ? 'Deactivate' : 'Activate'"><i class="pi pi-power-off"></i></button>
+                <button type="button" class="tcfg-icon-btn tcfg-icon-btn--danger" (click)="deleteActivity(activity)"
+                  aria-label="Delete activity"><i class="pi pi-trash"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredActivities.length">
+              <td colspan="8">
+                <div class="tcfg-empty"><i class="pi pi-calendar-plus"></i>
+                  <div><strong>No fixed activities</strong>
+                    <p>Fixed activities are optional. Add assembly, exercise or library reservations when needed.</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- ═══════════ PATTERN DIALOG ═══════════ -->
+  <p-dialog [(visible)]="showPatternDialog" [modal]="true" [draggable]="false" [resizable]="false"
+    [style]="{ width: '760px' }" styleClass="tcfg-dialog"
+    [header]="editingPatternId ? 'Edit Schedule Pattern' : 'Create Schedule Pattern'">
+    <div class="tcfg-form-grid">
+      <label class="tcfg-field">
+        <span>Pattern name <em>*</em></span>
+        <input type="text" [(ngModel)]="patternForm.name" placeholder="e.g. Standard School Day" />
+      </label>
+      <label class="tcfg-field">
+        <span>Status</span>
+        <label class="tcfg-switch">
+          <input type="checkbox" [(ngModel)]="patternForm.active" />
+          <span>{{ patternForm.active ? 'Active' : 'Inactive' }}</span>
+        </label>
+      </label>
+      <label class="tcfg-field tcfg-field--wide">
+        <span>Description</span>
+        <input type="text" [(ngModel)]="patternForm.description"
+          placeholder="e.g. Regular school day with teaching periods and standard breaks." />
+      </label>
+    </div>
+
+    <div class="tcfg-generator">
+      <div class="tcfg-generator__head">
+        <strong>Generate regular periods</strong>
+        <span>Or edit the slot list below for variable durations.</span>
+      </div>
+      <div class="tcfg-generator__grid">
+        <label class="tcfg-field"><span>Teaching periods</span>
+          <input type="number" min="1" max="20" [(ngModel)]="patternForm.teachingCount" /></label>
+        <label class="tcfg-field"><span>Minutes each</span>
+          <input type="number" min="5" max="180" [(ngModel)]="patternForm.duration" /></label>
+        <label class="tcfg-field"><span>Start time</span>
+          <input type="time" [(ngModel)]="patternForm.startTime" /></label>
+        <label class="tcfg-field"><span>Short break after</span>
+          <input type="number" min="0" [(ngModel)]="patternForm.shortBreakAfter" /></label>
+        <label class="tcfg-field"><span>Break minutes</span>
+          <input type="number" min="1" [(ngModel)]="patternForm.shortBreakMinutes" /></label>
+        <label class="tcfg-field"><span>Lunch after</span>
+          <input type="number" min="0" [(ngModel)]="patternForm.lunchAfter" /></label>
+        <label class="tcfg-field"><span>Lunch minutes</span>
+          <input type="number" min="1" [(ngModel)]="patternForm.lunchMinutes" /></label>
+        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-generator__apply" (click)="generateSlots()">
+          <i class="pi pi-refresh"></i> Generate slots
+        </button>
+      </div>
+    </div>
+
+    <div class="tcfg-table-wrap tcfg-slot-editor">
+      <table class="tcfg-table">
+        <thead>
+          <tr><th>#</th><th>Slot name</th><th>Type</th><th>Start</th><th>End</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let slot of patternForm.slots; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><input type="text" [(ngModel)]="slot.name" /></td>
+            <td>
+              <select [(ngModel)]="slot.slotType">
+                <option value="TEACHING">Teaching</option>
+                <option value="BREAK">Break</option>
+              </select>
+            </td>
+            <td><input type="time" [(ngModel)]="slot.startTime" /></td>
+            <td><input type="time" [(ngModel)]="slot.endTime" /></td>
+            <td><button type="button" class="tcfg-icon-btn tcfg-icon-btn--danger" (click)="removeSlot(i)"
+              aria-label="Remove slot"><i class="pi pi-trash"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="tcfg-add-slot" (click)="addSlot()"><i class="pi pi-plus"></i> Add slot</button>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="tcfg-dialog__footer">
+        <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="showPatternDialog = false">Cancel</button>
+        <button type="button" class="tcfg-btn tcfg-btn--primary" [disabled]="saving" (click)="savePattern()">
+          <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
+          {{ editingPatternId ? 'Save Pattern' : 'Create Pattern' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ═══════════ ASSIGN DIALOG ═══════════ -->
+  <p-dialog [(visible)]="showAssignDialog" [modal]="true" [draggable]="false" [resizable]="false"
+    [style]="{ width: '780px' }" styleClass="tcfg-dialog"
+    [header]="editingAssignmentId ? 'Edit Schedule Assignment' : 'Assign Schedule Pattern'">
+    <p class="tcfg-dialog__intro">Assign a schedule pattern to the selected academic group(s) and applicable days.</p>
+    <div class="tcfg-form-grid">
+      <label class="tcfg-field">
+        <span>Schedule Pattern <em>*</em></span>
+        <select [(ngModel)]="assignForm.patternId">
+          <option [ngValue]="null" disabled>Choose a pattern</option>
+          <option *ngFor="let pattern of patterns" [ngValue]="pattern.schedulePatternId" [disabled]="!pattern.active">
+            {{ pattern.name }} · {{ pattern.teachingSlotCount }} periods · {{ slotDuration(pattern) }} mins
+          </option>
+        </select>
+      </label>
+      <div class="tcfg-field">
+        <span>Effective Date Range (optional)</span>
+        <div class="tcfg-date-range">
+          <input type="date" [(ngModel)]="assignForm.effectiveFrom" />
+          <span>–</span>
+          <input type="date" [(ngModel)]="assignForm.effectiveTo" />
+        </div>
+      </div>
+    </div>
+
+    <div class="tcfg-picker">
+      <span class="tcfg-field__label">Academic group(s) <em>*</em></span>
+      <div class="tcfg-picker__row">
+        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="pickerSectionId = null">
+          <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
+        </select>
+        <select class="tcfg-select" *ngIf="sectionOptions.length" [(ngModel)]="pickerSectionId">
+          <option [ngValue]="null">All sections</option>
+          <option *ngFor="let s of sectionOptions" [ngValue]="s.value">{{ s.label }}</option>
+        </select>
+        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="addAssignUnit()">
+          <i class="pi pi-plus"></i> Add group
+        </button>
+      </div>
+      <div class="tcfg-chips" *ngIf="assignForm.units.length">
+        <span class="tcfg-chip tcfg-chip--removable" *ngFor="let unit of assignForm.units; let i = index">
+          {{ unit.label }}
+          <button type="button" (click)="removeAssignUnit(i)" aria-label="Remove group"><i class="pi pi-times"></i></button>
+        </span>
+      </div>
+    </div>
+
+    <div class="tcfg-days">
+      <span class="tcfg-field__label">Applicable Days <em>*</em></span>
+      <div class="tcfg-day-row">
+        <label *ngFor="let day of dayOrder" class="tcfg-day-check"
+          [class.is-checked]="assignForm.days.includes(day)">
+          <input type="checkbox" [checked]="assignForm.days.includes(day)" (change)="toggleAssignDay(day)" />
+          {{ dayShort[day] }}
+        </label>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="tcfg-dialog__footer">
+        <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="showAssignDialog = false">Cancel</button>
+        <button type="button" class="tcfg-btn tcfg-btn--primary" [disabled]="saving" (click)="saveAssignment()">
+          <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
+          {{ editingAssignmentId ? 'Save Assignment' : 'Assign Pattern' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ═══════════ FIXED ACTIVITY DIALOG ═══════════ -->
+  <p-dialog [(visible)]="showActivityDialog" [modal]="true" [draggable]="false" [resizable]="false"
+    [style]="{ width: '840px' }" styleClass="tcfg-dialog"
+    [header]="activityForm.fixedActivityId ? 'Edit Fixed Activity' : 'Add Fixed Activity'">
+    <p class="tcfg-dialog__intro">Configure a fixed activity that reserves specific time slots in the timetable.</p>
+    <div class="tcfg-form-grid tcfg-form-grid--3">
+      <label class="tcfg-field">
+        <span>Activity Name <em>*</em></span>
+        <input type="text" [(ngModel)]="activityForm.name" placeholder="e.g. Morning Assembly" />
+      </label>
+      <label class="tcfg-field">
+        <span>Activity Type <em>*</em></span>
+        <select [(ngModel)]="activityForm.activityType">
+          <option *ngFor="let type of activityTypes" [ngValue]="type">
+            {{ type.charAt(0) + type.slice(1).toLowerCase() }}
+          </option>
+        </select>
+      </label>
+      <div class="tcfg-field">
+        <span>Applies To <em>*</em></span>
+        <div class="tcfg-radio-row">
+          <label><input type="radio" [value]="true" [(ngModel)]="activityForm.appliesToAllGroups" />
+            All Academic Groups</label>
+          <label><input type="radio" [value]="false" [(ngModel)]="activityForm.appliesToAllGroups" />
+            Selected Groups</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="tcfg-picker" *ngIf="!activityForm.appliesToAllGroups">
+      <span class="tcfg-field__label">Selected groups <em>*</em></span>
+      <div class="tcfg-picker__row">
+        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="pickerSectionId = null">
+          <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
+        </select>
+        <select class="tcfg-select" *ngIf="sectionOptions.length" [(ngModel)]="pickerSectionId">
+          <option [ngValue]="null">All sections</option>
+          <option *ngFor="let s of sectionOptions" [ngValue]="s.value">{{ s.label }}</option>
+        </select>
+        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="addActivityUnit()">
+          <i class="pi pi-plus"></i> Add group
+        </button>
+      </div>
+      <div class="tcfg-chips" *ngIf="activityForm.units.length">
+        <span class="tcfg-chip tcfg-chip--removable" *ngFor="let unit of activityForm.units; let i = index">
+          {{ unit.label }}
+          <button type="button" (click)="removeActivityUnit(i)" aria-label="Remove group"><i class="pi pi-times"></i></button>
+        </span>
+      </div>
+    </div>
+
+    <div class="tcfg-days">
+      <span class="tcfg-field__label">Day(s) <em>*</em></span>
+      <div class="tcfg-day-row">
+        <label *ngFor="let day of dayOrder" class="tcfg-day-check"
+          [class.is-checked]="activityForm.days.includes(day)">
+          <input type="checkbox" [checked]="activityForm.days.includes(day)" (change)="toggleActivityDay(day)" />
+          {{ dayShort[day] }}
+        </label>
+      </div>
+    </div>
+
+    <div class="tcfg-form-grid tcfg-form-grid--3">
+      <div class="tcfg-field">
+        <span>Time Slot <em>*</em></span>
+        <div class="tcfg-date-range">
+          <input type="time" [(ngModel)]="activityForm.startTime" />
+          <span>–</span>
+          <input type="time" [(ngModel)]="activityForm.endTime" />
+        </div>
+      </div>
+      <label class="tcfg-field">
+        <span>Recurrence <em>*</em></span>
+        <select [(ngModel)]="activityForm.recurrence">
+          <option value="WEEKLY">Weekly</option>
+        </select>
+      </label>
+      <div class="tcfg-field">
+        <span>Effective Date Range (optional)</span>
+        <div class="tcfg-date-range">
+          <input type="date" [(ngModel)]="activityForm.effectiveFrom" />
+          <span>–</span>
+          <input type="date" [(ngModel)]="activityForm.effectiveTo" />
+        </div>
+      </div>
+    </div>
+
+    <label class="tcfg-field">
+      <span>Description (optional)</span>
+      <textarea rows="2" [(ngModel)]="activityForm.description"
+        placeholder="Add a brief description about this activity..."></textarea>
+    </label>
+    <label class="tcfg-switch">
+      <input type="checkbox" [(ngModel)]="activityForm.active" />
+      <span>{{ activityForm.active ? 'Active' : 'Inactive' }}</span>
+    </label>
+
+    <ng-template pTemplate="footer">
+      <div class="tcfg-dialog__footer">
+        <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="showActivityDialog = false">Cancel</button>
+        <button type="button" class="tcfg-btn tcfg-btn--primary" [disabled]="saving" (click)="saveActivity()">
+          <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
+          Save Activity
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>
