@@ -135,6 +135,10 @@
             <div class="sub-card__usage">
               <i class="pi pi-users sub-muted" aria-hidden="true"></i>
               <span>{{ usageLabel(s.mappedAcademicGroupCount) }}</span>
+              <span class="sub-badge" [class.sub-badge--active]="(s.mappedAcademicGroupCount || 0) > 0"
+                [class.sub-badge--inactive]="!s.mappedAcademicGroupCount">
+                {{ (s.mappedAcademicGroupCount || 0) > 0 ? 'Mapped' : 'Not mapped' }}
+              </span>
             </div>
 
             <div class="sub-card__footer" (click)="$event.stopPropagation()">

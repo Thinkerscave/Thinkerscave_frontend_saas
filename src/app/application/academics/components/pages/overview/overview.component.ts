@@ -90,6 +90,23 @@ export class AcademicsOverviewPageComponent {
     return Math.round((done * 100) / steps.length);
   }
 
+  stepRoute(code: string): string {
+    switch (code) {
+      case 'YEAR': return '/app/academics/academic-year';
+      case 'ACADEMIC_GROUPS': return '/app/academics/academic-groups';
+      case 'SUBJECTS': return '/app/academics/subjects';
+      case 'MAPPING': return '/app/academics/subject-mapping';
+      case 'ALLOCATION': return '/app/academics/teacher-allocation';
+      case 'TIMETABLE': return '/app/academics/timetable';
+      default: return '/app/academics/academic-year';
+    }
+  }
+
+  continueSetupRoute(ov: AcademicsOverview): string {
+    const next = (ov.readinessSteps || []).find((step) => step.state !== 'COMPLETE');
+    return next ? this.stepRoute(next.code) : '/app/academics/timetable';
+  }
+
   stepIcon(state: string): string {
     if (state === 'COMPLETE') return 'pi pi-check-circle';
     if (state === 'IN_PROGRESS') return 'pi pi-spin pi-spinner';
@@ -98,8 +115,27 @@ export class AcademicsOverviewPageComponent {
 
   timetableHeadline(ov: AcademicsOverview): string {
     if ((ov.timetable.openBlockingConflicts || 0) > 0) return 'Needs Attention';
-    if (ov.timetable.status === 'PUBLISHED' || ov.timetable.publishedVersion) return 'Timetable Published';
-    return ov.timetable.status || 'Not started';
+    if (ov.timetable.publishedVersion) {
+      return ov.timetable.status && ov.timetable.status !== 'PUBLISHED'
+        ? 'Published - newer draft in review'
+        : 'Timetable Published';
+    }
+    return this.friendlyStatus(ov.timetable.status);
+  }
+
+  friendlyStatus(status?: string | null): string {
+    if (!status) return 'Not started';
+    const labels: Record<string, string> = {
+      DRAFT: 'Draft',
+      READY_FOR_REVIEW: 'Ready for review',
+      PENDING_APPROVAL: 'Pending approval',
+      APPROVED: 'Approved',
+      PUBLISHED: 'Published',
+      SUPERSEDED: 'Superseded',
+      ARCHIVED: 'Archived',
+      NOT_GENERATED: 'Not generated'
+    };
+    return labels[status] ?? status.replace(/_/g, ' ').toLowerCase();
   }
 
   donutStyle(ov: AcademicsOverview): Record<string, string> {

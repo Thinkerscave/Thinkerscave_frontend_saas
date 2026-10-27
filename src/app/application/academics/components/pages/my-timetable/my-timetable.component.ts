@@ -30,6 +30,7 @@ export class MyTimetablePageComponent {
   loading = true;
   selectedYearId: number | null = null;
   data: MyTimetable | null = null;
+  accessNotice: string | null = null;
   viewMode: 'week' | 'day' = 'week';
   academicGroupFilter = '';
   subjectFilter = '';
@@ -54,7 +55,15 @@ export class MyTimetablePageComponent {
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: (d) => this.data = d,
-        error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load timetable', detail: err?.error?.message })
+        error: (err) => {
+        const message = String(err?.error?.message || '');
+        if (/profile required/i.test(message)) {
+          this.accessNotice = 'This page is available to staff accounts. Sign in with a staff login to see your teaching timetable.';
+        } else {
+          this.accessNotice = 'Your timetable could not be loaded right now.';
+          this.messages.add({ severity: 'error', summary: 'Unable to load timetable', detail: message });
+        }
+      }
       });
   }
 

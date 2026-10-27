@@ -11,6 +11,8 @@ export interface SubjectResponse {
   code: string;
   subjectType: SubjectType;
   description?: string | null;
+  defaultLessonDurationMin?: number | null;
+  defaultTimetablePreference?: SubjectTimetablePreference | null;
   active: boolean;
   /** Active curriculum mappings across all academic years. */
   mappedAcademicGroupCount: number;
@@ -27,6 +29,8 @@ export interface SubjectRequest {
   code?: string;
   subjectType: SubjectType;
   description?: string;
+  defaultLessonDurationMin?: number | null;
+  defaultTimetablePreference?: SubjectTimetablePreference | null;
 }
 
 export interface SubjectListQuery {
@@ -75,6 +79,8 @@ export interface SubjectMappingRow {
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
   scope: SubjectMappingScope;
+  choiceGroup?: string | null;
+  consecutivePeriods?: number;
   sectionIds: number[];
   sectionNames: string[];
   totalSectionCount: number;
@@ -115,6 +121,8 @@ export interface SubjectMappingUpsert {
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
   scope: SubjectMappingScope;
+  choiceGroup?: string | null;
+  consecutivePeriods?: number;
   sectionIds: number[];
 }
 

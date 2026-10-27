@@ -7,7 +7,9 @@
   [resizable]="false"
   [closable]="!saving"
   [closeOnEscape]="!saving"
-  [style]="{ width: 'min(520px, 94vw)' }">
+  position="right"
+  [style]="{ width: 'min(440px, 94vw)', height: '100vh' }"
+  styleClass="subject-drawer">
   <p class="sub-muted sub-dialog__subtitle">
     {{ isEdit
       ? 'Update the subject details. Existing academic group mappings are not changed.'
@@ -62,6 +64,22 @@
       </p-dropdown>
       <span class="sub-field__hint">Examples: Academic Subject, Practical / Lab, Activity</span>
       <span class="sub-field__error" *ngIf="fieldError('subjectType') as msg">{{ msg }}</span>
+    </div>
+
+    <div class="sub-field">
+      <label class="sub-field__label" for="sub-duration">Default lesson duration (minutes)</label>
+      <input id="sub-duration" type="number" min="1" max="240" formControlName="defaultLessonDurationMin"
+        placeholder="Optional, e.g. 40" />
+      <span class="sub-field__hint">Used as a preference when the schedule does not fix a duration.</span>
+    </div>
+
+    <div class="sub-field">
+      <label class="sub-field__label" for="sub-preference">Default preferred time</label>
+      <select id="sub-preference" formControlName="defaultTimetablePreference">
+        <option [ngValue]="null">No preference</option>
+        <option *ngFor="let option of preferenceOptions" [ngValue]="option.value">{{ option.label }}</option>
+      </select>
+      <span class="sub-field__hint">Curriculum mapping can override this preference.</span>
     </div>
 
     <div class="sub-field" [class.sub-field--invalid]="fieldError('description')">

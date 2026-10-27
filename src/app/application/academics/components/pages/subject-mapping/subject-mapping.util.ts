@@ -25,6 +25,8 @@ export interface DraftRow extends SubjectRef {
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
   scope: SubjectMappingScope;
+  choiceGroup: string | null;
+  consecutivePeriods: number;
   sectionIds: number[];
   saved: SubjectMappingRow | null;
   removed: boolean;
@@ -53,6 +55,8 @@ export function draftFromSaved(row: SubjectMappingRow): DraftRow {
     weeklyPeriods: row.weeklyPeriods,
     timetablePreference: row.timetablePreference,
     scope: row.scope,
+    choiceGroup: row.choiceGroup ?? null,
+    consecutivePeriods: row.consecutivePeriods ?? 1,
     sectionIds: normalizeSectionIds(row.sectionIds ?? []),
     saved: row,
     removed: false
@@ -67,6 +71,8 @@ export function newDraftRow(ref: SubjectRef, scope: SubjectMappingScope, section
     weeklyPeriods: 1,
     timetablePreference: 'ANY',
     scope,
+    choiceGroup: null,
+    consecutivePeriods: 1,
     sectionIds: scope === 'SELECTED_SECTIONS' ? normalizeSectionIds(sectionIds) : [],
     saved: null,
     removed: false
@@ -87,6 +93,8 @@ export function isModified(row: DraftRow): boolean {
     || Number(row.weeklyPeriods) !== saved.weeklyPeriods
     || row.timetablePreference !== saved.timetablePreference
     || row.scope !== saved.scope
+    || (row.choiceGroup ?? null) !== (saved.choiceGroup ?? null)
+    || (row.consecutivePeriods ?? 1) !== (saved.consecutivePeriods ?? 1)
     || !sameSections;
 }
 
@@ -158,6 +166,8 @@ export function buildSaveRequest(academicYearId: number, rows: readonly DraftRow
       weeklyPeriods: Number(row.weeklyPeriods),
       timetablePreference: row.timetablePreference,
       scope: row.scope,
+      choiceGroup: row.choiceGroup?.trim() || null,
+      consecutivePeriods: Number(row.consecutivePeriods) || 1,
       sectionIds: effectiveSectionIds(row)
     }));
   const removedSubjectIds = rows

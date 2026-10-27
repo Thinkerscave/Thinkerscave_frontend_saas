@@ -143,6 +143,8 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
         next: (subject) => {
           this.subject = subject;
           this.pageHeader.setPageHeader({
+            pageTitle: subject.name,
+            subtitle: [subject.code, this.typeLabel(subject.subjectType)].filter(Boolean).join(' - '),
             crumbs: [
               { label: 'Academics', link: ['/app/academics/overview'] },
               { label: 'Subjects', link: ['/app/academics/subjects'] },

@@ -45,3 +45,5 @@
   .ma-top, .ma-mid, .ma-shortcuts, .ma-info__grid { grid-template-columns: 1fr; }
   .ma-grid { grid-template-columns: 1fr; }
 }
+
+.ma-role-notice{display:flex;gap:.8rem;align-items:flex-start;padding:1.1rem;border:1px solid var(--tc-border);border-radius:12px;background:var(--tc-surface-card);color:var(--tc-text);margin-bottom:1rem}.ma-role-notice i{color:var(--tc-accent);font-size:1.2rem;margin-top:.1rem}.ma-role-notice strong{display:block;margin-bottom:.2rem}.ma-role-notice p{margin:0;color:var(--tc-text-muted);font-size:.85rem}

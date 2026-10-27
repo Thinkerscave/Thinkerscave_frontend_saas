@@ -25,6 +25,7 @@ import { AppPageChangeEvent } from '../../../../../shared/utils/paged-result.uti
 import { extractApiError } from '../../../../../shared/utils/api-error.util';
 import { AcademicYearDto } from '../../../models/academic-year.model';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
+import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
@@ -95,6 +96,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   private readonly subjectsApi = inject(SubjectsMappingApiService);
   private readonly groupsApi = inject(AcademicGroupsApiService);
   private readonly yearApi = inject(AcademicYearApiService);
+  private readonly yearCtx = inject(AcademicYearContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly confirm = inject(ConfirmationService);
@@ -206,6 +208,12 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     } else if (yearParam) {
       this.yearId = yearParam;
       this.afterYearChanged(false);
+    } else {
+      const contextYear = this.yearCtx.selectedYearId();
+      if (contextYear) {
+        this.yearId = contextYear;
+        this.afterYearChanged(false);
+      }
     }
   }
 
@@ -350,16 +358,24 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     }
     this.groupsApi.getDashboard(this.yearId).subscribe({
       next: (dash) => {
-        this.groupOptions = (dash.academicGroups ?? []).map((g) => ({
-          label: `${g.name}${g.code ? ` (${g.code})` : ''}${g.active ? '' : ' · Inactive'}`,
-          value: g.academicGroupId
-        }));
+        this.groupOptions = (dash.academicGroups ?? [])
+          .filter((g) => g.active !== false
+            || (this.groupId != null && g.academicGroupId === this.groupId))
+          .map((g) => ({
+            label: `${g.name}${g.code ? ` (${g.code})` : ''}`,
+            value: g.academicGroupId
+          }));
         if (this.groupId != null && !this.groupOptions.some((o) => o.value === this.groupId)) {
           this.groupId = null;
           this.lastGroupId = null;
         }
         this.cdr.markForCheck();
         if (keepGroup && this.groupId != null) {
+          this.lastGroupId = this.groupId;
+          this.loadBoard();
+          this.loadAvailable(true);
+        } else if (this.groupId == null && this.groupOptions.length) {
+          this.groupId = this.groupOptions[0].value;
           this.lastGroupId = this.groupId;
           this.loadBoard();
           this.loadAvailable(true);
@@ -587,6 +603,12 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   markRowChanged(): void {
     this.cdr.markForCheck();
+  }
+
+  onRequirementChanged(row: DraftRow, value: DraftRow['requirement']): void {
+    row.requirement = value;
+    if (value !== 'OPTIONAL') row.choiceGroup = null;
+    this.markRowChanged();
   }
 
   buildRowMenu(row: DraftRow): void {

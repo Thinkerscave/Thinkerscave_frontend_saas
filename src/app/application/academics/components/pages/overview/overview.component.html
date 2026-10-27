@@ -162,36 +162,47 @@
              [class.pi-clock]="!ov.timetable.publishedVersion && !ov.timetable.openBlockingConflicts"></i>
           <div>
             <strong>{{ timetableHeadline(ov) }}</strong>
-            <p *ngIf="ov.timetable.publishedVersion">Published version {{ ov.timetable.publishedVersion }}</p>
+            <p *ngIf="ov.timetable.publishedVersion">Published version {{ ov.timetable.publishedVersion }}<ng-container *ngIf="ov.timetable.latestVersion && ov.timetable.latestVersion !== ov.timetable.publishedVersion"> - latest draft v{{ ov.timetable.latestVersion }}: {{ friendlyStatus(ov.timetable.status) }}</ng-container></p>
             <p *ngIf="!ov.timetable.publishedVersion">The timetable has not been finalized for all academic groups.</p>
           </div>
         </div>
         <div class="ov-tt-metrics">
           <div><strong>{{ ov.timetable.latestVersion || 0 }}</strong><span>Latest Version</span></div>
           <div><strong>{{ ov.timetable.openBlockingConflicts || 0 }}</strong><span>Conflicts Open</span></div>
-          <div><strong>{{ ov.timetable.status || '—' }}</strong><span>Status</span></div>
+          <div><strong>{{ friendlyStatus(ov.timetable.status) }}</strong><span>Latest Status</span></div>
         </div>
         <a class="ov-link" routerLink="/app/academics/timetable">Timetable Readiness Details →</a>
       </article>
     </section>
 
     <section class="ov-bottom">
-      <article class="ov-panel">
-        <h3>Setup Progress</h3>
-        <div class="ov-gauge">
-          <div class="ov-gauge__ring" [style.--p]="setupPercent(ov) + '%'">
-            <strong>{{ setupPercent(ov) }}%</strong>
-            <span>Complete</span>
+      <article class="ov-panel ov-wizard">
+        <div class="ov-panel__head">
+          <div>
+            <h3>Academic Setup Wizard</h3>
+            <p class="ov-muted">Complete the setup steps in order. Each step opens the page where it is fixed.</p>
           </div>
+          <strong class="ov-wizard__percent">{{ setupPercent(ov) }}%</strong>
         </div>
-        <ul class="ov-checklist">
+        <div class="ov-wizard__bar" aria-hidden="true">
+          <span [style.width]="setupPercent(ov) + '%'"></span>
+        </div>
+        <ul class="ov-checklist ov-wizard__steps">
           <li *ngFor="let step of ov.readinessSteps">
-            <i [class]="stepIcon(step.state)" [class.ok]="step.state === 'COMPLETE'"></i>
-            <span>{{ step.label }}</span>
-            <em>{{ step.state === 'COMPLETE' ? 'Complete' : (step.state === 'IN_PROGRESS' ? 'In Progress' : 'Pending') }}</em>
+            <a [routerLink]="stepRoute(step.code)" class="ov-wizard__step">
+              <i [class]="stepIcon(step.state)" [class.ok]="step.state === 'COMPLETE'"></i>
+              <span>
+                <strong>{{ step.label }}</strong>
+                <small *ngIf="step.detail">{{ step.detail }}</small>
+              </span>
+              <em>{{ step.state === 'COMPLETE' ? 'Complete' : (step.state === 'IN_PROGRESS' ? 'In Progress' : 'Pending') }}</em>
+              <i class="pi pi-chevron-right"></i>
+            </a>
           </li>
         </ul>
-        <a class="ov-link" routerLink="/app/academics/academic-year">Continue Setup →</a>
+        <a class="ov-link" [routerLink]="continueSetupRoute(ov)">
+          {{ setupPercent(ov) >= 100 ? 'Review timetable' : 'Continue setup' }} ➜
+        </a>
       </article>
 
       <article class="ov-panel">

@@ -328,3 +328,5 @@
   .ay-hero-grid { grid-template-columns: 1fr; }
   .ay-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.ay-card--empty{min-height:0;display:flex;flex-direction:column;justify-content:center}

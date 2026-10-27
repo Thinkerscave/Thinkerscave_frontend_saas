@@ -181,7 +181,12 @@ export class AcademicGroupDetailPageComponent implements OnInit, OnDestroy {
     })).subscribe({
       next: (cls) => {
         this.cls = cls;
-        this.pageHeader.setPageSubtitle(cls.academicYearName || null);
+        this.pageHeader.setPageHeader({
+          pageTitle: cls.name,
+          subtitle: [cls.code, cls.academicYearName,
+            cls.stage ? this.classificationOptions.find((s) => s.value === cls.stage)?.label : null]
+            .filter(Boolean).join(' - ')
+        });
         this.loadSummary(cls.academicGroupId);
         if (this.wantsAddSection && this.canManage) {
           this.wantsAddSection = false;

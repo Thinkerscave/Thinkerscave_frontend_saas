@@ -120,8 +120,8 @@
       <span class="ta-metric__icon ta-metric__icon--red"><i class="pi pi-calendar-times" aria-hidden="true"></i></span>
       <span>
         <small>Timetable Conflicts</small>
-        <strong *ngIf="board.summary.timetableConflicts !== null; else notAvailable">{{ board.summary.timetableConflicts }}</strong>
-        <ng-template #notAvailable><strong class="ta-muted">Not available yet</strong></ng-template>
+        <strong *ngIf="board.summary.timetableConflicts != null; else notAvailable">{{ board.summary.timetableConflicts }}</strong>
+        <ng-template #notAvailable><strong class="ta-muted" *ngIf="board.summary.timetableConflictStatus === 'NOT_GENERATED'">Not generated</strong><strong class="ta-muted" *ngIf="board.summary.timetableConflictStatus !== 'NOT_GENERATED'">0</strong></ng-template>
       </span>
     </div>
   </div>
@@ -159,6 +159,14 @@
           <td>{{ row.weeklyPeriods }}</td>
           <td>{{ sectionScopeLabel(row) }}</td>
           <td>
+            <div class="ta-teacher ta-teacher--pending" *ngIf="pendingLabel(row.mappingId) as pendingText; else savedTeacher">
+              <span class="ta-avatar ta-avatar--pending" aria-hidden="true"><i class="pi pi-clock"></i></span>
+              <span>
+                <strong>{{ pendingText }}</strong>
+                <small>Pending · not saved yet</small>
+              </span>
+            </div>
+            <ng-template #savedTeacher>
             <div class="ta-teacher" *ngIf="row.assignedTeacher; else noTeacher">
               <span class="ta-avatar" aria-hidden="true">{{ initials(row.assignedTeacher.name) }}</span>
               <span>
@@ -175,18 +183,22 @@
                 </span>
               </div>
             </ng-template>
+            </ng-template>
           </td>
           <td>
+            <span class="ta-status" *ngIf="pendingLabel(row.mappingId); else savedStatus">Pending save</span>
+            <ng-template #savedStatus>
             <span class="ta-status" [class.ta-status--ok]="row.status === 'ASSIGNED'"
               [class.ta-status--warn]="row.status === 'PARTIAL'" [class.ta-status--bad]="row.status === 'UNASSIGNED'">
               {{ statusLabel(row.status) }}
             </span>
+            </ng-template>
           </td>
           <td class="ta-actions">
-            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && row.status !== 'ASSIGNED'"
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && row.status !== 'ASSIGNED' && !pendingLabel(row.mappingId)"
               (click)="openAssign(row)">Assign Teacher</button>
-            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && row.status === 'ASSIGNED'"
-              (click)="openAssign(row)">Edit</button>
+            <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" *ngIf="editable && (row.status === 'ASSIGNED' || pendingLabel(row.mappingId))"
+              (click)="openAssign(row)">{{ pendingLabel(row.mappingId) ? 'Change' : 'Edit' }}</button>
             <button type="button" class="ta-kebab" *ngIf="editable && row.groupTeacher" (click)="clearGroupTeacher(row)"
               [attr.aria-label]="'Clear group teacher for ' + row.subjectName" title="Clear group teacher">
               <i class="pi pi-ellipsis-v" aria-hidden="true"></i>

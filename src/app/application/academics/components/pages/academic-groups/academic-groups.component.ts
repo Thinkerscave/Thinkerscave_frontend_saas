@@ -484,4 +484,10 @@ export class AcademicGroupsPageComponent implements OnInit {
     if (!stage) return '';
     return ACADEMIC_STAGE_OPTIONS.find((s) => s.value === stage)?.label || stage;
   }
+
+  timetableLabel(status?: string | null): string {
+    if (status === 'PUBLISHED') return 'Published';
+    if (status === 'DRAFT') return 'Draft';
+    return 'Not set up';
+  }
 }

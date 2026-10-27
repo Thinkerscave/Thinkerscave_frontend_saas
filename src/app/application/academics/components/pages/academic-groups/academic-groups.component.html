@@ -27,6 +27,12 @@
   </tc-page-skeleton>
 
   <ng-container *ngIf="dashboard">
+  <section class="cs-summary" aria-label="Academic group summary">
+    <article><span class="cs-summary__icon"><i class="pi pi-th-large"></i></span><div><strong>{{ dashboard.academicGroupCount || 0 }}</strong><small>Total Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--success"><i class="pi pi-check-circle"></i></span><div><strong>{{ dashboard.academicGroupsActive || 0 }}</strong><small>Active Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--warning"><i class="pi pi-pause-circle"></i></span><div><strong>{{ (dashboard.academicGroupCount || 0) - (dashboard.academicGroupsActive || 0) }}</strong><small>Inactive Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--info"><i class="pi pi-users"></i></span><div><strong>{{ dashboard.studentCount || 0 }}</strong><small>Total Students</small></div></article>
+  </section>
   <div class="acad-toolbar cs-toolbar">
     <input
       class="acad-toolbar__search"
@@ -121,6 +127,18 @@
               <strong>{{ cls.studentCount || 0 }}</strong>
               <span>Students</span>
             </div>
+            <div>
+              <strong>{{ cls.subjectCount || 0 }}</strong>
+              <span>Subjects</span>
+            </div>
+            <div>
+              <strong>{{ cls.teacherCount || 0 }}</strong>
+              <span>Teachers</span>
+            </div>
+            <div>
+              <strong>{{ timetableLabel(cls.timetableStatus) }}</strong>
+              <span>Timetable</span>
+            </div>
           </div>
 
           <div class="cs-card__actions" (click)="$event.stopPropagation()">
@@ -148,6 +166,9 @@
                 <th>Classification</th>
                 <th>Sections</th>
                 <th>Students</th>
+                <th>Subjects</th>
+                <th>Teachers</th>
+                <th>Timetable</th>
                 <th>Status</th>
                 <th class="cs-table__actions" aria-label="Actions"></th>
               </tr>
@@ -165,6 +186,9 @@
                 <td>{{ stageLabel(cls.stage) || '—' }}</td>
                 <td>{{ cls.sectionCount || 0 }}</td>
                 <td>{{ cls.studentCount || 0 }}</td>
+                <td>{{ cls.subjectCount || 0 }}</td>
+                <td>{{ cls.teacherCount || 0 }}</td>
+                <td>{{ timetableLabel(cls.timetableStatus) }}</td>
                 <td>
                   <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
                     {{ cls.active ? 'Active' : 'Inactive' }}

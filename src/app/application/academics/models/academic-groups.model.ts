@@ -48,6 +48,9 @@ export interface AcademicGroupDto {
   sectionCount?: number;
   sectionsActive?: number;
   studentCount?: number;
+  subjectCount?: number;
+  teacherCount?: number;
+  timetableStatus?: 'PUBLISHED' | 'DRAFT' | 'NOT_GENERATED';
   sectionTeacherName?: string | null;
   sectionTeacherStaffId?: number | null;
   sections?: AcademicSectionDto[];

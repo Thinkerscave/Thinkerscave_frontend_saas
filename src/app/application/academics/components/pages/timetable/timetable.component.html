@@ -191,6 +191,7 @@
               [disabled]="generateDisabled" (click)="generate()">
               <i class="pi pi-refresh"></i> Regenerate
             </button>
+            <ng-container *ngIf="canSubmit"><button type="button" class="tt-btn tt-btn--outline tt-btn--sm" [disabled]="saving" (click)="submit()"><i class="pi pi-send"></i> Submit for Approval</button></ng-container>
             <ng-container *ngIf="canPublish">
               <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
                 *tcHasPerm="resource; action: 'approve'" [disabled]="saving" (click)="publish()">
@@ -283,7 +284,7 @@
         </div>
 
         <div class="tt-bottom">
-          <article class="tt-summary">
+          <article class="tt-summary" (click)="showUnscheduledNotice()" role="button" tabindex="0">
             <span class="tt-summary__icon tt-summary__icon--warning"><i class="pi pi-clock"></i></span>
             <div>
               <strong>Unscheduled Lessons</strong>
@@ -291,7 +292,7 @@
             </div>
             <i class="pi pi-chevron-right tt-summary__chevron"></i>
           </article>
-          <article class="tt-summary" [class.is-danger]="issueCount > 0">
+          <article class="tt-summary" [class.is-danger]="issueCount > 0" (click)="loadConflicts()" role="button" tabindex="0">
             <span class="tt-summary__icon tt-summary__icon--danger"><i class="pi pi-exclamation-triangle"></i></span>
             <div>
               <strong>Issues</strong>

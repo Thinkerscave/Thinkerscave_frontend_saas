@@ -53,3 +53,5 @@
   .mc-card { grid-template-columns: 64px 1fr; }
   .mc-card__actions { grid-column: 1 / -1; grid-template-columns: repeat(2, auto); }
 }
+
+.mc-role-notice{display:flex;gap:.8rem;align-items:flex-start;padding:1.1rem;border:1px solid var(--tc-border);border-radius:12px;background:var(--tc-surface-card);color:var(--tc-text);margin-bottom:1rem}.mc-role-notice i{color:var(--tc-accent);font-size:1.2rem;margin-top:.1rem}.mc-role-notice strong{display:block;margin-bottom:.2rem}.mc-role-notice p{margin:0;color:var(--tc-text-muted);font-size:.85rem}

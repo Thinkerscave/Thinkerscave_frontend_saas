@@ -71,6 +71,8 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
   page = 1;
 
   pending: CoverageChange[] = [];
+  /** Human-readable pending label per subject, shown in the table until the change is saved. */
+  pendingLabels = new Map<number, string>();
   saving = false;
   formError: string | null = null;
 
@@ -216,12 +218,17 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
     if (!this.yearId) return;
     this.groupsApi.getDashboard(this.yearId).subscribe({
       next: (dash) => {
-        this.groupOptions = (dash.academicGroups ?? []).map((g: AcademicGroupDto) => ({
-          label: `${g.name}${g.code ? ` (${g.code})` : ''}`,
-          value: g.academicGroupId
-        }));
+        this.groupOptions = (dash.academicGroups ?? [])
+          .filter((g: AcademicGroupDto) => g.active !== false)
+          .map((g: AcademicGroupDto) => ({
+            label: `${g.name}${g.code ? ` (${g.code})` : ''}`,
+            value: g.academicGroupId
+          }));
         if (preselectGroupId && this.groupOptions.some((g) => g.value === preselectGroupId)) {
           this.groupId = preselectGroupId;
+          this.loadBoard();
+        } else if (this.groupId == null && this.groupOptions.length) {
+          this.groupId = this.groupOptions[0].value;
           this.loadBoard();
         }
         this.cdr.markForCheck();
@@ -235,6 +242,7 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
       this.board = null;
       return;
     }
+    this.pendingLabels.clear();
     this.loading = true;
     this.boardError = null;
     this.api.board(this.yearId, this.groupId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -325,6 +333,8 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
       : { mappingId, action: 'ASSIGN_SECTIONS', staffId: this.selectedCandidateId, sectionIds: [...this.assignSectionIds], replaceOverrides: false };
     this.pending = [...this.pending.filter((c) => !(c.mappingId === mappingId && c.action === change.action
       && (change.action === 'ASSIGN_GROUP' || JSON.stringify(c.sectionIds) === JSON.stringify(change.sectionIds)))), change];
+    const name = this.candidates.find((c) => c.staffId === this.selectedCandidateId)?.name ?? 'Teacher';
+    this.pendingLabels.set(mappingId, change.action === 'ASSIGN_GROUP' ? `${name} · all sections` : `${name} · ${change.sectionIds.length} section(s)`);
     this.assignOpen = false;
     this.messages.add({ severity: 'info', summary: 'Change staged', detail: 'Save Allocation to apply it.' });
   }
@@ -333,9 +343,16 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
     this.pending = [...this.pending.filter((c) => c.mappingId !== row.mappingId), {
       mappingId: row.mappingId, action: 'CLEAR_GROUP', staffId: null, sectionIds: [], replaceOverrides: false
     }];
+    this.pendingLabels.set(row.mappingId, 'Teacher will be cleared');
+  }
+
+  pendingLabel(mappingId: number): string | null {
+    return this.pendingLabels.get(mappingId) ?? null;
   }
 
   removePending(index: number): void {
+    const removed = this.pending[index];
+    if (removed) this.pendingLabels.delete(removed.mappingId);
     this.pending = this.pending.filter((_, i) => i !== index);
   }
 
@@ -355,6 +372,7 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
 
   discardPending(): void {
     this.pending = [];
+    this.pendingLabels.clear();
     this.formError = null;
   }
 
@@ -392,6 +410,7 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
         this.saving = false;
         this.board = board;
         this.pending = [];
+        this.pendingLabels.clear();
         this.messages.add({ severity: 'success', summary: 'Teacher allocation saved' });
         this.cdr.markForCheck();
       },

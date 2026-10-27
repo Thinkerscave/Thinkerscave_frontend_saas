@@ -632,6 +632,18 @@ export class TimetablePageComponent implements OnInit {
     });
   }
 
+  showUnscheduledNotice(): void {
+    this.messages.add({
+      severity: this.unscheduledCount ? 'warn' : 'info',
+      summary: this.unscheduledCount ? 'Unscheduled lessons' : 'No unscheduled lessons',
+      detail: this.unscheduledCount
+        ? `${this.unscheduledCount} required lesson(s) could not be placed. Review Issues and regenerate after fixing the setup.`
+        : 'Every required lesson is placed in the current draft.',
+      life: 6000
+    });
+    this.loadConflicts();
+  }
+
   submit(): void {
     if (!this.selectedVersionId) return;
     this.runLifecycle(this.api.submitVersion(this.selectedVersionId),

@@ -119,3 +119,5 @@
     justify-content: flex-end;
   }
 }
+
+@media (max-width: 640px) {.tc-page-header__top{flex-direction:column;align-items:flex-start;gap:.35rem}.tc-page-header__lead{width:100%}.tc-page-header__right{width:100%;justify-content:flex-start;margin-left:0}.tc-page-header__title{font-size:1.15rem}.tc-page-header__subtitle{max-width:none;-webkit-line-clamp:3}}

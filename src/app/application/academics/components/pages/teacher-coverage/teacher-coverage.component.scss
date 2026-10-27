@@ -261,8 +261,11 @@
   small { color: var(--tc-muted, #64748b); font-size: 0.75rem; }
 }
 
-.ta-avatar {
-  width: 32px;
+.ta-avatar--empty { background: var(--tc-bg, #f1f5f9); color: var(--tc-muted, #64748b); }
+.ta-avatar--pending { background: rgba(245, 158, 11, 0.16); color: #b45309; }
+.ta-teacher--pending strong { color: #b45309; }
+
+.ta-avatar {  width: 32px;
   height: 32px;
   border-radius: 50%;
   display: grid;

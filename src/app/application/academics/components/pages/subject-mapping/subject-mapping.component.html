@@ -253,7 +253,7 @@
                 <p-dropdown
                   [options]="requirementOptions"
                   [ngModel]="row.requirement"
-                  (ngModelChange)="row.requirement = $event; markRowChanged()"
+                  (ngModelChange)="onRequirementChanged(row, $event)"
                   optionLabel="label"
                   optionValue="value"
                   [disabled]="!editable || row.removed"

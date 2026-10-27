@@ -30,6 +30,7 @@ export class MyAcademicGroupsPageComponent {
   loading = true;
   refreshing = false;
   hasLoaded = false;
+  accessNotice: string | null = null;
   selectedYearId: number | null = null;
   data: TeacherMyAcademicGroups | null = null;
   q = '';
@@ -67,7 +68,13 @@ export class MyAcademicGroupsPageComponent {
         },
         error: (err) => {
           this.hasLoaded = true;
-          this.messages.add({ severity: 'error', summary: 'Unable to load Academic Groups', detail: err?.error?.message });
+          const message = String(err?.error?.message || '');
+          if (/profile required/i.test(message)) {
+            this.accessNotice = 'This page is available to staff accounts. Sign in with a staff login to see your assigned academic groups.';
+          } else {
+            this.accessNotice = 'Academic groups could not be loaded right now.';
+            this.messages.add({ severity: 'error', summary: 'Unable to load Academic Groups', detail: message });
+          }
         }
       });
   }

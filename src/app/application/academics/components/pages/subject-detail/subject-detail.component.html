@@ -9,12 +9,9 @@
         <i [class]="typeIcon(s.subjectType)"></i>
       </span>
       <div class="sub-hero__text">
-        <h1 class="sub-hero__name">
-          {{ s.name }}
-          <span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">
-            {{ s.active ? 'Active' : 'Inactive' }}
-          </span>
-        </h1>
+        <span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">
+          {{ s.active ? 'Active' : 'Inactive' }}
+        </span>
         <p class="sub-card__meta">
           <code class="sub-code">{{ s.code }}</code>
           <span aria-hidden="true">|</span>
@@ -83,6 +80,8 @@
         <div><dt>Subject Code</dt><dd><code class="sub-code">{{ s.code }}</code></dd></div>
         <div><dt>Subject Type</dt><dd><span class="sub-type" [ngClass]="'sub-type--' + typeTone(s.subjectType)">{{ typeLabel(s.subjectType) }}</span></dd></div>
         <div><dt>Status</dt><dd><span class="sub-badge" [class.sub-badge--active]="s.active" [class.sub-badge--inactive]="!s.active">{{ s.active ? 'Active' : 'Inactive' }}</span></dd></div>
+        <div *ngIf="s.defaultLessonDurationMin"><dt>Default lesson duration</dt><dd>{{ s.defaultLessonDurationMin }} minutes</dd></div>
+        <div *ngIf="s.defaultTimetablePreference"><dt>Preferred time</dt><dd>{{ s.defaultTimetablePreference.replace('_', ' ') }}</dd></div>
         <div *ngIf="s.description"><dt>Description</dt><dd>{{ s.description }}</dd></div>
       </dl>
     </section>

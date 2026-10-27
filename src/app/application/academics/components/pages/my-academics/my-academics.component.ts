@@ -29,6 +29,7 @@ export class MyAcademicsPageComponent {
   loading = true;
   selectedYearId: number | null = null;
   data: StudentMyAcademics | null = null;
+  accessNotice: string | null = null;
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
@@ -48,7 +49,15 @@ export class MyAcademicsPageComponent {
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: (d) => this.data = d,
-        error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load academics', detail: err?.error?.message })
+        error: (err) => {
+        const message = String(err?.error?.message || '');
+        if (/profile required/i.test(message)) {
+          this.accessNotice = 'This page is available to student and parent accounts. Sign in with a student login to see your academics.';
+        } else {
+          this.accessNotice = 'Your academics could not be loaded right now.';
+          this.messages.add({ severity: 'error', summary: 'Unable to load academics', detail: message });
+        }
+      }
       });
   }
 

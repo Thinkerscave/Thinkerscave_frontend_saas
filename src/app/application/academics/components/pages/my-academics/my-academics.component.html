@@ -3,8 +3,9 @@
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
+    <div class="ma-role-notice" *ngIf="accessNotice"><i class="pi pi-lock"></i><div><strong>Not available for this account</strong><p>{{ accessNotice }}</p></div></div>
     <tc-page-skeleton *ngIf="loading" variant="detail"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
+  <ng-container *ngIf="!loading && !accessNotice">
 <ng-container *ngIf="data as d">
     <section class="ma-top">
       <article class="ma-profile">

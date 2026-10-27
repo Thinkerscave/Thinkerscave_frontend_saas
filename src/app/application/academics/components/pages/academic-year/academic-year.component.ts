@@ -366,6 +366,43 @@ export class AcademicYearPageComponent implements OnInit {
     });
   }
 
+  completeYear(year: AcademicYearDto): void {
+    this.confirm.confirm({
+      header: `Complete ${year.name}?`,
+      message: `This marks ${year.name} as completed. Historical records and published timetables remain intact.`,
+      acceptLabel: 'Mark Completed',
+      accept: () => this.api.complete(year.academicYearId).subscribe({
+        next: () => {
+          this.messages.add({ severity: 'success', summary: `${year.name} marked completed` });
+          this.reload();
+        },
+        error: (err) => this.messages.add({
+          severity: 'error', summary: 'Unable to complete academic year',
+          detail: err?.error?.message || 'Please try again'
+        })
+      })
+    });
+  }
+
+  archiveYear(year: AcademicYearDto): void {
+    this.confirm.confirm({
+      header: `Archive ${year.name}?`,
+      message: `This archives ${year.name}. Historical data is preserved and the year becomes read-only.`,
+      acceptLabel: 'Archive',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.api.archive(year.academicYearId).subscribe({
+        next: () => {
+          this.messages.add({ severity: 'success', summary: `${year.name} archived` });
+          this.reload();
+        },
+        error: (err) => this.messages.add({
+          severity: 'error', summary: 'Unable to archive academic year',
+          detail: err?.error?.message || 'Please try again'
+        })
+      })
+    });
+  }
+
   deactivate(year: AcademicYearDto): void {
     this.confirm.confirm({
       header: 'Deactivate academic year',

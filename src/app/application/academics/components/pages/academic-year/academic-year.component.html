@@ -82,8 +82,8 @@
         </article>
         <ng-template #noCurrent>
           <article class="ay-card ay-card--empty">
-            <h2>No Current Academic Year</h2>
-            <p>Create and activate an academic year to begin operations.</p>
+            <h2>No active academic year</h2>
+            <p>An approved year is ready below. Activate it to begin operations, or create the next academic year.</p>
           </article>
         </ng-template>
 
@@ -219,6 +219,8 @@
                     (click)="deactivate(year)">
                     Deactivate
                   </button>
+                  <ng-container *ngIf="year.status === 'CURRENT'"><button type="button" class="ay-link" *tcHasPerm="resource; action: 'approve'" (click)="completeYear(year)">Complete</button></ng-container>
+                  <ng-container *ngIf="year.status === 'COMPLETED'"><button type="button" class="ay-link ay-link--danger" *tcHasPerm="resource; action: 'approve'" (click)="archiveYear(year)">Archive</button></ng-container>
                 </td>
               </tr>
             </ng-template>

@@ -23,7 +23,9 @@ import {
   SUBJECT_TYPE_OPTIONS,
   SubjectRequest,
   SubjectResponse,
-  SubjectType
+  SubjectType,
+  SubjectTimetablePreference,
+  TIMETABLE_PREFERENCE_OPTIONS
 } from '../../../models/subjects-mapping.model';
 
 function notBlank(control: AbstractControl): ValidationErrors | null {
@@ -54,6 +56,7 @@ export class SubjectFormDialogComponent implements OnChanges {
   readonly nameMax = SUBJECT_NAME_MAX;
   readonly codeMax = SUBJECT_CODE_MAX;
   readonly descriptionMax = SUBJECT_DESCRIPTION_MAX;
+  readonly preferenceOptions = TIMETABLE_PREFERENCE_OPTIONS;
 
   saving = false;
   submitted = false;
@@ -63,6 +66,8 @@ export class SubjectFormDialogComponent implements OnChanges {
     name: ['', [Validators.required, Validators.maxLength(SUBJECT_NAME_MAX), notBlank]],
     code: ['', [Validators.maxLength(SUBJECT_CODE_MAX)]],
     subjectType: [null as SubjectType | null, [Validators.required]],
+    defaultLessonDurationMin: [null as number | null],
+    defaultTimetablePreference: [null as SubjectTimetablePreference | null],
     description: ['', [Validators.maxLength(SUBJECT_DESCRIPTION_MAX)]]
   });
 
@@ -115,6 +120,10 @@ export class SubjectFormDialogComponent implements OnChanges {
       name: String(value.name ?? '').trim(),
       code: String(value.code ?? '').trim() || undefined,
       subjectType: value.subjectType as SubjectType,
+      defaultLessonDurationMin: value.defaultLessonDurationMin == null
+        || String(value.defaultLessonDurationMin).trim() === ''
+        ? null : Number(value.defaultLessonDurationMin),
+      defaultTimetablePreference: value.defaultTimetablePreference as SubjectTimetablePreference | null || null,
       description: String(value.description ?? '').trim() || undefined
     };
     const editing = this.subject;
@@ -142,6 +151,8 @@ export class SubjectFormDialogComponent implements OnChanges {
       name: this.subject?.name ?? '',
       code: this.subject?.code ?? '',
       subjectType: this.subject?.subjectType ?? null,
+      defaultLessonDurationMin: this.subject?.defaultLessonDurationMin ?? null,
+      defaultTimetablePreference: this.subject?.defaultTimetablePreference ?? null,
       description: this.subject?.description ?? ''
     });
     this.submitted = false;

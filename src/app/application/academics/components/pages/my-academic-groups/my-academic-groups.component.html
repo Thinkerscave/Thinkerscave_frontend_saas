@@ -3,6 +3,7 @@
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
+  <div class="mc-role-notice" *ngIf="accessNotice"><i class="pi pi-lock"></i><div><strong>Not available for this account</strong><p>{{ accessNotice }}</p></div></div>
   <tc-page-skeleton
     *ngIf="loading && !hasLoaded"
     layout="cards-only"
@@ -11,7 +12,7 @@
     [showFilter]="true">
   </tc-page-skeleton>
 
-  <ng-container *ngIf="hasLoaded">
+  <ng-container *ngIf="hasLoaded && !accessNotice">
 <div class="mc-summary" *ngIf="data as d">
     <div><strong>{{ d.summary.academicGroupCount }}</strong><span>Total Academic Groups</span></div>
     <div><strong>{{ d.summary.sectionCount }}</strong><span>Total Sections</span></div>
