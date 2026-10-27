@@ -1,10 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, of, throwError } from 'rxjs';
+import { BackNavigationService } from '../../../../../core/services/back-navigation.service';
+import { NavigationHistoryService } from '../../../../../core/services/navigation-history.service';
+import { PageMetaService } from '../../../../../core/services/page-meta.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
+import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import {
   AvailableSubjectResponse,
@@ -80,7 +85,8 @@ describe('SubjectMappingPageComponent', () => {
     yearApi.search.and.returnValue(of([{ academicYearId: 1, name: '2026-27' }] as unknown as AcademicYearDto[]));
 
     messages = jasmine.createSpyObj('MessageService', ['add']);
-    confirm = jasmine.createSpyObj('ConfirmationService', ['confirm']);
+    confirm = new ConfirmationService() as jasmine.SpyObj<ConfirmationService>;
+    spyOn(confirm, 'confirm');
     canManage = jasmine.createSpy('canManage').and.returnValue(true);
 
     TestBed.resetTestingModule();
@@ -88,9 +94,14 @@ describe('SubjectMappingPageComponent', () => {
       imports: [SubjectMappingPageComponent],
       providers: [
         provideRouter([]),
+        provideNoopAnimations(),
         { provide: SubjectsMappingApiService, useValue: subjectsApi },
         { provide: AcademicGroupsApiService, useValue: groupsApi },
         { provide: AcademicYearApiService, useValue: yearApi },
+        { provide: AcademicsNavService, useValue: { back: jasmine.createSpy('back') } },
+        { provide: BackNavigationService, useValue: { back: jasmine.createSpy('back') } },
+        { provide: NavigationHistoryService, useValue: { hasPrevious: () => false } },
+        { provide: PageMetaService, useValue: { resolve: () => ({ showBack: false, backFallback: null }) } },
         { provide: MessageService, useValue: messages },
         { provide: PermissionService, useValue: { canManage, canView: () => true, canApprove: () => false } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) }, paramMap: of(convertToParamMap({})) } }
@@ -122,6 +133,35 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.isChecked(english())).toBeFalse();
     expect(component.statusLabel(component.rows[0])).toBe('Mapped');
     expect(component.changeCount).toBe(0);
+  });
+
+  it('shows section checkboxes beside their names and stages the selected section', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+
+    component.onScopeSelect('SELECTED_SECTIONS');
+    fixture.detectChanges();
+
+    const sectionList = fixture.nativeElement.querySelector('.sub-section-picker') as HTMLElement;
+    const checkboxes = sectionList.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+    expect(checkboxes.length).toBe(2);
+    expect(sectionList.textContent).toContain('A');
+    expect(sectionList.textContent).toContain('B');
+
+    checkboxes[0].checked = true;
+    checkboxes[0].dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.isSectionSelected(11)).toBeTrue();
+  });
+
+  it('uses the same checkbox selection in the per-subject section editor', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+
+    component.openSectionsDialog(component.rows[0]);
+    component.setSectionsDraftScope('SELECTED_SECTIONS');
+    fixture.detectChanges();
+
+    const sectionList = fixture.nativeElement.querySelector('.sub-dialog__sections') as HTMLElement;
+    expect(sectionList.querySelectorAll('input[type="checkbox"]').length).toBe(2);
   });
 
   it('stages a subject preselected from Subject Details without saving it', async () => {
@@ -172,11 +212,11 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.scope).toBe('SELECTED_SECTIONS');
   });
 
-  it('shows the unsaved change count near the header', async () => {
+  it('tracks the unsaved change count for the shared header status', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
     component.onAvailableToggle(english(), true);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('You have 1 unsaved change');
+    expect(component.changeCount).toBe(1);
   });
 
   it('reports success only after the backend returns the saved board', async () => {
@@ -229,12 +269,13 @@ describe('SubjectMappingPageComponent', () => {
   });
 
   it('read-only users cannot change selections or save', async () => {
-    canManage.and.returnValue(false);
     await setup({ academicYearId: '1', academicGroupId: '3' });
+    canManage.and.returnValue(false);
+    fixture.detectChanges();
     expect(component.canToggle(english())).toBeFalse();
     component.onAvailableToggle(english(), true);
     expect(component.changeCount).toBe(0);
     expect(component.canSave).toBeFalse();
-    expect(fixture.nativeElement.textContent).not.toContain('Save Mapping');
+    expect(fixture.nativeElement.querySelector('.sub-map-footer')).toBeNull();
   });
 });

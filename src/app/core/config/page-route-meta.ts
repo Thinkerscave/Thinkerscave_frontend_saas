@@ -116,7 +116,7 @@ export const ACADEMICS_PAGES = {
     pageTitle: 'Subject Mapping',
     pageSubtitle: 'Subjects taught in this Academic Group and how they are mapped.',
     pageKind: 'detail',
-    showBack: true,
+    hideBack: true,
     backFallback: '/app/academics/academic-groups'
   },
   teacherAllocation: {

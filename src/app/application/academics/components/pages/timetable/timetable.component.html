@@ -1,15 +1,13 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="tt-page">
-  <header class="tt-pagebar">
-    <div class="tt-pagebar__actions">
-      <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
-      <button type="button" class="tt-btn tt-btn--outline" (click)="openConfiguration()">
-        <i class="pi pi-cog" aria-hidden="true"></i>
-        Configure
-      </button>
-    </div>
-  </header>
+  <tc-saas-page-header [shellActions]="true">
+    <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
+    <button type="button" class="tc-btn tc-btn--accent" (click)="openConfiguration()">
+      <i class="pi pi-cog" aria-hidden="true"></i>
+      Configure
+    </button>
+  </tc-saas-page-header>
 
   <tc-page-skeleton *ngIf="loading && !workspace" layout="dashboard" [kpis]="0"></tc-page-skeleton>
 
@@ -222,29 +220,23 @@
             <table class="tt-grid" *ngIf="grid; else loadingGridTpl">
               <thead>
                 <tr>
-                  <th class="tt-grid__time">Time</th>
-                  <th *ngFor="let day of gridDays" scope="col">
-                    <span class="tt-grid__day">{{ dayLabels[day] }}</span>
-                    <span class="tt-grid__date">{{ dayDateLabel(day) }}</span>
+                  <th class="tt-grid__day-axis" scope="col">Day</th>
+                  <th *ngFor="let row of periodRows" class="tt-grid__period-axis" scope="col">
+                    <span class="tt-grid__period">{{ row.name }}</span>
+                    <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                <ng-container *ngFor="let row of periodRows">
-                  <tr *ngIf="isBreak(row)" class="tt-grid__break-row">
-                    <td class="tt-grid__time">
-                      <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
-                    </td>
-                    <td [attr.colspan]="gridDays.length" class="tt-grid__break">
-                      <span>{{ row.name }}</span>
-                    </td>
-                  </tr>
-                  <tr *ngIf="!isBreak(row)">
-                    <td class="tt-grid__time">
-                      <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
-                    </td>
-                    <td *ngFor="let day of gridDays" class="tt-grid__cell"
-                      [class.is-empty]="isEmptySlot(row, day)">
+                <tr *ngFor="let day of gridDays">
+                  <th class="tt-grid__day-axis" scope="row">
+                    <span class="tt-grid__day">{{ dayLabels[day] }}</span>
+                    <span class="tt-grid__date" *ngIf="dayDateLabel(day)">{{ dayDateLabel(day) }}</span>
+                  </th>
+                  <td *ngFor="let row of periodRows" class="tt-grid__cell"
+                    [class.is-empty]="isEmptySlot(row, day)" [class.tt-grid__break]="isBreak(row)">
+                    <span class="tt-grid__break-label" *ngIf="isBreak(row)">{{ row.name }}</span>
+                    <ng-container *ngIf="!isBreak(row)">
                       <button type="button" class="tt-empty-cell" *ngIf="isEmptySlot(row, day) && canEdit"
                         (click)="openPlace(day, row)" aria-label="Place a lesson">
                         <i class="pi pi-plus"></i>
@@ -260,9 +252,9 @@
                         <i class="pi pi-lock tt-lesson__lock" *ngIf="cell.locked"></i>
                         <i class="pi pi-ellipsis-v tt-lesson__more"></i>
                       </div>
-                    </td>
-                  </tr>
-                </ng-container>
+                    </ng-container>
+                  </td>
+                </tr>
               </tbody>
             </table>
             <ng-template #loadingGridTpl>
@@ -292,7 +284,7 @@
             </div>
             <i class="pi pi-chevron-right tt-summary__chevron"></i>
           </article>
-          <article class="tt-summary" [class.is-danger]="issueCount > 0" (click)="loadConflicts()" role="button" tabindex="0">
+          <article class="tt-summary" [class.is-danger]="issueCount > 0" (click)="openIssueDetails()" role="button" tabindex="0">
             <span class="tt-summary__icon tt-summary__icon--danger"><i class="pi pi-exclamation-triangle"></i></span>
             <div>
               <strong>Issues</strong>
@@ -311,17 +303,44 @@
             </div>
             <i class="pi pi-chevron-right tt-summary__chevron"></i>
           </article>
-          <button type="button" class="tt-btn tt-btn--outline tt-btn--lg" (click)="loadConflicts()">
+          <button type="button" class="tt-btn tt-btn--outline tt-btn--lg" (click)="openIssueDetails()">
             View Details
           </button>
         </div>
 
-        <div class="tt-issues-inline" *ngIf="visibleIssues.length || conflicts.length">
+        <div class="tt-issues-inline" *ngIf="showIssueDetails || visibleIssues.length || conflicts.length">
           <div class="tt-panel__title-row">
             <h3>Validation &amp; issues</h3>
             <span class="tt-pill" [attr.data-tone]="blockingIssues.length || hasOpenBlockingConflicts ? 'danger' : 'success'">
               {{ openConflictCount }} blocking
             </span>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm"
+              (click)="closeIssueDetails()" aria-label="Close validation details">
+              Close
+            </button>
+          </div>
+          <div class="tt-issue" *ngIf="loadingConflicts">
+            <span class="tt-issue__icon"><i class="pi pi-spin pi-spinner"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">Loading validation details</div>
+            </div>
+          </div>
+          <div class="tt-issue" *ngIf="conflictLoadError" data-severity="BLOCKING">
+            <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">Could not load validation details</div>
+              <div class="tt-issue__details"><span>{{ conflictLoadError }}</span></div>
+            </div>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" (click)="openIssueDetails()">Retry</button>
+          </div>
+          <div class="tt-issue" *ngIf="showIssueDetails && !loadingConflicts && !conflictLoadError
+            && !visibleIssues.length && !conflicts.length">
+            <span class="tt-issue__icon"><i class="pi pi-check-circle"></i></span>
+            <div class="tt-issue__main">
+              <div class="tt-issue__title">No issues found</div>
+              <div class="tt-issue__details"><span>No hard-constraint conflicts were found in this timetable.</span></div>
+            </div>
+            <span class="tt-pill" data-tone="success">Clear</span>
           </div>
           <div class="tt-issue" *ngFor="let issue of visibleIssues" [attr.data-severity]="issue.severity">
             <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>

@@ -1,5 +1,5 @@
 <div class="mt-page acad-page">
-<tc-saas-page-header>
+<tc-saas-page-header [shellActions]="true">
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
@@ -32,39 +32,41 @@
   <div class="mt-layout" *ngIf="data as d">
     <div class="mt-main">
       <p class="mt-message" *ngIf="d.message">{{ d.message }}</p>
-      <table class="mt-grid" *ngIf="d.grid?.periods?.length; else emptyTpl">
-        <thead>
-          <tr>
-            <th>Period</th>
-            <th *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
-              {{ day | titlecase }}
-              <small *ngIf="isToday(day)">TODAY</small>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of d.grid!.periods" [class.break]="p.slotKind === 'BREAK'">
-            <td>
-              <strong>{{ p.name || ('P' + p.periodNumber) }}</strong>
-              <div class="mt-muted" *ngIf="p.startTime">{{ p.startTime }}–{{ p.endTime }}</div>
-            </td>
-            <td *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
-              <ng-container *ngIf="p.slotKind === 'BREAK'; else cellTpl">Break</ng-container>
-              <ng-template #cellTpl>
-                <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
-                  <strong>{{ c.subjectName || '—' }}</strong>
-                  <span *ngIf="d.role === 'STAFF'">
-                    {{ c.academicGroupName }}{{ c.sectionName ? '-' + c.sectionName : '' }}
-                  </span>
-                  <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
-                  <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
-                </div>
-                <ng-template #free><span class="mt-free">Free</span></ng-template>
-              </ng-template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="mt-grid-scroll">
+        <table class="mt-grid" *ngIf="d.grid?.periods?.length; else emptyTpl">
+          <thead>
+            <tr>
+              <th scope="col">Day</th>
+              <th *ngFor="let p of d.grid!.periods" scope="col">
+                <strong>{{ p.name || ('P' + p.periodNumber) }}</strong>
+                <small *ngIf="p.startTime">{{ p.startTime }}–{{ p.endTime }}</small>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let day of visibleDays()">
+              <th scope="row" [class.today]="isToday(day)">
+                {{ day | titlecase }}
+                <small class="mt-today-label" *ngIf="isToday(day)">TODAY</small>
+              </th>
+              <td *ngFor="let p of d.grid!.periods" [class.today]="isToday(day)">
+                <ng-container *ngIf="p.slotKind === 'BREAK'; else cellTpl">Break</ng-container>
+                <ng-template #cellTpl>
+                  <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
+                    <strong>{{ c.subjectName || '—' }}</strong>
+                    <span *ngIf="d.role === 'STAFF'">
+                      {{ c.academicGroupName }}{{ c.sectionName ? '-' + c.sectionName : '' }}
+                    </span>
+                    <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
+                    <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
+                  </div>
+                  <ng-template #free><span class="mt-free">Free</span></ng-template>
+                </ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <ng-template #emptyTpl><div class="mt-empty">No published timetable available.</div></ng-template>
     </div>
     <aside class="mt-side">

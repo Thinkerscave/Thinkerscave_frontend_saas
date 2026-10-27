@@ -20,6 +20,7 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { AppPageChangeEvent } from '../../../../../shared/utils/paged-result.util';
 import { extractApiError } from '../../../../../shared/utils/api-error.util';
 import { SubjectFormDialogComponent } from '../../shared/subject-form-dialog/subject-form-dialog.component';
@@ -45,6 +46,7 @@ import {
     ConfirmDialogModule,
     MenuModule,
     AppPaginatorComponent,
+    SaasPageHeaderComponent,
     HasPermissionDirective,
     SubjectFormDialogComponent
   ],
@@ -87,7 +89,6 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
   usagePageSize = 10;
 
   editOpen = false;
-  menuItems: MenuItem[] = [];
   usageMenuItems: MenuItem[] = [];
 
   get canManage(): boolean {
@@ -231,16 +232,12 @@ export class SubjectDetailPageComponent implements OnInit, OnDestroy {
     this.loadUsage();
   }
 
-  buildMenu(subject: SubjectResponse): void {
-    const items: MenuItem[] = [];
-    if (this.canManage) {
-      if (subject.active) {
-        items.push({ label: 'Deactivate Subject', icon: 'pi pi-ban', command: () => this.confirmDeactivate(subject) });
-      } else {
-        items.push({ label: 'Reactivate Subject', icon: 'pi pi-check', command: () => this.activate(subject) });
-      }
+  toggleSubjectStatus(subject: SubjectResponse): void {
+    if (subject.active) {
+      this.confirmDeactivate(subject);
+      return;
     }
-    this.menuItems = items;
+    this.activate(subject);
   }
 
   private confirmDeactivate(subject: SubjectResponse): void {

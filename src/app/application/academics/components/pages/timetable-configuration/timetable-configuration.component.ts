@@ -13,6 +13,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
@@ -33,6 +34,7 @@ import {
 } from '../../../models/timetable.model';
 
 type ConfigTab = 'patterns' | 'assignments' | 'fixed';
+type PickerSectionScope = 'ALL' | 'SELECTED';
 
 interface PatternSlotForm {
   name: string;
@@ -95,6 +97,7 @@ const ACTIVITY_TYPES = ['GENERAL', 'ASSEMBLY', 'EXERCISE', 'SPORTS', 'LIBRARY', 
     CommonModule,
     FormsModule,
     TcAcademicYearSelectorComponent,
+    SaasPageHeaderComponent,
     TcPageSkeletonComponent,
     DialogModule,
     ConfirmDialogModule
@@ -148,13 +151,15 @@ export class TimetableConfigurationPageComponent implements OnInit {
   showAssignDialog = false;
   assignForm: AssignForm = this.emptyAssignForm();
   assignPickerGroupId: number | null = null;
-  assignPickerSectionId: number | null = null;
+  assignPickerScope: PickerSectionScope = 'ALL';
+  assignPickerSectionIds: number[] = [];
   editingAssignmentId: number | null = null;
 
   showActivityDialog = false;
   activityForm: ActivityForm = this.emptyActivityForm();
   activityPickerGroupId: number | null = null;
-  activityPickerSectionId: number | null = null;
+  activityPickerScope: PickerSectionScope = 'ALL';
+  activityPickerSectionIds: number[] = [];
 
   ngOnInit(): void {
     const qpYear = Number(this.route.snapshot.queryParamMap.get('academicYearId'));
@@ -442,6 +447,7 @@ export class TimetableConfigurationPageComponent implements OnInit {
       const matchesQuery = !q
         || row.academicGroupName.toLowerCase().includes(q)
         || row.academicGroupCode.toLowerCase().includes(q)
+        || (row.scopeLabel ?? '').toLowerCase().includes(q)
         || (row.sectionName ?? '').toLowerCase().includes(q);
       const matchesStatus = this.assignmentStatus === 'ALL'
         || (this.assignmentStatus === 'ACTIVE' ? row.active : !row.active);
@@ -454,11 +460,12 @@ export class TimetableConfigurationPageComponent implements OnInit {
   }
 
   rowLabel(row: GroupAssignmentRow): string {
-    return row.sectionId ? `${row.academicGroupName} - ${row.sectionName}` : row.academicGroupName;
+    if (row.sectionId != null) return `${row.academicGroupName} - ${row.sectionName}`;
+    return row.scopeLabel ? `${row.academicGroupName} - ${row.scopeLabel}` : row.academicGroupName;
   }
 
   rowCode(row: GroupAssignmentRow): string {
-    return `${row.academicGroupCode}${row.sectionName ? '-' + row.sectionName : ''}`;
+    return `${row.academicGroupCode}${row.sectionId != null && row.sectionName ? '-' + row.sectionName : ''}`;
   }
 
   openAssign(row?: GroupAssignmentRow, day?: DayOfWeek, cell?: GroupAssignmentCell): void {
@@ -473,17 +480,27 @@ export class TimetableConfigurationPageComponent implements OnInit {
       effectiveTo: cell?.effectiveTo ?? null
     };
     this.assignPickerGroupId = first?.academicGroupId ?? null;
-    this.assignPickerSectionId = first?.sectionId ?? null;
+    this.assignPickerScope = first?.sectionId != null ? 'SELECTED' : 'ALL';
+    this.assignPickerSectionIds = first?.sectionId != null ? [first.sectionId] : [];
     this.showAssignDialog = true;
     this.cdr.markForCheck();
   }
 
   addAssignUnit(): void {
     if (!this.assignPickerGroupId) return;
-    const unit = this.findUnit(this.assignPickerGroupId, this.assignPickerSectionId);
-    if (!unit) return;
-    if (!this.assignForm.units.some(u => u.academicGroupId === unit.academicGroupId && u.sectionId === unit.sectionId)) {
-      this.assignForm.units.push(unit);
+    const units = this.pickerUnitsForGroup(
+      this.assignPickerGroupId,
+      this.assignPickerScope,
+      this.assignPickerSectionIds
+    );
+    if (!units.length) {
+      this.messages.add({ severity: 'warn', summary: 'Select at least one section' });
+      return;
+    }
+    for (const unit of units) {
+      if (!this.assignForm.units.some(u => u.academicGroupId === unit.academicGroupId && u.sectionId === unit.sectionId)) {
+        this.assignForm.units.push(unit);
+      }
     }
     this.cdr.markForCheck();
   }
@@ -586,7 +603,8 @@ export class TimetableConfigurationPageComponent implements OnInit {
   openCreateActivity(): void {
     this.activityForm = this.emptyActivityForm();
     this.activityPickerGroupId = this.groupOptions[0]?.value ?? null;
-    this.activityPickerSectionId = null;
+    this.activityPickerScope = 'ALL';
+    this.activityPickerSectionIds = [];
     this.showActivityDialog = true;
     this.cdr.markForCheck();
   }
@@ -611,18 +629,29 @@ export class TimetableConfigurationPageComponent implements OnInit {
       effectiveTo: activity.effectiveTo ?? null,
       active: activity.active
     };
-    this.activityPickerGroupId = this.groupOptions[0]?.value ?? null;
-    this.activityPickerSectionId = null;
+    const firstUnit = activity.groups[0];
+    this.activityPickerGroupId = firstUnit?.academicGroupId ?? this.groupOptions[0]?.value ?? null;
+    this.activityPickerScope = firstUnit?.sectionId != null ? 'SELECTED' : 'ALL';
+    this.activityPickerSectionIds = firstUnit?.sectionId != null ? [firstUnit.sectionId] : [];
     this.showActivityDialog = true;
     this.cdr.markForCheck();
   }
 
   addActivityUnit(): void {
     if (!this.activityPickerGroupId) return;
-    const unit = this.findUnit(this.activityPickerGroupId, this.activityPickerSectionId);
-    if (!unit) return;
-    if (!this.activityForm.units.some(u => u.academicGroupId === unit.academicGroupId && u.sectionId === unit.sectionId)) {
-      this.activityForm.units.push(unit);
+    const units = this.pickerUnitsForGroup(
+      this.activityPickerGroupId,
+      this.activityPickerScope,
+      this.activityPickerSectionIds
+    );
+    if (!units.length) {
+      this.messages.add({ severity: 'warn', summary: 'Select at least one section' });
+      return;
+    }
+    for (const unit of units) {
+      if (!this.activityForm.units.some(u => u.academicGroupId === unit.academicGroupId && u.sectionId === unit.sectionId)) {
+        this.activityForm.units.push(unit);
+      }
     }
     this.cdr.markForCheck();
   }
@@ -728,9 +757,14 @@ export class TimetableConfigurationPageComponent implements OnInit {
 
   get sectionOptions(): { label: string; value: number }[] {
     const groupId = this.activeTab === 'fixed' ? this.activityPickerGroupId : this.assignPickerGroupId;
-    return (this.matrix?.rows ?? [])
-      .filter(r => r.academicGroupId === groupId && r.sectionId)
-      .map(r => ({ value: r.sectionId!, label: r.sectionName! }));
+    const sections = new Map<number, string>();
+    for (const row of this.matrix?.rows ?? []) {
+      if (row.academicGroupId === groupId && row.sectionId != null && row.sectionName
+        && !sections.has(row.sectionId)) {
+        sections.set(row.sectionId, row.sectionName);
+      }
+    }
+    return [...sections.entries()].map(([value, label]) => ({ value, label }));
   }
 
   get pickerGroupId(): number | null {
@@ -742,20 +776,65 @@ export class TimetableConfigurationPageComponent implements OnInit {
     else this.assignPickerGroupId = value;
   }
 
-  get pickerSectionId(): number | null {
-    return this.activeTab === 'fixed' ? this.activityPickerSectionId : this.assignPickerSectionId;
+  onPickerGroupChange(value: number | null): void {
+    this.pickerGroupId = value;
+    this.pickerScope = 'ALL';
+    this.pickerSelectedSectionIds = [];
+    this.cdr.markForCheck();
   }
 
-  set pickerSectionId(value: number | null) {
-    if (this.activeTab === 'fixed') this.activityPickerSectionId = value;
-    else this.assignPickerSectionId = value;
+  get pickerScope(): PickerSectionScope {
+    return this.activeTab === 'fixed' ? this.activityPickerScope : this.assignPickerScope;
   }
 
-  private findUnit(groupId: number, sectionId: number | null): AssignUnit | null {
-    const row = (this.matrix?.rows ?? []).find(r => r.academicGroupId === groupId
-      && (sectionId ? r.sectionId === sectionId : !r.sectionId));
-    if (!row) return null;
-    return this.unitOf(row);
+  set pickerScope(value: PickerSectionScope) {
+    if (this.activeTab === 'fixed') this.activityPickerScope = value;
+    else this.assignPickerScope = value;
+  }
+
+  get pickerSelectedSectionIds(): number[] {
+    return this.activeTab === 'fixed' ? this.activityPickerSectionIds : this.assignPickerSectionIds;
+  }
+
+  set pickerSelectedSectionIds(value: number[]) {
+    if (this.activeTab === 'fixed') this.activityPickerSectionIds = value;
+    else this.assignPickerSectionIds = value;
+  }
+
+  isPickerSectionSelected(sectionId: number): boolean {
+    return this.pickerSelectedSectionIds.includes(sectionId);
+  }
+
+  togglePickerSection(sectionId: number): void {
+    this.pickerSelectedSectionIds = this.pickerSelectedSectionIds.includes(sectionId)
+      ? this.pickerSelectedSectionIds.filter(id => id !== sectionId)
+      : [...this.pickerSelectedSectionIds, sectionId];
+    this.cdr.markForCheck();
+  }
+
+  private pickerUnitsForGroup(
+    groupId: number,
+    scope: PickerSectionScope,
+    selectedSectionIds: number[]
+  ): AssignUnit[] {
+    const groupLabel = this.groupOptions.find(group => group.value === groupId)?.label;
+    if (!groupLabel) return [];
+
+    const sectionsById = new Map(this.sectionOptions.map(section => [section.value, section.label]));
+    if (scope === 'SELECTED') {
+      return selectedSectionIds.flatMap(sectionId => {
+        const sectionName = sectionsById.get(sectionId);
+        return sectionName
+          ? [{ academicGroupId: groupId, sectionId, label: `${groupLabel} - ${sectionName}` }]
+          : [];
+      });
+    }
+
+    return [{
+      academicGroupId: groupId,
+      sectionId: null,
+      label: sectionsById.size ? `${groupLabel} - All sections` : groupLabel
+    }];
   }
 
   private unitOf(row: GroupAssignmentRow): AssignUnit {

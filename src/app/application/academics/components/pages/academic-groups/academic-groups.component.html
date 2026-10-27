@@ -2,7 +2,7 @@
 <p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="cs-page acad-page">
-<tc-saas-page-header>
+<tc-saas-page-header [shellActions]="true">
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
     <span class="cs-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
     <button
@@ -333,4 +333,3 @@
     </div>
   </form>
 </p-dialog>
-

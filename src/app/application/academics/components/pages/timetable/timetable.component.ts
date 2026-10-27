@@ -15,6 +15,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
+import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
@@ -93,6 +94,7 @@ const SUBJECT_TONES = ['sky', 'violet', 'rose', 'emerald', 'amber', 'teal', 'ind
     FormsModule,
     TcPageSkeletonComponent,
     TcAcademicYearSelectorComponent,
+    SaasPageHeaderComponent,
     DialogModule,
     ProgressBarModule,
     ConfirmDialogModule,
@@ -136,6 +138,7 @@ export class TimetablePageComponent implements OnInit {
   grid: TimetableGrid | null = null;
   loadingGrid = false;
   private cellIndex = new Map<string, TimetableCell[]>();
+  private gridRequestId = 0;
   private readonly collapsedIssues = new Set<string>();
 
   academicGroupOptions: { label: string; value: number }[] = [];
@@ -148,6 +151,8 @@ export class TimetablePageComponent implements OnInit {
 
   conflicts: TimetableConflict[] = [];
   loadingConflicts = false;
+  showIssueDetails = false;
+  conflictLoadError: string | null = null;
 
   showEditDialog = false;
   editForm: EditForm = this.emptyEditForm();
@@ -162,9 +167,11 @@ export class TimetablePageComponent implements OnInit {
   }
 
   onYearChange(yearId: number | null): void {
+    this.gridRequestId += 1;
     this.selectedYearId = yearId;
     this.workspace = null;
     this.grid = null;
+    this.loadingGrid = false;
     this.version = null;
     this.selectedVersionId = null;
     this.view = 'ACADEMIC_GROUP';
@@ -172,6 +179,8 @@ export class TimetablePageComponent implements OnInit {
     this.selectedSectionId = null;
     this.selectedStaffId = null;
     this.conflicts = [];
+    this.showIssueDetails = false;
+    this.conflictLoadError = null;
     this.stopPolling();
     this.generating = false;
     this.generationProgress = null;
@@ -273,30 +282,50 @@ export class TimetablePageComponent implements OnInit {
   }
 
   loadGrid(): void {
-    if (!this.selectedVersionId || this.state === 'NOT_GENERATED') return;
+    const requestId = ++this.gridRequestId;
+    const versionId = this.selectedVersionId;
+    const view = this.view;
+    this.grid = null;
+    this.cellIndex.clear();
+    if (!versionId || this.state === 'NOT_GENERATED') {
+      this.loadingGrid = false;
+      this.cdr.markForCheck();
+      return;
+    }
     const params: Record<string, any> = { weekStartDate: this.iso(this.weekStart) };
-    if (this.view === 'ACADEMIC_GROUP') {
-      if (!this.selectedGroupId) { this.grid = null; return; }
+    if (view === 'ACADEMIC_GROUP') {
+      if (!this.selectedGroupId) {
+        this.loadingGrid = false;
+        this.cdr.markForCheck();
+        return;
+      }
       params['academicGroupId'] = this.selectedGroupId;
       if (this.selectedSectionId) params['sectionId'] = this.selectedSectionId;
     } else {
-      if (!this.selectedStaffId) { this.grid = null; return; }
+      if (!this.selectedStaffId) {
+        this.loadingGrid = false;
+        this.cdr.markForCheck();
+        return;
+      }
       params['staffId'] = this.selectedStaffId;
     }
     this.loadingGrid = true;
     this.cdr.markForCheck();
-    this.api.getView(this.selectedVersionId, this.view, params).pipe(
+    this.api.getView(versionId, view, params).pipe(
       finalize(() => {
+        if (requestId !== this.gridRequestId) return;
         this.loadingGrid = false;
         this.cdr.markForCheck();
       })
     ).subscribe({
       next: (grid) => {
+        if (requestId !== this.gridRequestId) return;
         this.grid = grid;
         this.buildCellIndex();
         if (grid.editable) this.loadMappingRows();
       },
       error: (err) => {
+        if (requestId !== this.gridRequestId) return;
         this.grid = null;
         this.messages.add({
           severity: 'error',
@@ -575,6 +604,16 @@ export class TimetablePageComponent implements OnInit {
     this.cancelPoll$.next();
   }
 
+  openIssueDetails(): void {
+    this.showIssueDetails = true;
+    this.loadConflicts();
+  }
+
+  closeIssueDetails(): void {
+    this.showIssueDetails = false;
+    this.cdr.markForCheck();
+  }
+
   private onGenerationComplete(progress: GenerationProgress): void {
     this.generating = false;
     this.activeGenerationId = null;
@@ -689,13 +728,29 @@ export class TimetablePageComponent implements OnInit {
 
   loadConflicts(): void {
     const versionId = this.primaryVersion?.timetableVersionId ?? null;
-    if (!versionId) { this.conflicts = []; return; }
+    if (!versionId) {
+      this.conflicts = [];
+      this.conflictLoadError = null;
+      return;
+    }
+    this.conflictLoadError = null;
     this.loadingConflicts = true;
     this.api.getConflicts(versionId).pipe(
       finalize(() => { this.loadingConflicts = false; this.cdr.markForCheck(); })
     ).subscribe({
-      next: (list) => { this.conflicts = list; },
-      error: () => { this.conflicts = []; }
+      next: (list) => {
+        this.conflicts = list;
+        this.conflictLoadError = null;
+      },
+      error: (err) => {
+        this.conflicts = [];
+        this.conflictLoadError = err?.error?.message || 'Unable to load timetable issues. Please try again.';
+        this.messages.add({
+          severity: 'error',
+          summary: 'Could not load timetable issues',
+          detail: this.conflictLoadError ?? 'Unable to load timetable issues. Please try again.'
+        });
+      }
     });
   }
 

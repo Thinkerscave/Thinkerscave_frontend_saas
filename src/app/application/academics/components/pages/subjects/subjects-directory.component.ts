@@ -124,7 +124,8 @@ export class SubjectsDirectoryPageComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange(value: string): void {
-    this.search$.next(value ?? '');
+    this.searchTerm = value ?? '';
+    this.search$.next(this.searchTerm);
   }
 
   onFilterChange(): void {

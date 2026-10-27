@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
+import { BackNavigationService } from '../../../../../core/services/back-navigation.service';
+import { PageMetaService } from '../../../../../core/services/page-meta.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { SubjectResponse } from '../../../models/subjects-mapping.model';
@@ -37,8 +39,10 @@ describe('SubjectsDirectoryPageComponent', () => {
       imports: [SubjectsDirectoryPageComponent],
       providers: [
         provideRouter([]),
+        { provide: BackNavigationService, useValue: { back: jasmine.createSpy('back') } },
+        { provide: PageMetaService, useValue: { resolve: () => ({ showBack: false, backFallback: null }) } },
         { provide: SubjectsMappingApiService, useValue: api },
-        { provide: PermissionService, useValue: { canManage, canView: () => true, canApprove: () => false } },
+        { provide: PermissionService, useValue: { permissionsLoaded$: of(true), canManage, canView: () => true, canApprove: () => false } },
         { provide: MessageService, useValue: { add: jasmine.createSpy('add') } }
       ]
     }).compileComponents();
@@ -92,7 +96,6 @@ describe('SubjectsDirectoryPageComponent', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).not.toContain('Add Subject');
     expect(fixture.nativeElement.querySelector('[aria-label^="More actions"]')).toBeNull();
-    expect(text).toContain('Subject Mapping');
   });
 
   it('shows the empty directory state with Add Subject when no subjects exist', () => {

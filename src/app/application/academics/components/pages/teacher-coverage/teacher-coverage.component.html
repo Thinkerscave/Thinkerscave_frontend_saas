@@ -1,18 +1,5 @@
-<tc-saas-page-header>
-  <button
-    *ngIf="canManage"
-    type="button"
-    class="tc-btn tc-btn--primary"
-    [disabled]="!editable || !hasPending"
-    (click)="requestSave()"
-    aria-label="Save allocation">
-    <i class="pi pi-save" aria-hidden="true"></i>
-    {{ saving ? 'Saving…' : 'Save Allocation' }}
-  </button>
-</tc-saas-page-header>
-
-<section class="ta-context" aria-label="Allocation context">
-  <div class="ta-field">
+<tc-saas-page-header [shellActions]="true">
+  <div class="ta-field" page-context>
     <label class="ta-label" for="ta-year">Academic Year <span aria-hidden="true">*</span></label>
     <p-dropdown
       inputId="ta-year"
@@ -26,6 +13,19 @@
       styleClass="ta-dd">
     </p-dropdown>
   </div>
+  <button
+    *ngIf="canManage"
+    type="button"
+    class="tc-btn tc-btn--primary"
+    [disabled]="!editable || !hasPending"
+    (click)="requestSave()"
+    aria-label="Save allocation">
+    <i class="pi pi-save" aria-hidden="true"></i>
+    {{ saving ? 'Saving…' : 'Save Allocation' }}
+  </button>
+</tc-saas-page-header>
+
+<section class="ta-context" aria-label="Allocation context">
   <div class="ta-field">
     <label class="ta-label" for="ta-group">Academic Group <span aria-hidden="true">*</span></label>
     <p-dropdown

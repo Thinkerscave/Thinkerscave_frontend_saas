@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BehaviorSubject, of } from 'rxjs';
+import { BackNavigationService } from '../../../../../core/services/back-navigation.service';
+import { PageMetaService } from '../../../../../core/services/page-meta.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { SubjectResponse } from '../../../models/subjects-mapping.model';
@@ -32,12 +34,14 @@ describe('SubjectDetailPageComponent', () => {
       imports: [SubjectDetailPageComponent],
       providers: [
         provideRouter([]),
+        { provide: BackNavigationService, useValue: { back: jasmine.createSpy('back') } },
+        { provide: PageMetaService, useValue: { resolve: () => ({ showBack: false, backFallback: null }) } },
         { provide: SubjectsMappingApiService, useValue: api },
         {
           provide: ActivatedRoute,
           useValue: { paramMap: new BehaviorSubject(convertToParamMap({ subjectId: '7' })), snapshot: { queryParamMap: convertToParamMap({}) } }
         },
-        { provide: PermissionService, useValue: { canManage: () => true, canView: () => true, canApprove: () => false } },
+        { provide: PermissionService, useValue: { permissionsLoaded$: of(true), canManage: () => true, canView: () => true, canApprove: () => false } },
         { provide: MessageService, useValue: { add: jasmine.createSpy('add') } }
       ]
     }).compileComponents();

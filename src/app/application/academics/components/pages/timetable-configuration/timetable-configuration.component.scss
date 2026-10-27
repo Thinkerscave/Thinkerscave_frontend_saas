@@ -299,6 +299,48 @@
 .tcfg-picker { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .tcfg-picker__row { display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .tcfg-picker__row .tcfg-select { flex: 1 1 160px; }
+.tcfg-section-scope {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--cfg-border);
+  border-radius: 8px;
+  background-color: var(--cfg-surface-soft);
+}
+.tcfg-section-scope.has-selected-sections {
+  grid-template-columns: minmax(240px, 0.9fr) minmax(180px, 1.1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+.tcfg-section-scope__choice,
+.tcfg-section-options { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.tcfg-section-options__checks { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tcfg-section-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--cfg-border-strong);
+  border-radius: 7px;
+  background-color: var(--cfg-surface);
+  color: var(--cfg-text);
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.tcfg-section-check input { margin: 0; accent-color: var(--cfg-accent); }
+.tcfg-section-check.is-selected {
+  border-color: var(--cfg-accent);
+  background: color-mix(in srgb, var(--cfg-accent) 9%, var(--cfg-surface));
+  color: var(--cfg-accent);
+  font-weight: 600;
+}
+.tcfg-section-check:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--cfg-accent) 40%, transparent);
+  outline-offset: 2px;
+}
+.tcfg-field__hint { color: var(--cfg-muted); font-size: 0.72rem; }
 .tcfg-date-range { display: flex; align-items: center; gap: 0.35rem; }
 .tcfg-date-range input { flex: 1; min-width: 0; }
 .tcfg-days { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -321,6 +363,7 @@
 @media (max-width: 760px) {
   .tcfg-filters { flex-wrap: wrap; }
   .tcfg-filters > .tcfg-select { flex: 1 1 140px; width: auto; }
+  .tcfg-section-scope.has-selected-sections { grid-template-columns: minmax(0, 1fr); }
   .tcfg-form-grid,
   .tcfg-form-grid--3 { grid-template-columns: 1fr; }
   .tcfg-filters--stack { flex-wrap: wrap; }

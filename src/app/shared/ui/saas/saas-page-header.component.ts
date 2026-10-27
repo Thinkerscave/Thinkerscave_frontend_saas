@@ -6,8 +6,11 @@ import {
   DestroyRef,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   SimpleChanges,
+  TemplateRef,
+  ViewChild,
   inject
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,22 +33,27 @@ export interface SaasBreadcrumb { label: string; route?: string; }
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="saas-page-header saas-page-header--toolbar">
-      <div class="saas-page-header__actions">
-        <button
-          *ngIf="showBack"
-          type="button"
-          class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back"
-          (click)="goBack()">
-          <i class="pi pi-arrow-left" aria-hidden="true"></i>
-          Back
-        </button>
-        <ng-content></ng-content>
+    <ng-template #actionsTemplate>
+      <div class="saas-page-header saas-page-header--toolbar">
+        <div class="saas-page-header__actions">
+          <button
+            *ngIf="showBack"
+            type="button"
+            class="tc-btn tc-btn--outline tc-btn--sm tc-btn--back"
+            (click)="goBack()">
+            <i class="pi pi-arrow-left" aria-hidden="true"></i>
+            Back
+          </button>
+          <ng-content></ng-content>
+        </div>
       </div>
-    </div>
+    </ng-template>
+    <ng-container *ngIf="!shellActions">
+      <ng-container *ngTemplateOutlet="actionsTemplate"></ng-container>
+    </ng-container>
   `
 })
-export class SaasPageHeaderComponent implements OnInit, OnChanges {
+export class SaasPageHeaderComponent implements OnInit, OnChanges, OnDestroy {
   private readonly pageHeader = inject(BreadCrumbService);
   private readonly backNav = inject(BackNavigationService);
   private readonly pageMeta = inject(PageMetaService);
@@ -53,7 +61,13 @@ export class SaasPageHeaderComponent implements OnInit, OnChanges {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly actions = inject(BreadCrumbService);
 
+  @ViewChild('actionsTemplate', { static: true })
+  private actionsTemplate!: TemplateRef<unknown>;
+
+  /** Render the page toolbar in the shared shell header instead of the page body. */
+  @Input() shellActions = false;
   /** @deprecated Title belongs in the layout shell via route pageTitle. */
   @Input() showTitle = false;
   /** @deprecated Do not set entity names as the global page title. */
@@ -67,6 +81,7 @@ export class SaasPageHeaderComponent implements OnInit, OnChanges {
   private backFallback: string | string[] | null = null;
 
   ngOnInit(): void {
+    this.syncShellActions();
     this.refreshBack();
     this.router.events
       .pipe(
@@ -77,9 +92,16 @@ export class SaasPageHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if ('shellActions' in changes && this.actionsTemplate) {
+      this.syncShellActions();
+    }
     if ('subtitle' in changes && this.subtitle) {
       this.pageHeader.setPageHeader({ subtitle: this.subtitle });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.actions.clearActions(this.actionsTemplate);
   }
 
   goBack(): void {
@@ -91,5 +113,13 @@ export class SaasPageHeaderComponent implements OnInit, OnChanges {
     this.showBack = meta.showBack;
     this.backFallback = meta.backFallback;
     this.cdr.markForCheck();
+  }
+
+  private syncShellActions(): void {
+    if (this.shellActions) {
+      this.actions.setActions(this.actionsTemplate);
+    } else {
+      this.actions.clearActions(this.actionsTemplate);
+    }
   }
 }

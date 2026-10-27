@@ -10,6 +10,10 @@
   padding: 0;
 }
 
+.tc-page-header:has(.tc-page-header__actions) {
+  margin-bottom: var(--tc-page-row-gap, 0.75rem);
+}
+
 .tc-page-header__top {
   display: flex;
   align-items: flex-start;
@@ -52,11 +56,40 @@
 
 .tc-page-header__right {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.tc-page-header__actions {
+  --tc-button-primary-bg: var(--tc-button-accent-bg);
+  --tc-button-primary-hover-bg: var(--tc-button-accent-hover-bg);
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.tc-page-header__actions .tc-btn--outline:not(.tc-btn--back) {
+  border-color: color-mix(in srgb, var(--tc-accent) 38%, var(--tc-border));
+  color: var(--tc-accent);
+}
+
+.tc-page-header__actions .tc-btn--outline:not(.tc-btn--back):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--tc-accent) 8%, transparent);
+  border-color: var(--tc-accent);
+  color: var(--tc-accent-strong, var(--tc-accent));
+}
+
+.tc-page-header__trail-wrap {
+  display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  margin-left: auto;
+  max-width: 100%;
 }
 
 .tc-page-header__right-label {
@@ -94,10 +127,6 @@
 }
 
 @media (max-width: 768px) {
-  .tc-page-header {
-    margin-bottom: 0;
-  }
-
   .tc-page-header__top {
     flex-wrap: wrap;
     gap: 0.35rem 0.75rem;
@@ -120,4 +149,11 @@
   }
 }
 
-@media (max-width: 640px) {.tc-page-header__top{flex-direction:column;align-items:flex-start;gap:.35rem}.tc-page-header__lead{width:100%}.tc-page-header__right{width:100%;justify-content:flex-start;margin-left:0}.tc-page-header__title{font-size:1.15rem}.tc-page-header__subtitle{max-width:none;-webkit-line-clamp:3}}
+@media (max-width: 640px) {
+  .tc-page-header__top { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+  .tc-page-header__lead { width: 100%; }
+  .tc-page-header__right { width: 100%; align-items: flex-end; margin-left: 0; }
+  .tc-page-header__trail-wrap { width: 100%; flex-wrap: wrap; }
+  .tc-page-header__title { font-size: 1.15rem; }
+  .tc-page-header__subtitle { max-width: none; -webkit-line-clamp: 3; }
+}

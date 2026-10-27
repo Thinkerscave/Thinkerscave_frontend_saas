@@ -2,24 +2,36 @@
 <p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="ced-page acad-page" *ngIf="!loading && !loadError && event as e; else bootTpl">
-  <tc-saas-page-header>
+  <tc-saas-page-header [shellActions]="true">
     <button
       type="button"
-      class="tc-btn"
+      class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage"
       (click)="openEditEvent()">
       <i class="pi pi-pencil"></i> Edit Event
     </button>
-    <button
-      type="button"
-      class="tc-btn ced-icon-menu"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage"
-      (click)="buildHeaderMenu(); eventMenu.toggle($event)"
-      aria-label="More actions">
-      <i class="pi pi-ellipsis-v"></i>
-    </button>
+    <ng-container *ngIf="e.status === 'INACTIVE'">
+      <button
+        type="button"
+        class="tc-btn tc-btn--accent"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="reactivateEvent()">
+        <i class="pi pi-check" aria-hidden="true"></i> Reactivate Event
+      </button>
+    </ng-container>
+    <ng-container *ngIf="e.status !== 'INACTIVE'">
+      <button
+        type="button"
+        class="tc-btn ced-icon-menu"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="buildHeaderMenu(); eventMenu.toggle($event)"
+        aria-label="More actions">
+        <i class="pi pi-ellipsis-v"></i>
+      </button>
+    </ng-container>
   </tc-saas-page-header>
 
   <header class="ced-identity">

@@ -1,20 +1,12 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="tcfg-page">
-  <div class="tcfg-topbar">
-    <button type="button" class="tcfg-back" (click)="backToTimetable()">
+  <tc-saas-page-header [shellActions]="true">
+    <button type="button" class="tcfg-btn tcfg-btn--outline" data-action="back" (click)="backToTimetable()">
       <i class="pi pi-arrow-left"></i> Back to Timetable
     </button>
-  </div>
-
-  <header class="tcfg-header">
-    <div class="tcfg-header__actions">
-      <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
-      <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="backToTimetable()">
-        View Timetable <i class="pi pi-external-link"></i>
-      </button>
-    </div>
-  </header>
+    <tc-academic-year-selector (yearChange)="onYearChange($event)"></tc-academic-year-selector>
+  </tc-saas-page-header>
 
   <nav class="tcfg-tabs" role="tablist" aria-label="Timetable configuration">
     <button type="button" *ngFor="let tab of tabs" role="tab"
@@ -439,17 +431,47 @@
     <div class="tcfg-picker">
       <span class="tcfg-field__label">Academic group(s) <em>*</em></span>
       <div class="tcfg-picker__row">
-        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="pickerSectionId = null">
+        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="onPickerGroupChange($event)">
           <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
         </select>
-        <select class="tcfg-select" *ngIf="sectionOptions.length" [(ngModel)]="pickerSectionId">
-          <option [ngValue]="null">All sections</option>
-          <option *ngFor="let s of sectionOptions" [ngValue]="s.value">{{ s.label }}</option>
-        </select>
-        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="addAssignUnit()">
+        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm"
+          [disabled]="!pickerGroupId || (pickerScope === 'SELECTED' && !pickerSelectedSectionIds.length)"
+          (click)="addAssignUnit()">
           <i class="pi pi-plus"></i> Add group
         </button>
       </div>
+      <div class="tcfg-section-scope" *ngIf="sectionOptions.length"
+        [class.has-selected-sections]="pickerScope === 'SELECTED'">
+        <div class="tcfg-section-scope__choice">
+          <span class="tcfg-field__label">Section scope</span>
+          <div class="tcfg-radio-row">
+            <label>
+              <input type="radio" name="assignmentSectionScope" [checked]="pickerScope === 'ALL'"
+                (change)="pickerScope = 'ALL'" />
+              All Sections
+            </label>
+            <label>
+              <input type="radio" name="assignmentSectionScope" [checked]="pickerScope === 'SELECTED'"
+                (change)="pickerScope = 'SELECTED'" />
+              Selected Sections
+            </label>
+          </div>
+        </div>
+        <div class="tcfg-section-options" *ngIf="pickerScope === 'SELECTED'" role="group" aria-label="Select sections">
+          <span class="tcfg-field__hint">Choose one or more sections for this schedule pattern.</span>
+          <div class="tcfg-section-options__checks">
+            <label class="tcfg-section-check" *ngFor="let section of sectionOptions"
+              [class.is-selected]="isPickerSectionSelected(section.value)">
+              <input type="checkbox" [checked]="isPickerSectionSelected(section.value)"
+                (change)="togglePickerSection(section.value)" />
+              <span>{{ section.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <p class="tcfg-field__hint" *ngIf="!sectionOptions.length && pickerGroupId">
+        This group has no sections. The pattern applies to the whole group.
+      </p>
       <div class="tcfg-chips" *ngIf="assignForm.units.length">
         <span class="tcfg-chip tcfg-chip--removable" *ngFor="let unit of assignForm.units; let i = index">
           {{ unit.label }}
@@ -512,17 +534,47 @@
     <div class="tcfg-picker" *ngIf="!activityForm.appliesToAllGroups">
       <span class="tcfg-field__label">Selected groups <em>*</em></span>
       <div class="tcfg-picker__row">
-        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="pickerSectionId = null">
+        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="onPickerGroupChange($event)">
           <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
         </select>
-        <select class="tcfg-select" *ngIf="sectionOptions.length" [(ngModel)]="pickerSectionId">
-          <option [ngValue]="null">All sections</option>
-          <option *ngFor="let s of sectionOptions" [ngValue]="s.value">{{ s.label }}</option>
-        </select>
-        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm" (click)="addActivityUnit()">
+        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm"
+          [disabled]="!pickerGroupId || (pickerScope === 'SELECTED' && !pickerSelectedSectionIds.length)"
+          (click)="addActivityUnit()">
           <i class="pi pi-plus"></i> Add group
         </button>
       </div>
+      <div class="tcfg-section-scope" *ngIf="sectionOptions.length"
+        [class.has-selected-sections]="pickerScope === 'SELECTED'">
+        <div class="tcfg-section-scope__choice">
+          <span class="tcfg-field__label">Section scope</span>
+          <div class="tcfg-radio-row">
+            <label>
+              <input type="radio" name="activitySectionScope" [checked]="pickerScope === 'ALL'"
+                (change)="pickerScope = 'ALL'" />
+              All Sections
+            </label>
+            <label>
+              <input type="radio" name="activitySectionScope" [checked]="pickerScope === 'SELECTED'"
+                (change)="pickerScope = 'SELECTED'" />
+              Selected Sections
+            </label>
+          </div>
+        </div>
+        <div class="tcfg-section-options" *ngIf="pickerScope === 'SELECTED'" role="group" aria-label="Select sections">
+          <span class="tcfg-field__hint">Choose one or more sections for this activity.</span>
+          <div class="tcfg-section-options__checks">
+            <label class="tcfg-section-check" *ngFor="let section of sectionOptions"
+              [class.is-selected]="isPickerSectionSelected(section.value)">
+              <input type="checkbox" [checked]="isPickerSectionSelected(section.value)"
+                (change)="togglePickerSection(section.value)" />
+              <span>{{ section.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <p class="tcfg-field__hint" *ngIf="!sectionOptions.length && pickerGroupId">
+        This group has no sections. The activity applies to the whole group.
+      </p>
       <div class="tcfg-chips" *ngIf="activityForm.units.length">
         <span class="tcfg-chip tcfg-chip--removable" *ngFor="let unit of activityForm.units; let i = index">
           {{ unit.label }}

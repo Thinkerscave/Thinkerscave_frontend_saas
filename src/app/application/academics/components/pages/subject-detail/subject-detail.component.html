@@ -1,8 +1,26 @@
 <p-confirmDialog></p-confirmDialog>
-<p-menu #headerMenu [popup]="true" [model]="menuItems"></p-menu>
 <p-menu #usageMenu [popup]="true" [model]="usageMenuItems"></p-menu>
 
 <div class="sub-page sub-detail acad-page" *ngIf="subject as s; else stateTpl">
+  <tc-saas-page-header [shellActions]="true">
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      (click)="editOpen = true">
+      <i class="pi pi-pencil" aria-hidden="true"></i> Edit Subject
+    </button>
+    <button
+      *ngIf="canManage"
+      type="button"
+      class="tc-btn"
+      [class.tc-btn--danger]="s.active"
+      [class.tc-btn--accent]="!s.active"
+      (click)="toggleSubjectStatus(s)">
+      <i [class]="s.active ? 'pi pi-ban' : 'pi pi-check'" aria-hidden="true"></i>
+      {{ s.active ? 'Deactivate' : 'Reactivate' }} Subject
+    </button>
+  </tc-saas-page-header>
   <header class="sub-hero">
     <div class="sub-hero__identity">
       <span class="sub-icon sub-icon--lg" [ngClass]="'sub-icon--' + typeTone(s.subjectType)" aria-hidden="true">
@@ -19,26 +37,6 @@
         </p>
         <p class="sub-muted sub-hero__desc" *ngIf="s.description">{{ s.description }}</p>
       </div>
-    </div>
-    <div class="sub-header-actions">
-      <button type="button" class="tc-btn tc-btn--outline" (click)="back()">
-        <i class="pi pi-arrow-left" aria-hidden="true"></i> Back
-      </button>
-      <button
-        type="button"
-        class="tc-btn tc-btn--primary"
-        *tcHasPerm="resource; action: 'manage'"
-        (click)="editOpen = true">
-        <i class="pi pi-pencil" aria-hidden="true"></i> Edit Subject
-      </button>
-      <button
-        *ngIf="canManage"
-        type="button"
-        class="tc-btn tc-btn--outline"
-        (click)="buildMenu(s); headerMenu.toggle($event)"
-        aria-label="More subject actions">
-        <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
-      </button>
     </div>
   </header>
 

@@ -15,6 +15,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AcademicYearContextService } from '../../services/academic-year-context.service';
 
+export interface AcademicYearSelectorOption {
+  academicYearId: number;
+  name: string;
+  status?: string;
+}
+
 /**
  * Compact Figma-style Academic Year control for `tc-saas-page-header` actions.
  * Place LEFT of primary page actions. Breadcrumb stays in the shell (top-right).
@@ -257,6 +263,9 @@ export class TcAcademicYearSelectorComponent implements OnInit {
   /** When true, include an “All years” option that emits null. */
   @Input() allowAll = false;
   @Input() disabled = false;
+  /** Optional page-owned years and value for contexts that must not change global year state. */
+  @Input() options: AcademicYearSelectorOption[] | null = null;
+  @Input() value: number | null = null;
 
   /** Fired when the effective year changes (including first resolve). */
   @Output() readonly yearChange = new EventEmitter<number | null>();
@@ -265,25 +274,31 @@ export class TcAcademicYearSelectorComponent implements OnInit {
   private lastEmitted: number | null | undefined = undefined;
 
   get years() {
-    return this.ctx.years();
+    return this.options ?? this.ctx.years();
   }
 
   get selectedYearId() {
-    return this.ctx.selectedYearId();
+    return this.options === null ? this.ctx.selectedYearId() : this.value;
   }
 
   get loading() {
-    return this.ctx.loading();
+    return this.options === null && this.ctx.loading();
   }
 
   get displayLabel(): string {
     if (this.allowAll && this.selectedYearId == null) {
       return 'All years';
     }
+    if (this.options !== null) {
+      return this.years.find((year) => year.academicYearId === this.selectedYearId)?.name
+        ?? 'Select academic year';
+    }
     return this.ctx.selectedYearLabel();
   }
 
   ngOnInit(): void {
+    if (this.options !== null) return;
+
     this.ctx.ensureLoaded().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.emitIfChanged(this.ctx.selectedYearId());
       this.cdr.markForCheck();
@@ -303,6 +318,12 @@ export class TcAcademicYearSelectorComponent implements OnInit {
 
   choose(id: number | null): void {
     this.open = false;
+    if (this.options !== null) {
+      if (this.allowAll || id != null) {
+        this.yearChange.emit(id);
+      }
+      return;
+    }
     if (this.allowAll) {
       this.ctx.selectYear(id);
     } else if (id != null) {

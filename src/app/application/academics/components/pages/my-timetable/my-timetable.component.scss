@@ -22,11 +22,15 @@
 .mt-toggle button.active { background: #2563eb; color: #fff; }
 .mt-controls select { border: 1px solid #e2e8f0; border-radius: 10px; padding: .45rem .65rem; }
 .mt-layout { margin-top: 1rem; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 1rem; }
-.mt-grid { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+.mt-grid-scroll { max-width: 100%; overflow-x: auto; }
+.mt-grid { width: max-content; min-width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
 .mt-grid th, .mt-grid td { border: 1px solid #e2e8f0; padding: .45rem; vertical-align: top; font-size: .8rem; }
-.mt-grid th { background: #f8fafc; text-align: left; }
+.mt-grid th { min-width: 118px; background: #f8fafc; text-align: left; }
+.mt-grid th:first-child { position: sticky; left: 0; z-index: 1; min-width: 100px; text-align: left; }
+.mt-grid td { min-width: 118px; }
 .mt-grid th.today, .mt-grid td.today { background: #eff6ff; }
-.mt-grid th small { display: block; color: #2563eb; font-size: .65rem; letter-spacing: .04em; }
+.mt-grid thead th small { display: block; color: #64748b; font-size: .68rem; font-weight: 500; margin-top: .15rem; }
+.mt-grid th .mt-today-label { color: #2563eb; font-size: .65rem; letter-spacing: .04em; }
 .mt-cell { border-radius: 10px; padding: .45rem; display: grid; gap: .1rem; min-height: 64px; }
 .mt-cell strong { font-size: .82rem; }
 .mt-cell span, .mt-cell small { color: #475569; }

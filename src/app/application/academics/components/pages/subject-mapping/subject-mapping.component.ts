@@ -20,6 +20,7 @@ import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
+import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
 import { AppPageChangeEvent } from '../../../../../shared/utils/paged-result.util';
 import { extractApiError } from '../../../../../shared/utils/api-error.util';
@@ -82,6 +83,7 @@ function toPositiveId(value: string | null): number | null {
     CommonModule,
     FormsModule,
     SaasPageHeaderComponent,
+    TcAcademicYearSelectorComponent,
     AppPaginatorComponent,
     DropdownModule,
     DialogModule,
@@ -124,7 +126,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   private readonly availableSearch$ = new Subject<string>();
 
   // Context
-  yearOptions: ContextOption[] = [];
+  yearOptions: AcademicYearDto[] = [];
   groupOptions: ContextOption[] = [];
   yearId: number | null = null;
   groupId: number | null = null;
@@ -187,7 +189,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
     this.yearApi.search().subscribe({
       next: (years: AcademicYearDto[]) => {
-        this.yearOptions = years.map((y) => ({ label: y.name, value: y.academicYearId }));
+        this.yearOptions = years;
         this.cdr.markForCheck();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Unable to load academic years' })

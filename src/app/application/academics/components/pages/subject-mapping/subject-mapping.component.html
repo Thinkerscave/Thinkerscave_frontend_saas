@@ -2,21 +2,25 @@
 <p-menu #rowMenu [popup]="true" [model]="rowMenuItems"></p-menu>
 
 <div class="sub-page sub-map acad-page">
-  <tc-saas-page-header>
-    <div class="sub-header-actions">
-      <span class="sub-unsaved" *ngIf="changeCount > 0" role="status">
+  <tc-saas-page-header [shellActions]="true">
+      <button
+        type="button"
+        class="tc-btn tc-btn--outline tc-btn--back"
+        data-action="back"
+        (click)="backToDirectory()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+        Back
+      </button>
+      <tc-academic-year-selector
+        page-context
+        [options]="yearOptions"
+        [value]="yearId"
+        [disabled]="saving"
+        (yearChange)="onYearChange($event)">
+      </tc-academic-year-selector>
+      <span class="sub-unsaved" page-context *ngIf="changeCount > 0" role="status">
         You have {{ changeCount }} unsaved change{{ changeCount === 1 ? '' : 's' }}
       </span>
-      <button
-        *ngIf="showMutations"
-        type="button"
-        class="tc-btn tc-btn--primary"
-        [disabled]="!canSave"
-        (click)="save()">
-        <i class="pi pi-save" aria-hidden="true"></i>
-        {{ saving ? 'Saving…' : 'Save Mapping' }}
-      </button>
-    </div>
   </tc-saas-page-header>
 
   <div class="sub-alert" role="alert" *ngIf="formError">
@@ -35,22 +39,6 @@
 
   <section class="sub-context" aria-label="Mapping context">
     <div class="sub-field">
-      <label class="sub-field__label" for="sub-map-year">Academic Year <span class="sub-req" aria-hidden="true">*</span></label>
-      <p-dropdown
-        inputId="sub-map-year"
-        [options]="yearOptions"
-        [(ngModel)]="yearId"
-        (onChange)="onYearChange($event.value)"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select academic year"
-        [disabled]="saving"
-        appendTo="body"
-        styleClass="sub-context__dropdown">
-      </p-dropdown>
-    </div>
-
-    <div class="sub-field">
       <label class="sub-field__label" for="sub-map-group">Academic Group <span class="sub-req" aria-hidden="true">*</span></label>
       <p-dropdown
         inputId="sub-map-group"
@@ -66,51 +54,54 @@
       </p-dropdown>
     </div>
 
-    <div class="sub-scope" *ngIf="!board || board.hasSections; else noSectionsTpl">
-      <span class="sub-field__label" id="sub-scope-label">Section Scope</span>
-      <div class="sub-scope__options" role="radiogroup" aria-labelledby="sub-scope-label">
-        <button
-          type="button"
-          role="radio"
-          class="sub-scope__card"
-          [class.is-selected]="scope === scopeAll"
-          [attr.aria-checked]="scope === scopeAll"
-          [disabled]="!editable"
-          (click)="onScopeSelect(scopeAll)">
-          <strong>All Sections</strong>
-          <span>Apply subjects to all sections</span>
-        </button>
-        <button
-          type="button"
-          role="radio"
-          class="sub-scope__card"
-          [class.is-selected]="scope === scopeSelected"
-          [attr.aria-checked]="scope === scopeSelected"
-          [disabled]="!editable"
-          (click)="onScopeSelect(scopeSelected)">
-          <strong>Selected Sections</strong>
-          <span>Choose specific sections</span>
-        </button>
+    <div class="sub-scope-layout" [class.has-section-list]="scope === scopeSelected && hasSections">
+      <div class="sub-scope" *ngIf="!board || board.hasSections; else noSectionsTpl">
+        <span class="sub-field__label" id="sub-scope-label">Section Scope</span>
+        <div class="sub-scope__options" role="radiogroup" aria-labelledby="sub-scope-label">
+          <button
+            type="button"
+            role="radio"
+            class="sub-scope__card"
+            [class.is-selected]="scope === scopeAll"
+            [attr.aria-checked]="scope === scopeAll"
+            [disabled]="!editable"
+            (click)="onScopeSelect(scopeAll)">
+            <strong>All Sections</strong>
+            <span>Apply subjects to all sections</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            class="sub-scope__card"
+            [class.is-selected]="scope === scopeSelected"
+            [attr.aria-checked]="scope === scopeSelected"
+            [disabled]="!editable"
+            (click)="onScopeSelect(scopeSelected)">
+            <strong>Selected Sections</strong>
+            <span>Choose specific sections</span>
+          </button>
+        </div>
       </div>
-      <div class="sub-chip-list" *ngIf="scope === scopeSelected && hasSections" aria-label="Sections for new subjects">
-        <button
-          type="button"
-          class="sub-chip"
-          *ngFor="let section of activeSections"
-          [class.is-on]="isSectionSelected(section.sectionId)"
-          [attr.aria-pressed]="isSectionSelected(section.sectionId)"
-          [disabled]="!editable"
-          (click)="toggleSelectedSection(section.sectionId)">
-          {{ section.name }}
-        </button>
+      <ng-template #noSectionsTpl>
+        <div class="sub-scope sub-scope--note">
+          <span class="sub-field__label">Section Scope</span>
+          <p class="sub-muted">This group has no sections. The curriculum applies to the whole group.</p>
+        </div>
+      </ng-template>
+      <div class="sub-section-picker" *ngIf="scope === scopeSelected && hasSections" role="group" aria-label="Sections for new subjects">
+        <span class="sub-section-picker__label">Select sections</span>
+        <div class="sub-section-picker__options">
+          <label class="sub-section-check" *ngFor="let section of activeSections">
+            <input
+              type="checkbox"
+              [checked]="isSectionSelected(section.sectionId)"
+              [disabled]="!editable"
+              (change)="toggleSelectedSection(section.sectionId)" />
+            <span>{{ section.name }}</span>
+          </label>
+        </div>
       </div>
     </div>
-    <ng-template #noSectionsTpl>
-      <div class="sub-scope sub-scope--note">
-        <span class="sub-field__label">Section Scope</span>
-        <p class="sub-muted">This group has no sections. The curriculum applies to the whole group.</p>
-      </div>
-    </ng-template>
   </section>
 
   <div class="sub-empty sub-empty--gate" *ngIf="!contextReady">
@@ -345,38 +336,44 @@
   <p class="sub-muted sub-dialog__lead">
     Choose the sections of {{ sectionsEditingRow?.subjectName }} that receive this subject. This changes this subject only.
   </p>
-  <div class="sub-scope__options" role="radiogroup" aria-label="Section coverage">
-    <button
-      type="button"
-      role="radio"
-      class="sub-scope__card"
-      [class.is-selected]="sectionsDraftScope === scopeAll"
-      [attr.aria-checked]="sectionsDraftScope === scopeAll"
-      (click)="setSectionsDraftScope(scopeAll)">
-      <strong>All Sections</strong>
-      <span>Every active section of the group</span>
-    </button>
-    <button
-      type="button"
-      role="radio"
-      class="sub-scope__card"
-      [class.is-selected]="sectionsDraftScope === scopeSelected"
-      [attr.aria-checked]="sectionsDraftScope === scopeSelected"
-      (click)="setSectionsDraftScope(scopeSelected)">
-      <strong>Selected Sections</strong>
-      <span>Choose specific sections</span>
-    </button>
-  </div>
-  <div class="sub-chip-list sub-dialog__chips" *ngIf="sectionsDraftScope === scopeSelected" aria-label="Sections">
-    <button
-      type="button"
-      class="sub-chip"
-      *ngFor="let section of activeSections"
-      [class.is-on]="isSectionsDraftSelected(section.sectionId)"
-      [attr.aria-pressed]="isSectionsDraftSelected(section.sectionId)"
-      (click)="toggleSectionsDraft(section.sectionId)">
-      {{ section.name }}
-    </button>
+  <div class="sub-scope-layout sub-scope-layout--dialog" [class.has-section-list]="sectionsDraftScope === scopeSelected">
+    <div class="sub-scope">
+      <span class="sub-field__label">Section Scope</span>
+      <div class="sub-scope__options" role="radiogroup" aria-label="Section coverage">
+        <button
+          type="button"
+          role="radio"
+          class="sub-scope__card"
+          [class.is-selected]="sectionsDraftScope === scopeAll"
+          [attr.aria-checked]="sectionsDraftScope === scopeAll"
+          (click)="setSectionsDraftScope(scopeAll)">
+          <strong>All Sections</strong>
+          <span>Every active section of the group</span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          class="sub-scope__card"
+          [class.is-selected]="sectionsDraftScope === scopeSelected"
+          [attr.aria-checked]="sectionsDraftScope === scopeSelected"
+          (click)="setSectionsDraftScope(scopeSelected)">
+          <strong>Selected Sections</strong>
+          <span>Choose specific sections</span>
+        </button>
+      </div>
+    </div>
+    <div class="sub-section-picker sub-dialog__sections" *ngIf="sectionsDraftScope === scopeSelected" role="group" aria-label="Sections">
+      <span class="sub-section-picker__label">Select sections</span>
+      <div class="sub-section-picker__options">
+        <label class="sub-section-check" *ngFor="let section of activeSections">
+          <input
+            type="checkbox"
+            [checked]="isSectionsDraftSelected(section.sectionId)"
+            (change)="toggleSectionsDraft(section.sectionId)" />
+          <span>{{ section.name }}</span>
+        </label>
+      </div>
+    </div>
   </div>
   <div class="sub-alert" role="alert" *ngIf="sectionsError">
     <i class="pi pi-exclamation-circle" aria-hidden="true"></i>

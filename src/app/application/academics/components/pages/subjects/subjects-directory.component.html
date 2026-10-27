@@ -2,7 +2,7 @@
 <p-menu #subjectMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="sub-page acad-page">
-  <tc-saas-page-header>
+  <tc-saas-page-header [shellActions]="true">
     <div class="sub-header-actions">
       <button type="button" class="tc-btn tc-btn--outline" (click)="openMapping()">
         <i class="pi pi-book" aria-hidden="true"></i>

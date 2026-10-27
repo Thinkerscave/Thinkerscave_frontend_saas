@@ -36,6 +36,7 @@ export class BreadcrumbComponent implements OnInit {
   private readonly history = inject(NavigationHistoryService);
   private readonly loginService = inject(LoginService);
   private readonly menus = inject(MenuMappingService);
+  readonly actions$ = this.pageHeaderService.actions$;
 
   private pageOverride: AppPageHeader | null = null;
 

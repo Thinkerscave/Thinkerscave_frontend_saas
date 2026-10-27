@@ -3,7 +3,7 @@
 <p-menu #groupMenu [popup]="true" [model]="groupMenuItems"></p-menu>
 
 <div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
-  <tc-saas-page-header>
+  <tc-saas-page-header [shellActions]="true">
     <button
       type="button"
       class="tc-btn tc-btn--primary tc-btn--sm"

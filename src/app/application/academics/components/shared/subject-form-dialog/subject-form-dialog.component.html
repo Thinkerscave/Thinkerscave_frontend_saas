@@ -7,9 +7,10 @@
   [resizable]="false"
   [closable]="!saving"
   [closeOnEscape]="!saving"
-  position="right"
-  [style]="{ width: 'min(440px, 94vw)', height: '100vh' }"
-  styleClass="subject-drawer">
+  position="center"
+  [style]="{ width: 'min(560px, 94vw)', maxHeight: '90vh' }"
+  [contentStyle]="{ overflow: 'auto' }"
+  styleClass="subject-modal">
   <p class="sub-muted sub-dialog__subtitle">
     {{ isEdit
       ? 'Update the subject details. Existing academic group mappings are not changed.'

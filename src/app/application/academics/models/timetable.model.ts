@@ -201,6 +201,7 @@ export interface GroupAssignmentRow {
   academicGroupCode: string;
   sectionId?: number | null;
   sectionName?: string | null;
+  scopeLabel?: string | null;
   active: boolean;
   cells: GroupAssignmentCell[];
 }
