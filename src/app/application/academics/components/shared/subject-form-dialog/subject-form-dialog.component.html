@@ -35,20 +35,21 @@
       <span class="sub-field__error" *ngIf="fieldError('name') as msg">{{ msg }}</span>
     </div>
 
-    <div class="sub-field" [class.sub-field--invalid]="fieldError('code')">
-      <label class="sub-field__label" for="sub-code">
-        Subject Code
-        <i class="pi pi-info-circle" aria-hidden="true" title="Leave blank to generate a unique code"></i>
-      </label>
+    <div class="sub-field">
+      <label class="sub-field__label" for="sub-code">Subject Code</label>
       <input
         id="sub-code"
         type="text"
-        formControlName="code"
-        placeholder="Auto-generate or enter manually"
-        [attr.maxlength]="codeMax"
-        [attr.aria-invalid]="!!fieldError('code')" />
-      <span class="sub-field__hint">If left blank, a unique code will be generated automatically.</span>
-      <span class="sub-field__error" *ngIf="fieldError('code') as msg">{{ msg }}</span>
+        [value]="codePreview ?? ''"
+        [placeholder]="isEdit ? 'Code not available' : 'Enter a subject name to preview the code'"
+        readonly
+        aria-readonly="true" />
+      <span class="sub-field__hint" *ngIf="isEdit; else generatedCodeHint">
+        System-assigned code; changing the subject name does not change it.
+      </span>
+      <ng-template #generatedCodeHint>
+        <span class="sub-field__hint">Generated from the subject name. A number may be added if the preview code is already in use.</span>
+      </ng-template>
     </div>
 
     <div class="sub-field" [class.sub-field--invalid]="fieldError('subjectType')">
@@ -65,13 +66,6 @@
       </p-dropdown>
       <span class="sub-field__hint">Examples: Academic Subject, Practical / Lab, Activity</span>
       <span class="sub-field__error" *ngIf="fieldError('subjectType') as msg">{{ msg }}</span>
-    </div>
-
-    <div class="sub-field">
-      <label class="sub-field__label" for="sub-duration">Default lesson duration (minutes)</label>
-      <input id="sub-duration" type="number" min="1" max="240" formControlName="defaultLessonDurationMin"
-        placeholder="Optional, e.g. 40" />
-      <span class="sub-field__hint">Used as a preference when the schedule does not fix a duration.</span>
     </div>
 
     <div class="sub-field">

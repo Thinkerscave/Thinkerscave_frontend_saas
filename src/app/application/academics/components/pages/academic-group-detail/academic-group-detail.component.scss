@@ -22,53 +22,47 @@
   /* gap / padding from _page-rhythm.scss */
 }
 
-/* ── Identity (no duplicate profile card) ── */
 .cd-identity {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 0.75rem 1.25rem;
-  flex-wrap: wrap;
-}
-
-.cd-identity__title h1 {
-  margin: 0;
-  font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--tc-heading, #0f172a);
-  line-height: 1.2;
-}
-
-.cd-identity__year {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--tc-text-muted, #64748b);
-  font-weight: 500;
-}
-
-.cd-identity__meta {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
-  margin: 0.4rem 0 0;
-  font-size: 0.82rem;
-  color: var(--tc-text-muted, #64748b);
+  gap: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--tc-surface-card, #fff);
 }
 
-.cd-identity__meta code {
-  font-weight: 700;
-  color: var(--tc-heading, #0f172a);
+.cd-identity__icon {
+  display: inline-flex;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tc-primary-600, #0f766e) 12%, transparent);
+  color: var(--tc-primary-600, #0f766e);
+  font-size: 1.25rem;
 }
 
-.cd-status--active { color: #166534; font-weight: 700; }
-.cd-status--inactive { color: #64748b; font-weight: 700; }
+.cd-identity__body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.cd-identity__meta,
+.cd-identity__details { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; }
+.cd-identity__kind { color: var(--tc-text-muted, #64748b); font-size: 0.75rem; font-weight: 600; }
+.cd-identity__details { margin: 0; color: var(--tc-text-muted, #64748b); font-size: 0.84rem; }
+.cd-identity__details code { color: var(--tc-heading, #0f172a); font-weight: 700; }
 
-.cd-readonly {
-  color: #b45309;
+.cd-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
   font-weight: 600;
 }
+
+.cd-status--active { background: rgba(16, 185, 129, 0.14); color: #059669; }
+.cd-status--inactive { background: rgba(239, 68, 68, 0.14); color: #dc2626; }
 
 .cd-summary {
   margin: 0;
@@ -464,9 +458,7 @@
     grid-template-columns: 1fr;
   }
 
-  .cd-identity {
-    align-items: flex-start;
-  }
+  .cd-identity { align-items: flex-start; }
 
   .cd-summary {
     white-space: normal;

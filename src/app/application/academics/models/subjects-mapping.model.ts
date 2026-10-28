@@ -1,7 +1,6 @@
 export type SubjectType = 'ACADEMIC_SUBJECT' | 'PRACTICAL_LAB' | 'ACTIVITY';
 export type SubjectStatusFilter = 'ACTIVE' | 'INACTIVE';
 export type SubjectRequirement = 'COMPULSORY' | 'OPTIONAL';
-export type SubjectMappingScope = 'ALL_SECTIONS' | 'SELECTED_SECTIONS';
 export type SubjectTimetablePreference = 'ANY' | 'FIRST_HALF' | 'SECOND_HALF';
 
 /** Reusable catalog subject. No year, group, or weekly periods. */
@@ -11,7 +10,6 @@ export interface SubjectResponse {
   code: string;
   subjectType: SubjectType;
   description?: string | null;
-  defaultLessonDurationMin?: number | null;
   defaultTimetablePreference?: SubjectTimetablePreference | null;
   active: boolean;
   /** Active curriculum mappings across all academic years. */
@@ -26,10 +24,8 @@ export interface SubjectResponse {
 
 export interface SubjectRequest {
   name: string;
-  code?: string;
   subjectType: SubjectType;
   description?: string;
-  defaultLessonDurationMin?: number | null;
   defaultTimetablePreference?: SubjectTimetablePreference | null;
 }
 
@@ -53,18 +49,8 @@ export interface SubjectUsageResponse {
   requirement: SubjectRequirement;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  scope: SubjectMappingScope;
-  /** Covered sections. */
   sectionCount: number;
-  /** Active sections in the group. */
   totalSectionCount: number;
-  active: boolean;
-}
-
-export interface SubjectMappingSection {
-  sectionId: number;
-  name: string;
-  code?: string | null;
   active: boolean;
 }
 
@@ -78,12 +64,8 @@ export interface SubjectMappingRow {
   requirement: SubjectRequirement;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  scope: SubjectMappingScope;
   choiceGroup?: string | null;
   consecutivePeriods?: number;
-  sectionIds: number[];
-  sectionNames: string[];
-  totalSectionCount: number;
   teacherAllocationCount: number;
   timetableEntryCount: number;
 }
@@ -96,8 +78,6 @@ export interface SubjectMappingBoard {
   academicYearName: string;
   academicYearStatus: string;
   yearReadOnly: boolean;
-  hasSections: boolean;
-  sections: SubjectMappingSection[];
   mappings: SubjectMappingRow[];
   mappedCount: number;
   compulsoryCount: number;
@@ -110,6 +90,7 @@ export interface AvailableSubjectResponse {
   subjectName: string;
   subjectCode: string;
   subjectType: SubjectType;
+  defaultTimetablePreference?: SubjectTimetablePreference | null;
   subjectActive: boolean;
   mapped: boolean;
   mappingId: number | null;
@@ -120,10 +101,8 @@ export interface SubjectMappingUpsert {
   requirement: SubjectRequirement;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  scope: SubjectMappingScope;
   choiceGroup?: string | null;
   consecutivePeriods?: number;
-  sectionIds: number[];
 }
 
 export interface SubjectMappingSaveRequest {
@@ -151,7 +130,6 @@ export interface SubjectMappingImpactResponse {
 export const ACADEMICS_SUBJECTS_RESOURCE = 'ACADEMICS_SUBJECTS';
 
 export const SUBJECT_NAME_MAX = 150;
-export const SUBJECT_CODE_MAX = 50;
 export const SUBJECT_DESCRIPTION_MAX = 300;
 export const SUBJECT_WEEKLY_PERIODS_MIN = 1;
 export const SUBJECT_WEEKLY_PERIODS_MAX = 40;

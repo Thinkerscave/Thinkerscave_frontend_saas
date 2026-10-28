@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { of, Subject, throwError } from 'rxjs';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import { SubjectResponse } from '../../../models/subjects-mapping.model';
@@ -27,7 +28,10 @@ describe('SubjectFormDialogComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [SubjectFormDialogComponent],
-      providers: [{ provide: SubjectsMappingApiService, useValue: api }]
+      providers: [
+        provideNoopAnimations(),
+        { provide: SubjectsMappingApiService, useValue: api }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SubjectFormDialogComponent);
@@ -50,15 +54,23 @@ describe('SubjectFormDialogComponent', () => {
     expect(component.fieldError('name')).not.toBeNull();
   });
 
-  it('trims the name and omits a blank code so the backend generates it', () => {
-    component.form.patchValue({ name: '  Mathematics  ', code: '  ', subjectType: 'ACADEMIC_SUBJECT', description: '' });
+  it('trims the name and omits the generated code so the backend assigns the unique value', () => {
+    component.form.patchValue({ name: '  Mathematics  ', subjectType: 'ACADEMIC_SUBJECT', description: '' });
     component.submit();
     expect(api.createSubject).toHaveBeenCalledWith({
       name: 'Mathematics',
-      code: undefined,
       subjectType: 'ACADEMIC_SUBJECT',
+      defaultTimetablePreference: null,
       description: undefined
     });
+  });
+
+  it('shows a generated code preview from the subject name', () => {
+    component.form.patchValue({ name: 'Mathematics' });
+    expect(component.codePreview).toBe('MAT');
+
+    component.form.patchValue({ name: '9' });
+    expect(component.codePreview).toBe('SUB');
   });
 
   it('emits saved with created=true on create', () => {
@@ -89,13 +101,13 @@ describe('SubjectFormDialogComponent', () => {
       message: 'Validation failed',
       errors: [{ field: 'name', message: 'Subject name already exists' }]
     })));
-    component.form.patchValue({ name: 'Mathematics', code: 'MAT', subjectType: 'ACADEMIC_SUBJECT' });
+    component.form.patchValue({ name: 'Mathematics', subjectType: 'ACADEMIC_SUBJECT' });
     component.submit();
     fixture.detectChanges();
 
     expect(component.fieldError('name')).toBe('Subject name already exists');
     expect(component.formError).toBeNull();
-    expect(component.form.getRawValue()).toEqual(jasmine.objectContaining({ name: 'Mathematics', code: 'MAT', subjectType: 'ACADEMIC_SUBJECT' }));
+    expect(component.form.getRawValue()).toEqual(jasmine.objectContaining({ name: 'Mathematics', subjectType: 'ACADEMIC_SUBJECT' }));
     expect(component.saving).toBeFalse();
   });
 
@@ -114,8 +126,14 @@ describe('SubjectFormDialogComponent', () => {
     fixture.detectChanges();
 
     expect(component.form.getRawValue().name).toBe('Mathematics');
+    expect(component.codePreview).toBe('MAT');
+    component.form.patchValue({ name: 'Algebra' });
+    expect(component.codePreview).toBe('MAT');
     component.submit();
-    expect(api.updateSubject).toHaveBeenCalledWith(9, jasmine.objectContaining({ name: 'Mathematics', code: 'MAT' }));
+    expect(api.updateSubject).toHaveBeenCalledWith(9, jasmine.objectContaining({
+      name: 'Algebra',
+      defaultTimetablePreference: null
+    }));
     expect(api.createSubject).not.toHaveBeenCalled();
   });
 });

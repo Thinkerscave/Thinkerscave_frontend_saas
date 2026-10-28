@@ -11,12 +11,11 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { MenuModule } from 'primeng/menu';
-import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, expand, finalize, reduce } from 'rxjs';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
@@ -40,7 +39,6 @@ import {
   SubjectMappingBoard,
   SubjectMappingImpact,
   SubjectMappingSaveRequest,
-  SubjectMappingScope,
   SubjectType,
   TIMETABLE_PREFERENCE_OPTIONS,
   subjectTypeIcon,
@@ -56,9 +54,7 @@ import {
   draftStatus,
   isValidWeeklyPeriods,
   newDraftRow,
-  normalizeSectionIds,
   requirementLabel,
-  sectionsLabel,
   validateDraft
 } from './subject-mapping.util';
 
@@ -66,9 +62,6 @@ interface ContextOption {
   label: string;
   value: number;
 }
-
-const SCOPE_ALL: SubjectMappingScope = 'ALL_SECTIONS';
-const SCOPE_SELECTED: SubjectMappingScope = 'SELECTED_SECTIONS';
 
 function toPositiveId(value: string | null): number | null {
   const n = Number(value);
@@ -87,7 +80,6 @@ function toPositiveId(value: string | null): number | null {
     AppPaginatorComponent,
     DropdownModule,
     DialogModule,
-    MenuModule,
     ConfirmDialogModule
   ],
   providers: [ConfirmationService],
@@ -115,13 +107,10 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   readonly pageSizeOptions = [10, 20, 50];
   readonly weeklyMin = SUBJECT_WEEKLY_PERIODS_MIN;
   readonly weeklyMax = SUBJECT_WEEKLY_PERIODS_MAX;
-  readonly scopeAll = SCOPE_ALL;
-  readonly scopeSelected = SCOPE_SELECTED;
   readonly typeLabel = subjectTypeLabel;
   readonly typeIcon = subjectTypeIcon;
   readonly typeTone = subjectTypeTone;
   readonly requirementLabel = requirementLabel;
-  readonly sectionsLabel = sectionsLabel;
 
   private readonly availableSearch$ = new Subject<string>();
 
@@ -132,8 +121,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   groupId: number | null = null;
   private lastYearId: number | null = null;
   private lastGroupId: number | null = null;
-  scope: SubjectMappingScope = SCOPE_ALL;
-  selectedSectionIds: number[] = [];
   private preselectedSubjectId: number | null = null;
 
   // Board and draft
@@ -153,21 +140,16 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   availableType: SubjectType | null = null;
   availableLoading = false;
   availableError: string | null = null;
+  selectingAllAvailable = false;
+  private allAvailableFilterKey: string | null = null;
+  private allAvailableSubjectIds = new Set<number>();
+  private allAvailableSelectedIds = new Set<number>();
 
   // Save
   saving = false;
-  formError: string | null = null;
   impactDialogOpen = false;
   impacts: SubjectMappingImpact[] = [];
   private pendingSave: SubjectMappingSaveRequest | null = null;
-
-  // Row menu and section dialog
-  rowMenuItems: MenuItem[] = [];
-  sectionsDialogOpen = false;
-  private sectionsEditingSubjectId: number | null = null;
-  sectionsDraftScope: SubjectMappingScope = SCOPE_ALL;
-  sectionsDraftIds: number[] = [];
-  sectionsError: string | null = null;
 
   ngOnInit(): void {
     this.pageHeader.setPageHeader({
@@ -246,20 +228,14 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     return this.yearId != null && this.groupId != null;
   }
 
-  get hasSections(): boolean {
-    return !!this.board?.hasSections;
-  }
-
-  get activeSections() {
-    return this.board?.sections ?? [];
-  }
-
-  get totalSections(): number {
-    return this.activeSections.length;
-  }
-
   get mappedCount(): number {
     return this.rows.filter((row) => !row.removed).length;
+  }
+
+  get totalWeeklyPeriods(): number {
+    return this.rows
+      .filter((row) => !row.removed)
+      .reduce((total, row) => total + (Number(row.weeklyPeriods) || 0), 0);
   }
 
   get stagedCount(): number {
@@ -272,6 +248,23 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   get canSave(): boolean {
     return this.editable && this.contextReady && this.changeCount > 0;
+  }
+
+  get allAvailableSelected(): boolean {
+    return this.allAvailableFilterKey === this.availableFilterKey
+      && this.allAvailableSubjectIds.size > 0
+      && this.allAvailableSelectedIds.size === this.allAvailableSubjectIds.size;
+  }
+
+  get someAvailableSelected(): boolean {
+    if (this.allAvailableFilterKey === this.availableFilterKey && this.allAvailableSubjectIds.size > 0) {
+      return this.allAvailableSelectedIds.size > 0 && !this.allAvailableSelected;
+    }
+    return this.availableRows.some((item) => this.isChecked(item));
+  }
+
+  private get availableFilterKey(): string {
+    return `${this.groupId ?? ''}|${this.availableQuery.trim().toLowerCase()}|${this.availableType ?? ''}`;
   }
 
   // ───── Context selection ─────
@@ -300,8 +293,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       this.resetDraft();
       this.board = null;
       this.boardError = null;
-      this.scope = SCOPE_ALL;
-      this.selectedSectionIds = [];
       if (value != null) {
         this.loadBoard();
       }
@@ -311,36 +302,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       this.groupId = this.lastGroupId;
       this.cdr.markForCheck();
     });
-  }
-
-  onScopeSelect(next: SubjectMappingScope): void {
-    if (!this.editable || next === this.scope) return;
-    if (this.changeCount === 0) {
-      this.scope = next;
-      this.cdr.markForCheck();
-      return;
-    }
-    this.confirm.confirm({
-      header: 'Change section scope?',
-      message: 'Your unsaved changes stay on this page. The new section scope applies to subjects you add from now on, and existing subject sections are not changed.',
-      acceptLabel: 'Change scope',
-      accept: () => {
-        this.scope = next;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  toggleSelectedSection(sectionId: number): void {
-    if (!this.editable) return;
-    this.selectedSectionIds = this.selectedSectionIds.includes(sectionId)
-      ? this.selectedSectionIds.filter((id) => id !== sectionId)
-      : normalizeSectionIds([...this.selectedSectionIds, sectionId]);
-    this.cdr.markForCheck();
-  }
-
-  isSectionSelected(sectionId: number): boolean {
-    return this.selectedSectionIds.includes(sectionId);
   }
 
   backToDirectory(): void {
@@ -414,17 +375,12 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Replaces the baseline with the server board. `fresh` resets the section scope for a new context. */
+  /** Replaces the baseline with the server board. */
   private applyBoard(board: SubjectMappingBoard, fresh: boolean): void {
     this.board = board;
     this.rows = (board.mappings ?? []).map(draftFromSaved);
     if (fresh) {
-      this.scope = SCOPE_ALL;
-      this.selectedSectionIds = [];
       this.stagePreselectedSubject();
-    }
-    if (!board.hasSections) {
-      this.scope = SCOPE_ALL;
     }
     this.cdr.markForCheck();
   }
@@ -450,6 +406,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
           subjectName: subject.name,
           subjectCode: subject.code,
           subjectType: subject.subjectType,
+          defaultTimetablePreference: subject.defaultTimetablePreference,
           subjectActive: subject.active
         });
         this.cdr.markForCheck();
@@ -459,7 +416,10 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   loadAvailable(reset = false): void {
-    if (reset) this.availablePage = 0;
+    if (reset) {
+      this.availablePage = 0;
+      this.clearAllAvailableSelection();
+    }
     if (this.groupId == null) {
       this.availableRows = [];
       this.availableTotal = 0;
@@ -507,6 +467,65 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.loadAvailable(false);
   }
 
+  toggleAllAvailable(checked: boolean): void {
+    if (!this.editable || this.selectingAllAvailable || this.groupId == null) return;
+    const groupId = this.groupId;
+    const filterKey = this.availableFilterKey;
+    this.selectingAllAvailable = true;
+    this.cdr.markForCheck();
+    this.loadAllAvailableSubjects(groupId)
+      .pipe(finalize(() => {
+        this.selectingAllAvailable = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: (subjects) => {
+          if (groupId !== this.groupId || filterKey !== this.availableFilterKey) return;
+          const eligible = subjects.filter((item) => this.canToggle(item));
+          this.allAvailableFilterKey = filterKey;
+          this.allAvailableSubjectIds = new Set(eligible.map((item) => item.subjectId));
+          this.allAvailableSelectedIds = new Set(checked ? this.allAvailableSubjectIds : []);
+          for (const item of eligible) {
+            if (this.isChecked(item) !== checked) {
+              this.applyAvailableToggle(item, checked);
+            }
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => this.messages.add({
+          severity: 'error',
+          summary: 'Unable to select subjects',
+          detail: extractApiError(err, 'Could not load all subjects matching the current filters.').message
+        })
+      });
+  }
+
+  private loadAllAvailableSubjects(groupId: number) {
+    const query = {
+      q: this.availableQuery.trim() || undefined,
+      subjectType: this.availableType
+    };
+    return this.subjectsApi.listAvailableSubjects(groupId, {
+      ...query,
+      page: 0,
+      size: 100
+    }).pipe(
+      expand((response) => {
+        const nextPage = (response.page ?? response.number ?? 0) + 1;
+        return nextPage < response.totalPages
+          ? this.subjectsApi.listAvailableSubjects(groupId, { ...query, page: nextPage, size: 100 })
+          : EMPTY;
+      }),
+      reduce((subjects, response) => [...subjects, ...(response.content ?? [])], [] as AvailableSubjectResponse[])
+    );
+  }
+
+  private clearAllAvailableSelection(): void {
+    this.allAvailableFilterKey = null;
+    this.allAvailableSubjectIds.clear();
+    this.allAvailableSelectedIds.clear();
+  }
+
   // ───── Available list staging ─────
 
   private rowFor(subjectId: number): DraftRow | undefined {
@@ -525,6 +544,15 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   onAvailableToggle(item: AvailableSubjectResponse, checked: boolean): void {
     if (!this.canToggle(item)) return;
+    this.applyAvailableToggle(item, checked);
+    if (this.allAvailableFilterKey === this.availableFilterKey && this.allAvailableSubjectIds.has(item.subjectId)) {
+      if (checked) this.allAvailableSelectedIds.add(item.subjectId);
+      else this.allAvailableSelectedIds.delete(item.subjectId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private applyAvailableToggle(item: AvailableSubjectResponse, checked: boolean): void {
     const row = this.rowFor(item.subjectId);
     if (checked) {
       if (row) {
@@ -535,6 +563,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
           subjectName: item.subjectName,
           subjectCode: item.subjectCode,
           subjectType: item.subjectType,
+          defaultTimetablePreference: item.defaultTimetablePreference,
           subjectActive: item.subjectActive
         });
       }
@@ -547,7 +576,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
         this.rows = this.rows.filter((r) => r !== row);
       }
     }
-    this.cdr.markForCheck();
   }
 
   addSelectedSubjects(): void {
@@ -556,20 +584,12 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  /** Moves staged subjects into the mapped table with defaults. Returns false when the scope is incomplete. */
-  private commitStaged(): boolean {
-    if (this.staged.size === 0) return true;
-    const sectionIds = this.scope === SCOPE_SELECTED ? normalizeSectionIds(this.selectedSectionIds) : [];
-    if (this.scope === SCOPE_SELECTED && sectionIds.length === 0) {
-      this.formError = 'Select at least one section for Selected Sections, or switch to All Sections, before adding subjects.';
-      this.cdr.markForCheck();
-      return false;
-    }
-    const added = [...this.staged.values()].map((ref) => newDraftRow(ref, this.scope, sectionIds));
+  /** Moves staged subjects into the mapped table with curriculum defaults. */
+  private commitStaged(): void {
+    if (this.staged.size === 0) return;
+    const added = [...this.staged.values()].map((ref) => newDraftRow(ref));
     this.rows = [...this.rows, ...added];
     this.staged.clear();
-    this.formError = null;
-    return true;
   }
 
   // ───── Mapped table ─────
@@ -596,13 +616,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  sectionNamesFor(row: DraftRow): string {
-    return this.activeSections
-      .filter((section) => row.sectionIds.includes(section.sectionId))
-      .map((section) => section.name)
-      .join(', ');
-  }
-
   markRowChanged(): void {
     this.cdr.markForCheck();
   }
@@ -613,92 +626,23 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.markRowChanged();
   }
 
-  buildRowMenu(row: DraftRow): void {
-    if (!this.showMutations) {
-      this.rowMenuItems = [];
-      return;
-    }
-    if (row.removed) {
-      this.rowMenuItems = [{ label: 'Undo removal', icon: 'pi pi-undo', command: () => this.undoRemoval(row) }];
-      return;
-    }
-    const items: MenuItem[] = [];
-    if (this.hasSections) {
-      items.push({ label: 'Edit sections', icon: 'pi pi-th-large', command: () => this.openSectionsDialog(row) });
-    }
-    items.push({
-      label: 'Scheduling preference',
-      icon: 'pi pi-clock',
-      items: this.preferenceOptions.map((option) => ({
-        label: option.label,
-        icon: row.timetablePreference === option.value ? 'pi pi-check' : 'pi pi-circle',
-        command: () => {
-          row.timetablePreference = option.value;
-          this.cdr.markForCheck();
-        }
-      }))
-    });
-    items.push({ label: 'Remove from mapping', icon: 'pi pi-trash', command: () => this.removeRow(row) });
-    this.rowMenuItems = items;
-  }
-
-  private removeRow(row: DraftRow): void {
+  removeRow(row: DraftRow): void {
     if (row.saved) {
       row.removed = true;
     } else {
       this.rows = this.rows.filter((r) => r !== row);
     }
-    this.cdr.markForCheck();
-  }
-
-  private undoRemoval(row: DraftRow): void {
-    row.removed = false;
-    this.cdr.markForCheck();
-  }
-
-  // ───── Section dialog (per subject) ─────
-
-  openSectionsDialog(row: DraftRow): void {
-    this.sectionsEditingSubjectId = row.subjectId;
-    this.sectionsDraftScope = row.scope;
-    this.sectionsDraftIds = [...row.sectionIds];
-    this.sectionsError = null;
-    this.sectionsDialogOpen = true;
-  }
-
-  get sectionsEditingRow(): DraftRow | undefined {
-    return this.sectionsEditingSubjectId == null ? undefined : this.rowFor(this.sectionsEditingSubjectId);
-  }
-
-  setSectionsDraftScope(scope: SubjectMappingScope): void {
-    this.sectionsDraftScope = scope;
-    this.sectionsError = null;
-    this.cdr.markForCheck();
-  }
-
-  toggleSectionsDraft(sectionId: number): void {
-    this.sectionsDraftIds = this.sectionsDraftIds.includes(sectionId)
-      ? this.sectionsDraftIds.filter((id) => id !== sectionId)
-      : normalizeSectionIds([...this.sectionsDraftIds, sectionId]);
-    this.sectionsError = null;
-    this.cdr.markForCheck();
-  }
-
-  isSectionsDraftSelected(sectionId: number): boolean {
-    return this.sectionsDraftIds.includes(sectionId);
-  }
-
-  applySectionsDraft(): void {
-    const row = this.sectionsEditingRow;
-    if (!row) return;
-    if (this.sectionsDraftScope === SCOPE_SELECTED && this.sectionsDraftIds.length === 0) {
-      this.sectionsError = 'Select at least one section, or choose All Sections.';
-      this.cdr.markForCheck();
-      return;
+    if (this.allAvailableFilterKey === this.availableFilterKey && this.allAvailableSubjectIds.has(row.subjectId)) {
+      this.allAvailableSelectedIds.delete(row.subjectId);
     }
-    row.scope = this.sectionsDraftScope;
-    row.sectionIds = this.sectionsDraftScope === SCOPE_SELECTED ? normalizeSectionIds(this.sectionsDraftIds) : [];
-    this.sectionsDialogOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  undoRemoval(row: DraftRow): void {
+    row.removed = false;
+    if (this.allAvailableFilterKey === this.availableFilterKey && this.allAvailableSubjectIds.has(row.subjectId)) {
+      this.allAvailableSelectedIds.add(row.subjectId);
+    }
     this.cdr.markForCheck();
   }
 
@@ -706,19 +650,20 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   save(): void {
     if (!this.showMutations || this.saving || !this.contextReady || !this.board) return;
-    this.formError = null;
-    if (!this.commitStaged()) return;
+    this.commitStaged();
     if (this.changeCount === 0) return;
 
     const errors = validateDraft({
       academicYearId: this.yearId,
       academicGroupId: this.groupId,
-      rows: this.rows,
-      activeSectionIds: this.activeSections.map((s) => s.sectionId)
+      rows: this.rows
     });
     if (errors.length) {
-      this.formError = errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length - 1} more issue${errors.length > 2 ? 's' : ''})`;
-      this.cdr.markForCheck();
+      this.messages.add({
+        severity: 'error',
+        summary: 'Subject mapping needs attention',
+        detail: errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length - 1} more issue${errors.length > 2 ? 's' : ''})`
+      });
       return;
     }
 
@@ -740,7 +685,11 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.saving = false;
-        this.formError = extractApiError(err, 'Unable to validate subject mapping. Your changes are still here.').message;
+        this.messages.add({
+          severity: 'error',
+          summary: 'Unable to validate subject mapping',
+          detail: extractApiError(err, 'Your changes are still here.').message
+        });
         this.cdr.markForCheck();
       }
     });
@@ -782,7 +731,11 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.saving = false;
-        this.formError = extractApiError(err, 'Unable to save subject mapping. Your changes are still here.').message;
+        this.messages.add({
+          severity: 'error',
+          summary: 'Unable to save subject mapping',
+          detail: extractApiError(err, 'Your changes are still here.').message
+        });
         this.cdr.markForCheck();
       }
     });
@@ -813,7 +766,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   private resetDraft(): void {
     this.rows = [];
     this.staged.clear();
-    this.formError = null;
     this.impactDialogOpen = false;
     this.pendingSave = null;
     this.cdr.markForCheck();

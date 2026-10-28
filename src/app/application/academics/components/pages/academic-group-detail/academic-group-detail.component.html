@@ -1,6 +1,7 @@
 <p-confirmDialog></p-confirmDialog>
 <p-menu #sectionMenu [popup]="true" [model]="menuItems"></p-menu>
-<p-menu #groupMenu [popup]="true" [model]="groupMenuItems"></p-menu>
+<p-menu #groupMenu [popup]="true" [model]="groupMenuItems" appendTo="body"
+  styleClass="academic-group-actions-menu"></p-menu>
 
 <div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
   <tc-saas-page-header [shellActions]="true">
@@ -23,23 +24,20 @@
     </button>
   </tc-saas-page-header>
 
-  <header class="cd-identity">
-    <div class="cd-identity__title">
-      <p class="cd-identity__meta">
-        <code>{{ c.code }}</code>
-        <span aria-hidden="true">·</span>
-        <span>{{ c.academicYearName || 'Academic year' }}</span>
-        <ng-container *ngIf="c.stage">
-          <span aria-hidden="true">·</span>
-          <span>{{ stageLabel(c.stage) }}</span>
-        </ng-container>
-        <span aria-hidden="true">·</span>
+  <header class="cd-identity" aria-label="Academic group summary">
+    <span class="cd-identity__icon" aria-hidden="true"><i class="pi pi-users"></i></span>
+    <div class="cd-identity__body">
+      <div class="cd-identity__meta">
+        <span class="cd-identity__kind">Academic Group</span>
         <span class="cd-status" [class.cd-status--active]="c.active" [class.cd-status--inactive]="!c.active">
           {{ c.active ? 'Active' : 'Inactive' }}
         </span>
-        <span class="cd-readonly" *ngIf="c.yearReadOnly">· Historical · Read only</span>
+      </div>
+      <p class="cd-identity__details">
+        <code>{{ c.code }}</code>
+        <span aria-hidden="true">·</span>
+        <span>{{ c.academicYearName || '—' }}</span>
       </p>
-      <p class="cd-identity__desc" *ngIf="c.description">{{ c.description }}</p>
     </div>
   </header>
 
@@ -89,11 +87,7 @@
         </button>
       </div>
       <dl class="cd-info">
-        <div><dt>Group Name</dt><dd>{{ c.name }}</dd></div>
-        <div><dt>Group Code</dt><dd><code>{{ c.code }}</code></dd></div>
-        <div><dt>Academic Year</dt><dd>{{ c.academicYearName || '—' }}</dd></div>
         <div><dt>Classification</dt><dd>{{ c.stage ? stageLabel(c.stage) : 'Not set' }}</dd></div>
-        <div><dt>Status</dt><dd>{{ c.active ? 'Active' : 'Inactive' }}</dd></div>
         <div><dt>Description</dt><dd>{{ c.description || 'No description' }}</dd></div>
       </dl>
     </section>

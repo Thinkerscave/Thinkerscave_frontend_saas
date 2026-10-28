@@ -17,7 +17,6 @@ import { finalize } from 'rxjs';
 import { extractApiError } from '../../../../../shared/utils/api-error.util';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import {
-  SUBJECT_CODE_MAX,
   SUBJECT_DESCRIPTION_MAX,
   SUBJECT_NAME_MAX,
   SUBJECT_TYPE_OPTIONS,
@@ -54,7 +53,6 @@ export class SubjectFormDialogComponent implements OnChanges {
 
   readonly typeOptions = SUBJECT_TYPE_OPTIONS;
   readonly nameMax = SUBJECT_NAME_MAX;
-  readonly codeMax = SUBJECT_CODE_MAX;
   readonly descriptionMax = SUBJECT_DESCRIPTION_MAX;
   readonly preferenceOptions = TIMETABLE_PREFERENCE_OPTIONS;
 
@@ -64,9 +62,7 @@ export class SubjectFormDialogComponent implements OnChanges {
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(SUBJECT_NAME_MAX), notBlank]],
-    code: ['', [Validators.maxLength(SUBJECT_CODE_MAX)]],
     subjectType: [null as SubjectType | null, [Validators.required]],
-    defaultLessonDurationMin: [null as number | null],
     defaultTimetablePreference: [null as SubjectTimetablePreference | null],
     description: ['', [Validators.maxLength(SUBJECT_DESCRIPTION_MAX)]]
   });
@@ -77,6 +73,14 @@ export class SubjectFormDialogComponent implements OnChanges {
 
   get descriptionLength(): number {
     return String(this.form.controls.description.value ?? '').length;
+  }
+
+  get codePreview(): string | null {
+    if (this.subject) return this.subject.code;
+    const name = String(this.form.controls.name.value ?? '').trim();
+    if (!name) return null;
+    const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase();
+    return letters.length >= 3 ? letters.slice(0, 3) : (letters + 'SUB').slice(0, 3);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -94,7 +98,7 @@ export class SubjectFormDialogComponent implements OnChanges {
     this.onDialogVisibleChange(false);
   }
 
-  fieldError(name: 'name' | 'code' | 'subjectType' | 'description'): string | null {
+  fieldError(name: 'name' | 'subjectType' | 'description'): string | null {
     const control = this.form.get(name);
     const errors = control?.errors;
     if (!control || !errors || (!control.touched && !this.submitted && !errors['server'])) return null;
@@ -118,11 +122,7 @@ export class SubjectFormDialogComponent implements OnChanges {
     const value = this.form.getRawValue();
     const body: SubjectRequest = {
       name: String(value.name ?? '').trim(),
-      code: String(value.code ?? '').trim() || undefined,
       subjectType: value.subjectType as SubjectType,
-      defaultLessonDurationMin: value.defaultLessonDurationMin == null
-        || String(value.defaultLessonDurationMin).trim() === ''
-        ? null : Number(value.defaultLessonDurationMin),
       defaultTimetablePreference: value.defaultTimetablePreference as SubjectTimetablePreference | null || null,
       description: String(value.description ?? '').trim() || undefined
     };
@@ -149,9 +149,7 @@ export class SubjectFormDialogComponent implements OnChanges {
   private resetForm(): void {
     this.form.reset({
       name: this.subject?.name ?? '',
-      code: this.subject?.code ?? '',
       subjectType: this.subject?.subjectType ?? null,
-      defaultLessonDurationMin: this.subject?.defaultLessonDurationMin ?? null,
       defaultTimetablePreference: this.subject?.defaultTimetablePreference ?? null,
       description: this.subject?.description ?? ''
     });

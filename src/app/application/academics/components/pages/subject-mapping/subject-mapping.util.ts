@@ -4,7 +4,6 @@ import {
   SUBJECT_WEEKLY_PERIODS_MIN,
   SubjectMappingRow,
   SubjectMappingSaveRequest,
-  SubjectMappingScope,
   SubjectRequirement,
   SubjectTimetablePreference,
   SubjectType
@@ -16,6 +15,7 @@ export interface SubjectRef {
   subjectName: string;
   subjectCode: string;
   subjectType: SubjectType;
+  defaultTimetablePreference?: SubjectTimetablePreference | null;
   subjectActive: boolean;
 }
 
@@ -24,19 +24,13 @@ export interface DraftRow extends SubjectRef {
   requirement: SubjectRequirement;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  scope: SubjectMappingScope;
   choiceGroup: string | null;
   consecutivePeriods: number;
-  sectionIds: number[];
   saved: SubjectMappingRow | null;
   removed: boolean;
 }
 
 export type DraftStatus = 'MAPPED' | 'NEW' | 'MODIFIED' | 'REMOVED';
-
-export function normalizeSectionIds(ids: readonly number[]): number[] {
-  return [...new Set(ids)].sort((a, b) => a - b);
-}
 
 export function isValidWeeklyPeriods(value: unknown): boolean {
   if (value === null || value === undefined || value === '') return false;
@@ -54,48 +48,35 @@ export function draftFromSaved(row: SubjectMappingRow): DraftRow {
     requirement: row.requirement,
     weeklyPeriods: row.weeklyPeriods,
     timetablePreference: row.timetablePreference,
-    scope: row.scope,
     choiceGroup: row.choiceGroup ?? null,
     consecutivePeriods: row.consecutivePeriods ?? 1,
-    sectionIds: normalizeSectionIds(row.sectionIds ?? []),
     saved: row,
     removed: false
   };
 }
 
 /** Defaults for a subject staged with "Add Selected Subjects". */
-export function newDraftRow(ref: SubjectRef, scope: SubjectMappingScope, sectionIds: readonly number[]): DraftRow {
+export function newDraftRow(ref: SubjectRef): DraftRow {
   return {
     ...ref,
     requirement: 'COMPULSORY',
     weeklyPeriods: 1,
-    timetablePreference: 'ANY',
-    scope,
+    timetablePreference: ref.defaultTimetablePreference ?? 'ANY',
     choiceGroup: null,
     consecutivePeriods: 1,
-    sectionIds: scope === 'SELECTED_SECTIONS' ? normalizeSectionIds(sectionIds) : [],
     saved: null,
     removed: false
   };
 }
 
-function effectiveSectionIds(row: { scope: SubjectMappingScope; sectionIds: readonly number[] }): number[] {
-  return row.scope === 'SELECTED_SECTIONS' ? normalizeSectionIds(row.sectionIds) : [];
-}
-
 export function isModified(row: DraftRow): boolean {
   const saved = row.saved;
   if (!saved) return true;
-  const savedIds = normalizeSectionIds(saved.scope === 'SELECTED_SECTIONS' ? saved.sectionIds ?? [] : []);
-  const currentIds = effectiveSectionIds(row);
-  const sameSections = savedIds.length === currentIds.length && savedIds.every((id, i) => id === currentIds[i]);
   return row.requirement !== saved.requirement
     || Number(row.weeklyPeriods) !== saved.weeklyPeriods
     || row.timetablePreference !== saved.timetablePreference
-    || row.scope !== saved.scope
     || (row.choiceGroup ?? null) !== (saved.choiceGroup ?? null)
-    || (row.consecutivePeriods ?? 1) !== (saved.consecutivePeriods ?? 1)
-    || !sameSections;
+    || (row.consecutivePeriods ?? 1) !== (saved.consecutivePeriods ?? 1);
 }
 
 export function draftStatus(row: DraftRow): DraftStatus {
@@ -109,13 +90,6 @@ export function countChanges(rows: readonly DraftRow[], stagedCount: number): nu
   return rows.filter((row) => draftStatus(row) !== 'MAPPED').length + stagedCount;
 }
 
-export function sectionsLabel(row: { scope: SubjectMappingScope; sectionIds: readonly number[] }, totalSections: number): string {
-  if (row.scope === 'ALL_SECTIONS' || totalSections === 0 || row.sectionIds.length >= totalSections) {
-    return 'All Sections';
-  }
-  return `${row.sectionIds.length} of ${totalSections} sections`;
-}
-
 export function requirementLabel(value: SubjectRequirement): string {
   return REQUIREMENT_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
@@ -125,13 +99,11 @@ export function validateDraft(params: {
   academicYearId: number | null;
   academicGroupId: number | null;
   rows: readonly DraftRow[];
-  activeSectionIds: readonly number[];
 }): string[] {
   const errors: string[] = [];
   if (!params.academicYearId) errors.push('Select an academic year.');
   if (!params.academicGroupId) errors.push('Select an academic group.');
   const seen = new Set<number>();
-  const activeIds = new Set(params.activeSectionIds);
   for (const row of params.rows) {
     if (row.removed) continue;
     if (seen.has(row.subjectId)) {
@@ -141,14 +113,6 @@ export function validateDraft(params: {
     seen.add(row.subjectId);
     if (!isValidWeeklyPeriods(row.weeklyPeriods)) {
       errors.push(`${row.subjectName}: weekly periods must be a whole number from ${SUBJECT_WEEKLY_PERIODS_MIN} to ${SUBJECT_WEEKLY_PERIODS_MAX}.`);
-    }
-    if (row.scope === 'SELECTED_SECTIONS') {
-      const ids = normalizeSectionIds(row.sectionIds);
-      if (ids.length === 0) {
-        errors.push(`${row.subjectName}: select at least one section, or use All Sections.`);
-      } else if (ids.some((id) => !activeIds.has(id))) {
-        errors.push(`${row.subjectName}: one or more selected sections are no longer active.`);
-      }
     }
   }
   return errors;
@@ -165,10 +129,8 @@ export function buildSaveRequest(academicYearId: number, rows: readonly DraftRow
       requirement: row.requirement,
       weeklyPeriods: Number(row.weeklyPeriods),
       timetablePreference: row.timetablePreference,
-      scope: row.scope,
       choiceGroup: row.choiceGroup?.trim() || null,
-      consecutivePeriods: Number(row.consecutivePeriods) || 1,
-      sectionIds: effectiveSectionIds(row)
+      consecutivePeriods: Number(row.consecutivePeriods) || 1
     }));
   const removedSubjectIds = rows
     .filter((row) => row.removed && row.saved)

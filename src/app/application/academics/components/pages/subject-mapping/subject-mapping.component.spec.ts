@@ -31,15 +31,10 @@ const BOARD: SubjectMappingBoard = {
   academicYearName: '2026-27',
   academicYearStatus: 'CURRENT',
   yearReadOnly: false,
-  hasSections: true,
-  sections: [
-    { sectionId: 11, name: 'A', active: true },
-    { sectionId: 12, name: 'B', active: true }
-  ],
   mappings: [{
     mappingId: 101, subjectId: 5, subjectName: 'Mathematics', subjectCode: 'MATH', subjectType: 'ACADEMIC_SUBJECT',
-    subjectActive: true, requirement: 'COMPULSORY', weeklyPeriods: 5, timetablePreference: 'ANY', scope: 'ALL_SECTIONS',
-    sectionIds: [], sectionNames: [], totalSectionCount: 2, teacherAllocationCount: 0, timetableEntryCount: 0
+    subjectActive: true, requirement: 'COMPULSORY', weeklyPeriods: 5, timetablePreference: 'ANY',
+    teacherAllocationCount: 0, timetableEntryCount: 0
   }],
   mappedCount: 1,
   compulsoryCount: 1,
@@ -48,12 +43,18 @@ const BOARD: SubjectMappingBoard = {
 };
 
 const AVAILABLE: AvailableSubjectResponse[] = [
-  { subjectId: 5, subjectName: 'Mathematics', subjectCode: 'MATH', subjectType: 'ACADEMIC_SUBJECT', subjectActive: true, mapped: true, mappingId: 101 },
-  { subjectId: 6, subjectName: 'English', subjectCode: 'ENG', subjectType: 'ACADEMIC_SUBJECT', subjectActive: true, mapped: false, mappingId: null }
+  { subjectId: 5, subjectName: 'Mathematics', subjectCode: 'MATH', subjectType: 'ACADEMIC_SUBJECT', defaultTimetablePreference: 'SECOND_HALF', subjectActive: true, mapped: true, mappingId: 101 },
+  { subjectId: 6, subjectName: 'English', subjectCode: 'ENG', subjectType: 'ACADEMIC_SUBJECT', defaultTimetablePreference: 'FIRST_HALF', subjectActive: true, mapped: false, mappingId: null }
 ];
+
+const SCIENCE: AvailableSubjectResponse = {
+  subjectId: 7, subjectName: 'Science', subjectCode: 'SCI', subjectType: 'ACADEMIC_SUBJECT',
+  subjectActive: true, mapped: false, mappingId: null
+};
 
 const ENGLISH: SubjectResponse = {
   subjectId: 6, name: 'English', code: 'ENG', subjectType: 'ACADEMIC_SUBJECT', description: null,
+  defaultTimetablePreference: 'FIRST_HALF',
   active: true, mappedAcademicGroupCount: 0, mappedSectionCount: 0
 };
 
@@ -132,36 +133,16 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.isChecked(math())).toBeTrue();
     expect(component.isChecked(english())).toBeFalse();
     expect(component.statusLabel(component.rows[0])).toBe('Mapped');
+    expect(component.rows[0].timetablePreference).toBe('ANY');
     expect(component.changeCount).toBe(0);
   });
 
-  it('shows section checkboxes beside their names and stages the selected section', async () => {
+  it('removes section-scope controls and shows the weekly-period total', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
 
-    component.onScopeSelect('SELECTED_SECTIONS');
     fixture.detectChanges();
-
-    const sectionList = fixture.nativeElement.querySelector('.sub-section-picker') as HTMLElement;
-    const checkboxes = sectionList.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
-    expect(checkboxes.length).toBe(2);
-    expect(sectionList.textContent).toContain('A');
-    expect(sectionList.textContent).toContain('B');
-
-    checkboxes[0].checked = true;
-    checkboxes[0].dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-    expect(component.isSectionSelected(11)).toBeTrue();
-  });
-
-  it('uses the same checkbox selection in the per-subject section editor', async () => {
-    await setup({ academicYearId: '1', academicGroupId: '3' });
-
-    component.openSectionsDialog(component.rows[0]);
-    component.setSectionsDraftScope('SELECTED_SECTIONS');
-    fixture.detectChanges();
-
-    const sectionList = fixture.nativeElement.querySelector('.sub-dialog__sections') as HTMLElement;
-    expect(sectionList.querySelectorAll('input[type="checkbox"]').length).toBe(2);
+    expect(fixture.nativeElement.textContent).not.toContain('Section Scope');
+    expect(fixture.nativeElement.querySelector('.sub-period-total')?.textContent).toContain('5 weekly periods');
   });
 
   it('stages a subject preselected from Subject Details without saving it', async () => {
@@ -171,6 +152,7 @@ describe('SubjectMappingPageComponent', () => {
     component.onGroupChange(3);
     expect(subjectsApi.getSubject).toHaveBeenCalledWith(6);
     expect(component.staged.has(6)).toBeTrue();
+    expect(component.staged.get(6)?.defaultTimetablePreference).toBe('FIRST_HALF');
     expect(component.isChecked(english())).toBeTrue();
     expect(subjectsApi.saveMappings).not.toHaveBeenCalled();
   });
@@ -184,9 +166,42 @@ describe('SubjectMappingPageComponent', () => {
     expect(added).toBeDefined();
     expect(added!.requirement).toBe('COMPULSORY');
     expect(added!.weeklyPeriods).toBe(1);
-    expect(added!.timetablePreference).toBe('ANY');
+    expect(added!.timetablePreference).toBe('FIRST_HALF');
     expect(component.statusLabel(added!)).toBe('New');
     expect(subjectsApi.saveMappings).not.toHaveBeenCalled();
+  });
+
+  it('selects all matching subjects across every page and supports individual deselection', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listAvailableSubjects.and.callFake((_groupId, query) => {
+      const content = query.page === 0 ? AVAILABLE : [SCIENCE];
+      return of({
+        ...page(content),
+        page: query.page ?? 0,
+        number: query.page ?? 0,
+        size: 100,
+        totalElements: 3,
+        totalPages: 2,
+        first: query.page === 0,
+        last: query.page === 1
+      });
+    });
+
+    component.toggleAllAvailable(true);
+
+    expect(subjectsApi.listAvailableSubjects).toHaveBeenCalledWith(
+      3, jasmine.objectContaining({ page: 0, size: 100 })
+    );
+    expect(subjectsApi.listAvailableSubjects).toHaveBeenCalledWith(
+      3, jasmine.objectContaining({ page: 1, size: 100 })
+    );
+    expect(component.staged.has(6)).toBeTrue();
+    expect(component.staged.has(7)).toBeTrue();
+    expect(component.allAvailableSelected).toBeTrue();
+
+    component.onAvailableToggle(SCIENCE, false);
+    expect(component.staged.has(7)).toBeFalse();
+    expect(component.allAvailableSelected).toBeFalse();
   });
 
   it('unchecking a saved mapping stages a removal that Undo reverts', async () => {
@@ -201,22 +216,14 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.changeCount).toBe(0);
   });
 
-  it('asks for confirmation before changing scope with unsaved changes', async () => {
-    await setup({ academicYearId: '1', academicGroupId: '3' });
-    component.onAvailableToggle(english(), true);
-    component.onScopeSelect('SELECTED_SECTIONS');
-    expect(confirm.confirm).toHaveBeenCalled();
-    expect(component.scope).toBe('ALL_SECTIONS');
-
-    confirm.confirm.calls.mostRecent().args[0].accept!();
-    expect(component.scope).toBe('SELECTED_SECTIONS');
-  });
-
-  it('tracks the unsaved change count for the shared header status', async () => {
+  it('keeps unsaved-change guards without showing an unsaved-changes header message', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
     component.onAvailableToggle(english(), true);
     fixture.detectChanges();
     expect(component.changeCount).toBe(1);
+    expect(fixture.nativeElement.textContent).not.toContain('unsaved change');
+    component.backToDirectory();
+    expect(confirm.confirm).toHaveBeenCalled();
   });
 
   it('reports success only after the backend returns the saved board', async () => {
@@ -237,7 +244,11 @@ describe('SubjectMappingPageComponent', () => {
     subjectsApi.saveMappings.and.returnValue(throwError(() => ({ message: 'Teacher allocation blocks this change' })));
     component.onAvailableToggle(english(), true);
     component.save();
-    expect(component.formError).toBe('Teacher allocation blocks this change');
+    expect(messages.add).toHaveBeenCalledWith(jasmine.objectContaining({
+      severity: 'error',
+      summary: 'Unable to save subject mapping',
+      detail: 'Teacher allocation blocks this change'
+    }));
     expect(component.changeCount).toBe(1);
     expect(messages.add).not.toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'success' }));
     expect(component.saving).toBeFalse();
@@ -249,7 +260,11 @@ describe('SubjectMappingPageComponent', () => {
     component.rows[0].requirement = 'OPTIONAL';
     component.save();
     expect(subjectsApi.previewMappings).not.toHaveBeenCalled();
-    expect(component.formError).toContain('weekly periods');
+    expect(messages.add).toHaveBeenCalledWith(jasmine.objectContaining({
+      severity: 'error',
+      summary: 'Subject mapping needs attention',
+      detail: jasmine.stringMatching(/weekly periods/)
+    }));
   });
 
   it('requires confirmation when the preview reports impacts, then saves with confirmImpact', async () => {

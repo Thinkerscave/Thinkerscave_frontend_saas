@@ -49,16 +49,16 @@
         <div class="sw-form-grid">
           <div class="sw-field">
             <label class="sw-label">First Name <span class="req">*</span></label>
-            <input id="input-first-name" type="text" [(ngModel)]="firstName" placeholder="Arjun"/>
+            <input id="input-first-name" type="text" [(ngModel)]="firstName" placeholder="Enter first name"/>
             <small *ngIf="err('firstName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('firstName') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Middle Name</label>
-            <input id="input-middle-name" type="text" [(ngModel)]="middleName" placeholder="Kumar"/>
+            <input id="input-middle-name" type="text" [(ngModel)]="middleName" placeholder="Enter middle name"/>
           </div>
           <div class="sw-field">
             <label class="sw-label">Last Name <span class="req">*</span></label>
-            <input id="input-last-name" type="text" [(ngModel)]="lastName" placeholder="Sharma"/>
+            <input id="input-last-name" type="text" [(ngModel)]="lastName" placeholder="Enter last name"/>
             <small *ngIf="err('lastName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('lastName') }}</small>
           </div>
           <div class="sw-field">
@@ -69,6 +69,7 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
             <small *ngIf="err('gender')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('gender') }}</small>
@@ -86,6 +87,7 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
           </div>
@@ -97,27 +99,28 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
           </div>
           <div class="sw-field">
             <label class="sw-label">Mobile Number <span class="req">*</span></label>
-            <input id="input-mobile" type="tel" [(ngModel)]="mobileNumber" placeholder="+91 98765 43210"/>
+            <input id="input-mobile" type="tel" [(ngModel)]="mobileNumber" placeholder="Enter mobile number"/>
             <small *ngIf="err('mobileNumber')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('mobileNumber') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Email <span class="req">*</span></label>
-            <input id="input-email" type="email" [(ngModel)]="email" placeholder="arjun.sharma@school.com"/>
+            <input id="input-email" type="email" [(ngModel)]="email" placeholder="Enter work email"/>
             <small *ngIf="err('email')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('email') }}</small>
           </div>
           <div class="sw-field">
             <label class="sw-label">Highest Qualification</label>
             <input id="input-qualification" type="text" [(ngModel)]="highestQualification"
-                   placeholder="M.Sc. Mathematics, B.Ed."/>
+                   placeholder="Enter highest qualification"/>
           </div>
           <div class="sw-field">
             <label class="sw-label">Experience (Years)</label>
-            <input id="input-experience" type="number" [(ngModel)]="experienceYears" min="0" placeholder="5"/>
+            <input id="input-experience" type="number" [(ngModel)]="experienceYears" min="0" placeholder="Years of experience"/>
             <small *ngIf="err('experienceYears')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('experienceYears') }}</small>
           </div>
         </div>
@@ -127,17 +130,17 @@
           <div class="sw-field">
             <label class="sw-label">Contact Name</label>
             <input id="input-emergency-name" type="text" [(ngModel)]="emergencyContactName"
-                   placeholder="Full name"/>
+                   placeholder="Enter contact name"/>
           </div>
           <div class="sw-field">
             <label class="sw-label">Relation</label>
             <input id="input-emergency-relation" type="text" [(ngModel)]="emergencyContactRelation"
-                   placeholder="Spouse / Parent / Sibling"/>
+                   placeholder="Enter relationship"/>
           </div>
           <div class="sw-field">
             <label class="sw-label">Phone Number</label>
             <input id="input-emergency-phone" type="tel" [(ngModel)]="emergencyContactNumber"
-                   placeholder="+91 99887 76655"/>
+                   placeholder="Enter phone number"/>
             <small *ngIf="err('emergencyContactNumber')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('emergencyContactNumber') }}</small>
           </div>
         </div>
@@ -155,6 +158,7 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
           </div>
@@ -172,6 +176,7 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
           </div>
@@ -183,6 +188,7 @@
                         optionLabel="label"
                         optionValue="value"
                         appendTo="body"
+                        panelStyleClass="stf-dropdown-panel"
                         styleClass="w-full">
             </p-dropdown>
           </div>
@@ -200,8 +206,7 @@
             <input id="input-contract-end" type="date" [(ngModel)]="contractEndDate"/>
             <small *ngIf="err('contractEndDate')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('contractEndDate') }}</small>
           </div>
-          <div class="sw-field--full" *ngIf="staffType === 'TEACHING'"
-               style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <div class="sw-field--full sw-subject-grid" *ngIf="staffType === 'TEACHING'">
             <div class="sw-field">
               <label class="sw-label" for="select-primary-subject">Primary Subject <span class="req">*</span></label>
               <p-dropdown inputId="select-primary-subject"
@@ -210,9 +215,13 @@
                           (ngModelChange)="onSubjectSlotChange()"
                           optionLabel="label"
                           optionValue="value"
+                          [filter]="true"
+                          filterBy="label"
+                          filterPlaceholder="Search subjects"
                           placeholder="Select primary subject"
                           [disabled]="subjectsLoading || primarySubjectOptions.length === 0"
                           appendTo="body"
+                          panelStyleClass="stf-dropdown-panel"
                           styleClass="w-full">
               </p-dropdown>
               <small *ngIf="err('primarySubject')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('primarySubject') }}</small>
@@ -226,10 +235,14 @@
                           (ngModelChange)="onSubjectSlotChange()"
                           optionLabel="label"
                           optionValue="value"
+                          [filter]="true"
+                          filterBy="label"
+                          filterPlaceholder="Search subjects"
                           placeholder="Optional"
                           [showClear]="true"
                           [disabled]="subjectsLoading || subjectOptionList.length === 0"
                           appendTo="body"
+                          panelStyleClass="stf-dropdown-panel"
                           styleClass="w-full">
               </p-dropdown>
             </div>
@@ -300,7 +313,7 @@
         <div class="sw-form-grid">
           <div class="sw-field">
             <label class="sw-label">Bank Name</label>
-            <input id="input-bank-name" type="text" [(ngModel)]="bankName" placeholder="State Bank of India"/>
+            <input id="input-bank-name" type="text" [(ngModel)]="bankName" placeholder="Enter bank name"/>
             <small *ngIf="err('bankName')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('bankName') }}</small>
           </div>
           <div class="sw-field">
@@ -317,7 +330,7 @@
           </div>
           <div class="sw-field">
             <label class="sw-label">IFSC Code</label>
-            <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="SBIN0001234"/>
+            <input id="input-ifsc" type="text" [(ngModel)]="ifscCode" placeholder="Enter IFSC code"/>
             <small *ngIf="err('ifscCode')" class="sw-field-error" style="color:#d92d20;font-size:.75rem;">{{ err('ifscCode') }}</small>
           </div>
         </div>
@@ -375,7 +388,7 @@
             <div class="tc-form-group">
               <label class="tc-form-label" for="sw-doc-name">Document name <span class="required">*</span></label>
               <input id="sw-doc-name" name="docName" type="text" class="tc-form-control" maxlength="255"
-                     placeholder="For example: Aadhaar card (front)"
+                     placeholder="Enter a descriptive document name"
                      [class.has-error]="!!docNameError" [(ngModel)]="docName" (blur)="docNameTouched = true" />
               <small *ngIf="docNameError" class="tc-form-error">{{ docNameError }}</small>
             </div>
@@ -389,6 +402,7 @@
                           optionValue="value"
                           placeholder="Select a document type"
                           appendTo="body"
+                          panelStyleClass="stf-dropdown-panel"
                           styleClass="w-full">
               </p-dropdown>
             </div>
@@ -443,4 +457,3 @@
     </div>
   </div>
 </div>
-

@@ -244,6 +244,15 @@
   animation: tc-dropdown-in 180ms var(--tc-anim-easing) both;
 }
 
+.p-dropdown-panel.stf-dropdown-panel,
+.p-select-overlay.stf-dropdown-panel {
+  min-width: 100% !important;
+}
+
+.p-menu-overlay.academic-group-actions-menu {
+  margin-top: 0 !important;
+}
+
 @keyframes tc-dropdown-in {
   from { opacity: 0; transform: translateY(-8px) scale(0.975); }
   to   { opacity: 1; transform: translateY(0)    scale(1);     }

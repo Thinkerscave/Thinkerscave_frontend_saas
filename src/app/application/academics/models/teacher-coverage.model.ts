@@ -24,7 +24,6 @@ export interface CoverageRow {
   subjectType: string;
   weeklyPeriods: number;
   requirement: string;
-  scope: CoverageScope;
   sectionsTotal: number;
   sectionsAssigned: number;
   groupTeacher: CoverageTeacher | null;

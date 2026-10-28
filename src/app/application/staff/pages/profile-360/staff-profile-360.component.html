@@ -286,6 +286,7 @@
               placeholder="All types"
               [showClear]="!!documentFilter"
               appendTo="body"
+              panelStyleClass="stf-dropdown-panel"
               styleClass="att-filter-dropdown">
             </p-dropdown>
             <button *ngIf="canWrite" type="button" class="tc-btn tc-btn--primary tc-btn--sm"
@@ -425,7 +426,7 @@
     <div class="tc-form-group">
       <label class="tc-form-label" for="sp-upload-name">Document name <span class="required">*</span></label>
       <input id="sp-upload-name" name="uploadName" type="text" class="tc-form-control"
-             maxlength="255" placeholder="For example: Aadhaar card (front)"
+             maxlength="255" placeholder="Enter a descriptive document name"
              [class.has-error]="!!uploadNameError" [disabled]="uploadBusy"
              [(ngModel)]="uploadName" (ngModelChange)="uploadError = ''"
              (blur)="uploadNameTouched = true" />
@@ -446,6 +447,7 @@
         placeholder="Select a document type"
         [disabled]="uploadBusy"
         appendTo="body"
+        panelStyleClass="stf-dropdown-panel"
         styleClass="sp-upload-dropdown">
       </p-dropdown>
     </div>
@@ -513,12 +515,13 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
+          panelStyleClass="stf-dropdown-panel"
           styleClass="att-filter-dropdown">
         </p-dropdown>
       </div>
       <div class="sw-field">
         <label class="sw-label">Scope / Notes</label>
-        <input type="text" [(ngModel)]="assignForm.scope" placeholder="e.g. Class 10A, Science Block"/>
+        <input type="text" [(ngModel)]="assignForm.scope" placeholder="Enter scope or location"/>
       </div>
       <div class="sw-form-grid">
         <div class="sw-field">
@@ -548,4 +551,3 @@
 <app-document-preview-dialog />
 
 </section>
-
