@@ -3,6 +3,7 @@ export type AcademicsWorkspacePage =
   | 'academic-year'
   | 'academicGroups'
   | 'subjects'
+  | 'choice-groups'
   | 'subject-mapping'
   | 'teacher-allocation'
   | 'timetable'

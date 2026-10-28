@@ -277,6 +277,8 @@ export interface TimetableCell {
   subjectId?: number;
   subjectName?: string;
   academicGroupSubjectMappingId?: number;
+  academicGroupChoiceMappingId?: number;
+  choiceGroupName?: string;
   staffId?: number;
   staffName?: string;
   teacherAllocationId?: number;

@@ -39,6 +39,9 @@ import {
   SubjectMappingBoard,
   SubjectMappingImpact,
   SubjectMappingSaveRequest,
+  SubjectChoiceMapping,
+  SubjectChoiceMappingUpsert,
+  SubjectChoiceGroup,
   SubjectType,
   TIMETABLE_PREFERENCE_OPTIONS,
   subjectTypeIcon,
@@ -61,6 +64,13 @@ import {
 interface ContextOption {
   label: string;
   value: number;
+}
+
+interface ChoiceMappingDraft extends SubjectChoiceMapping {
+  saved: SubjectChoiceMapping | null;
+  removed: boolean;
+  expanded: boolean;
+  subjectPeriods: Record<number, number>;
 }
 
 function toPositiveId(value: string | null): number | null {
@@ -113,6 +123,13 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   readonly requirementLabel = requirementLabel;
 
   private readonly availableSearch$ = new Subject<string>();
+  choiceGroupOptions: SubjectChoiceGroup[] = [];
+  choiceGroupLoading = false;
+  choiceGroupError: string | null = null;
+  choiceGroupQuery = '';
+  selectedChoiceGroupIds = new Set<number>();
+  choiceMappings: ChoiceMappingDraft[] = [];
+  choiceImpactWarning = false;
 
   // Context
   yearOptions: AcademicYearDto[] = [];
@@ -151,6 +168,143 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   impacts: SubjectMappingImpact[] = [];
   private pendingSave: SubjectMappingSaveRequest | null = null;
 
+  onChoiceGroupQueryChange(value: string): void {
+    this.choiceGroupQuery = value ?? '';
+    this.cdr.markForCheck();
+  }
+
+  onChoiceGroupToggle(choiceGroupId: number, checked: boolean): void {
+    if (checked) this.selectedChoiceGroupIds.add(choiceGroupId);
+    else this.selectedChoiceGroupIds.delete(choiceGroupId);
+    this.cdr.markForCheck();
+  }
+
+  isChoiceGroupSelected(choiceGroupId: number): boolean {
+    return this.selectedChoiceGroupIds.has(choiceGroupId);
+  }
+
+  get availableChoiceGroups(): SubjectChoiceGroup[] {
+    const query = this.choiceGroupQuery.trim().toLowerCase();
+    return this.choiceGroupOptions.filter((choiceGroup) =>
+      choiceGroup.active
+      && !this.choiceMappings.some((mapping) => !mapping.removed
+        && mapping.choiceGroupId === choiceGroup.subjectChoiceGroupId)
+      && (!query || choiceGroup.name.toLowerCase().includes(query)
+        || choiceGroup.subjects.some((subject) =>
+          subject.name.toLowerCase().includes(query) || subject.code.toLowerCase().includes(query))));
+  }
+
+  choiceGroupSummary(group: SubjectChoiceGroup): string {
+    return group.subjects.slice(0, 3).map((subject) => subject.name).join(', ');
+  }
+
+  choiceMappingSummary(mapping: ChoiceMappingDraft): string {
+    return mapping.subjects.slice(0, 3).map((subject) => subject.subjectName).join(', ');
+  }
+
+  addSelectedChoiceGroups(): void {
+    if (!this.editable || !this.selectedChoiceGroupIds.size) return;
+    const selected = this.choiceGroupOptions.filter((group) =>
+      this.selectedChoiceGroupIds.has(group.subjectChoiceGroupId));
+    for (const group of selected) {
+      if (this.choiceMappings.some((mapping) => !mapping.removed
+        && mapping.choiceGroupId === group.subjectChoiceGroupId)) continue;
+      const subjects = group.subjects.map((subject) => ({
+        mappingId: 0,
+        choiceMappingId: null,
+        subjectId: subject.subjectId,
+        subjectName: subject.name,
+        subjectCode: subject.code,
+        subjectType: group.subjectType,
+        subjectActive: subject.active,
+        requirement: 'OPTIONAL' as const,
+        weeklyPeriods: 1,
+        timetablePreference: 'ANY' as const,
+        teacherAllocationCount: 0,
+        timetableEntryCount: 0
+      }));
+      this.choiceMappings.push({
+        academicGroupChoiceMappingId: 0,
+        choiceGroupId: group.subjectChoiceGroupId,
+        name: group.name,
+        subjectType: group.subjectType,
+        weeklyPeriods: 1,
+        timetablePreference: 'ANY',
+        active: true,
+        subjects,
+        saved: null,
+        removed: false,
+        expanded: true,
+        subjectPeriods: Object.fromEntries(subjects.map((subject) => [subject.subjectId, 1]))
+      });
+      for (const subject of subjects) this.staged.delete(subject.subjectId);
+    }
+    this.selectedChoiceGroupIds.clear();
+    this.markRowChanged();
+  }
+
+  toggleChoiceMapping(mapping: ChoiceMappingDraft): void {
+    mapping.expanded = !mapping.expanded;
+    this.cdr.markForCheck();
+  }
+
+  updateChoiceChildPeriods(mapping: ChoiceMappingDraft, subjectId: number, value: number): void {
+    mapping.subjectPeriods[subjectId] = Number(value);
+    const subject = mapping.subjects.find((row) => row.subjectId === subjectId);
+    if (subject) subject.weeklyPeriods = Number(value);
+    this.markRowChanged();
+  }
+
+  removeChoiceMapping(mapping: ChoiceMappingDraft): void {
+    if (mapping.saved) mapping.removed = true;
+    else this.choiceMappings = this.choiceMappings.filter((item) => item !== mapping);
+    this.markRowChanged();
+  }
+
+  undoChoiceMappingRemoval(mapping: ChoiceMappingDraft): void {
+    mapping.removed = false;
+    this.markRowChanged();
+  }
+
+  isChoiceChildPeriodValid(mapping: ChoiceMappingDraft, subjectId: number): boolean {
+    const periods = Number(mapping.subjectPeriods[subjectId]);
+    return Number.isInteger(periods) && periods >= this.weeklyMin && periods <= Number(mapping.weeklyPeriods);
+  }
+
+  isChoiceMappingChanged(mapping: ChoiceMappingDraft): boolean {
+    if (!mapping.saved) return true;
+    if (Number(mapping.weeklyPeriods) !== Number(mapping.saved.weeklyPeriods)
+      || mapping.timetablePreference !== mapping.saved.timetablePreference) return true;
+    return mapping.subjects.some((subject) => {
+      const savedSubject = mapping.saved?.subjects.find((item) => item.subjectId === subject.subjectId);
+      return !savedSubject || Number(mapping.subjectPeriods[subject.subjectId]) !== Number(savedSubject.weeklyPeriods);
+    });
+  }
+
+  loadChoiceGroupOptions(): void {
+    this.choiceGroupLoading = true;
+    this.choiceGroupError = null;
+    this.subjectsApi.listSubjectChoiceGroups({ status: 'ACTIVE', page: 0, size: 100 }).pipe(
+      expand((result) => result.last ? EMPTY : this.subjectsApi.listSubjectChoiceGroups({
+        status: 'ACTIVE', page: result.page + 1, size: 100
+      })),
+      reduce((all, result) => [...all, ...(result.content ?? [])], [] as SubjectChoiceGroup[]),
+      finalize(() => {
+        this.choiceGroupLoading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: (groups) => {
+        this.choiceGroupOptions = groups;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        this.choiceGroupError = extractApiError(error, 'Unable to load choice groups.').message;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.pageHeader.setPageHeader({
       subtitle: 'Assign subjects to an academic group and configure curriculum details.',
@@ -163,6 +317,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.availableSearch$
       .pipe(debounceTime(280), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadAvailable(true));
+    this.loadChoiceGroupOptions();
 
     const params = this.route.snapshot.queryParamMap;
     const yearParam = toPositiveId(params.get('academicYearId'));
@@ -229,13 +384,18 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   get mappedCount(): number {
-    return this.rows.filter((row) => !row.removed).length;
+    return this.rows.filter((row) => !row.removed).length
+      + this.choiceMappings.filter((mapping) => !mapping.removed).length;
   }
 
   get totalWeeklyPeriods(): number {
-    return this.rows
+    const standalone = this.rows
       .filter((row) => !row.removed)
       .reduce((total, row) => total + (Number(row.weeklyPeriods) || 0), 0);
+    const shared = this.choiceMappings
+      .filter((mapping) => !mapping.removed)
+      .reduce((total, mapping) => total + (Number(mapping.weeklyPeriods) || 0), 0);
+    return standalone + shared;
   }
 
   get stagedCount(): number {
@@ -243,7 +403,8 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   get changeCount(): number {
-    return countChanges(this.rows, this.staged.size);
+    return countChanges(this.rows, this.staged.size) + this.choiceMappings.filter((mapping) =>
+      mapping.removed ? !!mapping.saved : this.isChoiceMappingChanged(mapping)).length;
   }
 
   get canSave(): boolean {
@@ -378,7 +539,15 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   /** Replaces the baseline with the server board. */
   private applyBoard(board: SubjectMappingBoard, fresh: boolean): void {
     this.board = board;
-    this.rows = (board.mappings ?? []).map(draftFromSaved);
+    this.rows = (board.mappings ?? []).filter((row) => !row.choiceMappingId).map(draftFromSaved);
+    this.choiceMappings = (board.choiceMappings ?? []).map((mapping) => ({
+      ...mapping,
+      saved: mapping,
+      removed: false,
+      expanded: false,
+      subjectPeriods: Object.fromEntries(mapping.subjects.map((subject) => [subject.subjectId, subject.weeklyPeriods]))
+    }));
+    this.selectedChoiceGroupIds.clear();
     if (fresh) {
       this.stagePreselectedSubject();
     }
@@ -539,7 +708,12 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   canToggle(item: AvailableSubjectResponse): boolean {
-    return this.editable && (item.subjectActive || item.mapped);
+    return this.editable && !this.isChoiceSubject(item.subjectId) && (item.subjectActive || item.mapped);
+  }
+
+  isChoiceSubject(subjectId: number): boolean {
+    return this.choiceMappings.some((mapping) =>
+      mapping.subjects.some((subject) => subject.subjectId === subjectId));
   }
 
   onAvailableToggle(item: AvailableSubjectResponse, checked: boolean): void {
@@ -658,6 +832,17 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       academicGroupId: this.groupId,
       rows: this.rows
     });
+    for (const mapping of this.choiceMappings.filter((item) => !item.removed)) {
+      if (!isValidWeeklyPeriods(mapping.weeklyPeriods)) {
+        errors.push(`${mapping.name}: shared weekly workload must be a whole number from ${this.weeklyMin} to ${this.weeklyMax}.`);
+        continue;
+      }
+      for (const subject of mapping.subjects) {
+        if (!this.isChoiceChildPeriodValid(mapping, subject.subjectId)) {
+          errors.push(`${subject.subjectName}: effective periods must be from ${this.weeklyMin} to the shared workload.`);
+        }
+      }
+    }
     if (errors.length) {
       this.messages.add({
         severity: 'error',
@@ -668,15 +853,33 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     }
 
     const request = buildSaveRequest(this.yearId!, this.rows);
+    const changedChoiceMappings = this.choiceMappings.filter((mapping) =>
+      mapping.removed ? !!mapping.saved : this.isChoiceMappingChanged(mapping));
+    request.choiceGroupUpserts = changedChoiceMappings
+      .filter((mapping) => !mapping.removed)
+      .map((mapping): SubjectChoiceMappingUpsert => ({
+        choiceGroupId: mapping.choiceGroupId,
+        weeklyPeriods: Number(mapping.weeklyPeriods),
+        timetablePreference: mapping.timetablePreference,
+        subjectPeriods: Object.fromEntries(mapping.subjects.map((subject) => [
+          subject.subjectId, Number(mapping.subjectPeriods[subject.subjectId])
+        ]))
+      }));
+    request.removedChoiceGroupIds = changedChoiceMappings
+      .filter((mapping) => mapping.removed && mapping.saved)
+      .map((mapping) => mapping.choiceGroupId);
+    const groupImpactNeedsConfirmation = changedChoiceMappings.some((mapping) =>
+      !!mapping.saved && (mapping.removed || this.isChoiceMappingChanged(mapping)));
     const groupId = this.groupId!;
     this.saving = true;
     this.cdr.markForCheck();
     this.subjectsApi.previewMappings(groupId, request).subscribe({
       next: (preview) => {
-        if (preview.requiresConfirmation) {
+        if (preview.requiresConfirmation || groupImpactNeedsConfirmation) {
           this.saving = false;
           this.pendingSave = request;
           this.impacts = preview.impacts ?? [];
+          this.choiceImpactWarning = groupImpactNeedsConfirmation;
           this.impactDialogOpen = true;
           this.cdr.markForCheck();
           return;
@@ -701,6 +904,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     const groupId = this.groupId;
     this.impactDialogOpen = false;
     this.pendingSave = null;
+    this.choiceImpactWarning = false;
     this.persist(groupId, request);
   }
 
@@ -712,7 +916,8 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   private persist(groupId: number, request: SubjectMappingSaveRequest): void {
-    const changes = request.upserts.length + request.removedSubjectIds.length;
+    const changes = request.upserts.length + request.removedSubjectIds.length
+      + (request.choiceGroupUpserts?.length ?? 0) + (request.removedChoiceGroupIds?.length ?? 0);
     this.saving = true;
     this.cdr.markForCheck();
     this.subjectsApi.saveMappings(groupId, request).subscribe({
@@ -766,8 +971,11 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   private resetDraft(): void {
     this.rows = [];
     this.staged.clear();
+    this.choiceMappings = [];
+    this.selectedChoiceGroupIds.clear();
     this.impactDialogOpen = false;
     this.pendingSave = null;
+    this.choiceImpactWarning = false;
     this.cdr.markForCheck();
   }
 }

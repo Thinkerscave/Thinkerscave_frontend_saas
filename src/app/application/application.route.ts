@@ -339,6 +339,7 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'subject-mapping', data: { workspacePage: 'subject-mapping', ...ACADEMICS_PAGES.classSubjects }, loadComponent: () => import('./academics/components/pages/subject-mapping/subject-mapping.component').then(m => m.SubjectMappingPageComponent) },
       { path: 'academic-groups/:academicGroupId', data: { workspacePage: 'academicGroups', ...ACADEMICS_PAGES.classDetail }, loadComponent: () => import('./academics/components/pages/academic-group-detail/academic-group-detail.component').then(m => m.AcademicGroupDetailPageComponent) },
       { path: 'subjects', data: { workspacePage: 'subjects', ...ACADEMICS_PAGES.subjectsMapping }, loadComponent: () => import('./academics/components/pages/subjects/subjects-directory.component').then(m => m.SubjectsDirectoryPageComponent) },
+      { path: 'choice-groups', data: { workspacePage: 'choice-groups', ...ACADEMICS_PAGES.choiceGroups }, loadComponent: () => import('./academics/components/pages/choice-groups/choice-groups.component').then(m => m.ChoiceGroupsPageComponent) },
       { path: 'subjects/:subjectId', data: { workspacePage: 'subjects', ...ACADEMICS_PAGES.subjectDetail }, loadComponent: () => import('./academics/components/pages/subject-detail/subject-detail.component').then(m => m.SubjectDetailPageComponent) },
       { path: 'subjects-mapping', pathMatch: 'full', redirectTo: 'subjects' },
       { path: 'subjects-mapping/:subjectId', pathMatch: 'full', redirectTo: 'subjects/:subjectId' },

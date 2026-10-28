@@ -37,6 +37,35 @@ export interface SubjectListQuery {
   size?: number;
 }
 
+export interface SubjectChoiceGroupSubject {
+  subjectId: number;
+  name: string;
+  code: string;
+  active: boolean;
+}
+
+export interface SubjectChoiceGroup {
+  subjectChoiceGroupId: number;
+  name: string;
+  subjectType: SubjectType;
+  active: boolean;
+  subjects: SubjectChoiceGroupSubject[];
+  createdOn?: string | null;
+}
+
+export interface SubjectChoiceGroupRequest {
+  name: string;
+  subjectType: SubjectType;
+  subjectIds: number[];
+}
+
+export interface SubjectOption {
+  subjectId: number;
+  name: string;
+  code: string;
+  subjectType: SubjectType;
+}
+
 /** One active curriculum mapping of a subject (all years). */
 export interface SubjectUsageResponse {
   mappingId: number;
@@ -56,6 +85,7 @@ export interface SubjectUsageResponse {
 
 export interface SubjectMappingRow {
   mappingId: number;
+  choiceMappingId?: number | null;
   subjectId: number;
   subjectName: string;
   subjectCode: string;
@@ -79,6 +109,7 @@ export interface SubjectMappingBoard {
   academicYearStatus: string;
   yearReadOnly: boolean;
   mappings: SubjectMappingRow[];
+  choiceMappings?: SubjectChoiceMapping[];
   mappedCount: number;
   compulsoryCount: number;
   optionalCount: number;
@@ -109,7 +140,27 @@ export interface SubjectMappingSaveRequest {
   academicYearId: number;
   upserts: SubjectMappingUpsert[];
   removedSubjectIds: number[];
+  choiceGroupUpserts?: SubjectChoiceMappingUpsert[];
+  removedChoiceGroupIds?: number[];
   confirmImpact: boolean;
+}
+
+export interface SubjectChoiceMapping {
+  academicGroupChoiceMappingId: number;
+  choiceGroupId: number;
+  name: string;
+  subjectType: SubjectType;
+  weeklyPeriods: number;
+  timetablePreference: SubjectTimetablePreference;
+  active: boolean;
+  subjects: SubjectMappingRow[];
+}
+
+export interface SubjectChoiceMappingUpsert {
+  choiceGroupId: number;
+  weeklyPeriods: number;
+  timetablePreference: SubjectTimetablePreference;
+  subjectPeriods: Record<number, number>;
 }
 
 export interface SubjectMappingImpact {

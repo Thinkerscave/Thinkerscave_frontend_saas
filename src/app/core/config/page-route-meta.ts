@@ -101,6 +101,14 @@ export const ACADEMICS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
+  choiceGroups: {
+    breadcrumb: 'Choice Groups',
+    breadcrumbLink: ['/app/academics/subjects'],
+    pageTitle: 'Choice Groups',
+    pageSubtitle: 'Manage reusable groups of alternative subjects.',
+    pageKind: 'main',
+    hideBack: true
+  },
   subjectDetail: {
     breadcrumb: 'Subject',
     breadcrumbLink: ['/app/academics/subjects-mapping'],

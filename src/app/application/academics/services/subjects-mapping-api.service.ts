@@ -10,6 +10,10 @@ import {
   SubjectMappingBoard,
   SubjectMappingImpactResponse,
   SubjectMappingSaveRequest,
+  SubjectChoiceGroup,
+  SubjectChoiceGroupRequest,
+  SubjectOption,
+  SubjectStatusFilter,
   SubjectRequest,
   SubjectResponse,
   SubjectType,
@@ -70,6 +74,60 @@ export class SubjectsMappingApiService {
   activateSubject(subjectId: number): Observable<SubjectResponse> {
     return this.http
       .patch<ApiResponse<SubjectResponse>>(academicsApi.activateSubject(subjectId), {})
+      .pipe(map((res) => res.data));
+  }
+
+  listSubjectChoiceGroups(query: {
+    q?: string;
+    subjectType?: SubjectType | null;
+    status?: SubjectStatusFilter;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponse<SubjectChoiceGroup>> {
+    const params = buildParams({
+      q: query.q?.trim(),
+      subjectType: query.subjectType,
+      status: query.status,
+      page: query.page ?? 0,
+      size: query.size ?? 10
+    });
+    return this.http
+      .get<ApiResponse<PageResponse<SubjectChoiceGroup>>>(academicsApi.subjectChoiceGroups, { params })
+      .pipe(map((res) => res.data));
+  }
+
+  listChoiceGroupSubjectOptions(query: {
+    subjectType: SubjectType;
+    q?: string;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponse<SubjectOption>> {
+    const params = buildParams({
+      subjectType: query.subjectType,
+      q: query.q?.trim(),
+      page: query.page ?? 0,
+      size: query.size ?? 100
+    });
+    return this.http
+      .get<ApiResponse<PageResponse<SubjectOption>>>(academicsApi.subjectChoiceGroupSubjectOptions, { params })
+      .pipe(map((res) => res.data));
+  }
+
+  createSubjectChoiceGroup(request: SubjectChoiceGroupRequest): Observable<SubjectChoiceGroup> {
+    return this.http
+      .post<ApiResponse<SubjectChoiceGroup>>(academicsApi.subjectChoiceGroups, request)
+      .pipe(map((res) => res.data));
+  }
+
+  updateSubjectChoiceGroup(id: number, request: SubjectChoiceGroupRequest): Observable<SubjectChoiceGroup> {
+    return this.http
+      .put<ApiResponse<SubjectChoiceGroup>>(academicsApi.subjectChoiceGroupById(id), request)
+      .pipe(map((res) => res.data));
+  }
+
+  setSubjectChoiceGroupActive(id: number, active: boolean): Observable<SubjectChoiceGroup> {
+    return this.http
+      .patch<ApiResponse<SubjectChoiceGroup>>(academicsApi.subjectChoiceGroupStatus(id, active), {})
       .pipe(map((res) => res.data));
   }
 

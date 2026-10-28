@@ -12,6 +12,7 @@ export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   'academic-year': 'ACADEMICS_ACADEMIC_YEAR',
   'academicGroups': 'ACADEMICS_CLASSES',
   'subjects': 'ACADEMICS_SUBJECTS',
+  'choice-groups': 'ACADEMICS_SUBJECTS',
   'subject-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
@@ -66,6 +67,17 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     icon: 'pi pi-book',
     route: '/app/academics/subjects',
     primaryAction: 'Add Subject',
+    actionMode: 'subject'
+  },
+  {
+    page: 'choice-groups',
+    label: 'Choice Groups',
+    title: 'Choice Groups',
+    eyebrow: 'Curriculum configuration',
+    description: 'Manage reusable groups of alternative subjects.',
+    icon: 'pi pi-sitemap',
+    route: '/app/academics/choice-groups',
+    primaryAction: 'Create Choice Group',
     actionMode: 'subject'
   },
   {
@@ -178,6 +190,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'academic-year',
       'academicGroups',
       'subjects',
+      'choice-groups',
       'subject-mapping',
       'teacher-allocation',
       'timetable',

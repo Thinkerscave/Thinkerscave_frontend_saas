@@ -40,6 +40,11 @@ export const academicsApi = {
   deactivateSection: (id: number) => `${BASE}/academics/sections/${id}/deactivate`,
   activateSection: (id: number) => `${BASE}/academics/sections/${id}/activate`,
   subjects: `${BASE}/academics/subjects`,
+  subjectChoiceGroups: `${BASE}/academics/subject-choice-groups`,
+  subjectChoiceGroupById: (id: number) => `${BASE}/academics/subject-choice-groups/${id}`,
+  subjectChoiceGroupStatus: (id: number, active: boolean) =>
+    `${BASE}/academics/subject-choice-groups/${id}/${active ? 'activate' : 'deactivate'}`,
+  subjectChoiceGroupSubjectOptions: `${BASE}/academics/subject-choice-groups/subject-options`,
   subjectById: (id: number) => `${BASE}/academics/subjects/${id}`,
   subjectMappings: (id: number) => `${BASE}/academics/subjects/${id}/mappings`,
   deactivateSubject: (id: number) => `${BASE}/academics/subjects/${id}/deactivate`,

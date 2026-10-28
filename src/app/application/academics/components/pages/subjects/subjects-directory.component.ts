@@ -218,6 +218,10 @@ export class SubjectsDirectoryPageComponent implements OnInit, OnDestroy {
     );
   }
 
+  openChoiceGroups(): void {
+    void this.router.navigate(['/app/academics/choice-groups']);
+  }
+
   usageLabel(count: number): string {
     return count === 1 ? 'Used by 1 academic group' : `Used by ${count ?? 0} academic groups`;
   }

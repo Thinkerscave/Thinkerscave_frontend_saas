@@ -1,0 +1,166 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #choiceGroupMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="choice-groups-page acad-page">
+  <tc-saas-page-header [shellActions]="true">
+    <div class="choice-groups__header-actions">
+      <button type="button" class="tc-btn tc-btn--primary" *tcHasPerm="resource; action: 'manage'" (click)="openCreate()">
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        Create Choice Group
+      </button>
+    </div>
+  </tc-saas-page-header>
+
+  <tc-page-skeleton
+    *ngIf="loading && !loadedOnce"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false" [showFilter]="true" [cards]="8" [rows]="10" [columns]="5">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="loadedOnce || loadError">
+    <div class="acad-toolbar" *ngIf="loadedOnce">
+      <input class="acad-toolbar__search" type="search"
+        placeholder="Search groups or subjects..." [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)" aria-label="Search choice groups or subjects" />
+      <div class="acad-toolbar__filters">
+        <p-dropdown [options]="typeOptions" [(ngModel)]="typeFilter" (onChange)="onFilterChange()"
+          optionLabel="label" optionValue="value" ariaLabel="Subject type" styleClass="choice-group-filter" appendTo="body">
+        </p-dropdown>
+        <p-dropdown [options]="statusOptions" [(ngModel)]="statusFilter" (onChange)="onFilterChange()"
+          optionLabel="label" optionValue="value" ariaLabel="Status" styleClass="choice-group-filter" appendTo="body">
+        </p-dropdown>
+        <button type="button" class="tc-btn tc-btn--sm" *ngIf="hasFilters" (click)="clearFilters()">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i> Clear filters
+        </button>
+      </div>
+      <div class="acad-toolbar__end">
+        <app-grid-table-toggle [mode]="viewMode" (modeChange)="onViewModeChange($event)" ariaLabel="View mode">
+        </app-grid-table-toggle>
+      </div>
+    </div>
+
+    <div class="choice-groups__alert" role="alert" *ngIf="loadError && !loading">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ loadError }}</span>
+      <button type="button" class="tc-btn tc-btn--sm" (click)="reload()">Retry</button>
+    </div>
+
+    <section class="choice-groups__empty" *ngIf="!loading && !loadError && totalElements === 0">
+      <i class="pi pi-sitemap" aria-hidden="true"></i>
+      <h2>{{ hasFilters ? 'No choice groups match your filters' : 'No choice groups yet' }}</h2>
+      <p>{{ hasFilters ? 'Try another search or clear the filters.' : 'Create reusable groups of alternative subjects.' }}</p>
+      <button *ngIf="hasFilters" type="button" class="tc-btn" (click)="clearFilters()">Clear filters</button>
+      <button *ngIf="!hasFilters && canManage" type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">
+        <i class="pi pi-plus" aria-hidden="true"></i> Create Choice Group
+      </button>
+    </section>
+
+    <div class="choice-groups__results" [class.choice-groups__results--refreshing]="refreshing" *ngIf="groups.length">
+      <div class="choice-groups__cards" *ngIf="viewMode === 'grid'; else choiceGroupTable">
+        <article class="choice-group-card" *ngFor="let group of groups">
+          <header class="choice-group-card__header">
+            <div>
+              <span class="choice-group-card__icon" [ngClass]="'choice-group-card__icon--' + typeTone(group.subjectType)">
+                <i class="pi pi-sitemap" aria-hidden="true"></i>
+              </span>
+              <h2>{{ group.name }}</h2>
+              <p>{{ typeLabel(group.subjectType) }}</p>
+            </div>
+            <span class="choice-group-status" [class.is-active]="group.active">{{ group.active ? 'Active' : 'Inactive' }}</span>
+          </header>
+          <div class="choice-group-card__subjects">
+            <span *ngFor="let subject of group.subjects">{{ subject.name }}<small *ngIf="subject.code"> · {{ subject.code }}</small></span>
+          </div>
+          <footer>
+            <span>{{ group.subjects.length }} subjects</span>
+            <button *ngIf="canManage" class="choice-group-more" type="button"
+              [attr.aria-label]="'More actions for ' + group.name"
+              (click)="openMenu(group, choiceGroupMenu, $event)">
+              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+            </button>
+          </footer>
+        </article>
+      </div>
+
+      <ng-template #choiceGroupTable>
+        <div class="choice-groups__table-wrap">
+          <table class="choice-groups__table">
+            <thead><tr>
+              <th scope="col">Group name</th><th scope="col">Subject type</th>
+              <th scope="col">Included subjects</th><th scope="col">Status</th>
+              <th scope="col" aria-label="Actions"></th>
+            </tr></thead>
+            <tbody><tr *ngFor="let group of groups">
+              <td><strong>{{ group.name }}</strong></td>
+              <td>{{ typeLabel(group.subjectType) }}</td>
+              <td><div class="choice-groups__subject-list">
+                <span *ngFor="let subject of group.subjects">{{ subject.name }}<small *ngIf="subject.code"> ({{ subject.code }})</small></span>
+              </div></td>
+              <td><span class="choice-group-status" [class.is-active]="group.active">{{ group.active ? 'Active' : 'Inactive' }}</span></td>
+              <td class="choice-groups__actions">
+                <button *ngIf="canManage" class="choice-group-more" type="button"
+                  [attr.aria-label]="'More actions for ' + group.name"
+                  (click)="openMenu(group, choiceGroupMenu, $event)">
+                  <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr></tbody>
+          </table>
+        </div>
+      </ng-template>
+    </div>
+
+    <app-paginator *ngIf="groups.length" [page]="page" [rows]="pageSize" [totalRecords]="totalElements"
+      [pageSizeOptions]="pageSizeOptions" noun="choice groups" (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </ng-container>
+</div>
+
+<p-dialog [visible]="dialogOpen" (visibleChange)="dialogOpen = $event" [modal]="true"
+  [closable]="!saving" [draggable]="false" [resizable]="false"
+  [header]="editingGroup ? 'Edit Choice Group' : 'Create Choice Group'"
+  [style]="{ width: 'min(560px, 94vw)' }" styleClass="choice-group-dialog">
+  <div class="choice-group-form">
+    <label for="choice-group-name">Group name <span aria-hidden="true">*</span></label>
+    <input id="choice-group-name" class="choice-group-form__input" [(ngModel)]="groupName"
+      maxlength="100" placeholder="e.g. Second Language" />
+    <small class="choice-group-form__hint">Use a clear name for the alternative subjects.</small>
+
+    <label for="choice-group-type">Subject type <span aria-hidden="true">*</span></label>
+    <p-dropdown inputId="choice-group-type" [options]="formTypeOptions" [(ngModel)]="formSubjectType"
+      (onChange)="onFormTypeChange()" optionLabel="label" optionValue="value"
+      placeholder="Select subject type" appendTo="body" styleClass="choice-group-form__dropdown">
+    </p-dropdown>
+
+    <ng-container *ngIf="formSubjectType">
+      <label for="choice-group-subject-search">Select subjects <span aria-hidden="true">*</span></label>
+      <input id="choice-group-subject-search" class="choice-group-form__input" type="search"
+        [(ngModel)]="optionSearch" (ngModelChange)="onOptionSearchChange($event)"
+        placeholder="Search by subject name or code" />
+      <p class="choice-group-form__selection">Selected: {{ selectedSubjectIds.size }} (choose at least 2)</p>
+      <div class="choice-group-form__selected" *ngIf="editingGroup">
+        <button type="button" *ngFor="let subject of editingGroup.subjects"
+          [hidden]="!selectedSubjectIds.has(subject.subjectId)" (click)="removeSelected(subject.subjectId)">
+          {{ subject.name }} <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="choice-group-form__options" *ngIf="!optionLoading && !optionError && subjectOptions.length">
+        <label class="choice-group-form__option" *ngFor="let subject of subjectOptions">
+          <input type="checkbox" [checked]="isSelected(subject.subjectId)" (change)="toggleSubject(subject.subjectId)" />
+          <span>{{ subject.name }} <small *ngIf="subject.code">({{ subject.code }})</small></span>
+        </label>
+      </div>
+      <div class="choice-group-form__message" *ngIf="optionLoading">Loading eligible subjects…</div>
+      <div class="choice-group-form__message is-error" *ngIf="optionError">{{ optionError }}</div>
+      <div class="choice-group-form__message" *ngIf="!optionLoading && !optionError && !subjectOptions.length">
+        No active subjects of this type are available.
+      </div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer">
+    <button type="button" class="tc-btn" [disabled]="saving" (click)="dialogOpen = false">Cancel</button>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="!canSave" (click)="save()">
+      {{ saving ? 'Saving…' : 'Save' }}
+    </button>
+  </ng-template>
+</p-dialog>
