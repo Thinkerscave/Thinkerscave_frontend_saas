@@ -5,7 +5,10 @@ import { academicsApi } from '../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../shared/models/auth.model';
 import {
   FixedActivity,
+  FixedActivityOptions,
   FixedActivityRequest,
+  FixedActivityResolveRequest,
+  FixedActivitySchedule,
   GenerationProgress,
   GenerationStartResponse,
   GridView,
@@ -103,6 +106,21 @@ export class TimetableApiService {
   listFixedActivities(yearId: number): Observable<FixedActivity[]> {
     return this.http
       .get<ApiResponse<FixedActivity[]>>(academicsApi.timetableFixedActivities(yearId))
+      .pipe(map(r => r.data));
+  }
+
+  getFixedActivityOptions(yearId: number): Observable<FixedActivityOptions> {
+    return this.http
+      .get<ApiResponse<FixedActivityOptions>>(academicsApi.timetableFixedActivityOptions(yearId))
+      .pipe(map(r => r.data));
+  }
+
+  resolveFixedActivitySchedule(
+    yearId: number,
+    body: FixedActivityResolveRequest
+  ): Observable<FixedActivitySchedule> {
+    return this.http
+      .post<ApiResponse<FixedActivitySchedule>>(academicsApi.timetableFixedActivityResolve(yearId), body)
       .pipe(map(r => r.data));
   }
 

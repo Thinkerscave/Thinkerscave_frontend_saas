@@ -5,6 +5,32 @@
   color: var(--tc-text, #334155);
 }
 
+.ta-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--tc-border, #e2e8f0);
+}
+
+.ta-tabs__link {
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tc-muted, #64748b);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+
+  &:hover { color: var(--tc-primary, #0f766e); }
+
+  &.is-active {
+    color: var(--tc-primary, #0f766e);
+    border-bottom-color: var(--tc-primary, #0f766e);
+  }
+
+  &:focus-visible { outline: 2px solid var(--tc-primary, #0f766e); outline-offset: 2px; }
+}
+
 .ta-context {
   display: grid;
   grid-template-columns: repeat(2, minmax(200px, 1fr)) minmax(260px, 1.4fr);

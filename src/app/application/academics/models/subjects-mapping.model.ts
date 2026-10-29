@@ -160,7 +160,8 @@ export interface SubjectChoiceMappingUpsert {
   choiceGroupId: number;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  subjectPeriods: Record<number, number>;
+  /** Omitted on purpose: every member inherits the group's weekly periods. */
+  subjectPeriods?: Record<number, number>;
 }
 
 export interface SubjectMappingImpact {
@@ -195,6 +196,38 @@ export const SUBJECT_TYPE_FILTER_OPTIONS: { label: string; value: SubjectType | 
   { label: 'All Types', value: null },
   ...SUBJECT_TYPE_OPTIONS
 ];
+
+const SUBJECT_TYPE_RANK = new Map<string, number>(
+  SUBJECT_TYPE_OPTIONS.map((option, index) => [option.value, index])
+);
+
+/**
+ * Display rank from the shared type option order: teaching subjects, then practical labs,
+ * then activities. Derived from {@link SUBJECT_TYPE_OPTIONS} so no screen repeats the list.
+ */
+export function subjectTypeRank(type: SubjectType | string | null | undefined): number {
+  if (!type) return Number.MAX_SAFE_INTEGER;
+  return SUBJECT_TYPE_RANK.get(type) ?? Number.MAX_SAFE_INTEGER;
+}
+
+export interface SubjectDisplayItem {
+  name?: string | null;
+  subjectName?: string | null;
+  subjectType?: SubjectType | string | null;
+}
+
+/** Shared subject order: type rank first, then case-insensitive name. */
+export function compareSubjectDisplayOrder(a: SubjectDisplayItem, b: SubjectDisplayItem): number {
+  const byType = subjectTypeRank(a.subjectType) - subjectTypeRank(b.subjectType);
+  if (byType !== 0) return byType;
+  const left = (a.name ?? a.subjectName ?? '').trim();
+  const right = (b.name ?? b.subjectName ?? '').trim();
+  return left.localeCompare(right, undefined, { sensitivity: 'base', numeric: true });
+}
+
+export function sortSubjects<T extends SubjectDisplayItem>(items: readonly T[]): T[] {
+  return [...items].sort(compareSubjectDisplayOrder);
+}
 
 export const SUBJECT_STATUS_OPTIONS: { label: string; value: SubjectStatusFilter }[] = [
   { label: 'Active', value: 'ACTIVE' },

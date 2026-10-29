@@ -70,7 +70,6 @@ interface ChoiceMappingDraft extends SubjectChoiceMapping {
   saved: SubjectChoiceMapping | null;
   removed: boolean;
   expanded: boolean;
-  subjectPeriods: Record<number, number>;
 }
 
 function toPositiveId(value: string | null): number | null {
@@ -168,11 +167,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   impacts: SubjectMappingImpact[] = [];
   private pendingSave: SubjectMappingSaveRequest | null = null;
 
-  onChoiceGroupQueryChange(value: string): void {
-    this.choiceGroupQuery = value ?? '';
-    this.cdr.markForCheck();
-  }
-
   onChoiceGroupToggle(choiceGroupId: number, checked: boolean): void {
     if (checked) this.selectedChoiceGroupIds.add(choiceGroupId);
     else this.selectedChoiceGroupIds.delete(choiceGroupId);
@@ -187,6 +181,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     const query = this.choiceGroupQuery.trim().toLowerCase();
     return this.choiceGroupOptions.filter((choiceGroup) =>
       choiceGroup.active
+      && (!this.availableType || choiceGroup.subjectType === this.availableType)
       && !this.choiceMappings.some((mapping) => !mapping.removed
         && mapping.choiceGroupId === choiceGroup.subjectChoiceGroupId)
       && (!query || choiceGroup.name.toLowerCase().includes(query)
@@ -234,8 +229,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
         subjects,
         saved: null,
         removed: false,
-        expanded: true,
-        subjectPeriods: Object.fromEntries(subjects.map((subject) => [subject.subjectId, 1]))
+        expanded: true
       });
       for (const subject of subjects) this.staged.delete(subject.subjectId);
     }
@@ -246,13 +240,6 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   toggleChoiceMapping(mapping: ChoiceMappingDraft): void {
     mapping.expanded = !mapping.expanded;
     this.cdr.markForCheck();
-  }
-
-  updateChoiceChildPeriods(mapping: ChoiceMappingDraft, subjectId: number, value: number): void {
-    mapping.subjectPeriods[subjectId] = Number(value);
-    const subject = mapping.subjects.find((row) => row.subjectId === subjectId);
-    if (subject) subject.weeklyPeriods = Number(value);
-    this.markRowChanged();
   }
 
   removeChoiceMapping(mapping: ChoiceMappingDraft): void {
@@ -266,19 +253,15 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.markRowChanged();
   }
 
-  isChoiceChildPeriodValid(mapping: ChoiceMappingDraft, subjectId: number): boolean {
-    const periods = Number(mapping.subjectPeriods[subjectId]);
-    return Number.isInteger(periods) && periods >= this.weeklyMin && periods <= Number(mapping.weeklyPeriods);
+  isValidChoiceWeekly(mapping: ChoiceMappingDraft): boolean {
+    return isValidWeeklyPeriods(mapping.weeklyPeriods);
   }
 
   isChoiceMappingChanged(mapping: ChoiceMappingDraft): boolean {
     if (!mapping.saved) return true;
-    if (Number(mapping.weeklyPeriods) !== Number(mapping.saved.weeklyPeriods)
-      || mapping.timetablePreference !== mapping.saved.timetablePreference) return true;
-    return mapping.subjects.some((subject) => {
-      const savedSubject = mapping.saved?.subjects.find((item) => item.subjectId === subject.subjectId);
-      return !savedSubject || Number(mapping.subjectPeriods[subject.subjectId]) !== Number(savedSubject.weeklyPeriods);
-    });
+    // Members inherit the group workload, so only the group-level fields are editable.
+    return Number(mapping.weeklyPeriods) !== Number(mapping.saved.weeklyPeriods)
+      || mapping.timetablePreference !== mapping.saved.timetablePreference;
   }
 
   loadChoiceGroupOptions(): void {
@@ -399,7 +382,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   get stagedCount(): number {
-    return this.staged.size;
+    return this.staged.size + this.selectedChoiceGroupIds.size;
   }
 
   get changeCount(): number {
@@ -544,8 +527,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       ...mapping,
       saved: mapping,
       removed: false,
-      expanded: false,
-      subjectPeriods: Object.fromEntries(mapping.subjects.map((subject) => [subject.subjectId, subject.weeklyPeriods]))
+      expanded: false
     }));
     this.selectedChoiceGroupIds.clear();
     if (fresh) {
@@ -625,6 +607,14 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   onAvailableQueryChange(value: string): void {
     this.availableSearch$.next(value ?? '');
+  }
+
+  /** One search box drives both the paginated subjects and the client-side choice groups. */
+  onAvailableSearchChange(value: string): void {
+    this.availableQuery = value ?? '';
+    this.choiceGroupQuery = this.availableQuery;
+    this.onAvailableQueryChange(this.availableQuery);
+    this.cdr.markForCheck();
   }
 
   onAvailablePageChange(event: AppPageChangeEvent): void {
@@ -753,8 +743,9 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   addSelectedSubjects(): void {
-    if (!this.editable || this.staged.size === 0) return;
+    if (!this.editable || this.stagedCount === 0) return;
     this.commitStaged();
+    this.addSelectedChoiceGroups();
     this.cdr.markForCheck();
   }
 
@@ -833,14 +824,8 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       rows: this.rows
     });
     for (const mapping of this.choiceMappings.filter((item) => !item.removed)) {
-      if (!isValidWeeklyPeriods(mapping.weeklyPeriods)) {
-        errors.push(`${mapping.name}: shared weekly workload must be a whole number from ${this.weeklyMin} to ${this.weeklyMax}.`);
-        continue;
-      }
-      for (const subject of mapping.subjects) {
-        if (!this.isChoiceChildPeriodValid(mapping, subject.subjectId)) {
-          errors.push(`${subject.subjectName}: effective periods must be from ${this.weeklyMin} to the shared workload.`);
-        }
+      if (!this.isValidChoiceWeekly(mapping)) {
+        errors.push(`${mapping.name}: weekly periods must be a whole number from ${this.weeklyMin} to ${this.weeklyMax}.`);
       }
     }
     if (errors.length) {
@@ -860,10 +845,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       .map((mapping): SubjectChoiceMappingUpsert => ({
         choiceGroupId: mapping.choiceGroupId,
         weeklyPeriods: Number(mapping.weeklyPeriods),
-        timetablePreference: mapping.timetablePreference,
-        subjectPeriods: Object.fromEntries(mapping.subjects.map((subject) => [
-          subject.subjectId, Number(mapping.subjectPeriods[subject.subjectId])
-        ]))
+        timetablePreference: mapping.timetablePreference
       }));
     request.removedChoiceGroupIds = changedChoiceMappings
       .filter((mapping) => mapping.removed && mapping.saved)

@@ -221,6 +221,26 @@ export interface GroupAssignmentRequest {
   effectiveTo?: string | null;
 }
 
+export interface FixedActivityGroup {
+  academicGroupId: number;
+  academicGroupName?: string | null;
+  sectionId?: number | null;
+  sectionName?: string | null;
+}
+
+export interface FixedActivityPeriod {
+  timetablePeriodId: number;
+  academicGroupId: number;
+  sectionId?: number | null;
+  dayOfWeek: DayOfWeek;
+  periodName: string;
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
+  schedulePatternId?: number | null;
+  schedulePatternName?: string | null;
+}
+
 export interface FixedActivity {
   fixedActivityId?: number;
   academicYearId?: number;
@@ -228,29 +248,115 @@ export interface FixedActivity {
   description?: string | null;
   activityType: string;
   appliesToAllGroups: boolean;
-  startTime: string;
-  endTime: string;
-  recurrence: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  recurrence?: string | null;
   effectiveFrom?: string | null;
   effectiveTo?: string | null;
   active: boolean;
+  subjectId?: number | null;
+  subjectName?: string | null;
+  subjectCode?: string | null;
+  subjectType?: string | null;
+  periodName?: string | null;
+  staffId?: number | null;
+  staffName?: string | null;
   days: DayOfWeek[];
-  groups: { academicGroupId: number; academicGroupName?: string; sectionId?: number | null; sectionName?: string | null }[];
+  groups: FixedActivityGroup[];
+  periods: FixedActivityPeriod[];
 }
 
 export interface FixedActivityRequest {
-  name: string;
+  subjectId: number;
   description?: string | null;
-  activityType: string;
-  appliesToAllGroups: boolean;
-  startTime: string;
-  endTime: string;
-  recurrence: string;
-  effectiveFrom?: string | null;
-  effectiveTo?: string | null;
-  active: boolean;
+  /** Ignored by the server; status changes use the activate/deactivate actions. */
+  active?: boolean;
   days: DayOfWeek[];
   groups: { academicGroupId: number; sectionId?: number | null }[];
+  periodName: string;
+}
+
+export interface FixedActivitySubjectOption {
+  subjectId: number;
+  name: string;
+  code: string;
+  subjectType: 'ACADEMIC_SUBJECT' | 'PRACTICAL_LAB' | 'ACTIVITY';
+}
+
+export interface FixedActivitySectionOption {
+  sectionId: number;
+  name: string;
+  code: string;
+}
+
+export interface FixedActivityGroupOption {
+  academicGroupId: number;
+  name: string;
+  code: string;
+  sections: FixedActivitySectionOption[];
+}
+
+export interface FixedActivityOptions {
+  academicYearId: number;
+  subjects: FixedActivitySubjectOption[];
+  groups: FixedActivityGroupOption[];
+}
+
+export interface FixedActivityResolveRequest {
+  subjectId?: number | null;
+  groups: { academicGroupId: number; sectionId?: number | null }[];
+  days: DayOfWeek[];
+  periodName?: string | null;
+}
+
+export interface FixedActivitySchedulePeriod {
+  timetablePeriodId: number;
+  periodNumber: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface FixedActivityCombination {
+  academicGroupId: number;
+  academicGroupName: string;
+  sectionId?: number | null;
+  sectionName?: string | null;
+  unitLabel: string;
+  dayOfWeek: DayOfWeek;
+  schedulePatternId?: number | null;
+  schedulePatternName?: string | null;
+  periods: FixedActivitySchedulePeriod[];
+}
+
+export interface FixedActivityPeriodOption {
+  name: string;
+  displayTime: string;
+  timesVary: boolean;
+  times: string[];
+}
+
+export interface FixedActivityTeacherOption {
+  staffId: number;
+  staffName: string;
+  eligibleForAllUnits: boolean;
+  unitLabels: string[];
+}
+
+export interface FixedActivityValidationIssue {
+  code: string;
+  message: string;
+  academicGroupId?: number | null;
+  sectionId?: number | null;
+  dayOfWeek?: DayOfWeek | null;
+}
+
+export interface FixedActivitySchedule {
+  academicYearId: number;
+  combinations: FixedActivityCombination[];
+  commonPeriods: FixedActivityPeriodOption[];
+  teachers: FixedActivityTeacherOption[];
+  issues: FixedActivityValidationIssue[];
 }
 
 export interface TimetablePeriod {

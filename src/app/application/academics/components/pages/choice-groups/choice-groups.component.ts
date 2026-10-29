@@ -5,6 +5,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  ViewChild,
   inject
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenuModule } from 'primeng/menu';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 import { Subject, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { BreadCrumbService } from '../../../../../core/services/bread-crumb.service';
 import { PermissionService } from '../../../../../core/services/permission.service';
@@ -49,6 +51,7 @@ import { SubjectsMappingApiService } from '../../../services/subjects-mapping-ap
     DialogModule,
     DropdownModule,
     MenuModule,
+    OverlayPanelModule,
     HasPermissionDirective,
     TcPageSkeletonComponent,
     SaasPageHeaderComponent,
@@ -78,6 +81,7 @@ export class ChoiceGroupsPageComponent implements OnInit {
 
   private readonly search$ = new Subject<string>();
   private readonly optionSearch$ = new Subject<string>();
+  private optionRequestId = 0;
 
   groups: SubjectChoiceGroup[] = [];
   totalElements = 0;
@@ -102,7 +106,11 @@ export class ChoiceGroupsPageComponent implements OnInit {
   optionError: string | null = null;
   subjectOptions: SubjectOption[] = [];
   selectedSubjectIds = new Set<number>();
+  selectedSubjectDetails = new Map<number, SubjectOption>();
+  submitted = false;
   menuItems: MenuItem[] = [];
+
+  @ViewChild('subjectPanel') subjectPanel?: OverlayPanel;
 
   get canManage(): boolean {
     return this.permissions.canManage(this.resource);
@@ -112,16 +120,25 @@ export class ChoiceGroupsPageComponent implements OnInit {
     return !!this.searchTerm.trim() || this.typeFilter !== null || this.statusFilter !== 'ACTIVE';
   }
 
-  get selectedOptions(): SubjectOption[] {
-    return this.subjectOptions.filter((subject) => this.selectedSubjectIds.has(subject.subjectId));
+  get selectedSubjects(): SubjectOption[] {
+    return [...this.selectedSubjectDetails.values()];
   }
 
-  get canSave(): boolean {
-    return !!this.groupName.trim()
-      && this.groupName.trim().length <= 100
-      && !!this.formSubjectType
-      && this.selectedSubjectIds.size >= 2
-      && !this.saving;
+  get nameError(): string | null {
+    if (!this.submitted) return null;
+    const name = this.groupName.trim();
+    if (!name) return 'Group name is required.';
+    if (name.length > 100) return 'Group name cannot exceed 100 characters.';
+    return null;
+  }
+
+  get typeError(): string | null {
+    return this.submitted && !this.formSubjectType ? 'Select a subject type.' : null;
+  }
+
+  get subjectsError(): string | null {
+    if (!this.submitted) return null;
+    return this.selectedSubjectIds.size < 2 ? 'Select at least two subjects.' : null;
   }
 
   ngOnInit(): void {
@@ -216,8 +233,11 @@ export class ChoiceGroupsPageComponent implements OnInit {
     this.formSubjectType = null;
     this.subjectOptions = [];
     this.selectedSubjectIds.clear();
+    this.selectedSubjectDetails.clear();
     this.optionSearch = '';
     this.optionError = null;
+    this.submitted = false;
+    this.subjectPanel?.hide();
     this.dialogOpen = true;
     this.cdr.markForCheck();
   }
@@ -227,29 +247,65 @@ export class ChoiceGroupsPageComponent implements OnInit {
     this.groupName = group.name;
     this.formSubjectType = group.subjectType;
     this.selectedSubjectIds = new Set(group.subjects.map((subject) => subject.subjectId));
+    this.selectedSubjectDetails = new Map(group.subjects.map((subject) => [subject.subjectId, {
+      subjectId: subject.subjectId,
+      name: subject.name,
+      code: subject.code,
+      subjectType: group.subjectType
+    }]));
     this.optionSearch = '';
     this.optionError = null;
+    this.submitted = false;
     this.subjectOptions = [];
+    this.subjectPanel?.hide();
     this.dialogOpen = true;
     this.loadSubjectOptions();
   }
 
   onFormTypeChange(): void {
+    const cleared = this.selectedSubjectIds.size;
     this.selectedSubjectIds.clear();
+    this.selectedSubjectDetails.clear();
     this.subjectOptions = [];
     this.optionSearch = '';
+    this.subjectPanel?.hide();
+    if (cleared) {
+      this.messages.add({
+        severity: 'info',
+        summary: 'Subjects cleared',
+        detail: 'Choose subjects that match the new subject type.'
+      });
+    }
     if (this.formSubjectType) this.loadSubjectOptions();
     this.cdr.markForCheck();
   }
 
-  toggleSubject(subjectId: number): void {
-    if (this.selectedSubjectIds.has(subjectId)) this.selectedSubjectIds.delete(subjectId);
-    else this.selectedSubjectIds.add(subjectId);
+  onDialogVisibleChange(visible: boolean): void {
+    this.dialogOpen = visible;
+    if (!visible) this.subjectPanel?.hide();
+    this.cdr.markForCheck();
+  }
+
+  /** Selecting an option keeps it in the field and closes the picker so the form stays visible. */
+  selectSubject(subject: SubjectOption): void {
+    this.toggleSubject(subject);
+    this.subjectPanel?.hide();
+  }
+
+  toggleSubject(subject: SubjectOption): void {
+    if (this.selectedSubjectIds.has(subject.subjectId)) {
+      this.selectedSubjectIds.delete(subject.subjectId);
+      this.selectedSubjectDetails.delete(subject.subjectId);
+    } else {
+      this.selectedSubjectIds.add(subject.subjectId);
+      this.selectedSubjectDetails.set(subject.subjectId, subject);
+    }
     this.cdr.markForCheck();
   }
 
   removeSelected(subjectId: number): void {
     this.selectedSubjectIds.delete(subjectId);
+    this.selectedSubjectDetails.delete(subjectId);
     this.cdr.markForCheck();
   }
 
@@ -257,7 +313,7 @@ export class ChoiceGroupsPageComponent implements OnInit {
     return this.selectedSubjectIds.has(subjectId);
   }
 
-  openMenu(group: SubjectChoiceGroup, menu: { toggle: (event: Event) => void }, event: Event): void {
+  buildMenu(group: SubjectChoiceGroup): void {
     this.menuItems = [
       {
         label: 'Edit',
@@ -272,13 +328,18 @@ export class ChoiceGroupsPageComponent implements OnInit {
         visible: this.canManage
       }
     ];
-    menu.toggle(event);
   }
 
   save(): void {
+    if (this.saving) return;
+    this.submitted = true;
     const name = this.groupName.trim().replace(/\s+/g, ' ');
-    if (!name || name.length > 100 || !this.formSubjectType || this.selectedSubjectIds.size < 2) return;
+    if (!name || name.length > 100 || !this.formSubjectType || this.selectedSubjectIds.size < 2) {
+      this.cdr.markForCheck();
+      return;
+    }
     this.saving = true;
+    this.subjectPanel?.hide();
     this.cdr.markForCheck();
     const request = {
       name,
@@ -294,6 +355,7 @@ export class ChoiceGroupsPageComponent implements OnInit {
     })).subscribe({
       next: (saved) => {
         this.dialogOpen = false;
+        this.submitted = false;
         this.messages.add({
           severity: 'success',
           summary: this.editingGroup ? 'Choice group updated' : 'Choice group created',
@@ -314,7 +376,11 @@ export class ChoiceGroupsPageComponent implements OnInit {
         : 'Existing mappings will be preserved. The group cannot be used for new mappings.',
       acceptLabel: active ? 'Reactivate' : 'Deactivate',
       accept: () => this.api.setSubjectChoiceGroupActive(group.subjectChoiceGroupId, active).subscribe({
-        next: () => {
+        next: (updated) => {
+          // Reflect the new state immediately; reload keeps filters and pagination in sync.
+          this.groups = this.groups.map((item) => item.subjectChoiceGroupId === group.subjectChoiceGroupId
+            ? { ...item, active: updated.active }
+            : item);
           this.messages.add({ severity: 'success', summary: `Choice group ${active ? 'reactivated' : 'deactivated'}` });
           this.reload();
         },
@@ -325,6 +391,7 @@ export class ChoiceGroupsPageComponent implements OnInit {
 
   private loadSubjectOptions(): void {
     if (!this.formSubjectType) return;
+    const requestId = ++this.optionRequestId;
     this.optionLoading = true;
     this.optionError = null;
     this.api.listChoiceGroupSubjectOptions({
@@ -333,14 +400,23 @@ export class ChoiceGroupsPageComponent implements OnInit {
       page: 0,
       size: 100
     }).pipe(finalize(() => {
+      if (requestId !== this.optionRequestId) return;
       this.optionLoading = false;
       this.cdr.markForCheck();
     })).subscribe({
       next: (page) => {
+        if (requestId !== this.optionRequestId) return;
         this.subjectOptions = page.content ?? [];
+        // Keep chip labels in sync without dropping selections that are outside the current search.
+        for (const option of this.subjectOptions) {
+          if (this.selectedSubjectIds.has(option.subjectId)) {
+            this.selectedSubjectDetails.set(option.subjectId, option);
+          }
+        }
         this.cdr.markForCheck();
       },
       error: (error) => {
+        if (requestId !== this.optionRequestId) return;
         this.optionError = extractApiError(error, 'Unable to load eligible subjects.').message;
         this.cdr.markForCheck();
       }

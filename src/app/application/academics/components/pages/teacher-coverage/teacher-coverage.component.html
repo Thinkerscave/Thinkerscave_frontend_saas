@@ -25,6 +25,19 @@
   </button>
 </tc-saas-page-header>
 
+<nav class="ta-tabs" aria-label="Teacher allocation views">
+  <a
+    class="ta-tabs__link"
+    routerLink="/app/academics/teacher-allocation"
+    routerLinkActive="is-active"
+    [routerLinkActiveOptions]="{ exact: true }">
+    Subject Allocation
+  </a>
+  <a class="ta-tabs__link" routerLink="/app/academics/teacher-workload" routerLinkActive="is-active">
+    Teacher Workload
+  </a>
+</nav>
+
 <section class="ta-context" aria-label="Allocation context">
   <div class="ta-field">
     <label class="ta-label" for="ta-group">Academic Group <span aria-hidden="true">*</span></label>

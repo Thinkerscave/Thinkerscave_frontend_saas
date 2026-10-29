@@ -6,6 +6,7 @@ export type AcademicsWorkspacePage =
   | 'choice-groups'
   | 'subject-mapping'
   | 'teacher-allocation'
+  | 'teacher-workload'
   | 'timetable'
   | 'teacher-arrangement'
   | 'academic-calendar'

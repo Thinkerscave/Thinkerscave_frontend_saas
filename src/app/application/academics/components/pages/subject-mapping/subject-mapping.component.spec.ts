@@ -13,6 +13,7 @@ import { AcademicsNavService } from '../../../services/academics-nav.service';
 import { SubjectsMappingApiService } from '../../../services/subjects-mapping-api.service';
 import {
   AvailableSubjectResponse,
+  SubjectChoiceGroup,
   SubjectMappingBoard,
   SubjectMappingImpactResponse,
   SubjectResponse
@@ -58,6 +59,17 @@ const ENGLISH: SubjectResponse = {
   active: true, mappedAcademicGroupCount: 0, mappedSectionCount: 0
 };
 
+const CHOICE_GROUP: SubjectChoiceGroup = {
+  subjectChoiceGroupId: 11,
+  name: 'Second Language',
+  subjectType: 'ACADEMIC_SUBJECT',
+  active: true,
+  subjects: [
+    { subjectId: 20, name: 'Hindi', code: 'HIN', active: true },
+    { subjectId: 21, name: 'Sanskrit', code: 'SAN', active: true }
+  ]
+};
+
 describe('SubjectMappingPageComponent', () => {
   let fixture: ComponentFixture<SubjectMappingPageComponent>;
   let component: SubjectMappingPageComponent;
@@ -70,10 +82,11 @@ describe('SubjectMappingPageComponent', () => {
 
   async function setup(query: Record<string, string> = {}): Promise<void> {
     subjectsApi = jasmine.createSpyObj('SubjectsMappingApiService', [
-      'getMappingBoard', 'listAvailableSubjects', 'previewMappings', 'saveMappings', 'getSubject'
+      'getMappingBoard', 'listAvailableSubjects', 'listSubjectChoiceGroups', 'previewMappings', 'saveMappings', 'getSubject'
     ]);
     subjectsApi.getMappingBoard.and.returnValue(of(structuredClone(BOARD)));
     subjectsApi.listAvailableSubjects.and.returnValue(of(page(AVAILABLE)));
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([])));
     subjectsApi.previewMappings.and.returnValue(of({ valid: true, requiresConfirmation: false, impacts: [] } as SubjectMappingImpactResponse));
     subjectsApi.saveMappings.and.returnValue(of(structuredClone(BOARD)));
     subjectsApi.getSubject.and.returnValue(of(ENGLISH));
@@ -292,5 +305,74 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.changeCount).toBe(0);
     expect(component.canSave).toBeFalse();
     expect(fixture.nativeElement.querySelector('.sub-map-footer')).toBeNull();
+  });
+
+  it('adds a selected choice group with Add Selected Subjects and counts it once', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    expect(component.stagedCount).toBe(1);
+
+    component.addSelectedSubjects();
+
+    expect(component.choiceMappings.length).toBe(1);
+    expect(component.choiceMappings[0].subjects.length).toBe(2);
+    expect(component.selectedChoiceGroupIds.size).toBe(0);
+    expect(component.mappedCount).toBe(2);
+    expect(component.totalWeeklyPeriods).toBe(6);
+  });
+
+  it('saves a choice group with its weekly periods and no member overrides', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    component.addSelectedSubjects();
+
+    component.choiceMappings[0].weeklyPeriods = 3;
+    component.save();
+
+    const request = subjectsApi.previewMappings.calls.mostRecent().args[1];
+    expect(request.choiceGroupUpserts!.length).toBe(1);
+    expect(request.choiceGroupUpserts![0].weeklyPeriods).toBe(3);
+    expect(request.choiceGroupUpserts![0].subjectPeriods).toBeUndefined();
+    expect(subjectsApi.saveMappings).toHaveBeenCalled();
+  });
+
+  it('renders choice groups as expandable rows with read-only inherited members', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    component.addSelectedSubjects();
+    fixture.detectChanges();
+
+    const mapped = fixture.nativeElement.querySelector('.sub-mapped') as HTMLElement;
+    expect(mapped.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+    expect(mapped.querySelectorAll('.sub-mapped-group').length).toBe(1);
+    expect(mapped.querySelectorAll('.sub-mapped-group__child').length).toBe(2);
+
+    const child = mapped.querySelector('.sub-mapped-group__child') as HTMLElement;
+    expect(child.querySelector('input[type="number"]')).toBeNull();
+    expect(child.textContent).toContain('Inherit (1)');
+
+    component.toggleChoiceMapping(component.choiceMappings[0]);
+    fixture.detectChanges();
+    expect(mapped.querySelectorAll('.sub-mapped-group__child').length).toBe(0);
+  });
+
+  it('removes an unsaved choice group row without leaving a change behind', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    component.addSelectedSubjects();
+
+    component.removeChoiceMapping(component.choiceMappings[0]);
+
+    expect(component.choiceMappings.length).toBe(0);
+    expect(component.changeCount).toBe(0);
   });
 });

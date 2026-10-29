@@ -106,8 +106,9 @@ export const ACADEMICS_PAGES = {
     breadcrumbLink: ['/app/academics/subjects'],
     pageTitle: 'Choice Groups',
     pageSubtitle: 'Manage reusable groups of alternative subjects.',
-    pageKind: 'main',
-    hideBack: true
+    pageKind: 'detail',
+    showBack: true,
+    backFallback: '/app/academics/subjects'
   },
   subjectDetail: {
     breadcrumb: 'Subject',
@@ -131,6 +132,13 @@ export const ACADEMICS_PAGES = {
     breadcrumb: 'Teacher Allocation',
     pageTitle: 'Teacher Allocation',
     pageSubtitle: 'Assign teachers to every class, section and subject combination.',
+    pageKind: 'main',
+    hideBack: true
+  },
+  teacherWorkload: {
+    breadcrumb: 'Teacher Workload',
+    pageTitle: 'Teacher Workload',
+    pageSubtitle: 'View teacher-wise workload, teaching periods and capacity for the selected academic year.',
     pageKind: 'main',
     hideBack: true
   },

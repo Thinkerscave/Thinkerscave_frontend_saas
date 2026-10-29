@@ -61,6 +61,7 @@ teacherCoverageSave: (yearId: number) => `${BASE}/academics/years/${yearId}/teac
   teacherAllocationUnassign: (id: number) => `${BASE}/academics/teacher-allocations/${id}/unassign`,
   teacherAllocationRecommendations: `${BASE}/academics/teacher-allocations/recommendations`,
   teacherWorkloads: (yearId: number) => `${BASE}/academics/years/${yearId}/teacher-workloads`,
+  teacherWorkload: (yearId: number) => `${BASE}/academics/years/${yearId}/teacher-workload`,
   classTeachers: `${BASE}/academics/allocations/class-teachers`,
   classTeacherById: (id: number) => `${BASE}/academics/allocations/class-teachers/${id}`,
   subjectAssignments: `${BASE}/academics/allocations/subjects`,
@@ -83,6 +84,10 @@ teacherCoverageSave: (yearId: number) => `${BASE}/academics/years/${yearId}/teac
   timetableAssignmentMatrix: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/assignments/matrix`,
   timetableAssignment: (assignmentId: number) => `${BASE}/academics/timetable/assignments/${assignmentId}`,
   timetableFixedActivities: (yearId: number) => `${BASE}/academics/years/${yearId}/timetable/fixed-activities`,
+  timetableFixedActivityOptions: (yearId: number) =>
+    `${BASE}/academics/years/${yearId}/timetable/fixed-activities/options`,
+  timetableFixedActivityResolve: (yearId: number) =>
+    `${BASE}/academics/years/${yearId}/timetable/fixed-activities/resolve`,
   timetableFixedActivity: (activityId: number) => `${BASE}/academics/timetable/fixed-activities/${activityId}`,
   timetableFixedActivityActivate: (activityId: number) => `${BASE}/academics/timetable/fixed-activities/${activityId}/activate`,
   timetableFixedActivityDeactivate: (activityId: number) => `${BASE}/academics/timetable/fixed-activities/${activityId}/deactivate`,

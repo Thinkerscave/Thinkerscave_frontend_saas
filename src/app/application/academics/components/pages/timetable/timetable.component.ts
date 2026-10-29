@@ -22,6 +22,7 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
 import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
+import { sortSubjects } from '../../../models/subjects-mapping.model';
 import {
   ACADEMICS_TIMETABLE_RESOURCE,
   DAY_LABELS,
@@ -53,6 +54,7 @@ interface PeriodRow {
 interface SubjectChoice {
   mappingId: number;
   subjectName: string;
+  subjectType?: string | null;
   teacherAllocationId?: number | null;
   staffId?: number | null;
   staffName?: string | null;
@@ -841,7 +843,7 @@ export class TimetablePageComponent implements OnInit {
       next: (dash) => {
         this.mappingRows = dash.rows ?? [];
         const seen = new Set<number>();
-        this.subjectChoices = this.mappingRows
+        this.subjectChoices = sortSubjects(this.mappingRows
           .filter(r => r.status === 'ASSIGNED' || r.primaryStaffId)
           .filter(r => {
             if (seen.has(r.academicGroupSubjectMappingId)) return false;
@@ -851,11 +853,12 @@ export class TimetablePageComponent implements OnInit {
           .map(r => ({
             mappingId: r.academicGroupSubjectMappingId,
             subjectName: r.subjectName,
+            subjectType: r.subjectType,
             teacherAllocationId: r.teacherAllocationId,
             staffId: r.primaryStaffId,
             staffName: r.primaryStaffName,
             weeklyPeriods: r.weeklyPeriods
-          }));
+          })));
         this.cdr.markForCheck();
       },
       error: () => { this.mappingRows = []; this.subjectChoices = []; }

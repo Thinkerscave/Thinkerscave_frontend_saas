@@ -65,8 +65,8 @@
     <section class="sub-panel sub-avail" aria-labelledby="sub-avail-heading">
       <div class="sub-panel__head">
         <div>
-          <h2 id="sub-avail-heading">Available Subjects</h2>
-          <p>Select subjects to add to this academic group.</p>
+          <h2 id="sub-avail-heading">Available to Map</h2>
+          <p>Select subjects or choice groups to add to this academic group.</p>
         </div>
         <label class="sub-select-all">
           <input
@@ -84,11 +84,11 @@
         <input
           class="sub-search"
           type="search"
-          placeholder="Search subjects..."
+          placeholder="Search subjects or choice groups..."
           [ngModel]="availableQuery"
-          (ngModelChange)="availableQuery = $event; onAvailableQueryChange($event)"
+          (ngModelChange)="onAvailableSearchChange($event)"
           [disabled]="selectingAllAvailable"
-          aria-label="Search available subjects" />
+          aria-label="Search available subjects or choice groups" />
         <p-dropdown
           [options]="typeOptions"
           [(ngModel)]="availableType"
@@ -107,8 +107,13 @@
         <span>{{ availableError }}</span>
         <button type="button" class="tc-btn tc-btn--sm" (click)="loadAvailable()">Retry</button>
       </div>
+      <div class="sub-alert" role="alert" *ngIf="choiceGroupError">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <span>{{ choiceGroupError }}</span>
+        <button type="button" class="tc-btn tc-btn--sm" (click)="loadChoiceGroupOptions()">Retry</button>
+      </div>
 
-      <ul class="sub-avail-list" *ngIf="availableRows.length > 0; else availableEmptyTpl" [class.sub-results--refreshing]="availableLoading">
+      <ul class="sub-avail-list" *ngIf="availableRows.length > 0 || availableChoiceGroups.length > 0; else availableEmptyTpl" [class.sub-results--refreshing]="availableLoading">
         <li class="sub-avail-row" *ngFor="let item of availableRows" [class.is-mapped]="item.mapped">
           <input
             type="checkbox"
@@ -122,21 +127,44 @@
           </span>
           <label class="sub-avail-row__text" [attr.for]="'sub-avail-' + item.subjectId">
             <strong>{{ item.subjectName }}</strong>
-            <span class="sub-muted sub-small">{{ item.subjectCode }} | {{ typeLabel(item.subjectType) }}</span>
+            <span class="sub-muted sub-small">
+              {{ item.subjectCode }} | {{ typeLabel(item.subjectType) }}<ng-container *ngIf="!item.subjectActive"> · Inactive</ng-container>
+            </span>
           </label>
           <span class="sub-avail-row__badges">
-            <span class="sub-badge" [class.sub-badge--active]="item.subjectActive" [class.sub-badge--inactive]="!item.subjectActive">
-              {{ item.subjectActive ? 'Active' : 'Inactive' }}
-            </span>
             <span class="sub-badge sub-badge--mapped" *ngIf="item.mapped">Mapped</span>
+            <span class="sub-badge sub-badge--type">Subject</span>
+          </span>
+        </li>
+
+        <li class="sub-avail-row" *ngFor="let group of availableChoiceGroups">
+          <input type="checkbox" class="sub-avail-row__check"
+            [id]="'choice-group-' + group.subjectChoiceGroupId"
+            [checked]="isChoiceGroupSelected(group.subjectChoiceGroupId)"
+            [disabled]="!editable"
+            (change)="onChoiceGroupToggle(group.subjectChoiceGroupId, $any($event.target).checked)" />
+          <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(group.subjectType)" aria-hidden="true">
+            <i class="pi pi-sitemap"></i>
+          </span>
+          <label class="sub-avail-row__text" [attr.for]="'choice-group-' + group.subjectChoiceGroupId">
+            <strong>{{ group.name }}</strong>
+            <span class="sub-muted sub-small">
+              {{ typeLabel(group.subjectType) }} · {{ group.subjects.length }} alternatives:
+              {{ choiceGroupSummary(group) }}
+            </span>
+          </label>
+          <span class="sub-avail-row__badges">
+            <span class="sub-badge sub-badge--group">Choice Group</span>
           </span>
         </li>
       </ul>
       <ng-template #availableEmptyTpl>
-        <div class="sub-empty sub-empty--compact" *ngIf="!availableLoading">
-          <p>No subjects match your search.</p>
+        <div class="sub-empty sub-empty--compact" *ngIf="!availableLoading && !choiceGroupLoading">
+          <p>No subjects or choice groups match your search.</p>
         </div>
       </ng-template>
+
+      <div class="sub-empty sub-empty--compact" *ngIf="choiceGroupLoading"><p>Loading choice groups…</p></div>
 
       <app-paginator
         *ngIf="availableTotal > 0"
@@ -148,51 +176,6 @@
         ariaLabel="Available subjects pagination"
         (pageChange)="onAvailablePageChange($event)">
       </app-paginator>
-
-      <div class="sub-choice-picker">
-        <div class="sub-panel__head">
-          <div>
-            <h3>Available Choice Groups</h3>
-            <p>Add an existing group as one required curriculum choice.</p>
-          </div>
-          <button type="button" class="tc-btn tc-btn--primary tc-btn--sm"
-            [disabled]="!editable || selectedChoiceGroupIds.size === 0" (click)="addSelectedChoiceGroups()">
-            Add Choice Groups<span *ngIf="selectedChoiceGroupIds.size"> ({{ selectedChoiceGroupIds.size }})</span>
-          </button>
-        </div>
-        <input class="sub-search" type="search" placeholder="Search groups or included subjects"
-          [(ngModel)]="choiceGroupQuery" (ngModelChange)="onChoiceGroupQueryChange($event)"
-          aria-label="Search choice groups" />
-        <div class="sub-alert" role="alert" *ngIf="choiceGroupError">
-          <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
-          <span>{{ choiceGroupError }}</span>
-          <button type="button" class="tc-btn tc-btn--sm" (click)="loadChoiceGroupOptions()">Retry</button>
-        </div>
-        <ul class="sub-avail-list" *ngIf="!choiceGroupLoading && availableChoiceGroups.length">
-          <li class="sub-avail-row" *ngFor="let group of availableChoiceGroups">
-            <input type="checkbox" class="sub-avail-row__check"
-              [id]="'choice-group-' + group.subjectChoiceGroupId"
-              [checked]="isChoiceGroupSelected(group.subjectChoiceGroupId)"
-              [disabled]="!editable"
-              (change)="onChoiceGroupToggle(group.subjectChoiceGroupId, $any($event.target).checked)" />
-            <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(group.subjectType)" aria-hidden="true">
-              <i class="pi pi-sitemap"></i>
-            </span>
-            <label class="sub-avail-row__text" [attr.for]="'choice-group-' + group.subjectChoiceGroupId">
-              <strong>{{ group.name }}</strong>
-              <span class="sub-muted sub-small">
-                {{ typeLabel(group.subjectType) }} · {{ group.subjects.length }} alternatives:
-                {{ choiceGroupSummary(group) }}
-              </span>
-            </label>
-          </li>
-        </ul>
-        <div class="sub-empty sub-empty--compact" *ngIf="choiceGroupLoading"><p>Loading choice groups…</p></div>
-        <div class="sub-empty sub-empty--compact"
-          *ngIf="!choiceGroupLoading && !choiceGroupError && !availableChoiceGroups.length">
-          <p>No eligible choice groups are available.</p>
-        </div>
-      </div>
     </section>
 
     <section class="sub-panel sub-mapped" aria-labelledby="sub-mapped-heading">
@@ -205,7 +188,7 @@
               {{ totalWeeklyPeriods }} weekly periods
             </span>
           </div>
-          <p>Configure curriculum details for the selected subjects.</p>
+          <p>Configure curriculum details for the selected subjects and choice groups.</p>
         </div>
         <button
           *ngIf="showMutations"
@@ -218,11 +201,11 @@
         </button>
       </div>
 
-      <div class="sub-table-wrap" *ngIf="rows.length > 0">
+      <div class="sub-table-wrap" *ngIf="rows.length > 0 || choiceMappings.length > 0">
         <table class="sub-table sub-mapped-table">
           <thead>
             <tr>
-              <th scope="col">Subject</th>
+              <th scope="col">Subject / Group</th>
               <th scope="col">Requirement</th>
               <th scope="col">Weekly Periods</th>
               <th scope="col">Preferred Time</th>
@@ -314,68 +297,126 @@
                 </ng-template>
               </td>
             </tr>
+
+            <ng-container *ngFor="let mapping of choiceMappings">
+              <tr class="sub-mapped-group" [class.sub-row--removed]="mapping.removed">
+                <td>
+                  <div class="sub-table__name">
+                    <button
+                      type="button"
+                      class="sub-mapped-group__toggle"
+                      (click)="toggleChoiceMapping(mapping)"
+                      [attr.aria-expanded]="mapping.expanded"
+                      [attr.aria-label]="(mapping.expanded ? 'Collapse ' : 'Expand ') + mapping.name">
+                      <i class="pi" [ngClass]="mapping.expanded ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
+                    </button>
+                    <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(mapping.subjectType)" aria-hidden="true">
+                      <i class="pi pi-sitemap"></i>
+                    </span>
+                    <div>
+                      <div class="sub-mapped-group__name">
+                        <strong>{{ mapping.name }}</strong>
+                        <span class="sub-badge sub-badge--group">Choice Group</span>
+                      </div>
+                      <div class="sub-muted sub-small">{{ choiceMappingSummary(mapping) }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="sub-muted" aria-hidden="true">–</span></td>
+                <td>
+                  <input
+                    type="number"
+                    class="sub-weekly"
+                    [min]="weeklyMin"
+                    [max]="weeklyMax"
+                    step="1"
+                    [(ngModel)]="mapping.weeklyPeriods"
+                    (ngModelChange)="markRowChanged()"
+                    [disabled]="!editable || mapping.removed"
+                    [attr.aria-invalid]="!isValidChoiceWeekly(mapping)"
+                    [attr.aria-label]="'Weekly periods for ' + mapping.name" />
+                  <span class="sub-field__error" *ngIf="!isValidChoiceWeekly(mapping) && !mapping.removed">
+                    Enter {{ weeklyMin }}–{{ weeklyMax }}
+                  </span>
+                </td>
+                <td>
+                  <p-dropdown
+                    [options]="preferenceOptions"
+                    [(ngModel)]="mapping.timetablePreference"
+                    (ngModelChange)="markRowChanged()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [disabled]="!editable || mapping.removed"
+                    [ariaLabel]="'Preferred time for ' + mapping.name"
+                    appendTo="body"
+                    styleClass="sub-pref-dd">
+                  </p-dropdown>
+                </td>
+                <td>
+                  <span class="sub-badge" [ngClass]="mapping.removed ? 'sub-badge--removed' : 'sub-badge--mapped'">
+                    {{ mapping.removed ? 'Will be removed' : (mapping.saved ? (isChoiceMappingChanged(mapping) ? 'Modified' : 'Mapped') : 'New') }}
+                  </span>
+                </td>
+                <td class="sub-table__actions" *ngIf="showMutations">
+                  <button
+                    *ngIf="mapping.removed; else removeChoiceGroupButton"
+                    type="button"
+                    class="sub-icon-btn"
+                    (click)="undoChoiceMappingRemoval(mapping)"
+                    [attr.aria-label]="'Undo removal of ' + mapping.name">
+                    <i class="pi pi-undo" aria-hidden="true"></i>
+                  </button>
+                  <ng-template #removeChoiceGroupButton>
+                    <button
+                      type="button"
+                      class="sub-icon-btn"
+                      (click)="removeChoiceMapping(mapping)"
+                      [disabled]="!editable"
+                      [attr.aria-label]="'Remove ' + mapping.name + ' mapping'">
+                      <i class="pi pi-trash" aria-hidden="true"></i>
+                    </button>
+                  </ng-template>
+                </td>
+              </tr>
+
+              <ng-container *ngIf="mapping.expanded && !mapping.removed">
+                <tr class="sub-mapped-group__caption">
+                  <td [attr.colspan]="showMutations ? 6 : 5">
+                    {{ mapping.subjects.length }} subject{{ mapping.subjects.length === 1 ? '' : 's' }} in this group
+                    (teacher allocation remains subject-specific)
+                  </td>
+                </tr>
+                <tr class="sub-mapped-group__child" *ngFor="let subject of mapping.subjects">
+                  <td>
+                    <div class="sub-table__name sub-mapped-group__member">
+                      <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(subject.subjectType)" aria-hidden="true">
+                        <i [class]="typeIcon(subject.subjectType)"></i>
+                      </span>
+                      <div>
+                        <div class="sub-mapped-group__name">
+                          <strong>{{ subject.subjectName }}</strong>
+                          <span class="sub-badge sub-badge--group-member">Group member</span>
+                        </div>
+                        <div class="sub-muted sub-small">
+                          {{ subject.subjectCode }}
+                          <ng-container *ngIf="subject.teacherAllocationCount || subject.timetableEntryCount">
+                            · {{ subject.teacherAllocationCount }} teacher · {{ subject.timetableEntryCount }} timetable
+                          </ng-container>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="sub-muted" aria-hidden="true">–</span></td>
+                  <td><span class="sub-muted">Inherit ({{ mapping.weeklyPeriods }})</span></td>
+                  <td><span class="sub-muted" aria-hidden="true">–</span></td>
+                  <td></td>
+                  <td *ngIf="showMutations"></td>
+                </tr>
+              </ng-container>
+            </ng-container>
           </tbody>
         </table>
       </div>
-
-      <section class="sub-choice-mappings" *ngIf="choiceMappings.length" aria-label="Mapped choice groups">
-        <h3>Mapped Choice Groups</h3>
-        <div class="sub-choice-mapping" *ngFor="let mapping of choiceMappings" [class.sub-row--removed]="mapping.removed">
-          <header class="sub-choice-mapping__header">
-            <button type="button" class="sub-choice-mapping__toggle" (click)="toggleChoiceMapping(mapping)"
-              [attr.aria-expanded]="mapping.expanded">
-              <i class="pi" [ngClass]="mapping.expanded ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
-              <span>
-                <strong>{{ mapping.name }}</strong>
-                <small>{{ typeLabel(mapping.subjectType) }} · {{ mapping.subjects.length }} alternatives ·
-                  {{ choiceMappingSummary(mapping) }}</small>
-              </span>
-            </button>
-            <label class="sub-choice-mapping__field">
-              Shared weekly workload
-              <input type="number" class="sub-weekly" [min]="weeklyMin" [max]="weeklyMax"
-                [(ngModel)]="mapping.weeklyPeriods" (ngModelChange)="markRowChanged()"
-                [disabled]="!editable || mapping.removed" [attr.aria-label]="'Shared weekly workload for ' + mapping.name" />
-            </label>
-            <p-dropdown [options]="preferenceOptions" [(ngModel)]="mapping.timetablePreference"
-              (ngModelChange)="markRowChanged()" optionLabel="label" optionValue="value"
-              [disabled]="!editable || mapping.removed" [ariaLabel]="'Preferred time for ' + mapping.name"
-              appendTo="body" styleClass="sub-pref-dd">
-            </p-dropdown>
-            <span class="sub-badge" [ngClass]="mapping.removed ? 'sub-badge--removed' : 'sub-badge--mapped'">
-              {{ mapping.removed ? 'Will be removed' : (mapping.saved ? (isChoiceMappingChanged(mapping) ? 'Modified' : 'Mapped') : 'New') }}
-            </span>
-            <button *ngIf="showMutations && !mapping.removed" type="button" class="sub-icon-btn"
-              (click)="removeChoiceMapping(mapping)" [attr.aria-label]="'Remove ' + mapping.name + ' mapping'">
-              <i class="pi pi-trash" aria-hidden="true"></i>
-            </button>
-            <button *ngIf="showMutations && mapping.removed" type="button" class="sub-icon-btn"
-              (click)="undoChoiceMappingRemoval(mapping)" [attr.aria-label]="'Undo removal of ' + mapping.name">
-              <i class="pi pi-undo" aria-hidden="true"></i>
-            </button>
-          </header>
-          <div class="sub-choice-mapping__children" *ngIf="mapping.expanded && !mapping.removed">
-            <div class="sub-choice-mapping__child" *ngFor="let subject of mapping.subjects">
-              <div>
-                <strong>{{ subject.subjectName }}</strong>
-                <small>{{ subject.subjectCode }} · individual subject teacher allocation</small>
-              </div>
-              <label>
-                Effective periods
-                <input type="number" class="sub-weekly" [min]="weeklyMin" [max]="mapping.weeklyPeriods"
-                  [ngModel]="mapping.subjectPeriods[subject.subjectId]"
-                  (ngModelChange)="updateChoiceChildPeriods(mapping, subject.subjectId, $event)"
-                  [disabled]="!editable || mapping.removed"
-                  [attr.aria-invalid]="!isChoiceChildPeriodValid(mapping, subject.subjectId)"
-                  [attr.aria-label]="'Effective weekly periods for ' + subject.subjectName" />
-              </label>
-              <span class="sub-muted sub-small">
-                {{ subject.teacherAllocationCount }} teacher allocation(s) · {{ subject.timetableEntryCount }} timetable lesson(s)
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <div class="sub-empty sub-empty--compact" *ngIf="rows.length === 0 && !choiceMappings.length">
         <i class="pi pi-book" aria-hidden="true"></i>

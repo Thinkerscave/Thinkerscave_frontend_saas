@@ -23,7 +23,13 @@ import {
   DAY_SHORT,
   DayOfWeek,
   FixedActivity,
+  FixedActivityGroupOption,
+  FixedActivityOptions,
   FixedActivityRequest,
+  FixedActivitySchedule,
+  FixedActivitySectionOption,
+  FixedActivitySubjectOption,
+  FixedActivityTeacherOption,
   GroupAssignmentCell,
   GroupAssignmentMatrix,
   GroupAssignmentRequest,
@@ -32,9 +38,12 @@ import {
   SchedulePatternRequest,
   SlotKind
 } from '../../../models/timetable.model';
+import { SubjectType, subjectTypeLabel } from '../../../models/subjects-mapping.model';
 
 type ConfigTab = 'patterns' | 'assignments' | 'fixed';
 type PickerSectionScope = 'ALL' | 'SELECTED';
+type ActivitySectionScope = 'ALL' | 'SELECTED';
+type ActivityGroupScope = 'ALL' | 'SELECTED';
 
 interface PatternSlotForm {
   name: string;
@@ -73,21 +82,44 @@ interface AssignForm {
 
 interface ActivityForm {
   fixedActivityId: number | null;
-  name: string;
+  subjectId: number | null;
+  groupScope: ActivityGroupScope;
+  groupSelections: ActivityGroupSelection[];
   description: string;
-  activityType: string;
-  appliesToAllGroups: boolean;
-  units: AssignUnit[];
-  days: DayOfWeek[];
-  startTime: string;
-  endTime: string;
-  recurrence: string;
-  effectiveFrom: string | null;
-  effectiveTo: string | null;
   active: boolean;
+  days: DayOfWeek[];
+  periodName: string | null;
 }
 
-const ACTIVITY_TYPES = ['GENERAL', 'ASSEMBLY', 'EXERCISE', 'SPORTS', 'LIBRARY', 'COUNSELING', 'MEDITATION', 'OTHER'];
+interface ActivityGroupSelection {
+  academicGroupId: number;
+  sectionScope: ActivitySectionScope;
+  sectionIds: number[];
+}
+
+interface ActivityUnavailableSection {
+  groupId: number;
+  sectionId: number;
+  name: string;
+}
+
+interface ActivityUnavailableGroup {
+  groupId: number;
+  name: string;
+}
+
+const ACTIVITY_GROUP_SCOPES: { key: ActivityGroupScope; label: string; hint: string }[] = [
+  {
+    key: 'ALL',
+    label: 'All Groups',
+    hint: 'Applies to every active academic group and all of their sections.'
+  },
+  {
+    key: 'SELECTED',
+    label: 'Specific Groups',
+    hint: 'Choose one or more groups, then choose all or specific sections for each.'
+  }
+];
 
 @Component({
   selector: 'app-timetable-configuration-page',
@@ -118,7 +150,7 @@ export class TimetableConfigurationPageComponent implements OnInit {
   readonly dayOrder = DAY_ORDER;
   readonly dayLabels = DAY_LABELS;
   readonly dayShort = DAY_SHORT;
-  readonly activityTypes = ACTIVITY_TYPES;
+  readonly activityGroupScopes = ACTIVITY_GROUP_SCOPES;
   readonly tabs: { key: ConfigTab; label: string; icon: string }[] = [
     { key: 'patterns', label: 'Schedule Patterns', icon: 'pi pi-clock' },
     { key: 'assignments', label: 'Group Assignments', icon: 'pi pi-users' },
@@ -157,9 +189,17 @@ export class TimetableConfigurationPageComponent implements OnInit {
 
   showActivityDialog = false;
   activityForm: ActivityForm = this.emptyActivityForm();
-  activityPickerGroupId: number | null = null;
-  activityPickerScope: PickerSectionScope = 'ALL';
-  activityPickerSectionIds: number[] = [];
+  activityOptions: FixedActivityOptions | null = null;
+  activitySchedule: FixedActivitySchedule | null = null;
+  activityIssues: string[] = [];
+  activityRestoreIssues: string[] = [];
+  activityResolving = false;
+  activitySubjectSearch = '';
+  activityGroupSearch = '';
+  activityExpandedGroupIds: number[] = [];
+  activityUnavailableGroups: ActivityUnavailableGroup[] = [];
+  activityUnavailableSections: ActivityUnavailableSection[] = [];
+  private activityResolveToken = 0;
 
   ngOnInit(): void {
     const qpYear = Number(this.route.snapshot.queryParamMap.get('academicYearId'));
@@ -202,6 +242,29 @@ export class TimetableConfigurationPageComponent implements OnInit {
     this.api.listFixedActivities(yearId).subscribe({
       next: (list) => { this.fixedActivities = list; this.cdr.markForCheck(); },
       error: () => { this.fixedActivities = []; }
+    });
+    this.loadActivityOptions();
+  }
+
+  private loadActivityOptions(onLoaded?: () => void): void {
+    if (!this.selectedYearId) {
+      onLoaded?.();
+      return;
+    }
+    const yearId = this.selectedYearId;
+    this.api.getFixedActivityOptions(yearId).subscribe({
+      next: (options) => {
+        if (yearId !== this.selectedYearId) return;
+        this.activityOptions = options;
+        onLoaded?.();
+        if (!onLoaded && this.showActivityDialog) this.resolveActivitySchedule();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.activityOptions = null;
+        this.messages.add({ severity: 'error', summary: 'Unable to load subjects and groups' });
+        onLoaded?.();
+      }
     });
   }
 
@@ -517,13 +580,6 @@ export class TimetableConfigurationPageComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  toggleActivityDay(day: DayOfWeek): void {
-    const index = this.activityForm.days.indexOf(day);
-    if (index >= 0) this.activityForm.days.splice(index, 1);
-    else this.activityForm.days.push(day);
-    this.cdr.markForCheck();
-  }
-
   saveAssignment(): void {
     if (!this.selectedYearId) return;
     const form = this.assignForm;
@@ -575,124 +631,599 @@ export class TimetableConfigurationPageComponent implements OnInit {
 
   // ─── Fixed activities ─────────────────────────────────────────────────
 
+  get activityGroupOptions(): FixedActivityGroupOption[] {
+    return this.activityOptions?.groups ?? [];
+  }
+
+  get filteredActivitySubjects(): FixedActivitySubjectOption[] {
+    const q = this.activitySubjectSearch.trim().toLowerCase();
+    return (this.activityOptions?.subjects ?? []).filter(subject => !q
+      || subject.name.toLowerCase().includes(q)
+      || subject.code.toLowerCase().includes(q));
+  }
+
+  get activitySelectedSubject(): FixedActivitySubjectOption | null {
+    const id = this.activityForm.subjectId;
+    if (!id) return null;
+    return (this.activityOptions?.subjects ?? [])
+      .find(subject => subject.subjectId === id) ?? null;
+  }
+
+  get filteredActivityGroups(): FixedActivityGroupOption[] {
+    const q = this.activityGroupSearch.trim().toLowerCase();
+    return this.activityGroupOptions.filter(group => !q
+      || group.name.toLowerCase().includes(q)
+      || group.code.toLowerCase().includes(q));
+  }
+
+  get activityGroupsInScope(): FixedActivityGroupOption[] {
+    if (this.activityForm.groupScope === 'ALL') return this.activityGroupOptions;
+    const ids = new Set(this.activityForm.groupSelections.map(selection => selection.academicGroupId));
+    return this.activityGroupOptions.filter(group => ids.has(group.academicGroupId));
+  }
+
+  get activitySelectedGroupCount(): number {
+    return this.activityGroupsInScope.length;
+  }
+
+  get activityGroupSelectionMissing(): boolean {
+    return this.activityForm.groupScope === 'SELECTED'
+      && this.activityForm.groupSelections.length === 0;
+  }
+
+  get activitySectionSelectionInvalid(): boolean {
+    if (this.activityForm.groupScope === 'ALL') return false;
+    return this.activityForm.groupSelections.some(selection => {
+      const group = this.activityGroupOptions
+        .find(candidate => candidate.academicGroupId === selection.academicGroupId);
+      return !!group && group.sections.length > 0
+        && selection.sectionScope === 'SELECTED' && selection.sectionIds.length === 0;
+    });
+  }
+
+  activityGroupSelection(groupId: number): ActivityGroupSelection | null {
+    return this.activityForm.groupSelections
+      .find(selection => selection.academicGroupId === groupId) ?? null;
+  }
+
+  isActivityGroupSelected(groupId: number): boolean {
+    return !!this.activityGroupSelection(groupId);
+  }
+
+  isActivityGroupExpanded(groupId: number): boolean {
+    return this.activityExpandedGroupIds.includes(groupId);
+  }
+
+  toggleActivityGroupExpanded(groupId: number): void {
+    const index = this.activityExpandedGroupIds.indexOf(groupId);
+    if (index >= 0) this.activityExpandedGroupIds.splice(index, 1);
+    else this.activityExpandedGroupIds.push(groupId);
+    this.cdr.markForCheck();
+  }
+
+  activityGroupSummary(group: FixedActivityGroupOption): string {
+    const selection = this.activityGroupSelection(group.academicGroupId);
+    if (!selection) return group.name;
+    if (!group.sections.length || selection.sectionScope === 'ALL') {
+      return `${group.name} – All Sections`;
+    }
+    const names = group.sections
+      .filter(section => selection.sectionIds.includes(section.sectionId))
+      .map(section => section.name);
+    if (!names.length) return `${group.name} – No sections`;
+    if (names.length <= 2) return `${group.name} – ${names.join(', ')}`;
+    return `${group.name} – ${names.length} sections`;
+  }
+
+  activityGroupSectionSelectionInvalid(group: FixedActivityGroupOption): boolean {
+    const selection = this.activityGroupSelection(group.academicGroupId);
+    return !!selection && group.sections.length > 0
+      && selection.sectionScope === 'SELECTED' && selection.sectionIds.length === 0;
+  }
+
+  get activitySelectedUnitCount(): number {
+    return this.activityGroupsInScope.reduce((total, group) => {
+      const selection = this.activityGroupSelection(group.academicGroupId);
+      if (!group.sections.length || !selection || selection.sectionScope === 'ALL') {
+        return total + Math.max(1, group.sections.length);
+      }
+      return total + selection.sectionIds.length;
+    }, 0);
+  }
+
+  get activityIsAcademicSubject(): boolean {
+    const type = this.activitySelectedSubject?.subjectType;
+    return type === 'ACADEMIC_SUBJECT' || type === 'PRACTICAL_LAB';
+  }
+
+  get activityTeacherRequired(): boolean {
+    return this.activityIsAcademicSubject;
+  }
+
+  get activityEligibleTeachers(): FixedActivityTeacherOption[] {
+    return [...(this.activitySchedule?.teachers ?? [])]
+      .filter(teacher => teacher.eligibleForAllUnits)
+      .sort((a, b) => a.staffName.localeCompare(b.staffName));
+  }
+
+  get activityResolvedTeacherNames(): string {
+    return this.activityEligibleTeachers.map(teacher => teacher.staffName).join(', ');
+  }
+
+  get activityTeacherMissing(): boolean {
+    return this.activityTeacherRequired
+      && !!this.activityForm.subjectId
+      && this.activitySelectedUnitCount > 0
+      && this.activityEligibleTeachers.length === 0;
+  }
+
+  get activityTeacherNotShared(): boolean {
+    return this.activityTeacherMissing
+      && (this.activitySchedule?.teachers.length ?? 0) > 0;
+  }
+
+  get activityCommonPeriods(): { name: string; displayTime: string; timesVary: boolean; times: string[] }[] {
+    return this.activitySchedule?.commonPeriods ?? [];
+  }
+
+  get activityPeriodSelectionInvalid(): boolean {
+    const name = this.activityForm.periodName;
+    if (!name || !this.activityCommonPeriods.length) return false;
+    return !this.activityCommonPeriods.some(period => period.name === name);
+  }
+
+  get activityDisplayIssues(): string[] {
+    return [...this.activityRestoreIssues, ...this.activityIssues];
+  }
+
+  get activitySaveDisabled(): boolean {
+    return this.saving
+      || this.activityResolving
+      || !this.activityForm.subjectId
+      || this.activityGroupSelectionMissing
+      || this.activitySelectedGroupCount === 0
+      || !this.activityForm.days.length
+      || !this.activityForm.periodName
+      || this.activityPeriodSelectionInvalid
+      || this.activitySectionSelectionInvalid
+      || this.activitySelectedUnitCount === 0
+      || this.activityTeacherMissing
+      || this.activityDisplayIssues.length > 0;
+  }
+
+  activitySubjectTypeLabel(subject: FixedActivitySubjectOption | null): string {
+    return subjectTypeLabel(subject?.subjectType as SubjectType | undefined);
+  }
+
+  activityTypeLabel(activity: FixedActivity): string {
+    return subjectTypeLabel((activity.subjectType ?? activity.activityType) as SubjectType | undefined);
+  }
+
   get filteredActivities(): FixedActivity[] {
     const q = this.activitySearch.trim().toLowerCase();
-    return this.fixedActivities.filter(a => {
-      const matchesQuery = !q || a.name.toLowerCase().includes(q)
-        || (a.description ?? '').toLowerCase().includes(q);
+    return this.fixedActivities.filter(activity => {
+      const matchesQuery = !q
+        || (activity.subjectName ?? activity.name ?? '').toLowerCase().includes(q)
+        || (activity.description ?? '').toLowerCase().includes(q)
+        || (activity.periodName ?? '').toLowerCase().includes(q);
       const matchesStatus = this.activityStatus === 'ALL'
-        || (this.activityStatus === 'ACTIVE' ? a.active : !a.active);
+        || (this.activityStatus === 'ACTIVE' ? activity.active : !activity.active);
       const matchesGroup = !this.activityGroupFilter
-        || a.appliesToAllGroups
-        || a.groups.some(g => g.academicGroupId === this.activityGroupFilter);
+        || activity.appliesToAllGroups
+        || activity.groups.some(group => group.academicGroupId === this.activityGroupFilter);
       return matchesQuery && matchesStatus && matchesGroup;
     });
   }
 
   activityAppliesTo(activity: FixedActivity): string {
-    if (activity.appliesToAllGroups) return 'All Classes';
-    return activity.groups
-      .map(g => g.sectionName ? `${g.academicGroupName} - ${g.sectionName}` : g.academicGroupName)
-      .join(', ') || 'Selected groups';
+    if (!activity.groups?.length) return activity.appliesToAllGroups ? 'All groups' : 'No groups';
+    const grouped = new Map<number, { name: string; sections: string[]; allSections: boolean }>();
+    for (const unit of activity.groups) {
+      const entry = grouped.get(unit.academicGroupId)
+        ?? { name: unit.academicGroupName ?? 'Group', sections: [], allSections: false };
+      if (unit.sectionId == null) entry.allSections = true;
+      else if (unit.sectionName) entry.sections.push(unit.sectionName);
+      grouped.set(unit.academicGroupId, entry);
+    }
+    return [...grouped.entries()].map(([groupId, group]) => {
+      if (group.allSections) return `${group.name} (all sections)`;
+      if (!group.sections.length) return group.name;
+      const option = this.activityGroupOptions
+        .find(candidate => candidate.academicGroupId === groupId);
+      const coversEverySection = !!option && option.sections.length > 0
+        && group.sections.length === option.sections.length;
+      return coversEverySection
+        ? `${group.name} (all sections)`
+        : `${group.name} · ${group.sections.join(', ')}`;
+    }).join('; ');
+  }
+
+  activityPeriodLabel(activity: FixedActivity): string {
+    const label = activity.periodName || activity.periods?.[0]?.periodName;
+    if (!label) return this.activityTime(activity);
+    const times = new Set((activity.periods ?? [])
+      .filter(row => row.periodName === label)
+      .map(row => `${this.hhmm(row.startTime)} – ${this.hhmm(row.endTime)}`));
+    if (!times.size) return label;
+    if (times.size === 1) return `${label} · ${[...times][0]}`;
+    return `${label} · varies by day`;
   }
 
   activityTime(activity: FixedActivity): string {
+    if (!activity.startTime || !activity.endTime) return 'Not configured';
     return `${this.hhmm(activity.startTime)} – ${this.hhmm(activity.endTime)}`;
   }
 
   openCreateActivity(): void {
     this.activityForm = this.emptyActivityForm();
-    this.activityPickerGroupId = this.groupOptions[0]?.value ?? null;
-    this.activityPickerScope = 'ALL';
-    this.activityPickerSectionIds = [];
+    this.activitySubjectSearch = '';
+    this.activityGroupSearch = '';
+    this.activitySchedule = null;
+    this.activityIssues = [];
+    this.activityRestoreIssues = [];
+    this.activityUnavailableGroups = [];
+    this.activityUnavailableSections = [];
     this.showActivityDialog = true;
+    this.loadActivityOptions();
     this.cdr.markForCheck();
   }
 
   openEditActivity(activity: FixedActivity): void {
+    const groups = activity.groups ?? [];
+    const groupIds = [...new Set(groups.map(group => group.academicGroupId))];
+    const selections: ActivityGroupSelection[] = groupIds.map(groupId => {
+      const units = groups.filter(group => group.academicGroupId === groupId);
+      const sectionIds = units
+        .filter(unit => unit.sectionId != null)
+        .map(unit => unit.sectionId!);
+      const allSections = units.some(unit => unit.sectionId == null);
+      return {
+        academicGroupId: groupId,
+        sectionScope: allSections || !sectionIds.length ? 'ALL' : 'SELECTED',
+        sectionIds: allSections ? [] : sectionIds
+      };
+    });
+    const legacyAllGroups = activity.appliesToAllGroups && !groupIds.length;
     this.activityForm = {
       fixedActivityId: activity.fixedActivityId ?? null,
-      name: activity.name,
+      subjectId: activity.subjectId ?? null,
+      groupScope: legacyAllGroups ? 'ALL' : 'SELECTED',
+      groupSelections: selections,
       description: activity.description ?? '',
-      activityType: activity.activityType || 'GENERAL',
-      appliesToAllGroups: activity.appliesToAllGroups,
-      units: activity.groups.map(g => ({
-        academicGroupId: g.academicGroupId,
-        sectionId: g.sectionId ?? null,
-        label: g.sectionName ? `${g.academicGroupName} - ${g.sectionName}` : (g.academicGroupName ?? 'Group')
-      })),
+      active: activity.active,
       days: [...activity.days],
-      startTime: this.hhmm(activity.startTime),
-      endTime: this.hhmm(activity.endTime),
-      recurrence: activity.recurrence || 'WEEKLY',
-      effectiveFrom: activity.effectiveFrom ?? null,
-      effectiveTo: activity.effectiveTo ?? null,
-      active: activity.active
+      periodName: activity.periodName ?? activity.periods?.[0]?.periodName ?? null
     };
-    const firstUnit = activity.groups[0];
-    this.activityPickerGroupId = firstUnit?.academicGroupId ?? this.groupOptions[0]?.value ?? null;
-    this.activityPickerScope = firstUnit?.sectionId != null ? 'SELECTED' : 'ALL';
-    this.activityPickerSectionIds = firstUnit?.sectionId != null ? [firstUnit.sectionId] : [];
+    this.activitySubjectSearch = '';
+    this.activityGroupSearch = '';
+    this.activityExpandedGroupIds = [];
+    this.activitySchedule = null;
+    this.activityIssues = [];
+    this.activityRestoreIssues = [];
+    this.activityUnavailableGroups = [];
+    this.activityUnavailableSections = [];
     this.showActivityDialog = true;
+    this.loadActivityOptions(() => this.restoreActivityDependentState(activity));
     this.cdr.markForCheck();
   }
 
-  addActivityUnit(): void {
-    if (!this.activityPickerGroupId) return;
-    const units = this.pickerUnitsForGroup(
-      this.activityPickerGroupId,
-      this.activityPickerScope,
-      this.activityPickerSectionIds
-    );
-    if (!units.length) {
-      this.messages.add({ severity: 'warn', summary: 'Select at least one section' });
-      return;
-    }
-    for (const unit of units) {
-      if (!this.activityForm.units.some(u => u.academicGroupId === unit.academicGroupId && u.sectionId === unit.sectionId)) {
-        this.activityForm.units.push(unit);
+  /**
+   * Runs only after options are loaded so saved groups and sections can be matched against
+   * the current configuration. Never silently replaces a saved subject, group or section.
+   */
+  private restoreActivityDependentState(activity: FixedActivity): void {
+    const availableGroups = new Set(this.activityGroupOptions
+      .map(group => group.academicGroupId));
+    this.activityUnavailableGroups = this.activityForm.groupSelections
+      .filter(selection => !availableGroups.has(selection.academicGroupId))
+      .map(selection => ({
+        groupId: selection.academicGroupId,
+        name: activity.groups.find(unit =>
+          unit.academicGroupId === selection.academicGroupId)?.academicGroupName
+          ?? `Group ${selection.academicGroupId}`
+      }));
+    this.activityUnavailableSections = [];
+    for (const selection of this.activityForm.groupSelections) {
+      const group = this.activityGroupOptions
+        .find(candidate => candidate.academicGroupId === selection.academicGroupId);
+      if (!group) continue;
+      const availableSections = new Set(group.sections.map(section => section.sectionId));
+      for (const sectionId of selection.sectionIds) {
+        if (availableSections.has(sectionId)) continue;
+        this.activityUnavailableSections.push({
+          groupId: group.academicGroupId,
+          sectionId,
+          name: activity.groups.find(unit => unit.academicGroupId === group.academicGroupId
+            && unit.sectionId === sectionId)?.sectionName ?? `Section ${sectionId}`
+        });
       }
     }
+    this.refreshActivityRestoreIssues();
+    const coversEveryGroup = this.activityForm.groupScope !== 'ALL'
+      && !this.activityUnavailableGroups.length
+      && !this.activityUnavailableSections.length
+      && !!this.activityGroupOptions.length
+      && this.activityForm.groupSelections.length === this.activityGroupOptions.length
+      && this.activityForm.groupSelections.every(selection => selection.sectionScope === 'ALL');
+    if (coversEveryGroup) this.activityForm.groupScope = 'ALL';
+    this.resolveActivitySchedule();
+  }
+
+  private refreshActivityRestoreIssues(): void {
+    const issues: string[] = [];
+    if (this.activityForm.subjectId && this.activityOptions && !this.activitySelectedSubject) {
+      issues.push('The saved subject is no longer active or available. Select another subject.');
+    }
+    const usesSpecificGroups = this.activityForm.groupScope === 'SELECTED';
+    if (usesSpecificGroups && this.activityUnavailableGroups.length) {
+      issues.push('These saved academic groups are no longer active: '
+        + this.activityUnavailableGroups.map(group => group.name).join(', ')
+        + '. Remove them or choose different groups.');
+    }
+    if (usesSpecificGroups && this.activityUnavailableSections.length) {
+      issues.push('These saved sections are no longer active: '
+        + this.activityUnavailableSections.map(section => section.name).join(', ')
+        + '. Choose different sections or switch that group to All Sections.');
+    }
+    this.activityRestoreIssues = issues;
+  }
+
+  selectActivitySubject(subjectId: number): void {
+    this.activityForm.subjectId = subjectId;
+    this.onActivitySubjectChange();
+  }
+
+  onActivitySubjectChange(): void {
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
     this.cdr.markForCheck();
   }
 
-  removeActivityUnit(index: number): void {
-    this.activityForm.units.splice(index, 1);
+  onActivityPeriodChange(): void {
+    this.resolveActivitySchedule();
     this.cdr.markForCheck();
+  }
+
+  setActivityGroupScope(scope: ActivityGroupScope): void {
+    this.activityForm.groupScope = scope;
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  clearActivityGroups(): void {
+    this.activityForm.groupSelections = [];
+    this.activityUnavailableGroups = [];
+    this.activityUnavailableSections = [];
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  removeUnavailableActivityGroups(): void {
+    const available = new Set(this.activityGroupOptions.map(group => group.academicGroupId));
+    this.activityForm.groupSelections = this.activityForm.groupSelections
+      .filter(selection => available.has(selection.academicGroupId));
+    this.activityUnavailableGroups = [];
+    this.activityUnavailableSections = [];
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  toggleActivityGroup(group: FixedActivityGroupOption): void {
+    const index = this.activityForm.groupSelections
+      .findIndex(selection => selection.academicGroupId === group.academicGroupId);
+    if (index >= 0) {
+      this.activityForm.groupSelections.splice(index, 1);
+      this.activityUnavailableGroups = this.activityUnavailableGroups
+        .filter(unavailable => unavailable.groupId !== group.academicGroupId);
+      this.activityUnavailableSections = this.activityUnavailableSections
+        .filter(unavailable => unavailable.groupId !== group.academicGroupId);
+    } else {
+      this.activityForm.groupSelections.push({
+        academicGroupId: group.academicGroupId,
+        sectionScope: 'ALL',
+        sectionIds: []
+      });
+    }
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  onActivityAllSectionsChange(group: FixedActivityGroupOption, checked: boolean): void {
+    const selection = this.activityGroupSelection(group.academicGroupId);
+    if (!selection) return;
+    selection.sectionScope = checked ? 'ALL' : 'SELECTED';
+    selection.sectionIds = [];
+    if (checked) {
+      this.activityUnavailableSections = this.activityUnavailableSections
+        .filter(unavailable => unavailable.groupId !== group.academicGroupId);
+    }
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  isActivitySectionSelected(groupId: number, section: FixedActivitySectionOption): boolean {
+    const selection = this.activityGroupSelection(groupId);
+    if (!selection) return false;
+    return selection.sectionScope === 'ALL' || selection.sectionIds.includes(section.sectionId);
+  }
+
+  toggleActivitySection(group: FixedActivityGroupOption, section: FixedActivitySectionOption): void {
+    const selection = this.activityGroupSelection(group.academicGroupId);
+    if (!selection) return;
+    if (selection.sectionScope === 'ALL') {
+      // Switching from All Sections to a specific set: keep every other section selected.
+      selection.sectionScope = 'SELECTED';
+      selection.sectionIds = group.sections
+        .map(candidate => candidate.sectionId)
+        .filter(sectionId => sectionId !== section.sectionId);
+    } else {
+      const index = selection.sectionIds.indexOf(section.sectionId);
+      if (index >= 0) selection.sectionIds.splice(index, 1);
+      else selection.sectionIds.push(section.sectionId);
+      if (group.sections.length && selection.sectionIds.length === group.sections.length) {
+        selection.sectionScope = 'ALL';
+        selection.sectionIds = [];
+      }
+    }
+    this.activityUnavailableSections = this.activityUnavailableSections.filter(
+      unavailable => unavailable.groupId !== group.academicGroupId
+        || unavailable.sectionId !== section.sectionId);
+    this.refreshActivityRestoreIssues();
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  toggleActivityDay(day: DayOfWeek): void {
+    const index = this.activityForm.days.indexOf(day);
+    if (index >= 0) this.activityForm.days.splice(index, 1);
+    else this.activityForm.days.push(day);
+    this.resolveActivitySchedule();
+    this.cdr.markForCheck();
+  }
+
+  private buildActivityGroups(): { academicGroupId: number; sectionId: number | null }[] {
+    if (this.activityForm.groupScope === 'ALL') {
+      return this.activityGroupOptions
+        .map(group => ({ academicGroupId: group.academicGroupId, sectionId: null }));
+    }
+    const units: { academicGroupId: number; sectionId: number | null }[] = [];
+    for (const selection of this.activityForm.groupSelections) {
+      const group = this.activityGroupOptions
+        .find(candidate => candidate.academicGroupId === selection.academicGroupId);
+      if (!group) continue;
+      if (!group.sections.length || selection.sectionScope === 'ALL') {
+        units.push({ academicGroupId: group.academicGroupId, sectionId: null });
+        continue;
+      }
+      for (const sectionId of selection.sectionIds) {
+        units.push({ academicGroupId: group.academicGroupId, sectionId });
+      }
+    }
+    return units;
+  }
+
+  resolveActivitySchedule(): void {
+    if (!this.selectedYearId || !this.showActivityDialog) return;
+    const groups = this.buildActivityGroups();
+    if (!groups.length || !this.activityForm.days.length) {
+      this.activityResolveToken++;
+      this.activitySchedule = null;
+      this.activityIssues = [];
+      this.cdr.markForCheck();
+      return;
+    }
+    const token = ++this.activityResolveToken;
+    const form = this.activityForm;
+    this.activityResolving = true;
+    this.api.resolveFixedActivitySchedule(this.selectedYearId, {
+      subjectId: form.subjectId,
+      groups,
+      days: [...form.days],
+      periodName: form.periodName
+    }).pipe(finalize(() => {
+      if (token === this.activityResolveToken) this.activityResolving = false;
+    })).subscribe({
+      next: (schedule) => {
+        if (token !== this.activityResolveToken) return;
+        this.activitySchedule = schedule;
+        this.activityIssues = schedule.issues.map(issue => issue.message);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        if (token !== this.activityResolveToken) return;
+        this.activitySchedule = null;
+        this.activityIssues = [err?.error?.message
+          || 'Unable to resolve the timetable period for the selected group, sections and days.'];
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   saveActivity(): void {
     if (!this.selectedYearId) return;
     const form = this.activityForm;
-    if (!form.name.trim()) {
-      this.messages.add({ severity: 'warn', summary: 'Give the activity a name' });
+    const groups = this.buildActivityGroups();
+    if (!form.subjectId) {
+      this.messages.add({ severity: 'warn', summary: 'Select a subject' });
       return;
     }
-    if (!form.days.length) {
-      this.messages.add({ severity: 'warn', summary: 'Select at least one day' });
-      return;
-    }
-    if (!form.startTime || !form.endTime || form.startTime >= form.endTime) {
-      this.messages.add({ severity: 'warn', summary: 'The activity must start before it ends' });
-      return;
-    }
-    if (!form.appliesToAllGroups && !form.units.length) {
+    if (this.activityGroupSelectionMissing) {
       this.messages.add({ severity: 'warn', summary: 'Select at least one academic group' });
       return;
     }
+    if (this.activityForm.groupScope === 'SELECTED' && this.activityUnavailableGroups.length) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Remove inactive academic groups',
+        detail: 'One or more saved groups are no longer active. Remove them or choose different groups.'
+      });
+      return;
+    }
+    if (!groups.length) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Select at least one group or section',
+        detail: 'Every selected group needs All Sections or at least one specific section.'
+      });
+      return;
+    }
+    if (!form.days.length) {
+      this.messages.add({ severity: 'warn', summary: 'Select at least one applicable day' });
+      return;
+    }
+    if (!form.periodName) {
+      this.messages.add({ severity: 'warn', summary: 'Select a period available on every selected day' });
+      return;
+    }
+    if (this.activitySectionSelectionInvalid) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Select at least one section for each group',
+        detail: 'Groups set to Specific Sections need at least one section selected.'
+      });
+      return;
+    }
+    if (this.activityPeriodSelectionInvalid) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Choose a period available on every selected day and section'
+      });
+      return;
+    }
+    if (this.activityTeacherMissing) {
+      this.messages.add({
+        severity: 'warn',
+        summary: this.activityTeacherNotShared
+          ? 'No common teacher for the selected groups'
+          : 'No teacher is allocated for this subject',
+        detail: this.activityTeacherNotShared
+          ? 'No single teacher is allocated to every selected group and section. Choose groups that share a '
+            + 'teacher, or save separate fixed activities per group.'
+          : 'Assign a teacher in Teacher Allocation for the selected groups or sections before saving.',
+        life: 9000
+      });
+      return;
+    }
+    if (this.activityDisplayIssues.length) {
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Resolve the schedule issues before saving',
+        detail: this.activityDisplayIssues[0],
+        life: 8000
+      });
+      return;
+    }
     const body: FixedActivityRequest = {
-      name: form.name.trim(),
-      description: form.description?.trim() || null,
-      activityType: form.activityType,
-      appliesToAllGroups: form.appliesToAllGroups,
-      startTime: form.startTime + ':00',
-      endTime: form.endTime + ':00',
-      recurrence: form.recurrence,
-      effectiveFrom: form.effectiveFrom || null,
-      effectiveTo: form.effectiveTo || null,
-      active: form.active,
-      days: form.days,
-      groups: form.units.map(u => ({ academicGroupId: u.academicGroupId, sectionId: u.sectionId }))
+      subjectId: form.subjectId,
+      description: form.description.trim() || null,
+      days: [...form.days],
+      groups,
+      periodName: form.periodName
     };
     this.saving = true;
     const call = form.fixedActivityId
@@ -704,33 +1235,70 @@ export class TimetableConfigurationPageComponent implements OnInit {
         this.messages.add({ severity: 'success', summary: 'Fixed activity saved' });
         this.loadAll();
       },
-      error: (err) => this.messages.add({
-        severity: 'error',
-        summary: 'Could not save the fixed activity',
-        detail: err?.error?.message,
-        life: 10000
-      })
+      error: (err) => {
+        const detail = err?.error?.message;
+        if (detail) this.activityIssues = [detail];
+        this.messages.add({
+          severity: 'error',
+          summary: 'Could not save the fixed activity',
+          detail,
+          life: 10000
+        });
+        this.cdr.markForCheck();
+      }
     });
   }
 
   toggleActivityActive(activity: FixedActivity): void {
     if (!activity.fixedActivityId) return;
-    this.api.setFixedActivityActive(activity.fixedActivityId, !activity.active).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: activity.active ? 'Activity deactivated' : 'Activity activated' });
-        this.loadAll();
+    if (activity.active) {
+      this.confirm.confirm({
+        header: 'Deactivate fixed activity?',
+        message: `"${activity.subjectName ?? activity.name}" will stop being reserved in future timetable `
+          + 'generations. Published timetables are protected and existing entries keep their references.',
+        acceptLabel: 'Deactivate',
+        acceptButtonStyleClass: 'p-button-danger',
+        accept: () => this.setActivityActive(activity, false)
+      });
+      return;
+    }
+    this.setActivityActive(activity, true);
+  }
+
+  private setActivityActive(activity: FixedActivity, active: boolean): void {
+    if (!activity.fixedActivityId) return;
+    this.api.setFixedActivityActive(activity.fixedActivityId, active).subscribe({
+      next: (updated) => {
+        const index = this.fixedActivities
+          .findIndex(candidate => candidate.fixedActivityId === updated.fixedActivityId);
+        if (index >= 0) {
+          this.fixedActivities = [
+            ...this.fixedActivities.slice(0, index),
+            updated,
+            ...this.fixedActivities.slice(index + 1)
+          ];
+        }
+        this.messages.add({
+          severity: 'success',
+          summary: active ? 'Fixed activity activated' : 'Fixed activity deactivated'
+        });
+        this.cdr.markForCheck();
       },
       error: (err) => this.messages.add({
-        severity: 'error', summary: 'Could not update the activity', detail: err?.error?.message
+        severity: 'error',
+        summary: active ? 'Could not activate the activity' : 'Could not deactivate the activity',
+        detail: err?.error?.message,
+        life: 9000
       })
     });
   }
 
   deleteActivity(activity: FixedActivity): void {
     if (!activity.fixedActivityId) return;
+    const label = activity.subjectName ?? activity.name;
     this.confirm.confirm({
       header: 'Delete fixed activity?',
-      message: `"${activity.name}" will be removed from the configuration. Existing published timetables are not changed.`,
+      message: `"${label}" will be removed from the configuration. Existing published timetables are not changed.`,
       acceptLabel: 'Delete',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => this.api.deleteFixedActivity(activity.fixedActivityId!).subscribe({
@@ -756,7 +1324,7 @@ export class TimetableConfigurationPageComponent implements OnInit {
   }
 
   get sectionOptions(): { label: string; value: number }[] {
-    const groupId = this.activeTab === 'fixed' ? this.activityPickerGroupId : this.assignPickerGroupId;
+    const groupId = this.assignPickerGroupId;
     const sections = new Map<number, string>();
     for (const row of this.matrix?.rows ?? []) {
       if (row.academicGroupId === groupId && row.sectionId != null && row.sectionName
@@ -768,12 +1336,11 @@ export class TimetableConfigurationPageComponent implements OnInit {
   }
 
   get pickerGroupId(): number | null {
-    return this.activeTab === 'fixed' ? this.activityPickerGroupId : this.assignPickerGroupId;
+    return this.assignPickerGroupId;
   }
 
   set pickerGroupId(value: number | null) {
-    if (this.activeTab === 'fixed') this.activityPickerGroupId = value;
-    else this.assignPickerGroupId = value;
+    this.assignPickerGroupId = value;
   }
 
   onPickerGroupChange(value: number | null): void {
@@ -784,21 +1351,19 @@ export class TimetableConfigurationPageComponent implements OnInit {
   }
 
   get pickerScope(): PickerSectionScope {
-    return this.activeTab === 'fixed' ? this.activityPickerScope : this.assignPickerScope;
+    return this.assignPickerScope;
   }
 
   set pickerScope(value: PickerSectionScope) {
-    if (this.activeTab === 'fixed') this.activityPickerScope = value;
-    else this.assignPickerScope = value;
+    this.assignPickerScope = value;
   }
 
   get pickerSelectedSectionIds(): number[] {
-    return this.activeTab === 'fixed' ? this.activityPickerSectionIds : this.assignPickerSectionIds;
+    return this.assignPickerSectionIds;
   }
 
   set pickerSelectedSectionIds(value: number[]) {
-    if (this.activeTab === 'fixed') this.activityPickerSectionIds = value;
-    else this.assignPickerSectionIds = value;
+    this.assignPickerSectionIds = value;
   }
 
   isPickerSectionSelected(sectionId: number): boolean {
@@ -873,18 +1438,6 @@ export class TimetableConfigurationPageComponent implements OnInit {
     return 'sky';
   }
 
-  activityIcon(type: string): string {
-    switch ((type || '').toUpperCase()) {
-      case 'ASSEMBLY': return 'pi-users';
-      case 'EXERCISE': return 'pi-heart';
-      case 'SPORTS': return 'pi-bolt';
-      case 'LIBRARY': return 'pi-book';
-      case 'COUNSELING': return 'pi-heart-fill';
-      case 'MEDITATION': return 'pi-sparkles';
-      default: return 'pi-calendar';
-    }
-  }
-
   private duration(start: string, end: string): number {
     return Math.max(0, this.toMinutes(end) - this.toMinutes(start));
   }
@@ -929,18 +1482,13 @@ export class TimetableConfigurationPageComponent implements OnInit {
   private emptyActivityForm(): ActivityForm {
     return {
       fixedActivityId: null,
-      name: '',
+      subjectId: null,
+      groupScope: 'ALL',
+      groupSelections: [],
       description: '',
-      activityType: 'GENERAL',
-      appliesToAllGroups: true,
-      units: [],
-      days: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
-      startTime: '08:00',
-      endTime: '08:20',
-      recurrence: 'WEEKLY',
-      effectiveFrom: null,
-      effectiveTo: null,
-      active: true
+      active: true,
+      days: [],
+      periodName: null
     };
   }
 }

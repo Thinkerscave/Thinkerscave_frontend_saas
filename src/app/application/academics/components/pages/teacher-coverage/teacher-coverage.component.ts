@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -24,6 +24,7 @@ import {
 import { AcademicYearApiService } from '../../../services/academic-year-api.service';
 import { AcademicGroupsApiService } from '../../../services/academic-groups-api.service';
 import { TeacherCoverageApiService } from '../../../services/teacher-coverage-api.service';
+import { sortSubjects } from '../../../models/subjects-mapping.model';
 
 export const TEACHER_COVERAGE_RESOURCE = 'ACADEMICS_TEACHER_ALLOCATION';
 
@@ -33,7 +34,7 @@ type MetricFilter = 'NONE' | 'REQUIRING' | 'FULL' | 'WARNINGS';
   selector: 'app-teacher-coverage-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DialogModule, DropdownModule, SaasPageHeaderComponent],
+  imports: [CommonModule, FormsModule, DialogModule, DropdownModule, RouterLink, RouterLinkActive, SaasPageHeaderComponent],
   templateUrl: './teacher-coverage.component.html',
   styleUrls: ['./teacher-coverage.component.scss']
 })
@@ -134,7 +135,8 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
   }
 
   get subjectOptions(): { label: string; value: number }[] {
-    return (this.board?.rows ?? []).map((r) => ({ label: r.subjectName, value: r.mappingId }));
+    return sortSubjects(this.board?.rows ?? [])
+      .map((r) => ({ label: r.subjectName, value: r.mappingId }));
   }
 
   get teacherOptions(): { label: string; value: number }[] {

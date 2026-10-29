@@ -1,0 +1,456 @@
+<tc-saas-page-header [shellActions]="true">
+  <div class="tw-field" page-context>
+    <label class="tw-label" for="tw-year">Academic Year <span aria-hidden="true">*</span></label>
+    <p-dropdown
+      inputId="tw-year"
+      [options]="yearOptions"
+      [(ngModel)]="yearId"
+      (onChange)="onYearChange()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select academic year"
+      appendTo="body"
+      styleClass="tw-dd">
+    </p-dropdown>
+  </div>
+</tc-saas-page-header>
+
+<nav class="tw-tabs" aria-label="Teacher allocation views">
+  <a
+    class="tw-tabs__link"
+    routerLink="/app/academics/teacher-allocation"
+    routerLinkActive="is-active"
+    [routerLinkActiveOptions]="{ exact: true }">
+    Subject Allocation
+  </a>
+  <a class="tw-tabs__link" routerLink="/app/academics/teacher-workload" routerLinkActive="is-active">
+    Teacher Workload
+  </a>
+</nav>
+
+<div class="tw-state" *ngIf="loading" role="status">Loading teacher workload…</div>
+<div class="tw-alert" role="alert" *ngIf="error">
+  {{ error }}
+  <button type="button" class="tw-link" (click)="refresh()">Retry</button>
+</div>
+<div class="tw-state" *ngIf="!yearId && !loading">Select an academic year to load teacher workload.</div>
+
+<ng-container *ngIf="dashboard && !loading">
+  <div class="tw-metrics" role="group" aria-label="Workload summary">
+    <button
+      type="button"
+      class="tw-metric tw-metric--total"
+      [class.is-active]="!hasFilters"
+      [attr.aria-pressed]="!hasFilters"
+      (click)="clearFilters()">
+      <span class="tw-metric__icon tw-metric__icon--violet" aria-hidden="true"><i class="pi pi-users"></i></span>
+      <span>
+        <small>Total Teachers</small>
+        <strong>{{ dashboard.summary.totalTeachers }}</strong>
+        <em>Eligible for allocation</em>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="tw-metric tw-metric--overloaded"
+      [class.is-active]="summaryFilter === 'OVERLOADED'"
+      [attr.aria-pressed]="summaryFilter === 'OVERLOADED'"
+      (click)="selectSummary('OVERLOADED')">
+      <span class="tw-metric__icon tw-metric__icon--red" aria-hidden="true"><i class="pi pi-exclamation-triangle"></i></span>
+      <span>
+        <small>Overloaded</small>
+        <strong>{{ dashboard.summary.overloaded }}</strong>
+        <em>Above maximum workload</em>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="tw-metric tw-metric--below"
+      [class.is-active]="summaryFilter === 'BELOW_TARGET'"
+      [attr.aria-pressed]="summaryFilter === 'BELOW_TARGET'"
+      (click)="selectSummary('BELOW_TARGET')">
+      <span class="tw-metric__icon tw-metric__icon--green" aria-hidden="true"><i class="pi pi-check-circle"></i></span>
+      <span>
+        <small>Below Target</small>
+        <strong>{{ dashboard.summary.belowTarget }}</strong>
+        <em>Available capacity</em>
+      </span>
+    </button>
+
+    <button type="button" class="tw-metric tw-metric--unassigned" (click)="openUnassignedSubjects()">
+      <span class="tw-metric__icon tw-metric__icon--amber" aria-hidden="true"><i class="pi pi-file"></i></span>
+      <span>
+        <small>Unassigned Subjects</small>
+        <strong>{{ dashboard.summary.unassignedSubjects }}</strong>
+        <em>Still require allocation</em>
+      </span>
+      <i class="pi pi-chevron-right tw-metric__go" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <section class="tw-target" aria-label="Workload target basis">
+    <i class="pi pi-info-circle" aria-hidden="true"></i>
+    <div>
+      <p *ngIf="dashboard.targetAvailable">
+        <strong>Estimated workload target</strong> for {{ dashboard.academicYearName }} ·
+        benchmark <strong>{{ dashboard.benchmarkWeeklyCapacity }}</strong> teaching periods/week ·
+        {{ dashboard.bufferPercentage }}% planning buffer.
+      </p>
+      <p *ngIf="!dashboard.targetAvailable"><strong>Workload target unavailable.</strong></p>
+      <p class="tw-note">{{ dashboard.targetExplanation }}</p>
+      <p class="tw-note" *ngIf="dashboard.workloadBasis === 'ALLOCATION_ESTIMATE'">
+        Assigned periods are an allocation-based estimate from saved teacher allocations and fixed activities.
+        Actual scheduled periods are shown in the teacher details when a timetable version exists.
+      </p>
+    </div>
+    <button type="button" class="tw-icon-btn" (click)="refresh()" aria-label="Refresh teacher workload" title="Refresh">
+      <i class="pi pi-refresh" aria-hidden="true"></i>
+    </button>
+  </section>
+
+  <div
+    class="tw-alert tw-alert--warn"
+    role="status"
+    *ngFor="let warning of dashboard.warnings"
+    [class.tw-alert--info]="warning.severity === 'INFO'">
+    {{ warning.message }}
+  </div>
+
+  <div class="tw-toolbar">
+    <input
+      class="tw-search"
+      type="search"
+      placeholder="Search teacher name or employee ID…"
+      aria-label="Search teacher name or employee ID"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onFilterChange()" />
+    <p-dropdown
+      [options]="dashboard.subjectOptions"
+      [(ngModel)]="subjectFilter"
+      (onChange)="onFilterChange()"
+      optionLabel="label"
+      optionValue="id"
+      placeholder="All Subjects"
+      [showClear]="true"
+      appendTo="body"
+      styleClass="tw-dd tw-dd--sm">
+    </p-dropdown>
+    <p-dropdown
+      [options]="dashboard.academicGroupOptions"
+      [(ngModel)]="groupFilter"
+      (onChange)="onFilterChange()"
+      optionLabel="label"
+      optionValue="id"
+      placeholder="All Groups"
+      [showClear]="true"
+      appendTo="body"
+      styleClass="tw-dd tw-dd--sm">
+    </p-dropdown>
+    <p-dropdown
+      [options]="statusOptions"
+      [(ngModel)]="statusFilter"
+      (onChange)="onFilterChange()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All Workload Status"
+      appendTo="body"
+      styleClass="tw-dd tw-dd--sm">
+    </p-dropdown>
+    <button type="button" class="tw-link" *ngIf="hasFilters" (click)="clearFilters()">Clear Filters</button>
+  </div>
+
+  <div class="tw-table-wrap" *ngIf="dashboard.rows.length; else emptyTpl">
+    <table class="tw-table">
+      <thead>
+        <tr>
+          <th scope="col">Teacher</th>
+          <th scope="col">Employee ID</th>
+          <th scope="col">Subjects</th>
+          <th scope="col">Assigned Periods</th>
+          <th scope="col">
+            <span class="tw-th">
+              Expected Target
+              <i
+                class="pi pi-info-circle tw-info"
+                [pTooltip]="targetTooltip"
+                tooltipPosition="top"
+                tabindex="0"
+                role="img"
+                aria-label="How the expected target is calculated"></i>
+            </span>
+          </th>
+          <th scope="col">Remaining Capacity</th>
+          <th scope="col">Maximum</th>
+          <th scope="col">Workload Status</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let row of pagedRows; trackBy: trackRow"
+          class="tw-row"
+          tabindex="0"
+          (click)="openDetails(row)"
+          (keydown.enter)="openDetails(row)"
+          [attr.aria-label]="'Open workload details for ' + row.staffName">
+          <td>
+            <div class="tw-teacher">
+              <span class="tw-avatar" aria-hidden="true">{{ initials(row.staffName) }}</span>
+              <strong>{{ row.staffName }}</strong>
+            </div>
+          </td>
+          <td class="tw-muted">{{ row.employeeId || '—' }}</td>
+          <td class="tw-subjects">{{ subjectLabel(row) }}</td>
+          <td>
+            <div class="tw-load">
+              <strong>{{ row.assignedPeriods }}</strong>
+              <span class="tw-bar" aria-hidden="true">
+                <span class="tw-bar__fill" [ngClass]="barClass(row)" [style.width.%]="barPercent(row)"></span>
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="tw-target-value">
+              <ng-container *ngIf="row.expectedTarget != null; else noTarget">{{ row.expectedTarget }}</ng-container>
+              <small *ngIf="row.expectedTarget != null">Estimated</small>
+            </span>
+            <ng-template #noTarget><span class="tw-muted">Unavailable</span></ng-template>
+          </td>
+          <td>
+            <span [ngClass]="remainingClass(row)">{{ remainingText(row) }}</span>
+          </td>
+          <td>{{ maximumText(row) }}</td>
+          <td>
+            <span class="tw-status" [ngClass]="statusClass(row.status)">
+              <i [ngClass]="statusIcon(row.status)" aria-hidden="true"></i>
+              {{ statusLabel(row.status) }}
+            </span>
+          </td>
+          <td class="tw-actions">
+            <button
+              type="button"
+              class="tw-icon-btn"
+              (click)="openDetails(row); $event.stopPropagation()"
+              [attr.aria-label]="'View details for ' + row.staffName">
+              <i class="pi pi-chevron-right" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="tw-pager">
+      <span>
+        Showing {{ filteredRows.length ? (page - 1) * pageSize + 1 : 0 }}–{{ (page - 1) * pageSize + pagedRows.length }}
+        of {{ filteredRows.length }} teachers
+      </span>
+      <div class="tw-pager__controls">
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" [disabled]="page <= 1" (click)="setPage(page - 1)">Previous</button>
+        <span>Page {{ page }} of {{ pageCount }}</span>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" [disabled]="page >= pageCount" (click)="setPage(page + 1)">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyTpl>
+    <div class="tw-state">
+      <p *ngIf="dashboard.rows.length">No teachers match the selected filters.</p>
+      <p *ngIf="!dashboard.rows.length">No active teaching staff are available for this academic year.</p>
+    </div>
+  </ng-template>
+</ng-container>
+
+<p-dialog
+  header="Teacher Workload Details"
+  [(visible)]="detailsOpen"
+  [modal]="true"
+  [draggable]="false"
+  [dismissableMask]="true"
+  [closeOnEscape]="true"
+  [style]="{ width: 'min(880px, 96vw)' }"
+  styleClass="tw-dialog"
+  (onHide)="closeDetails()">
+  <ng-container *ngIf="detailsRow as row">
+    <p class="tw-dialog__subtitle">
+      Detailed view of the teacher's workload, allocation and teaching periods for
+      {{ dashboard?.academicYearName }}.
+    </p>
+
+    <div class="tw-identity">
+      <span class="tw-avatar tw-avatar--lg" aria-hidden="true">{{ initials(row.staffName) }}</span>
+      <div class="tw-identity__body">
+        <h3>{{ row.staffName }}</h3>
+        <p class="tw-muted">{{ row.employeeId || 'No employee ID' }}<ng-container *ngIf="row.email"> · {{ row.email }}</ng-container></p>
+        <p class="tw-muted"><i class="pi pi-book" aria-hidden="true"></i> {{ subjectLabel(row) }}</p>
+      </div>
+      <span class="tw-status" [ngClass]="statusClass(row.status)">
+        <i [ngClass]="statusIcon(row.status)" aria-hidden="true"></i>
+        {{ statusLabel(row.status) }}
+      </span>
+    </div>
+
+    <div class="tw-modal-metrics">
+      <div class="tw-modal-metric">
+        <small>Assigned Periods</small>
+        <strong>{{ row.assignedPeriods }}</strong>
+        <span>periods/week</span>
+        <span class="tw-bar tw-bar--lg" aria-hidden="true">
+          <span class="tw-bar__fill" [ngClass]="barClass(row)" [style.width.%]="barPercent(row)"></span>
+        </span>
+      </div>
+      <div class="tw-modal-metric">
+        <small>
+          Expected Target
+          <i
+            class="pi pi-info-circle tw-info"
+            [pTooltip]="targetTooltip"
+            tooltipPosition="top"
+            tabindex="0"
+            role="img"
+            aria-label="How the expected target is calculated"></i>
+        </small>
+        <strong>{{ targetText(row) }}</strong>
+        <span>periods/week · estimated</span>
+      </div>
+      <div class="tw-modal-metric">
+        <small>Remaining Capacity</small>
+        <strong [ngClass]="remainingClass(row)">{{ remainingText(row) }}</strong>
+        <span>periods</span>
+      </div>
+      <div class="tw-modal-metric">
+        <small>Maximum</small>
+        <strong>{{ maximumText(row) }}</strong>
+        <span>periods/week</span>
+      </div>
+    </div>
+
+    <p class="tw-note" *ngIf="row.overloadPeriods > 0">
+      {{ row.overloadPeriods }} period{{ row.overloadPeriods === 1 ? '' : 's' }} above the maximum weekly capacity.
+    </p>
+    <p class="tw-note" *ngIf="row.status === 'NEAR_MAXIMUM'">
+      Above the estimated target but within the maximum. This is not an overload.
+    </p>
+
+    <div class="tw-modal-tabs" role="tablist" aria-label="Workload details">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="detailsTab === 'BREAKDOWN'"
+        [class.is-active]="detailsTab === 'BREAKDOWN'"
+        (click)="setDetailsTab('BREAKDOWN')">
+        <i class="pi pi-book" aria-hidden="true"></i> Allocation Breakdown
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="detailsTab === 'SUBJECTS'"
+        [class.is-active]="detailsTab === 'SUBJECTS'"
+        (click)="setDetailsTab('SUBJECTS')">
+        <i class="pi pi-chart-bar" aria-hidden="true"></i> Subject Summary
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="detailsTab === 'CONFLICTS'"
+        [class.is-active]="detailsTab === 'CONFLICTS'"
+        (click)="setDetailsTab('CONFLICTS')">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i> Timetable Conflicts
+      </button>
+    </div>
+
+    <div class="tw-modal-panel" *ngIf="detailsTab === 'BREAKDOWN'">
+      <table class="tw-table tw-table--modal" *ngIf="row.breakdown.length; else noBreakdown">
+        <thead>
+          <tr>
+            <th scope="col">Subject</th>
+            <th scope="col">Academic Group / Section</th>
+            <th scope="col">Source</th>
+            <th scope="col">Periods / Week</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of row.breakdown">
+            <td>
+              {{ item.subjectName }}
+              <small class="tw-muted" *ngIf="item.choiceGroupName"> · {{ item.choiceGroupName }}</small>
+            </td>
+            <td>{{ groupSectionLabel(item.academicGroupName, item.sectionName) }}</td>
+            <td class="tw-muted">{{ sourceLabel(item.source) }}</td>
+            <td>{{ item.weeklyPeriods }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3"><strong>Total</strong></td>
+            <td><strong>{{ detailsBreakdownTotal }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+      <ng-template #noBreakdown>
+        <p class="tw-state">No allocation-based workload is recorded for this teacher.</p>
+      </ng-template>
+      <p class="tw-note" *ngIf="row.breakdown.length && detailsBreakdownTotal !== row.assignedPeriods">
+        Breakdown total {{ detailsBreakdownTotal }} does not match the assigned periods {{ row.assignedPeriods }}.
+        Please review the allocation data.
+      </p>
+    </div>
+
+    <div class="tw-modal-panel" *ngIf="detailsTab === 'SUBJECTS'">
+      <table class="tw-table tw-table--modal" *ngIf="detailsSubjectSummary.length; else noSubjects">
+        <thead>
+          <tr>
+            <th scope="col">Subject</th>
+            <th scope="col">Allocations</th>
+            <th scope="col">Periods / Week</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of detailsSubjectSummary">
+            <td>{{ item.subjectName }}</td>
+            <td>{{ item.allocations }}</td>
+            <td>{{ item.periods }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2"><strong>Total</strong></td>
+            <td><strong>{{ detailsBreakdownTotal }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+      <ng-template #noSubjects>
+        <p class="tw-state">No subjects are allocated to this teacher.</p>
+      </ng-template>
+    </div>
+
+    <div class="tw-modal-panel" *ngIf="detailsTab === 'CONFLICTS'">
+      <p class="tw-note" *ngIf="dashboard?.timetableStatus === 'NOT_GENERATED'">
+        Timetable conflicts are available after the weekly timetable is generated.
+        Workload figures on this page are allocation-based estimates.
+      </p>
+      <ng-container *ngIf="dashboard?.timetableStatus !== 'NOT_GENERATED'">
+        <p class="tw-note">
+          Scheduled periods in the current timetable:
+          {{ row.scheduledPeriods == null ? 'not available' : row.scheduledPeriods }}.
+        </p>
+        <ul class="tw-conflicts" *ngIf="row.conflicts.length; else noConflicts">
+          <li *ngFor="let conflict of row.conflicts">
+            <strong>{{ conflict.conflictType || 'Conflict' }}</strong>
+            <span *ngIf="conflict.dayOfWeek"> · {{ dayLabel(conflict.dayOfWeek) }}</span>
+            <span *ngIf="conflict.periodName"> · {{ conflict.periodName }}</span>
+            <span *ngIf="conflict.sectionName"> · {{ conflict.sectionName }}</span>
+            <p>{{ conflict.message }}</p>
+          </li>
+        </ul>
+        <ng-template #noConflicts>
+          <p class="tw-state">No open timetable conflicts are recorded for this teacher.</p>
+        </ng-template>
+      </ng-container>
+    </div>
+  </ng-container>
+
+  <div class="tw-dialog__footer">
+    <button type="button" class="tc-btn tc-btn--outline" (click)="closeDetails()">Close</button>
+  </div>
+</p-dialog>

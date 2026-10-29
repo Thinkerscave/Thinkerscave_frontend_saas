@@ -15,6 +15,7 @@ export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   'choice-groups': 'ACADEMICS_SUBJECTS',
   'subject-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
+  'teacher-workload': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
   'teacher-arrangement': 'ACADEMICS_TIMETABLE',
   'academic-calendar': 'ACADEMICS_CALENDAR',
@@ -100,6 +101,17 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     icon: 'pi pi-user-edit',
     route: '/app/academics/teacher-allocation',
     primaryAction: 'Assign teacher',
+    actionMode: 'allocation'
+  },
+  {
+    page: 'teacher-workload',
+    label: 'Teacher Workload',
+    title: 'Teacher Workload',
+    eyebrow: 'Capacity & load',
+    description: 'View teacher-wise workload, teaching periods and capacity for the selected academic year.',
+    icon: 'pi pi-chart-bar',
+    route: '/app/academics/teacher-workload',
+    primaryAction: 'View details',
     actionMode: 'allocation'
   },
   {
@@ -193,6 +205,7 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
       'choice-groups',
       'subject-mapping',
       'teacher-allocation',
+      'teacher-workload',
       'timetable',
       'teacher-arrangement',
       'academic-calendar',

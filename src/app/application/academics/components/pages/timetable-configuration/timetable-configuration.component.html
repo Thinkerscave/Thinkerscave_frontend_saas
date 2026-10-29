@@ -240,7 +240,8 @@
           <span class="tcfg-pill" data-tone="info">Optional</span>
         </div>
         <div class="tcfg-fixed-head">
-          <p>View and manage fixed activities applied to academic groups. They appear in the generated timetable.</p>
+          <p>Fixed lessons and activities applied to an academic group. Academic fixed lessons reserve their period
+            and count toward the subject's weekly workload. They appear in the generated timetable.</p>
           <button type="button" class="tcfg-btn tcfg-btn--primary" (click)="openCreateActivity()">
             <i class="pi pi-plus"></i> Add Fixed Activity
           </button>
@@ -249,11 +250,13 @@
       <div class="tcfg-filters">
         <label class="tcfg-search">
           <i class="pi pi-search"></i>
-          <input type="search" placeholder="Search activities..." [(ngModel)]="activitySearch" />
+          <input type="search" placeholder="Search by subject, period or description..." [(ngModel)]="activitySearch" />
         </label>
         <select class="tcfg-select" [(ngModel)]="activityGroupFilter" aria-label="Group filter">
           <option [ngValue]="null">All Groups</option>
-          <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
+          <option *ngFor="let group of activityGroupOptions" [ngValue]="group.academicGroupId">
+            {{ group.name }}
+          </option>
         </select>
         <select class="tcfg-select" [(ngModel)]="activityStatus" aria-label="Activity status">
           <option value="ALL">All Status</option>
@@ -266,8 +269,8 @@
         <table class="tcfg-table tcfg-activity-table">
           <thead>
             <tr>
-              <th>#</th><th>Activity Name</th><th>Applies To</th><th>Day(s)</th>
-              <th>Time Slot</th><th>Recurrence</th><th>Status</th><th>Actions</th>
+              <th>#</th><th>Subject</th><th>Applies To</th><th>Day(s)</th>
+              <th>Period</th><th>Teacher</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -275,20 +278,28 @@
               <td>{{ i + 1 }}</td>
               <td>
                 <div class="tcfg-activity-name">
-                  <span class="tcfg-activity-icon" [attr.data-type]="activity.activityType">
-                    <i class="pi" [ngClass]="activityIcon(activity.activityType)"></i>
+                  <span class="tcfg-activity-icon">
+                    <i class="pi pi-calendar-plus"></i>
                   </span>
-                  <strong>{{ activity.name }}</strong>
+                  <span class="tcfg-activity-name__text">
+                    <strong>{{ activity.subjectName || activity.name }}</strong>
+                    <small>
+                      {{ activity.subjectCode }}
+                      <ng-container *ngIf="activityTypeLabel(activity)">
+                        · {{ activityTypeLabel(activity) }}
+                      </ng-container>
+                    </small>
+                  </span>
                 </div>
               </td>
-              <td>{{ activityAppliesTo(activity) }}</td>
+              <td class="tcfg-activity-applies">{{ activityAppliesTo(activity) }}</td>
               <td>
                 <div class="tcfg-day-badges">
                   <span *ngFor="let day of activity.days">{{ dayShort[day] }}</span>
                 </div>
               </td>
-              <td>{{ activityTime(activity) }}</td>
-              <td class="tcfg-capitalize">{{ activity.recurrence | lowercase }}</td>
+              <td class="tcfg-activity-period">{{ activityPeriodLabel(activity) }}</td>
+              <td>{{ activity.staffName || '—' }}</td>
               <td>
                 <span class="tcfg-pill" [attr.data-tone]="activity.active ? 'success' : 'danger'">
                   {{ activity.active ? 'Active' : 'Inactive' }}
@@ -307,7 +318,7 @@
               <td colspan="8">
                 <div class="tcfg-empty"><i class="pi pi-calendar-plus"></i>
                   <div><strong>No fixed activities</strong>
-                    <p>Fixed activities are optional. Add assembly, exercise or library reservations when needed.</p>
+                    <p>Fixed activities are optional. Add assembly, exercise or library periods when needed.</p>
                   </div>
                 </div>
               </td>
@@ -504,135 +515,310 @@
 
   <!-- ═══════════ FIXED ACTIVITY DIALOG ═══════════ -->
   <p-dialog [(visible)]="showActivityDialog" [modal]="true" [draggable]="false" [resizable]="false"
-    [style]="{ width: '840px' }" styleClass="tcfg-dialog"
+    [style]="{ width: '920px', maxWidth: '96vw' }" styleClass="tcfg-dialog tcfg-dialog--activity"
     [header]="activityForm.fixedActivityId ? 'Edit Fixed Activity' : 'Add Fixed Activity'">
-    <p class="tcfg-dialog__intro">Configure a fixed activity that reserves specific time slots in the timetable.</p>
-    <div class="tcfg-form-grid tcfg-form-grid--3">
-      <label class="tcfg-field">
-        <span>Activity Name <em>*</em></span>
-        <input type="text" [(ngModel)]="activityForm.name" placeholder="e.g. Morning Assembly" />
-      </label>
-      <label class="tcfg-field">
-        <span>Activity Type <em>*</em></span>
-        <select [(ngModel)]="activityForm.activityType">
-          <option *ngFor="let type of activityTypes" [ngValue]="type">
-            {{ type.charAt(0) + type.slice(1).toLowerCase() }}
-          </option>
-        </select>
-      </label>
-      <div class="tcfg-field">
-        <span>Applies To <em>*</em></span>
-        <div class="tcfg-radio-row">
-          <label><input type="radio" [value]="true" [(ngModel)]="activityForm.appliesToAllGroups" />
-            All Academic Groups</label>
-          <label><input type="radio" [value]="false" [(ngModel)]="activityForm.appliesToAllGroups" />
-            Selected Groups</label>
-        </div>
-      </div>
-    </div>
+    <p class="tcfg-dialog__intro">
+      Reserve a recurring lesson or activity period. The period is resolved from the schedule pattern that applies
+      to the selected groups, section scopes and days. The teacher comes from Teacher Allocation and is
+      shown read-only.
+    </p>
 
-    <div class="tcfg-picker" *ngIf="!activityForm.appliesToAllGroups">
-      <span class="tcfg-field__label">Selected groups <em>*</em></span>
-      <div class="tcfg-picker__row">
-        <select class="tcfg-select" [(ngModel)]="pickerGroupId" (ngModelChange)="onPickerGroupChange($event)">
-          <option *ngFor="let g of groupOptions" [ngValue]="g.value">{{ g.label }}</option>
-        </select>
-        <button type="button" class="tcfg-btn tcfg-btn--outline tcfg-btn--sm"
-          [disabled]="!pickerGroupId || (pickerScope === 'SELECTED' && !pickerSelectedSectionIds.length)"
-          (click)="addActivityUnit()">
-          <i class="pi pi-plus"></i> Add group
-        </button>
-      </div>
-      <div class="tcfg-section-scope" *ngIf="sectionOptions.length"
-        [class.has-selected-sections]="pickerScope === 'SELECTED'">
-        <div class="tcfg-section-scope__choice">
-          <span class="tcfg-field__label">Section scope</span>
-          <div class="tcfg-radio-row">
-            <label>
-              <input type="radio" name="activitySectionScope" [checked]="pickerScope === 'ALL'"
-                (change)="pickerScope = 'ALL'" />
-              All Sections
+    <div class="tcfg-activity-form">
+      <section class="tcfg-activity-block">
+        <div class="tcfg-activity-block__head">
+          <div>
+            <h3>Subject <em>*</em></h3>
+            <p>Academic, practical and activity subjects from Subject Master can be scheduled.</p>
+          </div>
+          <span class="tcfg-pill" data-tone="info" *ngIf="activitySelectedSubject">
+            {{ activitySelectedSubject.name }} · {{ activitySubjectTypeLabel(activitySelectedSubject) }}
+          </span>
+        </div>
+        <label class="tcfg-search tcfg-search--block">
+          <i class="pi pi-search"></i>
+          <input type="search" placeholder="Search subjects by name or code..."
+            [(ngModel)]="activitySubjectSearch" />
+        </label>
+        <div class="tcfg-subject-list" role="radiogroup" aria-label="Subject"
+          *ngIf="filteredActivitySubjects.length">
+          <button type="button" *ngFor="let subject of filteredActivitySubjects"
+            class="tcfg-subject-option" role="radio"
+            [class.is-selected]="activityForm.subjectId === subject.subjectId"
+            [attr.aria-checked]="activityForm.subjectId === subject.subjectId"
+            (click)="selectActivitySubject(subject.subjectId)">
+            <span class="tcfg-subject-option__mark">
+              <i class="pi" [class.pi-check]="activityForm.subjectId === subject.subjectId"></i>
+            </span>
+            <span class="tcfg-subject-option__text">
+              <strong>{{ subject.name }}</strong>
+              <small>{{ subject.code }} · {{ activitySubjectTypeLabel(subject) }}</small>
+            </span>
+          </button>
+        </div>
+        <p class="tcfg-field__hint" *ngIf="!filteredActivitySubjects.length">
+          No active subjects match your search.
+        </p>
+        <p class="tcfg-field__hint tcfg-field__hint--error"
+          *ngIf="activityOptions && activityForm.subjectId && !activitySelectedSubject">
+          The saved subject is no longer active. Select another subject.
+        </p>
+      </section>
+
+      <section class="tcfg-activity-block">
+        <div class="tcfg-activity-block__head">
+          <div>
+            <h3>Groups &amp; Sections <em>*</em></h3>
+            <p>Choose the academic groups and sections where this fixed schedule should apply.</p>
+          </div>
+          <span class="tcfg-activity-count" *ngIf="activitySelectedGroupCount">
+            {{ activitySelectedGroupCount }} group(s) · {{ activitySelectedUnitCount }} unit(s)
+          </span>
+        </div>
+
+        <div class="tcfg-activity-modes" role="radiogroup" aria-label="Group scope">
+          <label *ngFor="let scope of activityGroupScopes" class="tcfg-activity-mode"
+            [class.is-selected]="activityForm.groupScope === scope.key">
+            <input type="radio" name="activityGroupScope"
+              [checked]="activityForm.groupScope === scope.key"
+              (change)="setActivityGroupScope(scope.key)" />
+            <span>
+              <strong>{{ scope.label }}</strong>
+              <small>{{ scope.hint }}</small>
+            </span>
+          </label>
+        </div>
+
+        <p class="tcfg-field__hint tcfg-field__hint--error" *ngIf="!activityGroupOptions.length">
+          No active academic groups are configured for this academic year.
+        </p>
+
+        <ng-container *ngIf="activityForm.groupScope === 'ALL'; else specificGroups">
+          <p class="tcfg-field__hint">
+            All active academic groups and all of their sections are included. New sections added to these
+            groups are picked up automatically.
+          </p>
+        </ng-container>
+
+        <ng-template #specificGroups>
+          <span class="tcfg-field__label">Academic Groups <em>*</em></span>
+          <div class="tcfg-group-picker">
+            <label class="tcfg-group-picker__search">
+              <i class="pi pi-search"></i>
+              <input type="search" placeholder="Search groups by name or code..."
+                [(ngModel)]="activityGroupSearch" aria-label="Search academic groups" />
             </label>
-            <label>
-              <input type="radio" name="activitySectionScope" [checked]="pickerScope === 'SELECTED'"
-                (change)="pickerScope = 'SELECTED'" />
-              Selected Sections
-            </label>
+
+            <div class="tcfg-group-picker__list" *ngIf="filteredActivityGroups.length; else noMatchingGroups">
+              <div class="tcfg-group-row" *ngFor="let group of filteredActivityGroups"
+                [class.is-selected]="isActivityGroupSelected(group.academicGroupId)"
+                [class.is-expanded]="isActivityGroupExpanded(group.academicGroupId)">
+                <div class="tcfg-group-row__head">
+                  <label class="tcfg-group-row__check">
+                    <input type="checkbox"
+                      [checked]="isActivityGroupSelected(group.academicGroupId)"
+                      (change)="toggleActivityGroup(group)"
+                      [attr.aria-label]="'Select ' + group.name" />
+                  </label>
+                  <button type="button" class="tcfg-group-row__expand"
+                    (click)="toggleActivityGroupExpanded(group.academicGroupId)"
+                    [attr.aria-expanded]="isActivityGroupExpanded(group.academicGroupId)"
+                    [attr.aria-controls]="'activity-group-' + group.academicGroupId">
+                    <span class="tcfg-group-row__text">
+                      <strong>{{ group.name }}</strong>
+                      <small>{{ group.code }}</small>
+                    </span>
+                    <span class="tcfg-group-row__count">
+                      {{ group.sections.length }} section(s)
+                    </span>
+                    <i class="pi"
+                      [class.pi-chevron-down]="isActivityGroupExpanded(group.academicGroupId)"
+                      [class.pi-chevron-right]="!isActivityGroupExpanded(group.academicGroupId)"></i>
+                  </button>
+                </div>
+
+                <div class="tcfg-group-row__body" *ngIf="isActivityGroupExpanded(group.academicGroupId)"
+                  [id]="'activity-group-' + group.academicGroupId">
+                  <ng-container *ngIf="group.sections.length; else noGroupSections">
+                    <label class="tcfg-group-check tcfg-group-check--all">
+                      <input type="checkbox"
+                        [checked]="activityGroupSelection(group.academicGroupId)?.sectionScope === 'ALL'"
+                        (change)="onActivityAllSectionsChange(group, $any($event.target).checked)" />
+                      <span>All Sections</span>
+                    </label>
+                    <div class="tcfg-group-check-list">
+                      <label class="tcfg-group-check" *ngFor="let section of group.sections">
+                        <input type="checkbox"
+                          [checked]="isActivitySectionSelected(group.academicGroupId, section)"
+                          (change)="toggleActivitySection(group, section)" />
+                        <span>{{ section.name }}</span>
+                      </label>
+                    </div>
+                    <p class="tcfg-field__hint tcfg-field__hint--error"
+                      *ngIf="activityGroupSectionSelectionInvalid(group)">
+                      Select at least one section for {{ group.name }}.
+                    </p>
+                    <p class="tcfg-field__hint"
+                      *ngIf="activityGroupSelection(group.academicGroupId)?.sectionScope === 'ALL'">
+                      All current and future sections in {{ group.name }} are included.
+                    </p>
+                  </ng-container>
+                  <ng-template #noGroupSections>
+                    <p class="tcfg-field__hint">
+                      This group has no sections, so the whole group is included.
+                    </p>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+            <ng-template #noMatchingGroups>
+              <p class="tcfg-group-picker__empty">No active groups match your search.</p>
+            </ng-template>
+          </div>
+
+          <p class="tcfg-field__hint tcfg-field__hint--error" *ngIf="activityGroupSelectionMissing">
+            Select at least one academic group.
+          </p>
+
+          <div class="tcfg-group-summary" *ngIf="activityGroupsInScope.length">
+            <div class="tcfg-group-summary__head">
+              <strong>Selected Groups &amp; Sections</strong>
+              <span>
+                {{ activitySelectedGroupCount }} group(s) selected
+                <button type="button" class="tcfg-link-btn" (click)="clearActivityGroups()">
+                  Clear All
+                </button>
+              </span>
+            </div>
+            <div class="tcfg-group-summary__chips">
+              <span class="tcfg-chip tcfg-chip--removable" *ngFor="let group of activityGroupsInScope">
+                {{ activityGroupSummary(group) }}
+                <button type="button" (click)="toggleActivityGroup(group)"
+                  [attr.aria-label]="'Remove ' + group.name">
+                  <i class="pi pi-times"></i>
+                </button>
+              </span>
+            </div>
+          </div>
+        </ng-template>
+
+        <p class="tcfg-field__hint tcfg-field__hint--error"
+          *ngIf="activityForm.groupScope === 'SELECTED' && activityUnavailableGroups.length">
+          These saved groups are no longer active: {{ activityUnavailableGroups.length }} group(s).
+          <button type="button" class="tcfg-link-btn" (click)="removeUnavailableActivityGroups()">
+            Remove inactive groups
+          </button>
+        </p>
+        <p class="tcfg-field__hint tcfg-field__hint--error"
+          *ngIf="activityForm.groupScope === 'SELECTED' && activityUnavailableSections.length">
+          {{ activityUnavailableSections.length }} saved section(s) are no longer active. Choose different
+          sections or switch that group to All Sections.
+        </p>
+      </section>
+
+      <section class="tcfg-activity-block">
+        <div class="tcfg-activity-block__head">
+          <div>
+            <h3>Day(s) <em>*</em></h3>
+            <p>Choose every day the activity runs. Days start unselected on purpose.</p>
           </div>
         </div>
-        <div class="tcfg-section-options" *ngIf="pickerScope === 'SELECTED'" role="group" aria-label="Select sections">
-          <span class="tcfg-field__hint">Choose one or more sections for this activity.</span>
-          <div class="tcfg-section-options__checks">
-            <label class="tcfg-section-check" *ngFor="let section of sectionOptions"
-              [class.is-selected]="isPickerSectionSelected(section.value)">
-              <input type="checkbox" [checked]="isPickerSectionSelected(section.value)"
-                (change)="togglePickerSection(section.value)" />
-              <span>{{ section.label }}</span>
-            </label>
-          </div>
+        <div class="tcfg-day-row">
+          <button type="button" *ngFor="let day of dayOrder" class="tcfg-day-check"
+            [class.is-checked]="activityForm.days.includes(day)"
+            [attr.aria-pressed]="activityForm.days.includes(day)"
+            [attr.aria-label]="dayLabels[day]"
+            [attr.title]="dayLabels[day]"
+            (click)="toggleActivityDay(day)">
+            {{ dayShort[day] }}
+          </button>
         </div>
-      </div>
-      <p class="tcfg-field__hint" *ngIf="!sectionOptions.length && pickerGroupId">
-        This group has no sections. The activity applies to the whole group.
-      </p>
-      <div class="tcfg-chips" *ngIf="activityForm.units.length">
-        <span class="tcfg-chip tcfg-chip--removable" *ngFor="let unit of activityForm.units; let i = index">
-          {{ unit.label }}
-          <button type="button" (click)="removeActivityUnit(i)" aria-label="Remove group"><i class="pi pi-times"></i></button>
-        </span>
-      </div>
-    </div>
+      </section>
 
-    <div class="tcfg-days">
-      <span class="tcfg-field__label">Day(s) <em>*</em></span>
-      <div class="tcfg-day-row">
-        <label *ngFor="let day of dayOrder" class="tcfg-day-check"
-          [class.is-checked]="activityForm.days.includes(day)">
-          <input type="checkbox" [checked]="activityForm.days.includes(day)" (change)="toggleActivityDay(day)" />
-          {{ dayShort[day] }}
+      <section class="tcfg-activity-block">
+        <div class="tcfg-activity-block__head">
+          <div>
+            <h3>Period <em>*</em></h3>
+            <p>Only periods configured on every selected day for the selected groups and sections are offered.</p>
+          </div>
+          <span class="tcfg-activity-resolving" *ngIf="activityResolving">
+            <i class="pi pi-spin pi-spinner"></i> Resolving schedule
+          </span>
+        </div>
+        <label class="tcfg-field">
+          <select [(ngModel)]="activityForm.periodName" (ngModelChange)="onActivityPeriodChange()"
+            [disabled]="!activityCommonPeriods.length || activityResolving"
+            aria-label="Activity period">
+            <option [ngValue]="null">
+              {{ activityCommonPeriods.length ? 'Select a period' : 'No common period available' }}
+            </option>
+            <option *ngFor="let period of activityCommonPeriods" [ngValue]="period.name">
+              {{ period.name }} · {{ period.displayTime }}
+            </option>
+          </select>
+        </label>
+        <p class="tcfg-field__hint"
+          *ngIf="activityForm.days.length && activitySelectedUnitCount && !activityResolving
+            && !activityCommonPeriods.length">
+          The selected days and sections do not share a common teaching period. Create separate fixed activity
+          schedules for the applicable days or choose sections that follow the same schedule pattern.
+        </p>
+        <p class="tcfg-field__hint"
+          *ngIf="activityPeriodSelectionInvalid">
+          The previously selected period is not available for the current days and sections. Choose a common
+          period from the list.
+        </p>
+      </section>
+
+      <div class="tcfg-form-grid tcfg-activity-block--plain">
+        <div class="tcfg-field tcfg-resolved-teacher">
+          <span>Teacher</span>
+          <div class="tcfg-resolved-teacher__value" *ngIf="activityEligibleTeachers.length; else noResolvedTeacher">
+            <i class="pi pi-user"></i>
+            <strong>{{ activityResolvedTeacherNames }}</strong>
+          </div>
+          <ng-template #noResolvedTeacher>
+            <div class="tcfg-resolved-teacher__value is-empty">
+              <i class="pi" [class.pi-user]="!activityTeacherRequired" [class.pi-exclamation-circle]="activityTeacherRequired"></i>
+              <strong>
+                {{ activityTeacherRequired
+                  ? (activityTeacherNotShared ? 'No common teacher' : 'No teacher allocated')
+                  : 'No teacher required' }}
+              </strong>
+            </div>
+          </ng-template>
+          <small class="tcfg-field__hint">
+            Resolved from Teacher Allocation and cannot be changed here.
+          </small>
+          <small class="tcfg-field__hint tcfg-field__hint--error"
+            *ngIf="activityTeacherMissing && !activityResolving">
+            {{ activityTeacherNotShared
+              ? 'No single teacher is allocated to every selected group and section. Choose groups that share a teacher.'
+              : 'Assign a teacher in Teacher Allocation for this subject before saving a fixed academic lesson.' }}
+          </small>
+        </div>
+        <label class="tcfg-field">
+          <span>Description (optional)</span>
+          <textarea rows="2" [(ngModel)]="activityForm.description"
+            placeholder="Add a short note about this activity..."></textarea>
         </label>
       </div>
-    </div>
 
-    <div class="tcfg-form-grid tcfg-form-grid--3">
-      <div class="tcfg-field">
-        <span>Time Slot <em>*</em></span>
-        <div class="tcfg-date-range">
-          <input type="time" [(ngModel)]="activityForm.startTime" />
-          <span>–</span>
-          <input type="time" [(ngModel)]="activityForm.endTime" />
+      <div class="tcfg-activity-issues" *ngIf="activityDisplayIssues.length" role="alert" aria-live="polite">
+        <div class="tcfg-activity-issues__head">
+          <i class="pi pi-exclamation-triangle"></i>
+          <strong>Resolve {{ activityDisplayIssues.length }} issue(s) before saving</strong>
         </div>
-      </div>
-      <label class="tcfg-field">
-        <span>Recurrence <em>*</em></span>
-        <select [(ngModel)]="activityForm.recurrence">
-          <option value="WEEKLY">Weekly</option>
-        </select>
-      </label>
-      <div class="tcfg-field">
-        <span>Effective Date Range (optional)</span>
-        <div class="tcfg-date-range">
-          <input type="date" [(ngModel)]="activityForm.effectiveFrom" />
-          <span>–</span>
-          <input type="date" [(ngModel)]="activityForm.effectiveTo" />
-        </div>
+        <ul>
+          <li *ngFor="let issue of activityDisplayIssues">{{ issue }}</li>
+        </ul>
       </div>
     </div>
-
-    <label class="tcfg-field">
-      <span>Description (optional)</span>
-      <textarea rows="2" [(ngModel)]="activityForm.description"
-        placeholder="Add a brief description about this activity..."></textarea>
-    </label>
-    <label class="tcfg-switch">
-      <input type="checkbox" [(ngModel)]="activityForm.active" />
-      <span>{{ activityForm.active ? 'Active' : 'Inactive' }}</span>
-    </label>
 
     <ng-template pTemplate="footer">
       <div class="tcfg-dialog__footer">
         <button type="button" class="tcfg-btn tcfg-btn--outline" (click)="showActivityDialog = false">Cancel</button>
-        <button type="button" class="tcfg-btn tcfg-btn--primary" [disabled]="saving" (click)="saveActivity()">
+        <button type="button" class="tcfg-btn tcfg-btn--primary" [disabled]="activitySaveDisabled"
+          (click)="saveActivity()">
           <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
           Save Activity
         </button>
