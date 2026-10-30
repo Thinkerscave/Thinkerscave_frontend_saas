@@ -130,6 +130,9 @@
             <span class="sub-muted sub-small">
               {{ item.subjectCode }} | {{ typeLabel(item.subjectType) }}<ng-container *ngIf="!item.subjectActive"> · Inactive</ng-container>
             </span>
+            <span class="sub-muted sub-small" *ngIf="choiceGroupForSubject(item.subjectId) as choiceGroup">
+              Alternative in "{{ choiceGroup.name }}"; map the choice group instead.
+            </span>
           </label>
           <span class="sub-avail-row__badges">
             <span class="sub-badge sub-badge--mapped" *ngIf="item.mapped">Mapped</span>
@@ -188,7 +191,7 @@
               {{ totalWeeklyPeriods }} weekly periods
             </span>
           </div>
-          <p>Configure curriculum details for the selected subjects and choice groups.</p>
+          <p>Choice-group workload is counted once. Set each alternative's weekly periods within that shared workload.</p>
         </div>
         <button
           *ngIf="showMutations"
@@ -214,7 +217,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of rows" [class.sub-row--removed]="row.removed">
+            <tr *ngFor="let row of visibleRows" [class.sub-row--removed]="row.removed">
               <td>
                 <div class="sub-table__name">
                   <span class="sub-icon sub-icon--sm" [ngClass]="'sub-icon--' + typeTone(row.subjectType)" aria-hidden="true">
@@ -330,8 +333,8 @@
                     [min]="weeklyMin"
                     [max]="weeklyMax"
                     step="1"
-                    [(ngModel)]="mapping.weeklyPeriods"
-                    (ngModelChange)="markRowChanged()"
+                    [ngModel]="mapping.weeklyPeriods"
+                    (ngModelChange)="onChoiceWeeklyChanged(mapping, $event)"
                     [disabled]="!editable || mapping.removed"
                     [attr.aria-invalid]="!isValidChoiceWeekly(mapping)"
                     [attr.aria-label]="'Weekly periods for ' + mapping.name" />
@@ -407,7 +410,22 @@
                     </div>
                   </td>
                   <td><span class="sub-muted" aria-hidden="true">–</span></td>
-                  <td><span class="sub-muted">Inherit ({{ mapping.weeklyPeriods }})</span></td>
+                  <td>
+                    <input
+                      type="number"
+                      class="sub-weekly"
+                      [min]="weeklyMin"
+                      [max]="mapping.weeklyPeriods"
+                      step="1"
+                      [ngModel]="subject.weeklyPeriods"
+                      (ngModelChange)="subject.weeklyPeriods = $event; markRowChanged()"
+                      [disabled]="!editable || mapping.removed"
+                      [attr.aria-invalid]="!isValidChoiceSubjectWeekly(mapping, subject)"
+                      [attr.aria-label]="'Weekly alternative periods for ' + subject.subjectName" />
+                    <span class="sub-field__error" *ngIf="!isValidChoiceSubjectWeekly(mapping, subject) && !mapping.removed">
+                      Enter {{ weeklyMin }}–{{ mapping.weeklyPeriods }}
+                    </span>
+                  </td>
                   <td><span class="sub-muted" aria-hidden="true">–</span></td>
                   <td></td>
                   <td *ngIf="showMutations"></td>
@@ -418,7 +436,7 @@
         </table>
       </div>
 
-      <div class="sub-empty sub-empty--compact" *ngIf="rows.length === 0 && !choiceMappings.length">
+      <div class="sub-empty sub-empty--compact" *ngIf="visibleRows.length === 0 && !choiceMappings.length">
         <i class="pi pi-book" aria-hidden="true"></i>
         <p>No curriculum mappings yet. Select an individual subject or an existing choice group.</p>
       </div>

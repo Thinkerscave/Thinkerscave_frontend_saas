@@ -38,6 +38,7 @@ import {
   SUBJECT_WEEKLY_PERIODS_MIN,
   SubjectMappingBoard,
   SubjectMappingImpact,
+  SubjectMappingRow,
   SubjectMappingSaveRequest,
   SubjectChoiceMapping,
   SubjectChoiceMappingUpsert,
@@ -193,6 +194,11 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     return group.subjects.slice(0, 3).map((subject) => subject.name).join(', ');
   }
 
+  choiceGroupForSubject(subjectId: number): SubjectChoiceGroup | undefined {
+    return this.choiceGroupOptions.find((group) =>
+      group.active && group.subjects.some((subject) => subject.subjectId === subjectId));
+  }
+
   choiceMappingSummary(mapping: ChoiceMappingDraft): string {
     return mapping.subjects.slice(0, 3).map((subject) => subject.subjectName).join(', ');
   }
@@ -204,26 +210,33 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     for (const group of selected) {
       if (this.choiceMappings.some((mapping) => !mapping.removed
         && mapping.choiceGroupId === group.subjectChoiceGroupId)) continue;
-      const subjects = group.subjects.map((subject) => ({
-        mappingId: 0,
-        choiceMappingId: null,
-        subjectId: subject.subjectId,
-        subjectName: subject.name,
-        subjectCode: subject.code,
-        subjectType: group.subjectType,
-        subjectActive: subject.active,
-        requirement: 'OPTIONAL' as const,
-        weeklyPeriods: 1,
-        timetablePreference: 'ANY' as const,
-        teacherAllocationCount: 0,
-        timetableEntryCount: 0
-      }));
+      const existingRows = group.subjects.map((subject) => this.rowFor(subject.subjectId));
+      const weeklyPeriods = Math.max(1, ...existingRows
+        .filter((row): row is DraftRow => !!row && !row.removed)
+        .map((row) => Number(row.weeklyPeriods) || 1));
+      const subjects = group.subjects.map((subject) => {
+        const existing = this.rowFor(subject.subjectId);
+        return {
+          mappingId: existing?.saved?.mappingId ?? 0,
+          choiceMappingId: null,
+          subjectId: subject.subjectId,
+          subjectName: subject.name,
+          subjectCode: subject.code,
+          subjectType: group.subjectType,
+          subjectActive: subject.active,
+          requirement: 'OPTIONAL' as const,
+          weeklyPeriods: existing && !existing.removed ? existing.weeklyPeriods : weeklyPeriods,
+          timetablePreference: existing?.timetablePreference ?? 'ANY' as const,
+          teacherAllocationCount: existing?.saved?.teacherAllocationCount ?? 0,
+          timetableEntryCount: existing?.saved?.timetableEntryCount ?? 0
+        };
+      });
       this.choiceMappings.push({
         academicGroupChoiceMappingId: 0,
         choiceGroupId: group.subjectChoiceGroupId,
         name: group.name,
         subjectType: group.subjectType,
-        weeklyPeriods: 1,
+        weeklyPeriods,
         timetablePreference: 'ANY',
         active: true,
         subjects,
@@ -259,9 +272,28 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
 
   isChoiceMappingChanged(mapping: ChoiceMappingDraft): boolean {
     if (!mapping.saved) return true;
-    // Members inherit the group workload, so only the group-level fields are editable.
     return Number(mapping.weeklyPeriods) !== Number(mapping.saved.weeklyPeriods)
-      || mapping.timetablePreference !== mapping.saved.timetablePreference;
+      || mapping.timetablePreference !== mapping.saved.timetablePreference
+      || mapping.subjects.some((subject) => {
+        const savedSubject = mapping.saved?.subjects.find((saved) => saved.subjectId === subject.subjectId);
+        return !!savedSubject && Number(subject.weeklyPeriods) !== Number(savedSubject.weeklyPeriods);
+      });
+  }
+
+  onChoiceWeeklyChanged(mapping: ChoiceMappingDraft, value: number): void {
+    const previous = Number(mapping.weeklyPeriods);
+    const next = Number(value);
+    mapping.weeklyPeriods = next;
+    for (const subject of mapping.subjects) {
+      if (Number(subject.weeklyPeriods) === previous) subject.weeklyPeriods = next;
+    }
+    this.markRowChanged();
+  }
+
+  isValidChoiceSubjectWeekly(mapping: ChoiceMappingDraft, subject: SubjectMappingRow): boolean {
+    return isValidWeeklyPeriods(subject.weeklyPeriods)
+      && isValidWeeklyPeriods(mapping.weeklyPeriods)
+      && Number(subject.weeklyPeriods) <= Number(mapping.weeklyPeriods);
   }
 
   loadChoiceGroupOptions(): void {
@@ -367,13 +399,17 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   get mappedCount(): number {
-    return this.rows.filter((row) => !row.removed).length
+    return this.visibleRows.filter((row) => !row.removed).length
       + this.choiceMappings.filter((mapping) => !mapping.removed).length;
+  }
+
+  get visibleRows(): DraftRow[] {
+    return this.rows.filter((row) => !this.isChoiceSubject(row.subjectId));
   }
 
   get totalWeeklyPeriods(): number {
     const standalone = this.rows
-      .filter((row) => !row.removed)
+      .filter((row) => !row.removed && !this.isChoiceSubject(row.subjectId))
       .reduce((total, row) => total + (Number(row.weeklyPeriods) || 0), 0);
     const shared = this.choiceMappings
       .filter((mapping) => !mapping.removed)
@@ -698,12 +734,15 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   }
 
   canToggle(item: AvailableSubjectResponse): boolean {
-    return this.editable && !this.isChoiceSubject(item.subjectId) && (item.subjectActive || item.mapped);
+    if (!this.editable || this.isChoiceSubject(item.subjectId) || !(item.subjectActive || item.mapped)) {
+      return false;
+    }
+    return !this.choiceGroupForSubject(item.subjectId) || this.isChecked(item);
   }
 
   isChoiceSubject(subjectId: number): boolean {
-    return this.choiceMappings.some((mapping) =>
-      mapping.subjects.some((subject) => subject.subjectId === subjectId));
+    return this.choiceMappings.some((mapping) => !mapping.removed
+      && mapping.subjects.some((subject) => subject.subjectId === subjectId));
   }
 
   onAvailableToggle(item: AvailableSubjectResponse, checked: boolean): void {
@@ -816,6 +855,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   save(): void {
     if (!this.showMutations || this.saving || !this.contextReady || !this.board) return;
     this.commitStaged();
+    this.addSelectedChoiceGroups();
     if (this.changeCount === 0) return;
 
     const errors = validateDraft({
@@ -826,6 +866,17 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     for (const mapping of this.choiceMappings.filter((item) => !item.removed)) {
       if (!this.isValidChoiceWeekly(mapping)) {
         errors.push(`${mapping.name}: weekly periods must be a whole number from ${this.weeklyMin} to ${this.weeklyMax}.`);
+      }
+      for (const subject of mapping.subjects) {
+        if (!this.isValidChoiceSubjectWeekly(mapping, subject)) {
+          errors.push(`${subject.subjectName}: alternative periods must be a whole number from ${this.weeklyMin} to the ${mapping.name} workload.`);
+        }
+      }
+    }
+    for (const row of this.rows.filter((item) => !item.removed)) {
+      const choiceGroup = this.choiceGroupForSubject(row.subjectId);
+      if (choiceGroup && !this.isChoiceSubject(row.subjectId)) {
+        errors.push(`${row.subjectName} belongs to the "${choiceGroup.name}" choice group. Map the choice group instead of the subject individually.`);
       }
     }
     if (errors.length) {
@@ -842,16 +893,28 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       mapping.removed ? !!mapping.saved : this.isChoiceMappingChanged(mapping));
     request.choiceGroupUpserts = changedChoiceMappings
       .filter((mapping) => !mapping.removed)
-      .map((mapping): SubjectChoiceMappingUpsert => ({
-        choiceGroupId: mapping.choiceGroupId,
-        weeklyPeriods: Number(mapping.weeklyPeriods),
-        timetablePreference: mapping.timetablePreference
-      }));
+      .map((mapping): SubjectChoiceMappingUpsert => {
+        const subjectPeriods: Record<number, number> = {};
+        for (const subject of mapping.subjects) {
+          if (Number(subject.weeklyPeriods) !== Number(mapping.weeklyPeriods)) {
+            subjectPeriods[subject.subjectId] = Number(subject.weeklyPeriods);
+          }
+        }
+        return {
+          choiceGroupId: mapping.choiceGroupId,
+          weeklyPeriods: Number(mapping.weeklyPeriods),
+          timetablePreference: mapping.timetablePreference,
+          ...(Object.keys(subjectPeriods).length ? { subjectPeriods } : {})
+        };
+      });
     request.removedChoiceGroupIds = changedChoiceMappings
       .filter((mapping) => mapping.removed && mapping.saved)
       .map((mapping) => mapping.choiceGroupId);
     const groupImpactNeedsConfirmation = changedChoiceMappings.some((mapping) =>
-      !!mapping.saved && (mapping.removed || this.isChoiceMappingChanged(mapping)));
+      (!!mapping.saved && (mapping.removed || this.isChoiceMappingChanged(mapping)))
+      || (!mapping.saved && mapping.subjects.some((subject) =>
+        subject.teacherAllocationCount > 0 || subject.timetableEntryCount > 0)));
+    const choiceImpacts = this.choiceMappingImpacts(changedChoiceMappings);
     const groupId = this.groupId!;
     this.saving = true;
     this.cdr.markForCheck();
@@ -860,7 +923,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
         if (preview.requiresConfirmation || groupImpactNeedsConfirmation) {
           this.saving = false;
           this.pendingSave = request;
-          this.impacts = preview.impacts ?? [];
+          this.impacts = [...(preview.impacts ?? []), ...choiceImpacts];
           this.choiceImpactWarning = groupImpactNeedsConfirmation;
           this.impactDialogOpen = true;
           this.cdr.markForCheck();
@@ -888,6 +951,21 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.pendingSave = null;
     this.choiceImpactWarning = false;
     this.persist(groupId, request);
+  }
+
+  private choiceMappingImpacts(mappings: ChoiceMappingDraft[]): SubjectMappingImpact[] {
+    return mappings.flatMap((mapping) => mapping.subjects
+      .filter((subject) => subject.teacherAllocationCount > 0 || subject.timetableEntryCount > 0)
+      .map((subject) => ({
+        subjectId: subject.subjectId,
+        subjectName: subject.subjectName,
+        type: mapping.removed ? 'REMOVAL' as const : 'SCHEDULE_CHANGE' as const,
+        teacherAllocationCount: subject.teacherAllocationCount,
+        timetableEntryCount: subject.timetableEntryCount,
+        message: mapping.removed
+          ? `Removing "${mapping.name}" keeps existing teacher assignments and timetable lessons as history.`
+          : `Mapping "${subject.subjectName}" through "${mapping.name}" changes how its existing allocations and timetable lessons are used.`
+      })));
   }
 
   cancelImpact(): void {

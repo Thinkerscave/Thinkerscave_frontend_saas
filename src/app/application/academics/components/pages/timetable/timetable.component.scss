@@ -455,6 +455,17 @@
   background-color: var(--tt-surface);
 }
 .tt-grid-scroll { overflow: auto; max-height: min(58vh, 680px); }
+.tt-grid-section + .tt-grid-section { border-top: 2px solid var(--tt-border); }
+.tt-grid-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--tt-surface-soft) 70%, var(--tt-surface));
+}
+.tt-grid-section__label { font-weight: 700; color: var(--tt-heading); font-size: 0.78rem; }
+.tt-grid-section__days { font-size: 0.7rem; color: var(--tt-muted); }
 .tt-grid {
   width: max-content;
   min-width: 860px;

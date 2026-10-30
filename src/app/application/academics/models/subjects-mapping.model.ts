@@ -160,7 +160,7 @@ export interface SubjectChoiceMappingUpsert {
   choiceGroupId: number;
   weeklyPeriods: number;
   timetablePreference: SubjectTimetablePreference;
-  /** Omitted on purpose: every member inherits the group's weekly periods. */
+  /** Per-alternative weekly periods; omitted members inherit the shared group workload. */
   subjectPeriods?: Record<number, number>;
 }
 

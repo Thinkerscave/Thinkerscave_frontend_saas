@@ -401,6 +401,8 @@ export interface TimetableGrid {
   timetableVersionId: number;
   view: GridView;
   periods: TimetablePeriod[];
+  /** Periods that actually belong to each working day (days may use different patterns). */
+  periodsByDay?: Record<string, TimetablePeriod[]>;
   workingDays: DayOfWeek[];
   cells: TimetableCell[];
   academicGroupId?: number;

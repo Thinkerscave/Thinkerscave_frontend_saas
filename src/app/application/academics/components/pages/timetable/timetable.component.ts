@@ -36,6 +36,7 @@ import {
   TimetableConflict,
   TimetableEntryRequest,
   TimetableGrid,
+  TimetablePeriod,
   TimetableVersion,
   TimetableWorkspace,
   WorkspaceIssue
@@ -49,6 +50,13 @@ interface PeriodRow {
   kind: string;
   periodIds: number[];
   sessions: number;
+}
+
+interface GridSection {
+  key: string;
+  label: string;
+  days: DayOfWeek[];
+  rows: PeriodRow[];
 }
 
 interface SubjectChoice {
@@ -169,6 +177,12 @@ export class TimetablePageComponent implements OnInit {
   }
 
   onYearChange(yearId: number | null): void {
+    // The academic-year selector re-emits the stored year after it initialises. Ignore that
+    // duplicate so the workspace and grid are not requested twice on first load.
+    if (yearId != null && yearId === this.selectedYearId
+        && (this.workspace != null || this.loading)) {
+      return;
+    }
     this.gridRequestId += 1;
     this.selectedYearId = yearId;
     this.workspace = null;
@@ -349,8 +363,12 @@ export class TimetablePageComponent implements OnInit {
   }
 
   get periodRows(): PeriodRow[] {
+    return this.buildRows(this.grid?.periods ?? []);
+  }
+
+  private buildRows(periods: TimetablePeriod[]): PeriodRow[] {
     const groups = new Map<string, PeriodRow>();
-    for (const period of this.grid?.periods ?? []) {
+    for (const period of periods) {
       const key = `${period.startTime}|${period.endTime}`;
       const row = groups.get(key);
       if (row) {
@@ -370,6 +388,52 @@ export class TimetablePageComponent implements OnInit {
       }
     }
     return [...groups.values()].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }
+
+  /** Period rows for one day only, so days with different patterns never share columns. */
+  rowsForDay(day: DayOfWeek): PeriodRow[] {
+    const periods = this.grid?.periodsByDay?.[day];
+    return this.buildRows(periods && periods.length ? periods : this.grid?.periods ?? []);
+  }
+
+  /**
+   * Days grouped by their schedule signature. A weekday pattern and a Saturday pattern render
+   * as separate tables instead of one table with duplicated "Period 1..N" columns.
+   */
+  get gridSections(): GridSection[] {
+    const groups = new Map<string, GridSection>();
+    for (const day of this.gridDays) {
+      const rows = this.rowsForDay(day);
+      const signature = rows.map(r => `${r.startTime}-${r.endTime}-${r.kind}`).join('|');
+      const existing = groups.get(signature);
+      if (existing) {
+        existing.days.push(day);
+        continue;
+      }
+      groups.set(signature, {
+        key: signature,
+        label: this.patternLabelForDay(day),
+        days: [day],
+        rows
+      });
+    }
+    return [...groups.values()];
+  }
+
+  private patternLabelForDay(day: DayOfWeek): string {
+    const periods = this.grid?.periodsByDay?.[day] ?? [];
+    const named = periods.find(p => !!p.schedulePatternName)?.schedulePatternName;
+    if (named) return named;
+    return this.distinctScheduleCount > 1 ? 'Schedule' : 'Weekly schedule';
+  }
+
+  private get distinctScheduleCount(): number {
+    const signatures = new Set<string>();
+    for (const day of this.gridDays) {
+      signatures.add(this.rowsForDay(day)
+        .map(r => `${r.startTime}-${r.endTime}-${r.kind}`).join('|'));
+    }
+    return signatures.size;
   }
 
   get gridDays(): DayOfWeek[] {
@@ -876,7 +940,8 @@ export class TimetablePageComponent implements OnInit {
   }
 
   get editSlots(): PeriodRow[] {
-    return this.periodRows.filter(r => !this.isBreak(r) && r.periodIds.length === 1);
+    return this.rowsForDay(this.editForm.dayOfWeek)
+      .filter(r => !this.isBreak(r) && r.periodIds.length === 1);
   }
 
   saveEntry(): void {

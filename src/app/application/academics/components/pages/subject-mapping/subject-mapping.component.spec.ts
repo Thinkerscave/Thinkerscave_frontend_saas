@@ -324,6 +324,21 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.totalWeeklyPeriods).toBe(6);
   });
 
+  it('prevents mapping an active choice-group member as an individual subject', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    const hindi: AvailableSubjectResponse = {
+      subjectId: 20, subjectName: 'Hindi', subjectCode: 'HIN', subjectType: 'ACADEMIC_SUBJECT',
+      subjectActive: true, mapped: false, mappingId: null
+    };
+
+    expect(component.canToggle(hindi)).toBeFalse();
+    component.onAvailableToggle(hindi, true);
+    expect(component.staged.has(hindi.subjectId)).toBeFalse();
+    expect(component.choiceGroupForSubject(hindi.subjectId)?.name).toBe('Second Language');
+  });
+
   it('saves a choice group with its weekly periods and no member overrides', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
     subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
@@ -331,7 +346,7 @@ describe('SubjectMappingPageComponent', () => {
     component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
     component.addSelectedSubjects();
 
-    component.choiceMappings[0].weeklyPeriods = 3;
+    component.onChoiceWeeklyChanged(component.choiceMappings[0], 3);
     component.save();
 
     const request = subjectsApi.previewMappings.calls.mostRecent().args[1];
@@ -341,7 +356,7 @@ describe('SubjectMappingPageComponent', () => {
     expect(subjectsApi.saveMappings).toHaveBeenCalled();
   });
 
-  it('renders choice groups as expandable rows with read-only inherited members', async () => {
+  it('renders each alternative frequency instead of falsely implying it inherits the group workload', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
     subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
     component.loadChoiceGroupOptions();
@@ -355,12 +370,28 @@ describe('SubjectMappingPageComponent', () => {
     expect(mapped.querySelectorAll('.sub-mapped-group__child').length).toBe(2);
 
     const child = mapped.querySelector('.sub-mapped-group__child') as HTMLElement;
-    expect(child.querySelector('input[type="number"]')).toBeNull();
-    expect(child.textContent).toContain('Inherit (1)');
+    expect(child.querySelector('input[type="number"]')).not.toBeNull();
+    expect(child.textContent).not.toContain('Inherit');
 
     component.toggleChoiceMapping(component.choiceMappings[0]);
     fixture.detectChanges();
     expect(mapped.querySelectorAll('.sub-mapped-group__child').length).toBe(0);
+  });
+
+  it('saves explicit alternative weekly-period overrides', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    component.addSelectedSubjects();
+    const mapping = component.choiceMappings[0];
+    component.onChoiceWeeklyChanged(mapping, 3);
+    mapping.subjects[0].weeklyPeriods = 2;
+
+    component.save();
+
+    expect(subjectsApi.previewMappings.calls.mostRecent().args[1].choiceGroupUpserts![0].subjectPeriods)
+      .toEqual({ 20: 2 });
   });
 
   it('removes an unsaved choice group row without leaving a change behind', async () => {

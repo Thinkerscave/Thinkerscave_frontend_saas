@@ -217,46 +217,56 @@
 
         <div class="tt-grid-wrap">
           <div class="tt-grid-scroll">
-            <table class="tt-grid" *ngIf="grid; else loadingGridTpl">
-              <thead>
-                <tr>
-                  <th class="tt-grid__day-axis" scope="col">Day</th>
-                  <th *ngFor="let row of periodRows" class="tt-grid__period-axis" scope="col">
-                    <span class="tt-grid__period">{{ row.name }}</span>
-                    <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let day of gridDays">
-                  <th class="tt-grid__day-axis" scope="row">
-                    <span class="tt-grid__day">{{ dayLabels[day] }}</span>
-                    <span class="tt-grid__date" *ngIf="dayDateLabel(day)">{{ dayDateLabel(day) }}</span>
-                  </th>
-                  <td *ngFor="let row of periodRows" class="tt-grid__cell"
-                    [class.is-empty]="isEmptySlot(row, day)" [class.tt-grid__break]="isBreak(row)">
-                    <span class="tt-grid__break-label" *ngIf="isBreak(row)">{{ row.name }}</span>
-                    <ng-container *ngIf="!isBreak(row)">
-                      <button type="button" class="tt-empty-cell" *ngIf="isEmptySlot(row, day) && canEdit"
-                        (click)="openPlace(day, row)" aria-label="Place a lesson">
-                        <i class="pi pi-plus"></i>
-                      </button>
-                      <div *ngFor="let cell of cellsFor(row, day)" class="tt-lesson"
-                        [attr.data-tone]="toneFor(cell)" [class.is-activity]="cell.entryType === 'ACTIVITY'"
-                        (click)="openEdit(cell)" role="button" tabindex="0"
-                        (keydown.enter)="openEdit(cell)">
-                        <strong>{{ cell.subjectName }}</strong>
-                        <span *ngIf="cell.staffName">{{ cell.staffName }}</span>
-                        <small>{{ cell.academicGroupName }}<ng-container *ngIf="cell.sectionName">
-                          • {{ cell.sectionName }}</ng-container></small>
-                        <i class="pi pi-lock tt-lesson__lock" *ngIf="cell.locked"></i>
-                        <i class="pi pi-ellipsis-v tt-lesson__more"></i>
-                      </div>
-                    </ng-container>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <ng-container *ngIf="grid; else loadingGridTpl">
+              <section class="tt-grid-section" *ngFor="let section of gridSections">
+                <header class="tt-grid-section__head">
+                  <span class="tt-grid-section__label">{{ section.label }}</span>
+                  <span class="tt-grid-section__days">
+                    {{ section.days.length }} day{{ section.days.length === 1 ? '' : 's' }}
+                  </span>
+                </header>
+                <table class="tt-grid">
+                  <thead>
+                    <tr>
+                      <th class="tt-grid__day-axis" scope="col">Day</th>
+                      <th *ngFor="let row of section.rows" class="tt-grid__period-axis" scope="col">
+                        <span class="tt-grid__period">{{ row.name }}</span>
+                        <span class="tt-grid__time-value">{{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }}</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let day of section.days">
+                      <th class="tt-grid__day-axis" scope="row">
+                        <span class="tt-grid__day">{{ dayLabels[day] }}</span>
+                        <span class="tt-grid__date" *ngIf="dayDateLabel(day)">{{ dayDateLabel(day) }}</span>
+                      </th>
+                      <td *ngFor="let row of section.rows" class="tt-grid__cell"
+                        [class.is-empty]="isEmptySlot(row, day)" [class.tt-grid__break]="isBreak(row)">
+                        <span class="tt-grid__break-label" *ngIf="isBreak(row)">{{ row.name }}</span>
+                        <ng-container *ngIf="!isBreak(row)">
+                          <button type="button" class="tt-empty-cell" *ngIf="isEmptySlot(row, day) && canEdit"
+                            (click)="openPlace(day, row)" aria-label="Place a lesson">
+                            <i class="pi pi-plus"></i>
+                          </button>
+                          <div *ngFor="let cell of cellsFor(row, day)" class="tt-lesson"
+                            [attr.data-tone]="toneFor(cell)" [class.is-activity]="cell.entryType === 'ACTIVITY'"
+                            (click)="openEdit(cell)" role="button" tabindex="0"
+                            (keydown.enter)="openEdit(cell)">
+                            <strong>{{ cell.subjectName }}</strong>
+                            <span *ngIf="cell.staffName">{{ cell.staffName }}</span>
+                            <small>{{ cell.academicGroupName }}<ng-container *ngIf="cell.sectionName">
+                              • {{ cell.sectionName }}</ng-container></small>
+                            <i class="pi pi-lock tt-lesson__lock" *ngIf="cell.locked"></i>
+                            <i class="pi pi-ellipsis-v tt-lesson__more"></i>
+                          </div>
+                        </ng-container>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </ng-container>
             <ng-template #loadingGridTpl>
               <div class="tt-grid-loading" *ngIf="loadingGrid; else emptyGrid">
                 <i class="pi pi-spin pi-spinner"></i> Loading timetable…
