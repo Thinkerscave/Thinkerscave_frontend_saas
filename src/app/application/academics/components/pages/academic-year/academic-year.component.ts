@@ -12,11 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { MenuModule } from 'primeng/menu';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TableModule } from 'primeng/table';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
@@ -49,6 +50,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     RouterLink,
     DialogModule,
     DropdownModule,
+    MenuModule,
     ProgressBarModule,
     TableModule,
     SaasPageHeaderComponent,
@@ -79,6 +81,7 @@ export class AcademicYearPageComponent implements OnInit {
   history: AcademicYearDto[] = [];
   searchTerm = '';
   statusFilter: AcademicYearStatus | null = null;
+  historyMenuItems: MenuItem[] = [];
 
   showCreate = false;
   showReject = false;
@@ -277,6 +280,55 @@ export class AcademicYearPageComponent implements OnInit {
       summary: year.name,
       detail: `${this.statusLabel(year.status)} · ${this.formatRange(year)}`
     });
+  }
+
+  buildHistoryMenu(year: AcademicYearDto): void {
+    const items: MenuItem[] = [];
+
+    if (year.status === 'APPROVED' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Activate Year',
+        icon: 'pi pi-check-circle',
+        command: () => this.confirmActivate(year)
+      });
+    }
+
+    if (['DRAFT', 'PREPARING', 'READY_FOR_APPROVAL', 'REJECTED'].includes(year.status)) {
+      items.push({
+        label: 'Continue Setup',
+        icon: 'pi pi-arrow-right',
+        command: () => this.continueSetup(year)
+      });
+    }
+
+    if (year.status === 'CURRENT' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Mark as Completed',
+        icon: 'pi pi-check-square',
+        command: () => this.completeYear(year)
+      });
+    }
+
+    if (year.status === 'COMPLETED' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Archive Year',
+        icon: 'pi pi-box',
+        command: () => this.archiveYear(year)
+      });
+    }
+
+    if (this.permissions.canManage(this.resource)) {
+      items.push({
+        separator: true
+      });
+      items.push({
+        label: 'Deactivate',
+        icon: 'pi pi-power-off',
+        command: () => this.deactivate(year)
+      });
+    }
+
+    this.historyMenuItems = items;
   }
 
   continueSetup(year: AcademicYearDto): void {

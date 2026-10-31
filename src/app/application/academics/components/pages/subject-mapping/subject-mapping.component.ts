@@ -152,7 +152,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   availableRows: AvailableSubjectResponse[] = [];
   availableTotal = 0;
   availablePage = 0;
-  availablePageSize = 10;
+  availablePageSize = 20;
   availableQuery = '';
   availableType: SubjectType | null = null;
   availableLoading = false;
@@ -197,6 +197,16 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
   choiceGroupForSubject(subjectId: number): SubjectChoiceGroup | undefined {
     return this.choiceGroupOptions.find((group) =>
       group.active && group.subjects.some((subject) => subject.subjectId === subjectId));
+  }
+
+  isChoiceGroupMapped(choiceGroupId: number): boolean {
+    return this.choiceMappings.some((mapping) =>
+      !mapping.removed && mapping.choiceGroupId === choiceGroupId);
+  }
+
+  isChoiceGroupMappedForSubject(subjectId: number): boolean {
+    const choiceGroup = this.choiceGroupForSubject(subjectId);
+    return !!choiceGroup && this.isChoiceGroupMapped(choiceGroup.subjectChoiceGroupId);
   }
 
   choiceMappingSummary(mapping: ChoiceMappingDraft): string {
@@ -342,6 +352,21 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.yearApi.search().subscribe({
       next: (years: AcademicYearDto[]) => {
         this.yearOptions = years;
+        if (!groupParam && !yearParam && this.yearId == null) {
+          const contextYear = this.yearCtx.selectedYearId();
+          const contextYearIsAvailable = contextYear != null
+            && years.some((year) => year.academicYearId === contextYear);
+          const defaultYear = contextYearIsAvailable
+            ? contextYear
+            : years.find((year) => year.status === 'CURRENT')?.academicYearId
+              ?? years[0]?.academicYearId
+              ?? null;
+          this.yearId = defaultYear;
+          if (defaultYear != null) {
+            this.yearCtx.selectYear(defaultYear);
+            this.afterYearChanged(false);
+          }
+        }
         this.cdr.markForCheck();
       },
       error: () => this.messages.add({ severity: 'error', summary: 'Unable to load academic years' })
@@ -351,6 +376,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       this.groupsApi.getAcademicGroup(groupParam).subscribe({
         next: (group) => {
           this.yearId = yearParam ?? group.academicYearId;
+          if (this.yearId != null) this.yearCtx.selectYear(this.yearId);
           this.groupId = groupParam;
           this.afterYearChanged(true);
         },
@@ -361,6 +387,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
       });
     } else if (yearParam) {
       this.yearId = yearParam;
+      this.yearCtx.selectYear(yearParam);
       this.afterYearChanged(false);
     } else {
       const contextYear = this.yearCtx.selectedYearId();
@@ -454,6 +481,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     this.guardUnsaved('Change academic year?', () => {
       this.yearId = value;
       this.lastYearId = value;
+      this.yearCtx.selectYear(value);
       this.groupId = null;
       this.lastGroupId = null;
       this.groupOptions = [];
@@ -737,7 +765,7 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     if (!this.editable || this.isChoiceSubject(item.subjectId) || !(item.subjectActive || item.mapped)) {
       return false;
     }
-    return !this.choiceGroupForSubject(item.subjectId) || this.isChecked(item);
+    return !this.isChoiceGroupMappedForSubject(item.subjectId) || this.isChecked(item);
   }
 
   isChoiceSubject(subjectId: number): boolean {
@@ -875,7 +903,8 @@ export class SubjectMappingPageComponent implements OnInit, OnDestroy {
     }
     for (const row of this.rows.filter((item) => !item.removed)) {
       const choiceGroup = this.choiceGroupForSubject(row.subjectId);
-      if (choiceGroup && !this.isChoiceSubject(row.subjectId)) {
+      if (choiceGroup && this.isChoiceGroupMapped(choiceGroup.subjectChoiceGroupId)
+          && !this.isChoiceSubject(row.subjectId)) {
         errors.push(`${row.subjectName} belongs to the "${choiceGroup.name}" choice group. Map the choice group instead of the subject individually.`);
       }
     }

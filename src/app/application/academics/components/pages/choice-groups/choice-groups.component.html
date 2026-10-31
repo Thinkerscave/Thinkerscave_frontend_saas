@@ -11,6 +11,16 @@
     </div>
   </tc-saas-page-header>
 
+  <aside class="acad-guide-banner acad-guide-banner--info" role="status">
+    <i class="pi pi-info-circle acad-guide-banner__icon" aria-hidden="true"></i>
+    <div class="acad-guide-banner__content">
+      <h4>Elective &amp; Alternative Subject Groups</h4>
+      <p>
+        Choice groups bundle alternative subjects (such as Elective Languages or Optional Streams) together. Students pick one alternative, and the timetable scheduler counts the combined group as a single shared teaching period.
+      </p>
+    </div>
+  </aside>
+
   <tc-page-skeleton
     *ngIf="loading && !loadedOnce"
     [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
@@ -45,14 +55,38 @@
       <button type="button" class="tc-btn tc-btn--sm" (click)="reload()">Retry</button>
     </div>
 
-    <div class="sub-empty" *ngIf="!loading && !loadError && totalElements === 0">
-      <i class="pi pi-sitemap" aria-hidden="true"></i>
-      <h3>{{ hasFilters ? 'No choice groups match your filters' : 'No choice groups yet' }}</h3>
-      <p>{{ hasFilters ? 'Try another search or clear the filters.' : 'Create reusable groups of alternative subjects.' }}</p>
-      <button *ngIf="hasFilters" type="button" class="tc-btn" (click)="clearFilters()">Clear filters</button>
-      <button *ngIf="!hasFilters && canManage" type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">
-        <i class="pi pi-plus" aria-hidden="true"></i> Create Choice Group
-      </button>
+    <div class="sub-empty-wrap" *ngIf="!loading && !loadError && totalElements === 0">
+      <div class="acad-empty-state" *ngIf="hasFilters; else noCgTpl">
+        <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+        </span>
+        <h3>No choice groups match your filters</h3>
+        <p>No choice groups found with the current search or filters. Try clearing your filters to see all groups.</p>
+        <div class="acad-empty-state__actions">
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="clearFilters()">Clear Filters</button>
+        </div>
+      </div>
+      <ng-template #noCgTpl>
+        <div class="acad-empty-state">
+          <span class="acad-empty-state__icon-box">
+            <i class="pi pi-sitemap" aria-hidden="true"></i>
+          </span>
+          <h3>No choice groups configured</h3>
+          <p>
+            Create reusable choice groups when students choose between alternative subjects (e.g., Computer Science or Physical Education). This allows timetable slots to be shared efficiently while keeping teacher tracking subject-specific.
+          </p>
+          <div class="acad-empty-state__actions">
+            <button
+              *ngIf="canManage"
+              type="button"
+              class="tc-btn tc-btn--primary"
+              (click)="openCreate()">
+              <i class="pi pi-plus" aria-hidden="true"></i>
+              Create First Choice Group
+            </button>
+          </div>
+        </div>
+      </ng-template>
     </div>
 
     <div class="sub-results" [class.sub-results--refreshing]="refreshing" *ngIf="groups.length">

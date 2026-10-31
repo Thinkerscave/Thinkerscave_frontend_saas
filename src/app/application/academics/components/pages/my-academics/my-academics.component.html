@@ -3,7 +3,13 @@
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
-    <div class="ma-role-notice" *ngIf="accessNotice"><i class="pi pi-lock"></i><div><strong>Not available for this account</strong><p>{{ accessNotice }}</p></div></div>
+    <div class="acad-guide-banner acad-guide-banner--warning" *ngIf="accessNotice">
+    <i class="pi pi-lock acad-guide-banner__icon"></i>
+    <div class="acad-guide-banner__content">
+      <div class="acad-guide-banner__title">Student Portal Restricted</div>
+      <div class="acad-guide-banner__desc">{{ accessNotice }}</div>
+    </div>
+  </div>
     <tc-page-skeleton *ngIf="loading" variant="detail"></tc-page-skeleton>
   <ng-container *ngIf="!loading && !accessNotice">
 <ng-container *ngIf="data as d">
@@ -34,7 +40,7 @@
       </article>
     </section>
 
-    <section class="ma-shortcuts">
+    <section class="ma-shortcuts acad-stagger">
       <a routerLink="/app/academics/my-academics"><strong>{{ d.subjects.length || 0 }}</strong><span>Subjects</span><em>View Subjects →</em></a>
       <a routerLink="/app/academics/my-timetable"><strong>{{ d.publishedTimetableExists ? 'Ready' : '—' }}</strong><span>Timetable</span><em>View Timetable →</em></a>
       <div><strong>{{ d.sectionTeacher?.staffName || '—' }}</strong><span>Group Teacher</span><em>Primary contact</em></div>
@@ -51,7 +57,15 @@
           </div>
           <span>{{ s.weeklyPeriods }} periods/week</span>
         </div>
-        <div class="ma-empty" *ngIf="!d.subjects.length">No subjects mapped for your Academic Group.</div>
+        <div class="acad-empty-state" *ngIf="!d.subjects.length">
+          <div class="acad-empty-state__icon-box">
+            <i class="pi pi-book"></i>
+          </div>
+          <h4 class="acad-empty-state__title">No Curriculum Subjects Mapped</h4>
+          <p class="acad-empty-state__desc">
+            No subjects are currently mapped to your academic group and section for this academic year.
+          </p>
+        </div>
       </article>
 
       <article class="ma-panel">

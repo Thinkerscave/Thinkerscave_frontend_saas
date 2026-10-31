@@ -53,7 +53,7 @@
   </section>
 
   <!-- ========== CALENDAR VIEW ========== -->
-  <div class="ac-cal-layout" *ngIf="viewMode === 'calendar'" [class.ac-results--refreshing]="refreshing">
+  <div class="ac-cal-layout acad-content-enter" *ngIf="viewMode === 'calendar'" [class.ac-results--refreshing]="refreshing">
     <section class="ac-month" aria-label="Monthly calendar">
       <header class="ac-month__head">
         <h2>{{ monthLabel }}</h2>
@@ -245,7 +245,7 @@
     </div>
 
     <ng-container *ngIf="totalEvents; else emptyTpl">
-      <div class="ac-results" [class.ac-results--refreshing]="refreshing">
+      <div class="ac-results acad-content-enter" [class.ac-results--refreshing]="refreshing">
         <div class="ac-table-wrap">
           <table class="ac-table">
             <thead>

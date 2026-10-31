@@ -5,7 +5,7 @@
   <tc-saas-page-header [shellActions]="true">
     <button
       type="button"
-      class="tc-btn tc-btn--primary"
+      class="tc-btn tc-btn--primary tc-btn--sm"
       *tcHasPerm="resource; action: 'manage'"
       (click)="editOpen = true">
       <i class="pi pi-pencil" aria-hidden="true"></i> Edit Subject
@@ -13,12 +13,12 @@
     <button
       *ngIf="canManage"
       type="button"
-      class="tc-btn"
+      class="tc-btn tc-btn--outline tc-btn--sm"
       [class.tc-btn--danger]="s.active"
       [class.tc-btn--accent]="!s.active"
       (click)="toggleSubjectStatus(s)">
       <i [class]="s.active ? 'pi pi-ban' : 'pi pi-check'" aria-hidden="true"></i>
-      {{ s.active ? 'Deactivate' : 'Reactivate' }} Subject
+      {{ s.active ? 'Deactivate' : 'Reactivate' }}
     </button>
   </tc-saas-page-header>
   <header class="sub-hero">

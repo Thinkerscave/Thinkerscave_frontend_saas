@@ -83,30 +83,42 @@
       <button type="button" class="tc-btn tc-btn--sm" (click)="reload()">Retry</button>
     </div>
 
-    <div class="sub-empty" *ngIf="!loading && !loadError && totalElements === 0">
-      <ng-container *ngIf="hasFilters; else noSubjectsTpl">
-        <i class="pi pi-filter-slash" aria-hidden="true"></i>
+    <div class="sub-empty-wrap" *ngIf="!loading && !loadError && totalElements === 0">
+      <div class="acad-empty-state" *ngIf="hasFilters; else noSubjectsTpl">
+        <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+          <i class="pi pi-filter-slash" aria-hidden="true"></i>
+        </span>
         <h3>No subjects match your filters</h3>
-        <p>Try a different search or change the filters.</p>
-        <button type="button" class="tc-btn" (click)="clearFilters()">Clear filters</button>
-      </ng-container>
+        <p>No curriculum subjects matched your search query or selected type/status filters. Try resetting the filters.</p>
+        <div class="acad-empty-state__actions">
+          <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="clearFilters()">Clear Filters</button>
+        </div>
+      </div>
       <ng-template #noSubjectsTpl>
-        <i class="pi pi-book" aria-hidden="true"></i>
-        <h3>No subjects yet</h3>
-        <p>Create reusable subjects, then map them to academic groups.</p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          (click)="openCreate()">
-          <i class="pi pi-plus" aria-hidden="true"></i>
-          Add Subject
-        </button>
+        <div class="acad-empty-state">
+          <span class="acad-empty-state__icon-box">
+            <i class="pi pi-book" aria-hidden="true"></i>
+          </span>
+          <h3>No subjects created yet</h3>
+          <p>
+            Subjects form the master curriculum library for your school. Once created, they can be mapped to academic groups, grouped into elective choice groups, and assigned to teachers for weekly timetable scheduling.
+          </p>
+          <div class="acad-empty-state__actions">
+            <button
+              type="button"
+              class="tc-btn tc-btn--primary"
+              *tcHasPerm="resource; action: 'manage'"
+              (click)="openCreate()">
+              <i class="pi pi-plus" aria-hidden="true"></i>
+              Add First Subject
+            </button>
+          </div>
+        </div>
       </ng-template>
     </div>
 
     <ng-container *ngIf="subjects.length > 0">
-      <div class="sub-results" [class.sub-results--refreshing]="refreshing">
+      <div class="sub-results acad-content-enter" [class.sub-results--refreshing]="refreshing">
         <div class="sub-grid acad-stagger" *ngIf="viewMode === 'grid'; else tableTpl">
           <article
             class="sub-card acad-card-clickable"

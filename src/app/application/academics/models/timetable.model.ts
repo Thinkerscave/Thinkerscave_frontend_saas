@@ -125,6 +125,7 @@ export interface TimetableWorkspace {
   academicYearId: number;
   academicYearName: string;
   academicYearStatus: string;
+  yearActive: boolean;
   yearReadOnly: boolean;
   state: TimetableState;
   overallStatus: 'READY' | 'BLOCKED' | string;

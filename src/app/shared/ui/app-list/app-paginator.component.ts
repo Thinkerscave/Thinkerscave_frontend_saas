@@ -22,7 +22,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav
-      *ngIf="totalRecords > 0"
+      *ngIf="totalRecords > rows && rows > 0"
       class="app-paginator"
       role="navigation"
       [attr.aria-label]="ariaLabel">

@@ -1,3 +1,4 @@
+@use '../../shared/styles/academics-common' as *;
 :host {
   display: block;
   min-height: 100%;
@@ -83,8 +84,14 @@ select {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
   gap: 12px 20px;
   align-items: center;
-  padding: 12px 0;
+  padding: 12px 8px;
+  border-radius: 8px;
+  transition: background-color var(--tc-anim-duration-fast, 150ms) ease;
   border-top: 1px solid var(--tc-border, #e2e8f0);
+
+  &:hover {
+    background: color-mix(in srgb, var(--tc-accent, #1F3A93) 3%, transparent);
+  }
 }
 
 .slot-detail,

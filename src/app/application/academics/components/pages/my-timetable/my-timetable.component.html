@@ -3,10 +3,16 @@
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
-    <div class="mt-role-notice" *ngIf="accessNotice"><i class="pi pi-lock"></i><div><strong>Not available for this account</strong><p>{{ accessNotice }}</p></div></div>
+    <div class="acad-guide-banner acad-guide-banner--warning" *ngIf="accessNotice">
+    <i class="pi pi-lock acad-guide-banner__icon"></i>
+    <div class="acad-guide-banner__content">
+      <div class="acad-guide-banner__title">Timetable Schedule Restricted</div>
+      <div class="acad-guide-banner__desc">{{ accessNotice }}</div>
+    </div>
+  </div>
     <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
   <ng-container *ngIf="!loading && !accessNotice">
-<div class="mt-summary" *ngIf="data">
+<div class="mt-summary acad-stagger" *ngIf="data">
     <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Lessons Today</span></div>
     <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
     <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
@@ -29,7 +35,7 @@
     </select>
   </div>
 
-  <div class="mt-layout" *ngIf="data as d">
+  <div class="mt-layout acad-content-enter" *ngIf="data as d">
     <div class="mt-main">
       <p class="mt-message" *ngIf="d.message">{{ d.message }}</p>
       <div class="mt-grid-scroll">
@@ -67,7 +73,17 @@
           </tbody>
         </table>
       </div>
-      <ng-template #emptyTpl><div class="mt-empty">No published timetable available.</div></ng-template>
+      <ng-template #emptyTpl>
+        <div class="acad-empty-state">
+          <div class="acad-empty-state__icon-box">
+            <i class="pi pi-calendar-times"></i>
+          </div>
+          <h4 class="acad-empty-state__title">No Published Timetable</h4>
+          <p class="acad-empty-state__desc">
+            The timetable for this academic year has not been published yet. Once finalized and published by academic administration, your weekly period schedule will appear here.
+          </p>
+        </div>
+      </ng-template>
     </div>
     <aside class="mt-side">
       <h3>Today's Schedule</h3>

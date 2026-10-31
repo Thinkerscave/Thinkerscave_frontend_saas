@@ -143,7 +143,7 @@
       <li *ngFor="let m of subjectPreview">{{ m.subjectName }}</li>
       <li class="cd-subjects__more" *ngIf="subjectsMoreCount > 0">+{{ subjectsMoreCount }} more</li>
     </ul>
-    <p class="cd-subjects__empty" *ngIf="subjectBoard && !subjectPreview.length">No subjects mapped to this group yet.</p>
+    <p class="cd-subjects__empty" *ngIf="subjectBoard && !subjectPreview.length">No subjects mapped yet. Map curriculum subjects to enable teacher allocations and timetable generation.</p>
     <p class="cd-error-line" role="status" *ngIf="subjectsError">Subjects could not be loaded.</p>
   </section>
 
@@ -211,21 +211,24 @@
     </div>
 
     <ng-template #noSections>
-      <div class="cd-empty-sections">
-        <i class="pi pi-inbox" aria-hidden="true"></i>
-        <h3>No sections yet</h3>
+      <div class="acad-empty-state" style="margin: 0.5rem 0; padding: 2.5rem 1.5rem;">
+        <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+          <i class="pi pi-sitemap" aria-hidden="true"></i>
+        </span>
+        <h3>No sections created for this group</h3>
         <p>
-          This group is managed directly. Add sections only when it needs subdivisions,
-          such as A and B, to organize students or assign section teachers.
+          Students in this group can be managed directly as a single cohort. Add sections if this class needs subdivisions (such as Section A and Section B) to organize students or assign section teachers.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="!canManage"
-          (click)="openAddSection()">
-          <i class="pi pi-plus"></i> Add Section
-        </button>
+        <div class="acad-empty-state__actions">
+          <button
+            type="button"
+            class="tc-btn tc-btn--primary tc-btn--sm"
+            *tcHasPerm="resource; action: 'manage'"
+            [disabled]="!canManage"
+            (click)="openAddSection()">
+            <i class="pi pi-plus" aria-hidden="true"></i> Add Section
+          </button>
+        </div>
       </div>
     </ng-template>
   </section>

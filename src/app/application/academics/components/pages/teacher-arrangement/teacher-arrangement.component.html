@@ -3,6 +3,16 @@
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
+  <div class="acad-guide-banner acad-guide-banner--info" *ngIf="selectedYearId">
+    <i class="pi pi-info-circle acad-guide-banner__icon"></i>
+    <div class="acad-guide-banner__content">
+      <div class="acad-guide-banner__title">Daily Teacher Substitution & Coverage</div>
+      <div class="acad-guide-banner__desc">
+        Record planned or emergency faculty leaves, inspect teaching periods needing coverage, and assign free substitute teachers from automated candidate recommendations.
+      </div>
+    </div>
+  </div>
+
   <ng-container *ngIf="selectedYearId; else selectYear">
     <section class="arrangement-section" *ngIf="canManage">
       <header class="section-heading">
@@ -66,7 +76,15 @@
           <p>{{ selectedDate }}</p>
         </div>
       </header>
-      <p class="empty-state" *ngIf="!approvedForDate.length">No approved substitute arrangements for this date.</p>
+      <div class="acad-empty-state" *ngIf="!approvedForDate.length">
+        <div class="acad-empty-state__icon-box">
+          <i class="pi pi-calendar-plus"></i>
+        </div>
+        <h4 class="acad-empty-state__title">No Approved Coverage for This Date</h4>
+        <p class="acad-empty-state__desc">
+          No substitute arrangements have been approved yet for {{ selectedDate }}. Record an absence above or review pending requests.
+        </p>
+      </div>
       <article class="approved-arrangement" *ngFor="let arrangement of approvedForDate; trackBy: trackByArrangement">
         <strong>{{ arrangement.absentTeacherName }} · {{ arrangement.reason }}</strong>
         <div class="approved-slot" *ngFor="let slot of arrangement.slots">
@@ -83,7 +101,15 @@
           <p>Pending requests reserve their substitute periods until approved or rejected.</p>
         </div>
       </header>
-      <p class="empty-state" *ngIf="!arrangements.length">No teacher absence requests for this academic year.</p>
+      <div class="acad-empty-state" *ngIf="!arrangements.length">
+        <div class="acad-empty-state__icon-box">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <h4 class="acad-empty-state__title">No Teacher Absence Requests</h4>
+        <p class="acad-empty-state__desc">
+          There are no pending or historical substitution requests for this academic year.
+        </p>
+      </div>
       <article class="request-row" *ngFor="let arrangement of arrangements; trackBy: trackByArrangement">
         <div class="request-summary">
           <strong>{{ arrangement.absentTeacherName }} · {{ arrangement.absenceDate }}</strong>

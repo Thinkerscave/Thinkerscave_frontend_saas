@@ -28,6 +28,26 @@
         </div>
       </section>
 
+      <div class="acad-guide-banner acad-guide-banner--info" *ngIf="blockingIssues.length === 0">
+        <i class="pi pi-info-circle acad-guide-banner__icon"></i>
+        <div class="acad-guide-banner__content">
+          <div class="acad-guide-banner__title">Ready for Automated Generation</div>
+          <div class="acad-guide-banner__desc">
+            All prerequisite setup (curriculum subjects, teacher allocations, and period schedules) is complete. Click "Generate Timetable" to produce an optimized draft schedule.
+          </div>
+        </div>
+      </div>
+
+      <div class="acad-guide-banner acad-guide-banner--warning" *ngIf="blockingIssues.length > 0">
+        <i class="pi pi-exclamation-triangle acad-guide-banner__icon"></i>
+        <div class="acad-guide-banner__content">
+          <div class="acad-guide-banner__title">Prerequisites Incomplete ({{ blockingIssues.length }} blocking requirement{{ blockingIssues.length === 1 ? '' : 's' }})</div>
+          <div class="acad-guide-banner__desc">
+            Before generating the timetable, resolve the missing teacher allocations or unscheduled period rules highlighted below.
+          </div>
+        </div>
+      </div>
+
       <section class="tt-panel">
         <div class="tt-panel__head">
           <div>
@@ -35,7 +55,7 @@
             <p>Complete the required setup to enable timetable generation.</p>
           </div>
         </div>
-        <div class="tt-setup-grid">
+        <div class="tt-setup-grid acad-stagger">
           <article *ngFor="let item of setupItems" class="tt-setup-card" [attr.data-status]="item.status">
             <span class="tt-setup-card__icon" [attr.data-key]="item.key">
               <i class="pi" [ngClass]="{
@@ -128,7 +148,7 @@
           <ng-template #readyHint>
             <p class="tt-generate-hint"><i class="pi pi-check-circle"></i> All blocking requirements are satisfied.</p>
           </ng-template>
-          <p class="tt-generate-hint" *ngIf="!canManualEntry">
+          <p class="tt-generate-hint" *ngIf="manualEntryBlockedBySchedule">
             <i class="pi pi-info-circle"></i> Configure the weekly schedule before entering lessons manually.
           </p>
         </div>
@@ -147,7 +167,7 @@
 
     <!-- ═══════════════ STATE B/C — DRAFT / PUBLISHED ═══════════════ -->
     <ng-container *ngIf="state !== 'NOT_GENERATED'">
-      <section class="tt-panel tt-workspace">
+      <section class="tt-panel tt-workspace acad-content-enter">
         <div class="tt-toolbar">
           <div class="tt-view-tabs" role="tablist">
             <button type="button" role="tab" [class.is-active]="view === 'ACADEMIC_GROUP'"
@@ -191,26 +211,15 @@
             <span class="tt-status" [attr.data-tone]="statusTone()">
               <span class="tt-status__dot"></span>{{ statusLabel }}
             </span>
-            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *tcHasPerm="resource; action: 'manage'"
-              [disabled]="saving" (click)="validate()">
-              <i class="pi pi-check-square"></i> Validate
-            </button>
-            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *tcHasPerm="resource; action: 'manage'"
-              [disabled]="generateDisabled" (click)="generate()">
-              <i class="pi pi-refresh"></i> Regenerate
-            </button>
-            <ng-container *ngIf="canDiscardDraft">
-              <button type="button" class="tt-btn tt-btn--danger-ghost tt-btn--sm"
-                *tcHasPerm="resource; action: 'manage'"
-                [disabled]="saving" (click)="discardDraft()">
-                <i class="pi pi-trash"></i> Delete Draft
+            <ng-container *ngIf="canValidate">
+              <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *tcHasPerm="resource; action: 'manage'"
+                [disabled]="saving" (click)="validate()" title="Validate current draft against constraints">
+                <i class="pi pi-check-square"></i> Validate
               </button>
             </ng-container>
-            <ng-container *ngIf="canSubmit"><button type="button" class="tt-btn tt-btn--outline tt-btn--sm" [disabled]="saving" (click)="submit()"><i class="pi pi-send"></i> Submit for Approval</button></ng-container>
-            <ng-container *ngIf="canPublish">
-              <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
-                *tcHasPerm="resource; action: 'approve'" [disabled]="saving" (click)="publish()">
-                <i class="pi pi-send"></i> Publish <i class="pi pi-chevron-down"></i>
+            <ng-container *ngIf="canSubmit">
+              <button type="button" class="tt-btn tt-btn--primary tt-btn--sm" [disabled]="saving" (click)="submit()">
+                <i class="pi pi-send"></i> Submit for Approval
               </button>
             </ng-container>
             <ng-container *ngIf="primaryVersion?.status === 'PENDING_APPROVAL' && canApprove">
@@ -219,6 +228,18 @@
                 <i class="pi pi-check"></i> Approve
               </button>
             </ng-container>
+            <ng-container *ngIf="canPublish">
+              <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
+                *tcHasPerm="resource; action: 'approve'" [disabled]="saving" (click)="publish()">
+                <i class="pi pi-globe"></i> Publish
+              </button>
+            </ng-container>
+            <p-menu #ttMenu [model]="timetableMoreActions" [popup]="true" appendTo="body"></p-menu>
+            <button type="button" class="tt-btn tt-btn--outline tt-btn--sm tt-btn--icon"
+              (click)="ttMenu.toggle($event)" aria-label="More timetable actions"
+              *ngIf="timetableMoreActions.length" title="More timetable actions">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
           </div>
         </div>
 
@@ -266,6 +287,7 @@
                             (click)="openPlace(day, row)" aria-label="Place a lesson">
                             <i class="pi pi-plus"></i>
                           </button>
+                          <span class="tt-free-label" *ngIf="isEmptySlot(row, day) && view === 'TEACHER'">Free</span>
                           <div *ngFor="let cell of cellsFor(row, day)" class="tt-lesson"
                             [attr.data-tone]="toneFor(cell)" [class.is-activity]="cell.entryType === 'ACTIVITY'"
                             [class.is-menu-open]="menuEntryId === cell.entryId"
@@ -305,12 +327,21 @@
                 <i class="pi pi-spin pi-spinner"></i> Loading timetable…
               </div>
               <ng-template #emptyGrid>
-                <div class="tt-empty">
-                  <i class="pi pi-table"></i>
-                  <div>
-                    <strong>Nothing to show yet</strong>
-                    <p *ngIf="view === 'ACADEMIC_GROUP'">Choose an academic group and section.</p>
-                    <p *ngIf="view === 'TEACHER'">Choose a teacher.</p>
+                <div class="acad-empty-state">
+                  <div class="acad-empty-state__icon-box">
+                    <i class="pi pi-calendar-times"></i>
+                  </div>
+                  <h4 class="acad-empty-state__title">No Timetable Lessons Displayed</h4>
+                  <p class="acad-empty-state__desc" *ngIf="view === 'ACADEMIC_GROUP'">
+                    Select an academic group and section above to view scheduled classes, or click any available slot to manually place a lesson.
+                  </p>
+                  <p class="acad-empty-state__desc" *ngIf="view === 'TEACHER'">
+                    Select a teacher from the dropdown above to inspect their weekly timetable allocation.
+                  </p>
+                  <div class="acad-empty-state__actions" *ngIf="canEdit && view === 'ACADEMIC_GROUP'">
+                    <button type="button" class="tc-btn tc-btn--primary" [disabled]="generateDisabled" (click)="generate()">
+                      <i class="pi pi-refresh"></i> Generate Timetable
+                    </button>
                   </div>
                 </div>
               </ng-template>
@@ -351,7 +382,7 @@
           </button>
         </div>
 
-        <div class="tt-issues-inline" *ngIf="showIssueDetails || visibleIssues.length || conflicts.length">
+        <div class="tt-issues-inline" *ngIf="showIssueDetails || visibleIssues.length || visibleConflicts.length">
           <div class="tt-panel__title-row">
             <h3>Validation &amp; issues</h3>
             <span class="tt-pill" [attr.data-tone]="blockingIssues.length || hasOpenBlockingConflicts ? 'danger' : 'success'">
@@ -377,7 +408,7 @@
             <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" (click)="openIssueDetails()">Retry</button>
           </div>
           <div class="tt-issue" *ngIf="showIssueDetails && !loadingConflicts && !conflictLoadError
-            && !visibleIssues.length && !conflicts.length">
+            && !visibleIssues.length && !visibleConflicts.length">
             <span class="tt-issue__icon"><i class="pi pi-check-circle"></i></span>
             <div class="tt-issue__main">
               <div class="tt-issue__title">No issues found</div>
@@ -397,7 +428,7 @@
             <button type="button" class="tt-btn tt-btn--outline tt-btn--sm" *ngIf="issue.actionRoute"
               (click)="goTo(issue.actionRoute)">Resolve <i class="pi pi-arrow-right"></i></button>
           </div>
-          <div class="tt-issue" *ngFor="let c of conflicts" [attr.data-severity]="c.blocking ? 'BLOCKING' : 'WARNING'">
+          <div class="tt-issue" *ngFor="let c of pagedConflicts" [attr.data-severity]="c.blocking ? 'BLOCKING' : 'WARNING'">
             <span class="tt-issue__icon"><i class="pi pi-exclamation-triangle"></i></span>
             <div class="tt-issue__main">
               <div class="tt-issue__title">{{ conflictLabel(c) }}</div>
@@ -408,6 +439,16 @@
             </span>
             <span class="tt-pill" [attr.data-tone]="'neutral'">{{ c.status | titlecase }}</span>
           </div>
+          <app-paginator
+            *ngIf="visibleConflicts.length > conflictPageSize"
+            [page]="conflictPage"
+            [rows]="conflictPageSize"
+            [totalRecords]="visibleConflicts.length"
+            [pageSizeOptions]="[10, 20, 50]"
+            noun="timetable conflicts"
+            ariaLabel="Timetable conflicts pagination"
+            (pageChange)="onConflictPageChange($event)">
+          </app-paginator>
         </div>
       </section>
     </ng-container>

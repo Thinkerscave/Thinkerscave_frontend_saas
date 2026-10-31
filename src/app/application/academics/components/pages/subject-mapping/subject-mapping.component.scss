@@ -67,6 +67,7 @@
 }
 
 .sub-avail-row {
+  transition: background-color var(--tc-anim-duration-fast, 150ms) ease;
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
@@ -76,6 +77,7 @@
   background: var(--tc-surface-card, #fff);
 }
 .sub-avail-row:last-child { border-bottom: none; }
+.sub-avail-row:hover { background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 4%, transparent); }
 .sub-avail-row.is-mapped .sub-avail-row__text strong { color: var(--tc-heading, #0f172a); }
 
 .sub-avail-row__check { width: 16px; height: 16px; margin: 0; cursor: pointer; }
@@ -185,7 +187,8 @@
 @media (max-width: 960px) {
   .sub-map-grid { grid-template-columns: minmax(0, 1fr); }
   .sub-context { grid-template-columns: minmax(0, 1fr); }
-  .sub-avail-row { grid-template-columns: auto auto minmax(0, 1fr); }
+  .sub-avail-row {
+  transition: background-color var(--tc-anim-duration-fast, 150ms) ease; grid-template-columns: auto auto minmax(0, 1fr); }
   .sub-avail-row__badges { grid-column: 3; justify-content: flex-start; }
   .sub-mapped-group__member { padding-left: 0.75rem; }
 }

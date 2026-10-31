@@ -132,11 +132,11 @@ describe('SubjectMappingPageComponent', () => {
   const english = (): AvailableSubjectResponse => AVAILABLE[1];
   const math = (): AvailableSubjectResponse => AVAILABLE[0];
 
-  it('does not load the board until both year and group are selected', async () => {
+  it('uses the available academic year and loads its default group when no route context is supplied', async () => {
     await setup();
-    expect(subjectsApi.getMappingBoard).not.toHaveBeenCalled();
-    expect(subjectsApi.listAvailableSubjects).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Select an academic year and academic group to load subject mapping.');
+    expect(component.yearId).toBe(1);
+    expect(component.groupId).toBe(3);
+    expect(subjectsApi.getMappingBoard).toHaveBeenCalledWith(3);
   });
 
   it('preselects year and group from query params and auto-loads saved mappings as checked', async () => {
@@ -160,9 +160,9 @@ describe('SubjectMappingPageComponent', () => {
 
   it('stages a subject preselected from Subject Details without saving it', async () => {
     await setup({ subjectId: '6' });
-    expect(subjectsApi.getMappingBoard).not.toHaveBeenCalled();
-    component.onYearChange(1);
-    component.onGroupChange(3);
+    expect(component.yearId).toBe(1);
+    expect(component.groupId).toBe(3);
+    expect(subjectsApi.getMappingBoard).toHaveBeenCalledWith(3);
     expect(subjectsApi.getSubject).toHaveBeenCalledWith(6);
     expect(component.staged.has(6)).toBeTrue();
     expect(component.staged.get(6)?.defaultTimetablePreference).toBe('FIRST_HALF');
@@ -324,7 +324,7 @@ describe('SubjectMappingPageComponent', () => {
     expect(component.totalWeeklyPeriods).toBe(6);
   });
 
-  it('prevents mapping an active choice-group member as an individual subject', async () => {
+  it('allows mapping a choice-group member individually when the academic group has not mapped that choice group', async () => {
     await setup({ academicYearId: '1', academicGroupId: '3' });
     subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
     component.loadChoiceGroupOptions();
@@ -333,10 +333,27 @@ describe('SubjectMappingPageComponent', () => {
       subjectActive: true, mapped: false, mappingId: null
     };
 
-    expect(component.canToggle(hindi)).toBeFalse();
+    expect(component.canToggle(hindi)).toBeTrue();
     component.onAvailableToggle(hindi, true);
-    expect(component.staged.has(hindi.subjectId)).toBeFalse();
+    expect(component.staged.has(hindi.subjectId)).toBeTrue();
     expect(component.choiceGroupForSubject(hindi.subjectId)?.name).toBe('Second Language');
+    component.save();
+    expect(subjectsApi.saveMappings).toHaveBeenCalled();
+  });
+
+  it('prevents mapping an individual alternative when its choice group is mapped for the academic group', async () => {
+    await setup({ academicYearId: '1', academicGroupId: '3' });
+    subjectsApi.listSubjectChoiceGroups.and.returnValue(of(page([CHOICE_GROUP])));
+    component.loadChoiceGroupOptions();
+    component.onChoiceGroupToggle(CHOICE_GROUP.subjectChoiceGroupId, true);
+    component.addSelectedChoiceGroups();
+    const hindi: AvailableSubjectResponse = {
+      subjectId: 20, subjectName: 'Hindi', subjectCode: 'HIN', subjectType: 'ACADEMIC_SUBJECT',
+      subjectActive: true, mapped: false, mappingId: null
+    };
+
+    expect(component.isChoiceGroupMappedForSubject(hindi.subjectId)).toBeTrue();
+    expect(component.canToggle(hindi)).toBeFalse();
   });
 
   it('saves a choice group with its weekly periods and no member overrides', async () => {

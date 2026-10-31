@@ -12,12 +12,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, exhaustMap, finalize, takeUntil, takeWhile, timer } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
+import { MenuModule } from 'primeng/menu';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+import { AppPaginatorComponent } from '../../../../../shared/ui/app-list';
+import { AppPageChangeEvent } from '../../../../../shared/utils/paged-result.util';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
@@ -95,8 +98,10 @@ const SUBJECT_TONES = ['sky', 'violet', 'rose', 'emerald', 'amber', 'teal', 'ind
     TcAcademicYearSelectorComponent,
     SaasPageHeaderComponent,
     DialogModule,
+    AppPaginatorComponent,
     ProgressBarModule,
     ConfirmDialogModule,
+    MenuModule,
     HasPermissionDirective
   ],
   providers: [ConfirmationService],
@@ -148,6 +153,8 @@ export class TimetablePageComponent implements OnInit {
   weekStart = this.monday(new Date());
 
   conflicts: TimetableConflict[] = [];
+  conflictPage = 0;
+  conflictPageSize = 10;
   loadingConflicts = false;
   showIssueDetails = false;
   conflictLoadError: string | null = null;
@@ -183,6 +190,7 @@ export class TimetablePageComponent implements OnInit {
     this.selectedSectionId = null;
     this.selectedStaffId = null;
     this.conflicts = [];
+    this.conflictPage = 0;
     this.showIssueDetails = false;
     this.conflictLoadError = null;
     this.stopPolling();
@@ -391,7 +399,8 @@ export class TimetablePageComponent implements OnInit {
     const groups = new Map<string, GridSection>();
     for (const day of this.gridDays) {
       const rows = this.rowsForDay(day);
-      const signature = rows.map(r => `${r.startTime}-${r.endTime}-${r.kind}`).join('|');
+      const signature = `${this.patternLabelForDay(day)}|${rows
+        .map(r => `${r.startTime}-${r.endTime}-${r.kind}`).join('|')}`;
       const existing = groups.get(signature);
       if (existing) {
         existing.days.push(day);
@@ -409,8 +418,10 @@ export class TimetablePageComponent implements OnInit {
 
   private patternLabelForDay(day: DayOfWeek): string {
     const periods = this.grid?.periodsByDay?.[day] ?? [];
-    const named = periods.find(p => !!p.schedulePatternName)?.schedulePatternName;
-    if (named) return named;
+    const names = [...new Set(periods
+      .map(period => period.schedulePatternName)
+      .filter((name): name is string => !!name))];
+    if (names.length) return names.join(' + ');
     return this.distinctScheduleCount > 1 ? 'Schedule' : 'Weekly schedule';
   }
 
@@ -478,8 +489,14 @@ export class TimetablePageComponent implements OnInit {
 
   get canPublish(): boolean {
     return !!this.primaryVersion
-      && ['DRAFT', 'READY_FOR_REVIEW', 'APPROVED'].includes(this.primaryVersion.status)
+      && this.primaryVersion.status === 'APPROVED'
       && this.canApprove;
+  }
+
+  get canValidate(): boolean {
+    return !!this.primaryVersion
+      && ['DRAFT', 'READY_FOR_REVIEW'].includes(this.primaryVersion.status)
+      && !this.workspace?.yearReadOnly;
   }
 
   get canSubmit(): boolean {
@@ -500,6 +517,35 @@ export class TimetablePageComponent implements OnInit {
 
   get visibleIssues(): WorkspaceIssue[] {
     return [...this.blockingIssues, ...this.warningIssues];
+  }
+
+  get visibleConflicts(): TimetableConflict[] {
+    const readinessIssues = new Map<string, WorkspaceIssue['severity']>();
+    for (const issue of this.visibleIssues) {
+      const key = this.normalizeIssueMessage(issue.message);
+      if (key && (!readinessIssues.has(key) || issue.severity === 'BLOCKING')) {
+        readinessIssues.set(key, issue.severity);
+      }
+    }
+    return this.conflicts.filter(conflict => {
+      const severity = readinessIssues.get(this.normalizeIssueMessage(conflict.message));
+      return severity === undefined || (severity === 'BLOCKING') !== conflict.blocking;
+    });
+  }
+
+  get pagedConflicts(): TimetableConflict[] {
+    const start = this.conflictPage * this.conflictPageSize;
+    return this.visibleConflicts.slice(start, start + this.conflictPageSize);
+  }
+
+  onConflictPageChange(event: AppPageChangeEvent): void {
+    this.conflictPage = event.page;
+    this.conflictPageSize = event.rows;
+    this.cdr.markForCheck();
+  }
+
+  private normalizeIssueMessage(message: string | null | undefined): string {
+    return (message ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
   }
 
   get setupItems(): SetupItem[] {
@@ -528,8 +574,7 @@ export class TimetablePageComponent implements OnInit {
 
   get generateDisabled(): boolean {
     if (this.generating || this.workspace?.yearReadOnly) return true;
-    if (this.state === 'NOT_GENERATED') return !this.workspace?.canGenerate;
-    return !this.workspace?.readiness?.ready;
+    return !this.workspace?.canGenerate || !this.workspace?.readiness?.ready;
   }
 
   openConfiguration(): void {
@@ -702,7 +747,7 @@ export class TimetablePageComponent implements OnInit {
   }
 
   validate(): void {
-    if (!this.selectedVersionId) return;
+    if (!this.selectedVersionId || !this.canValidate) return;
     this.saving = true;
     this.api.validateVersion(this.selectedVersionId).pipe(
       finalize(() => { this.saving = false; this.cdr.markForCheck(); })
@@ -793,6 +838,7 @@ export class TimetablePageComponent implements OnInit {
     ).subscribe({
       next: (list) => {
         this.conflicts = list;
+        this.conflictPage = 0;
         this.conflictLoadError = null;
       },
       error: (err) => {
@@ -832,9 +878,45 @@ export class TimetablePageComponent implements OnInit {
   // ─── Manual editing ──────────────────────────────────────────────────
 
   get canManualEntry(): boolean {
-    if (!this.workspace || this.workspace.yearReadOnly) return false;
+    if (!this.workspace || this.workspace.yearReadOnly || !this.workspace.yearActive) return false;
+    if (['PENDING_APPROVAL', 'APPROVED'].includes(this.workspace.workingVersion?.status ?? '')) return false;
     const schedule = this.workspace.setup?.find(item => item.key === 'schedule');
     return schedule ? schedule.status === 'COMPLETE' : true;
+  }
+
+  get manualEntryBlockedBySchedule(): boolean {
+    if (!this.workspace?.yearActive || this.workspace.yearReadOnly) return false;
+    if (['PENDING_APPROVAL', 'APPROVED'].includes(this.workspace.workingVersion?.status ?? '')) return false;
+    const schedule = this.workspace.setup?.find(item => item.key === 'schedule');
+    return !!schedule && schedule.status !== 'COMPLETE';
+  }
+
+  get timetableMoreActions(): MenuItem[] {
+    const items: MenuItem[] = [];
+    if (this.permissions.canManage(this.resource)) {
+      items.push({
+        label: 'Regenerate Timetable',
+        icon: 'pi pi-refresh',
+        disabled: this.generateDisabled,
+        command: () => this.generate()
+      });
+      items.push({
+        label: 'Configure Timetable',
+        icon: 'pi pi-cog',
+        command: () => this.openConfiguration()
+      });
+    }
+    if (this.canDiscardDraft) {
+      items.push({ separator: true });
+      items.push({
+        label: 'Delete Draft',
+        icon: 'pi pi-trash',
+        disabled: this.saving,
+        styleClass: 'tc-menu-item-danger',
+        command: () => this.discardDraft()
+      });
+    }
+    return items;
   }
 
   get canDiscardDraft(): boolean {

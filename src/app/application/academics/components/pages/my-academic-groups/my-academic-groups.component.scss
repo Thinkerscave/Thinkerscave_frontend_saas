@@ -1,3 +1,4 @@
+@use '../../shared/styles/academics-common' as *;
 :host { display: block; }
 .mc-page.acad-page, .mc-page { color: #0f172a; }
 .mc-breadcrumb { display: flex; gap: .4rem; font-size: .8rem; color: #64748b; margin-bottom: .35rem; }
@@ -9,6 +10,8 @@
   margin-top: 1rem; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem;
 }
 .mc-summary > div {
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1));
   background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: .85rem;
 }
 .mc-summary strong { display: block; font-size: 1.35rem; }
@@ -24,10 +27,16 @@
 .mc-list { margin-top: .85rem; display: grid; gap: .75rem; }
 .mc-list--grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .mc-card {
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1));
   display: grid; grid-template-columns: 64px 1fr auto; gap: .85rem; align-items: start;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: .9rem;
 }
-.mc-list--grid .mc-card { grid-template-columns: 1fr; }
+.mc-list--grid .mc-card {
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)); grid-template-columns: 1fr; }
 .mc-badge {
   width: 64px; height: 64px; border-radius: 12px; background: #eff6ff; color: #1d4ed8;
   display: grid; place-items: center; font-weight: 800; font-size: .95rem;
@@ -50,7 +59,10 @@
 }
 @media (max-width: 900px) {
   .mc-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mc-card { grid-template-columns: 64px 1fr; }
+  .mc-card {
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)); grid-template-columns: 64px 1fr; }
   .mc-card__actions { grid-column: 1 / -1; grid-template-columns: repeat(2, auto); }
 }
 

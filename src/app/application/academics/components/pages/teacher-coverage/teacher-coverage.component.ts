@@ -49,7 +49,7 @@ export class TeacherCoveragePageComponent implements OnInit, OnDestroy {
   private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly pageSize = 10;
+  readonly pageSize = 20;
   readonly resource = TEACHER_COVERAGE_RESOURCE;
 
   yearOptions: { label: string; value: number }[] = [];

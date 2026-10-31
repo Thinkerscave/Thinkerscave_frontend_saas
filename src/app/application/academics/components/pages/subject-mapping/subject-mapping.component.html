@@ -46,9 +46,14 @@
     </div>
   </section>
 
-  <div class="sub-empty sub-empty--gate" *ngIf="!contextReady">
-    <i class="pi pi-sitemap" aria-hidden="true"></i>
-    <p>Select an academic year and academic group to load subject mapping.</p>
+  <div class="acad-empty-state" *ngIf="!contextReady">
+    <span class="acad-empty-state__icon-box">
+      <i class="pi pi-link" aria-hidden="true"></i>
+    </span>
+    <h3>Select an Academic Group to Configure Curriculum</h3>
+    <p>
+      Subject mapping links subjects from your master library to specific academic groups (classes). Select an academic group from the selector above to assign subjects, allocate weekly teaching periods, and define timetable preferences.
+    </p>
   </div>
 
   <div class="sub-alert" role="alert" *ngIf="contextReady && boardError">
@@ -61,7 +66,7 @@
     <p>Loading subject mapping…</p>
   </div>
 
-  <div class="sub-map-grid" *ngIf="contextReady && board">
+  <div class="sub-map-grid acad-content-enter" *ngIf="contextReady && board">
     <section class="sub-panel sub-avail" aria-labelledby="sub-avail-heading">
       <div class="sub-panel__head">
         <div>
@@ -131,7 +136,12 @@
               {{ item.subjectCode }} | {{ typeLabel(item.subjectType) }}<ng-container *ngIf="!item.subjectActive"> · Inactive</ng-container>
             </span>
             <span class="sub-muted sub-small" *ngIf="choiceGroupForSubject(item.subjectId) as choiceGroup">
-              Alternative in "{{ choiceGroup.name }}"; map the choice group instead.
+              <ng-container *ngIf="isChoiceGroupMapped(choiceGroup.subjectChoiceGroupId); else standaloneChoiceMember">
+                Alternative in mapped group "{{ choiceGroup.name }}"; map the choice group instead.
+              </ng-container>
+              <ng-template #standaloneChoiceMember>
+                Member of "{{ choiceGroup.name }}"; map this subject individually or add the choice group.
+              </ng-template>
             </span>
           </label>
           <span class="sub-avail-row__badges">

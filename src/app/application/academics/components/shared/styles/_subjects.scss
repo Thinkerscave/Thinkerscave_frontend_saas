@@ -152,6 +152,8 @@
     border-bottom: 1px solid var(--tc-border, #e2e8f0);
     vertical-align: middle;
   }
+  .sub-table tbody tr { transition: background-color var(--tc-anim-duration-fast, 150ms) ease; }
+  .sub-table tbody tr:hover td { background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 4%, transparent); }
   .sub-table tbody tr:last-child td { border-bottom: none; }
   .sub-table tbody tr.sub-row--removed td { opacity: 0.6; }
   .sub-table__actions { width: 56px; text-align: right; }
@@ -262,9 +264,15 @@
     border: 1px solid var(--tc-border, #e2e8f0);
     border-radius: 12px;
     min-width: 0;
-    transition: box-shadow 150ms ease, border-color 150ms ease;
+    transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+                box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+                border-color var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1));
   }
-  .sub-card:hover { box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08); }
+  .sub-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    border-color: color-mix(in srgb, var(--tc-primary-600, #2563eb) 30%, var(--tc-border, #e2e8f0));
+  }
   .sub-card--inactive { opacity: 0.85; }
   .sub-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
   .sub-card__identity { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }

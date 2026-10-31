@@ -90,7 +90,7 @@ export class SubjectsDirectoryPageComponent implements OnInit, OnDestroy {
   statusFilter: SubjectStatusFilter = 'ACTIVE';
   viewMode: AppListViewMode = 'grid';
   page = 0;
-  pageSize = UI_PAGINATION.defaultSize;
+  pageSize = 20;
 
   formOpen = false;
   editingSubject: SubjectResponse | null = null;

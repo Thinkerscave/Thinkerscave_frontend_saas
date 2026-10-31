@@ -9,6 +9,8 @@ import { AcademicsMeApiService } from '../../../services/academics-me-api.servic
 import { ACADEMICS_MY_ACADEMICS_RESOURCE, StudentMyAcademics } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+import { LoginService } from '../../../../../core/services/login.service';
+import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-my-academics-page',
@@ -22,10 +24,13 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class MyAcademicsPageComponent {
   private readonly api = inject(AcademicsMeApiService);
+  private readonly login = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_ACADEMICS_RESOURCE;
+  private readonly hasStudentOrParentRole = roleTokensFromUser(this.login.getUser())
+    .some(role => role === 'STUDENT' || role === 'PARENT');
   loading = true;
   selectedYearId: number | null = null;
   data: StudentMyAcademics | null = null;
@@ -35,15 +40,30 @@ export class MyAcademicsPageComponent {
     this.selectedYearId = yearId;
     if (yearId == null) {
       this.data = null;
+      this.accessNotice = null;
       this.loading = false;
       this.cdr.markForCheck();
       return;
     }
+    if (!this.hasStudentOrParentRole) {
+      this.data = null;
+      this.accessNotice = 'This page is available to student and parent accounts. Sign in with a student login to see your academics.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.accessNotice = null;
     this.reload();
   }
 
   reload(): void {
     if (!this.selectedYearId) return;
+    if (!this.hasStudentOrParentRole) {
+      this.accessNotice = 'This page is available to student and parent accounts. Sign in with a student login to see your academics.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
     this.loading = true;
     this.api.myAcademics(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))

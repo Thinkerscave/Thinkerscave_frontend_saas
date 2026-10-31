@@ -33,7 +33,15 @@
   {{ error }}
   <button type="button" class="tw-link" (click)="refresh()">Retry</button>
 </div>
-<div class="tw-state" *ngIf="!yearId && !loading">Select an academic year to load teacher workload.</div>
+<div class="acad-empty-state" *ngIf="!yearId && !loading">
+  <div class="acad-empty-state__icon-box">
+    <i class="pi pi-calendar"></i>
+  </div>
+  <h4 class="acad-empty-state__title">Select an Academic Year</h4>
+  <p class="acad-empty-state__desc">
+    Choose an academic year from the dropdown above to evaluate teaching period distribution, workload caps, and buffer capacity.
+  </p>
+</div>
 
 <ng-container *ngIf="dashboard && !loading">
   <div class="tw-metrics" role="group" aria-label="Workload summary">
@@ -240,7 +248,7 @@
         </tr>
       </tbody>
     </table>
-    <div class="tw-pager">
+    <div class="tw-pager" *ngIf="filteredRows.length > pageSize">
       <span>
         Showing {{ filteredRows.length ? (page - 1) * pageSize + 1 : 0 }}–{{ (page - 1) * pageSize + pagedRows.length }}
         of {{ filteredRows.length }} teachers
@@ -254,9 +262,25 @@
   </div>
 
   <ng-template #emptyTpl>
-    <div class="tw-state">
-      <p *ngIf="dashboard.rows.length">No teachers match the selected filters.</p>
-      <p *ngIf="!dashboard.rows.length">No active teaching staff are available for this academic year.</p>
+    <div class="acad-empty-state">
+      <div class="acad-empty-state__icon-box">
+        <i class="pi pi-filter-slash"></i>
+      </div>
+      <h4 class="acad-empty-state__title">{{ dashboard.rows.length ? 'No Matching Teachers' : 'No Active Teaching Staff' }}</h4>
+      <p class="acad-empty-state__desc" *ngIf="dashboard.rows.length">
+        No faculty members match your search criteria or workload status filters. Try clearing your filters.
+      </p>
+      <p class="acad-empty-state__desc" *ngIf="!dashboard.rows.length">
+        No active teaching staff are configured for this academic year yet. Assign faculty to classes in Subject Allocation to calculate workload.
+      </p>
+      <div class="acad-empty-state__actions">
+        <button type="button" class="tc-btn tc-btn--secondary" *ngIf="hasFilters" (click)="clearFilters()">
+          <i class="pi pi-filter-slash"></i> Clear Filters
+        </button>
+        <a class="tc-btn tc-btn--primary" *ngIf="!dashboard.rows.length" routerLink="/app/academics/teacher-allocation">
+          <i class="pi pi-users"></i> Go to Subject Allocation
+        </a>
+      </div>
     </div>
   </ng-template>
 </ng-container>

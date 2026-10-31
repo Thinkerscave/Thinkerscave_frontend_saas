@@ -10,6 +10,8 @@ import { AcademicsMeApiService } from '../../../services/academics-me-api.servic
 import { ACADEMICS_MY_TIMETABLE_RESOURCE, MyTimetable } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+import { LoginService } from '../../../../../core/services/login.service';
+import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-my-timetable-page',
@@ -23,10 +25,12 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 })
 export class MyTimetablePageComponent {
   private readonly api = inject(AcademicsMeApiService);
+  private readonly login = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_TIMETABLE_RESOURCE;
+  private readonly hasStaffRole = roleTokensFromUser(this.login.getUser()).includes('STAFF');
   loading = true;
   selectedYearId: number | null = null;
   data: MyTimetable | null = null;
@@ -41,15 +45,30 @@ export class MyTimetablePageComponent {
     this.selectedYearId = yearId;
     if (yearId == null) {
       this.data = null;
+      this.accessNotice = null;
       this.loading = false;
       this.cdr.markForCheck();
       return;
     }
+    if (!this.hasStaffRole) {
+      this.data = null;
+      this.accessNotice = 'This page is available to staff accounts. Sign in with a staff login to see your teaching timetable.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.accessNotice = null;
     this.reload();
   }
 
   reload(): void {
     if (!this.selectedYearId) return;
+    if (!this.hasStaffRole) {
+      this.accessNotice = 'This page is available to staff accounts. Sign in with a staff login to see your teaching timetable.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
     this.loading = true;
     this.api.myTimetable(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))

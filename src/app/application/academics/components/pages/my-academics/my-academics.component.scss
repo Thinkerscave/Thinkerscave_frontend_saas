@@ -1,3 +1,4 @@
+@use '../../shared/styles/academics-common' as *;
 :host { display: block; }
 .ma-page { color: #0f172a; }
 .ma-breadcrumb { display: flex; gap: .4rem; font-size: .8rem; color: #64748b; margin-bottom: .35rem; }
@@ -26,6 +27,13 @@
 .ma-shortcuts a, .ma-shortcuts > div {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: .85rem; text-decoration: none; color: inherit;
   display: grid; gap: .15rem;
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.ma-shortcuts a:hover,
+.ma-shortcuts > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 .ma-shortcuts em { font-style: normal; color: #2563eb; font-size: .78rem; font-weight: 600; }
 .ma-mid { margin-top: .85rem; display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: .85rem; }

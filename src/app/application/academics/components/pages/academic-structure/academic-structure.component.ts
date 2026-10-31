@@ -7,6 +7,7 @@ import { MessageService } from 'primeng/api';
 import { finalize, map } from 'rxjs';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
 import { LoginService } from '../../../../../core/services/login.service';
+import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
 import { ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE, AcademicStructureTreeStage, TeacherAcademicStructure } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
@@ -28,9 +29,8 @@ export class AcademicStructurePageComponent {
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_ACADEMIC_STRUCTURE_RESOURCE;
-  readonly isAdminView = this.login.getUserRole().some(role =>
-    ['ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER'].includes(String(role))
-  );
+  readonly isAdminView = roleTokensFromUser(this.login.getUser())
+    .some(role => ['ORGANIZATION_ADMIN', 'ORGANIZATION_OWNER'].includes(role));
   loading = true;
   selectedYearId: number | null = null;
   selectedAcademicGroupId: number | null = null;
@@ -59,7 +59,9 @@ export class AcademicStructurePageComponent {
       .subscribe({
         next: (d) => {
           this.data = d;
-          this.selectedAcademicGroupId = d.academicGroups?.[0]?.academicGroupId ?? null;
+          const defaultGroup = d.academicGroups?.find(group => group.sections.length > 0)
+            ?? d.academicGroups?.[0];
+          this.selectedAcademicGroupId = defaultGroup?.academicGroupId ?? null;
         },
         error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load structure', detail: err?.error?.message })
       });
@@ -69,18 +71,22 @@ export class AcademicStructurePageComponent {
     return {
       academicYearId,
       academicYearName: '',
-      academicGroups: stages.flatMap(stage => stage.academicGroups ?? []).filter(c => c.active !== false).map(c => ({
-        academicGroupId: c.academicGroupId,
-        academicGroupName: c.academicGroupName,
-        academicGroupCode: c.academicGroupCode,
-        sections: (c.sections ?? []).filter(s => s.active !== false).map(s => ({
-          sectionId: s.sectionId,
-          sectionName: s.sectionName,
-          sectionCode: s.sectionCode,
-          capacity: s.capacity,
-          subjects: []
+      academicGroups: stages.flatMap(stage => (stage.academicGroups ?? [])
+        .filter(group => group.active !== false)
+        .map(group => ({
+          academicGroupId: group.academicGroupId,
+          academicGroupName: group.academicGroupName,
+          academicGroupCode: group.academicGroupCode,
+          stage: stage.stage,
+          sections: (group.sections ?? []).filter(section => section.active !== false).map(section => ({
+            sectionId: section.sectionId,
+            sectionName: section.sectionName,
+            sectionCode: section.sectionCode,
+            capacity: section.capacity,
+            subjects: []
+          }))
         }))
-      }))
+      )
     };
   }
 
@@ -90,6 +96,12 @@ export class AcademicStructurePageComponent {
 
   get sectionCount(): number {
     return (this.data?.academicGroups || []).reduce((n, c) => n + (c.sections?.length || 0), 0);
+  }
+
+  get stageCount(): number {
+    return new Set((this.data?.academicGroups || [])
+      .map(group => group.stage)
+      .filter((stage): stage is string => !!stage)).size;
   }
 
   get subjectCount(): number {

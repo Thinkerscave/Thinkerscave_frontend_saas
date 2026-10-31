@@ -16,6 +16,14 @@
     </button>
   </tc-saas-page-header>
 
+  <aside class="acad-guide-banner acad-guide-banner--info" *ngIf="dashboard?.yearReadOnly" role="status">
+    <i class="pi pi-lock acad-guide-banner__icon" aria-hidden="true"></i>
+    <div class="acad-guide-banner__content">
+      <h4>Historical Academic Year (Read-Only)</h4>
+      <p>This academic year is locked for historical preservation. Groups, sections, and allocations cannot be modified.</p>
+    </div>
+  </aside>
+
   <tc-page-skeleton
     *ngIf="loading && !dashboard"
     [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
@@ -27,7 +35,7 @@
   </tc-page-skeleton>
 
   <ng-container *ngIf="dashboard">
-  <section class="cs-summary" aria-label="Academic group summary">
+  <section class="cs-summary acad-stagger" aria-label="Academic group summary">
     <article><span class="cs-summary__icon"><i class="pi pi-th-large"></i></span><div><strong>{{ dashboard.academicGroupCount || 0 }}</strong><small>Total Groups</small></div></article>
     <article><span class="cs-summary__icon cs-summary__icon--success"><i class="pi pi-check-circle"></i></span><div><strong>{{ dashboard.academicGroupsActive || 0 }}</strong><small>Active Groups</small></div></article>
     <article><span class="cs-summary__icon cs-summary__icon--warning"><i class="pi pi-pause-circle"></i></span><div><strong>{{ (dashboard.academicGroupCount || 0) - (dashboard.academicGroupsActive || 0) }}</strong><small>Inactive Groups</small></div></article>
@@ -93,7 +101,7 @@
   </div>
 
   <ng-container *ngIf="totalAcademicGroups; else emptyTpl">
-    <div class="cs-results" [class.cs-results--refreshing]="refreshing">
+    <div class="cs-results acad-content-enter" [class.cs-results--refreshing]="refreshing">
       <div class="cs-grid acad-stagger" *ngIf="viewMode === 'grid'; else listTpl">
         <article
           class="cs-card acad-card-clickable"
@@ -222,29 +230,36 @@
   </ng-container>
 
   <ng-template #emptyTpl>
-    <div class="cs-empty" *ngIf="isFilterEmptyState; else noAcademicGroupsTpl">
-      <i class="pi pi-filter-slash" aria-hidden="true"></i>
-      <h3>No groups match your filters</h3>
-      <p>Try changing the search or filters.</p>
-      <button type="button" class="tc-btn" (click)="clearFilters()">Clear Filters</button>
+    <div class="acad-empty-state" *ngIf="isFilterEmptyState; else noAcademicGroupsTpl">
+      <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+        <i class="pi pi-filter-slash" aria-hidden="true"></i>
+      </span>
+      <h3>No academic groups match your active filters</h3>
+      <p>We couldn't find any academic groups matching "{{ searchTerm.trim() }}" or your current filter criteria.</p>
+      <div class="acad-empty-state__actions">
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="clearFilters()">Clear Filters</button>
+      </div>
     </div>
     <ng-template #noAcademicGroupsTpl>
-      <div class="cs-empty">
-        <i class="pi pi-inbox" aria-hidden="true"></i>
-        <h3>No academic groups yet</h3>
+      <div class="acad-empty-state">
+        <span class="acad-empty-state__icon-box">
+          <i class="pi pi-th-large" aria-hidden="true"></i>
+        </span>
+        <h3>No academic groups created yet</h3>
         <p>
-          There are no academic groups for
-          {{ dashboard.academicYearName || 'this academic year' }} yet.
+          Academic groups represent classes or grades for {{ dashboard.academicYearName || 'this academic year' }} (e.g., Grade 6, Batch A). Create your first academic group to begin organizing sections, mapping subjects, and assigning teachers.
         </p>
-        <button
-          type="button"
-          class="tc-btn tc-btn--primary"
-          *tcHasPerm="resource; action: 'manage'"
-          [disabled]="readOnly"
-          (click)="openCreateAcademicGroup()">
-          <i class="pi pi-plus"></i>
-          Create Academic Group
-        </button>
+        <div class="acad-empty-state__actions">
+          <button
+            type="button"
+            class="tc-btn tc-btn--primary"
+            *tcHasPerm="resource; action: 'manage'"
+            [disabled]="readOnly"
+            (click)="openCreateAcademicGroup()">
+            <i class="pi pi-plus" aria-hidden="true"></i>
+            Create First Academic Group
+          </button>
+        </div>
       </div>
     </ng-template>
   </ng-template>

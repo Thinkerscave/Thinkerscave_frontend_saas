@@ -36,6 +36,7 @@ export interface TeacherAcademicStructure {
     academicGroupId: number;
     academicGroupName: string;
     academicGroupCode?: string;
+    stage?: string;
     sections: {
       sectionId: number;
       sectionName: string;

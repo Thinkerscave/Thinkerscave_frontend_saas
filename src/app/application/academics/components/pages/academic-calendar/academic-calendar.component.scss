@@ -204,6 +204,13 @@
 }
 
 .ac-day:not(.ac-day--muted) {
+  transition: border-color var(--tc-anim-duration-fast, 150ms) ease,
+              box-shadow var(--tc-anim-duration-fast, 150ms) ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--tc-primary-600, #2563eb) 45%, var(--tc-border, #e2e8f0));
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  }
   cursor: pointer;
 }
 
@@ -576,6 +583,7 @@
   border-bottom: 0;
 }
 
+.ac-table tbody tr { transition: background-color var(--tc-anim-duration-fast, 150ms) ease; }
 .ac-table tbody tr:hover {
   background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 4%, #fff);
 }

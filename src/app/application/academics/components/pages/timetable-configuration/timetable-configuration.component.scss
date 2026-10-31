@@ -1,3 +1,5 @@
+@use '../../shared/styles/academics-common' as *;
+
 :host {
   display: block;
   --cfg-accent: var(--tc-accent, #7c3aed);
