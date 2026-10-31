@@ -115,12 +115,22 @@
               [class.pi-spinner]="generating"></i>
             {{ generateLabel }}
           </button>
+          <button type="button" class="tt-btn tt-btn--outline tt-btn--lg"
+            *tcHasPerm="resource; action: 'manage'"
+            [disabled]="manualDrafting || !canManualEntry" (click)="createManualDraft()">
+            <i class="pi" [class.pi-pencil]="!manualDrafting" [class.pi-spin]="manualDrafting"
+              [class.pi-spinner]="manualDrafting"></i>
+            Enter Manually
+          </button>
           <p class="tt-generate-hint" *ngIf="ws.generateBlockedReason; else readyHint">
             <i class="pi pi-info-circle"></i> {{ ws.generateBlockedReason }}
           </p>
           <ng-template #readyHint>
             <p class="tt-generate-hint"><i class="pi pi-check-circle"></i> All blocking requirements are satisfied.</p>
           </ng-template>
+          <p class="tt-generate-hint" *ngIf="!canManualEntry">
+            <i class="pi pi-info-circle"></i> Configure the weekly schedule before entering lessons manually.
+          </p>
         </div>
       </section>
 
@@ -189,6 +199,13 @@
               [disabled]="generateDisabled" (click)="generate()">
               <i class="pi pi-refresh"></i> Regenerate
             </button>
+            <ng-container *ngIf="canDiscardDraft">
+              <button type="button" class="tt-btn tt-btn--danger-ghost tt-btn--sm"
+                *tcHasPerm="resource; action: 'manage'"
+                [disabled]="saving" (click)="discardDraft()">
+                <i class="pi pi-trash"></i> Delete Draft
+              </button>
+            </ng-container>
             <ng-container *ngIf="canSubmit"><button type="button" class="tt-btn tt-btn--outline tt-btn--sm" [disabled]="saving" (click)="submit()"><i class="pi pi-send"></i> Submit for Approval</button></ng-container>
             <ng-container *ngIf="canPublish">
               <button type="button" class="tt-btn tt-btn--primary tt-btn--sm"
@@ -251,6 +268,7 @@
                           </button>
                           <div *ngFor="let cell of cellsFor(row, day)" class="tt-lesson"
                             [attr.data-tone]="toneFor(cell)" [class.is-activity]="cell.entryType === 'ACTIVITY'"
+                            [class.is-menu-open]="menuEntryId === cell.entryId"
                             (click)="openEdit(cell)" role="button" tabindex="0"
                             (keydown.enter)="openEdit(cell)">
                             <strong>{{ cell.subjectName }}</strong>
@@ -258,7 +276,22 @@
                             <small>{{ cell.academicGroupName }}<ng-container *ngIf="cell.sectionName">
                               • {{ cell.sectionName }}</ng-container></small>
                             <i class="pi pi-lock tt-lesson__lock" *ngIf="cell.locked"></i>
-                            <i class="pi pi-ellipsis-v tt-lesson__more"></i>
+                            <ng-container *ngIf="canEdit && cell.entryType !== 'ACTIVITY' && cell.entryId">
+                              <button type="button" class="tt-lesson__more"
+                                [attr.aria-label]="'Actions for ' + cell.subjectName"
+                                (click)="toggleLessonMenu($event, cell)">
+                                <i class="pi pi-ellipsis-v"></i>
+                              </button>
+                              <div class="tt-lesson__menu" *ngIf="menuEntryId === cell.entryId"
+                                (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                                <button type="button" (click)="editFromMenu($event, cell)">
+                                  <i class="pi pi-pencil"></i> Edit
+                                </button>
+                                <button type="button" class="is-danger" (click)="deleteFromMenu($event, cell)">
+                                  <i class="pi pi-trash"></i> Delete
+                                </button>
+                              </div>
+                            </ng-container>
                           </div>
                         </ng-container>
                       </td>
@@ -380,42 +413,51 @@
     </ng-container>
   </ng-container>
 
-  <!-- Edit / place lesson -->
+  <!-- Add / edit lesson -->
   <p-dialog [(visible)]="showEditDialog" [modal]="true" [draggable]="false" [resizable]="false"
     [style]="{ width: '560px' }" styleClass="tt-dialog"
-    [header]="editForm.mode === 'place' ? 'Place Lesson' : 'Edit Lesson'">
+    [header]="editForm.mode === 'place' ? 'Add Lesson' : 'Edit Lesson'">
     <div class="tt-form">
+      <div class="tt-context">
+        <span><i class="pi pi-users"></i> {{ editClassLabel }}</span>
+        <span><i class="pi pi-calendar"></i> {{ dayLabels[editForm.dayOfWeek] }}</span>
+        <span><i class="pi pi-clock"></i> {{ editSlotLabel }}</span>
+      </div>
       <label class="tt-field">
         <span>Subject <em>*</em></span>
-        <select [(ngModel)]="editForm.mappingId" (ngModelChange)="onSubjectChange()"
-          [disabled]="editForm.mode === 'edit'">
+        <select [(ngModel)]="editForm.mappingId" aria-label="Subject">
           <option [ngValue]="null" disabled>Choose a subject</option>
-          <option *ngFor="let s of subjectChoices" [ngValue]="s.mappingId">
+          <option *ngFor="let s of editSubjectChoices" [ngValue]="s.mappingId" [disabled]="!s.available">
             {{ s.subjectName }}<ng-container *ngIf="s.weeklyPeriods"> · {{ s.weeklyPeriods }}/week</ng-container>
+            <ng-container *ngIf="!s.available && s.unavailableReason"> — {{ s.unavailableReason }}</ng-container>
           </option>
         </select>
       </label>
-      <label class="tt-field">
+      <div class="tt-resolved" *ngIf="selectedSubject as subject">
+        <i class="pi pi-user"></i>
         <span>Teacher</span>
-        <select [(ngModel)]="editForm.staffId">
-          <option [ngValue]="null">Use allocation teacher</option>
-          <option *ngFor="let t of teacherChoices" [ngValue]="t.value">{{ t.label }}</option>
-        </select>
-      </label>
-      <label class="tt-field">
-        <span>Day <em>*</em></span>
-        <select [(ngModel)]="editForm.dayOfWeek">
-          <option *ngFor="let d of dayOrder" [ngValue]="d">{{ dayLabels[d] }}</option>
-        </select>
-      </label>
-      <label class="tt-field">
-        <span>Time slot <em>*</em></span>
-        <select [(ngModel)]="editForm.periodId">
-          <option *ngFor="let row of editSlots" [ngValue]="row.periodIds[0]">
-            {{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }} ({{ row.name }})
-          </option>
-        </select>
-      </label>
+        <strong>{{ subject.teacherName || 'Not allocated' }}</strong>
+        <small *ngIf="subject.available">from Teacher Allocation</small>
+      </div>
+      <ng-container *ngIf="editForm.mode === 'edit'">
+        <label class="tt-field">
+          <span>Day <em>*</em></span>
+          <select [(ngModel)]="editForm.dayOfWeek" (ngModelChange)="onEditDayChange()">
+            <option *ngFor="let d of editDayOptions" [ngValue]="d">{{ dayLabels[d] }}</option>
+          </select>
+        </label>
+        <label class="tt-field">
+          <span>Time slot <em>*</em></span>
+          <select [(ngModel)]="editForm.periodId">
+            <option *ngFor="let row of editSlots" [ngValue]="row.periodIds[0]">
+              {{ timeLabel(row.startTime) }} – {{ timeLabel(row.endTime) }} ({{ row.name }})
+            </option>
+          </select>
+        </label>
+      </ng-container>
+      <p class="tt-empty-hint" *ngIf="!editSubjectChoices.length">
+        No subjects are available for this class. Complete Subject Mapping and Teacher Allocation first.
+      </p>
     </div>
     <div class="tt-dialog__note" *ngIf="editForm.mode === 'edit'">
       <i class="pi" [class.pi-lock]="editForm.locked" [class.pi-unlock]="!editForm.locked"></i>
@@ -436,9 +478,9 @@
         </div>
         <div class="tt-dialog__footer-right">
           <button type="button" class="tt-btn tt-btn--outline" (click)="showEditDialog = false">Cancel</button>
-          <button type="button" class="tt-btn tt-btn--primary" [disabled]="saving" (click)="saveEntry()">
+          <button type="button" class="tt-btn tt-btn--primary" [disabled]="!canSaveEntry" (click)="saveEntry()">
             <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
-            {{ editForm.mode === 'place' ? 'Place Lesson' : 'Save Changes' }}
+            {{ editForm.mode === 'place' ? 'Add Lesson' : 'Save Changes' }}
           </button>
         </div>
       </div>

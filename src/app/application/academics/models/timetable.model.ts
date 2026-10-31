@@ -9,6 +9,7 @@ export type GenerationStatus =
   | 'GENERATING'
   | 'GENERATED'
   | 'GENERATED_WITH_CONFLICTS'
+  | 'MANUAL'
   | 'FAILED';
 export type VersionStatus =
   | 'DRAFT'
@@ -414,6 +415,21 @@ export interface TimetableGrid {
   editable: boolean;
   weekStartDate?: string;
   weekDates: { dayOfWeek: DayOfWeek; date: string }[];
+  /** Subjects that can be placed in the viewed class, with their allocation teacher. */
+  subjectOptions?: PlacementSubjectOption[];
+}
+
+export interface PlacementSubjectOption {
+  mappingId: number;
+  subjectId?: number | null;
+  subjectName: string;
+  staffId?: number | null;
+  teacherName?: string | null;
+  teacherAllocationId?: number | null;
+  choiceGroupName?: string | null;
+  weeklyPeriods?: number | null;
+  available: boolean;
+  unavailableReason?: string | null;
 }
 
 export interface TimetableConflict {
@@ -468,6 +484,7 @@ export interface GenerationProgress {
 }
 
 export interface TimetableEntryRequest {
+  academicGroupId?: number | null;
   sectionId?: number | null;
   academicGroupSubjectMappingId?: number | null;
   teacherAllocationId?: number | null;

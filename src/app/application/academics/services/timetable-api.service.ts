@@ -36,6 +36,18 @@ export class TimetableApiService {
       .pipe(map(r => r.data));
   }
 
+  createManualDraft(yearId: number): Observable<TimetableVersion> {
+    return this.http
+      .post<ApiResponse<TimetableVersion>>(academicsApi.timetableManualDraft(yearId), {})
+      .pipe(map(r => r.data));
+  }
+
+  discardVersion(versionId: number): Observable<void> {
+    return this.http
+      .delete<ApiResponse<void>>(academicsApi.timetableVersionDiscard(versionId))
+      .pipe(map(r => r.data));
+  }
+
   getView(versionId: number, view: GridView, params: Record<string, any> = {}): Observable<TimetableGrid> {
     let httpParams = new HttpParams().set('view', view);
     Object.entries(params).forEach(([key, value]) => {

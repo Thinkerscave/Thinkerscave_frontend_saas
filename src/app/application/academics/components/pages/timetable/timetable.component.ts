@@ -4,6 +4,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   inject
 } from '@angular/core';
@@ -21,8 +22,6 @@ import { HasPermissionDirective } from '../../../../../shared/directives/has-per
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
-import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
-import { sortSubjects } from '../../../models/subjects-mapping.model';
 import {
   ACADEMICS_TIMETABLE_RESOURCE,
   DAY_LABELS,
@@ -31,6 +30,7 @@ import {
   DayOfWeek,
   GenerationProgress,
   GridView,
+  PlacementSubjectOption,
   SetupItem,
   TimetableCell,
   TimetableConflict,
@@ -59,22 +59,11 @@ interface GridSection {
   rows: PeriodRow[];
 }
 
-interface SubjectChoice {
-  mappingId: number;
-  subjectName: string;
-  subjectType?: string | null;
-  teacherAllocationId?: number | null;
-  staffId?: number | null;
-  staffName?: string | null;
-  weeklyPeriods?: number;
-}
-
 interface EditForm {
   mode: 'place' | 'edit';
   entryId: number | null;
   sectionId: number | null;
   mappingId: number | null;
-  staffId: number | null;
   dayOfWeek: DayOfWeek;
   periodId: number | null;
   locked: boolean;
@@ -116,7 +105,6 @@ const SUBJECT_TONES = ['sky', 'violet', 'rose', 'emerald', 'amber', 'teal', 'ind
 })
 export class TimetablePageComponent implements OnInit {
   private readonly api = inject(TimetableApiService);
-  private readonly teacherApi = inject(TeacherAllocationApiService);
   private readonly yearCtx = inject(AcademicYearContextService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -166,9 +154,9 @@ export class TimetablePageComponent implements OnInit {
 
   showEditDialog = false;
   editForm: EditForm = this.emptyEditForm();
-  subjectChoices: SubjectChoice[] = [];
-  teacherChoices: { label: string; value: number }[] = [];
-  private mappingRows: any[] = [];
+  editSubjectFallback: PlacementSubjectOption | null = null;
+  menuEntryId: number | null = null;
+  manualDrafting = false;
 
   ngOnInit(): void {
     this.yearCtx.ensureLoaded().subscribe();
@@ -338,7 +326,6 @@ export class TimetablePageComponent implements OnInit {
         if (requestId !== this.gridRequestId) return;
         this.grid = grid;
         this.buildCellIndex();
-        if (grid.editable) this.loadMappingRows();
       },
       error: (err) => {
         if (requestId !== this.gridRequestId) return;
@@ -844,14 +831,68 @@ export class TimetablePageComponent implements OnInit {
 
   // ─── Manual editing ──────────────────────────────────────────────────
 
+  get canManualEntry(): boolean {
+    if (!this.workspace || this.workspace.yearReadOnly) return false;
+    const schedule = this.workspace.setup?.find(item => item.key === 'schedule');
+    return schedule ? schedule.status === 'COMPLETE' : true;
+  }
+
+  get canDiscardDraft(): boolean {
+    const version = this.primaryVersion;
+    return !!version && !this.workspace?.yearReadOnly
+      && this.permissions.canManage(this.resource)
+      && ['DRAFT', 'READY_FOR_REVIEW'].includes(version.status);
+  }
+
+  get subjectOptions(): PlacementSubjectOption[] {
+    return this.grid?.subjectOptions ?? [];
+  }
+
+  get editSubjectChoices(): PlacementSubjectOption[] {
+    const options = [...this.subjectOptions];
+    const fallback = this.editSubjectFallback;
+    if (fallback && !options.some(option => option.mappingId === fallback.mappingId)) {
+      options.unshift(fallback);
+    }
+    return options;
+  }
+
+  get selectedSubject(): PlacementSubjectOption | null {
+    const selected = this.editSubjectChoices.find(
+      option => option.mappingId === this.editForm.mappingId);
+    return selected ?? null;
+  }
+
+  get editSlotLabel(): string {
+    const periodId = this.editForm.periodId;
+    if (!periodId) return '—';
+    const period = (this.grid?.periods ?? [])
+      .find(p => p.timetablePeriodId === periodId);
+    if (!period) return '—';
+    return `${this.timeLabel(period.startTime)} – ${this.timeLabel(period.endTime)} (${period.name})`;
+  }
+
+  get editClassLabel(): string {
+    const group = this.grid?.academicGroupName
+      ?? this.academicGroupOptions.find(o => o.value === this.selectedGroupId)?.label;
+    const section = this.grid?.sectionName;
+    return [group, section].filter(Boolean).join(' • ') || 'Selected class';
+  }
+
+  get canSaveEntry(): boolean {
+    return !!this.editForm.mappingId && !!this.editForm.periodId && !this.saving
+      && (this.selectedSubject?.available ?? false);
+  }
+
   openPlace(day: DayOfWeek, row: PeriodRow): void {
-    if (!this.canEdit || this.isBreak(row) || row.periodIds.length !== 1) return;
+    if (!this.canEdit || this.view !== 'ACADEMIC_GROUP'
+        || this.isBreak(row) || row.periodIds.length !== 1) return;
+    this.editSubjectFallback = null;
     this.editForm = {
       mode: 'place', entryId: null, sectionId: this.selectedSectionId,
-      mappingId: null, staffId: null, dayOfWeek: day, periodId: row.periodIds[0], locked: false
+      mappingId: null, dayOfWeek: day, periodId: row.periodIds[0], locked: false
     };
     this.showEditDialog = true;
-    this.prepareEditChoices();
     this.cdr.markForCheck();
   }
 
@@ -866,76 +907,28 @@ export class TimetablePageComponent implements OnInit {
       });
       return;
     }
+    const mappingId = cell.academicGroupSubjectMappingId ?? null;
+    this.editSubjectFallback = mappingId == null ? null : {
+      mappingId,
+      subjectId: cell.subjectId ?? null,
+      subjectName: cell.subjectName ?? 'Current subject',
+      staffId: cell.staffId ?? null,
+      teacherName: cell.staffName ?? null,
+      teacherAllocationId: cell.teacherAllocationId ?? null,
+      choiceGroupName: cell.choiceGroupName ?? null,
+      available: true,
+      unavailableReason: null
+    };
     this.editForm = {
       mode: 'edit',
       entryId: cell.entryId ?? null,
       sectionId: cell.sectionId ?? this.selectedSectionId,
-      mappingId: cell.academicGroupSubjectMappingId ?? null,
-      staffId: cell.staffId ?? null,
+      mappingId,
       dayOfWeek: cell.dayOfWeek,
       periodId: cell.periodId,
       locked: !!cell.locked
     };
     this.showEditDialog = true;
-    this.prepareEditChoices();
-    this.cdr.markForCheck();
-  }
-
-  private prepareEditChoices(): void {
-    this.teacherChoices = [...this.teacherOptions];
-    const row = this.mappingRows.find(r => r.academicGroupSubjectMappingId === this.editForm.mappingId);
-    if (row?.primaryStaffId && !this.teacherChoices.some(t => t.value === row.primaryStaffId)) {
-      this.teacherChoices.push({ label: row.primaryStaffName, value: row.primaryStaffId });
-    }
-    if (this.editForm.staffId && !this.teacherChoices.some(t => t.value === this.editForm.staffId)) {
-      const cell = (this.grid?.cells ?? []).find(c => c.entryId === this.editForm.entryId);
-      if (cell?.staffName) this.teacherChoices.push({ label: cell.staffName, value: this.editForm.staffId });
-    }
-    if (!this.editForm.mappingId && this.subjectChoices.length) {
-      this.editForm.mappingId = this.subjectChoices[0].mappingId;
-      this.onSubjectChange();
-    }
-  }
-
-  private loadMappingRows(): void {
-    if (!this.selectedYearId || this.view !== 'ACADEMIC_GROUP' || !this.selectedGroupId) return;
-    this.teacherApi.getDashboard(this.selectedYearId, {
-      academicGroupId: this.selectedGroupId,
-      sectionId: this.selectedSectionId,
-      size: 100
-    }).subscribe({
-      next: (dash) => {
-        this.mappingRows = dash.rows ?? [];
-        const seen = new Set<number>();
-        this.subjectChoices = sortSubjects(this.mappingRows
-          .filter(r => r.status === 'ASSIGNED' || r.primaryStaffId)
-          .filter(r => {
-            if (seen.has(r.academicGroupSubjectMappingId)) return false;
-            seen.add(r.academicGroupSubjectMappingId);
-            return true;
-          })
-          .map(r => ({
-            mappingId: r.academicGroupSubjectMappingId,
-            subjectName: r.subjectName,
-            subjectType: r.subjectType,
-            teacherAllocationId: r.teacherAllocationId,
-            staffId: r.primaryStaffId,
-            staffName: r.primaryStaffName,
-            weeklyPeriods: r.weeklyPeriods
-          })));
-        this.cdr.markForCheck();
-      },
-      error: () => { this.mappingRows = []; this.subjectChoices = []; }
-    });
-  }
-
-  onSubjectChange(): void {
-    const choice = this.subjectChoices.find(s => s.mappingId === this.editForm.mappingId);
-    if (!choice) return;
-    if (choice.staffId) this.editForm.staffId = choice.staffId;
-    if (!this.teacherChoices.some(t => t.value === choice.staffId) && choice.staffId) {
-      this.teacherChoices.push({ label: choice.staffName ?? 'Teacher', value: choice.staffId });
-    }
     this.cdr.markForCheck();
   }
 
@@ -944,13 +937,27 @@ export class TimetablePageComponent implements OnInit {
       .filter(r => !this.isBreak(r) && r.periodIds.length === 1);
   }
 
+  get editDayOptions(): DayOfWeek[] {
+    const days = this.grid?.workingDays ?? [];
+    return days.length ? days : this.dayOrder;
+  }
+
+  onEditDayChange(): void {
+    const slots = this.editSlots;
+    const current = this.editForm.periodId;
+    if (!slots.some(row => current != null && row.periodIds.includes(current))) {
+      this.editForm.periodId = slots[0]?.periodIds[0] ?? null;
+    }
+    this.cdr.markForCheck();
+  }
+
   saveEntry(): void {
-    if (!this.selectedVersionId || !this.canEdit) return;
+    if (!this.selectedVersionId || !this.canEdit || !this.canSaveEntry) return;
     const form = this.editForm;
     const body: TimetableEntryRequest = {
+      academicGroupId: this.grid?.academicGroupId ?? this.selectedGroupId,
       sectionId: form.sectionId,
       academicGroupSubjectMappingId: form.mappingId,
-      staffId: form.staffId,
       dayOfWeek: form.dayOfWeek,
       periodId: form.periodId
     };
@@ -966,7 +973,10 @@ export class TimetablePageComponent implements OnInit {
     call.pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); })).subscribe({
       next: () => {
         this.showEditDialog = false;
-        this.messages.add({ severity: 'success', summary: 'Timetable updated' });
+        this.messages.add({
+          severity: 'success',
+          summary: form.mode === 'place' ? 'Lesson added' : 'Lesson updated'
+        });
         this.loadWorkspace();
       },
       error: (err) => this.messages.add({
@@ -980,6 +990,10 @@ export class TimetablePageComponent implements OnInit {
 
   deleteEntry(): void {
     if (!this.editForm.entryId) return;
+    this.confirmDeleteEntry(this.editForm.entryId, true);
+  }
+
+  private confirmDeleteEntry(entryId: number, closeDialog = false): void {
     this.confirm.confirm({
       header: 'Remove this lesson?',
       message: 'The lesson is removed from the draft. You can place it again later.',
@@ -987,16 +1001,102 @@ export class TimetablePageComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.saving = true;
-        this.api.deleteEntry(this.editForm.entryId!).pipe(
+        this.api.deleteEntry(entryId).pipe(
           finalize(() => { this.saving = false; this.cdr.markForCheck(); })
         ).subscribe({
           next: () => {
-            this.showEditDialog = false;
+            if (closeDialog) this.showEditDialog = false;
             this.messages.add({ severity: 'success', summary: 'Lesson removed' });
             this.loadWorkspace();
           },
           error: (err) => this.messages.add({
             severity: 'error', summary: 'Could not remove the lesson', detail: err?.error?.message
+          })
+        });
+      }
+    });
+  }
+
+  @HostListener('document:click')
+  closeLessonMenu(): void {
+    if (this.menuEntryId == null) return;
+    this.menuEntryId = null;
+    this.cdr.markForCheck();
+  }
+
+  toggleLessonMenu(event: MouseEvent, cell: TimetableCell): void {
+    event.stopPropagation();
+    if (cell.entryType === 'ACTIVITY') {
+      this.openEdit(cell);
+      return;
+    }
+    this.menuEntryId = this.menuEntryId === cell.entryId ? null : (cell.entryId ?? null);
+    this.cdr.markForCheck();
+  }
+
+  editFromMenu(event: MouseEvent, cell: TimetableCell): void {
+    event.stopPropagation();
+    this.menuEntryId = null;
+    this.openEdit(cell);
+  }
+
+  deleteFromMenu(event: MouseEvent, cell: TimetableCell): void {
+    event.stopPropagation();
+    this.menuEntryId = null;
+    if (cell.entryId) this.confirmDeleteEntry(cell.entryId);
+  }
+
+  createManualDraft(): void {
+    if (!this.selectedYearId || this.manualDrafting) return;
+    this.manualDrafting = true;
+    this.api.createManualDraft(this.selectedYearId).pipe(
+      finalize(() => { this.manualDrafting = false; this.cdr.markForCheck(); })
+    ).subscribe({
+      next: (version) => {
+        this.messages.add({
+          severity: 'success',
+          summary: 'Manual entry ready',
+          detail: `Version ${version.versionNumber} created. Click an empty slot to add a lesson.`,
+          life: 7000
+        });
+        this.loadWorkspace();
+      },
+      error: (err) => this.messages.add({
+        severity: 'error',
+        summary: 'Could not start manual entry',
+        detail: err?.error?.message,
+        life: 10000
+      })
+    });
+  }
+
+  discardDraft(): void {
+    const version = this.primaryVersion;
+    if (!version) return;
+    this.confirm.confirm({
+      header: 'Delete this draft?',
+      message: `Version ${version.versionNumber} and all of its lessons will be permanently removed.`,
+      acceptLabel: 'Delete draft',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.saving = true;
+        this.api.discardVersion(version.timetableVersionId).pipe(
+          finalize(() => { this.saving = false; this.cdr.markForCheck(); })
+        ).subscribe({
+          next: () => {
+            this.messages.add({ severity: 'success', summary: 'Draft deleted' });
+            this.workspace = null;
+            this.grid = null;
+            this.version = null;
+            this.selectedVersionId = null;
+            this.conflicts = [];
+            this.loadWorkspace();
+          },
+          error: (err) => this.messages.add({
+            severity: 'error',
+            summary: 'Could not delete the draft',
+            detail: err?.error?.message,
+            life: 10000
           })
         });
       }
@@ -1079,7 +1179,7 @@ export class TimetablePageComponent implements OnInit {
   private emptyEditForm(): EditForm {
     return {
       mode: 'place', entryId: null, sectionId: null, mappingId: null,
-      staffId: null, dayOfWeek: 'MONDAY', periodId: null, locked: false
+      dayOfWeek: 'MONDAY', periodId: null, locked: false
     };
   }
 }
