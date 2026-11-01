@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
@@ -48,6 +49,7 @@ export class AlumniDirectoryComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly viewPrefs = inject(ViewPreferenceService);
 
   loading = true;
@@ -161,7 +163,7 @@ export class AlumniDirectoryComponent implements OnInit {
   }
 
   exportAlumni(): void {
-    alert('Export triggered. File will be downloaded shortly.');
+    this.feedback.info('Export is not available yet', 'Alumni export has not been connected to the server.');
   }
 
   viewProfile(studentId?: number | null): void {

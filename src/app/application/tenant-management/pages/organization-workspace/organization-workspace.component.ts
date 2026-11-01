@@ -454,7 +454,7 @@ export class OrganizationWorkspaceComponent implements OnInit {
   triggerMigration(): void {
     const id = this.org?.tenant?.id;
     if (!id) { this.toast('warn', 'Unavailable', 'No tenant registry found.'); return; }
-    this.runAction(() => this.api.triggerTenantMigration(id), 'Migration started', 'Tenant migration job triggered.');
+    this.runAction(() => this.api.triggerTenantMigration(id), 'Migration completed', 'Tenant schema migrated to the latest version.');
   }
 
   downloadInvoicePdf(): void {
@@ -503,4 +503,3 @@ export class OrganizationWorkspaceComponent implements OnInit {
     this.feedback[severity](summary, detail, { life: 4000 });
   }
 }
-

@@ -171,6 +171,11 @@ export class AdmissionsCrmService {
     return this.http.put<ApiEnvelope<LeadRecord>>(`${this.leads}/${id}`, payload).pipe(map(r => r.data));
   }
 
+  updateLeadStatus(id: number, status: string): Observable<LeadRecord> {
+    const params = new HttpParams().set('status', status);
+    return this.http.post<ApiEnvelope<LeadRecord>>(`${this.leads}/${id}/status`, {}, { params }).pipe(map(r => r.data));
+  }
+
   getLead(id: number): Observable<LeadRecord> {
     return this.http.get<ApiEnvelope<LeadRecord>>(`${this.leads}/${id}`).pipe(map(r => r.data));
   }

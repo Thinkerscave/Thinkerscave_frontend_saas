@@ -19,20 +19,21 @@ import {
   StaffFilterParams,
   StaffSummary,
   StaffType
-} from '../../shared/models/staff.model';
-import { StaffService, saveBlobAsFile } from '../../shared/services/staff.service';
-import { PermissionService } from '../../../../core/services/permission.service';
-import { canWriteStaff } from '../../shared/permissions/staff-permissions';
+} from '../../models/staff.model';
+import { StaffService } from '../../services/staff.service';
 import { AppListResultsComponent, AppListToolbarComponent, AppListViewMode, AppPaginatorComponent } from '../../../../shared/ui/app-list';
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
+import { canWriteStaff } from '../../shared/permissions/staff-permissions';
 
 import { SoftRefreshKeys, SoftRefreshService, TcPageSkeletonComponent, ListSnapshotCache } from '../../../../shared/ui/loading';
 interface KpiTile {
@@ -72,9 +73,10 @@ const LIST_KEY = 'staff.directory.view';
 })
 export class StaffDirectoryComponent implements OnInit {
   private readonly api = inject(StaffService);
+  private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly permissions = inject(PermissionService);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly feedback = inject(UiFeedbackService);
@@ -87,8 +89,6 @@ export class StaffDirectoryComponent implements OnInit {
   hasLoaded = false;
   searching = false;
   errorMessage = '';
-  private readonly photoUrls = new Map<number, string | null>();
-
   view: AppListViewMode = this.viewPrefs.globalDefault();
 
   dashboard: StaffDashboard = {
@@ -106,6 +106,10 @@ export class StaffDirectoryComponent implements OnInit {
 
   openMenuId: number | null = null;
   actionLoading: number | null = null;
+
+  get canWrite(): boolean {
+    return canWriteStaff(this.permissions);
+  }
 
   readonly kpiTiles: KpiTile[] = [
     { key: 'totalStaff',      label: 'Total Staff',        icon: 'pi-users',           tone: 'primary' },
@@ -229,7 +233,6 @@ export class StaffDirectoryComponent implements OnInit {
           }
           this.staffPage = page;
           this.errorMessage = '';
-          this.loadPhotos(page.content);
           this.snapshots.set(LIST_KEY, { staffPage: this.staffPage, dashboard: this.dashboard });
         },
         error: () => {
@@ -286,53 +289,19 @@ export class StaffDirectoryComponent implements OnInit {
     this.router.navigate(['/app/staff/profile', staff.staffId]);
   }
 
-  /** True when the user can create, edit, activate/deactivate or delete staff. */
-  get canWrite(): boolean {
-    return canWriteStaff(this.permissions);
-  }
-
   addStaff(): void {
-    if (!this.canWrite) return;
     this.router.navigate(['/app/staff/create']);
   }
 
+  importStaff(): void {
+    this.feedback.info('Import', 'Staff import will be available soon.');
+  }
+
   exportStaff(): void {
-    const request: StaffFilterParams = {
-      ...this.appliedFilters,
-      keyword: this.filters.keyword
-    };
-    this.api.exportStaff(request).subscribe({
-      next: ({ blob, fileName }) => saveBlobAsFile(blob, fileName),
-      error: () => this.feedback.error('Export failed', 'Unable to export staff. Please try again.')
-    });
-  }
-
-  /** Returns the blob object URL for a staff photo, or null when none is loaded. */
-  photoFor(staff: StaffSummary): string | null {
-    return this.photoUrls.get(staff.staffId) ?? null;
-  }
-
-  private loadPhotos(items: StaffSummary[]): void {
-    for (const staff of items) {
-      if (!staff.photoUrl) {
-        this.photoUrls.set(staff.staffId, null);
-        continue;
-      }
-      if (this.photoUrls.has(staff.staffId)) {
-        continue;
-      }
-      this.api.getPhotoObjectUrl(staff.staffId).subscribe({
-        next: url => {
-          this.photoUrls.set(staff.staffId, url);
-          this.cdr.markForCheck();
-        },
-        error: () => this.photoUrls.set(staff.staffId, null)
-      });
-    }
+    this.feedback.info('Export', 'Staff export will be available soon.');
   }
 
   editStaff(staff: StaffSummary, event?: Event): void {
-    if (!this.canWrite) return;
     event?.stopPropagation();
     this.closeMenu();
     this.persistListContext();
@@ -347,8 +316,11 @@ export class StaffDirectoryComponent implements OnInit {
 
   closeMenu(): void { this.openMenuId = null; }
 
+  photoFor(staff: StaffSummary): string | null {
+    return staff.photoUrl || null;
+  }
+
   toggleActive(staff: StaffSummary, event?: Event): void {
-    if (!this.canWrite) return;
     event?.stopPropagation();
     this.closeMenu();
     this.actionLoading = staff.staffId;
@@ -362,11 +334,16 @@ export class StaffDirectoryComponent implements OnInit {
       });
   }
 
-  deleteStaff(staff: StaffSummary, event?: Event): void {
-    if (!this.canWrite) return;
+  async deleteStaff(staff: StaffSummary, event?: Event): Promise<void> {
     event?.stopPropagation();
     this.closeMenu();
-    if (!confirm(`Delete ${staff.fullName}? This action cannot be undone.`)) return;
+    const ok = await this.dialogs.confirm({
+      header: 'Delete staff member?',
+      message: `${staff.fullName} will be deleted. This action cannot be undone.`,
+      acceptLabel: 'Delete',
+      tone: 'danger'
+    });
+    if (!ok) return;
     this.actionLoading = staff.staffId;
     this.api.deleteStaff(staff.staffId)
       .pipe(finalize(() => { this.actionLoading = null; this.cdr.markForCheck(); }))

@@ -26,6 +26,7 @@ import { AppGridTableToggleComponent, AppListViewMode, AppPaginatorComponent } f
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPageChangeEvent, slicePage } from '../../../../shared/utils/paged-result.util';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
 
@@ -61,6 +62,7 @@ interface PromotionDraft {
 export class PromotionsComponent implements OnInit {
   private readonly api = inject(PlatformManagementService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly feedback = inject(UiFeedbackService);
   private readonly viewPrefs = inject(ViewPreferenceService);
@@ -188,11 +190,17 @@ export class PromotionsComponent implements OnInit {
       });
   }
 
-  archive(promotion: Promotion, event: Event): void {
+  async archive(promotion: Promotion, event: Event): Promise<void> {
     event.stopPropagation();
     if (promotion.status === 'ARCHIVED') return;
-    
-    if (!window.confirm(`Are you sure you want to archive promotion ${promotion.promotionCode}?`)) {
+
+    const ok = await this.dialogs.confirm({
+      header: 'Archive promotion?',
+      message: `Promotion ${promotion.promotionCode} will be archived.`,
+      acceptLabel: 'Archive',
+      tone: 'danger'
+    });
+    if (!ok) {
       return;
     }
 
