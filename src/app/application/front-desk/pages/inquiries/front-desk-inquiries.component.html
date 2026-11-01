@@ -1,0 +1,139 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header>
+    @if (!online) {
+      <button type="button" class="tc-btn tc-btn--primary" (click)="openCreate()">
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        Add inquiry
+      </button>
+    }
+  </tc-saas-page-header>
+  @if (firstLoad) {
+    <tc-page-skeleton layout="directory-table" />
+  } @else {
+    <tc-saas-panel [title]="(online ? 'Online inquiries' : 'Admission inquiries') + ' · ' + total">
+      <app-list-toolbar
+        [search]="keyword"
+        [searchPlaceholder]="online ? 'Search student, parent, mobile, source' : 'Search student, parent, mobile'"
+        [searching]="busy"
+        (searchChange)="keyword = $event"
+        (searchDebounced)="load(0)"
+        (submitted)="load(0)"
+        (reset)="reset()">
+        <select [(ngModel)]="status" name="status" (ngModelChange)="load(0)">
+          <option value="">All statuses</option>
+          @for (item of statuses; track item) {
+            <option [value]="item">{{ label(item) }}</option>
+          }
+        </select>
+      </app-list-toolbar>
+      <app-list-results [busy]="busy">
+        @if (!rows.length) {
+          <app-empty-state
+            [title]="online ? 'No online inquiries' : 'No inquiries'"
+            [message]="online ? 'Website and ad campaign leads appear here.' : 'Walk-in inquiries captured at the front desk appear here.'" />
+        } @else {
+          <div class="tc-table-wrap">
+            <table>
+              <thead><tr><th>Student</th><th>Parent</th><th>Mobile</th><th>Class</th><th>Counselor</th><th>Follow-up</th><th>Status</th><th>Source</th></tr></thead>
+              <tbody>
+                @for (row of rows; track row.inquiryId) {
+                  <tr>
+                    <td><a [routerLink]="['/app/front-desk/inquiries', row.inquiryId]">{{ row.studentName || row.name }}</a></td>
+                    <td>{{ row.parentContactName }}</td>
+                    <td>{{ row.mobileNumber }}</td>
+                    <td>{{ row.classInterestedIn }}</td>
+                    <td>{{ row.assignedCounselorName || '—' }}</td>
+                    <td>{{ row.nextFollowUpDate | date:'mediumDate' }}</td>
+                    <td><span class="desk-badge">{{ label(row.status) }}</span></td>
+                    <td>{{ sourceLabel(row.inquirySource) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </app-list-results>
+      <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+    </tc-saas-panel>
+  }
+
+  <tc-drawer-form
+    [open]="drawer"
+    title="Add walk-in inquiry"
+    description="Creates an admissions lead for counselor follow-up. No counseling notes here."
+    size="lg"
+    (closed)="drawer = false">
+    <app-section-header title="Student & parent" icon="pi pi-users" />
+    <app-form-section [columns]="2">
+      <app-input
+        label="Student name"
+        [required]="true"
+        [(ngModel)]="draft.studentName"
+        name="studentName"
+        [error]="fieldErrors['studentName'] ?? ''"
+        (ngModelChange)="clearError('studentName')" />
+      <app-input
+        label="Parent / guardian name"
+        [required]="true"
+        [(ngModel)]="draft.parent"
+        name="parent"
+        [error]="fieldErrors['parent'] ?? ''"
+        (ngModelChange)="clearError('parent')" />
+      <app-phone-input
+        label="Mobile number"
+        [required]="true"
+        [(ngModel)]="draft.mobile"
+        name="mobile"
+        [error]="fieldErrors['mobile'] ?? ''"
+        (ngModelChange)="clearError('mobile')" />
+    </app-form-section>
+
+    <app-section-header title="Interest" description="Academic year and class for admission." icon="pi pi-book" />
+    <app-form-section [columns]="2">
+      <app-select
+        label="Academic year"
+        placeholder="Select year"
+        [required]="true"
+        [options]="yearOptions"
+        [(ngModel)]="draft.academicYearId"
+        name="academicYearId"
+        [error]="fieldErrors['academicYearId'] ?? ''"
+        (ngModelChange)="onYearChange($event)" />
+      <app-select
+        label="Class interested in"
+        placeholder="Select class"
+        [required]="true"
+        [options]="classOptions"
+        [(ngModel)]="draft.classId"
+        name="classId"
+        [error]="fieldErrors['classId'] ?? ''"
+        (ngModelChange)="clearError('classId')" />
+      <div class="app-form-section__full">
+        <app-input label="Address" [(ngModel)]="draft.address" name="address" placeholder="Optional" />
+      </div>
+      <div class="app-form-section__full">
+        <app-textarea label="Comments" [rows]="3" [(ngModel)]="draft.comments" name="comments" placeholder="Front desk notes for counselor" />
+      </div>
+    </app-form-section>
+
+    <app-section-header title="Follow-up" icon="pi pi-calendar" />
+    <app-form-section [columns]="2">
+      <app-select
+        label="Counselor"
+        placeholder="Unassigned"
+        [options]="counselorOptions"
+        [(ngModel)]="draft.counselorId"
+        name="counselorId" />
+      <div class="tc-form-field">
+        <label for="followUp">Next follow-up</label>
+        <input id="followUp" type="date" [(ngModel)]="draft.followUp" name="followUp" />
+      </div>
+    </app-form-section>
+
+    <div drawer-actions class="desk-drawer-actions">
+      <button type="button" class="tc-btn" (click)="drawer = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="create()">Save inquiry</button>
+    </div>
+  </tc-drawer-form>
+  <app-toast />
+</section>

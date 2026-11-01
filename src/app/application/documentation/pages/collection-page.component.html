@@ -1,0 +1,70 @@
+<section class="tc-page-shell desk-page doc-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--primary" [disabled]="saving" (click)="save()">
+      @if (saving) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      }
+      Save collection
+    </button>
+  </tc-saas-page-header>
+
+  <tc-saas-panel title="Document collection">
+    <p class="desk-intro">Select an approved collection type and record documents received per student.</p>
+
+    <app-section-header title="Class & type" icon="pi pi-filter" />
+    <div class="desk-filter-row">
+      <app-select
+        label="Class"
+        placeholder="Select class"
+        [options]="classOptions"
+        [(ngModel)]="classId"
+        name="classId"
+        (ngModelChange)="loadStudents($event)" />
+      <app-select
+        label="Approved collection type"
+        placeholder="Select type"
+        [options]="masterOptions"
+        [(ngModel)]="masterId"
+        name="masterId" />
+      <div class="tc-form-field">
+        <label class="desk-class-checklist">
+          <input type="checkbox" [(ngModel)]="allStudents" name="allStudents" />
+          Include all students in class
+        </label>
+      </div>
+    </div>
+
+    @if (!rows.length) {
+      <app-empty-state title="No students loaded" message="Choose a class to load the student list." />
+    } @else {
+      <div class="tc-table-wrap">
+        <table>
+          <thead><tr><th></th><th>Student</th><th>Document name</th><th>Files</th></tr></thead>
+          <tbody>
+            @for (row of rows; track row.studentId) {
+              <tr>
+                <td>
+                  <input type="checkbox" [checked]="picked.has(row.studentId)" (change)="toggle(row.studentId)" />
+                </td>
+                <td>{{ row.studentName }}</td>
+                <td>
+                  <input class="desk-table-input" [(ngModel)]="row.documentName" [name]="'doc' + row.studentId" placeholder="Document title" />
+                </td>
+                <td>
+                  @for (file of row.files; track file.filePath) {
+                    <div class="desk-meta-block__muted">{{ file.fileName }}</div>
+                  }
+                  @if (row.error) {
+                    <div class="desk-badge desk-badge--danger">{{ row.error }}</div>
+                  }
+                  <input type="file" (change)="addFile(row, $event)" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </tc-saas-panel>
+  <app-toast />
+</section>

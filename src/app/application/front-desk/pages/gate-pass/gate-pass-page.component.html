@@ -1,0 +1,126 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header />
+
+  <tc-saas-panel title="Issue early exit pass">
+    <p class="desk-intro">
+      A gate pass can be issued only when today's attendance is <strong>Present</strong>. Verify pickup by phone or OTP.
+    </p>
+
+    <app-section-header title="Student" description="Search by name, class, or roll number." icon="pi pi-user" />
+    <app-form-section [columns]="1">
+      <div class="desk-lookup">
+        <app-input
+          label="Search student"
+          placeholder="Student name or roll number"
+          [(ngModel)]="lookup"
+          name="lookup"
+          (ngModelChange)="search($event)" />
+
+        @if (selected) {
+          <div class="desk-selected-host" role="status">
+            <span class="desk-selected-host__label">Selected</span>
+            <strong>{{ selected.studentName }} · {{ selected.className }} · {{ selected.sectionName }} · {{ selected.rollNumber }}</strong>
+            <button type="button" class="tc-btn tc-btn--sm" (click)="clearStudent()">Clear</button>
+          </div>
+          @if (attendance) {
+            <p class="desk-attendance">
+              Attendance today:
+              <span class="desk-badge" [class.desk-badge--success]="attendance === 'PRESENT'" [class.desk-badge--warn]="attendance !== 'PRESENT'">
+                {{ attendanceLabel(attendance) }}
+              </span>
+            </p>
+          }
+        }
+
+        @if (lookup.trim().length >= 2 && !students.length && !searching) {
+          <p class="desk-help-text">No students found.</p>
+        }
+
+        @if (students.length) {
+          <ul class="desk-lookup-list" role="listbox" aria-label="Student search results">
+            @for (student of students; track student.studentId) {
+              <li>
+                <button type="button" class="desk-lookup-list__item" (click)="pick(student)">
+                  {{ student.studentName }} · {{ student.className }} · {{ student.sectionName }} · {{ student.rollNumber }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </app-form-section>
+
+    <app-section-header title="Exit details" description="Reason and authorised pickup person." icon="pi pi-sign-out" />
+    <app-form-section [columns]="2">
+      <app-input label="Reason" placeholder="Medical, family emergency, etc." [required]="true" [(ngModel)]="reason" name="reason" />
+      <app-input label="Pickup person" placeholder="Name of person collecting the student" [required]="true" [(ngModel)]="pickupPerson" name="pickupPerson" />
+      <app-select
+        label="Verification mode"
+        [options]="verificationOptions"
+        [(ngModel)]="verificationMode"
+        name="verificationMode"
+        (ngModelChange)="onVerificationModeChange()" />
+    </app-form-section>
+
+    @if (verificationMode === 'OTP' && selected) {
+      <app-section-header title="OTP verification" description="Send a code to the registered parent contact." icon="pi pi-shield" />
+      <app-form-section [columns]="1">
+        <div class="desk-otp-row">
+          <button type="button" class="tc-btn" (click)="sendOtp()">Send OTP</button>
+          <app-input label="OTP code" placeholder="Enter code" [(ngModel)]="otp" name="otp" />
+          <button type="button" class="tc-btn" (click)="verifyOtp()">Verify</button>
+          @if (otpVerified) {
+            <span class="desk-badge desk-badge--success">Verified</span>
+          }
+        </div>
+      </app-form-section>
+    }
+
+    <div class="desk-panel-actions">
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        title="Issues an early-exit pass only when today's attendance is Present"
+        [disabled]="!canIssue"
+        (click)="issue()">
+        Issue gate pass
+      </button>
+    </div>
+  </tc-saas-panel>
+
+  <tc-saas-panel [title]="'Issued passes · ' + total">
+    @if (!rows.length) {
+      <app-empty-state title="No gate passes issued" message="Passes issued today appear here for reprint." />
+    } @else {
+      <div class="tc-table-wrap">
+        <table>
+          <thead><tr><th>Student</th><th>Reason</th><th>Pickup</th><th>Verification</th><th></th></tr></thead>
+          <tbody>
+            @for (row of rows; track row['id']) {
+              <tr>
+                <td>{{ row['studentName'] }} · {{ row['className'] }} · {{ row['sectionName'] }}</td>
+                <td>{{ row['reason'] }}</td>
+                <td>{{ row['pickupPerson'] }}</td>
+                <td>{{ row['verificationMode'] }} · {{ row['issuedAt'] }}</td>
+                <td><button type="button" class="tc-btn" (click)="print(row)">Print</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+  </tc-saas-panel>
+
+  @if (printable) {
+    <article class="desk-print">
+      <h1>{{ orgName }}</h1>
+      <p>{{ printable['studentName'] }} · {{ printable['className'] }} · {{ printable['sectionName'] }}</p>
+      <p>{{ printable['reason'] }}</p>
+      <p>Pickup: {{ printable['pickupPerson'] }}</p>
+      <p>Verification: {{ printable['verificationMode'] }}</p>
+      <p>{{ printable['issuedAt'] }}</p>
+    </article>
+  }
+  <app-toast />
+</section>

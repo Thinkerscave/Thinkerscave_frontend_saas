@@ -1,0 +1,15 @@
+/* Documentation workspace — same rhythm as front desk */
+.doc-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-page-row-gap, 0.75rem);
+  padding-bottom: var(--tc-page-pad-bottom, 1rem);
+  min-width: 0;
+}
+
+.doc-page .desk-intro {
+  margin: 0 0 0.85rem;
+  font-size: var(--tc-font-size-sm);
+  color: var(--tc-text-muted);
+  line-height: 1.45;
+}

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { finalize, forkJoin } from 'rxjs';
@@ -30,6 +31,7 @@ interface KpiTile {
 export class StudentMovementComponent implements OnInit {
   private readonly api = inject(StudentsWorkspaceService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly feedback = inject(UiFeedbackService);
 
   loading = false;
   refreshing = false;
@@ -191,6 +193,6 @@ export class StudentMovementComponent implements OnInit {
   }
 
   exportTransfers(): void {
-    alert('Export triggered. File will be downloaded shortly.');
+    this.feedback.info('Export is not available yet', 'Transfer export has not been connected to the server.');
   }
 }

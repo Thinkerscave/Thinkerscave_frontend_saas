@@ -1,0 +1,13 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header>
+    <a class="tc-btn tc-btn--primary" routerLink="/app/front-desk/visitors" title="Check a visitor in and print a pass">Check in</a>
+  </tc-saas-page-header>
+  @if (loading) {
+    <tc-page-skeleton layout="directory-table" />
+  } @else if (error) {
+    <p role="alert">{{ error }}</p>
+  } @else {
+    <tc-saas-stat-grid [stats]="stats" (statSelect)="open($event)" />
+  }
+  <app-toast />
+</section>

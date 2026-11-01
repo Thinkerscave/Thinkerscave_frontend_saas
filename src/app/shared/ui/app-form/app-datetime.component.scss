@@ -1,0 +1,59 @@
+@use './app-form-tokens';
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep .app-datetime__picker {
+  display: flex;
+  width: 100%;
+
+  .p-datepicker-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 50px;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--tc-input-border);
+    border-right: 0;
+    border-radius: 12px 0 0 12px;
+    background: var(--tc-input-bg);
+    color: var(--tc-text);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    cursor: pointer;
+
+    &::placeholder {
+      color: var(--tc-input-placeholder);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--tc-input-hover-border);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--tc-input-focus-border);
+      box-shadow: var(--tc-focus-ring);
+    }
+
+    &:disabled {
+      background: var(--tc-surface-100);
+      color: var(--tc-text-muted);
+      cursor: not-allowed;
+    }
+  }
+
+  .p-datepicker-dropdown {
+    min-height: 50px;
+    border: 1px solid var(--tc-input-border);
+    border-radius: 0 12px 12px 0;
+  }
+}
+
+:host ::ng-deep .app-datetime.is-invalid .app-datetime__picker {
+  .p-datepicker-input,
+  .p-datepicker-dropdown {
+    border-color: var(--tc-danger);
+  }
+}

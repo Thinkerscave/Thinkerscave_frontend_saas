@@ -1,0 +1,49 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header>
+    <a class="tc-btn tc-btn--primary" routerLink="/app/front-desk/visitors" title="Register a new visitor pass">
+      <i class="pi pi-plus" aria-hidden="true"></i>
+      Check in visitor
+    </a>
+  </tc-saas-page-header>
+  @if (firstLoad) {
+    <tc-page-skeleton layout="directory-table" />
+  } @else {
+    <tc-saas-panel [title]="'Active visitors · ' + total">
+      <app-list-toolbar [search]="keyword" searchPlaceholder="Search visitor, badge, mobile" [searching]="busy" (searchChange)="keyword = $event" (searchDebounced)="reload(0)" (submitted)="reload(0)" (reset)="reset()" />
+      <app-list-results [busy]="busy">
+        @if (!rows.length) {
+          <app-empty-state title="No visitors on campus" message="Checked-in visitors appear here until they leave." />
+        } @else {
+          <div class="tc-table-wrap">
+            <table>
+              <thead><tr><th>Visitor</th><th>Purpose</th><th>Meeting</th><th>In</th><th></th></tr></thead>
+              <tbody>
+                @for (row of rows; track row['id']) {
+                  <tr>
+                    <td>
+                      <strong>{{ row['visitorName'] }}</strong>
+                      <div class="desk-meta-block__muted">{{ row['mobileNumber'] }}</div>
+                    </td>
+                    <td>
+                      {{ row['purpose'] }}
+                      @if (row['overstay']) {
+                        <span class="desk-badge desk-badge--danger">Overstay</span>
+                      }
+                    </td>
+                    <td>{{ row['meetPersonName'] }}</td>
+                    <td>{{ asDate(row['inTime']) | date:'short' }}</td>
+                    <td class="desk-row-actions">
+                      <button type="button" class="tc-btn" title="Records the out-time and closes this campus visit" (click)="checkOut(row)">Check out</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </app-list-results>
+      <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+    </tc-saas-panel>
+  }
+  <app-toast />
+</section>

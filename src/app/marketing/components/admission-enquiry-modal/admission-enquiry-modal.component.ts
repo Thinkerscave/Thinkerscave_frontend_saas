@@ -36,6 +36,8 @@ export class AdmissionEnquiryModalComponent {
 
   readonly form = this.fb.group({
     studentName: ['', [Validators.maxLength(100)]],
+    parentName: ['', [Validators.maxLength(100)]],
+    email: ['', [Validators.email, Validators.maxLength(150)]],
     mobileNumber: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
     classId: [null as number | null, Validators.required],
     consent: [false, Validators.requiredTrue]
@@ -102,6 +104,8 @@ export class AdmissionEnquiryModalComponent {
     const values = this.form.getRawValue();
     const payload: PublicInquirySubmitRequest = {
       studentName: (values.studentName ?? '').trim() || undefined,
+      parentName: (values.parentName ?? '').trim() || undefined,
+      email: (values.email ?? '').trim() || undefined,
       mobileNumber: (values.mobileNumber ?? '').trim(),
       classId: values.classId as number,
       consent: true
@@ -142,7 +146,7 @@ export class AdmissionEnquiryModalComponent {
   }
 
   private resetForm(): void {
-    this.form.reset({ studentName: '', mobileNumber: '', classId: null, consent: false });
+    this.form.reset({ studentName: '', parentName: '', email: '', mobileNumber: '', classId: null, consent: false });
     this.submitError.set(null);
     this.success.set(false);
     this.result.set(null);

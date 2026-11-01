@@ -85,7 +85,7 @@ export const APPLICATION_STATUS_GROUPS: Record<string, string[]> = {
   ENROLLED: ['ENROLLED']
 };
 
-export const FOLLOW_UP_TYPES = ['CALL', 'WHATSAPP', 'EMAIL', 'WALK_IN', 'SMS', 'OTHER'] as const;
+export const FOLLOW_UP_TYPES = ['CALL', 'WHATSAPP', 'EMAIL', 'WALK_IN', 'SMS', 'BROCHURE', 'ENTRANCE_TEST', 'OTHER'] as const;
 
 export const DOCUMENT_TYPES = [
   'BIRTH_CERTIFICATE',

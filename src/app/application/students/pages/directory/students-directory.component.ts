@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
+import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -77,6 +79,8 @@ export class StudentsDirectoryComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogs = inject(UiConfirmService);
+  private readonly feedback = inject(UiFeedbackService);
   private readonly listContext = inject(ListContextService);
   private readonly viewPrefs = inject(ViewPreferenceService);
   private readonly softRefresh = inject(SoftRefreshService);
@@ -478,7 +482,7 @@ export class StudentsDirectoryComponent implements OnInit {
     if (this.filter.classId) params.set('classId', this.filter.classId);
     if (this.filter.status) params.set('status', this.filter.status);
     // In production, this would call a backend export endpoint
-    alert('Export triggered. File will be downloaded shortly.');
+    this.feedback.info('Export is not available yet', 'Student export has not been connected to the server.');
   }
 
   // ---- More menu ----
@@ -495,15 +499,20 @@ export class StudentsDirectoryComponent implements OnInit {
     this.router.navigate(['/app/students/transfers']);
   }
 
-  deactivateStudent(s: StudentDirectoryCard, event: Event): void {
+  async deactivateStudent(s: StudentDirectoryCard, event: Event): Promise<void> {
     event.stopPropagation();
     this.openMoreMenuId = null;
-    if (confirm(`Deactivate ${s.fullName}?`)) {
-      this.api.updateStudentStatus(s.studentId, 'INACTIVE').subscribe({
-        next: () => this.loadAll(),
-        error: () => { this.errorMessage = 'Could not deactivate student.'; this.cdr.markForCheck(); }
-      });
-    }
+    const ok = await this.dialogs.confirm({
+      header: 'Deactivate student?',
+      message: `${s.fullName} will be marked inactive.`,
+      acceptLabel: 'Deactivate',
+      tone: 'danger'
+    });
+    if (!ok) return;
+    this.api.updateStudentStatus(s.studentId, 'INACTIVE').subscribe({
+      next: () => this.loadAll(),
+      error: () => { this.errorMessage = 'Could not deactivate student.'; this.cdr.markForCheck(); }
+    });
   }
 
   viewTimeline(s: StudentDirectoryCard, event: Event): void {

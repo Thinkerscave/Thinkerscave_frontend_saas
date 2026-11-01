@@ -1,0 +1,165 @@
+<section class="tc-page-shell desk-page desk-inquiry-detail">
+  <tc-saas-page-header />
+
+  @if (loading) {
+    <tc-page-skeleton layout="detail" />
+  } @else if (lead) {
+    <div class="desk-inquiry-detail__identity">
+      <div class="desk-inquiry-detail__identity-main">
+        <span class="desk-inquiry-detail__avatar" aria-hidden="true">{{ initials }}</span>
+        <div class="desk-inquiry-detail__identity-text">
+          <span class="desk-badge" [class.desk-badge--success]="lead.status === 'APPLICATION_SUBMITTED'">
+            {{ labels[status] || status }}
+          </span>
+          <p class="desk-inquiry-detail__ref">
+            {{ lead.inquiryNumber || ('INQ-' + lead.inquiryId) }}
+            · {{ sourceLabel }}
+            @if (lead.createdOn) {
+              · Created {{ lead.createdOn | date:'mediumDate' }}
+            }
+          </p>
+        </div>
+      </div>
+      <div class="desk-inquiry-detail__quick">
+        @if (lead.mobileNumber) {
+          <a class="tc-btn tc-btn--ghost tc-btn--sm" [href]="'tel:' + lead.mobileNumber" title="Call parent">
+            <i class="pi pi-phone" aria-hidden="true"></i>
+            {{ lead.mobileNumber }}
+          </a>
+        }
+        @if (lead.email) {
+          <a class="tc-btn tc-btn--ghost tc-btn--sm" [href]="'mailto:' + lead.email" title="Email">
+            <i class="pi pi-envelope" aria-hidden="true"></i>
+            Email
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="desk-fact-grid">
+      <div class="desk-fact">
+        <span class="desk-fact__label">Parent / guardian</span>
+        <span class="desk-fact__value">{{ lead.parentContactName || '—' }}</span>
+      </div>
+      <div class="desk-fact">
+        <span class="desk-fact__label">Class interested</span>
+        <span class="desk-fact__value">{{ lead.classInterestedIn || '—' }}</span>
+      </div>
+      <div class="desk-fact">
+        <span class="desk-fact__label">Counselor</span>
+        <span class="desk-fact__value">{{ lead.assignedCounselorName || 'Unassigned' }}</span>
+      </div>
+      <div class="desk-fact">
+        <span class="desk-fact__label">Next follow-up</span>
+        <span class="desk-fact__value">
+          {{ lead.nextFollowUpDate ? (lead.nextFollowUpDate | date:'mediumDate') : '—' }}
+        </span>
+      </div>
+      @if (detail?.applicationFeeStatus) {
+        <div class="desk-fact">
+          <span class="desk-fact__label">Application fee</span>
+          <span class="desk-fact__value">{{ detail?.applicationFeeStatus }}</span>
+        </div>
+      }
+      @if (lead.address) {
+        <div class="desk-fact desk-fact--wide">
+          <span class="desk-fact__label">Address</span>
+          <span class="desk-fact__value">{{ lead.address }}</span>
+        </div>
+      }
+      @if (lead.comments) {
+        <div class="desk-fact desk-fact--wide">
+          <span class="desk-fact__label">Desk comments</span>
+          <span class="desk-fact__value">{{ lead.comments }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="desk-inquiry-detail__columns">
+      <tc-saas-panel title="Pipeline">
+        <p class="desk-intro">Update status and counselor assignment for the admissions queue.</p>
+
+        <app-section-header title="Status" icon="pi pi-flag" />
+        <div class="desk-form-action-row">
+          <app-select
+            label="Status"
+            [options]="statusOptions"
+            [(ngModel)]="status"
+            name="status" />
+          <div class="desk-form-action-row__btn">
+            <button type="button" class="tc-btn tc-btn--primary" (click)="saveStatus()">Update status</button>
+          </div>
+        </div>
+
+        <app-section-header title="Counselor" icon="pi pi-user" />
+        <div class="desk-form-action-row">
+          <app-select
+            label="Assigned counselor"
+            [options]="counselorOptions"
+            [(ngModel)]="counselorId"
+            name="counselorId" />
+          <div class="desk-form-action-row__btn">
+            <button type="button" class="tc-btn" [disabled]="!counselorId?.trim()" (click)="assign()">Assign counselor</button>
+          </div>
+        </div>
+      </tc-saas-panel>
+
+      <tc-saas-panel title="Schedule follow-up">
+        <p class="desk-intro">Desk follow-up only — not counseling session notes.</p>
+        <app-form-section [columns]="2">
+          <app-select
+            label="Follow-up type"
+            [options]="followTypeOptions"
+            [(ngModel)]="followType"
+            name="followType" />
+          <div class="tc-form-field desk-date-field">
+            <label for="followDate">Next follow-up date</label>
+            <input id="followDate" type="date" [(ngModel)]="followDate" name="followDate" />
+          </div>
+          <div class="app-form-section__full">
+            <app-input
+              label="Note"
+              placeholder="Brief desk note for counselor"
+              [(ngModel)]="followNote"
+              name="followNote" />
+          </div>
+        </app-form-section>
+        <div class="desk-panel-actions desk-panel-actions--compact">
+          <button type="button" class="tc-btn tc-btn--primary" (click)="saveFollowUp()">Save follow-up</button>
+        </div>
+      </tc-saas-panel>
+    </div>
+
+    <tc-saas-panel [title]="'Follow-up history · ' + followUps.length">
+      @if (!followUps.length) {
+        <app-empty-state title="No follow-ups yet" message="Scheduled desk follow-ups appear here after you save one." />
+      } @else {
+        <div class="tc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Type</th>
+                <th>Next date</th>
+                <th>Note</th>
+                <th>By</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of followUps; track item.followUpId) {
+                <tr>
+                  <td>{{ (item.followUpDate || item.createdOn) | date:'medium' }}</td>
+                  <td>{{ formatFollowType(item.followUpType) }}</td>
+                  <td>{{ item.nextFollowUpDate ? (item.nextFollowUpDate | date:'mediumDate') : '—' }}</td>
+                  <td>{{ item.remarks || '—' }}</td>
+                  <td>{{ item.createdBy || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </tc-saas-panel>
+  }
+  <app-toast />
+</section>

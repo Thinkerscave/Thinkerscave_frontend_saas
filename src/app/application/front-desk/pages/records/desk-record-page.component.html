@@ -1,0 +1,252 @@
+<section class="tc-page-shell desk-page">
+  <tc-saas-page-header>
+    <button type="button" class="tc-btn tc-btn--primary" (click)="openNew()">
+      <i class="pi pi-plus" aria-hidden="true"></i>
+      {{ config.addLabel }}
+    </button>
+  </tc-saas-page-header>
+
+  @if (firstLoad) {
+    <tc-page-skeleton layout="directory-table" />
+  } @else {
+    <tc-saas-panel [title]="config.listTitle + ' · ' + total">
+      <app-list-toolbar
+        [search]="keyword"
+        [searchPlaceholder]="config.searchPlaceholder"
+        [searching]="busy"
+        (searchChange)="keyword = $event"
+        (searchDebounced)="load(0)"
+        (submitted)="load(0)"
+        (reset)="reset()" />
+      <app-list-results [busy]="busy">
+        @if (!rows.length) {
+          <app-empty-state [title]="config.emptyTitle" [message]="config.emptyMessage" />
+        } @else {
+          <div class="tc-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  @for (col of config.columns; track col.key) {
+                    <th>{{ col.label }}</th>
+                  }
+                  @if (config.rowAction) {
+                    <th></th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row['id']) {
+                  <tr>
+                    @for (col of config.columns; track col.key) {
+                      <td>{{ cellValue(row, col.key) }}</td>
+                    }
+                    @if (config.rowAction) {
+                      <td class="desk-row-actions">
+                        <button type="button" class="tc-btn" [title]="config.rowAction.tooltip" (click)="run(row)">
+                          {{ config.rowAction.label }}
+                        </button>
+                        @if (config.path === 'appointments') {
+                          <button type="button" class="tc-btn" title="Moves this appointment to a new slot" (click)="reschedule(row)">
+                            Reschedule
+                          </button>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </app-list-results>
+      <app-paginator [page]="page" [rows]="size" [totalRecords]="total" (pageChange)="onPage($event)" />
+    </tc-saas-panel>
+  }
+
+  <tc-drawer-form
+    [open]="drawer"
+    [title]="config.addLabel"
+    [description]="config.drawerIntro"
+    size="lg"
+    (closed)="drawer = false">
+    @for (group of formSectionGroups; track group.id) {
+      <app-section-header
+        [title]="group.meta.title"
+        [description]="group.meta.description"
+        [icon]="group.meta.icon" />
+
+      <app-form-section [columns]="2">
+        @for (field of group.fields; track field.key) {
+          @if (field.type === 'staff-search') {
+            <div class="app-form-section__full desk-lookup">
+              <app-input
+                [label]="field.label"
+                [placeholder]="field.placeholder ?? 'Search by name or mobile'"
+                [required]="field.required ?? false"
+                [ngModel]="staffLookup"
+                (ngModelChange)="searchStaff($event)"
+                [name]="field.key + 'Lookup'"
+                [error]="fieldErrors[field.key] ?? ''" />
+
+              @if (selectedStaffLabel) {
+                <div class="desk-selected-host" role="status">
+                  <span class="desk-selected-host__label">Selected</span>
+                  <strong>{{ selectedStaffLabel }}</strong>
+                  <button type="button" class="tc-btn tc-btn--sm" (click)="clearStaff()">Clear</button>
+                </div>
+              }
+
+              @if (staffLookup.trim().length >= 2 && !staff.length && !staffSearching) {
+                <p class="desk-help-text">No staff found. Try another name or mobile number.</p>
+              }
+
+              @if (staff.length) {
+                <ul class="desk-lookup-list" role="listbox" [attr.aria-label]="field.label + ' results'">
+                  @for (person of staff; track person.staffId) {
+                    <li>
+                      <button type="button" class="desk-lookup-list__item" (click)="pickStaff(person)">
+                        {{ person.name }} · {{ person.designation }} · {{ person.mobile }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          } @else if (field.type === 'select') {
+            <div [class.app-form-section__full]="field.fullWidth">
+              <app-select
+                [label]="field.label"
+                [placeholder]="'Select'"
+                [required]="field.required ?? false"
+                [options]="field.options ?? []"
+                [(ngModel)]="form[field.key]"
+                [name]="field.key"
+                [error]="fieldErrors[field.key] ?? ''"
+                (ngModelChange)="clearFieldError(field.key)" />
+            </div>
+          } @else if (field.type === 'textarea') {
+            <div [class.app-form-section__full]="field.fullWidth !== false">
+              <app-textarea
+                [label]="field.label"
+                [placeholder]="field.placeholder ?? ''"
+                [hint]="field.hint ?? ''"
+                [required]="field.required ?? false"
+                [rows]="3"
+                [(ngModel)]="form[field.key]"
+                [name]="field.key"
+                [error]="fieldErrors[field.key] ?? ''"
+                (ngModelChange)="clearFieldError(field.key)" />
+            </div>
+          } @else if (field.type === 'phone') {
+            <app-phone-input
+              [label]="field.label"
+              [required]="field.required ?? false"
+              [(ngModel)]="form[field.key]"
+              [name]="field.key"
+              [error]="fieldErrors[field.key] ?? ''"
+              (ngModelChange)="clearFieldError(field.key)" />
+          } @else if (field.type === 'datetime' || field.type === 'date') {
+            <div [class.app-form-section__full]="field.fullWidth">
+              <app-datetime
+                [label]="field.label"
+                [mode]="field.type"
+                timezone="utc"
+                [placeholder]="field.placeholder ?? ''"
+                [hint]="field.hint ?? ''"
+                [required]="field.required ?? false"
+                [minDate]="field.futureOnly ? now : null"
+                [maxDate]="field.pastOnly ? now : null"
+                [(ngModel)]="form[field.key]"
+                [name]="field.key"
+                [error]="fieldErrors[field.key] ?? ''"
+                (ngModelChange)="clearFieldError(field.key)" />
+            </div>
+          } @else if (field.type === 'number') {
+            <div class="tc-form-field" [class.app-form-section__full]="field.fullWidth">
+              <label [attr.for]="field.key">
+                {{ field.label }}
+                @if (field.required) {
+                  <span class="app-field__required" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                [id]="field.key"
+                [type]="field.type"
+                [placeholder]="field.placeholder ?? ''"
+                [(ngModel)]="form[field.key]"
+                [name]="field.key"
+                (ngModelChange)="clearFieldError(field.key)" />
+              @if (field.hint) {
+                <small class="desk-help-text">{{ field.hint }}</small>
+              }
+              @if (fieldErrors[field.key]) {
+                <p class="app-field__error" role="alert">{{ fieldErrors[field.key] }}</p>
+              }
+            </div>
+          } @else {
+            <div [class.app-form-section__full]="field.fullWidth">
+              <app-input
+                [label]="field.label"
+                [placeholder]="field.placeholder ?? ''"
+                [hint]="field.hint ?? ''"
+                [required]="field.required ?? false"
+                [(ngModel)]="form[field.key]"
+                [name]="field.key"
+                [error]="fieldErrors[field.key] ?? ''"
+                (ngModelChange)="clearFieldError(field.key)" />
+            </div>
+          }
+        }
+      </app-form-section>
+    }
+
+    <div drawer-actions class="desk-drawer-actions">
+      <button type="button" class="tc-btn" (click)="drawer = false">Cancel</button>
+      <button type="button" class="tc-btn tc-btn--primary" (click)="save()">Save</button>
+    </div>
+  </tc-drawer-form>
+
+  <p-dialog
+    header="Reschedule appointment"
+    [visible]="rescheduleOpen"
+    (visibleChange)="!$event && closeReschedule()"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '420px' }">
+    @if (rescheduleRow) {
+      <div class="desk-reschedule">
+        <p class="desk-reschedule__summary">
+          <strong>{{ rescheduleRow['visitorName'] }}</strong>
+          @if (rescheduleRow['staffName']) {
+            with {{ rescheduleRow['staffName'] }}
+          }
+          @if (cellValue(rescheduleRow, 'requestedSlot')) {
+            <span class="desk-help-text">Current slot: {{ cellValue(rescheduleRow, 'requestedSlot') }}</span>
+          }
+        </p>
+        <app-datetime
+          label="New date and time"
+          timezone="utc"
+          [required]="true"
+          [minDate]="now"
+          [(ngModel)]="rescheduleSlot"
+          name="rescheduleSlot"
+          [error]="rescheduleError"
+          (ngModelChange)="rescheduleError = ''" />
+      </div>
+    }
+    <div class="desk-reschedule__actions">
+      <button type="button" class="tc-btn" (click)="closeReschedule()">Cancel</button>
+      <button
+        type="button"
+        class="tc-btn tc-btn--primary"
+        title="Moves this appointment to the selected slot and marks it Rescheduled"
+        [disabled]="!rescheduleSlot || rescheduling"
+        (click)="confirmReschedule()">
+        {{ rescheduling ? 'Saving…' : 'Reschedule' }}
+      </button>
+    </div>
+  </p-dialog>
+
+  <app-toast />
+</section>

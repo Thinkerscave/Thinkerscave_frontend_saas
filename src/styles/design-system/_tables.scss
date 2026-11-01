@@ -1,10 +1,92 @@
 /* Tables */
 .tc-table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--tc-border);
   border-radius: var(--tc-radius-lg);
   background: var(--tc-surface-card);
+}
+
+/* Plain <table> inside wrap (Front Desk, documentation, legacy lists) */
+.tc-table-wrap > table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--tc-font-size-sm);
+
+  th {
+    background: var(--tc-table-header-bg);
+    color: var(--tc-text-muted);
+    font-weight: 600;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--tc-border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--tc-border);
+    color: var(--tc-text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--tc-table-row-hover-bg);
+  }
+
+  .tc-btn {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .tc-table-wrap > table {
+    min-width: 480px;
+  }
+}
+
+/* Card-style rows on phones — no extra markup required */
+@media (max-width: 640px) {
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table {
+    min-width: 0;
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table thead {
+    display: none;
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table tbody tr {
+    display: block;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--tc-border);
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table tbody tr:hover {
+    background: transparent;
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table tbody td {
+    display: block;
+    padding: 0.2rem 0;
+    border: none;
+    white-space: normal;
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table tbody td:last-child {
+    padding-top: 0.45rem;
+  }
+
+  .tc-table-wrap:not(.tc-table-wrap--scroll-only) > table tbody td .tc-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .tc-table {
