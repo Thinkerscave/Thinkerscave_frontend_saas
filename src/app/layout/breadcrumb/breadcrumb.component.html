@@ -4,9 +4,14 @@
       <h1 class="tc-page-header__title">{{ title }}</h1>
       <p *ngIf="subtitle" class="tc-page-header__subtitle">{{ subtitle }}</p>
     </div>
-    <div class="tc-page-header__right" *ngIf="rightLabel || !hideBreadcrumb">
-      <span *ngIf="rightLabel" class="tc-page-header__right-label"><i class="pi pi-calendar" aria-hidden="true"></i>{{ rightLabel }}</span>
-      <p-breadcrumb *ngIf="!hideBreadcrumb" class="tc-page-header__trail" [home]="home" [model]="items"></p-breadcrumb>
+    <div class="tc-page-header__right" *ngIf="rightLabel || !hideBreadcrumb || (actions$ | async)">
+      <div class="tc-page-header__trail-wrap" *ngIf="rightLabel || !hideBreadcrumb">
+        <span *ngIf="rightLabel" class="tc-page-header__right-label"><i class="pi pi-calendar" aria-hidden="true"></i>{{ rightLabel }}</span>
+        <p-breadcrumb *ngIf="!hideBreadcrumb" class="tc-page-header__trail" [home]="home" [model]="items"></p-breadcrumb>
+      </div>
+      <div class="tc-page-header__actions" *ngIf="actions$ | async as actions">
+        <ng-container *ngTemplateOutlet="actions"></ng-container>
+      </div>
     </div>
   </div>
 </header>

@@ -5,7 +5,7 @@ export interface TeacherOption {
 
 export interface EligibleArrangementSlot {
   timetableEntryId: number;
-  className: string;
+  academicGroupName: string;
   sectionName: string;
   subjectName: string;
   periodNumber: number;
@@ -37,7 +37,7 @@ export interface TeacherArrangement {
   reviewNote: string | null;
   slots: {
     timetableEntryId: number;
-    className: string;
+    academicGroupName: string;
     sectionName: string;
     subjectName: string;
     periodNumber: number;

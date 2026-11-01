@@ -1,26 +1,34 @@
 <div class="mt-page acad-page">
-<tc-saas-page-header>
-    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+<tc-saas-page-header [shellActions]="true">
+    <tc-academic-year-selector *ngIf="!hasStudentRole" (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <small class="mt-context" *ngIf="hasStudentRole && enrollmentYearName">{{ enrollmentYearName }} · Based on your active enrollment</small>
   </tc-saas-page-header>
 
+    <div class="acad-guide-banner acad-guide-banner--warning" *ngIf="accessNotice">
+    <i class="pi pi-lock acad-guide-banner__icon"></i>
+    <div class="acad-guide-banner__content">
+      <div class="acad-guide-banner__title">{{ hasStudentRole ? 'Enrollment Required' : 'Timetable Schedule Restricted' }}</div>
+      <div class="acad-guide-banner__desc">{{ accessNotice }}</div>
+    </div>
+  </div>
     <tc-page-skeleton *ngIf="loading" variant="table" [rows]="8" [columns]="6"></tc-page-skeleton>
-  <ng-container *ngIf="!loading">
-<div class="mt-summary" *ngIf="data">
-    <div class="blue"><strong>{{ summary.classesToday }}</strong><span>Classes Today</span></div>
-    <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>Teaching Periods</span></div>
+  <ng-container *ngIf="!loading && !accessNotice">
+<div class="mt-summary acad-stagger" *ngIf="data?.grid?.periods?.length">
+    <div class="blue"><strong>{{ summary.classesToday }}</strong><span>{{ data?.role === 'STUDENT' ? 'Classes Today' : 'Lessons Today' }}</span></div>
+    <div class="green"><strong>{{ summary.teachingPeriods }}</strong><span>{{ data?.role === 'STUDENT' ? 'Scheduled Periods' : 'Teaching Periods' }}</span></div>
     <div class="purple"><strong>{{ summary.freePeriods }}</strong><span>Free Periods</span></div>
-    <div class="orange"><strong>{{ summary.classes }}</strong><span>Classes / Sections</span></div>
+    <div class="orange"><strong>{{ summary.academicGroups }}</strong><span>{{ data?.role === 'STUDENT' ? 'My Class Sections' : 'Academic Groups / Sections' }}</span></div>
     <div class="pink"><strong>{{ summary.subjects }}</strong><span>Subjects</span></div>
   </div>
 
-  <div class="mt-controls">
+  <div class="mt-controls" *ngIf="data?.grid?.periods?.length">
     <div class="mt-toggle">
       <button type="button" [class.active]="viewMode === 'week'" (click)="viewMode = 'week'">Week</button>
       <button type="button" [class.active]="viewMode === 'day'" (click)="viewMode = 'day'">Day</button>
     </div>
-    <select [(ngModel)]="classFilter">
-      <option value="">All My Classes</option>
-      <option *ngFor="let c of classOptions" [value]="c">{{ c }}</option>
+    <select *ngIf="data?.role === 'STAFF'" [(ngModel)]="academicGroupFilter">
+      <option value="">All My Academic Groups</option>
+      <option *ngFor="let c of academicGroupOptions" [value]="c">{{ c }}</option>
     </select>
     <select [(ngModel)]="subjectFilter">
       <option value="">All Subjects</option>
@@ -28,63 +36,75 @@
     </select>
   </div>
 
-  <div class="mt-layout" *ngIf="data as d">
+  <div class="mt-layout acad-content-enter" *ngIf="data as d">
     <div class="mt-main">
       <p class="mt-message" *ngIf="d.message">{{ d.message }}</p>
-      <table class="mt-grid" *ngIf="d.grid?.periods?.length; else emptyTpl">
-        <thead>
-          <tr>
-            <th>Period</th>
-            <th *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
-              {{ day | titlecase }}
-              <small *ngIf="isToday(day)">TODAY</small>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of d.grid!.periods" [class.break]="p.slotKind === 'BREAK'">
-            <td>
-              <strong>{{ p.name || ('P' + p.periodNumber) }}</strong>
-              <div class="mt-muted" *ngIf="p.startTime">{{ p.startTime }}–{{ p.endTime }}</div>
-            </td>
-            <td *ngFor="let day of visibleDays()" [class.today]="isToday(day)">
-              <ng-container *ngIf="p.slotKind === 'BREAK'; else cellTpl">Break</ng-container>
-              <ng-template #cellTpl>
-                <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
-                  <strong>{{ c.subjectName || '—' }}</strong>
-                  <span *ngIf="d.role === 'STAFF'">
-                    {{ c.className }}{{ c.sectionName ? '-' + c.sectionName : '' }}
-                  </span>
-                  <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
-                  <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
-                </div>
-                <ng-template #free><span class="mt-free">Free</span></ng-template>
-              </ng-template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <ng-template #emptyTpl><div class="mt-empty">No published timetable available.</div></ng-template>
+      <div class="mt-grid-scroll">
+        <table class="mt-grid" *ngIf="d.grid?.periods?.length; else emptyTpl">
+          <thead>
+            <tr>
+              <th scope="col">Day</th>
+              <th *ngFor="let p of d.grid!.periods" scope="col">
+                <strong>{{ p.name || ('P' + p.periodNumber) }}</strong>
+                <small *ngIf="p.startTime">{{ p.startTime }}–{{ p.endTime }}</small>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let day of visibleDays()">
+              <th scope="row" [class.today]="isToday(day)">
+                {{ day | titlecase }}
+                <small class="mt-today-label" *ngIf="isToday(day)">TODAY</small>
+              </th>
+              <td *ngFor="let p of d.grid!.periods" [class.today]="isToday(day)">
+                <ng-container *ngIf="p.slotKind === 'BREAK'; else cellTpl">Break</ng-container>
+                <ng-template #cellTpl>
+                  <div class="mt-cell" *ngIf="cell(day, p.periodNumber) as c; else free" [ngStyle]="cellStyle(c.subjectName)">
+                    <strong>{{ c.subjectName || '—' }}</strong>
+                    <span *ngIf="d.role === 'STAFF'">
+                      {{ c.academicGroupName }}{{ c.sectionName ? '-' + c.sectionName : '' }}
+                    </span>
+                    <span *ngIf="d.role === 'STUDENT'">{{ c.staffName || '—' }}</span>
+                    <small *ngIf="c.resourceName">{{ c.resourceName }}</small>
+                  </div>
+                  <ng-template #free><span class="mt-free">Free</span></ng-template>
+                </ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyTpl>
+        <div class="acad-empty-state">
+          <div class="acad-empty-state__icon-box">
+            <i class="pi pi-calendar-times"></i>
+          </div>
+          <h4 class="acad-empty-state__title">No Published Timetable</h4>
+          <p class="acad-empty-state__desc">
+            The timetable for this academic year has not been published yet. Once finalized and published by academic administration, your weekly period schedule will appear here.
+          </p>
+        </div>
+      </ng-template>
     </div>
     <aside class="mt-side">
-      <h3>Today's Schedule</h3>
+      <h3>{{ d.role === 'STUDENT' ? 'Your Classes Today' : "Today's Schedule" }}</h3>
       <article *ngFor="let t of d.todaySchedule" class="mt-today" [class.current]="isCurrent(t.startTime, t.endTime)">
         <div class="mt-today__time">{{ t.startTime }}–{{ t.endTime }}</div>
         <div>
           <strong>{{ t.subjectName || t.periodLabel || ('Period ' + t.periodNumber) }}</strong>
-          <div>{{ t.className }}{{ t.sectionName ? '-' + t.sectionName : '' }}</div>
+          <div>{{ t.academicGroupName }}{{ t.sectionName ? '-' + t.sectionName : '' }}</div>
           <small>{{ t.roomName || '—' }}</small>
         </div>
         <span class="mt-now" *ngIf="isCurrent(t.startTime, t.endTime)">CURRENT</span>
       </article>
-      <p class="mt-muted" *ngIf="!d.todaySchedule.length">No classes scheduled today.</p>
+      <p class="mt-muted" *ngIf="!d.todaySchedule.length">{{ d.role === 'STUDENT' ? 'No classes scheduled for today.' : 'No academic groups scheduled today.' }}</p>
 
       <div class="mt-actions">
-        <a routerLink="/app/academics/my-classes">My Classes</a>
-        <a routerLink="/app/academics/academic-structure">Academic Structure</a>
-        <a routerLink="/app/academics/my-academics">My Academics</a>
+        <a *ngIf="d.role === 'STAFF'" routerLink="/app/academics/my-academic-groups">My Academic Groups</a>
+        <a *ngIf="d.role === 'STAFF'" routerLink="/app/academics/academic-structure">Academic Structure</a>
+        <a *ngIf="d.role === 'STUDENT'" routerLink="/app/academics/my-academics">My Academics</a>
       </div>
-      <p class="mt-tip">Tip: Use Week/Day and filters to focus on your schedule quickly.</p>
+      <p class="mt-tip">Tip: Use Week/Day{{ d.role === 'STAFF' ? ' and filters' : '' }} to focus on your schedule quickly.</p>
     </aside>
   </div>
   </ng-container>

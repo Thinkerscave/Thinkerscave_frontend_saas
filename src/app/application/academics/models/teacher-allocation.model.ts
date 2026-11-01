@@ -14,16 +14,16 @@ export type AcademicYearStatusLite =
 export interface TeacherAllocationRow {
   teacherAllocationId?: number | null;
   academicYearId: number;
-  classId: number;
-  className: string;
-  classCode?: string;
+  academicGroupId: number;
+  academicGroupName: string;
+  academicGroupCode?: string;
   sectionId: number;
   sectionName: string;
-  classSubjectMappingId: number;
+  academicGroupSubjectMappingId: number;
   subjectId: number;
   subjectName: string;
   subjectCode?: string;
-  subjectCategory?: string;
+  subjectType?: string;
   weeklyPeriods: number;
   primaryStaffId?: number | null;
   primaryStaffName?: string | null;
@@ -75,7 +75,7 @@ export interface TeacherAllocationDashboard {
 
 export interface TeacherAllocationAssignRequest {
   sectionId: number;
-  classSubjectMappingId: number;
+  academicGroupSubjectMappingId: number;
   staffId: number;
   role?: 'PRIMARY' | 'SECONDARY';
 }

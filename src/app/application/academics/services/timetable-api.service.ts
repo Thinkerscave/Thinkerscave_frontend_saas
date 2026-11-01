@@ -1,79 +1,184 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { academicsApi } from '../../../shared/constants/api.endpoint';
 import { ApiResponse } from '../../../shared/models/auth.model';
 import {
-  AcademicResource,
+  FixedActivity,
+  FixedActivityOptions,
+  FixedActivityRequest,
+  FixedActivityResolveRequest,
+  FixedActivitySchedule,
   GenerationProgress,
   GenerationStartResponse,
-  TimetableConfiguration,
-  TimetableConfigurationRequest,
+  GridView,
+  GroupAssignmentMatrix,
+  GroupAssignmentRequest,
+  SchedulePattern,
+  SchedulePatternRequest,
+  TimetableCell,
   TimetableConflict,
-  TimetableDashboard,
-  TimetableGenerateResult,
+  TimetableEntryRequest,
   TimetableGrid,
-  TimetableReadiness,
   TimetableVersion,
-  GridView
+  TimetableWorkspace
 } from '../models/timetable.model';
 
 @Injectable({ providedIn: 'root' })
 export class TimetableApiService {
   private readonly http = inject(HttpClient);
 
-  getDashboard(yearId: number): Observable<TimetableDashboard> {
+  getWorkspace(yearId: number, date?: string | null): Observable<TimetableWorkspace> {
+    let params = new HttpParams();
+    if (date) params = params.set('date', date);
     return this.http
-      .get<ApiResponse<TimetableDashboard>>(academicsApi.timetableDashboard(yearId))
+      .get<ApiResponse<TimetableWorkspace>>(academicsApi.timetableWorkspace(yearId), { params })
       .pipe(map(r => r.data));
   }
 
-  getConfiguration(yearId: number): Observable<TimetableConfiguration | null> {
+  createManualDraft(yearId: number): Observable<TimetableVersion> {
     return this.http
-      .get<ApiResponse<TimetableConfiguration>>(academicsApi.timetableConfiguration(yearId))
+      .post<ApiResponse<TimetableVersion>>(academicsApi.timetableManualDraft(yearId), {})
       .pipe(map(r => r.data));
   }
 
-  /** Unsaved configuration prefilled from the latest other year, or a standard school day. */
-  getConfigurationTemplate(yearId: number): Observable<TimetableConfiguration> {
+  discardVersion(versionId: number): Observable<void> {
     return this.http
-      .get<ApiResponse<TimetableConfiguration>>(academicsApi.timetableConfigurationTemplate(yearId))
+      .delete<ApiResponse<void>>(academicsApi.timetableVersionDiscard(versionId))
       .pipe(map(r => r.data));
   }
 
-  saveConfiguration(yearId: number, body: TimetableConfigurationRequest): Observable<TimetableConfiguration> {
+  getView(versionId: number, view: GridView, params: Record<string, any> = {}): Observable<TimetableGrid> {
+    let httpParams = new HttpParams().set('view', view);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
     return this.http
-      .put<ApiResponse<TimetableConfiguration>>(academicsApi.timetableConfiguration(yearId), body)
+      .get<ApiResponse<TimetableGrid>>(academicsApi.timetableView(versionId), { params: httpParams })
       .pipe(map(r => r.data));
   }
 
-  generate(yearId: number): Observable<TimetableGenerateResult> {
+  listPatterns(yearId: number): Observable<SchedulePattern[]> {
     return this.http
-      .post<ApiResponse<TimetableGenerateResult>>(academicsApi.timetableGenerate(yearId), {})
+      .get<ApiResponse<SchedulePattern[]>>(academicsApi.timetablePatterns(yearId))
       .pipe(map(r => r.data));
   }
 
-  getReadiness(yearId: number): Observable<TimetableReadiness> {
+  createPattern(yearId: number, body: SchedulePatternRequest): Observable<SchedulePattern> {
     return this.http
-      .get<ApiResponse<TimetableReadiness>>(academicsApi.timetableReadiness(yearId))
+      .post<ApiResponse<SchedulePattern>>(academicsApi.timetablePatterns(yearId), body)
       .pipe(map(r => r.data));
   }
 
-  startGeneration(yearId: number, body?: { seed?: number }): Observable<GenerationStartResponse> {
+  updatePattern(patternId: number, body: SchedulePatternRequest): Observable<SchedulePattern> {
     return this.http
-      .post<ApiResponse<GenerationStartResponse>>(academicsApi.timetableGenerations(yearId), body ?? {})
+      .put<ApiResponse<SchedulePattern>>(academicsApi.timetablePattern(patternId), body)
       .pipe(map(r => r.data));
   }
 
-  getGenerationProgress(generationId: string): Observable<GenerationProgress> {
+  duplicatePattern(patternId: number, name?: string): Observable<SchedulePattern> {
     return this.http
-      .get<ApiResponse<GenerationProgress>>(academicsApi.timetableGenerationById(generationId))
+      .post<ApiResponse<SchedulePattern>>(academicsApi.timetablePatternDuplicate(patternId), { name })
       .pipe(map(r => r.data));
   }
 
-  cancelGeneration(generationId: string): Observable<void> {
+  setPatternActive(patternId: number, active: boolean): Observable<SchedulePattern> {
+    const url = active
+      ? academicsApi.timetablePatternActivate(patternId)
+      : academicsApi.timetablePatternDeactivate(patternId);
+    return this.http.post<ApiResponse<SchedulePattern>>(url, {}).pipe(map(r => r.data));
+  }
+
+  getAssignmentMatrix(yearId: number): Observable<GroupAssignmentMatrix> {
     return this.http
-      .post<ApiResponse<void>>(academicsApi.timetableGenerationCancel(generationId), {})
+      .get<ApiResponse<GroupAssignmentMatrix>>(academicsApi.timetableAssignmentMatrix(yearId))
+      .pipe(map(r => r.data));
+  }
+
+  assignPattern(yearId: number, body: GroupAssignmentRequest): Observable<any> {
+    return this.http
+      .post<ApiResponse<any>>(academicsApi.timetableAssignments(yearId), body)
+      .pipe(map(r => r.data));
+  }
+
+  updateAssignment(assignmentId: number, body: Partial<GroupAssignmentRequest>): Observable<any> {
+    return this.http
+      .put<ApiResponse<any>>(academicsApi.timetableAssignment(assignmentId), body)
+      .pipe(map(r => r.data));
+  }
+
+  deleteAssignment(assignmentId: number): Observable<void> {
+    return this.http
+      .delete<ApiResponse<void>>(academicsApi.timetableAssignment(assignmentId))
+      .pipe(map(r => r.data));
+  }
+
+  listFixedActivities(yearId: number): Observable<FixedActivity[]> {
+    return this.http
+      .get<ApiResponse<FixedActivity[]>>(academicsApi.timetableFixedActivities(yearId))
+      .pipe(map(r => r.data));
+  }
+
+  getFixedActivityOptions(yearId: number): Observable<FixedActivityOptions> {
+    return this.http
+      .get<ApiResponse<FixedActivityOptions>>(academicsApi.timetableFixedActivityOptions(yearId))
+      .pipe(map(r => r.data));
+  }
+
+  resolveFixedActivitySchedule(
+    yearId: number,
+    body: FixedActivityResolveRequest
+  ): Observable<FixedActivitySchedule> {
+    return this.http
+      .post<ApiResponse<FixedActivitySchedule>>(academicsApi.timetableFixedActivityResolve(yearId), body)
+      .pipe(map(r => r.data));
+  }
+
+  createFixedActivity(yearId: number, body: FixedActivityRequest): Observable<FixedActivity> {
+    return this.http
+      .post<ApiResponse<FixedActivity>>(academicsApi.timetableFixedActivities(yearId), body)
+      .pipe(map(r => r.data));
+  }
+
+  updateFixedActivity(activityId: number, body: FixedActivityRequest): Observable<FixedActivity> {
+    return this.http
+      .put<ApiResponse<FixedActivity>>(academicsApi.timetableFixedActivity(activityId), body)
+      .pipe(map(r => r.data));
+  }
+
+  setFixedActivityActive(activityId: number, active: boolean): Observable<FixedActivity> {
+    const url = active
+      ? academicsApi.timetableFixedActivityActivate(activityId)
+      : academicsApi.timetableFixedActivityDeactivate(activityId);
+    return this.http.post<ApiResponse<FixedActivity>>(url, {}).pipe(map(r => r.data));
+  }
+
+  deleteFixedActivity(activityId: number): Observable<void> {
+    return this.http
+      .delete<ApiResponse<void>>(academicsApi.timetableFixedActivity(activityId))
+      .pipe(map(r => r.data));
+  }
+
+  startGeneration(yearId: number, body: {
+    seed?: number; academicGroupIds?: number[]; preserveLocked?: boolean;
+    replaceExistingDraft?: boolean; referenceDate?: string | null;
+  } = {}): Observable<GenerationStartResponse> {
+    return this.http
+      .post<ApiResponse<GenerationStartResponse>>(academicsApi.timetableGenerations(yearId), body)
+      .pipe(map(r => r.data));
+  }
+
+  getGenerationProgress(generationId: number): Observable<GenerationProgress> {
+    return this.http
+      .get<ApiResponse<GenerationProgress>>(academicsApi.timetableGenerationById(String(generationId)))
+      .pipe(map(r => r.data));
+  }
+
+  cancelGeneration(generationId: number): Observable<void> {
+    return this.http
+      .post<ApiResponse<void>>(academicsApi.timetableGenerationCancel(String(generationId)), {})
       .pipe(map(r => r.data));
   }
 
@@ -83,29 +188,15 @@ export class TimetableApiService {
       .pipe(map(r => r.data));
   }
 
-  getGrid(versionId: number, view: GridView, params?: Record<string, any>): Observable<TimetableGrid> {
-    let httpParams: any = { view };
-    if (params) httpParams = { ...httpParams, ...params };
-    return this.http
-      .get<ApiResponse<TimetableGrid>>(academicsApi.timetableGrid(versionId), { params: httpParams })
-      .pipe(map(r => r.data));
-  }
-
   getConflicts(versionId: number): Observable<TimetableConflict[]> {
     return this.http
       .get<ApiResponse<TimetableConflict[]>>(academicsApi.timetableConflicts(versionId))
       .pipe(map(r => r.data));
   }
 
-  resolveConflict(conflictId: number): Observable<TimetableConflict> {
+  validateVersion(versionId: number): Observable<TimetableConflict[]> {
     return this.http
-      .post<ApiResponse<TimetableConflict>>(academicsApi.timetableConflictResolve(conflictId), {})
-      .pipe(map(r => r.data));
-  }
-
-  ignoreConflict(conflictId: number): Observable<TimetableConflict> {
-    return this.http
-      .post<ApiResponse<TimetableConflict>>(academicsApi.timetableConflictIgnore(conflictId), {})
+      .post<ApiResponse<TimetableConflict[]>>(academicsApi.timetableVersionValidate(versionId), {})
       .pipe(map(r => r.data));
   }
 
@@ -133,21 +224,28 @@ export class TimetableApiService {
       .pipe(map(r => r.data));
   }
 
-  listResources(): Observable<AcademicResource[]> {
+  addEntry(versionId: number, body: TimetableEntryRequest): Observable<TimetableCell> {
     return this.http
-      .get<ApiResponse<AcademicResource[]>>(academicsApi.academicResources)
+      .post<ApiResponse<TimetableCell>>(academicsApi.timetableVersionEntries(versionId), body)
       .pipe(map(r => r.data));
   }
 
-  createResource(body: Omit<AcademicResource, 'academicResourceId'>): Observable<AcademicResource> {
+  updateEntry(entryId: number, body: TimetableEntryRequest): Observable<TimetableCell> {
     return this.http
-      .post<ApiResponse<AcademicResource>>(academicsApi.academicResources, body)
+      .put<ApiResponse<TimetableCell>>(academicsApi.timetableEntry(entryId), body)
       .pipe(map(r => r.data));
   }
 
-  deactivateResource(id: number): Observable<AcademicResource> {
+  deleteEntry(entryId: number): Observable<void> {
     return this.http
-      .post<ApiResponse<AcademicResource>>(academicsApi.deactivateAcademicResource(id), {})
+      .delete<ApiResponse<void>>(academicsApi.timetableEntry(entryId))
       .pipe(map(r => r.data));
+  }
+
+  lockEntry(entryId: number, locked: boolean): Observable<TimetableCell> {
+    const url = locked
+      ? academicsApi.timetableEntryLock(entryId)
+      : academicsApi.timetableEntryUnlock(entryId);
+    return this.http.post<ApiResponse<TimetableCell>>(url, {}).pipe(map(r => r.data));
   }
 }

@@ -1,0 +1,337 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #sectionMenu [popup]="true" [model]="menuItems"></p-menu>
+<p-menu #groupMenu [popup]="true" [model]="groupMenuItems" appendTo="body"
+  styleClass="academic-group-actions-menu"></p-menu>
+
+<div class="cd-page acad-page" *ngIf="!loading && !loadError && cls as c; else bootTpl">
+  <tc-saas-page-header [shellActions]="true">
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary tc-btn--sm"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage"
+      (click)="openAddSection()">
+      <i class="pi pi-plus"></i> Add Section
+    </button>
+    <button
+      type="button"
+      class="tc-btn tc-btn--outline tc-btn--sm cd-kebab"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="!canManage"
+      (click)="buildGroupMenu(); groupMenu.toggle($event)"
+      aria-label="Academic Group actions">
+      <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+    </button>
+  </tc-saas-page-header>
+
+  <header class="cd-identity" aria-label="Academic group summary">
+    <span class="cd-identity__icon" aria-hidden="true"><i class="pi pi-users"></i></span>
+    <div class="cd-identity__body">
+      <div class="cd-identity__meta">
+        <span class="cd-identity__kind">Academic Group</span>
+        <span class="cd-status" [class.cd-status--active]="c.active" [class.cd-status--inactive]="!c.active">
+          {{ c.active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+      <p class="cd-identity__details">
+        <code>{{ c.code }}</code>
+        <span aria-hidden="true">·</span>
+        <span>{{ c.academicYearName || '—' }}</span>
+      </p>
+    </div>
+  </header>
+
+  <section class="cd-metrics" aria-label="Group summary">
+    <button type="button" class="cd-metric" (click)="focusSections()">
+      <span class="cd-metric__label">Sections</span>
+      <strong class="cd-metric__value">{{ summary?.sectionCount ?? '—' }}</strong>
+    </button>
+    <button type="button" class="cd-metric" (click)="viewStudents()">
+      <span class="cd-metric__label">Total Students</span>
+      <strong class="cd-metric__value">{{ studentCount }}</strong>
+    </button>
+    <a class="cd-metric"
+      routerLink="/app/academics/subject-mapping"
+      [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+      <span class="cd-metric__label">Subjects / Curriculum</span>
+      <strong class="cd-metric__value">{{ subjectBoard?.mappedCount ?? '—' }}</strong>
+    </a>
+    <a class="cd-metric"
+      routerLink="/app/academics/teacher-allocation"
+      [queryParams]="{ from: 'academicGroups', academicGroupId: c.academicGroupId }">
+      <span class="cd-metric__label">Teachers</span>
+      <strong class="cd-metric__value">{{ summary?.teacherCount ?? '—' }}</strong>
+    </a>
+    <a class="cd-metric"
+      routerLink="/app/academics/timetable"
+      [queryParams]="{ from: 'academicGroups', academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+      <span class="cd-metric__label">Timetable</span>
+      <strong class="cd-metric__value">{{ timetableLabel }}</strong>
+    </a>
+  </section>
+  <p class="cd-error-line" role="status" *ngIf="summaryError">
+    Live counts could not be loaded. Figures are shown as unavailable rather than estimated.
+  </p>
+
+  <div class="cd-grid">
+    <section class="cd-panel" aria-labelledby="cd-info-heading">
+      <div class="cd-panel__head">
+        <h2 id="cd-info-heading">Group Information</h2>
+        <button
+          type="button"
+          class="tc-btn tc-btn--outline tc-btn--sm"
+          *tcHasPerm="resource; action: 'manage'"
+          [disabled]="!canManage"
+          (click)="openEditAcademicGroup()">
+          <i class="pi pi-pencil"></i> Edit
+        </button>
+      </div>
+      <dl class="cd-info">
+        <div><dt>Classification</dt><dd>{{ c.stage ? stageLabel(c.stage) : 'Not set' }}</dd></div>
+        <div><dt>Description</dt><dd>{{ c.description || 'No description' }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="cd-panel" aria-labelledby="cd-quick-heading">
+      <div class="cd-panel__head">
+        <h2 id="cd-quick-heading">Quick Actions</h2>
+      </div>
+      <div class="cd-quick">
+        <button type="button" class="cd-quick__item" (click)="viewStudents()">
+          <strong>View Students</strong>
+          <span>Student directory filtered to this group</span>
+        </button>
+        <a class="cd-quick__item"
+          routerLink="/app/academics/subject-mapping"
+          [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+          <strong>Manage Subjects</strong>
+          <span>Curriculum mapping for this group</span>
+        </a>
+        <a class="cd-quick__item"
+          routerLink="/app/academics/teacher-allocation"
+          [queryParams]="{ from: 'academicGroups', academicGroupId: c.academicGroupId }">
+          <strong>Teacher Allocation</strong>
+          <span>Assign teachers to this group's subjects</span>
+        </a>
+        <a class="cd-quick__item"
+          routerLink="/app/academics/timetable"
+          [queryParams]="{ from: 'academicGroups', academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+          <strong>View Timetable</strong>
+          <span>Timetable workspace for this group</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <section class="cd-panel cd-subjects" aria-labelledby="cd-subjects-heading">
+    <div class="cd-panel__head">
+      <div>
+        <h2 id="cd-subjects-heading">Subjects</h2>
+        <p class="cd-subjects__hint">Active subjects mapped to this academic group.</p>
+      </div>
+      <a
+        class="tc-btn tc-btn--outline tc-btn--sm"
+        routerLink="/app/academics/subject-mapping"
+        [queryParams]="{ academicYearId: c.academicYearId, academicGroupId: c.academicGroupId }">
+        <i class="pi pi-book" aria-hidden="true"></i> Manage Subjects
+      </a>
+    </div>
+    <p class="cd-subjects__count" *ngIf="subjectBoard as board">
+      <strong>{{ board.mappedCount }}</strong> mapped subject{{ board.mappedCount === 1 ? '' : 's' }}
+    </p>
+    <ul class="cd-subjects__list" *ngIf="subjectPreview.length">
+      <li *ngFor="let m of subjectPreview">{{ m.subjectName }}</li>
+      <li class="cd-subjects__more" *ngIf="subjectsMoreCount > 0">+{{ subjectsMoreCount }} more</li>
+    </ul>
+    <p class="cd-subjects__empty" *ngIf="subjectBoard && !subjectPreview.length">No subjects mapped yet. Map curriculum subjects to enable teacher allocations and timetable generation.</p>
+    <p class="cd-error-line" role="status" *ngIf="subjectsError">Subjects could not be loaded.</p>
+  </section>
+
+  <section class="cd-sections" id="cd-sections" aria-labelledby="cd-sections-heading">
+    <div class="cd-sections__head">
+      <div>
+        <h2 id="cd-sections-heading">Sections</h2>
+        <p>Optional subdivisions of this group, such as A and B.</p>
+      </div>
+    </div>
+
+    <div class="cd-table-wrap" *ngIf="c.sections?.length; else noSections">
+      <table class="cd-table">
+        <thead>
+          <tr>
+            <th scope="col">Section Name</th>
+            <th scope="col">Section Code</th>
+            <th scope="col">Section Teacher</th>
+            <th scope="col">Students</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="cd-table__actions"><span class="cd-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let section of c.sections" [class.cd-row--inactive]="!section.active">
+            <td><strong>{{ sectionDisplayName(section) }}</strong></td>
+            <td><code>{{ section.code }}</code></td>
+            <td>
+              <span *ngIf="section.sectionTeacherName">{{ section.sectionTeacherName }}</span>
+              <button
+                *ngIf="!section.sectionTeacherName"
+                type="button"
+                class="cd-assign"
+                [disabled]="!canManage"
+                (click)="openAssignTeacher(section)">
+                {{ canManage ? 'Assign Teacher' : 'Not assigned' }}
+              </button>
+            </td>
+            <td>
+              <button type="button" class="cd-link" (click)="viewStudents(section)">
+                {{ section.studentCount || 0 }}
+              </button>
+            </td>
+            <td>
+              <span
+                class="cd-badge"
+                [class.cd-badge--success]="section.active"
+                [class.cd-badge--neutral]="!section.active">
+                {{ section.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="cd-table__actions">
+              <button
+                type="button"
+                class="cd-icon-btn"
+                *ngIf="canManage"
+                (click)="buildSectionMenu(section); sectionMenu.toggle($event)"
+                aria-label="Section actions">
+                <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noSections>
+      <div class="acad-empty-state" style="margin: 0.5rem 0; padding: 2.5rem 1.5rem;">
+        <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+          <i class="pi pi-sitemap" aria-hidden="true"></i>
+        </span>
+        <h3>No sections created for this group</h3>
+        <p>
+          Students in this group can be managed directly as a single cohort. Add sections if this class needs subdivisions (such as Section A and Section B) to organize students or assign section teachers.
+        </p>
+        <div class="acad-empty-state__actions">
+          <button
+            type="button"
+            class="tc-btn tc-btn--primary tc-btn--sm"
+            *tcHasPerm="resource; action: 'manage'"
+            [disabled]="!canManage"
+            (click)="openAddSection()">
+            <i class="pi pi-plus" aria-hidden="true"></i> Add Section
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </section>
+</div>
+
+<ng-template #bootTpl>
+  <div class="cd-page acad-page" *ngIf="loadError; else loadingTpl">
+    <div class="cd-error">
+      <h2>Unable to load Academic Group</h2>
+      <p>We couldn't load this Academic Group right now.</p>
+      <div class="cd-error__actions">
+        <button type="button" class="tc-btn tc-btn--primary" (click)="retry()">Try Again</button>
+        <button type="button" class="tc-btn" (click)="back()">Go back</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="cd-page acad-page" aria-busy="true">
+      <tc-saas-page-header></tc-saas-page-header>
+      <tc-page-skeleton variant="detail"></tc-page-skeleton>
+    </div>
+  </ng-template>
+</ng-template>
+
+<p-dialog
+  header="Edit Academic Group"
+  [(visible)]="showAcademicGroupDialog"
+  [modal]="true"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  [draggable]="false">
+  <form class="cd-form" [formGroup]="academicGroupForm" (ngSubmit)="saveAcademicGroup()">
+    <div class="cd-form__alert" role="alert" *ngIf="formError">{{ formError }}</div>
+    <label>Group Name *<input type="text" formControlName="name" /></label>
+    <label>Group Code<input type="text" formControlName="code" placeholder="Leave blank to keep the current code" /></label>
+    <label>
+      Classification (optional)
+      <p-dropdown
+        [options]="classificationOptions"
+        formControlName="stage"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="None"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+    <label>Description (optional)<textarea rows="3" maxlength="500" formControlName="description"></textarea></label>
+    <div class="cd-form__actions">
+      <button type="button" class="tc-btn" (click)="showAcademicGroupDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save Changes' }}</button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [header]="editingSectionId ? 'Edit Section' : 'Add Section'"
+  [(visible)]="showSectionDialog"
+  [modal]="true"
+  [style]="{ width: 'min(480px, 94vw)' }"
+  [draggable]="false">
+  <p class="cs-form__year" *ngIf="cls && !editingSectionId">
+    Parent group: <strong>{{ cls.name }}</strong> ({{ cls.code }}). Inherited automatically.
+  </p>
+  <form class="cd-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
+    <label>
+      Section Name *
+      <input type="text" formControlName="name" (blur)="suggestSectionCode()" placeholder="A" />
+      <small class="cd-form__error" *ngIf="sectionForm.get('name')?.touched && sectionForm.get('name')?.hasError('required')">
+        Section name is required.
+      </small>
+      <small class="cd-form__error" *ngIf="sectionForm.get('name')?.touched && sectionForm.get('name')?.hasError('maxlength')">
+        Section name cannot exceed 50 characters.
+      </small>
+    </label>
+    <label>Section Code<input type="text" formControlName="code" placeholder="C1-A" /></label>
+    <label>
+      Capacity
+      <input type="number" min="1" formControlName="capacity" placeholder="40" />
+      <small class="cd-form__error" *ngIf="sectionForm.get('capacity')?.touched && sectionForm.get('capacity')?.hasError('min')">
+        Capacity must be greater than zero.
+      </small>
+    </label>
+    <label>
+      Section Teacher
+      <p-dropdown
+        [options]="staffOptions"
+        formControlName="sectionTeacherStaffId"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="Select teacher (optional)"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+    <div class="cd-form__status">
+      <span>Status</span>
+      <span class="cd-status" [class.cd-status--active]="editingSectionActive" [class.cd-status--inactive]="!editingSectionActive">
+        {{ editingSectionActive ? 'Active' : 'Inactive' }}
+      </span>
+    </div>
+    <div class="cd-form__actions">
+      <button type="button" class="tc-btn" (click)="showSectionDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+    </div>
+  </form>
+</p-dialog>

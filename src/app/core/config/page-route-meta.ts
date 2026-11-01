@@ -79,27 +79,36 @@ export const ACADEMICS_PAGES = {
     hideBack: true
   },
   classesSections: {
-    breadcrumb: 'Classes & Sections',
-    pageTitle: 'Classes & Sections',
-    pageSubtitle: 'Manage your academic classes, sections, class teachers and student distribution.',
+    breadcrumb: 'Academic Groups',
+    pageTitle: 'Academic Groups',
+    pageSubtitle: 'Manage academic groups, sections, section teachers and student distribution.',
     pageKind: 'main',
     hideBack: true
   },
   classDetail: {
-    breadcrumb: 'Class',
-    breadcrumbLink: ['/app/academics/classes-sections'],
-    pageTitle: 'Class Details',
-    pageSubtitle: 'Sections, teachers and related academic setup for this class.',
+    breadcrumb: 'Academic Group',
+    breadcrumbLink: ['/app/academics/academic-groups'],
+    pageTitle: 'Academic Group Details',
+    pageSubtitle: 'Sections, teachers and related academic setup for this Academic Group.',
     pageKind: 'detail',
     showBack: true,
-    backFallback: '/app/academics/classes-sections'
+    backFallback: '/app/academics/academic-groups'
   },
   subjectsMapping: {
     breadcrumb: 'Subjects',
     pageTitle: 'Subjects',
-    pageSubtitle: 'Create and manage subjects and map them to classes.',
+    pageSubtitle: 'Create and manage subjects and map them to academic groups.',
     pageKind: 'main',
     hideBack: true
+  },
+  choiceGroups: {
+    breadcrumb: 'Choice Groups',
+    breadcrumbLink: ['/app/academics/subjects'],
+    pageTitle: 'Choice Groups',
+    pageSubtitle: 'Manage reusable groups of alternative subjects.',
+    pageKind: 'detail',
+    showBack: true,
+    backFallback: '/app/academics/subjects'
   },
   subjectDetail: {
     breadcrumb: 'Subject',
@@ -112,12 +121,12 @@ export const ACADEMICS_PAGES = {
   },
   classSubjects: {
     breadcrumb: 'Subject Mapping',
-    breadcrumbLink: ['/app/academics/classes-sections'],
+    breadcrumbLink: ['/app/academics/academic-groups'],
     pageTitle: 'Subject Mapping',
-    pageSubtitle: 'Subjects taught in this class and how they are mapped.',
+    pageSubtitle: 'Subjects taught in this Academic Group and how they are mapped.',
     pageKind: 'detail',
-    showBack: true,
-    backFallback: '/app/academics/classes-sections'
+    hideBack: true,
+    backFallback: '/app/academics/academic-groups'
   },
   teacherAllocation: {
     breadcrumb: 'Teacher Allocation',
@@ -126,10 +135,24 @@ export const ACADEMICS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
+  teacherWorkload: {
+    breadcrumb: 'Teacher Workload',
+    pageTitle: 'Teacher Workload',
+    pageSubtitle: 'View teacher-wise workload, teaching periods and capacity for the selected academic year.',
+    pageKind: 'main',
+    hideBack: true
+  },
   timetable: {
     breadcrumb: 'Timetable',
     pageTitle: 'Timetable',
     pageSubtitle: 'Configure periods, generate the weekly timetable and resolve conflicts.',
+    pageKind: 'main',
+    hideBack: true
+  },
+  timetableConfiguration: {
+    breadcrumb: 'Timetable Configuration',
+    pageTitle: 'Timetable Configuration',
+    pageSubtitle: 'Manage daily schedules, assign them to academic groups and configure optional fixed activities.',
     pageKind: 'main',
     hideBack: true
   },
@@ -156,31 +179,31 @@ export const ACADEMICS_PAGES = {
     showBack: true,
     backFallback: '/app/academics/academic-calendar'
   },
-  myClasses: {
-    breadcrumb: 'My Classes',
-    pageTitle: 'My Classes',
-    pageSubtitle: 'Classes and sections assigned to you.',
+  myAcademicGroups: {
+    breadcrumb: 'My Academic Groups',
+    pageTitle: 'My Academic Groups',
+    pageSubtitle: 'Academic groups and sections assigned to you.',
     pageKind: 'main',
     hideBack: true
   },
   myTimetable: {
     breadcrumb: 'My Timetable',
     pageTitle: 'My Timetable',
-    pageSubtitle: 'Your weekly teaching schedule.',
+    pageSubtitle: 'Your published schedule for your active teaching assignment or student enrollment.',
     pageKind: 'main',
     hideBack: true
   },
   academicStructure: {
     breadcrumb: 'Academic Structure',
     pageTitle: 'Academic Structure',
-    pageSubtitle: 'Stages, classes, sections and subject relationships across the school.',
+    pageSubtitle: 'Stages, academic groups, sections and subject relationships across the school.',
     pageKind: 'main',
     hideBack: true
   },
   myAcademics: {
     breadcrumb: 'My Academics',
     pageTitle: 'My Academics',
-    pageSubtitle: 'Your class, section, subjects and timetable for the current academic year.',
+    pageSubtitle: 'Your class, section, mapped subjects and timetable for your active enrollment.',
     pageKind: 'main',
     hideBack: true
   }

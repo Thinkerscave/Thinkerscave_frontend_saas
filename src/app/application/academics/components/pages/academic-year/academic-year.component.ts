@@ -12,11 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { MenuModule } from 'primeng/menu';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TableModule } from 'primeng/table';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { HasPermissionDirective } from '../../../../../shared/directives/has-permission.directive';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
@@ -49,6 +50,7 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
     RouterLink,
     DialogModule,
     DropdownModule,
+    MenuModule,
     ProgressBarModule,
     TableModule,
     SaasPageHeaderComponent,
@@ -79,6 +81,7 @@ export class AcademicYearPageComponent implements OnInit {
   history: AcademicYearDto[] = [];
   searchTerm = '';
   statusFilter: AcademicYearStatus | null = null;
+  historyMenuItems: MenuItem[] = [];
 
   showCreate = false;
   showReject = false;
@@ -90,7 +93,7 @@ export class AcademicYearPageComponent implements OnInit {
   transitions: AcademicYearTransitionDto[] = [];
   transitionYears: AcademicYearDto[] = [];
   transitionTargetYearId: number | null = null;
-  transitionCopyClasses = true;
+  transitionCopyAcademicGroups = true;
   transitionCopySections = true;
   transitionCopySubjects = true;
   transitionCopyMappings = true;
@@ -279,6 +282,55 @@ export class AcademicYearPageComponent implements OnInit {
     });
   }
 
+  buildHistoryMenu(year: AcademicYearDto): void {
+    const items: MenuItem[] = [];
+
+    if (year.status === 'APPROVED' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Activate Year',
+        icon: 'pi pi-check-circle',
+        command: () => this.confirmActivate(year)
+      });
+    }
+
+    if (['DRAFT', 'PREPARING', 'READY_FOR_APPROVAL', 'REJECTED'].includes(year.status)) {
+      items.push({
+        label: 'Continue Setup',
+        icon: 'pi pi-arrow-right',
+        command: () => this.continueSetup(year)
+      });
+    }
+
+    if (year.status === 'CURRENT' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Mark as Completed',
+        icon: 'pi pi-check-square',
+        command: () => this.completeYear(year)
+      });
+    }
+
+    if (year.status === 'COMPLETED' && this.permissions.canApprove(this.resource)) {
+      items.push({
+        label: 'Archive Year',
+        icon: 'pi pi-box',
+        command: () => this.archiveYear(year)
+      });
+    }
+
+    if (this.permissions.canManage(this.resource)) {
+      items.push({
+        separator: true
+      });
+      items.push({
+        label: 'Deactivate',
+        icon: 'pi pi-power-off',
+        command: () => this.deactivate(year)
+      });
+    }
+
+    this.historyMenuItems = items;
+  }
+
   continueSetup(year: AcademicYearDto): void {
     if (year.status === 'PREPARING' || year.status === 'DRAFT' || year.status === 'REJECTED') {
       this.api.markReady(year.academicYearId).subscribe({
@@ -286,11 +338,11 @@ export class AcademicYearPageComponent implements OnInit {
           this.messages.add({ severity: 'success', summary: 'Marked ready for approval' });
           this.reload();
         },
-        error: () =>           this.router.navigate(['/app/academics/classes-sections'])
+        error: () =>           this.router.navigate(['/app/academics/academic-groups'])
       });
       return;
     }
-    this.router.navigate(['/app/academics/classes-sections']);
+    this.router.navigate(['/app/academics/academic-groups']);
   }
 
   submitForApproval(year: AcademicYearDto): void {
@@ -366,6 +418,43 @@ export class AcademicYearPageComponent implements OnInit {
     });
   }
 
+  completeYear(year: AcademicYearDto): void {
+    this.confirm.confirm({
+      header: `Complete ${year.name}?`,
+      message: `This marks ${year.name} as completed. Historical records and published timetables remain intact.`,
+      acceptLabel: 'Mark Completed',
+      accept: () => this.api.complete(year.academicYearId).subscribe({
+        next: () => {
+          this.messages.add({ severity: 'success', summary: `${year.name} marked completed` });
+          this.reload();
+        },
+        error: (err) => this.messages.add({
+          severity: 'error', summary: 'Unable to complete academic year',
+          detail: err?.error?.message || 'Please try again'
+        })
+      })
+    });
+  }
+
+  archiveYear(year: AcademicYearDto): void {
+    this.confirm.confirm({
+      header: `Archive ${year.name}?`,
+      message: `This archives ${year.name}. Historical data is preserved and the year becomes read-only.`,
+      acceptLabel: 'Archive',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.api.archive(year.academicYearId).subscribe({
+        next: () => {
+          this.messages.add({ severity: 'success', summary: `${year.name} archived` });
+          this.reload();
+        },
+        error: (err) => this.messages.add({
+          severity: 'error', summary: 'Unable to archive academic year',
+          detail: err?.error?.message || 'Please try again'
+        })
+      })
+    });
+  }
+
   deactivate(year: AcademicYearDto): void {
     this.confirm.confirm({
       header: 'Deactivate academic year',
@@ -398,7 +487,7 @@ export class AcademicYearPageComponent implements OnInit {
       (y) => y.academicYearId !== current.academicYearId && !['COMPLETED', 'ARCHIVED', 'CURRENT'].includes(y.status)
     );
     this.transitionTargetYearId = this.transitionYears[0]?.academicYearId ?? null;
-    this.transitionCopyClasses = true;
+    this.transitionCopyAcademicGroups = true;
     this.transitionCopySections = true;
     this.transitionCopySubjects = true;
     this.transitionCopyMappings = true;
@@ -430,7 +519,7 @@ export class AcademicYearPageComponent implements OnInit {
     this.transitionApi
       .create(sourceId, {
         targetAcademicYearId: this.transitionTargetYearId,
-        copyClasses: this.transitionCopyClasses,
+        copyAcademicGroups: this.transitionCopyAcademicGroups,
         copySections: this.transitionCopySections,
         copySubjects: this.transitionCopySubjects,
         copyMappings: this.transitionCopyMappings,

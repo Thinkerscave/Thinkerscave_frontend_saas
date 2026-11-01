@@ -10,13 +10,16 @@ import {
 export const ACADEMICS_PAGE_RESOURCE: Record<AcademicsWorkspacePage, string> = {
   overview: 'ACADEMICS_OVERVIEW',
   'academic-year': 'ACADEMICS_ACADEMIC_YEAR',
-  'classes-sections': 'ACADEMICS_CLASSES',
-  'subjects-mapping': 'ACADEMICS_SUBJECTS',
+  'academicGroups': 'ACADEMICS_CLASSES',
+  'subjects': 'ACADEMICS_SUBJECTS',
+  'choice-groups': 'ACADEMICS_SUBJECTS',
+  'subject-mapping': 'ACADEMICS_SUBJECTS',
   'teacher-allocation': 'ACADEMICS_TEACHER_ALLOCATION',
+  'teacher-workload': 'ACADEMICS_TEACHER_ALLOCATION',
   timetable: 'ACADEMICS_TIMETABLE',
   'teacher-arrangement': 'ACADEMICS_TIMETABLE',
   'academic-calendar': 'ACADEMICS_CALENDAR',
-  'my-classes': 'ACADEMICS_MY_CLASSES',
+  'my-academicGroups': 'ACADEMICS_MY_CLASSES',
   'my-timetable': 'ACADEMICS_MY_TIMETABLE',
   'academic-structure': 'ACADEMICS_ACADEMIC_STRUCTURE',
   'my-academics': 'ACADEMICS_MY_ACADEMICS'
@@ -46,25 +49,47 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'year'
   },
   {
-    page: 'classes-sections',
-    label: 'Classes & Sections',
-    title: 'Classes & Sections',
+    page: 'academicGroups',
+    label: 'Academic Groups',
+    title: 'Academic Groups',
     eyebrow: 'Structure management',
-    description: 'Manage classes, sections, class teachers and student distribution.',
+    description: 'Create and manage academic groups, their optional sections, and student distribution.',
     icon: 'pi pi-th-large',
-    route: '/app/academics/classes-sections',
-    primaryAction: 'Add Class',
-    actionMode: 'class'
+    route: '/app/academics/academic-groups',
+    primaryAction: 'Create Academic Group',
+    actionMode: 'academic-group'
   },
   {
-    page: 'subjects-mapping',
+    page: 'subjects',
     label: 'Subjects',
     title: 'Subjects',
     eyebrow: 'Curriculum configuration',
-    description: 'Create subjects and map them to classes from the subject or class view.',
+    description: 'Manage reusable subjects and learning activities, then map them to academic groups.',
     icon: 'pi pi-book',
-    route: '/app/academics/subjects-mapping',
+    route: '/app/academics/subjects',
     primaryAction: 'Add Subject',
+    actionMode: 'subject'
+  },
+  {
+    page: 'choice-groups',
+    label: 'Choice Groups',
+    title: 'Choice Groups',
+    eyebrow: 'Curriculum configuration',
+    description: 'Manage reusable groups of alternative subjects.',
+    icon: 'pi pi-sitemap',
+    route: '/app/academics/choice-groups',
+    primaryAction: 'Create Choice Group',
+    actionMode: 'subject'
+  },
+  {
+    page: 'subject-mapping',
+    label: 'Subject Mapping',
+    title: 'Subject Mapping',
+    eyebrow: 'Curriculum configuration',
+    description: 'Assign subjects to an academic group and configure curriculum details.',
+    icon: 'pi pi-book',
+    route: '/app/academics/subject-mapping',
+    primaryAction: 'Save Mapping',
     actionMode: 'subject'
   },
   {
@@ -72,10 +97,21 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     label: 'Teacher Allocation',
     title: 'Teacher Allocation',
     eyebrow: 'Who teaches what',
-    description: 'Assign teachers to class-section subjects and monitor weekly workload.',
+    description: 'Assign teachers to group-section subjects and monitor weekly workload.',
     icon: 'pi pi-user-edit',
     route: '/app/academics/teacher-allocation',
     primaryAction: 'Assign teacher',
+    actionMode: 'allocation'
+  },
+  {
+    page: 'teacher-workload',
+    label: 'Teacher Workload',
+    title: 'Teacher Workload',
+    eyebrow: 'Capacity & load',
+    description: 'View teacher-wise workload, teaching periods and capacity for the selected academic year.',
+    icon: 'pi pi-chart-bar',
+    route: '/app/academics/teacher-workload',
+    primaryAction: 'View details',
     actionMode: 'allocation'
   },
   {
@@ -112,13 +148,13 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     actionMode: 'calendar-event'
   },
   {
-    page: 'my-classes',
-    label: 'My Classes',
-    title: 'My Classes',
+    page: 'my-academicGroups',
+    label: 'My Academic Groups',
+    title: 'My Academic Groups',
     eyebrow: 'Teacher workspace',
-    description: 'View your assigned classes, subjects and teaching load.',
+    description: 'View your assigned Academic Groups, subjects and teaching load.',
     icon: 'pi pi-users',
-    route: '/app/academics/my-classes',
+    route: '/app/academics/my-academic-groups',
     primaryAction: 'Open timetable',
     actionMode: 'allocation'
   },
@@ -127,7 +163,7 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     label: 'My Timetable',
     title: 'My Timetable',
     eyebrow: 'Published schedule',
-    description: 'Your published weekly teaching or class schedule.',
+    description: 'Your published weekly teaching or Academic Group schedule.',
     icon: 'pi pi-clock',
     route: '/app/academics/my-timetable',
     primaryAction: 'Refresh',
@@ -142,14 +178,14 @@ export const ACADEMICS_PAGES: AcademicsPageConfig[] = [
     icon: 'pi pi-sitemap',
     route: '/app/academics/academic-structure',
     primaryAction: 'View',
-    actionMode: 'class'
+    actionMode: 'academic-group'
   },
   {
     page: 'my-academics',
     label: 'My Academics',
     title: 'My Academics',
     eyebrow: 'Student / Parent',
-    description: 'Your class, subjects and academic year summary.',
+    description: 'Your Academic Group, subjects and academic year summary.',
     icon: 'pi pi-id-card',
     route: '/app/academics/my-academics',
     primaryAction: 'View timetable',
@@ -164,13 +200,16 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
     pages: [
       'overview',
       'academic-year',
-      'classes-sections',
-      'subjects-mapping',
+      'academicGroups',
+      'subjects',
+      'choice-groups',
+      'subject-mapping',
       'teacher-allocation',
+      'teacher-workload',
       'timetable',
       'teacher-arrangement',
       'academic-calendar',
-      'my-classes',
+      'my-academicGroups',
       'my-timetable',
       'my-academics',
       'academic-structure'
@@ -179,9 +218,9 @@ export const ACADEMICS_NAV_GROUPS: AcademicsNavGroup[] = [
 ];
 
 export const ACADEMICS_QUICK_ACTIONS: AcademicsQuickAction[] = [
-  { id: 'create-class', label: 'Create class', helper: 'Add a new class group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'class', pages: ['classes-sections'] },
-  { id: 'add-section', label: 'Add section', helper: 'Create a class section', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['classes-sections'] },
-  { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects-mapping'] },
+  { id: 'create-academic-group', label: 'Create Academic Group', helper: 'Add a new Academic Group', icon: 'pi pi-plus-circle', tone: 'primary', actionMode: 'academic-group', pages: ['academicGroups'] },
+  { id: 'add-section', label: 'Add section', helper: 'Add a section to a group', icon: 'pi pi-th-large', tone: 'info', actionMode: 'section', pages: ['academicGroups'] },
+  { id: 'add-subject', label: 'Add subject', helper: 'Grow the subject library', icon: 'pi pi-book', tone: 'success', actionMode: 'subject', pages: ['subjects'] },
   { id: 'assign-teacher', label: 'Assign teacher', helper: 'Fill missing allocations', icon: 'pi pi-user-edit', tone: 'primary', actionMode: 'allocation', pages: ['teacher-allocation'] },
   { id: 'add-period', label: 'Add period', helper: 'Place a timetable slot', icon: 'pi pi-clock', tone: 'info', actionMode: 'timetable', pages: ['timetable'] },
   { id: 'auto-generate', label: 'Auto generate', helper: 'Generate timetable automatically', icon: 'pi pi-sparkles', tone: 'success', actionMode: 'timetable', pages: ['timetable'] },
@@ -227,11 +266,11 @@ export function pageConfig(page: AcademicsWorkspacePage): AcademicsPageConfig {
 export function actionModeLabel(mode: AcademicsActionMode): string {
   const labels: Record<AcademicsActionMode, string> = {
     year: 'Create academic year',
-    class: 'Create class',
+    'academic-group': 'Create Academic Group',
     section: 'Create section',
     subject: 'Add subject',
     allocation: 'Assign teacher',
-    'class-teacher': 'Assign class teacher',
+    'section-teacher': 'Assign section teacher',
     timetable: 'Add timetable period',
     'calendar-event': 'Add calendar event',
     settings: 'Update setting',

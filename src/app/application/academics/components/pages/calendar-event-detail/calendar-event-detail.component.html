@@ -2,24 +2,36 @@
 <p-menu #eventMenu [popup]="true" [model]="menuItems"></p-menu>
 
 <div class="ced-page acad-page" *ngIf="!loading && !loadError && event as e; else bootTpl">
-  <tc-saas-page-header>
+  <tc-saas-page-header [shellActions]="true">
     <button
       type="button"
-      class="tc-btn"
+      class="tc-btn tc-btn--primary"
       *tcHasPerm="resource; action: 'manage'"
       [disabled]="!canManage"
       (click)="openEditEvent()">
       <i class="pi pi-pencil"></i> Edit Event
     </button>
-    <button
-      type="button"
-      class="tc-btn ced-icon-menu"
-      *tcHasPerm="resource; action: 'manage'"
-      [disabled]="!canManage"
-      (click)="buildHeaderMenu(); eventMenu.toggle($event)"
-      aria-label="More actions">
-      <i class="pi pi-ellipsis-v"></i>
-    </button>
+    <ng-container *ngIf="e.status === 'INACTIVE'">
+      <button
+        type="button"
+        class="tc-btn tc-btn--accent"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="reactivateEvent()">
+        <i class="pi pi-check" aria-hidden="true"></i> Reactivate Event
+      </button>
+    </ng-container>
+    <ng-container *ngIf="e.status !== 'INACTIVE'">
+      <button
+        type="button"
+        class="tc-btn ced-icon-menu"
+        *tcHasPerm="resource; action: 'manage'"
+        [disabled]="!canManage"
+        (click)="buildHeaderMenu(); eventMenu.toggle($event)"
+        aria-label="More actions">
+        <i class="pi pi-ellipsis-v"></i>
+      </button>
+    </ng-container>
   </tc-saas-page-header>
 
   <header class="ced-identity">
@@ -95,18 +107,18 @@
 
   <section
     class="ced-sections"
-    *ngIf="e.audienceType === 'CLASS' && e.classes?.length"
-    aria-labelledby="ced-classes-heading">
+    *ngIf="e.audienceType === 'ACADEMIC_GROUP' && e.academicGroups?.length"
+    aria-labelledby="ced-academic-groups-heading">
     <div class="ced-sections__head">
       <div>
-        <h2 id="ced-classes-heading">Applicable Classes</h2>
-        <p>Classes included in this event.</p>
+        <h2 id="ced-academic-groups-heading">Applicable Academic Groups</h2>
+        <p>Academic Groups included in this event.</p>
       </div>
     </div>
     <ul class="ced-list">
-      <li *ngFor="let cls of e.classes">
-        <strong>{{ cls.name }}</strong>
-        <code *ngIf="cls.code">{{ cls.code }}</code>
+      <li *ngFor="let group of e.academicGroups">
+        <strong>{{ group.name }}</strong>
+        <code *ngIf="group.code">{{ group.code }}</code>
       </li>
     </ul>
   </section>
@@ -123,7 +135,7 @@
     </div>
     <ul class="ced-list">
       <li *ngFor="let section of e.sections">
-        <strong>{{ section.className ? (section.className + ' - ' + section.name) : section.name }}</strong>
+        <strong>{{ section.academicGroupName ? (section.academicGroupName + ' - ' + section.name) : section.name }}</strong>
         <code *ngIf="section.code">{{ section.code }}</code>
       </li>
     </ul>
@@ -265,14 +277,14 @@
           styleClass="ced-form-dd">
         </p-dropdown>
       </label>
-      <label *ngIf="eventForm.value.audienceType === 'CLASS'">
-        Classes *
+          <label *ngIf="eventForm.value.audienceType === 'ACADEMIC_GROUP'">
+        Academic Groups *
         <p-multiSelect
-          [options]="classOptions"
-          formControlName="classIds"
+          [options]="academicGroupOptions"
+          formControlName="academicGroupIds"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select classes"
+          placeholder="Select academic groups"
           [filter]="true"
           appendTo="body"
           styleClass="ced-form-dd"

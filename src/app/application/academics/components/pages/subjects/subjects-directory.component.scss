@@ -1,0 +1,27 @@
+@use '../../shared/styles/academics-common' as *;
+@use '../../shared/styles/subjects' as *;
+
+@include subject-styles;
+@include subject-responsive;
+
+:host { display: block; }
+
+.sub-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sub-results--refreshing {
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}
+
+.sub-page .acad-toolbar {
+  align-items: center;
+}
+
+:host ::ng-deep .sub-filter-dd {
+  min-width: 150px;
+}

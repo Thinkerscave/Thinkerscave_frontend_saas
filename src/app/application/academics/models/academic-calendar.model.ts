@@ -5,12 +5,12 @@ export type CalendarEventType =
   | 'ACADEMIC_EVENT'
   | 'OTHER';
 
-export type CalendarAudienceType = 'EVERYONE' | 'CLASS' | 'SECTION';
+export type CalendarAudienceType = 'EVERYONE' | 'ACADEMIC_GROUP' | 'SECTION';
 
 export type CalendarEventStatus = 'DRAFT' | 'PUBLISHED' | 'INACTIVE';
 
-export interface CalendarClassRef {
-  classId: number;
+export interface CalendarAcademicGroupRef {
+  academicGroupId: number;
   name: string;
   code?: string;
 }
@@ -19,7 +19,7 @@ export interface CalendarSectionRef {
   sectionId: number;
   name: string;
   code?: string;
-  className?: string;
+  academicGroupName?: string;
 }
 
 export interface AcademicCalendarEventDto {
@@ -38,7 +38,7 @@ export interface AcademicCalendarEventDto {
   location?: string | null;
   audienceType: CalendarAudienceType;
   status: CalendarEventStatus;
-  classes?: CalendarClassRef[];
+  academicGroups?: CalendarAcademicGroupRef[];
   sections?: CalendarSectionRef[];
   publishedBy?: string | null;
   publishedOn?: string | null;
@@ -75,7 +75,7 @@ export interface AcademicCalendarEventRequest {
   endTime?: string | null;
   location?: string;
   audienceType: CalendarAudienceType;
-  classIds?: number[];
+  academicGroupIds?: number[];
   sectionIds?: number[];
   publish?: boolean;
 }
@@ -107,6 +107,6 @@ export const CALENDAR_STATUS_OPTIONS: { label: string; value: CalendarEventStatu
 
 export const CALENDAR_AUDIENCE_OPTIONS: { label: string; value: CalendarAudienceType }[] = [
   { label: 'Everyone', value: 'EVERYONE' },
-  { label: 'Specific Classes', value: 'CLASS' },
+  { label: 'Specific Academic Groups', value: 'ACADEMIC_GROUP' },
   { label: 'Specific Sections', value: 'SECTION' }
 ];

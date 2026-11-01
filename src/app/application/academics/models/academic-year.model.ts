@@ -14,8 +14,8 @@ export type AcademicYearPattern = 'ANNUAL' | 'SEMESTER' | 'TRIMESTER' | 'TERM' |
 export type ReadinessState = 'COMPLETE' | 'PENDING' | 'IN_PROGRESS' | 'NOT_STARTED';
 
 export interface YearStructureStats {
-  classesTotal: number;
-  classesActive: number;
+  academicGroupsTotal: number;
+  academicGroupsActive: number;
   sectionsTotal: number;
   sectionsActive: number;
   subjectsTotal: number;

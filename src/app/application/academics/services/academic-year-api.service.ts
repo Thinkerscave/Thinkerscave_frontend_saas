@@ -71,4 +71,12 @@ export class AcademicYearApiService {
   activate(id: number): Observable<AcademicYearDto> {
     return this.http.post<ApiResponse<AcademicYearDto>>(academicsApi.yearActivate(id), {}).pipe(map((r) => r.data));
   }
+
+  complete(id: number): Observable<AcademicYearDto> {
+    return this.http.post<ApiResponse<AcademicYearDto>>(academicsApi.yearComplete(id), {}).pipe(map((r) => r.data));
+  }
+
+  archive(id: number): Observable<AcademicYearDto> {
+    return this.http.post<ApiResponse<AcademicYearDto>>(academicsApi.yearArchive(id), {}).pipe(map((r) => r.data));
+  }
 }

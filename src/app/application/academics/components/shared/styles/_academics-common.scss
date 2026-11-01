@@ -2,6 +2,128 @@
 
 /* Shell spacing for .acad-page lives in styles/academics/_workspace.scss (global). */
 
+/* ── Page-level entry animation (applied to main content after load) ── */
+@keyframes acad-page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.acad-content-enter {
+  animation: acad-page-enter 220ms var(--tc-anim-easing, cubic-bezier(0.4, 0, 0.2, 1)) both;
+}
+
+/* ── Standardised section panel ── */
+.acad-section {
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: var(--tc-radius-lg, 1rem);
+  box-shadow: var(--tc-shadow-sm);
+  overflow: hidden;
+}
+
+.acad-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--tc-border, #e2e8f0);
+
+  h2, h3 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  p {
+    margin: 0.15rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--tc-text-muted, #64748b);
+  }
+
+  .acad-section__title-group {
+    min-width: 0;
+  }
+
+  .acad-section__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+}
+
+.acad-section__body {
+  padding: 1rem 1.125rem;
+}
+
+/* ── Summary bar with consistent hover ── */
+.acad-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.acad-kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: var(--tc-radius-md, 0.75rem);
+  box-shadow: var(--tc-shadow-xs);
+  transition: transform var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing),
+              box-shadow var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing),
+              border-color var(--tc-anim-duration-fast, 150ms) var(--tc-anim-easing);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--tc-shadow-md);
+    border-color: color-mix(in srgb, var(--tc-accent, #1F3A93) 20%, var(--tc-border, #e2e8f0));
+  }
+}
+
+.acad-kpi__icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--tc-accent, #1F3A93) 10%, transparent);
+  color: var(--tc-accent, #1F3A93);
+
+  &--success { background: rgba(16, 185, 129, 0.12); color: #059669; }
+  &--warning { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+  &--info    { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
+  &--purple  { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+}
+
+.acad-kpi__data {
+  min-width: 0;
+
+  strong {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  small {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--tc-text-muted, #64748b);
+    margin-top: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 /* Dense toolbar — search does not dominate; filters get equal weight */
 .acad-toolbar {
   display: flex;
@@ -15,15 +137,22 @@
 }
 
 .acad-toolbar__search {
-  flex: 0 1 220px;
-  min-width: 140px;
-  max-width: 280px;
-  padding: 0.45rem 0.65rem;
+  flex: 0 1 240px;
+  min-width: 160px;
+  max-width: 320px;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--tc-border, #e2e8f0);
   border-radius: 8px;
   background: var(--tc-bg, #fff);
   color: var(--tc-text);
   font-size: 0.82rem;
+  transition: border-color var(--tc-anim-duration-fast, 150ms) ease, box-shadow var(--tc-anim-duration-fast, 150ms) ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--tc-primary-600, #2563eb);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-primary-600, #2563eb) 14%, transparent);
+  }
 }
 
 .acad-toolbar__filters {
@@ -45,13 +174,13 @@
 /* Clickable cards */
 .acad-card-clickable {
   cursor: pointer;
-  transition: transform var(--tc-anim-duration-fast, 150ms) ease,
-    box-shadow var(--tc-anim-duration-fast, 150ms) ease,
-    border-color var(--tc-anim-duration-fast, 150ms) ease;
+  transition: transform var(--tc-anim-duration-fast, 150ms) cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow var(--tc-anim-duration-fast, 150ms) cubic-bezier(0.16, 1, 0.3, 1),
+    border-color var(--tc-anim-duration-fast, 150ms) cubic-bezier(0.16, 1, 0.3, 1);
 }
 .acad-card-clickable:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   border-color: color-mix(in srgb, var(--tc-primary-600, #2563eb) 35%, var(--tc-border, #e2e8f0));
 }
 .acad-card-clickable:focus-visible {
@@ -60,36 +189,159 @@
 }
 
 /* Stagger enter for grids */
-.acad-stagger > *:nth-child(1) { animation-delay: 20ms; }
-.acad-stagger > *:nth-child(2) { animation-delay: 40ms; }
-.acad-stagger > *:nth-child(3) { animation-delay: 60ms; }
-.acad-stagger > *:nth-child(4) { animation-delay: 80ms; }
-.acad-stagger > *:nth-child(5) { animation-delay: 100ms; }
-.acad-stagger > *:nth-child(6) { animation-delay: 120ms; }
-.acad-stagger > *:nth-child(7) { animation-delay: 140ms; }
-.acad-stagger > *:nth-child(8) { animation-delay: 160ms; }
+.acad-stagger > *:nth-child(1)  { animation-delay: 20ms; }
+.acad-stagger > *:nth-child(2)  { animation-delay: 40ms; }
+.acad-stagger > *:nth-child(3)  { animation-delay: 60ms; }
+.acad-stagger > *:nth-child(4)  { animation-delay: 80ms; }
+.acad-stagger > *:nth-child(5)  { animation-delay: 100ms; }
+.acad-stagger > *:nth-child(6)  { animation-delay: 120ms; }
+.acad-stagger > *:nth-child(7)  { animation-delay: 140ms; }
+.acad-stagger > *:nth-child(8)  { animation-delay: 160ms; }
+.acad-stagger > *:nth-child(9)  { animation-delay: 180ms; }
+.acad-stagger > *:nth-child(10) { animation-delay: 200ms; }
+.acad-stagger > *:nth-child(11) { animation-delay: 220ms; }
+.acad-stagger > *:nth-child(12) { animation-delay: 240ms; }
 .acad-stagger > * {
-  animation: acad-stagger-in 280ms var(--tc-anim-easing, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: acad-stagger-in 260ms var(--tc-anim-easing, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 @keyframes acad-stagger-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Guidance Banner */
+.acad-guide-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1.15rem;
+  background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 6%, var(--tc-surface-card, #fff));
+  border: 1px solid color-mix(in srgb, var(--tc-primary-600, #2563eb) 20%, var(--tc-border, #e2e8f0));
+  border-left: 4px solid var(--tc-primary-600, #2563eb);
+  border-radius: 10px;
+  margin-bottom: 0.85rem;
+}
+
+.acad-guide-banner--warning {
+  background: color-mix(in srgb, #f59e0b 8%, var(--tc-surface-card, #fff));
+  border-color: color-mix(in srgb, #f59e0b 25%, var(--tc-border, #e2e8f0));
+  border-left-color: #f59e0b;
+}
+
+.acad-guide-banner--info {
+  background: color-mix(in srgb, #0ea5e9 8%, var(--tc-surface-card, #fff));
+  border-color: color-mix(in srgb, #0ea5e9 25%, var(--tc-border, #e2e8f0));
+  border-left-color: #0ea5e9;
+}
+
+.acad-guide-banner__icon {
+  font-size: 1.15rem;
+  color: var(--tc-primary-600, #2563eb);
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.acad-guide-banner--warning .acad-guide-banner__icon { color: #d97706; }
+.acad-guide-banner--info .acad-guide-banner__icon { color: #0284c7; }
+
+.acad-guide-banner__content {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  h4 {
+    margin: 0 0 0.2rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--tc-text-muted, #64748b);
+    line-height: 1.45;
+  }
+}
+
+.acad-guide-banner__action {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+}
+
+/* Standardized Empty State */
+.acad-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px dashed var(--tc-border, #cbd5e1);
+  border-radius: 14px;
+  margin: 1rem 0;
+
+  &__icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--tc-primary-600, #2563eb) 10%, transparent);
+    color: var(--tc-primary-600, #2563eb);
+    font-size: 1.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  &__icon-box--warn {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+  }
+
+  &__icon-box--muted {
+    background: var(--tc-bg-muted, #f1f5f9);
+    color: var(--tc-text-muted, #64748b);
+  }
+
+  h3 {
+    margin: 0 0 0.35rem 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--tc-heading, #0f172a);
+  }
+
+  p {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.85rem;
+    color: var(--tc-text-muted, #64748b);
+    max-width: 52ch;
+    line-height: 1.5;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+}
+
 /* Buttons */
-.acad-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; white-space: nowrap; }
+.acad-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all var(--tc-anim-duration-fast, 150ms) ease; border: 1px solid transparent; white-space: nowrap; }
 .acad-btn-primary { background: var(--tc-primary-600); color: #fff; border-color: var(--tc-primary-600); }
-.acad-btn-primary:hover { opacity: 0.9; }
+.acad-btn-primary:hover { opacity: 0.92; box-shadow: 0 2px 8px color-mix(in srgb, var(--tc-primary-600) 35%, transparent); }
 .acad-btn-outline { background: transparent; color: var(--tc-text); border-color: var(--tc-border); }
 .acad-btn-outline:hover { background: var(--tc-bg-muted); }
 .acad-btn-ghost { background: transparent; color: var(--tc-text-muted); border-color: transparent; }
-.acad-btn-ghost:hover { background: var(--tc-bg-muted); }
+.acad-btn-ghost:hover { background: var(--tc-bg-muted); color: var(--tc-heading); }
 .acad-btn-danger { background: #EF4444; color: #fff; }
+.acad-btn-danger:hover { background: #dc2626; }
 .acad-btn-sm { padding: 0.25rem 0.55rem; font-size: 0.78rem; }
 
-.acad-icon-btn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--tc-border); background: transparent; color: var(--tc-text-muted); cursor: pointer; transition: all 0.15s; }
-.acad-icon-btn:hover { background: var(--tc-bg-muted); color: var(--tc-heading); }
+.acad-icon-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--tc-border); background: transparent; color: var(--tc-text-muted); cursor: pointer; transition: all var(--tc-anim-duration-fast, 150ms) ease; }
+.acad-icon-btn:hover { background: var(--tc-bg-muted); color: var(--tc-heading); border-color: color-mix(in srgb, var(--tc-primary-600) 30%, var(--tc-border)); }
 
 /* Inputs */
 .acad-input { padding: 0.5rem 0.65rem; border: 1px solid var(--tc-border); border-radius: 8px; background: var(--tc-bg); color: var(--tc-text); font-size: 0.85rem; }
@@ -98,15 +350,20 @@
 .acad-dropdown { width: 100%; }
 
 /* Table */
-.acad-table { width: 100%; }
-.acad-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--tc-text-muted); padding: 0.55rem 0.65rem !important; }
-.acad-table td { padding: 0.5rem 0.65rem !important; font-size: 0.82rem; }
+.acad-table { width: 100%; border-collapse: collapse; }
+.acad-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--tc-text-muted); padding: 0.55rem 0.65rem !important; font-weight: 600; letter-spacing: 0.03em; border-bottom: 1px solid var(--tc-border); background: var(--tc-table-header-bg, #f8fafc); }
+.acad-table td { padding: 0.55rem 0.65rem !important; font-size: 0.82rem; border-bottom: 1px solid var(--tc-border); vertical-align: middle; }
+.acad-table tbody tr { transition: background-color var(--tc-anim-duration-fast, 150ms) ease; }
+.acad-table tbody tr:hover td { background: color-mix(in srgb, var(--tc-accent, #1F3A93) 4%, transparent); }
+.acad-table tbody tr:last-child td { border-bottom: 0; }
+.acad-table tbody tr.is-clickable { cursor: pointer; }
+.acad-table tbody tr.is-clickable:hover td { background: color-mix(in srgb, var(--tc-accent, #1F3A93) 5%, transparent); }
 .acad-pill { display: inline-flex; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; background: var(--tc-bg-muted); color: var(--tc-text-muted); }
 .acad-pill.active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
 .acad-code { display: inline-flex; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; background: var(--tc-bg-muted); color: var(--tc-primary-600); font-family: monospace; }
 
 /* Status Badges */
-.acad-status { display: inline-flex; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.acad-status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
 .acad-status.pending { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
 .acad-status.approved { background: rgba(16, 185, 129, 0.12); color: #10B981; }
 .acad-status.rejected { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
@@ -124,7 +381,8 @@
 
 /* Summary cards */
 .acad-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
-.acad-summary-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem; background: var(--tc-surface-card); border: 1px solid var(--tc-border); border-radius: 8px; }
+.acad-summary-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem; background: var(--tc-surface-card); border: 1px solid var(--tc-border); border-radius: 8px; transition: transform var(--tc-anim-duration-fast, 150ms) ease; }
+.acad-summary-card:hover { transform: translateY(-1px); }
 .acad-summary-card i { font-size: 1.2rem; }
 .acad-summary-card span { display: block; font-size: 0.72rem; color: var(--tc-text-muted); }
 .acad-summary-card strong { font-size: 1.15rem; color: var(--tc-heading); }
@@ -132,7 +390,24 @@
 /* View tabs */
 .acad-view-tabs { display: flex; background: var(--tc-bg-muted); border-radius: 6px; padding: 0.15rem; }
 .acad-view-tab { padding: 0.3rem 0.7rem; border: none; background: transparent; color: var(--tc-text-muted); font-size: 0.8rem; cursor: pointer; border-radius: 5px; transition: all 0.15s; }
-.acad-view-tab.active { background: var(--tc-surface-card); color: var(--tc-heading); font-weight: 600; }
+.acad-view-tab.active { background: var(--tc-surface-card); color: var(--tc-heading); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+
+/* Sticky / Floating Pending Changes Banner */
+.acad-pending-bar {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--tc-surface-card, #fff);
+  border: 1px solid var(--tc-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  animation: acad-stagger-in 200ms ease both;
+}
 
 @media (max-width: 760px) {
   .acad-toolbar__search {
@@ -143,5 +418,40 @@
     margin-left: 0;
     width: 100%;
     justify-content: flex-end;
+  }
+  .acad-guide-banner {
+    flex-direction: column;
+  }
+  .acad-guide-banner__action {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .acad-card-clickable,
+  .acad-btn,
+  .acad-icon-btn,
+  .acad-summary-card,
+  .acad-kpi,
+  .acad-content-enter,
+  .acad-stagger > * {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+:host-context(.tc-reduce-motion) {
+  .acad-card-clickable,
+  .acad-btn,
+  .acad-icon-btn,
+  .acad-summary-card,
+  .acad-kpi,
+  .acad-content-enter,
+  .acad-stagger > * {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
   }
 }

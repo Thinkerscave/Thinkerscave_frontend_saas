@@ -1,32 +1,47 @@
 <div class="as-page acad-page">
-<tc-saas-page-header>
+<tc-saas-page-header [shellActions]="true">
     <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
     <tc-page-skeleton *ngIf="loading" variant="list" [rows]="6" [columns]="3" [showKpis]="false"></tc-page-skeleton>
   <ng-container *ngIf="!loading">
 <div class="as-summary" *ngIf="data as d">
-    <div><strong>{{ d.classes.length }}</strong><span>Classes</span></div>
-    <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
-    <div *ngIf="!isAdminView"><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
-  </div>
+        <div *ngIf="isAdminView"><strong>{{ stageCount }}</strong><span>Stages</span></div>
+        <div><strong>{{ d.academicGroups.length }}</strong><span>Academic Groups</span></div>
+        <div><strong>{{ sectionCount }}</strong><span>Sections</span></div>
+        <div *ngIf="!isAdminView"><strong>{{ subjectCount }}</strong><span>Subjects</span></div>
+      </div>
 
-  <div class="as-layout" *ngIf="data as d">
-    <div class="as-list">
-      <article class="as-class" *ngFor="let c of d.classes" [class.active]="selectedClassId === c.classId" (click)="selectedClassId = c.classId">
-        <div class="as-class__top">
-          <h3>{{ c.className }}</h3>
-          <code *ngIf="c.classCode">{{ c.classCode }}</code>
-          <span class="as-star" title="You teach here" *ngIf="!isAdminView">★</span>
+      <div class="as-layout" *ngIf="data as d">
+        <div class="as-list">
+          <button type="button" class="as-class" *ngFor="let c of d.academicGroups"
+            [class.active]="selectedAcademicGroupId === c.academicGroupId"
+            [attr.aria-pressed]="selectedAcademicGroupId === c.academicGroupId"
+            [attr.aria-label]="'View structure for ' + c.academicGroupName"
+            (click)="selectedAcademicGroupId = c.academicGroupId">
+            <span class="as-class__top">
+              <strong class="as-class__name">{{ c.academicGroupName }}</strong>
+              <code *ngIf="c.academicGroupCode">{{ c.academicGroupCode }}</code>
+              <span class="as-stage" *ngIf="isAdminView && c.stage">{{ c.stage | titlecase }}</span>
+              <span class="as-star" title="You teach here" *ngIf="!isAdminView">★</span>
+            </span>
+            <span class="as-class__summary">{{ c.sections.length }} sections<span *ngIf="!isAdminView"> · {{ subjectCountFor(c) }} subjects</span></span>
+          </button>
+          <div class="acad-empty-state" *ngIf="!d.academicGroups.length">
+        <div class="acad-empty-state__icon-box">
+          <i class="pi pi-sitemap"></i>
         </div>
-        <p>{{ c.sections.length }} sections<span *ngIf="!isAdminView"> · {{ subjectCountFor(c) }} subjects</span></p>
-      </article>
-      <div class="as-empty" *ngIf="!d.classes?.length">{{ isAdminView ? 'No classes in this academic year.' : 'No structure linked to your allocations.' }}</div>
+        <h4 class="acad-empty-state__title">No Academic Groups Found</h4>
+        <p class="acad-empty-state__desc">
+          {{ isAdminView ? 'No academic groups or sections configured for this academic year yet.' : 'No academic structure is linked to your current teaching allocations.' }}
+        </p>
+      </div>
     </div>
 
     <aside class="as-detail" *ngIf="selectedClass as cls">
       <div class="as-detail__head">
-        <h2>{{ cls.className }}</h2>
+        <h2>{{ cls.academicGroupName }}</h2>
+        <span class="as-stage" *ngIf="isAdminView && cls.stage">{{ cls.stage | titlecase }}</span>
         <span class="as-star" *ngIf="!isAdminView">★ You teach here</span>
       </div>
       <div class="as-section" *ngFor="let s of cls.sections">
@@ -39,8 +54,9 @@
           <span *ngIf="s.capacity != null">Capacity {{ s.capacity }}</span>
         </div>
       </div>
+      <p class="as-empty" *ngIf="!cls.sections.length">No active sections are configured for this academic group yet.</p>
       <div class="as-actions" *ngIf="!isAdminView">
-        <a routerLink="/app/academics/my-classes">My Classes</a>
+        <a routerLink="/app/academics/my-academic-groups">My Academic Groups</a>
         <a routerLink="/app/academics/my-timetable">My Timetable</a>
       </div>
     </aside>

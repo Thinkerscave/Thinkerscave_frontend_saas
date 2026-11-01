@@ -1,0 +1,350 @@
+<p-confirmDialog></p-confirmDialog>
+<p-menu #classMenu [popup]="true" [model]="menuItems"></p-menu>
+
+<div class="cs-page acad-page">
+<tc-saas-page-header [shellActions]="true">
+    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <span class="cs-readonly" *ngIf="dashboard?.yearReadOnly">Historical · Read only</span>
+    <button
+      type="button"
+      class="tc-btn tc-btn--primary"
+      *tcHasPerm="resource; action: 'manage'"
+      [disabled]="readOnly"
+      (click)="openCreateAcademicGroup()">
+      <i class="pi pi-plus"></i>
+      Create Academic Group
+    </button>
+  </tc-saas-page-header>
+
+  <aside class="acad-guide-banner acad-guide-banner--info" *ngIf="dashboard?.yearReadOnly" role="status">
+    <i class="pi pi-lock acad-guide-banner__icon" aria-hidden="true"></i>
+    <div class="acad-guide-banner__content">
+      <h4>Historical Academic Year (Read-Only)</h4>
+      <p>This academic year is locked for historical preservation. Groups, sections, and allocations cannot be modified.</p>
+    </div>
+  </aside>
+
+  <tc-page-skeleton
+    *ngIf="loading && !dashboard"
+    [layout]="viewMode === 'grid' ? 'directory-cards' : 'directory-table'"
+    [showKpis]="false"
+    [showFilter]="true"
+    [cards]="8"
+    [rows]="10"
+    [columns]="6">
+  </tc-page-skeleton>
+
+  <ng-container *ngIf="dashboard">
+  <section class="cs-summary acad-stagger" aria-label="Academic group summary">
+    <article><span class="cs-summary__icon"><i class="pi pi-th-large"></i></span><div><strong>{{ dashboard.academicGroupCount || 0 }}</strong><small>Total Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--success"><i class="pi pi-check-circle"></i></span><div><strong>{{ dashboard.academicGroupsActive || 0 }}</strong><small>Active Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--warning"><i class="pi pi-pause-circle"></i></span><div><strong>{{ (dashboard.academicGroupCount || 0) - (dashboard.academicGroupsActive || 0) }}</strong><small>Inactive Groups</small></div></article>
+    <article><span class="cs-summary__icon cs-summary__icon--info"><i class="pi pi-users"></i></span><div><strong>{{ dashboard.studentCount || 0 }}</strong><small>Total Students</small></div></article>
+  </section>
+  <div class="acad-toolbar cs-toolbar">
+    <input
+      class="acad-toolbar__search"
+      type="search"
+      placeholder="Search groups by name or code"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange($event)"
+      aria-label="Search academic groups by name or code" />
+    <div class="acad-toolbar__filters">
+      <p-dropdown
+        *ngIf="showClassificationFilter"
+        [options]="stageOptions"
+        [(ngModel)]="stageFilter"
+        (onChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Classification"
+        styleClass="cs-filter-dd"
+        appendTo="body">
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="activeFilter"
+        (onChange)="onFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        styleClass="cs-filter-dd"
+        appendTo="body">
+      </p-dropdown>
+    </div>
+    <div class="acad-toolbar__end">
+      <app-grid-table-toggle
+        pageKey="academics.academic-groups.view"
+        [mode]="viewMode"
+        (modeChange)="onViewModeChange($event)"
+        ariaLabel="View mode">
+      </app-grid-table-toggle>
+    </div>
+  </div>
+
+  <div class="cs-filter-bar" *ngIf="hasVisibleFilters || showDeactivatedHint">
+    <div class="cs-chips" *ngIf="hasVisibleFilters">
+      <button type="button" class="cs-chip" *ngIf="searchTerm.trim()" (click)="clearSearch()">
+        “{{ searchTerm.trim() }}” <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-chip" *ngIf="stageFilter" (click)="clearStage()">
+        {{ stageLabel(stageFilter) }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-chip" *ngIf="activeFilter !== null" (click)="clearStatus()">
+        {{ activeFilter ? 'Active' : 'Inactive' }} <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="cs-clear" (click)="clearFilters()">Clear filters</button>
+    </div>
+    <p class="cs-hint-line" *ngIf="showDeactivatedHint">
+      Deactivated groups are hidden. Use Status → Inactive to view them.
+    </p>
+  </div>
+
+  <ng-container *ngIf="totalAcademicGroups; else emptyTpl">
+    <div class="cs-results acad-content-enter" [class.cs-results--refreshing]="refreshing">
+      <div class="cs-grid acad-stagger" *ngIf="viewMode === 'grid'; else listTpl">
+        <article
+          class="cs-card acad-card-clickable"
+          *ngFor="let cls of pagedAcademicGroups"
+          [class.cs-card--inactive]="!cls.active"
+          (click)="openDetails(cls.academicGroupId)"
+          (keydown.enter)="openDetails(cls.academicGroupId)"
+          tabindex="0"
+          role="link"
+          [attr.aria-label]="'View details for ' + cls.name">
+          <div class="cs-card__top">
+            <div class="cs-card__identity">
+              <h2>{{ cls.name }}</h2>
+              <code>{{ cls.code }}</code>
+            </div>
+            <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
+              {{ cls.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <div class="cs-card__tags">
+            <span class="cs-tag" *ngIf="cls.stage">{{ stageLabel(cls.stage) }}</span>
+          </div>
+
+          <div class="cs-card__stats">
+            <div>
+              <strong>{{ cls.sectionCount || 0 }}</strong>
+              <span>Sections</span>
+            </div>
+            <div>
+              <strong>{{ cls.studentCount || 0 }}</strong>
+              <span>Students</span>
+            </div>
+            <div>
+              <strong>{{ cls.subjectCount || 0 }}</strong>
+              <span>Subjects</span>
+            </div>
+            <div>
+              <strong>{{ cls.teacherCount || 0 }}</strong>
+              <span>Teachers</span>
+            </div>
+            <div>
+              <strong>{{ timetableLabel(cls.timetableStatus) }}</strong>
+              <span>Timetable</span>
+            </div>
+          </div>
+
+          <div class="cs-card__actions" (click)="$event.stopPropagation()">
+            <button type="button" class="cs-details" (click)="openDetails(cls.academicGroupId)">
+              View Details <span aria-hidden="true">→</span>
+            </button>
+            <button
+              type="button"
+              class="cs-icon-btn"
+              (click)="buildAcademicGroupMenu(cls); classMenu.toggle($event)"
+              aria-label="More actions">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #listTpl>
+        <div class="cs-table-wrap">
+          <table class="cs-table">
+            <thead>
+              <tr>
+                <th>Group</th>
+                <th>Code</th>
+                <th>Classification</th>
+                <th>Sections</th>
+                <th>Students</th>
+                <th>Subjects</th>
+                <th>Teachers</th>
+                <th>Timetable</th>
+                <th>Status</th>
+                <th class="cs-table__actions" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let cls of pagedAcademicGroups"
+                class="acad-card-clickable"
+                (click)="openDetails(cls.academicGroupId)"
+                (keydown.enter)="openDetails(cls.academicGroupId)"
+                tabindex="0"
+                role="link">
+                <td><strong>{{ cls.name }}</strong></td>
+                <td><code>{{ cls.code }}</code></td>
+                <td>{{ stageLabel(cls.stage) || '—' }}</td>
+                <td>{{ cls.sectionCount || 0 }}</td>
+                <td>{{ cls.studentCount || 0 }}</td>
+                <td>{{ cls.subjectCount || 0 }}</td>
+                <td>{{ cls.teacherCount || 0 }}</td>
+                <td>{{ timetableLabel(cls.timetableStatus) }}</td>
+                <td>
+                  <span class="cs-badge" [class.cs-badge--success]="cls.active" [class.cs-badge--neutral]="!cls.active">
+                    {{ cls.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="cs-table__actions" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="cs-icon-btn"
+                    (click)="buildAcademicGroupMenu(cls); classMenu.toggle($event)"
+                    aria-label="More actions">
+                    <i class="pi pi-ellipsis-v"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+    </div>
+
+    <app-paginator
+      *ngIf="totalAcademicGroups > 0"
+      [page]="page"
+      [rows]="pageSize"
+      [totalRecords]="totalAcademicGroups"
+      [pageSizeOptions]="pageSizeOptions"
+      noun="academic groups"
+      (pageChange)="onPageChange($event)">
+    </app-paginator>
+  </ng-container>
+
+  <ng-template #emptyTpl>
+    <div class="acad-empty-state" *ngIf="isFilterEmptyState; else noAcademicGroupsTpl">
+      <span class="acad-empty-state__icon-box acad-empty-state__icon-box--muted">
+        <i class="pi pi-filter-slash" aria-hidden="true"></i>
+      </span>
+      <h3>No academic groups match your active filters</h3>
+      <p>We couldn't find any academic groups matching "{{ searchTerm.trim() }}" or your current filter criteria.</p>
+      <div class="acad-empty-state__actions">
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" (click)="clearFilters()">Clear Filters</button>
+      </div>
+    </div>
+    <ng-template #noAcademicGroupsTpl>
+      <div class="acad-empty-state">
+        <span class="acad-empty-state__icon-box">
+          <i class="pi pi-th-large" aria-hidden="true"></i>
+        </span>
+        <h3>No academic groups created yet</h3>
+        <p>
+          Academic groups represent classes or grades for {{ dashboard.academicYearName || 'this academic year' }} (e.g., Grade 6, Batch A). Create your first academic group to begin organizing sections, mapping subjects, and assigning teachers.
+        </p>
+        <div class="acad-empty-state__actions">
+          <button
+            type="button"
+            class="tc-btn tc-btn--primary"
+            *tcHasPerm="resource; action: 'manage'"
+            [disabled]="readOnly"
+            (click)="openCreateAcademicGroup()">
+            <i class="pi pi-plus" aria-hidden="true"></i>
+            Create First Academic Group
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </ng-template>
+  </ng-container>
+</div>
+
+<p-dialog
+  [header]="editingAcademicGroupId ? 'Edit Academic Group' : 'Create Academic Group'"
+  [(visible)]="showAcademicGroupDialog"
+  [modal]="true"
+  [style]="{ width: 'min(560px, 94vw)' }"
+  [draggable]="false">
+  <p class="cs-form__year" *ngIf="dashboard?.academicYearName">
+    Academic Year: <strong>{{ dashboard!.academicYearName }}</strong>
+  </p>
+  <form class="cs-form" [formGroup]="groupForm" (ngSubmit)="saveAcademicGroup()">
+    <div class="cs-form__alert" role="alert" *ngIf="formError">{{ formError }}</div>
+
+    <label>
+      Group Name *
+      <input type="text" formControlName="name" placeholder="e.g. Academic Group 6, B.Com Year 1, JEE Batch A" />
+      <small class="cs-form__error" *ngIf="groupForm.get('name')?.touched && groupForm.get('name')?.hasError('required')">
+        Group name is required.
+      </small>
+    </label>
+
+    <label>
+      Group Code
+      <input type="text" formControlName="code" placeholder="Auto-generate or enter manually" />
+      <small class="cs-form__hint">If left blank, a unique code is generated automatically.</small>
+    </label>
+
+    <label>
+      Classification (optional)
+      <p-dropdown
+        [options]="classificationOptions"
+        formControlName="stage"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="None"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+
+    <label>
+      Description (optional)
+      <textarea rows="3" maxlength="500" formControlName="description" placeholder="Add description (optional)"></textarea>
+    </label>
+
+    <fieldset class="cs-form__sections" *ngIf="!editingAcademicGroupId">
+      <legend>Sections</legend>
+      <p class="cs-form__hint">Will this group be divided into sections? You can also add sections later.</p>
+      <div class="cs-choice" role="radiogroup" aria-label="Sections">
+        <label class="cs-choice__option" [class.cs-choice__option--selected]="groupForm.value.addSections === 'now'">
+          <input type="radio" name="addSections" value="now"
+            [checked]="groupForm.value.addSections === 'now'"
+            (change)="onAddSectionsChange('now')" />
+          <span><strong>Yes, add sections</strong><small>Create sections now or later.</small></span>
+        </label>
+        <label class="cs-choice__option" [class.cs-choice__option--selected]="groupForm.value.addSections === 'later'">
+          <input type="radio" name="addSections" value="later"
+            [checked]="groupForm.value.addSections === 'later'"
+            (change)="onAddSectionsChange('later')" />
+          <span><strong>No sections</strong><small>Manage this group directly.</small></span>
+        </label>
+      </div>
+
+      <div class="cs-form__section-row" *ngFor="let row of sectionRows.controls; let i = index" [formGroup]="$any(row)">
+        <input type="text" formControlName="name" placeholder="Section name, e.g. A" aria-label="Section name" />
+        <input type="text" formControlName="code" placeholder="Code (optional)" aria-label="Section code" />
+        <button type="button" class="cs-icon-btn" (click)="removeSectionRow(i)" aria-label="Remove section">
+          <i class="pi pi-trash" aria-hidden="true"></i>
+        </button>
+      </div>
+      <button type="button" class="tc-btn tc-btn--sm" *ngIf="groupForm.value.addSections === 'now'" (click)="addSectionRow()">
+        <i class="pi pi-plus"></i> Add another section
+      </button>
+    </fieldset>
+
+    <div class="cs-form__actions">
+      <button type="button" class="tc-btn" (click)="showAcademicGroupDialog = false">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : (editingAcademicGroupId ? 'Save Changes' : 'Create Group') }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

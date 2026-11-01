@@ -1,15 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
 import { MessageService } from 'primeng/api';
-import { finalize } from 'rxjs';
+import { EMPTY, finalize, switchMap } from 'rxjs';
 import { AcademicsMeApiService } from '../../../services/academics-me-api.service';
 import { ACADEMICS_MY_TIMETABLE_RESOURCE, MyTimetable } from '../../../models/academics-me.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
+import { LoginService } from '../../../../../core/services/login.service';
+import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
 
 @Component({
   selector: 'app-my-timetable-page',
@@ -21,50 +23,110 @@ import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
   templateUrl: './my-timetable.component.html',
   styleUrls: ['./my-timetable.component.scss']
 })
-export class MyTimetablePageComponent {
+export class MyTimetablePageComponent implements OnInit {
   private readonly api = inject(AcademicsMeApiService);
+  private readonly login = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_TIMETABLE_RESOURCE;
+  private readonly hasStaffRole = roleTokensFromUser(this.login.getUser()).includes('STAFF');
+  readonly hasStudentRole = roleTokensFromUser(this.login.getUser()).includes('STUDENT');
+  private readonly hasSupportedRole = this.hasStaffRole || this.hasStudentRole;
   loading = true;
   selectedYearId: number | null = null;
+  enrollmentYearName: string | null = null;
   data: MyTimetable | null = null;
+  accessNotice: string | null = null;
   viewMode: 'week' | 'day' = 'week';
-  classFilter = '';
+  academicGroupFilter = '';
   subjectFilter = '';
 
   private readonly palette = ['#dbeafe', '#dcfce7', '#fce7f3', '#ffedd5', '#ede9fe', '#e0f2fe', '#fef3c7'];
+
+  ngOnInit(): void {
+    if (this.hasStudentRole) {
+      this.loadStudentTimetable();
+    }
+  }
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
     if (yearId == null) {
       this.data = null;
+      this.accessNotice = null;
       this.loading = false;
       this.cdr.markForCheck();
       return;
     }
+    if (!this.hasSupportedRole) {
+      this.data = null;
+      this.accessNotice = 'This page is available to staff and student accounts.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.accessNotice = null;
     this.reload();
   }
 
   reload(): void {
     if (!this.selectedYearId) return;
+    if (!this.hasSupportedRole) {
+      this.accessNotice = 'This page is available to staff and student accounts.';
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
     this.loading = true;
     this.api.myTimetable(this.selectedYearId)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
       .subscribe({
         next: (d) => this.data = d,
-        error: (err) => this.messages.add({ severity: 'error', summary: 'Unable to load timetable', detail: err?.error?.message })
+        error: (err) => this.handleLoadError(err)
       });
+  }
+
+  private loadStudentTimetable(): void {
+    this.loading = true;
+    this.api.myAcademics()
+      .pipe(
+        switchMap((academics) => {
+          if (!academics.academicYearId) {
+            this.accessNotice = 'No active enrollment is linked to your student account. Ask an administrator to assign your Academic Group, section, and academic year.';
+            return EMPTY;
+          }
+          this.selectedYearId = academics.academicYearId;
+          this.enrollmentYearName = academics.academicYearName || null;
+          return this.api.myTimetable(academics.academicYearId);
+        }),
+        finalize(() => { this.loading = false; this.cdr.markForCheck(); })
+      )
+      .subscribe({
+        next: (data) => this.data = data,
+        error: (err) => this.handleLoadError(err)
+      });
+  }
+
+  private handleLoadError(err: any): void {
+    const message = String(err?.error?.message || '');
+    if (/profile required|active enrollment|academic year is assigned/i.test(message)) {
+      this.accessNotice = this.hasStudentRole
+        ? 'No active enrollment is linked to your student account. Ask an administrator to assign your Academic Group, section, and academic year.'
+        : 'This page is available to staff accounts. Sign in with a staff login to see your teaching timetable.';
+    } else {
+      this.accessNotice = 'Your timetable could not be loaded right now.';
+      this.messages.add({ severity: 'error', summary: 'Unable to load timetable', detail: message });
+    }
   }
 
   get todayName(): string {
     return new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   }
 
-  get classOptions(): string[] {
+  get academicGroupOptions(): string[] {
     const cells = this.data?.grid?.cells || [];
-    return [...new Set(cells.map((c) => [c.className, c.sectionName].filter(Boolean).join('-')).filter(Boolean))];
+    return [...new Set(cells.map((c) => [c.academicGroupName, c.sectionName].filter(Boolean).join('-')).filter(Boolean))];
   }
 
   get subjectOptions(): string[] {
@@ -75,14 +137,14 @@ export class MyTimetablePageComponent {
   get summary() {
     const today = this.data?.todaySchedule || [];
     const teaching = today.filter((t) => !!t.subjectName).length;
-    const classes = new Set((this.data?.grid?.cells || []).map((c) => `${c.className}-${c.sectionName}`)).size;
+    const academicGroups = new Set((this.data?.grid?.cells || []).map((c) => `${c.academicGroupName}-${c.sectionName}`)).size;
     const subjects = new Set((this.data?.grid?.cells || []).map((c) => c.subjectName).filter(Boolean)).size;
     const periods = this.data?.grid?.periods?.filter((p) => p.slotKind !== 'BREAK').length || 0;
     return {
       classesToday: teaching,
       teachingPeriods: `${teaching} / ${periods || teaching || 0}`,
       freePeriods: Math.max(0, periods - teaching),
-      classes,
+      academicGroups,
       subjects
     };
   }
@@ -105,9 +167,9 @@ export class MyTimetablePageComponent {
       (c) => c.dayOfWeek === day && c.periodNumber === periodNumber
     );
     if (!cell) return null;
-    if (this.classFilter) {
-      const label = [cell.className, cell.sectionName].filter(Boolean).join('-');
-      if (label !== this.classFilter) return null;
+    if (this.academicGroupFilter) {
+      const label = [cell.academicGroupName, cell.sectionName].filter(Boolean).join('-');
+      if (label !== this.academicGroupFilter) return null;
     }
     if (this.subjectFilter && cell.subjectName !== this.subjectFilter) return null;
     return cell;

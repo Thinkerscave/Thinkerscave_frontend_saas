@@ -8,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 import { AcademicsOverviewApiService } from '../../../services/academics-overview-api.service';
 import { AcademicsOverview, ACADEMICS_OVERVIEW_RESOURCE } from '../../../models/academics-overview.model';
+import { subjectTypeLabel, SubjectType } from '../../../models/subjects-mapping.model';
 
 import { TcPageSkeletonComponent } from '../../../../../shared/ui/loading';
 
@@ -27,10 +28,11 @@ export class AcademicsOverviewPageComponent {
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_OVERVIEW_RESOURCE;
+  readonly subjectTypeLabel = (type: string | undefined) => subjectTypeLabel(type as SubjectType | undefined);
   loading = true;
   selectedYearId: number | null = null;
   overview: AcademicsOverview | null = null;
-  snapshotTab: 'classes' | 'subjects' = 'classes';
+  snapshotTab: 'academicGroups' | 'subjects' = 'academicGroups';
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
@@ -88,6 +90,23 @@ export class AcademicsOverviewPageComponent {
     return Math.round((done * 100) / steps.length);
   }
 
+  stepRoute(code: string): string {
+    switch (code) {
+      case 'YEAR': return '/app/academics/academic-year';
+      case 'ACADEMIC_GROUPS': return '/app/academics/academic-groups';
+      case 'SUBJECTS': return '/app/academics/subjects';
+      case 'MAPPING': return '/app/academics/subject-mapping';
+      case 'ALLOCATION': return '/app/academics/teacher-allocation';
+      case 'TIMETABLE': return '/app/academics/timetable';
+      default: return '/app/academics/academic-year';
+    }
+  }
+
+  continueSetupRoute(ov: AcademicsOverview): string {
+    const next = (ov.readinessSteps || []).find((step) => step.state !== 'COMPLETE');
+    return next ? this.stepRoute(next.code) : '/app/academics/timetable';
+  }
+
   stepIcon(state: string): string {
     if (state === 'COMPLETE') return 'pi pi-check-circle';
     if (state === 'IN_PROGRESS') return 'pi pi-spin pi-spinner';
@@ -96,12 +115,31 @@ export class AcademicsOverviewPageComponent {
 
   timetableHeadline(ov: AcademicsOverview): string {
     if ((ov.timetable.openBlockingConflicts || 0) > 0) return 'Needs Attention';
-    if (ov.timetable.status === 'PUBLISHED' || ov.timetable.publishedVersion) return 'Timetable Published';
-    return ov.timetable.status || 'Not started';
+    if (ov.timetable.publishedVersion) {
+      return ov.timetable.status && ov.timetable.status !== 'PUBLISHED'
+        ? 'Published - newer draft in review'
+        : 'Timetable Published';
+    }
+    return this.friendlyStatus(ov.timetable.status);
+  }
+
+  friendlyStatus(status?: string | null): string {
+    if (!status) return 'Not started';
+    const labels: Record<string, string> = {
+      DRAFT: 'Draft',
+      READY_FOR_REVIEW: 'Ready for review',
+      PENDING_APPROVAL: 'Pending approval',
+      APPROVED: 'Approved',
+      PUBLISHED: 'Published',
+      SUPERSEDED: 'Superseded',
+      ARCHIVED: 'Archived',
+      NOT_GENERATED: 'Not generated'
+    };
+    return labels[status] ?? status.replace(/_/g, ' ').toLowerCase();
   }
 
   donutStyle(ov: AcademicsOverview): Record<string, string> {
-    const rows = ov.studentsByClass || [];
+    const rows = ov.studentsByAcademicGroup || [];
     if (!rows.length) return { background: '#e2e8f0' };
     const colors = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#db2777', '#0891b2', '#64748b'];
     let cursor = 0;
