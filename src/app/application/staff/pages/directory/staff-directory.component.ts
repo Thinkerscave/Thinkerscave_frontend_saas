@@ -26,13 +26,14 @@ import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { ListContextService } from '../../../../core/services/list-context.service';
 import { ViewPreferenceService } from '../../../services/view-preference.service';
 import { ListQuerySession } from '../../../../shared/utils/list-query.session';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { AvatarComponent } from '../../../../shared/ui/avatar/avatar.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { CreateStaffComponent } from '../create-staff/create-staff.component';
 import { KpiCardComponent, KpiGroupComponent, KpiTone } from '../../../../shared/ui/kpi';
 import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { UiFeedbackService } from '../../../../core/feedback/ui-feedback.service';
 import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
+import { canWriteStaff } from '../../shared/permissions/staff-permissions';
 
 import { SoftRefreshKeys, SoftRefreshService, TcPageSkeletonComponent, ListSnapshotCache } from '../../../../shared/ui/loading';
 interface KpiTile {
@@ -62,17 +63,17 @@ const LIST_KEY = 'staff.directory.view';
     AppPaginatorComponent,
     AvatarComponent,
     EmptyStateComponent,
-    CreateStaffComponent,
     KpiCardComponent,
     KpiGroupComponent,
     SaasPageHeaderComponent,
     TcPageSkeletonComponent
   ],
-  styleUrls: ['../../staff.shared.scss'],
+  styleUrls: ['../../shared/styles/staff.shared.scss'],
   templateUrl: './staff-directory.component.html'
 })
 export class StaffDirectoryComponent implements OnInit {
   private readonly api = inject(StaffService);
+  private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialogs = inject(UiConfirmService);
@@ -88,8 +89,6 @@ export class StaffDirectoryComponent implements OnInit {
   hasLoaded = false;
   searching = false;
   errorMessage = '';
-  showAddDrawer = false;
-
   view: AppListViewMode = this.viewPrefs.globalDefault();
 
   dashboard: StaffDashboard = {
@@ -107,6 +106,10 @@ export class StaffDirectoryComponent implements OnInit {
 
   openMenuId: number | null = null;
   actionLoading: number | null = null;
+
+  get canWrite(): boolean {
+    return canWriteStaff(this.permissions);
+  }
 
   readonly kpiTiles: KpiTile[] = [
     { key: 'totalStaff',      label: 'Total Staff',        icon: 'pi-users',           tone: 'primary' },
@@ -287,7 +290,7 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   addStaff(): void {
-    this.showAddDrawer = true;
+    this.router.navigate(['/app/staff/create']);
   }
 
   importStaff(): void {
@@ -296,16 +299,6 @@ export class StaffDirectoryComponent implements OnInit {
 
   exportStaff(): void {
     this.feedback.info('Export', 'Staff export will be available soon.');
-  }
-
-  closeAddDrawer(): void {
-    this.showAddDrawer = false;
-  }
-
-  onStaffAdded(): void {
-    this.showAddDrawer = false;
-    this.loadStaff();
-    this.loadDashboard();
   }
 
   editStaff(staff: StaffSummary, event?: Event): void {
@@ -322,6 +315,10 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   closeMenu(): void { this.openMenuId = null; }
+
+  photoFor(staff: StaffSummary): string | null {
+    return staff.photoUrl || null;
+  }
 
   toggleActive(staff: StaffSummary, event?: Event): void {
     event?.stopPropagation();

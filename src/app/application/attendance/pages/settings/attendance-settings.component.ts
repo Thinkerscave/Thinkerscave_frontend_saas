@@ -5,19 +5,21 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 
+import { PermissionService } from '../../../../core/services/permission.service';
 import { UiConfirmService } from '../../../../core/feedback/ui-confirm.service';
-
-import { SaasPageHeaderComponent, SaasPanelComponent } from '../../../../shared/ui/saas';
+import { SaasPageHeaderComponent } from '../../../../shared/ui/saas';
 import { SchoolOperationsDataService } from '../../../school-operations/services/school-operations-data.service';
 import { AttendanceOrgSettings } from '../../../school-operations/models/school-operations.model';
 
 import { TcPageSkeletonComponent } from '../../../../shared/ui/loading';
+
+const ATTENDANCE_RESOURCE = 'ATTENDANCE';
+
 @Component({
   selector: 'app-attendance-settings',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent,
-    TcPageSkeletonComponent, SaasPanelComponent],
+  imports: [CommonModule, FormsModule, DropdownModule, SaasPageHeaderComponent, TcPageSkeletonComponent],
   templateUrl: './attendance-settings.component.html',
   styleUrl: './attendance-settings.component.scss'
 })
@@ -26,39 +28,52 @@ export class AttendanceSettingsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialogs = inject(UiConfirmService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly permissions = inject(PermissionService);
 
   settings: AttendanceOrgSettings = {
     attendanceMode: 'DAILY',
-    lateAfterTime: '08:15',
-    windowStartTime: '07:00',
-    windowEndTime: '09:00',
+    attendanceEditingPolicy: 'SAME_DAY',
+    windowStartTime: '09:00',
+    windowEndTime: '17:00',
     allowCopyPrevious: true,
     minStudentAttendancePercent: 75,
-    studentAlertThresholdPercent: 80,
-    sendSmsOnAbsent: false,
-    sendEmailOnAbsent: false,
+    minStaffWorkingHours: 8,
+    staffLateGraceMinutes: 15,
     freezeAfterDays: 0
   };
 
-  readonly freezeAfterOptions = [
-    { label: 'No automatic freeze', value: 0 },
-    { label: '3 days', value: 3 },
-    { label: '7 days', value: 7 },
-    { label: '15 days', value: 15 },
-    { label: '30 days', value: 30 }
+  readonly editingPolicyOptions = [
+    { label: 'Same day', value: 'SAME_DAY' },
+    { label: 'Same week', value: 'SAME_WEEK' },
+    { label: 'Same month', value: 'SAME_MONTH' }
   ];
 
   loading = true;
+  loaded = false;
   saving = false;
   saved = false;
   errorMessage = '';
+
+  get canManageSettings(): boolean {
+    return this.permissions.canManage(ATTENDANCE_RESOURCE);
+  }
 
   ngOnInit(): void {
     this.load();
   }
 
+  isValid(): boolean {
+    const minAttendance = this.settings.minStudentAttendancePercent;
+    const graceMinutes = this.settings.staffLateGraceMinutes;
+    const minimumHours = this.settings.minStaffWorkingHours;
+    return Number.isFinite(minAttendance) && minAttendance >= 0 && minAttendance <= 100
+      && Number.isFinite(graceMinutes) && graceMinutes >= 0 && graceMinutes <= 120
+      && Number.isFinite(minimumHours) && minimumHours >= 1 && minimumHours <= 24;
+  }
+
   load(): void {
     this.loading = true;
+    this.loaded = false;
     this.errorMessage = '';
     this.dataService.getAttendanceSettings()
       .pipe(
@@ -66,7 +81,10 @@ export class AttendanceSettingsComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: data => { this.settings = { ...data }; },
+        next: data => {
+          this.settings = { ...data };
+          this.loaded = true;
+        },
         error: () => { this.errorMessage = 'Unable to load attendance settings.'; }
       });
   }
@@ -78,15 +96,10 @@ export class AttendanceSettingsComponent implements OnInit {
     this.errorMessage = '';
     const payload: Partial<AttendanceOrgSettings> = {
       attendanceMode: this.settings.attendanceMode,
-      lateAfterTime: this.toApiTime(this.settings.lateAfterTime),
-      windowStartTime: this.toApiTime(this.settings.windowStartTime),
-      windowEndTime: this.toApiTime(this.settings.windowEndTime),
-      allowCopyPrevious: this.settings.allowCopyPrevious,
+      attendanceEditingPolicy: this.settings.attendanceEditingPolicy,
       minStudentAttendancePercent: this.settings.minStudentAttendancePercent,
-      studentAlertThresholdPercent: this.settings.studentAlertThresholdPercent,
-      sendSmsOnAbsent: this.settings.sendSmsOnAbsent,
-      sendEmailOnAbsent: this.settings.sendEmailOnAbsent,
-      freezeAfterDays: this.settings.freezeAfterDays
+      minStaffWorkingHours: this.settings.minStaffWorkingHours,
+      staffLateGraceMinutes: this.settings.staffLateGraceMinutes
     };
     this.dataService.saveAttendanceSettings(payload)
       .pipe(
@@ -131,10 +144,5 @@ export class AttendanceSettingsComponent implements OnInit {
           this.errorMessage = err?.error?.message || 'Unable to reset attendance settings.';
         }
       });
-  }
-
-  private toApiTime(value: string): string {
-    if (!value) return value;
-    return value.length === 5 ? `${value}:00` : value;
   }
 }
