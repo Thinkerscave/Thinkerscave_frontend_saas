@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -97,7 +97,11 @@ export class AcademicsWorkspaceComponent {
   });
 
   constructor() {
-    this.yearContext.ensureLoaded().subscribe();
+    effect(() => {
+      if (this.pageData()['requiresYear'] === true) {
+        this.yearContext.ensureLoaded().subscribe();
+      }
+    });
   }
 
   setupAcademicYear(): void {
@@ -112,4 +116,3 @@ export class AcademicsWorkspaceComponent {
     return snapshot.data ?? {};
   }
 }
-

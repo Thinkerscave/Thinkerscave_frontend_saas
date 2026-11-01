@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SaasPageHeaderComponent } from '../../../../../shared/ui/saas/saas-primitives';
 import { TcAcademicYearSelectorComponent } from '../../../../../shared/ui/academic-year-selector';
@@ -22,19 +22,26 @@ import { roleTokensFromUser } from '../../../../../core/utils/workspace-home';
   templateUrl: './my-academics.component.html',
   styleUrls: ['./my-academics.component.scss']
 })
-export class MyAcademicsPageComponent {
+export class MyAcademicsPageComponent implements OnInit {
   private readonly api = inject(AcademicsMeApiService);
   private readonly login = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
 
   readonly resource = ACADEMICS_MY_ACADEMICS_RESOURCE;
+  readonly hasStudentRole = roleTokensFromUser(this.login.getUser()).includes('STUDENT');
   private readonly hasStudentOrParentRole = roleTokensFromUser(this.login.getUser())
     .some(role => role === 'STUDENT' || role === 'PARENT');
   loading = true;
   selectedYearId: number | null = null;
   data: StudentMyAcademics | null = null;
   accessNotice: string | null = null;
+
+  ngOnInit(): void {
+    if (this.hasStudentRole) {
+      this.loadEnrolledStudentAcademics();
+    }
+  }
 
   onAcademicYearChange(yearId: number | null): void {
     this.selectedYearId = yearId;
@@ -78,6 +85,27 @@ export class MyAcademicsPageComponent {
           this.messages.add({ severity: 'error', summary: 'Unable to load academics', detail: message });
         }
       }
+      });
+  }
+
+  private loadEnrolledStudentAcademics(): void {
+    this.loading = true;
+    this.api.myAcademics()
+      .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (data) => {
+          this.data = data;
+          this.selectedYearId = data.academicYearId ?? null;
+        },
+        error: (err) => {
+          const message = String(err?.error?.message || '');
+          if (/profile required|active enrollment/i.test(message)) {
+            this.accessNotice = 'No active enrollment is linked to your student account. Ask an administrator to assign your Academic Group, section, and academic year.';
+          } else {
+            this.accessNotice = 'Your academics could not be loaded right now.';
+            this.messages.add({ severity: 'error', summary: 'Unable to load academics', detail: message });
+          }
+        }
       });
   }
 

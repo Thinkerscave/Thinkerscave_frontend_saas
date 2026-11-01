@@ -189,7 +189,7 @@ export const ACADEMICS_PAGES = {
   myTimetable: {
     breadcrumb: 'My Timetable',
     pageTitle: 'My Timetable',
-    pageSubtitle: 'Your weekly teaching schedule.',
+    pageSubtitle: 'Your published schedule for your active teaching assignment or student enrollment.',
     pageKind: 'main',
     hideBack: true
   },
@@ -203,7 +203,7 @@ export const ACADEMICS_PAGES = {
   myAcademics: {
     breadcrumb: 'My Academics',
     pageTitle: 'My Academics',
-    pageSubtitle: 'Your class, section, subjects and timetable for the current academic year.',
+    pageSubtitle: 'Your class, section, mapped subjects and timetable for your active enrollment.',
     pageKind: 'main',
     hideBack: true
   }

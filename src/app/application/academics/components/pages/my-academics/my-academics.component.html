@@ -1,12 +1,12 @@
 <div class="ma-page acad-page">
 <tc-saas-page-header [shellActions]="true">
-    <tc-academic-year-selector (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
+    <tc-academic-year-selector *ngIf="!hasStudentRole" (yearChange)="onAcademicYearChange($event)"></tc-academic-year-selector>
   </tc-saas-page-header>
 
     <div class="acad-guide-banner acad-guide-banner--warning" *ngIf="accessNotice">
     <i class="pi pi-lock acad-guide-banner__icon"></i>
     <div class="acad-guide-banner__content">
-      <div class="acad-guide-banner__title">Student Portal Restricted</div>
+      <div class="acad-guide-banner__title">{{ hasStudentRole ? 'Enrollment Required' : 'Student Portal Restricted' }}</div>
       <div class="acad-guide-banner__desc">{{ accessNotice }}</div>
     </div>
   </div>

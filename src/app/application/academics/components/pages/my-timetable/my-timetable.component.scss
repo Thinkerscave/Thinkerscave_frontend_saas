@@ -1,6 +1,7 @@
 @use '../../shared/styles/academics-common' as *;
 :host { display: block; }
 .mt-page { color: #0f172a; }
+.mt-context { color: #64748b; font-size: .8rem; }
 .mt-breadcrumb { display: flex; gap: .4rem; font-size: .8rem; color: #64748b; margin-bottom: .35rem; }
 .mt-breadcrumb a { color: #64748b; text-decoration: none; }
 .mt-header__row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
