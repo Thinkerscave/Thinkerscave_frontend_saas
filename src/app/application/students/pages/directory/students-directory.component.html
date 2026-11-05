@@ -44,12 +44,26 @@
         (reset)="clearFilters()"
         (viewChange)="onViewModeChange($event)">
         <p-dropdown
+          [options]="academicYearOptions"
+          [(ngModel)]="filter.academicYearId"
+          optionLabel="label"
+          optionValue="id"
+          placeholder="All Academic Years"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="stu-filter-dropdown"
+          (onChange)="onAcademicYearChanged()">
+        </p-dropdown>
+        <p-dropdown
           [options]="classSelectOptions"
           [(ngModel)]="filter.classId"
           optionLabel="label"
           optionValue="value"
           placeholder="All Classes"
           [showClear]="true"
+                    [disabled]="!filter.academicYearId && !filter.classId"
           [filter]="true"
           filterBy="label"
           appendTo="body"
@@ -66,6 +80,16 @@
           [filter]="true"
           filterBy="label"
           [disabled]="!filter.classId"
+          appendTo="body"
+          styleClass="stu-filter-dropdown">
+        </p-dropdown>
+        <p-dropdown
+          [options]="assignedOptions"
+          [(ngModel)]="filter.assigned"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All placements"
+          [showClear]="true"
           appendTo="body"
           styleClass="stu-filter-dropdown">
         </p-dropdown>
@@ -124,6 +148,7 @@
           <span><i class="pi pi-book"></i> {{ s.className || '—' }} – {{ s.sectionName || '—' }}</span>
           <span><i class="pi pi-hashtag"></i> Roll {{ s.rollNumber || '—' }}</span>
           <span><i class="pi pi-phone"></i> {{ s.mobile || '—' }}</span>
+                    <span><i class="pi pi-users"></i> {{ s.guardianName || '—' }} · {{ s.guardianMobile || '—' }}</span>
           <span class="stu-presence" [attr.data-state]="s.attendanceStatus">
             {{ presenceLabel(s.attendanceStatus) }}
           </span>
@@ -149,9 +174,6 @@
                 <button type="button" class="stu-more-menu__item" (click)="whatsapp(s, $event)">
                   <i class="pi pi-whatsapp"></i> WhatsApp
                 </button>
-                <button type="button" class="stu-more-menu__item" (click)="transferStudent(s, $event)">
-                  <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
-                </button>
                 <button type="button" class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
                   <i class="pi pi-history"></i> View Timeline
                 </button>
@@ -174,6 +196,7 @@
             <th>Admission No.</th>
             <th>Class / Section</th>
             <th>Roll No.</th>
+            <th>Parent / Guardian</th>
             <th>Mobile No.</th>
             <th>Status</th>
             <th>Actions</th>
@@ -189,7 +212,7 @@
                 <tc-avatar [name]="s.fullName" [imageUrl]="s.photoUrl ?? null" size="sm"></tc-avatar>
                 <div>
                   <strong class="stu-table-name">{{ s.fullName }}</strong>
-                  <small class="stu-meta-muted">{{ s.studentCode || '' }}</small>
+                  <small class="stu-meta-muted">Student ID: {{ s.studentCode || s.studentId }}</small>
                 </div>
               </div>
             </td>
@@ -199,6 +222,7 @@
               <small class="stu-meta-muted">{{ s.sectionName || '—' }}</small>
             </td>
             <td>{{ s.rollNumber || '—' }}</td>
+            <td>{{ s.guardianName || '—' }}<br/><small class="stu-meta-muted">{{ s.guardianMobile || '—' }}</small></td>
             <td>{{ s.mobile || '—' }}</td>
             <td>
               <span class="tc-badge" [attr.data-status]="statusLabel(s)">
@@ -221,9 +245,6 @@
                     </button>
                     <button type="button" class="stu-more-menu__item" (click)="whatsapp(s, $event)">
                       <i class="pi pi-whatsapp"></i> WhatsApp
-                    </button>
-                    <button type="button" class="stu-more-menu__item" (click)="transferStudent(s, $event)">
-                      <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
                     </button>
                     <button type="button" class="stu-more-menu__item" (click)="viewTimeline(s, $event)">
                       <i class="pi pi-history"></i> View Timeline
@@ -272,7 +293,10 @@
       <div>
         <h2>Bulk Import Students</h2>
         <p *ngIf="importStep === 'upload'" class="stu-dialog-subtitle">
-          Download the template, fill it, and upload to import students.
+          Download the template, fill it, and preview the workbook before importing.
+        </p>
+        <p *ngIf="importStep === 'preview'" class="stu-dialog-subtitle">
+          Review validation results before creating Student records.
         </p>
       </div>
       <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="closeImport()">
@@ -286,7 +310,7 @@
           <i class="pi pi-file-excel"></i>
         </div>
         <div class="stu-import-template__copy">
-          <strong>Student_Import_Template.csv</strong>
+          <strong>Student_Import_Template.xlsx</strong>
           <small>19 columns including student &amp; parent details</small>
         </div>
         <button type="button" class="tc-btn" (click)="downloadTemplate()">
@@ -295,15 +319,15 @@
       </div>
 
       <div class="tc-form-field tc-form-field--full">
-        <label>Select File (CSV or Excel)</label>
+        <label>Select Excel File (.xlsx)</label>
         <div class="stu-file-drop" [class.has-file]="!!importFile">
           <i class="pi pi-upload stu-file-drop__icon"></i>
-          <p class="stu-file-drop__hint">Drag &amp; drop your file here or</p>
+          <p class="stu-file-drop__hint">Choose the completed template workbook.</p>
           <label class="stu-file-drop__chooser">
             <span class="tc-btn tc-btn--primary">
               <i class="pi pi-folder-open"></i> Choose File
             </span>
-            <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileSelected($event)" class="sr-only"/>
+            <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="onFileSelected($event)" class="sr-only"/>
           </label>
           <p *ngIf="importFile" class="stu-file-drop__selected">
             <i class="pi pi-check-circle"></i> {{ importFile.name }}
@@ -314,6 +338,22 @@
       <div *ngIf="importError" class="tc-empty-state tc-empty-state--inline">
         <i class="pi pi-exclamation-triangle"></i> {{ importError }}
       </div>
+    </div>
+
+    <div class="tc-dialog__body" *ngIf="importStep === 'preview' && importPreview">
+      <div class="stu-import-stats">
+        <div class="stu-import-stat"><strong>{{ importPreview.total }}</strong><span>Rows checked</span></div>
+        <div class="stu-import-stat is-success"><strong>{{ importPreview.valid }}</strong><span>Ready to import</span></div>
+        <div class="stu-import-stat is-danger"><strong>{{ importPreview.failed }}</strong><span>Needs correction</span></div>
+      </div>
+      <p *ngIf="importPreview.failed === 0" class="tc-empty-state tc-empty-state--inline">
+        All non-empty rows passed validation. Import will create {{ importPreview.valid }} Student records.
+      </p>
+      <div *ngIf="importPreview.errors.length" class="stu-import-errors" role="alert">
+        <h3>Rows to correct</h3>
+        <ul><li *ngFor="let error of importPreview.errors">{{ error }}</li></ul>
+      </div>
+      <p class="stu-dialog-subtitle">Importing skips invalid rows; successfully created records cannot be undone.</p>
     </div>
 
     <div class="tc-dialog__body" *ngIf="importStep === 'result' && importResult">
@@ -340,10 +380,18 @@
       <button type="button" class="tc-btn" (click)="closeImport()">
         {{ importStep === 'result' ? 'Close' : 'Cancel' }}
       </button>
+      <button *ngIf="importStep === 'preview'" type="button" class="tc-btn" (click)="importStep = 'upload'">
+        Back to file
+      </button>
       <button *ngIf="importStep === 'upload'" type="button" class="tc-btn tc-btn--primary"
-              [disabled]="!importFile || importLoading" (click)="uploadImport()">
+              [disabled]="!importFile || importLoading" (click)="previewImport()">
         <i class="pi" [class.pi-upload]="!importLoading" [class.pi-spin]="importLoading" [class.pi-spinner]="importLoading"></i>
-        {{ importLoading ? 'Uploading…' : 'Upload & Import' }}
+        {{ importLoading ? 'Checking…' : 'Preview import' }}
+      </button>
+      <button *ngIf="importStep === 'preview'" type="button" class="tc-btn tc-btn--primary"
+              [disabled]="importLoading || !importPreview?.valid" (click)="uploadImport()">
+        <i class="pi" [class.pi-check]="!importLoading" [class.pi-spin]="importLoading" [class.pi-spinner]="importLoading"></i>
+        {{ importLoading ? 'Importing…' : 'Import valid rows' }}
       </button>
     </div>
   </div>

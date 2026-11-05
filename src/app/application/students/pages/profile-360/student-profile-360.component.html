@@ -1,230 +1,87 @@
 <section class="tc-page-shell tc-detail-page stu-profile-page" (click)="closeMenus()">
-
-  <tc-saas-page-header></tc-saas-page-header>
-
-  <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="7"></tc-page-skeleton>
-
-  <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline">
-    <i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}
-  </div>
+  <tc-saas-page-header>
+    <div class="stu-profile-actions" *ngIf="profile">
+      <button type="button" class="tc-btn tc-btn--primary" (click)="editStudent()">
+        <i class="pi pi-pencil" aria-hidden="true"></i> Edit Student
+      </button>
+      <div class="stu-more-menu">
+        <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" (click)="toggleMoreActions($event)"
+                title="More actions" aria-label="More student actions" [attr.aria-expanded]="moreActionsOpen">
+          <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+        </button>
+        <div class="stu-more-menu__panel" *ngIf="moreActionsOpen">
+          <button *ngIf="studentCanChangeStatus" type="button" class="stu-more-menu__item is-danger" (click)="changeStudentStatus()">
+            <i class="pi" [ngClass]="studentIsActive ? 'pi-ban' : 'pi-check-circle'" aria-hidden="true"></i>
+            {{ studentIsActive ? 'Deactivate' : 'Activate' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </tc-saas-page-header>
+  <app-toast />
+  <tc-page-skeleton *ngIf="loading" variant="detail" [tabs]="3"></tc-page-skeleton>
+  <div *ngIf="errorMessage" class="tc-empty-state tc-empty-state--inline"><i class="pi pi-exclamation-triangle"></i> {{ errorMessage }}</div>
 
   <ng-container *ngIf="!loading && profile">
-
-    <header class="stu-hero tc-detail-page__hero">
-      <tc-avatar
-        [name]="profile.overview.fullName"
-        [imageUrl]="avatarUrl"
-        size="xl">
-      </tc-avatar>
-
-      <div class="stu-hero__meta">
-        <h1>
-          {{ profile.overview.fullName }}
-          <span class="tc-badge" [attr.data-status]="profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE')">
-            {{ profile.overview.status || (profile.overview.active ? 'ACTIVE' : 'INACTIVE') | titlecase }}
+    <section class="stu-identity tc-detail-page__hero">
+      <tc-avatar [name]="profile.overview.fullName" [imageUrl]="avatarUrl" size="lg"></tc-avatar>
+      <div class="stu-identity__body">
+        <div class="stu-identity__title">
+          <h1>{{ profile.overview.fullName }}</h1>
+          <span class="tc-badge" [attr.data-status]="profile.overview.status || 'ACTIVE'">
+            {{ profile.overview.status || 'ACTIVE' | titlecase }}
           </span>
-        </h1>
-        <p>
-          {{ profile.overview.className || '—' }}
-          <ng-container *ngIf="profile.overview.sectionName"> · Sec {{ profile.overview.sectionName }}</ng-container>
-          · Admission {{ profile.overview.admissionNumber || '—' }}
+        </div>
+        <p class="stu-identity__meta">
+          {{ profile.overview.studentCode || ('Student ' + profile.overview.studentId) }} · Admission {{ profile.overview.admissionNumber || '—' }}
         </p>
-
-        <div class="stu-hero-chips">
-          <span class="stu-hero-chip"><i class="pi pi-hashtag"></i> Roll {{ dash(profile.overview.rollNumber) }}</span>
-          <span class="stu-hero-chip"><i class="pi pi-id-card"></i> {{ profile.overview.studentCode || 'N/A' }}</span>
-          <span class="stu-hero-chip"><i class="pi pi-calendar"></i> Age {{ dash(profile.overview.ageYears) }}</span>
-          <span class="stu-hero-chip" *ngIf="profile.overview.academicYear">
-            <i class="pi pi-book"></i> {{ profile.overview.academicYear }}
+        <div class="stu-identity__chips">
+          <span class="stu-chip">
+            <i class="pi pi-book" aria-hidden="true"></i>
+            {{ profile.overview.academicYear ? (profile.overview.className || 'Class unassigned') : 'Unassigned' }}<ng-container *ngIf="profile.overview.academicYear && profile.overview.sectionName"> · {{ profile.overview.sectionName }}</ng-container>
           </span>
-        </div>
-
-        <div class="stu-hero-stats" aria-label="Quick stats">
-          <div class="stu-hero-stat" data-tone="info">
-            <strong>{{ profile.overview.profileCompletion || 0 }}%</strong>
-            <span>Profile</span>
-          </div>
-          <div class="stu-hero-stat" data-tone="success">
-            <strong>{{ studentDocs.length }}</strong>
-            <span>Documents</span>
-          </div>
-          <div class="stu-hero-stat">
-            <strong>{{ profile.family.guardians.length || 0 }}</strong>
-            <span>Guardians</span>
-          </div>
+          <span class="stu-chip" *ngIf="profile.overview.academicYear">
+            <i class="pi pi-calendar" aria-hidden="true"></i> {{ profile.overview.academicYear }}
+          </span>
+          <span class="stu-chip"><i class="pi pi-hashtag" aria-hidden="true"></i> Roll {{ dash(profile.overview.rollNumber) }}</span>
+          <span class="stu-chip"><i class="pi pi-clock" aria-hidden="true"></i> Age {{ dash(profile.overview.ageYears) }}</span>
         </div>
       </div>
+    </section>
 
-      <div class="stu-hero__actions">
-        <button type="button" class="tc-btn tc-btn--primary" (click)="go('PERSONAL')">
-          <i class="pi pi-pencil"></i> Edit Profile
-        </button>
-
-        <div class="stu-more-menu">
-          <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon"
-                  (click)="toggleMoreActions($event)" title="More actions">
-            <i class="pi pi-ellipsis-v"></i>
-          </button>
-          <div class="stu-more-menu__panel" *ngIf="moreActionsOpen">
-            <button class="stu-more-menu__item" (click)="transferStudent()">
-              <i class="pi pi-arrow-right-arrow-left"></i> Transfer Student
-            </button>
-            <button class="stu-more-menu__item">
-              <i class="pi pi-print"></i> Print Profile
-            </button>
-            <button class="stu-more-menu__item">
-              <i class="pi pi-id-card"></i> Print ID Card
-            </button>
-            <button class="stu-more-menu__item is-danger">
-              <i class="pi pi-ban"></i> Deactivate
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+    <tc-kpi-group ariaLabel="Student summary" mode="equal" [columns]="4">
+      <tc-kpi-card label="Profile Completion" [value]="(profile.overview.profileCompletion || 0) + '%'"
+                   icon="pi pi-chart-bar" tone="info"></tc-kpi-card>
+      <tc-kpi-card label="Guardians" [value]="profile.family.guardians.length"
+                   icon="pi pi-users" tone="primary"></tc-kpi-card>
+      <tc-kpi-card label="Documents" [value]="studentDocs.length"
+                   icon="pi pi-folder-open" tone="neutral" hint="Open Documents"
+                   [clickable]="true" (select)="go('DOCUMENTS')"></tc-kpi-card>
+      <tc-kpi-card label="Enrollment" [value]="profile.academics.enrollmentStatus || 'Not enrolled'"
+                   icon="pi pi-book" tone="success"></tc-kpi-card>
+    </tc-kpi-group>
 
     <nav class="adm-tabs tc-detail-page__tabs" aria-label="Profile sections">
-      <button *ngFor="let tab of tabs"
-              type="button"
-              [class.is-active]="activeTab === tab.key"
-              (click)="go(tab.key)">
-        <i class="{{ tab.icon }}"></i> {{ tab.label }}
-      </button>
+      <button *ngFor="let tab of tabs" type="button" [class.is-active]="activeTab === tab.key" (click)="go(tab.key)"><i class="{{ tab.icon }}"></i> {{ tab.label }}</button>
     </nav>
-
     <div class="adm-tab-panel tc-detail-page__content">
-
-      <!-- OVERVIEW -->
       <ng-container *ngIf="activeTab === 'OVERVIEW'">
-        <div class="stu-kpi-mini-grid">
-          <div class="stu-kpi-mini">
-            <div class="stu-kpi-mini__icon" data-tone="info">
-              <i class="pi pi-user"></i>
-            </div>
-            <div class="stu-kpi-mini__body">
-              <strong>{{ dash(profile.overview.gender) }}</strong>
-              <span>Gender</span>
-            </div>
-          </div>
-
-          <div class="stu-kpi-mini">
-            <div class="stu-kpi-mini__icon" data-tone="success">
-              <i class="pi pi-heart"></i>
-            </div>
-            <div class="stu-kpi-mini__body">
-              <strong>{{ dash(profile.overview.bloodGroup) }}</strong>
-              <span>Blood group</span>
-            </div>
-          </div>
-
-          <div class="stu-kpi-mini">
-            <div class="stu-kpi-mini__icon" data-tone="info">
-              <i class="pi pi-file"></i>
-            </div>
-            <div class="stu-kpi-mini__body">
-              <strong>{{ verifiedDocCount() }}/{{ studentDocs.length }}</strong>
-              <span>Docs verified</span>
-            </div>
-          </div>
-
-          <div class="stu-kpi-mini">
-            <div class="stu-completion stu-completion--stack">
-              <span class="stu-kpi-label">Profile completion</span>
-              <div class="stu-completion-row">
-                <div class="stu-completion__bar">
-                  <span [style.width.%]="profile.overview.profileCompletion || 0"></span>
-                </div>
-                <strong class="stu-completion__pct">{{ profile.overview.profileCompletion || 0 }}%</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stu-profile-layout stu-profile-layout--single">
-          <div class="stu-snapshot-grid stu-snapshot-grid--top">
-            <div class="stu-snapshot">
-              <div class="stu-snapshot__head">
-                <h3>Student summary</h3>
-                <a (click)="go('PERSONAL')">View all</a>
-              </div>
-              <div class="stu-snapshot__rows">
-                <div><span>Gender</span><strong>{{ dash(profile.personal.gender) }}</strong></div>
-                <div><span>DOB</span><strong>{{ dash(profile.personal.dateOfBirth) }}</strong></div>
-                <div><span>Age</span><strong>{{ dash(profile.personal.ageYears ?? profile.overview.ageYears) }}</strong></div>
-                <div><span>Blood group</span><strong>{{ dash(profile.personal.bloodGroup) }}</strong></div>
-                <div><span>Mother tongue</span><strong>{{ dash(profile.personal.motherTongue) }}</strong></div>
-                <div><span>Religion</span><strong>{{ dash(profile.personal.religion) }}</strong></div>
-                <div><span>Nationality</span><strong>{{ dash(profile.personal.nationality) }}</strong></div>
-                <div><span>Category</span><strong>{{ dash(profile.personal.category) }}</strong></div>
-              </div>
-            </div>
-
-            <div class="stu-snapshot">
-              <div class="stu-snapshot__head">
-                <h3>Academic summary</h3>
-                <a (click)="go('ACADEMICS')">View all</a>
-              </div>
-              <div class="stu-snapshot__rows">
-                <div><span>Academic year</span><strong>{{ dash(profile.academics.academicYear) }}</strong></div>
-                <div><span>Admission date</span><strong>{{ dash(profile.academics.admissionDate) }}</strong></div>
-                <div><span>Enrollment date</span><strong>{{ dash(profile.academics.enrollmentDate) }}</strong></div>
-                <div><span>Enrollment status</span>
-                  <span class="tc-badge stu-badge-compact" [attr.data-status]="profile.academics.enrollmentStatus || 'ACTIVE'">
-                    {{ (profile.academics.enrollmentStatus || 'Active') | titlecase }}
-                  </span>
-                </div>
-                <div><span>Current class</span><strong>{{ dash(profile.academics.currentClass) }}</strong></div>
-                <div><span>Current section</span><strong>{{ dash(profile.academics.currentSection) }}</strong></div>
-                <div><span>Roll number</span><strong>{{ dash(profile.academics.rollNumber) }}</strong></div>
-              </div>
-            </div>
-
-            <div class="stu-snapshot">
-              <div class="stu-snapshot__head">
-                <h3>Contact</h3>
-                <a (click)="go('PERSONAL')">View all</a>
-              </div>
-              <div class="stu-snapshot__rows">
-                <div><span>Mobile</span><strong>{{ dash(profile.personal.mobile) }}</strong></div>
-                <div><span>Email</span><strong>{{ dash(profile.personal.email) }}</strong></div>
-                <div><span>Emergency</span><strong>{{ dash(profile.medical.emergencyContact) }}</strong></div>
-                <div class="stu-contact-address-row">
-                  <span>Current address</span>
-                  <strong class="stu-contact-address">
-                    {{ profile.personal.currentAddressLine1 || '—' }}
-                    <ng-container *ngIf="profile.personal.currentCity || profile.personal.currentState">
-                      <br>{{ profile.personal.currentCity }} {{ profile.personal.currentState }}
-                    </ng-container>
-                    <ng-container *ngIf="profile.personal.currentPincode">
-                      <br>{{ profile.personal.currentPincode }}
-                    </ng-container>
-                  </strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </ng-container>
 
       <!-- PERSONAL -->
-      <ng-container *ngIf="activeTab === 'PERSONAL'">
-        <div class="tc-card tc-card--panel" *ngIf="!editingPersonal">
+      <ng-container *ngIf="activeTab === 'OVERVIEW'">
+        <div class="tc-card tc-card--panel">
           <div class="tc-card__header">
             <h2>Personal details</h2>
-            <button class="tc-btn" (click)="startEditPersonal()">
-              <i class="pi pi-pencil"></i> Edit
-            </button>
           </div>
           <dl class="adm-dl">
             <div><dt>Full name</dt><dd>{{ dash(profile.personal.fullName) }}</dd></div>
             <div><dt>Gender</dt><dd>{{ dash(profile.personal.gender) }}</dd></div>
             <div><dt>Date of birth</dt><dd>{{ dash(profile.personal.dateOfBirth) }}</dd></div>
             <div><dt>Age</dt><dd>{{ dash(profile.personal.ageYears ?? profile.overview.ageYears) }}</dd></div>
-            <div><dt>Place of birth</dt><dd>{{ dash(profile.personal.placeOfBirth) }}</dd></div>
             <div><dt>Nationality</dt><dd>{{ dash(profile.personal.nationality) }}</dd></div>
-            <div><dt>Religion</dt><dd>{{ dash(profile.personal.religion) }}</dd></div>
             <div><dt>Mother tongue</dt><dd>{{ dash(profile.personal.motherTongue) }}</dd></div>
-            <div><dt>Category</dt><dd>{{ dash(profile.personal.category) }}</dd></div>
+            <div><dt>Social category</dt><dd>{{ dash(profile.personal.socialCategory) }}</dd></div>
             <div><dt>ID type</dt><dd>{{ dash(profile.personal.identityDocumentType) }}</dd></div>
             <div><dt>ID number</dt><dd>{{ dash(profile.personal.identityDocumentNumber) }}</dd></div>
             <div><dt>Blood group</dt><dd>{{ dash(profile.personal.bloodGroup) }}</dd></div>
@@ -245,68 +102,61 @@
           </div>
         </div>
 
-        <div class="tc-card tc-card--panel stu-inline-edit" *ngIf="editingPersonal">
-          <div class="stu-inline-edit__header">
-            <h3>Edit personal details</h3>
-          </div>
-          <div class="stu-inline-edit__form">
-            <div class="tc-form-field">
-              <label>First name</label>
-              <input type="text" [(ngModel)]="personalForm.firstName"/>
-            </div>
-            <div class="tc-form-field">
-              <label>Last name</label>
-              <input type="text" [(ngModel)]="personalForm.lastName"/>
-            </div>
-            <div class="tc-form-field">
-              <label>Gender</label>
-              <p-dropdown
-                [options]="genderOptions"
-                [(ngModel)]="personalForm.gender"
-                optionLabel="label"
-                optionValue="value"
-                appendTo="body"
-                styleClass="att-filter-dropdown">
-              </p-dropdown>
-            </div>
-            <div class="tc-form-field">
-              <label>Date of birth</label>
-              <input type="date" [(ngModel)]="personalForm.dateOfBirth"/>
-            </div>
-            <div class="tc-form-field">
-              <label>Mobile</label>
-              <input type="tel" [(ngModel)]="personalForm.mobile"/>
-            </div>
-            <div class="tc-form-field">
-              <label>Email</label>
-              <input type="email" [(ngModel)]="personalForm.email"/>
-            </div>
-            <div class="tc-form-field tc-form-field--full">
-              <label>Current address</label>
-              <input type="text" [(ngModel)]="personalForm.currentAddressLine1"/>
-            </div>
-            <div class="tc-form-field">
-              <label>City</label>
-              <input type="text" [(ngModel)]="personalForm.currentCity"/>
-            </div>
-            <div class="tc-form-field">
-              <label>State</label>
-              <input type="text" [(ngModel)]="personalForm.currentState"/>
-            </div>
-          </div>
-          <div class="stu-inline-edit__actions">
-            <button class="tc-btn tc-btn--ghost" (click)="cancelEditPersonal()">Cancel</button>
-            <button class="tc-btn tc-btn--primary" (click)="savePersonal()">Save changes</button>
-          </div>
-        </div>
       </ng-container>
 
       <!-- FAMILY -->
-      <ng-container *ngIf="activeTab === 'FAMILY'">
+      <ng-container *ngIf="activeTab === 'OVERVIEW'">
         <div class="tc-card tc-card--panel">
           <div class="tc-card__header">
             <h2>Guardians &amp; family contacts</h2>
-            <button class="tc-btn tc-btn--primary"><i class="pi pi-plus"></i> Add guardian</button>
+            <button type="button" class="tc-btn tc-btn--primary" (click)="addGuardian()"><i class="pi pi-plus"></i> Add guardian</button>
+          </div>
+
+          <div class="tc-card tc-card--panel stu-inline-edit" *ngIf="guardianEditorOpen">
+            <div class="stu-inline-edit__header">
+              <h3>{{ editingGuardianId ? 'Edit guardian' : 'Add parent or guardian' }}</h3>
+            </div>
+            <div class="stu-inline-edit__form">
+              <div class="tc-form-field">
+                <label>Relationship</label>
+                <p-dropdown [options]="relationshipOptions" [(ngModel)]="guardianForm.relationship"
+                            optionLabel="label" optionValue="value" appendTo="body"></p-dropdown>
+              </div>
+              <div class="tc-form-field">
+                <label>First name</label>
+                <input type="text" [(ngModel)]="guardianForm.firstName" />
+              </div>
+              <div class="tc-form-field">
+                <label>Middle name</label>
+                <input type="text" [(ngModel)]="guardianForm.middleName" />
+              </div>
+              <div class="tc-form-field">
+                <label>Last name</label>
+                <input type="text" [(ngModel)]="guardianForm.lastName" />
+              </div>
+              <div class="tc-form-field">
+                <label>Mobile</label>
+                <input type="tel" [(ngModel)]="guardianForm.mobile" />
+              </div>
+              <div class="tc-form-field">
+                <label>Email</label>
+                <input type="email" [(ngModel)]="guardianForm.email" />
+              </div>
+              <div class="tc-form-field">
+                <label>Occupation</label>
+                <input type="text" [(ngModel)]="guardianForm.occupation" />
+              </div>
+              <label class="stu-add-form__check"><input type="checkbox" [(ngModel)]="guardianForm.isPrimaryContact" name="guardianPrimary" /> Primary contact</label>
+              <label class="stu-add-form__check"><input type="checkbox" [(ngModel)]="guardianForm.receiveSms" name="guardianSms" /> Receives SMS</label>
+              <label class="stu-add-form__check"><input type="checkbox" [(ngModel)]="guardianForm.receiveEmail" name="guardianEmailOptIn" /> Receives email</label>
+              <label class="stu-add-form__check"><input type="checkbox" [(ngModel)]="guardianForm.isPickupAuthorized" name="guardianPickup" /> Authorized for pickup</label>
+            </div>
+            <div class="stu-inline-edit__actions">
+              <button type="button" class="tc-btn tc-btn--ghost" (click)="guardianEditorOpen = false">Cancel</button>
+              <button type="button" class="tc-btn tc-btn--primary" [disabled]="guardianSaving" (click)="saveGuardian()">
+                {{ guardianSaving ? 'Saving…' : 'Save guardian' }}
+              </button>
+            </div>
           </div>
 
           <div class="tc-table-wrap" *ngIf="profile.family.guardians.length; else noFamily">
@@ -319,6 +169,7 @@
                   <th>Email</th>
                   <th>Occupation</th>
                   <th>Role</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,6 +183,10 @@
                     <span class="adm-badge" data-tone="success" *ngIf="g.isPrimaryContact">Primary contact</span>
                     <span class="stu-muted-cell" *ngIf="!g.isPrimaryContact">—</span>
                   </td>
+                  <td>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="editGuardian(g)">Edit</button>
+                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm" (click)="removeGuardian(g)">Remove</button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -340,17 +195,52 @@
             <div class="tc-empty-state">
               <i class="pi pi-users"></i>
               <h3>No guardians linked</h3>
-              <p>Guardian details from admission will appear here once linked to the student.</p>
+              <p>Add a parent or guardian to keep family contacts with the Student record.</p>
             </div>
           </ng-template>
         </div>
       </ng-container>
 
       <!-- ACADEMICS -->
-      <ng-container *ngIf="activeTab === 'ACADEMICS'">
+      <ng-container *ngIf="activeTab === 'OVERVIEW'">
         <div class="tc-card tc-card--panel">
           <div class="tc-card__header">
             <h2>Current enrollment</h2>
+            <button type="button" class="tc-btn tc-btn--secondary" (click)="startEditEnrollment()">
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+              {{ profile.academics.academicYear ? 'Edit placement' : 'Set placement' }}
+            </button>
+          </div>
+          <div class="stu-inline-edit__form" *ngIf="editingEnrollment">
+            <div class="tc-form-field">
+              <label>Academic year</label>
+              <p-dropdown [options]="academicYearOptions" optionLabel="label" optionValue="id"
+                          [(ngModel)]="enrollmentForm.academicYearId"
+                          (onChange)="onEnrollmentYearChange($event.value)" placeholder="Select year"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Class</label>
+              <p-dropdown [options]="enrollmentClassOptions" optionLabel="label" optionValue="id"
+                          [(ngModel)]="enrollmentForm.classId"
+                          (onChange)="onEnrollmentClassChange($event.value)"
+                          [disabled]="!enrollmentForm.academicYearId" placeholder="Select class"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Section</label>
+              <p-dropdown [options]="enrollmentSectionOptions" optionLabel="label" optionValue="id"
+                          [(ngModel)]="enrollmentForm.sectionId"
+                          [disabled]="!enrollmentForm.classId" placeholder="Unassigned"></p-dropdown>
+            </div>
+            <div class="tc-form-field">
+              <label>Roll number</label>
+              <input type="text" [(ngModel)]="enrollmentForm.rollNumber" />
+            </div>
+            <div class="stu-inline-edit__actions">
+              <button type="button" class="tc-btn tc-btn--ghost" (click)="editingEnrollment = false">Cancel</button>
+              <button type="button" class="tc-btn tc-btn--primary" [disabled]="enrollmentSaving" (click)="saveEnrollment()">
+                <i class="pi pi-check" aria-hidden="true"></i> Save placement
+              </button>
+            </div>
           </div>
           <dl class="adm-dl">
             <div><dt>Academic year</dt><dd>{{ dash(profile.academics.academicYear) }}</dd></div>
@@ -423,154 +313,104 @@
 
       <!-- DOCUMENTS -->
       <ng-container *ngIf="activeTab === 'DOCUMENTS'">
-        <div class="tc-card tc-card--panel">
-          <div class="tc-card__header">
-            <h2>Student documents</h2>
-            <button class="tc-btn tc-btn--primary"><i class="pi pi-upload"></i> Upload</button>
+        <section class="stu-documents">
+          <div class="stu-documents__toolbar">
+            <div class="stu-documents__heading">
+              <h2>Documents</h2>
+              <span>{{ studentDocs.length }} {{ studentDocs.length === 1 ? 'document' : 'documents' }}</span>
+            </div>
+            <div class="stu-documents__controls">
+              <p-dropdown inputId="student-document-filter" [options]="documentFilterOptions"
+                          [(ngModel)]="documentFilter" optionLabel="label" optionValue="value"
+                          placeholder="All types" [showClear]="!!documentFilter" appendTo="body"
+                          styleClass="att-filter-dropdown">
+              </p-dropdown>
+              <button type="button" class="tc-btn tc-btn--primary" [disabled]="documentBusy"
+                      (click)="openDocumentUpload()">
+                <i class="pi pi-upload" aria-hidden="true"></i> Upload Document
+              </button>
+            </div>
           </div>
 
-          <div class="tc-table-wrap" *ngIf="studentDocs.length; else noDocs">
-            <table class="tc-table stu-docs-table">
+          <p *ngIf="documentError" class="stu-documents__error" role="alert">{{ documentError }}</p>
+          <p *ngIf="documentBusy" class="stu-documents__status" role="status">Updating documents…</p>
+
+          <div *ngIf="studentDocs.length === 0" class="stu-documents__empty">
+            <i class="pi pi-folder-open" aria-hidden="true"></i>
+            <strong>No documents uploaded yet</strong>
+            <p>Upload identity documents, certificates, or other files for this Student.</p>
+            <button type="button" class="tc-btn tc-btn--primary" [disabled]="documentBusy" (click)="openDocumentUpload()">
+              <i class="pi pi-upload" aria-hidden="true"></i> Upload Document
+            </button>
+          </div>
+
+          <div *ngIf="studentDocs.length > 0 && filteredDocuments.length === 0" class="stu-documents__empty stu-documents__empty--filtered">
+            <i class="pi pi-filter" aria-hidden="true"></i>
+            <strong>No documents match this type</strong>
+            <p>Choose another document type or clear the filter.</p>
+          </div>
+
+          <div class="tc-table-wrap" *ngIf="filteredDocuments.length > 0">
+            <table class="tc-table stu-documents__table">
               <thead>
                 <tr>
                   <th>Document</th>
-                  <th>File name</th>
+                  <th>Type</th>
+                  <th>Size</th>
                   <th>Status</th>
-                  <th class="stu-docs-table__actions">Actions</th>
+                  <th class="stu-documents__actions">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let d of studentDocs">
+                <tr *ngFor="let d of filteredDocuments">
                   <td>
-                    <strong>{{ d.displayLabel || d.documentType }}</strong>
-                    <div class="stu-muted-cell" *ngIf="d.remarks && d.displayLabel !== d.remarks">{{ d.remarks }}</div>
+                    <div class="stu-documents__name">
+                      <i class="pi" [ngClass]="fileIcon(d)" aria-hidden="true"></i>
+                      <span>
+                        <strong>{{ d.documentName || d.displayLabel || 'Student document' }}</strong>
+                        <small *ngIf="d.fileName && d.fileName !== d.documentName">{{ d.fileName }}</small>
+                      </span>
+                    </div>
                   </td>
-                  <td>{{ d.documentName || '—' }}</td>
+                  <td>{{ documentTypeLabel(d.documentType) }}</td>
+                  <td>{{ formatDocumentSize(d.fileSize) }}</td>
                   <td>
                     <span class="tc-badge" [attr.data-status]="d.status">{{ d.status | titlecase }}</span>
                   </td>
-                  <td class="stu-docs-table__actions">
-                    <button type="button" class="tc-btn tc-btn--ghost tc-btn--sm"
-                            *ngIf="d.documentId"
-                            (click)="downloadDoc(d)">
-                      <i class="pi pi-download"></i> Download
+                  <td class="stu-documents__actions">
+                    <input #replaceInput type="file" hidden [attr.accept]="documentAccept"
+                           (change)="replaceDocument(d, $event)" />
+                    <button type="button" class="stu-documents__icon" title="Preview"
+                            [attr.aria-label]="'Preview ' + d.documentName" *ngIf="d.documentId"
+                            [disabled]="documentBusy" (click)="previewDocument(d)">
+                      <i class="pi pi-eye" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="stu-documents__icon" title="Download"
+                            [attr.aria-label]="'Download ' + d.documentName" *ngIf="d.documentId"
+                            [disabled]="documentBusy" (click)="downloadDoc(d)">
+                      <i class="pi pi-download" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="stu-documents__icon" title="Replace file"
+                            [attr.aria-label]="'Replace ' + d.documentName" *ngIf="d.documentId"
+                            [disabled]="documentBusy" (click)="replaceInput.click()">
+                      <i class="pi pi-sync" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="stu-documents__icon" title="Verify"
+                            [attr.aria-label]="'Verify ' + d.documentName" *ngIf="d.status === 'PENDING'"
+                            [disabled]="documentBusy" (click)="verifyDocument(d)">
+                      <i class="pi pi-check-circle" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="stu-documents__icon is-danger" title="Remove"
+                            [attr.aria-label]="'Remove ' + d.documentName" *ngIf="d.documentId"
+                            [disabled]="documentBusy" (click)="removeDocument(d)">
+                      <i class="pi pi-trash" aria-hidden="true"></i>
                     </button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <ng-template #noDocs>
-            <div class="tc-empty-state stu-timeline-empty">
-              <i class="pi pi-file"></i>
-              <h3>No documents yet</h3>
-              <p>Documents submitted during admission will appear here after enrollment.</p>
-            </div>
-          </ng-template>
-        </div>
-      </ng-container>
-
-      <!-- MEDICAL -->
-      <ng-container *ngIf="activeTab === 'MEDICAL'">
-        <div class="tc-card tc-card--panel" *ngIf="!editingMedical">
-          <div class="tc-card__header">
-            <h2>Medical &amp; emergency</h2>
-            <button class="tc-btn" (click)="startEditMedical()">
-              <i class="pi pi-pencil"></i> Edit
-            </button>
-          </div>
-
-          <div class="stu-medical-grid">
-            <div class="stu-medical-col">
-              <div>
-                <span class="stu-field-label stu-field-label--block">Blood group</span>
-                <strong class="stu-blood-value">{{ dash(profile.medical.bloodGroup) }}</strong>
-              </div>
-              <div>
-                <span class="stu-field-label stu-field-label--block">Allergies</span>
-                <p class="stu-medical-text">{{ profile.medical.allergies || 'None reported' }}</p>
-              </div>
-              <div>
-                <span class="stu-field-label stu-field-label--block">Medical conditions</span>
-                <p class="stu-medical-text">{{ profile.medical.medicalConditions || 'None reported' }}</p>
-              </div>
-              <div>
-                <span class="stu-field-label stu-field-label--block">Medications</span>
-                <p class="stu-medical-text">{{ profile.medical.medications || 'None' }}</p>
-              </div>
-            </div>
-
-            <div class="stu-medical-col stu-medical-col--split">
-              <div class="stu-emergency-card">
-                <span class="stu-field-label stu-field-label--block">Emergency contact</span>
-                <p class="stu-medical-text">
-                  <strong>{{ dash(profile.medical.emergencyContactName) }}</strong><br>
-                  <span *ngIf="profile.medical.emergencyContactRelation">{{ profile.medical.emergencyContactRelation }} · </span>
-                  <i class="pi pi-phone stu-medical-phone-icon"></i>
-                  {{ dash(profile.medical.emergencyContactPhone) }}
-                </p>
-              </div>
-              <div>
-                <span class="stu-field-label stu-field-label--block">Family doctor</span>
-                <p class="stu-medical-text">
-                  <strong>{{ dash(profile.medical.doctorName) }}</strong><br>
-                  <i class="pi pi-phone stu-medical-phone-icon"></i> {{ dash(profile.medical.doctorContact) }}
-                </p>
-              </div>
-              <div>
-                <span class="stu-field-label stu-field-label--block">Emergency notes</span>
-                <div class="stu-medical-note">
-                  <p class="stu-medical-text stu-medical-text--reset">
-                    {{ profile.medical.emergencyNotes || 'No specific emergency instructions provided.' }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tc-card tc-card--panel stu-inline-edit" *ngIf="editingMedical">
-          <div class="stu-inline-edit__header">
-            <h3>Edit medical details</h3>
-          </div>
-          <div class="stu-inline-edit__form">
-            <div class="tc-form-field">
-              <label>Blood group</label>
-              <p-dropdown
-                [options]="bloodGroupOptions"
-                [(ngModel)]="medicalForm.bloodGroup"
-                optionLabel="label"
-                optionValue="value"
-                appendTo="body"
-                styleClass="att-filter-dropdown">
-              </p-dropdown>
-            </div>
-            <div class="tc-form-field">
-              <label>Doctor name</label>
-              <input type="text" [(ngModel)]="medicalForm.doctorName"/>
-            </div>
-            <div class="tc-form-field">
-              <label>Doctor contact</label>
-              <input type="tel" [(ngModel)]="medicalForm.doctorContact"/>
-            </div>
-            <div class="tc-form-field tc-form-field--full">
-              <label>Allergies</label>
-              <textarea [(ngModel)]="medicalForm.allergies"></textarea>
-            </div>
-            <div class="tc-form-field tc-form-field--full">
-              <label>Medical conditions</label>
-              <textarea [(ngModel)]="medicalForm.medicalConditions"></textarea>
-            </div>
-            <div class="tc-form-field tc-form-field--full">
-              <label>Emergency notes</label>
-              <textarea [(ngModel)]="medicalForm.emergencyNotes"></textarea>
-            </div>
-          </div>
-          <div class="stu-inline-edit__actions">
-            <button class="tc-btn tc-btn--ghost" (click)="cancelEditMedical()">Cancel</button>
-            <button class="tc-btn tc-btn--primary" (click)="saveMedical()">Save changes</button>
-          </div>
-        </div>
+        </section>
       </ng-container>
 
       <!-- TIMELINE -->
@@ -613,3 +453,62 @@
     </div>
   </ng-container>
 </section>
+
+<p-dialog header="Upload Student Document" [visible]="documentUploadOpen"
+          (visibleChange)="onDocumentUploadVisibleChange($event)" [modal]="true"
+          [draggable]="false" [resizable]="false" [closable]="!documentUploadBusy"
+          [closeOnEscape]="!documentUploadBusy" maskStyleClass="tc-mask-plain"
+          [style]="{ width: '480px', maxWidth: '94vw' }" appendTo="body">
+  <form class="stu-upload-form" novalidate (ngSubmit)="uploadDocument()">
+    <p class="stu-upload-form__intro">Add a document to this Student profile.</p>
+    <div *ngIf="documentError" class="stu-upload-alert" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <div><strong>Document not uploaded</strong><p>{{ documentError }}</p></div>
+    </div>
+    <div class="tc-form-group">
+      <label class="tc-form-label" for="student-upload-name">Document name <span class="required">*</span></label>
+      <input id="student-upload-name" name="studentUploadName" type="text" class="tc-form-control"
+             maxlength="255" placeholder="Enter a descriptive document name"
+             [class.has-error]="documentNameTouched && !documentName.trim()" [disabled]="documentUploadBusy"
+             [(ngModel)]="documentName" (ngModelChange)="documentError = ''" (blur)="documentNameTouched = true" />
+      <small *ngIf="documentNameTouched && !documentName.trim()" class="tc-form-error">Document name is required.</small>
+      <small *ngIf="documentName.trim()" class="tc-form-hint">This is the name shown in the document list.</small>
+    </div>
+    <div class="tc-form-group">
+      <label class="tc-form-label" for="student-upload-type">Document type <span class="required">*</span></label>
+      <p-dropdown inputId="student-upload-type" name="studentUploadType" [options]="documentTypes"
+                  [(ngModel)]="documentType" (ngModelChange)="documentError = ''"
+                  optionLabel="label" optionValue="value" placeholder="Select a document type"
+                  [disabled]="documentUploadBusy" appendTo="body" styleClass="stu-upload-dropdown">
+      </p-dropdown>
+    </div>
+    <div class="tc-form-group">
+      <span class="tc-form-label">File <span class="required">*</span></span>
+      <div class="stu-file-drop" [class.is-filled]="!!documentFile" [class.has-error]="!!documentFileError">
+        <span class="stu-file-drop__icon" aria-hidden="true"><i class="pi" [ngClass]="documentFile ? 'pi-file' : 'pi-cloud-upload'"></i></span>
+        <div *ngIf="documentFile; else noStudentFile" class="stu-file-drop__text">
+          <strong [title]="documentFile.name">{{ documentFile.name }}</strong>
+          <small>{{ formatDocumentSize(documentFile.size) }}</small>
+        </div>
+        <ng-template #noStudentFile>
+          <div class="stu-file-drop__text"><strong>No file selected</strong><small>PDF, image, Excel or CSV, up to 5 MB</small></div>
+        </ng-template>
+        <button type="button" class="tc-btn tc-btn--outline tc-btn--sm" [disabled]="documentUploadBusy"
+                (click)="studentUploadFileInput.click()">
+          <i class="pi pi-folder-open" aria-hidden="true"></i> {{ documentFile ? 'Change file' : 'Browse file' }}
+        </button>
+        <input #studentUploadFileInput type="file" hidden [attr.accept]="documentAccept" (change)="onDocumentFileSelected($event)" />
+      </div>
+      <small *ngIf="documentFileError" class="tc-form-error">{{ documentFileError }}</small>
+    </div>
+    <p *ngIf="documentUploadMissing && !documentUploadBusy" class="stu-upload-hint">{{ documentUploadMissing }}</p>
+    <div class="stu-upload-actions">
+      <button type="button" class="tc-btn tc-btn--outline" [disabled]="documentUploadBusy" (click)="requestCloseDocumentUpload()">Cancel</button>
+      <button type="submit" class="tc-btn tc-btn--primary" [disabled]="!canSubmitDocumentUpload">
+        <i class="pi" [ngClass]="documentUploadBusy ? 'pi-spin pi-spinner' : 'pi-upload'" aria-hidden="true"></i>
+        {{ documentUploadBusy ? 'Uploading…' : 'Upload document' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>
+<app-document-preview-dialog />

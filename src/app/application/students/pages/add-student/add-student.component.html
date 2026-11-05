@@ -10,8 +10,12 @@
     <i class="pi pi-exclamation-triangle"></i>
     <span>{{ apiError }}</span>
   </div>
+  <div *ngIf="isEditMode && loadingExisting" class="stu-add-page__banner" role="status">
+    <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+    <span>Loading Student details…</span>
+  </div>
 
-  <app-card [hasFooter]="true" [elevated]="true">
+  <app-card *ngIf="!loadingExisting" [hasFooter]="true" [elevated]="true">
     <tc-saas-tabs [tabs]="tabs" [active]="activeTab" (changeTab)="onTabChange($event)"></tc-saas-tabs>
 
     <form class="stu-add-form" novalidate (submit)="$event.preventDefault()">
@@ -22,7 +26,7 @@
             description="Identity captured at admission."
             icon="pi pi-id-card">
           </app-section-header>
-          <div class="stu-add-photo">
+          <div class="stu-add-photo" *ngIf="!isEditMode">
             <div class="stu-add-photo__preview">
               <img *ngIf="photoPreviewUrl; else emptyPhoto" [src]="photoPreviewUrl" alt="Student profile preview">
               <ng-template #emptyPhoto><i class="pi pi-user" aria-hidden="true"></i></ng-template>
@@ -53,7 +57,9 @@
           <div class="stu-add-form__grid">
             <app-input
               label="Admission Number"
-              placeholder="Auto-generated if empty"
+              placeholder="Leave blank if not assigned"
+              title="Enter the institution's admission number. Leave blank if it has not been assigned."
+              [disabled]="isEditMode"
               [(ngModel)]="form.admissionNumber"
               name="admissionNumber">
             </app-input>
@@ -126,7 +132,7 @@
           </div>
         </section>
 
-        <section class="stu-add-form__section">
+        <section class="stu-add-form__section" *ngIf="!isEditMode">
           <app-section-header
             title="Primary parent / guardian"
             description="First contact for this student."
@@ -149,6 +155,12 @@
               name="parentFirstName"
               [error]="fieldError('parentFirstName')"
               (ngModelChange)="clearField('parentFirstName')">
+            </app-input>
+            <app-input
+              label="Middle Name"
+              placeholder="Optional"
+              [(ngModel)]="primaryParent.middleName"
+              name="parentMiddleName">
             </app-input>
             <app-input
               label="Last Name"
@@ -182,8 +194,15 @@
             </app-input>
           </div>
         </section>
+        <section class="stu-add-form__section" *ngIf="isEditMode">
+          <app-section-header
+            title="Family contacts"
+            description="Manage linked guardians from the Student Profile overview."
+            icon="pi pi-users">
+          </app-section-header>
+        </section>
 
-        <section class="stu-add-form__section">
+        <section class="stu-add-form__section" *ngIf="!isEditMode">
           <app-section-header
             title="Academic placement"
             description="Optional for onboarding. Leave blank to create the student without enrollment."
@@ -231,15 +250,16 @@
                 type="date"
                 [(ngModel)]="form.enrollmentDate"
                 name="enrollmentDate" />
+              <app-validation-message [message]="fieldError('enrollmentDate')"></app-validation-message>
             </div>
-            <app-select
-              label="Status"
-              placeholder="Select status"
-              [options]="enrollmentStatusOptions"
-              [(ngModel)]="form.enrollmentStatus"
-              name="enrollmentStatus">
-            </app-select>
           </div>
+        </section>
+        <section class="stu-add-form__section" *ngIf="isEditMode">
+          <app-section-header
+            title="Academic placement"
+            description="Placement and enrollment history are managed from the Student Profile overview."
+            icon="pi pi-book">
+          </app-section-header>
         </section>
       </ng-container>
 
@@ -259,18 +279,11 @@
               name="bloodGroup">
             </app-select>
             <app-select
-              label="Religion"
-              placeholder="Select religion"
-              [options]="religionOptions"
-              [(ngModel)]="form.religion"
-              name="religion">
-            </app-select>
-            <app-select
-              label="Category"
-              placeholder="Select category"
+              label="Social Category"
+              placeholder="Select social category (optional)"
               [options]="categoryOptions"
-              [(ngModel)]="form.category"
-              name="category">
+              [(ngModel)]="form.socialCategory"
+              name="socialCategory">
             </app-select>
             <app-input
               label="Nationality"
@@ -283,12 +296,6 @@
               placeholder="Enter mother tongue"
               [(ngModel)]="form.motherTongue"
               name="motherTongue">
-            </app-input>
-            <app-input
-              label="Place of Birth"
-              placeholder="Enter place of birth"
-              [(ngModel)]="form.placeOfBirth"
-              name="placeOfBirth">
             </app-input>
             <app-select
               label="National ID Type"
@@ -303,6 +310,24 @@
               [(ngModel)]="form.identityDocumentNumber"
               name="identityDocumentNumber">
             </app-input>
+          </div>
+        </section>
+
+        <section class="stu-add-form__section" *ngIf="isEditMode">
+          <app-section-header
+            title="Emergency contact"
+            description="Optional contact details for urgent situations."
+            icon="pi pi-phone">
+          </app-section-header>
+          <div class="stu-add-form__grid">
+            <app-input label="Contact name" placeholder="Enter contact name"
+                       [(ngModel)]="form.emergencyContactName" name="emergencyContactName"></app-input>
+            <app-input label="Relationship" placeholder="Enter relationship"
+                       [(ngModel)]="form.emergencyContactRelation" name="emergencyContactRelation"></app-input>
+            <app-phone-input label="Phone" placeholder="10-digit mobile"
+                             [(ngModel)]="form.emergencyContactPhone" name="emergencyContactPhone"></app-phone-input>
+            <app-input class="stu-add-form__span-2" label="Remarks" placeholder="Optional notes"
+                       [(ngModel)]="form.remarks" name="studentRemarks"></app-input>
           </div>
         </section>
 
@@ -322,15 +347,27 @@
             </app-input>
             <app-input
               label="Address Line 2"
-              placeholder="Landmark (optional)"
+              placeholder="Apartment or unit (optional)"
               [(ngModel)]="form.currentAddressLine2"
               name="currentAddressLine2">
+            </app-input>
+            <app-input
+              label="Landmark"
+              placeholder="Nearby landmark (optional)"
+              [(ngModel)]="form.currentLandmark"
+              name="currentLandmark">
             </app-input>
             <app-input
               label="City"
               placeholder="Enter city"
               [(ngModel)]="form.currentCity"
               name="currentCity">
+            </app-input>
+            <app-input
+              label="District"
+              placeholder="Enter district (optional)"
+              [(ngModel)]="form.currentDistrict"
+              name="currentDistrict">
             </app-input>
             <app-input
               label="State"
@@ -361,11 +398,29 @@
                 [(ngModel)]="form.permanentAddressLine1"
                 name="permanentAddressLine1">
               </app-input>
+                <app-input
+                  label="Address Line 2"
+                  placeholder="Apartment or unit (optional)"
+                  [(ngModel)]="form.permanentAddressLine2"
+                  name="permanentAddressLine2">
+                </app-input>
+                <app-input
+                  label="Landmark"
+                  placeholder="Nearby landmark (optional)"
+                  [(ngModel)]="form.permanentLandmark"
+                  name="permanentLandmark">
+                </app-input>
               <app-input
                 label="City"
                 placeholder="Enter city"
                 [(ngModel)]="form.permanentCity"
                 name="permanentCity">
+              </app-input>
+              <app-input
+                label="District"
+                placeholder="Enter district (optional)"
+                [(ngModel)]="form.permanentDistrict"
+                name="permanentDistrict">
               </app-input>
               <app-input
                 label="State"
@@ -383,47 +438,7 @@
           </ng-container>
         </section>
 
-        <section class="stu-add-form__section">
-          <app-section-header
-            title="Medical information"
-            description="Optional health notes for school records."
-            icon="pi pi-heart">
-          </app-section-header>
-          <div class="stu-add-form__grid">
-            <app-input
-              label="Doctor Name"
-              placeholder="Enter doctor name"
-              [(ngModel)]="form.doctorName"
-              name="doctorName">
-            </app-input>
-            <app-phone-input
-              label="Doctor Contact"
-              placeholder="10-digit mobile"
-              [(ngModel)]="form.doctorContact"
-              name="doctorContact">
-            </app-phone-input>
-            <app-textarea
-              class="stu-add-form__span-2"
-              label="Allergies"
-              placeholder="Dust, peanuts…"
-              [compact]="true"
-              [rows]="2"
-              [(ngModel)]="form.allergies"
-              name="allergies">
-            </app-textarea>
-            <app-textarea
-              class="stu-add-form__span-2"
-              label="Medical Conditions"
-              placeholder="Asthma…"
-              [compact]="true"
-              [rows]="2"
-              [(ngModel)]="form.medicalConditions"
-              name="medicalConditions">
-            </app-textarea>
-          </div>
-        </section>
-
-        <section class="stu-add-form__section">
+        <section class="stu-add-form__section" *ngIf="!isEditMode">
           <div class="stu-add-form__section-head">
             <app-section-header
               title="Additional parents"
@@ -452,6 +467,7 @@
                 </app-select>
                 <app-input
                   label="First Name"
+                  [required]="true"
                   [(ngModel)]="parent.firstName"
                   [name]="'extraFirst' + i">
                 </app-input>
@@ -462,28 +478,112 @@
                 </app-input>
                 <app-phone-input
                   label="Mobile"
+                  [required]="true"
                   [(ngModel)]="parent.mobile"
                   [name]="'extraMobile' + i">
                 </app-phone-input>
+                <app-input
+                  label="Email"
+                  type="email"
+                  [(ngModel)]="parent.email"
+                  [name]="'extraEmail' + i">
+                </app-input>
+                <app-input
+                  label="Occupation"
+                  [(ngModel)]="parent.occupation"
+                  [name]="'extraOccupation' + i">
+                </app-input>
               </div>
             </ng-container>
           </article>
         </section>
       </ng-container>
+
+      <ng-container *ngIf="currentStep === 3">
+        <section class="stu-add-form__section">
+          <div class="stu-add-doc-header">
+            <app-section-header
+              title="Documents"
+              description="Optional. Upload documents now or add them later from the Student Profile."
+              icon="pi pi-file">
+            </app-section-header>
+            <button type="button" class="tc-btn tc-btn--primary" (click)="openDocumentDialog()">
+              <i class="pi pi-plus"></i> Add Document
+            </button>
+          </div>
+
+          <div *ngIf="queuedDocuments.length === 0" class="stu-add-doc-empty">
+            <i class="pi pi-folder-open" aria-hidden="true"></i>
+            <p>No documents added. This step is optional.</p>
+          </div>
+
+          <ul *ngIf="queuedDocuments.length" class="stu-add-doc-list" aria-label="Documents to upload">
+            <li *ngFor="let document of queuedDocuments; let i = index">
+              <i class="pi pi-file" aria-hidden="true"></i>
+              <span class="stu-add-doc-list__text">
+                <strong>{{ document.documentName }}</strong>
+                <small>{{ documentTypeLabel(document.documentType) }} · {{ document.file.name }} · {{ formatDocumentSize(document.file.size) }}</small>
+              </span>
+              <button type="button" class="tc-btn tc-btn--ghost tc-btn--icon" title="Remove document"
+                      [attr.aria-label]="'Remove ' + document.documentName" (click)="removeQueuedDocument(i)">
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </li>
+          </ul>
+        </section>
+      </ng-container>
     </form>
+
+    <p-dialog header="Add Student Document" [(visible)]="docDialogOpen" [modal]="true"
+              [draggable]="false" [resizable]="false" appendTo="body"
+              [style]="{ width: '480px', maxWidth: '94vw' }" (onHide)="closeDocumentDialog()">
+      <form class="stu-add-doc-dialog" novalidate (ngSubmit)="addQueuedDocument()">
+        <div class="tc-form-group">
+          <label class="tc-form-label" for="student-doc-name">Document name <span class="required">*</span></label>
+          <input id="student-doc-name" name="studentDocName" type="text" class="tc-form-control"
+                 maxlength="255" placeholder="Enter a descriptive document name"
+                 [(ngModel)]="docName" (blur)="docNameTouched = true" />
+          <small *ngIf="docNameError" class="tc-form-error">{{ docNameError }}</small>
+        </div>
+        <div class="tc-form-group">
+          <label class="tc-form-label" for="student-doc-type">Document type <span class="required">*</span></label>
+          <p-dropdown inputId="student-doc-type" name="studentDocType" [options]="documentTypeOptions"
+                      [(ngModel)]="docType" optionLabel="label" optionValue="value"
+                      placeholder="Select a document type" appendTo="body" styleClass="w-full">
+          </p-dropdown>
+        </div>
+        <div class="tc-form-group">
+          <span class="tc-form-label">File <span class="required">*</span></span>
+          <div class="stu-add-doc-file" [class.is-filled]="!!docFile" [class.has-error]="!!docFileError">
+            <i class="pi" [ngClass]="docFile ? 'pi-file' : 'pi-cloud-upload'" aria-hidden="true"></i>
+            <span class="stu-add-doc-file__text">
+              <strong>{{ docFile?.name || 'No file selected' }}</strong>
+              <small>{{ docFile ? formatDocumentSize(docFile.size) : 'PDF, image, Excel or CSV, up to 5 MB' }}</small>
+            </span>
+            <button type="button" class="tc-btn" (click)="docFileInput.click()">{{ docFile ? 'Change file' : 'Browse file' }}</button>
+            <input #docFileInput type="file" hidden [attr.accept]="documentAccept" (change)="onDocumentFileChosen($event)" />
+          </div>
+          <small *ngIf="docFileError" class="tc-form-error">{{ docFileError }}</small>
+        </div>
+        <div class="stu-add-doc-dialog__actions">
+          <button type="button" class="tc-btn tc-btn--ghost" (click)="closeDocumentDialog()">Cancel</button>
+          <button type="submit" class="tc-btn tc-btn--primary" [disabled]="!canAddDocument">Add Document</button>
+        </div>
+      </form>
+    </p-dialog>
 
     <div card-footer class="stu-add-form__footer">
       <button type="button" class="tc-btn tc-btn--ghost" (click)="currentStep > 1 ? back() : goBack()">
         <i class="pi" [class.pi-arrow-left]="currentStep > 1" [class.pi-times]="currentStep === 1"></i>
         {{ currentStep > 1 ? 'Previous' : 'Cancel' }}
       </button>
-      <button *ngIf="currentStep < 2" type="button" class="tc-btn tc-btn--primary" (click)="next()">
+      <button *ngIf="currentStep < 3" type="button" class="tc-btn tc-btn--primary" (click)="next()">
         Next <i class="pi pi-arrow-right"></i>
       </button>
-      <button *ngIf="currentStep === 2" type="button" class="tc-btn tc-btn--primary"
+      <button *ngIf="currentStep === 3" type="button" class="tc-btn tc-btn--primary"
               [disabled]="saving" (click)="submit()">
         <i class="pi" [class.pi-check]="!saving" [class.pi-spin]="saving" [class.pi-spinner]="saving"></i>
-        {{ saving ? 'Saving…' : 'Create student' }}
+        {{ saving ? 'Saving…' : isEditMode ? 'Save changes' : createdStudentId ? 'Retry remaining steps' : 'Create student' }}
       </button>
     </div>
   </app-card>

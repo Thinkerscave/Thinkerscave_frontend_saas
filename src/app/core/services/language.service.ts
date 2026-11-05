@@ -46,7 +46,6 @@ const MENU_LABEL_KEYS: Record<string, string> = {
   Payroll: 'menu.payroll',
   Leave: 'menu.leave',
   Documents: 'menu.documents',
-  Alumni: 'menu.alumni',
   Overview: 'menu.overview',
   Leads: 'menu.leads',
   'Follow-ups': 'menu.followUps',

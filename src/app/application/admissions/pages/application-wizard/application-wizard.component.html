@@ -103,24 +103,10 @@
               <small class="adm-field-error" *ngIf="showError('student.identityDocumentNumber')">{{ fieldError('student.identityDocumentNumber', 'Document number') }}</small>
             </div>
             <div class="tc-form-field">
-              <label>Religion</label>
-              <p-dropdown
-                [options]="religionOptions"
-                formControlName="religion"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-                appendTo="body"
-                styleClass="adm-app-form-dd"
-                panelStyleClass="adm-app-form-dd-panel"
-                placeholder="Select"
-              ></p-dropdown>
-            </div>
-            <div class="tc-form-field">
-              <label>Category</label>
+              <label>Social Category</label>
               <p-dropdown
                 [options]="categoryOptions"
-                formControlName="category"
+                formControlName="socialCategory"
                 optionLabel="label"
                 optionValue="value"
                 [showClear]="true"
@@ -133,10 +119,6 @@
             <div class="tc-form-field">
               <label>Mother Tongue</label>
               <input type="text" formControlName="motherTongue" />
-            </div>
-            <div class="tc-form-field">
-              <label>Place of Birth</label>
-              <input type="text" formControlName="placeOfBirth" />
             </div>
             <div class="tc-form-field" [class.is-invalid]="showError('student.contactNumber')">
               <label>Mobile Number *</label>
@@ -194,48 +176,41 @@
             </div>
           </div>
 
-          <div class="adm-form-grid" *ngIf="showSecondaryGuardian">
-            <div class="adm-form-grid__full adm-section-card__sub">Secondary parent / guardian</div>
-            <div class="tc-form-field">
-              <label>Full Name</label>
-              <input type="text" formControlName="secondaryGuardianName" />
-            </div>
-            <div class="tc-form-field">
-              <label>Relationship</label>
-              <p-dropdown
-                [options]="relationshipOptions"
-                formControlName="secondaryGuardianRelationship"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-                appendTo="body"
-                styleClass="adm-app-form-dd"
-                panelStyleClass="adm-app-form-dd-panel"
-              ></p-dropdown>
-            </div>
-            <div class="tc-form-field" [class.is-invalid]="showError('parents.secondaryGuardianMobile')">
-              <label>Mobile Number</label>
-              <input type="tel" formControlName="secondaryGuardianMobile" />
-              <small class="adm-field-error" *ngIf="showError('parents.secondaryGuardianMobile')">{{ fieldError('parents.secondaryGuardianMobile', 'Mobile number') }}</small>
-            </div>
-            <div class="tc-form-field" [class.is-invalid]="showError('parents.secondaryGuardianEmail')">
-              <label>Email</label>
-              <input type="email" formControlName="secondaryGuardianEmail" />
-              <small class="adm-field-error" *ngIf="showError('parents.secondaryGuardianEmail')">{{ fieldError('parents.secondaryGuardianEmail', 'Email') }}</small>
-            </div>
-            <div class="tc-form-field">
-              <label>Occupation</label>
-              <input type="text" formControlName="secondaryGuardianOccupation" />
-            </div>
+          <div formArrayName="additionalGuardians">
+            <section class="adm-form-grid" *ngFor="let guardian of additionalGuardians.controls; let i = index" [formGroupName]="i">
+              <div class="adm-form-grid__full adm-section-card__sub">
+                <span>Additional parent / guardian {{ i + 1 }}</span>
+                <button type="button" class="adm-link-btn" (click)="removeAdditionalGuardian(i)" aria-label="Remove guardian">
+                  <i class="pi pi-trash" aria-hidden="true"></i> Remove
+                </button>
+              </div>
+              <div class="tc-form-field">
+                <label>Full Name *</label>
+                <input type="text" formControlName="fullName" />
+              </div>
+              <div class="tc-form-field">
+                <label>Relationship *</label>
+                <p-dropdown [options]="relationshipOptions" formControlName="relationship" optionLabel="label"
+                            optionValue="value" appendTo="body" styleClass="adm-app-form-dd"
+                            panelStyleClass="adm-app-form-dd-panel"></p-dropdown>
+              </div>
+              <div class="tc-form-field">
+                <label>Mobile Number *</label>
+                <input type="tel" formControlName="mobile" />
+              </div>
+              <div class="tc-form-field">
+                <label>Email</label>
+                <input type="email" formControlName="email" />
+              </div>
+              <div class="tc-form-field">
+                <label>Occupation</label>
+                <input type="text" formControlName="occupation" />
+              </div>
+            </section>
           </div>
 
-          <button
-            *ngIf="!showSecondaryGuardian"
-            type="button"
-            class="adm-link-btn"
-            (click)="showSecondaryGuardian = true"
-          >
-            + Add another parent or guardian
+          <button type="button" class="adm-link-btn" (click)="addAdditionalGuardian()">
+            <i class="pi pi-plus" aria-hidden="true"></i> Add another parent or guardian
           </button>
         </article>
 
@@ -257,10 +232,18 @@
               <label>Address Line 2</label>
               <input type="text" formControlName="addressLine2" />
             </div>
+            <div class="tc-form-field">
+              <label>Landmark</label>
+              <input type="text" formControlName="landmark" />
+            </div>
             <div class="tc-form-field" [class.is-invalid]="showError('address.city')">
               <label>City *</label>
               <input type="text" formControlName="city" />
               <small class="adm-field-error" *ngIf="showError('address.city')">{{ fieldError('address.city', 'City') }}</small>
+            </div>
+            <div class="tc-form-field">
+              <label>District</label>
+              <input type="text" formControlName="district" />
             </div>
             <div class="tc-form-field">
               <label>State</label>
@@ -293,10 +276,18 @@
               <label>Address Line 2</label>
               <input type="text" formControlName="permanentAddressLine2" />
             </div>
+            <div class="tc-form-field">
+              <label>Landmark</label>
+              <input type="text" formControlName="permanentLandmark" />
+            </div>
             <div class="tc-form-field" [class.is-invalid]="showError('address.permanentCity')">
               <label>City *</label>
               <input type="text" formControlName="permanentCity" />
               <small class="adm-field-error" *ngIf="showError('address.permanentCity')">{{ fieldError('address.permanentCity', 'City') }}</small>
+            </div>
+            <div class="tc-form-field">
+              <label>District</label>
+              <input type="text" formControlName="permanentDistrict" />
             </div>
             <div class="tc-form-field">
               <label>State</label>

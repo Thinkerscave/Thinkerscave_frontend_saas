@@ -10,12 +10,16 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
+import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { MessageService } from 'primeng/api';
-import { catchError, finalize, of } from 'rxjs';
+import { Observable, catchError, concatMap, finalize, from, map, of, tap, toArray } from 'rxjs';
 
 import { AppToastComponent } from '../../../../core/feedback/app-toast.component';
 import { BackNavigationService } from '../../../../core/services/back-navigation.service';
+import { StudentReferenceDataService } from '../../../../shared/services/student-reference-data.service';
 import { ParentInfo, StudentWizardRequest } from '../../models/students-workspace.model';
 import { StudentsWorkspaceService } from '../../services/students-workspace.service';
 import {
@@ -34,14 +38,21 @@ import {
   AppSectionHeaderComponent,
   AppSelectComponent,
   AppSelectOption,
-  AppTextareaComponent,
   AppValidationMessageComponent,
   phoneErrorMessage
 } from '../../../../shared/ui/app-form';
 
-type WizardStep = 1 | 2;
+type WizardStep = 1 | 2 | 3;
+
+interface QueuedStudentDocument {
+  file: File;
+  documentType: string;
+  documentName: string;
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xlsx', 'xls', 'csv'];
 
 @Component({
   selector: 'app-add-student',
@@ -50,6 +61,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   imports: [
     CommonModule,
     FormsModule,
+    DialogModule,
+    DropdownModule,
     AppToastComponent,
     SaasTabsComponent,
     SaasPageHeaderComponent,
@@ -58,7 +71,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     AppPhoneInputComponent,
     AppSectionHeaderComponent,
     AppSelectComponent,
-    AppTextareaComponent,
     AppValidationMessageComponent
   ],
   providers: [MessageService],
@@ -67,13 +79,18 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 })
 export class AddStudentComponent implements OnInit, OnDestroy {
   private readonly api = inject(StudentsWorkspaceService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messages = inject(MessageService);
   private readonly backNav = inject(BackNavigationService);
   private readonly softRefresh = inject(SoftRefreshService);
+  private readonly referenceData = inject(StudentReferenceDataService);
 
   currentStep: WizardStep = 1;
+  isEditMode = false;
+  editStudentId: number | null = null;
+  loadingExisting = false;
   attempted = false;
   saving = false;
   apiError = '';
@@ -82,9 +99,28 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   photoPreviewUrl: string | null = null;
   photoError = '';
   @ViewChild('photoInput') private photoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('docFileInput') private docFileInput?: ElementRef<HTMLInputElement>;
   sameAddress = false;
   classIdValue: string | null = null;
   sectionIdValue: string | null = null;
+  createdStudentId: number | null = null;
+
+  docDialogOpen = false;
+  docName = '';
+  docNameTouched = false;
+  docType: string | null = null;
+  docFile: File | null = null;
+  docFileError = '';
+  queuedDocuments: QueuedStudentDocument[] = [];
+  readonly documentAccept = '.pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv';
+  readonly documentTypeOptions: AppSelectOption[] = [
+    { label: 'Birth Certificate', value: 'BIRTH_CERTIFICATE' },
+    { label: 'Identity Proof', value: 'AADHAR' },
+    { label: 'Previous School Certificate', value: 'PREVIOUS_SCHOOL_CERTIFICATE' },
+    { label: 'Transfer Certificate', value: 'TRANSFER_CERTIFICATE' },
+    { label: 'Marksheet', value: 'MARKSHEET' },
+    { label: 'Other', value: 'OTHER' }
+  ];
 
   readonly today = new Date().toISOString().slice(0, 10);
 
@@ -92,10 +128,13 @@ export class AddStudentComponent implements OnInit, OnDestroy {
     return value != null ? String(value) : null;
   }
 
-  readonly tabs: SaasTab[] = [
-    { key: 'basic', label: 'Basic Details', icon: 'pi pi-user' },
-    { key: 'additional', label: 'Additional Details', icon: 'pi pi-list' }
-  ];
+  get tabs(): SaasTab[] {
+    return [
+      { key: 'basic', label: this.isEditMode ? 'Student Details' : 'Student & Family', icon: 'pi pi-user' },
+      { key: 'additional', label: 'Additional Details', icon: 'pi pi-list' },
+      { key: 'documents', label: 'Documents', icon: 'pi pi-file' }
+    ];
+  }
 
   classOptions: AppSelectOption[] = [];
   sectionOptions: AppSelectOption[] = [];
@@ -104,16 +143,8 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   readonly genderOptions: AppSelectOption[] = [
     { label: 'Male', value: 'MALE' },
     { label: 'Female', value: 'FEMALE' },
-    { label: 'Other', value: 'OTHER' }
-  ];
-  readonly religionOptions: AppSelectOption[] = [
-    { label: 'Hindu', value: 'Hindu' },
-    { label: 'Muslim', value: 'Muslim' },
-    { label: 'Christian', value: 'Christian' },
-    { label: 'Sikh', value: 'Sikh' },
-    { label: 'Buddhist', value: 'Buddhist' },
-    { label: 'Jain', value: 'Jain' },
-    { label: 'Other', value: 'Other' }
+    { label: 'Other', value: 'OTHER' },
+    { label: 'Prefer not to say', value: 'OTHER' }
   ];
   readonly bloodGroupOptions: AppSelectOption[] = [
     { label: 'A+', value: 'A+' },
@@ -131,38 +162,106 @@ export class AddStudentComponent implements OnInit, OnDestroy {
     { label: 'Guardian', value: 'GUARDIAN' },
     { label: 'Other', value: 'OTHER' }
   ];
-  readonly categoryOptions: AppSelectOption[] = [
-    { label: 'GEN', value: 'GEN' },
-    { label: 'OBC', value: 'OBC' },
-    { label: 'SC', value: 'SC' },
-    { label: 'ST', value: 'ST' },
-    { label: 'EWS', value: 'EWS' },
-    { label: 'Other', value: 'OTHER' }
-  ];
+  categoryOptions: AppSelectOption[] = [];
   readonly identityTypeOptions: AppSelectOption[] = [
     { label: 'Aadhaar', value: 'AADHAAR' },
     { label: 'Passport', value: 'PASSPORT' },
     { label: 'Birth Certificate', value: 'BIRTH_CERTIFICATE' },
     { label: 'Other', value: 'OTHER' }
   ];
-  readonly enrollmentStatusOptions: AppSelectOption[] = [
-    { label: 'Active', value: 'ACTIVE' },
-    { label: 'Inactive', value: 'INACTIVE' }
-  ];
-
   form: StudentWizardRequest = {
     firstName: '',
     lastName: '',
-    gender: 'MALE',
+    gender: '',
     nationality: 'Indian',
     parents: [this.emptyParent('FATHER')],
     enrollmentStatus: 'ACTIVE',
-    sameAsCurrentAddress: false
+    sameAsCurrentAddress: false,
+    enrollmentDate: this.today
   };
 
   ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (Number.isInteger(id) && id > 0) {
+      this.isEditMode = true;
+      this.editStudentId = id;
+      this.createdStudentId = id;
+      this.loadingExisting = true;
+      this.loadExistingStudent(id);
+    }
     this.loadAcademicYears();
     this.loadClasses();
+    this.referenceData.socialCategories().subscribe(options => {
+      this.categoryOptions = options;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadExistingStudent(studentId: number): void {
+    this.api.profile(studentId).subscribe({
+      next: profile => {
+        const personal = profile.personal;
+        const academics = profile.academics;
+        const medical = profile.medical;
+        this.form = {
+          admissionNumber: profile.overview.admissionNumber,
+          firstName: personal.firstName ?? '',
+          middleName: personal.middleName ?? '',
+          lastName: personal.lastName ?? '',
+          gender: personal.gender?.toUpperCase() ?? '',
+          dateOfBirth: personal.dateOfBirth ?? '',
+          religion: personal.religion ?? '',
+          nationality: personal.nationality ?? '',
+          socialCategory: personal.socialCategory ?? '',
+          motherTongue: personal.motherTongue ?? '',
+          placeOfBirth: personal.placeOfBirth ?? '',
+          identityDocumentType: personal.identityDocumentType ?? '',
+          identityDocumentNumber: personal.identityDocumentNumber ?? '',
+          mobile: personal.mobile ?? '',
+          email: personal.email ?? '',
+          remarks: personal.remarks ?? '',
+          emergencyContactName: personal.emergencyContactName ?? '',
+          emergencyContactPhone: personal.emergencyContactPhone ?? '',
+          emergencyContactRelation: personal.emergencyContactRelation ?? '',
+          currentAddressLine1: personal.currentAddressLine1 ?? '',
+          currentAddressLine2: personal.currentAddressLine2 ?? '',
+          currentLandmark: personal.currentLandmark ?? '',
+          currentCity: personal.currentCity ?? '',
+          currentDistrict: personal.currentDistrict ?? '',
+          currentState: personal.currentState ?? '',
+          currentCountry: personal.currentCountry ?? '',
+          currentPincode: personal.currentPincode ?? '',
+          permanentAddressLine1: personal.permanentAddressLine1 ?? '',
+          permanentAddressLine2: personal.permanentAddressLine2 ?? '',
+          permanentLandmark: personal.permanentLandmark ?? '',
+          permanentCity: personal.permanentCity ?? '',
+          permanentDistrict: personal.permanentDistrict ?? '',
+          permanentState: personal.permanentState ?? '',
+          permanentCountry: personal.permanentCountry ?? '',
+          permanentPincode: personal.permanentPincode ?? '',
+          sameAsCurrentAddress: personal.sameAddress ?? false,
+          rollNumber: academics.rollNumber ?? '',
+          enrollmentDate: academics.enrollmentDate ?? this.today,
+          enrollmentStatus: academics.enrollmentStatus ?? 'ACTIVE',
+          bloodGroup: medical.bloodGroup ?? personal.bloodGroup ?? '',
+          allergies: medical.allergies ?? '',
+          medicalConditions: medical.medicalConditions ?? '',
+          medications: medical.medications ?? '',
+          doctorName: medical.doctorName ?? '',
+          doctorContact: medical.doctorContact ?? '',
+          emergencyNotes: medical.emergencyNotes ?? '',
+          parents: []
+        };
+        this.sameAddress = this.form.sameAsCurrentAddress ?? false;
+        this.loadingExisting = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.apiError = 'Unable to load this Student. Please retry.';
+        this.loadingExisting = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -208,7 +307,7 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   }
 
   get activeTab(): string {
-    return this.currentStep === 1 ? 'basic' : 'additional';
+    return this.currentStep === 1 ? 'basic' : this.currentStep === 2 ? 'additional' : 'documents';
   }
 
   get fullName(): string {
@@ -223,7 +322,9 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.backNav.back({ fallback: '/app/students/directory' });
+    this.backNav.back({
+      fallback: this.editStudentId ? `/app/students/profile/${this.editStudentId}` : '/app/students/directory'
+    });
   }
 
   emptyParent(relationship = 'FATHER'): ParentInfo {
@@ -249,11 +350,24 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   }
 
   onTabChange(key: string): void {
-    if (key === 'additional') {
-      this.next();
-      return;
+    const target: Record<string, WizardStep> = { basic: 1, additional: 2, documents: 3 };
+    const nextStep = target[key];
+    if (!nextStep) return;
+    if (nextStep > 1 && this.currentStep === 1) {
+      this.attempted = true;
+      if (!this.canProceedStep1()) {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Missing required fields',
+          detail: 'Please fill the highlighted fields before continuing.'
+        });
+        this.cdr.markForCheck();
+        return;
+      }
     }
-    this.back();
+    this.currentStep = nextStep;
+    this.apiError = '';
+    this.cdr.markForCheck();
   }
 
   onClassChange(value: string | null): void {
@@ -285,7 +399,10 @@ export class AddStudentComponent implements OnInit, OnDestroy {
     this.form.sameAsCurrentAddress = this.sameAddress;
     if (this.sameAddress) {
       this.form.permanentAddressLine1 = this.form.currentAddressLine1;
+      this.form.permanentAddressLine2 = this.form.currentAddressLine2;
+      this.form.permanentLandmark = this.form.currentLandmark;
       this.form.permanentCity = this.form.currentCity;
+      this.form.permanentDistrict = this.form.currentDistrict;
       this.form.permanentState = this.form.currentState;
       this.form.permanentPincode = this.form.currentPincode;
     }
@@ -313,6 +430,8 @@ export class AddStudentComponent implements OnInit, OnDestroy {
         // Enrollment is optional for onboarding; if year is chosen, class becomes required.
         if (this.form.academicYearId && !this.form.classId) return 'Class is required when academic year is selected.';
         return '';
+      case 'enrollmentDate':
+        return this.form.academicYearId && !this.form.enrollmentDate ? 'Enrollment date is required when enrolling.' : '';
       case 'parentFirstName':
         return parent?.firstName?.trim() ? '' : 'Parent first name is required.';
       case 'parentMobile':
@@ -338,23 +457,25 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   }
 
   next(): void {
-    this.attempted = true;
-    this.apiError = '';
-    if (!this.canProceedStep1()) {
-      this.messages.add({
-        severity: 'error',
-        summary: 'Missing required fields',
-        detail: 'Please fill the highlighted fields before continuing.'
-      });
-      this.cdr.markForCheck();
-      return;
+    if (this.currentStep === 1) {
+      this.attempted = true;
+      this.apiError = '';
+      if (!this.canProceedStep1()) {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Missing required fields',
+          detail: 'Please fill the highlighted fields before continuing.'
+        });
+        this.cdr.markForCheck();
+        return;
+      }
     }
-    this.currentStep = 2;
+    this.currentStep = Math.min(3, this.currentStep + 1) as WizardStep;
     this.cdr.markForCheck();
   }
 
   back(): void {
-    this.currentStep = 1;
+    this.currentStep = Math.max(1, this.currentStep - 1) as WizardStep;
     this.apiError = '';
     this.cdr.markForCheck();
   }
@@ -362,12 +483,16 @@ export class AddStudentComponent implements OnInit, OnDestroy {
   canProceedStep1(): boolean {
     const previous = this.attempted;
     this.attempted = true;
-    const invalid = [
-      'firstName', 'lastName', 'dateOfBirth', 'gender', 'classId',
-      'parentFirstName', 'parentMobile', 'mobile', 'email', 'parentEmail'
-    ].some(key => !!this.fieldError(key));
+    const requiredFields = this.isEditMode
+      ? ['firstName', 'lastName', 'dateOfBirth', 'gender', 'mobile', 'email']
+      : ['firstName', 'lastName', 'dateOfBirth', 'gender', 'classId', 'enrollmentDate',
+        'parentFirstName', 'parentMobile', 'mobile', 'email', 'parentEmail'];
+    const invalidFields = requiredFields.some(key => !!this.fieldError(key));
+    const invalidGuardians = !this.isEditMode && (!this.form.parents?.length || this.form.parents.some(parent =>
+      !parent.existingParentId && (!parent.firstName.trim() || !!phoneErrorMessage(parent.mobile)
+        || !!this.optionalEmailError(parent.email))));
     this.attempted = previous;
-    return !invalid;
+    return !invalidFields && !invalidGuardians;
   }
 
   submit(): void {
@@ -384,23 +509,132 @@ export class AddStudentComponent implements OnInit, OnDestroy {
       return;
     }
     this.saving = true;
-    this.api.createStudentWizard(this.form, this.photoFile)
-      .pipe(finalize(() => { this.saving = false; this.cdr.markForCheck(); }))
-      .subscribe({
+    let studentSaved = false;
+    let save$: Observable<number>;
+    if (this.isEditMode && this.editStudentId) {
+      const studentId = this.editStudentId;
+      save$ = this.api.updateStudentWizard(studentId, this.form).pipe(
+        tap(() => {
+          studentSaved = true;
+          this.softRefresh.mark(SoftRefreshKeys.studentsDirectory, 'updated');
+        }),
+        concatMap(() => this.api.updateMedical(studentId, this.form).pipe(map(() => studentId)))
+      );
+    } else if (this.createdStudentId) {
+      save$ = of(this.createdStudentId);
+    } else {
+      save$ = this.api.createStudentWizard(this.form, this.photoFile).pipe(tap(studentId => {
+        this.createdStudentId = studentId;
+        studentSaved = true;
+        this.softRefresh.mark(SoftRefreshKeys.studentsDirectory, 'created');
+      }));
+    }
+    save$.pipe(
+      concatMap(studentId => this.uploadQueuedDocuments(studentId).pipe(map(() => studentId))),
+      finalize(() => { this.saving = false; this.cdr.markForCheck(); })
+    ).subscribe({
         next: () => {
           this.messages.add({
             severity: 'success',
-            summary: 'Student created',
-            detail: `${this.fullName} has been added to the directory.`
+            summary: this.isEditMode ? 'Student updated' : 'Student created',
+            detail: this.isEditMode ? `${this.fullName} has been updated.` : `${this.fullName} has been added to the directory.`
           });
-          // Soft SPA return: directory soft-refreshes list data (no blank remount skeleton).
-          this.softRefresh.mark(SoftRefreshKeys.studentsDirectory, 'created');
-          void this.router.navigate(['/app/students/directory']);
+          void this.router.navigate(this.editStudentId
+            ? ['/app/students/profile', this.editStudentId]
+            : ['/app/students/directory']);
         },
         error: err => {
-          this.apiError = err?.error?.message || 'Failed to create student. Please retry.';
+          this.apiError = this.isEditMode && studentSaved
+            ? `Student details were updated, but a follow-up save failed: ${err?.error?.message || 'Please retry.'}`
+            : !this.isEditMode && this.createdStudentId
+              ? `Student was saved, but a document upload failed: ${err?.error?.message || 'Please retry the remaining documents.'}`
+              : err?.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} Student. Please retry.`;
         }
       });
+  }
+
+  get docNameError(): string {
+    return this.docNameTouched && !this.docName.trim() ? 'Document name is required.' : '';
+  }
+
+  get canAddDocument(): boolean {
+    return !!this.docName.trim() && !!this.docType && !!this.docFile && !this.docFileError;
+  }
+
+  openDocumentDialog(): void {
+    this.resetDocumentForm();
+    this.docDialogOpen = true;
+  }
+
+  onDocumentFileChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(extension)) {
+      this.docFileError = 'Choose a PDF, image, Excel or CSV file.';
+      return;
+    }
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      this.docFileError = 'File must be 5 MB or smaller.';
+      return;
+    }
+    this.docFile = file;
+    this.docFileError = '';
+  }
+
+  addQueuedDocument(): void {
+    if (!this.canAddDocument || !this.docFile || !this.docType) {
+      this.docNameTouched = true;
+      return;
+    }
+    this.queuedDocuments = [...this.queuedDocuments, {
+      file: this.docFile,
+      documentType: this.docType,
+      documentName: this.docName.trim()
+    }];
+    this.closeDocumentDialog();
+    this.cdr.markForCheck();
+  }
+
+  closeDocumentDialog(): void {
+    this.docDialogOpen = false;
+    this.resetDocumentForm();
+  }
+
+  removeQueuedDocument(index: number): void {
+    this.queuedDocuments = this.queuedDocuments.filter((_, itemIndex) => itemIndex !== index);
+  }
+
+  formatDocumentSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  documentTypeLabel(value: string): string {
+    return this.documentTypeOptions.find(option => option.value === value)?.label ?? value;
+  }
+
+  private resetDocumentForm(): void {
+    this.docName = '';
+    this.docType = null;
+    this.docFile = null;
+    this.docFileError = '';
+    this.docNameTouched = false;
+  }
+
+  private uploadQueuedDocuments(studentId: number): Observable<unknown[]> {
+    return from(this.queuedDocuments).pipe(
+      concatMap(document => this.api.uploadStudentDocument(
+        studentId, document.file, document.documentType, document.documentName
+      ).pipe(tap(() => {
+        this.queuedDocuments = this.queuedDocuments.filter(item => item !== document);
+        this.cdr.markForCheck();
+      }))),
+      toArray()
+    );
   }
 
   parentLabel(index: number): string {

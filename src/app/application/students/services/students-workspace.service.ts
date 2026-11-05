@@ -1,19 +1,17 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
   AcademicHistoryRow,
   AchievementRequest,
   AchievementResponse,
-  AlumniFilters,
-  AlumniRequest,
-  AlumniResponse,
   ClassOption,
   DocumentVaultEntry,
   DocumentVaultKpi,
   DocumentVaultRequest,
+  GuardianInfo,
   MedicalSnapshot,
   SectionOption,
   StudentCreateRequest,
@@ -22,12 +20,11 @@ import {
   StudentKpi,
   StudentPersonal,
   StudentProfile360,
+  ParentInfo,
   StudentSearchRequest,
   StudentStatus,
   StudentTimelineEntry,
-  StudentWizardRequest,
-  TransferRequest,
-  TransferStatus
+  StudentWizardRequest
 } from '../models/students-workspace.model';
 import { resolveStudentPhotoUrl } from '../../../shared/utils/profile-assets';
 
@@ -60,12 +57,14 @@ interface BackendStudentDto {
   nationality?: string | null;
   motherTongue?: string | null;
   category?: string | null;
+  socialCategory?: string | null;
   placeOfBirth?: string | null;
   identityDocumentType?: string | null;
   identityDocumentNumber?: string | null;
   mobileNumber?: string | null;
   email?: string | null;
   status?: string | null;
+  academicYear?: string | null;
   className?: string | null;
   sectionName?: string | null;
   parentName?: string | null;
@@ -79,13 +78,20 @@ interface BackendStudentDto {
   emergencyContactRelation?: string | null;
   currentAddressLine1?: string | null;
   currentAddressLine2?: string | null;
+  currentLandmark?: string | null;
   currentCity?: string | null;
+  currentDistrict?: string | null;
   currentState?: string | null;
+  currentCountry?: string | null;
   currentPostalCode?: string | null;
+  sameAddress?: boolean | null;
   permanentAddressLine1?: string | null;
   permanentAddressLine2?: string | null;
+  permanentLandmark?: string | null;
   permanentCity?: string | null;
+  permanentDistrict?: string | null;
   permanentState?: string | null;
+  permanentCountry?: string | null;
   permanentPostalCode?: string | null;
 }
 
@@ -95,8 +101,13 @@ interface BackendParentDto {
   mobileNumber?: string;
   email?: string;
   occupation?: string;
+  organizationName?: string;
+  qualification?: string;
   relationship?: string;
   primaryContact?: boolean;
+  receiveSms?: boolean;
+  receiveEmail?: boolean;
+  pickupAuthorized?: boolean;
 }
 
 interface BackendProfileDto {
@@ -105,6 +116,9 @@ interface BackendProfileDto {
   parents?: BackendParentDto[];
   enrollment?: {
     enrollmentId?: number;
+    academicYearId?: number;
+    classId?: number;
+    sectionId?: number;
     academicYear?: string;
     className?: string;
     sectionName?: string;
@@ -141,18 +155,6 @@ interface BackendLookupDto {
   name: string;
 }
 
-interface BackendTransferDto {
-  id: number;
-  requestNumber?: string;
-  studentId?: number;
-  enrollmentId?: number;
-  reason?: string;
-  destinationSchool?: string;
-  status?: string;
-  requestedOn?: string;
-  certificateNumber?: string;
-}
-
 interface BulkUploadSummary {
   totalRecords?: number;
   successCount?: number;
@@ -168,6 +170,13 @@ export interface StudentImportResult {
   errors?: string[];
 }
 
+export interface StudentImportPreview {
+  total: number;
+  valid: number;
+  failed: number;
+  errors: string[];
+}
+
 export interface PageEnvelope<T> {
   content: T[];
   totalElements: number;
@@ -181,7 +190,6 @@ export class StudentsWorkspaceService {
   private readonly http = inject(HttpClient);
   private readonly studentsBase = `${environment.baseUrl}/students`;
   private readonly documentsBase = `${environment.baseUrl}/documents`;
-  private readonly transfersBase = `${environment.baseUrl}/students/transfers`;
 
   private academicYearCache: ClassOption[] = [];
 
@@ -199,17 +207,13 @@ export class StudentsWorkspaceService {
       totalStudents: count(),
       activeStudents: count('ACTIVE'),
       inactiveStudents: count('INACTIVE'),
-      alumniCount: this.http
-        .get<ApiEnvelope<BackendStudentDto[]>>(`${this.studentsBase}/alumni`)
-        .pipe(map(r => r.data?.length ?? 0)),
-      newAdmissionsThisYear: count('ACTIVE')
+      unassignedStudents: this.search({ assigned: false }, 0, 1).pipe(map(page => page.totalElements))
     }).pipe(
-      map(({ totalStudents, activeStudents, inactiveStudents, alumniCount, newAdmissionsThisYear }) => ({
+      map(({ totalStudents, activeStudents, inactiveStudents, unassignedStudents }) => ({
         totalStudents,
         activeStudents,
         inactiveStudents,
-        alumniCount,
-        newAdmissionsThisYear
+        unassignedStudents
       }))
     );
   }
@@ -226,14 +230,32 @@ export class StudentsWorkspaceService {
       .set('size', String(size))
       .set('sort', sort);
     if (filter.keyword) params = params.set('keyword', filter.keyword);
+    if (filter.academicYearId) params = params.set('academicYearId', filter.academicYearId);
     if (filter.classId) params = params.set('classId', filter.classId);
     if (filter.sectionId) params = params.set('sectionId', filter.sectionId);
     if (filter.status) params = params.set('status', filter.status);
+    if (filter.assigned != null) params = params.set('assigned', String(filter.assigned));
+    if (filter.rollNumber) params = params.set('rollNumber', filter.rollNumber);
     if (filter.parentName) params = params.set('parentName', filter.parentName);
+    if (filter.parentMobile) params = params.set('parentMobile', filter.parentMobile);
 
     return this.http
       .get<ApiEnvelope<SpringPage<BackendStudentDto>>>(this.studentsBase, { params })
       .pipe(map(r => this.mapPage(r.data, dto => this.mapDirectoryCard(dto))));
+  }
+
+  exportStudents(filter: StudentSearchRequest): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.keyword) params = params.set('keyword', filter.keyword);
+    if (filter.academicYearId) params = params.set('academicYearId', filter.academicYearId);
+    if (filter.classId) params = params.set('classId', filter.classId);
+    if (filter.sectionId) params = params.set('sectionId', filter.sectionId);
+    if (filter.status) params = params.set('status', filter.status);
+    if (filter.assigned != null) params = params.set('assigned', String(filter.assigned));
+    if (filter.rollNumber) params = params.set('rollNumber', filter.rollNumber);
+    if (filter.parentName) params = params.set('parentName', filter.parentName);
+    if (filter.parentMobile) params = params.set('parentMobile', filter.parentMobile);
+    return this.http.get(`${this.studentsBase}/export`, { params, responseType: 'blob' });
   }
 
   // ---------- Class/Section options ----------
@@ -259,6 +281,17 @@ export class StudentsWorkspaceService {
       .pipe(map(r => (r.data ?? []).map(s => ({ id: s.id, label: s.name, classId }))));
   }
 
+  updateEnrollment(studentId: number, enrollment: {
+    academicYearId: number;
+    classId: number;
+    sectionId?: number | null;
+    rollNumber?: string | null;
+  }): Observable<void> {
+    return this.http
+      .post<ApiEnvelope<unknown>>(`${this.studentsBase}/${studentId}/enrollment`, enrollment)
+      .pipe(map(() => void 0));
+  }
+
   listBloodGroups(): Observable<string[]> {
     return this.http
       .get<ApiEnvelope<string[]>>(`${this.studentsBase}/blood-groups`)
@@ -272,9 +305,8 @@ export class StudentsWorkspaceService {
       .pipe(map(() => void 0));
   }
 
-  createStudentWizard(payload: StudentWizardRequest, photo?: File | null): Observable<void> {
+  createStudentWizard(payload: StudentWizardRequest, photo?: File | null): Observable<number> {
     const primary = payload.parents?.[0];
-    const secondary = payload.parents?.[1];
     const body: Record<string, unknown> = {
       admissionNumber: payload.admissionNumber?.trim() || null,
       rollNumber: payload.rollNumber ?? null,
@@ -283,11 +315,9 @@ export class StudentsWorkspaceService {
       lastName: payload.lastName,
       gender: payload.gender || 'OTHER',
       dateOfBirth: payload.dateOfBirth || new Date().toISOString().substring(0, 10),
-      religion: payload.religion ?? null,
       nationality: payload.nationality ?? null,
       motherTongue: payload.motherTongue ?? null,
-      category: payload.category ?? null,
-      placeOfBirth: payload.placeOfBirth ?? null,
+      socialCategory: payload.socialCategory ?? null,
       identityDocumentType: payload.identityDocumentType ?? null,
       identityDocumentNumber: payload.identityDocumentNumber ?? null,
       mobileNumber: payload.mobile ?? null,
@@ -302,6 +332,23 @@ export class StudentsWorkspaceService {
       parentOrganizationName: primary?.organization ?? null,
       parentQualification: primary?.qualification ?? null,
       annualIncome: primary?.annualIncome ? Number(primary.annualIncome) : null,
+      parents: (payload.parents ?? []).map((parent, index) => ({
+        existingParentId: parent.existingParentId ?? null,
+        relationship: parent.relationship || 'GUARDIAN',
+        firstName: parent.firstName,
+        middleName: parent.middleName ?? null,
+        lastName: parent.lastName || 'NA',
+        mobileNumber: parent.mobile,
+        email: parent.email ?? null,
+        occupation: parent.occupation ?? null,
+        organizationName: parent.organization ?? null,
+        qualification: parent.qualification ?? null,
+        annualIncome: parent.annualIncome ? Number(parent.annualIncome) : null,
+        primaryContact: index === 0 || Boolean(parent.isPrimaryContact),
+        receiveSms: parent.receiveSms ?? true,
+        receiveEmail: parent.receiveEmail ?? true,
+        pickupAuthorized: parent.isPickupAuthorized ?? false
+      })),
       academicYearId: payload.academicYearId ?? null,
       classId: payload.classId ?? null,
       sectionId: payload.sectionId ?? null,
@@ -310,35 +357,70 @@ export class StudentsWorkspaceService {
       sameAddress: payload.sameAsCurrentAddress ?? false,
       currentAddressLine1: payload.currentAddressLine1 ?? null,
       currentAddressLine2: payload.currentAddressLine2 ?? null,
+      currentLandmark: payload.currentLandmark ?? null,
       currentCity: payload.currentCity ?? null,
+      currentDistrict: payload.currentDistrict ?? null,
       currentState: payload.currentState ?? null,
       currentPostalCode: payload.currentPincode ?? null,
       permanentAddressLine1: payload.permanentAddressLine1 ?? null,
       permanentAddressLine2: payload.permanentAddressLine2 ?? null,
+      permanentLandmark: payload.permanentLandmark ?? null,
       permanentCity: payload.permanentCity ?? null,
+      permanentDistrict: payload.permanentDistrict ?? null,
       permanentState: payload.permanentState ?? null,
       permanentPostalCode: payload.permanentPincode ?? null,
-      bloodGroup: payload.bloodGroup ?? null,
-      allergies: payload.allergies ?? null,
-      medicalConditions: payload.medicalConditions ?? null,
-      medications: payload.medications ?? null,
-      doctorName: payload.doctorName ?? null,
-      doctorContact: payload.doctorContact ?? null,
-      emergencyNotes: payload.emergencyNotes ?? null
+      bloodGroup: payload.bloodGroup ?? null
     };
-    if (secondary?.firstName?.trim() && secondary?.mobile?.trim()) {
-      body['secondaryParentRelationship'] = secondary.relationship || 'MOTHER';
-      body['secondaryParentFirstName'] = secondary.firstName;
-      body['secondaryParentLastName'] = secondary.lastName || 'NA';
-      body['secondaryParentMobileNumber'] = secondary.mobile;
-      body['secondaryParentEmail'] = secondary.email ?? null;
-      body['secondaryParentOccupation'] = secondary.occupation ?? null;
-    }
     const formData = new FormData();
     formData.append('studentData', new Blob([JSON.stringify(body)], { type: 'application/json' }));
     if (photo) formData.append('photo', photo, photo.name);
     return this.http
-      .post<ApiEnvelope<unknown>>(`${this.studentsBase}/registerStudent`, formData)
+      .post<ApiEnvelope<BackendStudentDto>>(`${this.studentsBase}/registerStudent`, formData)
+      .pipe(map(response => response.data.studentId));
+  }
+
+  updateStudentWizard(studentId: number, payload: StudentWizardRequest): Observable<void> {
+    const body = {
+      admissionNumber: payload.admissionNumber?.trim() || null,
+      rollNumber: payload.rollNumber ?? null,
+      firstName: payload.firstName,
+      middleName: payload.middleName ?? null,
+      lastName: payload.lastName,
+      gender: payload.gender || 'OTHER',
+      dateOfBirth: payload.dateOfBirth,
+      religion: payload.religion ?? null,
+      nationality: payload.nationality ?? null,
+      motherTongue: payload.motherTongue ?? null,
+      socialCategory: payload.socialCategory ?? null,
+      placeOfBirth: payload.placeOfBirth ?? null,
+      identityDocumentType: payload.identityDocumentType ?? null,
+      identityDocumentNumber: payload.identityDocumentNumber ?? null,
+      mobileNumber: payload.mobile ?? null,
+      email: payload.email ?? null,
+      remarks: payload.remarks ?? null,
+      emergencyContactName: payload.emergencyContactName ?? null,
+      emergencyContactPhone: payload.emergencyContactPhone ?? null,
+      emergencyContactRelation: payload.emergencyContactRelation ?? null,
+      sameAddress: payload.sameAsCurrentAddress ?? false,
+      currentAddressLine1: payload.currentAddressLine1 ?? null,
+      currentAddressLine2: payload.currentAddressLine2 ?? null,
+      currentLandmark: payload.currentLandmark ?? null,
+      currentCity: payload.currentCity ?? null,
+      currentDistrict: payload.currentDistrict ?? null,
+      currentState: payload.currentState ?? null,
+      currentCountry: payload.currentCountry ?? null,
+      currentPostalCode: payload.currentPincode ?? null,
+      permanentAddressLine1: payload.permanentAddressLine1 ?? null,
+      permanentAddressLine2: payload.permanentAddressLine2 ?? null,
+      permanentLandmark: payload.permanentLandmark ?? null,
+      permanentCity: payload.permanentCity ?? null,
+      permanentDistrict: payload.permanentDistrict ?? null,
+      permanentState: payload.permanentState ?? null,
+      permanentCountry: payload.permanentCountry ?? null,
+      permanentPostalCode: payload.permanentPincode ?? null
+    };
+    return this.http
+      .put<ApiEnvelope<unknown>>(`${this.studentsBase}/${studentId}`, body)
       .pipe(map(() => void 0));
   }
 
@@ -346,6 +428,59 @@ export class StudentsWorkspaceService {
     return this.http
       .patch<ApiEnvelope<unknown>>(`${this.studentsBase}/${studentId}/status`, { status })
       .pipe(map(() => void 0));
+  }
+
+  addParent(studentId: number, parent: ParentInfo): Observable<GuardianInfo> {
+    return this.http
+      .post<ApiEnvelope<BackendParentDto>>(`${this.studentsBase}/${studentId}/parents`, this.parentRequest(parent))
+      .pipe(map(response => this.mapGuardian(response.data)));
+  }
+
+  updateParent(studentId: number, parentId: number, parent: ParentInfo): Observable<GuardianInfo> {
+    return this.http
+      .put<ApiEnvelope<BackendParentDto>>(`${this.studentsBase}/${studentId}/parents/${parentId}`, this.parentRequest(parent))
+      .pipe(map(response => this.mapGuardian(response.data)));
+  }
+
+  removeParent(studentId: number, parentId: number): Observable<void> {
+    return this.http
+      .delete<ApiEnvelope<void>>(`${this.studentsBase}/${studentId}/parents/${parentId}`)
+      .pipe(map(() => void 0));
+  }
+
+  private parentRequest(parent: ParentInfo): Record<string, unknown> {
+    return {
+      existingParentId: parent.existingParentId ?? null,
+      relationship: parent.relationship,
+      firstName: parent.firstName,
+      middleName: parent.middleName ?? null,
+      lastName: parent.lastName || null,
+      mobileNumber: parent.mobile,
+      email: parent.email ?? null,
+      occupation: parent.occupation ?? null,
+      organizationName: parent.organization ?? null,
+      qualification: parent.qualification ?? null,
+      annualIncome: parent.annualIncome ? Number(parent.annualIncome) : null,
+      primaryContact: Boolean(parent.isPrimaryContact),
+      receiveSms: parent.receiveSms ?? true,
+      receiveEmail: parent.receiveEmail ?? true,
+      pickupAuthorized: parent.isPickupAuthorized ?? false
+    };
+  }
+
+  private mapGuardian(parent: BackendParentDto): GuardianInfo {
+    return {
+      guardianId: parent.parentId ?? null,
+      name: parent.fullName ?? '',
+      mobile: parent.mobileNumber,
+      email: parent.email,
+      occupation: parent.occupation,
+      organization: parent.organizationName,
+      qualification: parent.qualification,
+      relation: parent.relationship,
+      isPrimaryContact: parent.primaryContact,
+      isPickupAuthorized: parent.pickupAuthorized
+    };
   }
 
   getActiveEnrollment(studentId: number): Observable<{ enrollmentId: number }> {
@@ -362,21 +497,30 @@ export class StudentsWorkspaceService {
   }
 
   updatePersonal(studentId: number, payload: Partial<StudentPersonal>): Observable<StudentPersonal> {
-    const parts = (payload.fullName ?? '').trim().split(/\s+/);
     const body = {
-      firstName: payload.firstName ?? parts[0] ?? 'Student',
-      middleName: payload.middleName ?? (parts.length > 2 ? parts.slice(1, -1).join(' ') : null),
-      lastName: payload.lastName ?? parts[parts.length - 1] ?? 'NA',
-      gender: payload.gender ?? 'Other',
-      dateOfBirth: payload.dateOfBirth ?? new Date().toISOString().substring(0, 10),
-      mobileNumber: payload.mobile ?? '0000000000',
-      email: payload.email ?? null,
-      admissionNumber: `ADM-${studentId}`,
-      parentFirstName: 'Guardian',
-      parentLastName: 'NA',
-      parentMobileNumber: '0000000000',
-      academicYearId: 1,
-      classId: 1
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      gender: payload.gender,
+      dateOfBirth: payload.dateOfBirth,
+      mobile: payload.mobile,
+      email: payload.email,
+      currentAddressLine1: payload.currentAddressLine1,
+      currentAddressLine2: payload.currentAddressLine2,
+      currentLandmark: payload.currentLandmark,
+      currentCity: payload.currentCity,
+      currentDistrict: payload.currentDistrict,
+      currentState: payload.currentState,
+      currentCountry: payload.currentCountry,
+      currentPostalCode: payload.currentPincode,
+      sameAddress: payload.sameAddress,
+      permanentAddressLine1: payload.permanentAddressLine1,
+      permanentAddressLine2: payload.permanentAddressLine2,
+      permanentLandmark: payload.permanentLandmark,
+      permanentCity: payload.permanentCity,
+      permanentDistrict: payload.permanentDistrict,
+      permanentState: payload.permanentState,
+      permanentCountry: payload.permanentCountry,
+      permanentPostalCode: payload.permanentPincode
     };
     return this.http
       .put<ApiEnvelope<BackendStudentDto>>(`${this.studentsBase}/${studentId}/personal`, body)
@@ -447,6 +591,11 @@ export class StudentsWorkspaceService {
         documentId?: number;
         documentName?: string;
         documentType?: string;
+        fileName?: string;
+        fileExtension?: string;
+        mimeType?: string;
+        fileSize?: number;
+        uploadedOn?: string;
         displayLabel?: string;
         remarks?: string;
         status?: string;
@@ -471,11 +620,15 @@ export class StudentsWorkspaceService {
               documentId: doc.documentId ?? null,
               studentId,
               documentName: doc.documentName ?? 'Document',
+              fileName: doc.fileName ?? doc.documentName ?? 'Document',
+              fileExtension: doc.fileExtension ?? null,
+              mimeType: doc.mimeType ?? null,
+              fileSize: doc.fileSize ?? null,
               documentType: doc.documentType ?? 'OTHER',
               displayLabel: label || this.formatDocumentType(doc.documentType),
               remarks: doc.remarks ?? null,
               status,
-              uploadedDate: null,
+              uploadedDate: doc.uploadedOn ?? null,
               category: 'PERSONAL'
             };
           });
@@ -487,6 +640,76 @@ export class StudentsWorkspaceService {
     return this.http.get(`${this.studentsBase}/document/${docId}/download`, { responseType: 'blob' });
   }
 
+  uploadStudentDocument(
+    studentId: number,
+    file: File,
+    documentType: string,
+    documentName?: string,
+    remarks?: string
+  ): Observable<StudentDocumentEntry> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    let params = new HttpParams()
+      .set('studentId', String(studentId))
+      .set('documentType', documentType);
+    if (documentName?.trim()) params = params.set('documentName', documentName.trim());
+    if (remarks?.trim()) params = params.set('remarks', remarks.trim());
+    return this.http
+      .post<ApiEnvelope<{
+        documentId?: number; documentName?: string; documentType?: string; fileName?: string;
+        fileExtension?: string; mimeType?: string; fileSize?: number; status?: string; remarks?: string;
+      }>>(`${this.documentsBase}`, form, { params })
+      .pipe(map(response => ({
+        documentId: response.data.documentId ?? null,
+        studentId,
+        documentName: response.data.documentName ?? documentName ?? file.name,
+        fileName: response.data.fileName ?? file.name,
+        fileExtension: response.data.fileExtension ?? null,
+        mimeType: response.data.mimeType ?? file.type,
+        fileSize: response.data.fileSize ?? file.size,
+        documentType: response.data.documentType ?? documentType,
+        displayLabel: response.data.documentName ?? documentName ?? this.formatDocumentType(documentType),
+        remarks: response.data.remarks ?? remarks ?? null,
+        status: (response.data.status ?? 'PENDING') as StudentDocumentEntry['status'],
+        uploadedDate: null,
+        category: 'PERSONAL'
+      })));
+  }
+
+  replaceStudentDocument(
+    studentId: number,
+    documentId: number,
+    file: File,
+    documentName?: string,
+    remarks?: string
+  ): Observable<StudentDocumentEntry> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    let params = new HttpParams().set('studentId', String(studentId));
+    if (documentName?.trim()) params = params.set('documentName', documentName.trim());
+    if (remarks?.trim()) params = params.set('remarks', remarks.trim());
+    return this.http
+      .put<ApiEnvelope<{
+        documentId?: number; documentName?: string; documentType?: string; fileName?: string;
+        fileExtension?: string; mimeType?: string; fileSize?: number; status?: string; remarks?: string;
+      }>>(`${this.documentsBase}/${documentId}`, form, { params })
+      .pipe(map(response => ({
+        documentId: response.data.documentId ?? null,
+        studentId,
+        documentName: response.data.documentName ?? documentName ?? file.name,
+        fileName: response.data.fileName ?? file.name,
+        fileExtension: response.data.fileExtension ?? null,
+        mimeType: response.data.mimeType ?? file.type,
+        fileSize: response.data.fileSize ?? file.size,
+        documentType: response.data.documentType ?? 'OTHER',
+        displayLabel: response.data.documentName ?? documentName ?? this.formatDocumentType(response.data.documentType),
+        remarks: response.data.remarks ?? remarks ?? null,
+        status: (response.data.status ?? 'PENDING') as StudentDocumentEntry['status'],
+        uploadedDate: null,
+        category: 'PERSONAL'
+      })));
+  }
+
   // ---------- Achievements (no backend yet) ----------
   achievements(_studentId: number): Observable<AchievementResponse[]> {
     return of([]);
@@ -494,19 +717,6 @@ export class StudentsWorkspaceService {
 
   addAchievement(_studentId: number, _req: AchievementRequest): Observable<AchievementResponse> {
     return of({ achievementId: 0, studentId: 0, category: '', title: '' });
-  }
-
-  // ---------- Alumni ----------
-  alumni(filters?: AlumniFilters): Observable<AlumniResponse[]> {
-    let params = new HttpParams();
-    if (filters?.keyword) params = params.set('keyword', filters.keyword);
-    return this.http
-      .get<ApiEnvelope<BackendStudentDto[]>>(`${this.studentsBase}/alumni`, { params })
-      .pipe(map(r => (r.data ?? []).map(dto => this.mapAlumni(dto))));
-  }
-
-  addAlumni(_req: AlumniRequest): Observable<AlumniResponse> {
-    return of({ alumniId: 0, fullName: '' });
   }
 
   // ---------- Document Vault (aggregated from per-student docs) ----------
@@ -557,43 +767,39 @@ export class StudentsWorkspaceService {
     );
   }
 
-  addDocument(req: DocumentVaultRequest): Observable<DocumentVaultEntry> {
-    const formData = new FormData();
-    if (req.fileUrl) {
-      formData.append('file', new Blob(['placeholder'], { type: 'application/octet-stream' }), req.fileName);
-    }
-    formData.append('documentType', req.documentType);
-    return this.http
-      .post<ApiEnvelope<{ documentId?: number; documentName?: string; documentType?: string }>>(
-        this.documentsBase,
-        formData,
-        { params: new HttpParams().set('studentId', String(req.studentId)) }
-      )
-      .pipe(
-        map(r => ({
-          documentId: r.data?.documentId ?? 0,
-          studentId: req.studentId,
-          studentName: '',
-          documentType: req.documentType,
-          fileName: req.fileName,
-          fileUrl: req.fileUrl ?? null,
-          status: 'PENDING',
-          category: req.category,
-          uploadedOn: new Date().toISOString(),
-          expiresOn: req.expiresOn ?? null,
-          remarks: req.remarks ?? null
-        }))
-      );
+  addDocument(req: DocumentVaultRequest, file?: File): Observable<DocumentVaultEntry> {
+    if (!file) return throwError(() => new Error('A real document file is required.'));
+    return this.uploadStudentDocument(req.studentId, file, req.documentType, req.fileName, req.remarks ?? undefined)
+      .pipe(map(document => ({
+        documentId: document.documentId ?? 0,
+        studentId: req.studentId,
+        studentName: '',
+        documentType: document.documentType,
+        fileName: document.fileName ?? file.name,
+        fileUrl: null,
+        status: document.status === 'UPLOADED' ? 'PENDING' : document.status as DocumentVaultEntry['status'],
+        category: req.category,
+        uploadedOn: document.uploadedDate ?? new Date().toISOString(),
+        expiresOn: req.expiresOn ?? null,
+        remarks: document.remarks ?? req.remarks ?? null
+      })));
   }
 
   verifyDocument(id: number): Observable<DocumentVaultEntry> {
-    return this.documents().pipe(
-      map(entries => {
-        const entry = entries.find(e => e.documentId === id);
-        if (!entry) throw new Error('Document not found');
-        return { ...entry, status: 'VERIFIED' as const };
-      })
-    );
+    const params = new HttpParams().set('status', 'VERIFIED');
+    return this.http
+      .post<ApiEnvelope<{ documentId: number; documentName: string; documentType: string; remarks?: string }>>(
+        `${this.documentsBase}/${id}/verify`, {}, { params })
+      .pipe(map(response => ({
+        documentId: id,
+        studentId: 0,
+        studentName: '',
+        documentType: response.data.documentType,
+        fileName: response.data.documentName,
+        status: 'VERIFIED',
+        category: 'OTHER',
+        remarks: response.data.remarks ?? null
+      })));
   }
 
   deleteDocument(id: number): Observable<void> {
@@ -623,33 +829,21 @@ export class StudentsWorkspaceService {
       );
   }
 
+  previewStudentImport(file: File): Observable<StudentImportPreview> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<ApiEnvelope<BulkUploadSummary>>(`${this.studentsBase}/import/preview`, formData)
+      .pipe(map(response => ({
+        total: response.data?.totalRecords ?? 0,
+        valid: response.data?.successCount ?? 0,
+        failed: response.data?.failureCount ?? 0,
+        errors: response.data?.errors ?? []
+      })));
+  }
+
   downloadImportErrors(jobId: string): Observable<Blob> {
     return this.http.get(`${this.studentsBase}/import/${jobId}/errors`, { responseType: 'blob' });
-  }
-
-  // ---------- Transfer ----------
-  listTransfers(): Observable<TransferRequest[]> {
-    return this.http
-      .get<ApiEnvelope<BackendTransferDto[]>>(this.transfersBase)
-      .pipe(map(r => (r.data ?? []).map(t => this.mapTransfer(t))));
-  }
-
-  createTransfer(payload: TransferRequest): Observable<TransferRequest> {
-    const body = {
-      studentId: payload.studentId,
-      enrollmentId: payload.enrollmentId,
-      reason: payload.reason,
-      destinationSchool: payload.destinationSchool
-    };
-    return this.http
-      .post<ApiEnvelope<BackendTransferDto>>(this.transfersBase, body)
-      .pipe(map(r => this.mapTransfer(r.data)));
-  }
-
-  transitionTransfer(id: number, target: TransferStatus, remarks?: string): Observable<TransferRequest> {
-    return this.http
-      .patch<ApiEnvelope<BackendTransferDto>>(`${this.transfersBase}/${id}/status`, { status: target, remarks })
-      .pipe(map(r => this.mapTransfer(r.data)));
   }
 
   // ---------- Mappers ----------
@@ -687,15 +881,7 @@ export class StudentsWorkspaceService {
     const en = raw.enrollment;
     const med = raw.medical ?? {};
     const parents = (raw.parents?.length ? raw.parents : (raw.parent ? [raw.parent] : []))
-      .map(p => ({
-        guardianId: p.parentId ?? null,
-        name: p.fullName ?? '',
-        mobile: p.mobileNumber,
-        email: p.email,
-        occupation: p.occupation,
-        relation: this.formatRelation(p.relationship),
-        isPrimaryContact: !!p.primaryContact
-      }));
+      .map(p => ({ ...this.mapGuardian(p), relation: this.formatRelation(p.relationship) }));
     const primary = parents.find(g => g.isPrimaryContact) ?? parents[0] ?? null;
     const rollNumber = en?.rollNumber || s.rollNumber || null;
     const ageYears = s.ageYears ?? this.ageFromDob(s.dateOfBirth);
@@ -711,7 +897,7 @@ export class StudentsWorkspaceService {
       nationality: s.nationality,
       religion: s.religion,
       motherTongue: s.motherTongue,
-      category: s.category,
+      socialCategory: s.socialCategory ?? s.category,
       placeOfBirth: s.placeOfBirth,
       identityDocumentType: s.identityDocumentType,
       identityDocumentNumber: s.identityDocumentNumber,
@@ -720,16 +906,26 @@ export class StudentsWorkspaceService {
       bloodGroup: med.bloodGroup,
       currentAddressLine1: s.currentAddressLine1,
       currentAddressLine2: s.currentAddressLine2,
+      currentLandmark: s.currentLandmark,
       currentCity: s.currentCity,
+      currentDistrict: s.currentDistrict,
       currentState: s.currentState,
+      currentCountry: s.currentCountry,
       currentPincode: s.currentPostalCode,
+      sameAddress: s.sameAddress,
       permanentAddressLine1: s.permanentAddressLine1,
       permanentAddressLine2: s.permanentAddressLine2,
+      permanentLandmark: s.permanentLandmark,
       permanentCity: s.permanentCity,
+      permanentDistrict: s.permanentDistrict,
       permanentState: s.permanentState,
+      permanentCountry: s.permanentCountry,
       permanentPincode: s.permanentPostalCode,
       remarks: s.remarks,
-      ...med
+      ...med,
+      emergencyContactName: s.emergencyContactName,
+      emergencyContactPhone: s.emergencyContactPhone,
+      emergencyContactRelation: s.emergencyContactRelation
     };
 
     const prev = raw.previousSchooling;
@@ -769,6 +965,9 @@ export class StudentsWorkspaceService {
         siblings: []
       },
       academics: {
+        academicYearId: en?.academicYearId ?? null,
+        classId: en?.classId ?? null,
+        sectionId: en?.sectionId ?? null,
         currentClass: en?.className ?? s.className,
         currentSection: en?.sectionName ?? s.sectionName,
         rollNumber,
@@ -868,16 +1067,10 @@ export class StudentsWorkspaceService {
 
   private mapPersonalFromStudent(dto: BackendStudentDto, payload: Partial<StudentPersonal>): StudentPersonal {
     return {
+      ...payload,
       fullName: dto.fullName ?? payload.fullName ?? '',
       mobile: dto.mobileNumber ?? payload.mobile,
       email: dto.email ?? payload.email,
-      gender: payload.gender,
-      dateOfBirth: payload.dateOfBirth,
-      nationality: payload.nationality,
-      religion: payload.religion,
-      bloodGroup: payload.bloodGroup,
-      motherTongue: payload.motherTongue,
-      remarks: payload.remarks
     };
   }
 
@@ -899,32 +1092,6 @@ export class StudentsWorkspaceService {
     if (eventType.includes('ENROLL') || eventType.includes('ACADEMIC')) return 'pi pi-book';
     if (eventType.includes('ALUMNI')) return 'pi pi-graduation-cap';
     return 'pi pi-pencil';
-  }
-
-  private mapAlumni(dto: BackendStudentDto): AlumniResponse {
-    return {
-      alumniId: dto.studentId,
-      studentId: dto.studentId,
-      fullName: dto.fullName ?? '',
-      course: dto.className,
-      contact: dto.mobileNumber,
-      email: dto.email
-    };
-  }
-
-  private mapTransfer(dto: BackendTransferDto): TransferRequest {
-    return {
-      id: dto.id,
-      requestNumber: dto.requestNumber,
-      transferNumber: dto.requestNumber,
-      studentId: dto.studentId,
-      enrollmentId: dto.enrollmentId,
-      reason: dto.reason,
-      destinationSchool: dto.destinationSchool,
-      status: dto.status as TransferStatus,
-      requestedOn: dto.requestedOn,
-      certificateNumber: dto.certificateNumber
-    };
   }
 
   private resolveAcademicYearId(academicYear?: string | null): Observable<number> {

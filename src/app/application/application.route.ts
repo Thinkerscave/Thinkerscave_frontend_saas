@@ -17,7 +17,6 @@ import {
 } from '../core/config/page-route-meta';
 import { COMMUNICATION_ROUTES } from './communication/communication.routes';
 import { STAFF_ROUTES } from './staff/staff.routes';
-import { TRANSFER_MANAGEMENT_ROUTES } from './transfer-management/transfer-management.routes';
 import { unsavedChangesGuard } from '../core/guard/unsaved-changes.guard';
 
 export const APPLICATION_ROUTES: Routes = [
@@ -350,18 +349,15 @@ export const APPLICATION_ROUTES: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'directory', data: { workspacePage: 'directory', ...STUDENTS_PAGES.directory }, loadComponent: () => import('./students/pages/directory/students-directory.component').then(m => m.StudentsDirectoryComponent) },
-          { path: 'transfers', pathMatch: 'full', redirectTo: '/app/transfers' },
           { path: 'documents', pathMatch: 'full', redirectTo: 'directory' },
-          { path: 'alumni', data: { workspacePage: 'alumni', ...STUDENTS_PAGES.alumni }, loadComponent: () => import('./students/pages/alumni/alumni-directory.component').then(m => m.AlumniDirectoryComponent) },
           // Legacy paths kept as redirects so deep links and bookmarks remain stable.
           { path: 'dashboard', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'profiles', pathMatch: 'full', redirectTo: 'directory' },
+          { path: 'edit/:id', data: { workspacePage: 'directory', ...STUDENTS_PAGES.editStudent }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
           { path: 'add-student', data: { workspacePage: 'directory', ...STUDENTS_PAGES.addStudent }, loadComponent: () => import('./students/pages/add-student/add-student.component').then(m => m.AddStudentComponent) },
           { path: 'admissions', pathMatch: 'full', redirectTo: '/app/admissions/applications' },
           { path: 'classes', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
           { path: 'sections', pathMatch: 'full', redirectTo: '/app/academics/academic-setup' },
-          { path: 'student-movement', pathMatch: 'full', redirectTo: 'transfers' },
-          { path: 'transfer', pathMatch: 'full', redirectTo: 'transfers' },
           { path: 'parents', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'id-cards', pathMatch: 'full', redirectTo: 'directory' },
           { path: 'syllabus-tracker', pathMatch: 'full', redirectTo: '/app/academics/syllabus-tracker' }
@@ -443,10 +439,6 @@ export const APPLICATION_ROUTES: Routes = [
   {
     path: '',
     children: COMMUNICATION_ROUTES
-  },
-  {
-    path: '',
-    children: TRANSFER_MANAGEMENT_ROUTES
   },
   // ━━━ Master Data ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {

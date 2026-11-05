@@ -21,7 +21,7 @@ import {
   StudentKpi,
   StudentSearchRequest
 } from '../../models/students-workspace.model';
-import { StudentsWorkspaceService, PageEnvelope } from '../../services/students-workspace.service';
+import { StudentsWorkspaceService, PageEnvelope, StudentImportPreview } from '../../services/students-workspace.service';
 import { TcTranslatePipe } from '../../../../shared/pipes/tc-translate.pipe';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
@@ -97,9 +97,10 @@ export class StudentsDirectoryComponent implements OnInit {
 
   // ---- Bulk Import ----
   showImport = false;
-  importStep: 'upload' | 'result' = 'upload';
+  importStep: 'upload' | 'preview' | 'result' = 'upload';
   importFile: File | null = null;
   importLoading = false;
+  importPreview: StudentImportPreview | null = null;
   importResult: { total: number; success: number; failed: number } | null = null;
   importJobId = '';
   importError = '';
@@ -111,11 +112,11 @@ export class StudentsDirectoryComponent implements OnInit {
     totalStudents: 0,
     activeStudents: 0,
     inactiveStudents: 0,
-    newAdmissionsThisYear: 0,
-    alumniCount: 0
+    unassignedStudents: 0
   };
 
   students: StudentDirectoryCard[] = [];
+  academicYearOptions: SelectOption[] = [];
   classOptions: SelectOption[] = [];
   sectionOptions: SelectOption[] = [];
 
@@ -142,11 +143,17 @@ export class StudentsDirectoryComponent implements OnInit {
     { label: 'Inactive', value: 'INACTIVE' }
   ];
 
+  readonly assignedOptions: FilterOption<boolean | null>[] = [
+    { label: 'All placements', value: null },
+    { label: 'Assigned', value: true },
+    { label: 'Unassigned', value: false }
+  ];
+
   readonly kpiTiles: KpiTile[] = [
     { key: 'totalStudents',         label: 'Total Students',  icon: 'pi-users',           hint: 'Across all classes',     tone: 'info' },
     { key: 'activeStudents',        label: 'Active',          icon: 'pi-check-circle',    hint: 'Currently enrolled',     tone: 'success', filter: { status: 'ACTIVE' } },
     { key: 'inactiveStudents',      label: 'Inactive',        icon: 'pi-times-circle',    hint: 'Disabled or left',       tone: 'warning', filter: { status: 'INACTIVE' } },
-    { key: 'alumniCount',           label: 'Alumni',          icon: 'pi-graduation-cap',  hint: 'Past graduates',         tone: 'neutral' }
+    { key: 'unassignedStudents',    label: 'Unassigned',      icon: 'pi pi-user-minus',   hint: 'No active enrollment',   tone: 'neutral', filter: { assigned: false } }
   ];
 
   get classSelectOptions(): FilterOption<string>[] {
@@ -160,9 +167,11 @@ export class StudentsDirectoryComponent implements OnInit {
   get hasContextualQuery(): boolean {
     return !!(
       this.filter.keyword?.trim() ||
+      this.appliedFilter.academicYearId ||
       this.appliedFilter.classId ||
       this.appliedFilter.sectionId ||
       this.appliedFilter.status ||
+      this.appliedFilter.assigned != null ||
       this.activeKpi
     );
   }
@@ -196,9 +205,11 @@ export class StudentsDirectoryComponent implements OnInit {
       }
     }
     this.appliedFilter = {
+      academicYearId: this.filter.academicYearId,
       classId: this.filter.classId,
       sectionId: this.filter.sectionId,
-      status: this.filter.status
+      status: this.filter.status,
+      assigned: this.filter.assigned
     };
 
     // Soft return from Add Student (or other mutations): restore snapshot + refresh in place.
@@ -227,21 +238,17 @@ export class StudentsDirectoryComponent implements OnInit {
       }
       this.cdr.markForCheck();
     });
-    this.api.listClasses().subscribe(classes => {
-      this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
+    this.api.listAcademicYears().subscribe(years => {
+      this.academicYearOptions = years.map(year => ({ id: year.id, label: year.label }));
       this.cdr.markForCheck();
     });
-    if (this.filter.classId) {
-      this.api.listSectionsByClass(Number(this.filter.classId)).subscribe(sections => {
-        this.sectionOptions = sections.map(s => ({ id: s.id, label: s.label }));
-        const incoming = this.filter.sectionId;
-        if (incoming && !this.sectionOptions.some(s => String(s.id) === String(incoming))) {
-          this.filter.sectionId = null;
-        }
-        this.runSearch();
-        this.cdr.markForCheck();
+    if (this.filter.academicYearId) {
+      this.loadClassesForYear(Number(this.filter.academicYearId));
+    } else if (this.filter.classId) {
+      this.api.listClasses().subscribe(classes => {
+        this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
+        this.loadSectionsForClass(Number(this.filter.classId));
       });
-      return;
     }
     this.runSearch();
   }
@@ -298,9 +305,11 @@ export class StudentsDirectoryComponent implements OnInit {
 
   applyFilters(): void {
     this.appliedFilter = {
+      academicYearId: this.filter.academicYearId,
       classId: this.filter.classId,
       sectionId: this.filter.sectionId,
-      status: this.filter.status
+      status: this.filter.status,
+      assigned: this.filter.assigned
     };
     this.appliedSort = this.sortField;
     this.pageIndex = 0;
@@ -330,10 +339,6 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   toggleKpiFilter(tile: KpiTile): void {
-    if (tile.key === 'alumniCount') {
-      this.router.navigate(['/app/students/alumni']);
-      return;
-    }
     if (this.activeKpi === tile.key) {
       this.activeKpi = null;
       this.filter = { keyword: this.filter.keyword };
@@ -350,6 +355,8 @@ export class StudentsDirectoryComponent implements OnInit {
   clearFilters(): void {
     this.filter = {};
     this.appliedFilter = {};
+    this.classOptions = [];
+    this.sectionOptions = [];
     this.sortField = 'firstName,asc';
     this.appliedSort = this.sortField;
     this.activeKpi = null;
@@ -366,6 +373,34 @@ export class StudentsDirectoryComponent implements OnInit {
         this.cdr.markForCheck();
       });
     }
+  }
+
+  onAcademicYearChanged(): void {
+    this.filter.classId = null;
+    this.filter.sectionId = null;
+    this.classOptions = [];
+    this.sectionOptions = [];
+    if (this.filter.academicYearId) {
+      this.loadClassesForYear(Number(this.filter.academicYearId));
+    }
+  }
+
+  private loadClassesForYear(academicYearId: number): void {
+    this.api.listClasses(academicYearId).subscribe(classes => {
+      this.classOptions = classes.map(c => ({ id: c.id, label: c.label }));
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadSectionsForClass(classId: number): void {
+    this.api.listSectionsByClass(classId).subscribe(sections => {
+      this.sectionOptions = sections.map(s => ({ id: s.id, label: s.label }));
+      const incoming = this.filter.sectionId;
+      if (incoming && !this.sectionOptions.some(s => String(s.id) === String(incoming))) {
+        this.filter.sectionId = null;
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   // ---- Profile navigation ----
@@ -386,6 +421,7 @@ export class StudentsDirectoryComponent implements OnInit {
     this.importFile = null;
     this.importError = '';
     this.importResult = null;
+    this.importPreview = null;
   }
 
   closeImport(): void { this.showImport = false; }
@@ -393,7 +429,14 @@ export class StudentsDirectoryComponent implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.importFile = input.files[0];
+      const file = input.files[0];
+      if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        this.importFile = null;
+        this.importError = 'Choose an .xlsx workbook downloaded from the template action.';
+        input.value = '';
+        return;
+      }
+      this.importFile = file;
       this.importError = '';
     }
   }
@@ -408,26 +451,7 @@ export class StudentsDirectoryComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => {
-        const headers = [
-          'Admission Number', 'First Name', 'Middle Name', 'Last Name',
-          'Gender', 'Date Of Birth', 'Mobile', 'Email',
-          'Academic Year', 'Class Code', 'Section Code', 'Roll Number',
-          'Father Name', 'Father Mobile', 'Mother Name', 'Mother Mobile',
-          'Address', 'Blood Group', 'Remarks'
-        ].join(',');
-        const sample = ['ADM001', 'Rahul', '', 'Sharma', 'Male', '2010-05-15',
-          '9876543210', 'rahul@example.com', '2025-2026', 'CLS6', 'SEC-A', '1',
-          'Rajesh Sharma', '9876543211', 'Priya Sharma', '9876543212',
-          '45 Green Park, New Delhi', 'B+', ''].join(',');
-        const blob = new Blob([headers + '\n' + sample], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Student_Import_Template.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+      error: () => { this.importError = 'Unable to download the Excel template. Check your connection and retry.'; }
     });
   }
 
@@ -444,22 +468,35 @@ export class StudentsDirectoryComponent implements OnInit {
           this.importResult = { total: result.total, success: result.success, failed: result.failed };
           this.importJobId = result.jobId;
           this.importStep = 'result';
-          if (result.failed > 0) this.loadAll();
+          if (result.success > 0) this.loadAll();
         },
         error: () => { this.importError = 'Import failed. Please check the file format and retry.'; }
       });
   }
 
+  previewImport(): void {
+    if (!this.importFile) {
+      this.importError = 'Choose an .xlsx workbook first.';
+      return;
+    }
+    this.importLoading = true;
+    this.importError = '';
+    this.api.previewStudentImport(this.importFile)
+      .pipe(finalize(() => { this.importLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: preview => {
+          this.importPreview = preview;
+          this.importStep = 'preview';
+        },
+        error: err => {
+          this.importError = err?.error?.message || 'Unable to preview this workbook.';
+        }
+      });
+  }
+
   downloadErrorReport(): void {
     if (!this.importJobId) {
-      const content = 'Row,Error\n5,Invalid date of birth format\n18,Class code not found';
-      const blob = new Blob([content], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Import_Error_Report.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+      this.importError = 'The import job is unavailable. Re-run the import to retrieve its error report.';
       return;
     }
     this.api.downloadImportErrors(this.importJobId).subscribe({
@@ -476,13 +513,18 @@ export class StudentsDirectoryComponent implements OnInit {
 
   // ---- Export ----
   exportStudents(): void {
-    // MOCK: Trigger download with current filter params
-    const params = new URLSearchParams();
-    if (this.filter.keyword) params.set('keyword', this.filter.keyword);
-    if (this.filter.classId) params.set('classId', this.filter.classId);
-    if (this.filter.status) params.set('status', this.filter.status);
-    // In production, this would call a backend export endpoint
-    this.feedback.info('Export is not available yet', 'Student export has not been connected to the server.');
+    this.api.exportStudents({ ...this.appliedFilter, keyword: this.filter.keyword })
+      .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = 'students.csv';
+          anchor.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => this.feedback.error('Export failed', 'Unable to export students. Please try again.')
+      });
   }
 
   // ---- More menu ----
@@ -492,12 +534,6 @@ export class StudentsDirectoryComponent implements OnInit {
   }
 
   closeMoreMenu(): void { this.openMoreMenuId = null; }
-
-  transferStudent(s: StudentDirectoryCard, event: Event): void {
-    event.stopPropagation();
-    this.openMoreMenuId = null;
-    this.router.navigate(['/app/students/transfers']);
-  }
 
   async deactivateStudent(s: StudentDirectoryCard, event: Event): Promise<void> {
     event.stopPropagation();

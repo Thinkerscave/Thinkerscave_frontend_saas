@@ -104,7 +104,7 @@ export const IDENTITY_TYPES = [
 ] as const;
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-export const CATEGORY_OPTIONS = ['GEN', 'OBC', 'SC', 'ST', 'EWS', 'OTHER'];
+export const CATEGORY_OPTIONS = ['GENERAL', 'OBC', 'EBC', 'SC', 'ST', 'OTHER', 'PREFER_NOT_TO_SAY'];
 export const RELIGION_OPTIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other'];
 export const BOARD_OPTIONS = ['CBSE', 'ICSE', 'BSE Odisha', 'CHSE Odisha', 'State board', 'Other'];
 export const MEDIUM_OPTIONS = ['English', 'Odia', 'Hindi', 'Other'];

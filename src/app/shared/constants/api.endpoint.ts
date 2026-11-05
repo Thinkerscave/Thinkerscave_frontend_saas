@@ -366,7 +366,6 @@ export const studentApi = {
   timeline: (id: number) => `${BASE}/students/${id}/timeline`,
   documents: (id: number) => `${BASE}/students/${id}/documents`,
   downloadDoc: (docId: number) => `${BASE}/students/document/${docId}/download`,
-  alumni: `${BASE}/students/alumni`,
   import: `${BASE}/students/import`,
   importTemplate: `${BASE}/students/import/template`,
   importSummary: (jobId: string) => `${BASE}/students/import/${jobId}`,

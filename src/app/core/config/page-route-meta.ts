@@ -424,17 +424,18 @@ export const STUDENTS_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
-  alumni: {
-    breadcrumb: 'Alumni',
-    pageTitle: 'Alumni',
-    pageSubtitle: 'Stay connected with your past graduates.',
-    pageKind: 'main',
-    hideBack: true
-  },
   addStudent: {
     breadcrumb: 'Add Student',
     pageTitle: 'Add Student',
     pageSubtitle: 'Create a student record with personal, academic and guardian details.',
+    pageKind: 'detail',
+    showBack: true,
+    backFallback: '/app/students/directory'
+  },
+  editStudent: {
+    breadcrumb: 'Edit Student',
+    pageTitle: 'Edit Student',
+    pageSubtitle: 'Update the student profile and demographic details.',
     pageKind: 'detail',
     showBack: true,
     backFallback: '/app/students/directory'
@@ -860,16 +861,6 @@ export const USER_PROFILE_PAGE = {
   pageKind: 'detail',
   showBack: true,
   backFallback: '/app'
-} as const;
-
-export const TRANSFER_PAGES = {
-  transfers: {
-    breadcrumb: 'Transfer Requests',
-    pageTitle: 'Transfer Requests',
-    pageSubtitle: 'Manage student transfer certificates and exit workflows.',
-    pageKind: 'main',
-    hideBack: true
-  }
 } as const;
 
 export const EXAM_PAGES = {

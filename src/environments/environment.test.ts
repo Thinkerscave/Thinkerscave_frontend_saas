@@ -7,7 +7,6 @@ export const environment = {
     defaultTenantId: 'public',
     platformTenantId: 'public',
     defaultOrganizationId: 1,
-    h2ConsoleUrl: '',
     requireOrganizationSelection: true,
     authUseHttpOnlyRefresh: true,
     /** TEMPORARY — remove when production email reset is live. */

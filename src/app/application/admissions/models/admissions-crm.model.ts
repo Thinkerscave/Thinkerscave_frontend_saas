@@ -238,9 +238,11 @@ export interface LeadFullDetail {
 }
 
 export interface ApplicationProfileDetails {
+  guardians?: ApplicationGuardianDetails[] | null;
   bloodGroup?: string | null;
   religion?: string | null;
   category?: string | null;
+  socialCategory?: string | null;
   nationality?: string | null;
   identityDocumentType?: string | null;
   identityDocumentNumber?: string | null;
@@ -266,14 +268,18 @@ export interface ApplicationProfileDetails {
 
   addressLine1?: string | null;
   addressLine2?: string | null;
+  landmark?: string | null;
   city?: string | null;
+  district?: string | null;
   state?: string | null;
   country?: string | null;
   pinCode?: string | null;
   sameAsPresentAddress?: boolean | null;
   permanentAddressLine1?: string | null;
   permanentAddressLine2?: string | null;
+  permanentLandmark?: string | null;
   permanentCity?: string | null;
+  permanentDistrict?: string | null;
   permanentState?: string | null;
   permanentCountry?: string | null;
   permanentPinCode?: string | null;
@@ -296,6 +302,15 @@ export interface ApplicationProfileDetails {
   secondLanguage?: string | null;
   linkedParentId?: number | null;
   siblingName?: string | null;
+}
+
+export interface ApplicationGuardianDetails {
+  fullName: string;
+  relationship: string;
+  mobile: string;
+  email?: string | null;
+  occupation?: string | null;
+  primaryContact?: boolean | null;
 }
 
 export interface ApplicationSearchRequest {

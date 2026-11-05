@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
+  FormArray,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -45,7 +46,6 @@ import {
   INDIAN_MOBILE_PATTERN,
   INDIAN_PIN_PATTERN,
   MEDIUM_OPTIONS,
-  RELIGION_OPTIONS,
   formatAdmissionsLabel,
   isAdditionalDocumentType,
   normalizeDocumentType,
@@ -58,6 +58,7 @@ import {
   SaasStepperComponent
 } from '../../../../shared/ui/saas';
 import { DocumentPreviewDialogComponent } from '../../components/document-preview-dialog/document-preview-dialog.component';
+import { StudentReferenceDataService } from '../../../../shared/services/student-reference-data.service';
 
 function notFutureDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
@@ -111,6 +112,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   private readonly messages = inject(MessageService);
   private readonly nav = inject(AdmissionsNavService);
   private readonly permissions = inject(PermissionService);
+  private readonly studentReferenceData = inject(StudentReferenceDataService);
   private readonly destroy$ = new Subject<void>();
   readonly applicationsResource = 'ADMISSIONS_APPLICATIONS';
   previewUrls = new Map<number, string>();
@@ -124,8 +126,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     { label: 'Other', value: 'OTHER' }
   ];
   readonly bloodGroups = BLOOD_GROUPS.map(v => ({ label: v, value: v }));
-  readonly categoryOptions = CATEGORY_OPTIONS.map(v => ({ label: v, value: v }));
-  readonly religionOptions = RELIGION_OPTIONS.map(v => ({ label: v, value: v }));
+  categoryOptions = CATEGORY_OPTIONS.map(v => ({ label: formatAdmissionsLabel(v), value: v }));
   readonly boardOptions = BOARD_OPTIONS.map(v => ({ label: v, value: v }));
   readonly mediumOptions = MEDIUM_OPTIONS.map(v => ({ label: v, value: v }));
   readonly identityTypes = IDENTITY_TYPES.map(t => ({ label: t.label, value: t.value }));
@@ -153,7 +154,6 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   additionalDocs: DocChecklistItem[] = [];
   progress: ApplicationProgress | null = null;
   activeStep = 0;
-  showSecondaryGuardian = false;
   showEmergencyContact = false;
   confirmAccurate = false;
   docsMissingHighlight = false;
@@ -185,7 +185,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       identityDocumentType: [''],
       identityDocumentNumber: [''],
       religion: [''],
-      category: [''],
+      socialCategory: [''],
       motherTongue: [''],
       placeOfBirth: [''],
       email: ['', [Validators.email]],
@@ -203,19 +203,24 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       secondaryGuardianRelationship: [''],
       secondaryGuardianMobile: ['', [optionalPattern(INDIAN_MOBILE_PATTERN)]],
       secondaryGuardianEmail: ['', [Validators.email]],
-      secondaryGuardianOccupation: ['']
+      secondaryGuardianOccupation: [''],
+      additionalGuardians: this.fb.array([])
     }),
     address: this.fb.group({
       addressLine1: ['', Validators.required],
       addressLine2: [''],
+      landmark: [''],
       city: ['', Validators.required],
+      district: [''],
       state: [''],
       country: ['India'],
       pinCode: ['', [Validators.required, Validators.pattern(INDIAN_PIN_PATTERN)]],
       sameAsPresentAddress: [true],
       permanentAddressLine1: [''],
       permanentAddressLine2: [''],
+      permanentLandmark: [''],
       permanentCity: [''],
+      permanentDistrict: [''],
       permanentState: [''],
       permanentCountry: ['India'],
       permanentPinCode: ['']
@@ -251,6 +256,10 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.studentReferenceData.socialCategories().subscribe(options => {
+      this.categoryOptions = options;
+      this.cdr.markForCheck();
+    });
     this.api.academicYears().subscribe({
       next: years => {
         this.years = years;
@@ -332,6 +341,32 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     if (this.inquiryId) {
       this.prefillFromLead(this.inquiryId);
     }
+  }
+
+  get additionalGuardians(): FormArray {
+    return this.form.get('parents.additionalGuardians') as FormArray;
+  }
+
+  addAdditionalGuardian(value: Partial<{
+    fullName: string | null;
+    relationship: string | null;
+    mobile: string | null;
+    email: string | null;
+    occupation: string | null;
+  }> = {}): void {
+    this.additionalGuardians.push(this.fb.group({
+      fullName: [value.fullName ?? '', [Validators.required, Validators.minLength(2)]],
+      relationship: [value.relationship ?? 'GUARDIAN', Validators.required],
+      mobile: [value.mobile ?? '', [Validators.required, Validators.pattern(INDIAN_MOBILE_PATTERN)]],
+      email: [value.email ?? '', [Validators.email]],
+      occupation: [value.occupation ?? '']
+    }));
+    this.cdr.markForCheck();
+  }
+
+  removeAdditionalGuardian(index: number): void {
+    this.additionalGuardians.removeAt(index);
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {
@@ -509,7 +544,20 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     const hasPrev = p.hasPreviousSchooling === true
       || !!(p.previousSchoolName && p.previousSchoolName.trim());
 
-    this.showSecondaryGuardian = !!(p.secondaryGuardianName || p.secondaryGuardianMobile);
+    this.additionalGuardians.clear();
+    const savedGuardians = (p.guardians ?? []).filter(guardian => !guardian.primaryContact);
+    const legacyGuardian = p.secondaryGuardianName || p.secondaryGuardianMobile || p.motherName || p.motherContact
+      ? [{
+          fullName: p.secondaryGuardianName || p.motherName || '',
+          relationship: p.secondaryGuardianRelationship || p.motherRelationship || 'MOTHER',
+          mobile: p.secondaryGuardianMobile || p.motherContact || '',
+          email: p.secondaryGuardianEmail || p.motherEmail || '',
+          occupation: p.secondaryGuardianOccupation || p.motherOccupation || ''
+        }]
+      : [];
+    for (const guardian of savedGuardians.length ? savedGuardians : legacyGuardian) {
+      this.addAdditionalGuardian(guardian);
+    }
     this.showEmergencyContact = !!(p.emergencyContactName || p.emergencyContactMobile);
 
     this.form.patchValue({
@@ -522,7 +570,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
         identityDocumentType: p.identityDocumentType ?? (p.aadhaarNumber ? 'AADHAAR' : ''),
         identityDocumentNumber: p.identityDocumentNumber ?? p.aadhaarNumber ?? '',
         religion: p.religion ?? '',
-        category: p.category ?? '',
+        socialCategory: p.socialCategory ?? p.category ?? '',
         motherTongue: p.motherTongue ?? '',
         placeOfBirth: p.placeOfBirth ?? '',
         email: record.email,
@@ -543,14 +591,18 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       address: {
         addressLine1: p.addressLine1 || addressParts.line1,
         addressLine2: p.addressLine2 ?? '',
+        landmark: p.landmark ?? '',
         city: p.city || addressParts.city,
+        district: p.district ?? '',
         state: p.state || addressParts.state,
         country: p.country || 'India',
         pinCode: p.pinCode || addressParts.pinCode,
         sameAsPresentAddress: sameAsPresent,
         permanentAddressLine1: p.permanentAddressLine1 ?? '',
         permanentAddressLine2: p.permanentAddressLine2 ?? '',
+        permanentLandmark: p.permanentLandmark ?? '',
         permanentCity: p.permanentCity ?? '',
+        permanentDistrict: p.permanentDistrict ?? '',
         permanentState: p.permanentState ?? '',
         permanentCountry: p.permanentCountry || 'India',
         permanentPinCode: p.permanentPinCode ?? ''
@@ -660,7 +712,9 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
     const presentParts = [
       v.address.addressLine1,
       v.address.addressLine2,
+      v.address.landmark,
       v.address.city,
+      v.address.district,
       v.address.state,
       v.address.pinCode
     ].filter(Boolean);
@@ -691,7 +745,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       inquiryId: this.inquiryId,
       profile: {
         bloodGroup: v.student.bloodGroup || null,
-        category: v.student.category || null,
+        socialCategory: v.student.socialCategory || null,
         nationality: v.student.nationality || null,
         identityDocumentType: identityType,
         identityDocumentNumber: identityNumber,
@@ -701,21 +755,39 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
         placeOfBirth: v.student.placeOfBirth || null,
         parentRelationship: v.parents.parentRelationship || null,
         fatherOccupation: v.parents.fatherOccupation || null,
-        secondaryGuardianName: this.showSecondaryGuardian ? (v.parents.secondaryGuardianName || null) : null,
-        secondaryGuardianRelationship: this.showSecondaryGuardian ? (v.parents.secondaryGuardianRelationship || null) : null,
-        secondaryGuardianMobile: this.showSecondaryGuardian ? (v.parents.secondaryGuardianMobile || null) : null,
-        secondaryGuardianEmail: this.showSecondaryGuardian ? (v.parents.secondaryGuardianEmail || null) : null,
-        secondaryGuardianOccupation: this.showSecondaryGuardian ? (v.parents.secondaryGuardianOccupation || null) : null,
+        guardians: [
+          {
+            fullName: v.parents.parentName || null,
+            relationship: v.parents.parentRelationship || null,
+            mobile: v.parents.parentContact || null,
+            email: v.parents.parentEmail || null,
+            occupation: v.parents.fatherOccupation || null,
+            primaryContact: true
+          },
+          ...this.additionalGuardians.getRawValue().map((guardian: { fullName: string; relationship: string; mobile: string; email: string; occupation: string }) => ({
+            ...guardian,
+            primaryContact: false
+          }))
+        ],
+        secondaryGuardianName: v.parents.secondaryGuardianName || this.additionalGuardians.at(0)?.get('fullName')?.value || null,
+        secondaryGuardianRelationship: v.parents.secondaryGuardianRelationship || this.additionalGuardians.at(0)?.get('relationship')?.value || null,
+        secondaryGuardianMobile: v.parents.secondaryGuardianMobile || this.additionalGuardians.at(0)?.get('mobile')?.value || null,
+        secondaryGuardianEmail: v.parents.secondaryGuardianEmail || this.additionalGuardians.at(0)?.get('email')?.value || null,
+        secondaryGuardianOccupation: v.parents.secondaryGuardianOccupation || this.additionalGuardians.at(0)?.get('occupation')?.value || null,
         addressLine1: v.address.addressLine1 || null,
         addressLine2: v.address.addressLine2 || null,
+        landmark: v.address.landmark || null,
         city: v.address.city || null,
+        district: v.address.district || null,
         state: v.address.state || null,
         country: v.address.country || null,
         pinCode: v.address.pinCode || null,
         sameAsPresentAddress: same,
         permanentAddressLine1: same ? (v.address.addressLine1 || null) : (v.address.permanentAddressLine1 || null),
         permanentAddressLine2: same ? (v.address.addressLine2 || null) : (v.address.permanentAddressLine2 || null),
+        permanentLandmark: same ? (v.address.landmark || null) : (v.address.permanentLandmark || null),
         permanentCity: same ? (v.address.city || null) : (v.address.permanentCity || null),
+        permanentDistrict: same ? (v.address.district || null) : (v.address.permanentDistrict || null),
         permanentState: same ? (v.address.state || null) : (v.address.permanentState || null),
         permanentCountry: same ? (v.address.country || null) : (v.address.permanentCountry || null),
         permanentPinCode: same ? (v.address.pinCode || null) : (v.address.permanentPinCode || null),
@@ -811,9 +883,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
         && this.form.get('parents.parentEmail')!.valid
         && this.form.get('address')!.valid
         && (!this.showEmergencyContact || this.form.get('emergency')!.valid)
-        && (!this.showSecondaryGuardian
-          || (this.form.get('parents.secondaryGuardianMobile')!.valid
-            && this.form.get('parents.secondaryGuardianEmail')!.valid));
+        && this.additionalGuardians.valid;
     }
     if (index === 1) {
       return !!this.form.get('academic.academicYearId')?.valid
@@ -1444,9 +1514,7 @@ export class ApplicationWizardComponent implements OnInit, OnDestroy {
       { label: 'Mobile', value: p.parentContact || '—' },
       { label: 'Email', value: p.parentEmail || '—' },
       { label: 'Occupation', value: p.fatherOccupation || '—' },
-      { label: 'Secondary guardian', value: p.secondaryGuardianName || '—' },
-      { label: 'Secondary relationship', value: p.secondaryGuardianRelationship || '—' },
-      { label: 'Secondary mobile', value: p.secondaryGuardianMobile || '—' },
+      { label: 'Additional guardians', value: this.additionalGuardians.getRawValue().map((guardian: { fullName: string }) => guardian.fullName).filter(Boolean).join(', ') || '—' },
       { label: 'Present address', value: present },
       { label: 'Permanent address', value: permanent },
       { label: 'Emergency contact', value: e.emergencyContactName || '—' },

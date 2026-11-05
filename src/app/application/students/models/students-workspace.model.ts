@@ -7,16 +7,19 @@ export interface StudentKpi {
   totalStudents: number;
   activeStudents: number;
   inactiveStudents: number;
-  newAdmissionsThisYear: number;
-  alumniCount: number;
+  unassignedStudents: number;
 }
 
 export interface StudentSearchRequest {
   keyword?: string | null;
   classId?: string | null;
   sectionId?: string | null;
-  status?: 'ACTIVE' | 'INACTIVE' | 'ALUMNI' | null;
+  status?: StudentStatus | null;
+  academicYearId?: string | null;
+  assigned?: boolean | null;
+  rollNumber?: string | null;
   parentName?: string | null;
+  parentMobile?: string | null;
 }
 
 export interface StudentCreateRequest {
@@ -35,11 +38,15 @@ export interface StudentCreateRequest {
   currentCountry?: string | null;
   currentState?: string | null;
   currentCity?: string | null;
+  currentDistrict?: string | null;
+  currentLandmark?: string | null;
   currentZipCode?: string | null;
   currentAddressLine?: string | null;
   permanentCountry?: string | null;
   permanentState?: string | null;
   permanentCity?: string | null;
+  permanentDistrict?: string | null;
+  permanentLandmark?: string | null;
   permanentZipCode?: string | null;
   permanentAddressLine?: string | null;
   classId?: number | null;
@@ -51,6 +58,9 @@ export interface StudentCreateRequest {
   guardianEmail?: string | null;
   guardianPhoneNumber?: string | null;
   guardianAddress?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
 }
 
 /** Extended create request matching the 5-step wizard */
@@ -64,18 +74,29 @@ export interface StudentWizardRequest {
   dateOfBirth?: string | null;
   religion?: string | null;
   nationality?: string | null;
+  socialCategory?: string | null;
   motherTongue?: string | null;
   mobile?: string | null;
   email?: string | null;
+  remarks?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
   currentAddressLine1?: string | null;
   currentAddressLine2?: string | null;
+  currentLandmark?: string | null;
   currentCity?: string | null;
+  currentDistrict?: string | null;
   currentState?: string | null;
+  currentCountry?: string | null;
   currentPincode?: string | null;
   permanentAddressLine1?: string | null;
   permanentAddressLine2?: string | null;
+  permanentLandmark?: string | null;
   permanentCity?: string | null;
+  permanentDistrict?: string | null;
   permanentState?: string | null;
+  permanentCountry?: string | null;
   permanentPincode?: string | null;
   sameAsCurrentAddress?: boolean;
   photoUrl?: string | null;
@@ -92,7 +113,6 @@ export interface StudentWizardRequest {
   enrollmentDate?: string | null;
   enrollmentStatus?: string | null;
 
-  category?: string | null;
   placeOfBirth?: string | null;
   identityDocumentType?: string | null;
   identityDocumentNumber?: string | null;
@@ -108,8 +128,10 @@ export interface StudentWizardRequest {
 }
 
 export interface ParentInfo {
+  existingParentId?: number | null;
   relationship: string; // 'FATHER' | 'MOTHER' | 'GUARDIAN'
   firstName: string;
+  middleName?: string | null;
   lastName: string;
   mobile: string;
   email?: string | null;
@@ -125,7 +147,7 @@ export interface ParentInfo {
 
 export type AttendanceStatusToday = 'PRESENT_TODAY' | 'ABSENT_TODAY' | 'PENDING';
 
-export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'ALUMNI' | 'PENDING';
+export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'TRANSFERRED' | 'WITHDRAWN' | 'GRADUATED' | 'ALUMNI';
 
 export interface StudentDirectoryCard {
   studentId: number;
@@ -192,24 +214,34 @@ export interface StudentPersonal {
   religion?: string | null;
   bloodGroup?: string | null;
   motherTongue?: string | null;
-  category?: string | null;
+  socialCategory?: string | null;
   placeOfBirth?: string | null;
   identityDocumentType?: string | null;
   identityDocumentNumber?: string | null;
   mobile?: string | null;
   email?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
   permanentAddress?: string | null;
   currentAddress?: string | null;
   permanentAddressLine1?: string | null;
   permanentAddressLine2?: string | null;
+  permanentLandmark?: string | null;
   permanentCity?: string | null;
+  permanentDistrict?: string | null;
   permanentState?: string | null;
+  permanentCountry?: string | null;
   permanentPincode?: string | null;
   currentAddressLine1?: string | null;
   currentAddressLine2?: string | null;
+  currentLandmark?: string | null;
   currentCity?: string | null;
+  currentDistrict?: string | null;
   currentState?: string | null;
+  currentCountry?: string | null;
   currentPincode?: string | null;
+  sameAddress?: boolean | null;
   remarks?: string | null;
 }
 
@@ -247,6 +279,9 @@ export interface FamilySnapshot {
 }
 
 export interface AcademicsSnapshot {
+  academicYearId?: number | null;
+  classId?: number | null;
+  sectionId?: number | null;
   currentClass?: string | null;
   currentSection?: string | null;
   rollNumber?: string | null;
@@ -306,6 +341,9 @@ export interface StudentDocumentEntry {
   displayLabel?: string | null;
   remarks?: string | null;
   fileName?: string | null;
+  fileExtension?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
   fileUrl?: string | null;
   status: 'UPLOADED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'MISSING';
   uploadedDate?: string | null;
@@ -352,46 +390,6 @@ export interface AchievementResponse {
   icon?: string | null;
 }
 
-export interface AlumniRequest {
-  studentId?: number | null;
-  fullName: string;
-  batchYear?: string | null;
-  yearPassed?: string | null;
-  course?: string | null;
-  occupation?: string | null;
-  employer?: string | null;
-  contact?: string | null;
-  email?: string | null;
-  city?: string | null;
-  graduationDate?: string | null;
-  linkedIn?: string | null;
-}
-
-export interface AlumniResponse {
-  alumniId: number;
-  studentId?: number | null;
-  fullName: string;
-  batchYear?: string | null;
-  yearPassed?: string | null;
-  course?: string | null;
-  occupation?: string | null;
-  employer?: string | null;
-  contact?: string | null;
-  email?: string | null;
-  city?: string | null;
-  graduationDate?: string | null;
-  linkedIn?: string | null;
-}
-
-export interface AlumniFilters {
-  passoutYear?: string | null;
-  course?: string | null;
-  batch?: string | null;
-  city?: string | null;
-  occupation?: string | null;
-  keyword?: string | null;
-}
-
 export interface DocumentVaultKpi {
   totalDocuments: number;
   verifiedDocuments: number;
@@ -427,31 +425,6 @@ export interface DocumentVaultRequest {
   fileSize?: number | null;
   status?: DocumentVaultStatus | null;
   expiresOn?: string | null;
-  remarks?: string | null;
-}
-
-// --- Transfer (existing endpoints) ---
-
-/** Simplified spec-aligned transfer status (REQUESTED → APPROVED → COMPLETED or REJECTED) */
-export type TransferStatus = 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'CERTIFICATE_ISSUED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
-
-export interface TransferRequest {
-  id?: number;
-  transferNumber?: string | null;
-  requestNumber?: string | null;
-  studentId?: number | null;
-  studentName?: string | null;
-  className?: string | null;
-  sectionName?: string | null;
-  enrollmentId?: number | null;
-  requestedOn?: string | null;
-  reason?: string | null;
-  destinationSchool?: string | null;
-  status?: TransferStatus | null;
-  approvedByUserId?: number | null;
-  approvedOn?: string | null;
-  certificateNumber?: string | null;
-  certificateIssuedOn?: string | null;
   remarks?: string | null;
 }
 

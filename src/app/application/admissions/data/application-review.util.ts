@@ -37,7 +37,9 @@ export function buildApplicationReviewSections(app: ApplicationRecord): ReviewSe
   const present = joinAddress([
     p.addressLine1,
     p.addressLine2,
+    p.landmark,
     p.city,
+    p.district,
     p.state,
     p.country,
     p.pinCode
@@ -48,11 +50,29 @@ export function buildApplicationReviewSections(app: ApplicationRecord): ReviewSe
     : joinAddress([
         p.permanentAddressLine1,
         p.permanentAddressLine2,
+        p.permanentLandmark,
         p.permanentCity,
+        p.permanentDistrict,
         p.permanentState,
         p.permanentCountry,
         p.permanentPinCode
       ]);
+  const additionalGuardians = p.guardians?.filter(guardian => !guardian.primaryContact) ?? [];
+  const guardianFields = additionalGuardians.length
+    ? additionalGuardians.flatMap((guardian, index) => [
+        reviewField(`Additional guardian ${index + 1}`, guardian.fullName),
+        reviewField('Relationship', guardian.relationship),
+        reviewField('Mobile', guardian.mobile),
+        reviewField('Email', guardian.email),
+        reviewField('Occupation', guardian.occupation)
+      ])
+    : [
+        reviewField('Secondary guardian', p.secondaryGuardianName || p.motherName),
+        reviewField('Secondary relationship', p.secondaryGuardianRelationship || p.motherRelationship),
+        reviewField('Secondary mobile', p.secondaryGuardianMobile || p.motherContact),
+        reviewField('Secondary email', p.secondaryGuardianEmail || p.motherEmail),
+        reviewField('Secondary occupation', p.secondaryGuardianOccupation || p.motherOccupation)
+      ];
 
   return [
     {
@@ -65,10 +85,8 @@ export function buildApplicationReviewSections(app: ApplicationRecord): ReviewSe
         reviewField('Gender', app.gender),
         reviewField('Blood group', p.bloodGroup),
         reviewField('Nationality', p.nationality),
-        reviewField('Religion', p.religion),
-        reviewField('Category', p.category),
+        reviewField('Social category', p.socialCategory ?? p.category),
         reviewField('Mother tongue', p.motherTongue),
-        reviewField('Place of birth', p.placeOfBirth),
         reviewField('Email', app.email),
         reviewField('Mobile', app.contactNumber),
         reviewField('ID type', p.identityDocumentType ? formatAdmissionsLabel(p.identityDocumentType) : null),
@@ -85,11 +103,7 @@ export function buildApplicationReviewSections(app: ApplicationRecord): ReviewSe
         reviewField('Mobile', app.parentContact),
         reviewField('Email', app.parentEmail),
         reviewField('Occupation', p.fatherOccupation),
-        reviewField('Secondary guardian', p.secondaryGuardianName),
-        reviewField('Secondary relationship', p.secondaryGuardianRelationship),
-        reviewField('Secondary mobile', p.secondaryGuardianMobile),
-        reviewField('Secondary email', p.secondaryGuardianEmail),
-        reviewField('Secondary occupation', p.secondaryGuardianOccupation),
+        ...guardianFields,
         reviewField('Emergency contact', p.emergencyContactName),
         reviewField('Emergency relationship', p.emergencyContactRelationship),
         reviewField('Emergency mobile', p.emergencyContactMobile),
