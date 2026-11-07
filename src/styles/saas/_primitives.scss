@@ -276,7 +276,12 @@ tc-saas-page-header:not(:has(.tc-btn--back)):not(:has(.saas-page-header__actions
   align-items: center;
   border-bottom: 1px solid var(--saas-border);
   padding: 0 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.saas-tabs::-webkit-scrollbar { display: none; }
 
 .saas-tabs button {
   background: transparent;
@@ -290,6 +295,8 @@ tc-saas-page-header:not(:has(.tc-btn--back)):not(:has(.saas-page-header__actions
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  flex: 0 0 auto;
   transition: all 0.15s ease;
 }
 .saas-tabs button:hover { color: var(--saas-text); }

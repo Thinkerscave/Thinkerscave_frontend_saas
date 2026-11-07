@@ -13,8 +13,8 @@
         <i class="pi pi-search"></i>
         <input type="text" [(ngModel)]="search" placeholder="Search action or summary...">
       </label>
-      <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate"></label>
-      <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate"></label>
+      <label class="saas-field"><span>From</span><input type="date" [(ngModel)]="fromDate" (change)="load()"></label>
+      <label class="saas-field"><span>To</span><input type="date" [(ngModel)]="toDate" (change)="load()"></label>
       <label class="saas-field"><span>Module</span>
         <p-dropdown
           [options]="moduleOptions"
@@ -35,7 +35,8 @@
           styleClass="att-filter-dropdown">
         </p-dropdown>
       </label>
-      <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-refresh"></i>Reset</button>
+      <button type="button" class="saas-btn" (click)="load()"><i class="pi pi-refresh"></i>Refresh</button>
+      <button type="button" class="saas-btn" (click)="reset()"><i class="pi pi-filter-slash"></i>Reset</button>
     </tc-saas-filter-row>
 
     <tc-saas-panel [title]="'All Activity (' + filtered.length + ')'">

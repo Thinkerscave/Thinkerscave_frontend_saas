@@ -1,11 +1,12 @@
 import { CommonModule, DatePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 
-import { AdminAuditEvent, AdminControlCenter } from '../../../administration/models/admin-control.model';
-import { AdminControlDataService } from '../../../administration/services/admin-control-data.service';
+import { auditApi } from '../../../../shared/constants/api.endpoint';
+import { unwrapApiResponse } from '../../../../shared/utils/api-response.util';
 
 import { UI_PAGINATION } from '../../../../shared/config/ui-standards';
 import { AppPaginatorComponent } from '../../../../shared/ui/app-list';
@@ -25,6 +26,21 @@ interface SelectOption {
   value: string;
 }
 
+interface AuditLogRow {
+  id: number;
+  eventType: string;
+  action: string;
+  entityType: string;
+  actorUsername: string;
+  summary: string;
+  occurredAt: string;
+}
+
+interface AuditLogPage {
+  content: AuditLogRow[];
+  totalElements: number;
+}
+
 @Component({
   selector: 'app-activity-logs',
   standalone: true,
@@ -36,11 +52,11 @@ interface SelectOption {
 export class ActivityLogsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly adminData = inject(AdminControlDataService);
+  private readonly http = inject(HttpClient);
 
   loading = true;
-  workspace: AdminControlCenter | null = null;
-  logs: AdminAuditEvent[] = [];
+  logs: AuditLogRow[] = [];
+  totalLogs = 0;
   search = '';
   fromDate = this.daysAgo(7);
   toDate = this.today();
@@ -52,25 +68,43 @@ export class ActivityLogsComponent implements OnInit {
   readonly pageSizeOptions = UI_PAGINATION.table.options;
 
   ngOnInit(): void {
-    this.adminData.loadWorkspace()
+    this.load();
+  }
+
+  load(): void {
+    const params: Record<string, string> = {
+      page: '0',
+      size: '100',
+      sort: 'occurredAt,desc',
+      from: new Date(`${this.fromDate}T00:00:00`).toISOString(),
+      to: new Date(`${this.toDate}T23:59:59.999`).toISOString()
+    };
+    this.http.get<unknown>(auditApi.logs, { params })
       .pipe(
         finalizeBusy(busy => { this.loading = busy; this.cdr.markForCheck(); }),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: ws => {
-          this.workspace = ws;
-          this.logs = (ws?.auditLogs || []);
+        next: response => {
+          const page = unwrapApiResponse<AuditLogPage>(response, { content: [], totalElements: 0 });
+          this.logs = page?.content ?? [];
+          this.totalLogs = page?.totalElements ?? this.logs.length;
+          this.page = 0;
           this.cdr.markForCheck();
         },
-        error: () => { this.cdr.markForCheck(); }
+        error: () => {
+          this.logs = [];
+          this.totalLogs = 0;
+          this.cdr.markForCheck();
+        }
       });
   }
 
   get stats(): SaasStat[] {
-    const total = this.logs.length;
-    const today = this.logs.filter(l => l.occurredAt?.startsWith(this.today())).length;
-    const security = this.workspace?.securityEvents?.length ?? 0;
+    const total = this.totalLogs;
+    const today = this.logs.filter(l => (l.occurredAt || '').startsWith(this.today())).length;
+    const security = this.logs.filter(l =>
+      /login|auth|security/i.test(l.action || '') || /security/i.test(l.entityType || '')).length;
     const failed = this.logs.filter(l => (l.action || '').toLowerCase().includes('fail')).length;
     return [
       { key: 'total', label: 'Total Logs', value: total.toLocaleString(), helper: 'In selected range', icon: 'pi pi-list', tone: 'primary' },
@@ -97,7 +131,7 @@ export class ActivityLogsComponent implements OnInit {
     ];
   }
 
-  get filtered(): AdminAuditEvent[] {
+  get filtered(): AuditLogRow[] {
     const q = this.search.trim().toLowerCase();
     return this.logs.filter(l => {
       if (this.moduleFilter !== 'all' && (l.entityType || 'system') !== this.moduleFilter) return false;
@@ -107,7 +141,7 @@ export class ActivityLogsComponent implements OnInit {
     });
   }
 
-  get pageItems(): AdminAuditEvent[] {
+  get pageItems(): AuditLogRow[] {
     const start = this.page * this.pageSize;
     return this.filtered.slice(start, start + this.pageSize);
   }
@@ -126,6 +160,7 @@ export class ActivityLogsComponent implements OnInit {
     this.moduleFilter = 'all';
     this.userFilter = 'all';
     this.page = 0;
+    this.load();
   }
 
   exportCsv(): void {

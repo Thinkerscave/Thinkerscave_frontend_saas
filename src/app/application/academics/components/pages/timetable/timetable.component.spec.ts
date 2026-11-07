@@ -5,7 +5,6 @@ import { of, Subject } from 'rxjs';
 import { PermissionService } from '../../../../../core/services/permission.service';
 import { AcademicYearContextService } from '../../../../../shared/services/academic-year-context.service';
 import { TimetableApiService } from '../../../services/timetable-api.service';
-import { TeacherAllocationApiService } from '../../../services/teacher-allocation-api.service';
 import { TimetableGrid, TimetableWorkspace } from '../../../models/timetable.model';
 import { TimetablePageComponent } from './timetable.component';
 
@@ -30,7 +29,6 @@ describe('TimetablePageComponent issue details', () => {
       imports: [TimetablePageComponent],
       providers: [
         { provide: TimetableApiService, useValue: timetableApi },
-        { provide: TeacherAllocationApiService, useValue: {} },
         { provide: AcademicYearContextService, useValue: {} },
         { provide: Router, useValue: {} },
         { provide: PermissionService, useValue: permissionService },

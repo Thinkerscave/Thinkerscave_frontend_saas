@@ -712,3 +712,228 @@ export interface ProvisioningStep {
 export interface ProvisioningJobDetail extends ProvisioningJob {
   steps: ProvisioningStep[];
 }
+
+/* ============================================================
+   Migration Center — releases, database migrations and catalog
+   synchronization as three independent, backend-driven lifecycles.
+   ============================================================ */
+
+export interface MigrationCenterOverview {
+  latestAvailableDatabaseVersion?: string;
+  latestAvailableCatalogVersion?: string;
+  currentReleaseId?: number;
+  currentReleaseVersion?: string;
+  currentReleaseStatus?: ReleaseStatus;
+  currentApplicationVersion?: string;
+  targetDatabaseVersion?: string;
+  targetCatalogVersion?: string;
+  totalTenants: number;
+  databaseCurrent: number;
+  databasePending: number;
+  databaseFailed: number;
+  catalogSynced: number;
+  catalogPending: number;
+  catalogFailed: number;
+  maintenanceTenants: number;
+  activeJobs: number;
+  failedJobs: number;
+  totalReleases: number;
+  migrationScripts: number;
+  checkedAt: string;
+}
+
+export interface ReleaseOverview extends PlatformRelease {
+  totalTenants: number;
+  succeeded: number;
+  failed: number;
+  pending: number;
+  progressPercent: number;
+}
+
+export type ValidationStatus = 'PASS' | 'WARN' | 'FAIL';
+
+export interface ValidationCheck {
+  key: string;
+  label: string;
+  status: ValidationStatus;
+  message: string;
+}
+
+export interface ReleaseValidation {
+  valid: boolean;
+  releaseId: string;
+  targetDatabaseVersion: string;
+  latestAvailableDatabaseVersion?: string;
+  targetCatalogVersion: string;
+  currentCatalogVersion?: string;
+  eligibleTenants: number;
+  checks: ValidationCheck[];
+  checkedAt: string;
+}
+
+export interface ReleaseDetail {
+  release: ReleaseOverview;
+  validation: ReleaseValidation;
+  tenantExecutions: ExecutionJob[];
+  timeline: MigrationAuditEvent[];
+  checkedAt: string;
+}
+
+export interface ScriptState {
+  version: string;
+  description?: string;
+  script?: string;
+  state?: string;
+  checksum?: number;
+  installedOn?: string;
+  executionTimeMs?: number;
+}
+
+export interface MigrationPreview {
+  tenantId: number;
+  tenantIdentifier: string;
+  schemaName: string;
+  currentVersion?: string;
+  targetVersion: string;
+  pendingCount: number;
+  appliedCount: number;
+  validationSuccessful: boolean;
+  validationMessage: string;
+  pendingScripts: ScriptState[];
+  checks: ValidationCheck[];
+  maintenanceMode: boolean;
+  checkedAt: string;
+}
+
+export interface TenantMigrationDetail extends TenantReleaseOperation {
+  healthScore?: number;
+  healthIssues: string[];
+  currentFlywayVersion?: string;
+  pendingScripts: ScriptState[];
+  appliedScriptCount: number;
+  migrationHistory: MigrationExecution[];
+  catalogSyncHistory: CatalogSyncExecution[];
+  active: boolean;
+}
+
+export interface MigrationScript {
+  version: string;
+  description?: string;
+  script: string;
+  location: string;
+  appliedTenantCount: number;
+  pendingTenantCount: number;
+  totalTenants: number;
+}
+
+export interface CatalogVersion {
+  versionNumber: number;
+  changeType: string;
+  entityType: string;
+  entityKey: string;
+  createdBy?: string;
+  createdOn?: string;
+}
+
+export interface TenantCatalogRow {
+  tenantId: number;
+  organizationName?: string;
+  tenantIdentifier: string;
+  schemaName: string;
+  catalogVersion?: string;
+  targetCatalogVersion?: string;
+  syncStatus: OperationStatus;
+  lastSyncedAt?: string;
+  errorMessage?: string;
+}
+
+export interface CatalogOverview {
+  status: {
+    totalTenants: number;
+    synchronizedTenants: number;
+    pendingTenants: number;
+    failedTenants: number;
+    targetCatalogVersion?: string;
+    checkedAt: string;
+  };
+  latestCatalogVersion?: string;
+  versions: CatalogVersion[];
+  tenants: TenantCatalogRow[];
+  checkedAt: string;
+}
+
+export type JobType = 'MIGRATION' | 'CATALOG_SYNC' | 'PROVISIONING';
+
+export interface ExecutionJob {
+  jobId: string;
+  jobType: JobType;
+  tenantId?: number;
+  tenantIdentifier?: string;
+  organizationName?: string;
+  releaseId?: string;
+  status: string;
+  attempt: number;
+  targetVersion?: string;
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+}
+
+export interface MigrationAuditEvent {
+  id: number;
+  eventType: string;
+  actor?: string;
+  tenantIdentifier?: string;
+  entityType?: string;
+  entityId?: string;
+  status: string;
+  targetVersion?: string;
+  details?: string;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+export interface LocalMigrationStatus {
+  enabled: boolean;
+  loopbackDatasource: boolean;
+  datasourceHost?: string;
+  datasourceDatabase?: string;
+  activeProfiles?: string;
+  flywayAvailable: boolean;
+  currentVersion?: string;
+  latestAvailableVersion?: string;
+  pendingCount: number;
+  pendingScripts: ScriptState[];
+  validationSuccessful: boolean;
+  validationMessage: string;
+  blockers: string[];
+  checkedAt: string;
+}
+
+export interface LocalMigrationRun {
+  executed: boolean;
+  outcome: string;
+  message: string;
+  beforeVersion?: string;
+  afterVersion?: string;
+  migrationsExecuted: number;
+  appliedScripts: ScriptState[];
+  completedAt: string;
+}
+
+export interface TenantMigrationResult {
+  id: number;
+  releaseId?: number;
+  tenantId: number;
+  tenantIdentifier: string;
+  fromVersion?: string;
+  targetVersion: string;
+  observedVersion?: string;
+  status: OperationStatus;
+  attempt: number;
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+}
+
+

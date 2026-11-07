@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { StatListItem } from '../../models/dashboard.model';
 
-/** Reused for STAT_LIST, and (via input) SYSTEM_HEALTH checks / EXAMINATION_SUMMARY upcoming items. */
+/** Renders a generic list of labelled statistics for the `STAT_LIST` widget. */
 @Component({
   selector: 'tc-stat-list-widget',
   standalone: true,

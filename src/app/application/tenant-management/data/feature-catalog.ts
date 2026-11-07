@@ -1,6 +1,4 @@
-import { PlanTier } from './tenant-view.model';
-
-export type MatrixTier = Exclude<PlanTier, 'unknown'>;
+export type MatrixTier = 'starter' | 'professional' | 'enterprise' | 'custom';
 
 export interface PlanDefinition {
   id: MatrixTier;

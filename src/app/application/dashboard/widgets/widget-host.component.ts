@@ -20,12 +20,7 @@ import { ProfileSummaryWidgetComponent } from './profile-summary/profile-summary
 import { ChildProfileWidgetComponent } from './child-profile/child-profile.widget';
 import { QuickActionsWidgetComponent } from './quick-actions/quick-actions.widget';
 import { RecentRecordsWidgetComponent } from './recent-records/recent-records.widget';
-import { SystemHealthWidgetComponent } from './system-health/system-health.widget';
 import { TopOrganizationsWidgetComponent } from './top-organizations/top-organizations.widget';
-import { LeaveSummaryWidgetComponent } from './leave-summary/leave-summary.widget';
-import { LibrarySummaryWidgetComponent } from './library-summary/library-summary.widget';
-import { TransportSummaryWidgetComponent } from './transport-summary/transport-summary.widget';
-import { SupportTicketsWidgetComponent } from './support-tickets/support-tickets.widget';
 
 /**
  * The dashboard shell's ONLY switch-like construct — and it is keyed
@@ -56,12 +51,7 @@ import { SupportTicketsWidgetComponent } from './support-tickets/support-tickets
     ChildProfileWidgetComponent,
     QuickActionsWidgetComponent,
     RecentRecordsWidgetComponent,
-    SystemHealthWidgetComponent,
-    TopOrganizationsWidgetComponent,
-    LeaveSummaryWidgetComponent,
-    LibrarySummaryWidgetComponent,
-    TransportSummaryWidgetComponent,
-    SupportTicketsWidgetComponent
+    TopOrganizationsWidgetComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-host.component.html'

@@ -516,14 +516,6 @@ export const auditApi = {
   security: `${BASE}/audit/security`,
 };
 
-// ─── Admin Control ──────────────────────────────────────────────────────────────
-export const adminControlApi = {
-  workspace: `${BASE}/admin-control/workspace`,
-  diagnostics: `${BASE}/admin-control/diagnostics`,
-  provision: `${BASE}/tenant-onboarding/provision`,
-  registerUser: `${BASE}/users/register`,
-};
-
 // ─── Organization ───────────────────────────────────────────────────────────────
 export const organizationApi = {
   base: `${BASE}/organizations`,
@@ -617,4 +609,30 @@ export const platformTenantHealthApi = {
   summary: `${PLATFORM_BASE}/tenant-health/summary`,
   tenants: `${PLATFORM_BASE}/tenant-health/tenants`,
   tenantById: (tenantId: number) => `${PLATFORM_BASE}/tenant-health/tenants/${tenantId}`
+};
+
+/** Consolidated Migration Center API: releases, Flyway migrations, catalog sync, jobs, history. */
+export const platformMigrationCenterApi = {
+  overview: `${PLATFORM_BASE}/migration-center/overview`,
+  releases: `${PLATFORM_BASE}/migration-center/releases`,
+  releaseById: (id: number | string) => `${PLATFORM_BASE}/migration-center/releases/${id}`,
+  validateRelease: (id: number | string) => `${PLATFORM_BASE}/migration-center/releases/${id}/validate`,
+  executeRelease: (id: number | string) => `${PLATFORM_BASE}/migration-center/releases/${id}/execute`,
+  tenants: `${PLATFORM_BASE}/migration-center/tenants`,
+  tenantById: (tenantId: number) => `${PLATFORM_BASE}/migration-center/tenants/${tenantId}`,
+  tenantPreview: (tenantId: number) => `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/preview`,
+  tenantValidate: (tenantId: number) => `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/validate`,
+  tenantMigrate: (tenantId: number) => `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/migrate`,
+  tenantRetryMigration: (tenantId: number) =>
+    `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/retry-migration`,
+  tenantRetryCatalog: (tenantId: number) =>
+    `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/retry-catalog`,
+  tenantMaintenance: (tenantId: number) => `${PLATFORM_BASE}/migration-center/tenants/${tenantId}/maintenance`,
+  scripts: `${PLATFORM_BASE}/migration-center/scripts`,
+  catalog: `${PLATFORM_BASE}/migration-center/catalog`,
+  jobs: `${PLATFORM_BASE}/migration-center/jobs`,
+  history: `${PLATFORM_BASE}/migration-center/history`,
+  localStatus: `${PLATFORM_BASE}/migration-center/local/status`,
+  localValidate: `${PLATFORM_BASE}/migration-center/local/validate`,
+  localMigrate: `${PLATFORM_BASE}/migration-center/local/migrate`
 };

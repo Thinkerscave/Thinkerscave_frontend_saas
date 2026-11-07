@@ -6,6 +6,7 @@ import {
   auditApi,
   platformCatalogSyncApi,
   platformMigrationApi,
+  platformMigrationCenterApi,
   platformReleaseApi,
   platformTenantHealthApi
 } from '../../../shared/constants/api.endpoint';
@@ -39,13 +40,26 @@ import {
   PlatformAuditLog,
   PlatformSecurityAuditLog,
   CatalogSyncExecution,
+  CatalogOverview,
   CreateReleasePayload,
+  ExecutionJob,
+  LocalMigrationRun,
+  LocalMigrationStatus,
+  MigrationAuditEvent,
+  MigrationCenterOverview,
   MigrationExecution,
+  MigrationPreview,
+  MigrationScript,
   PlatformRelease,
+  ReleaseDetail,
+  ReleaseOverview,
   ReleaseSummary,
+  ReleaseValidation,
   SpringPage,
   SubscriptionPlan,
   TenantHealthResponse,
+  TenantMigrationDetail,
+  TenantMigrationResult,
   TenantRegistry,
   TenantReleaseDetail,
   TenantReleaseOperation
@@ -460,6 +474,184 @@ export class PlatformManagementService {
         },
         tenants: this.emptyPage()
       }))
+    );
+  }
+
+  /* ------------------------------------------------------------------ Migration Center */
+
+  getMigrationCenterOverview(): Observable<MigrationCenterOverview> {
+    return this.http.get<unknown>(platformMigrationCenterApi.overview).pipe(
+      map(r => unwrapApiResponse<MigrationCenterOverview>(r, {
+        totalTenants: 0, databaseCurrent: 0, databasePending: 0, databaseFailed: 0,
+        catalogSynced: 0, catalogPending: 0, catalogFailed: 0, maintenanceTenants: 0,
+        activeJobs: 0, failedJobs: 0, totalReleases: 0, migrationScripts: 0,
+        checkedAt: new Date(0).toISOString()
+      }))
+    );
+  }
+
+  getMigrationCenterReleases(page = 0, size = 20): Observable<SpringPage<ReleaseOverview>> {
+    const params = new HttpParams().set('page', String(page)).set('size', String(size));
+    return this.http.get<unknown>(platformMigrationCenterApi.releases, { params }).pipe(
+      map(r => this.mapPageResponse<ReleaseOverview>(r))
+    );
+  }
+
+  getMigrationCenterRelease(id: number | string): Observable<ReleaseDetail> {
+    return this.http.get<unknown>(platformMigrationCenterApi.releaseById(id)).pipe(
+      map(r => unwrapApiResponse<ReleaseDetail>(r, {} as ReleaseDetail))
+    );
+  }
+
+  validateMigrationCenterRelease(id: number | string): Observable<ReleaseValidation> {
+    return this.http.post<unknown>(platformMigrationCenterApi.validateRelease(id), {}).pipe(
+      map(r => unwrapApiResponse<ReleaseValidation>(r, {} as ReleaseValidation))
+    );
+  }
+
+  executeMigrationCenterRelease(id: number | string): Observable<ReleaseOverview> {
+    return this.http.post<unknown>(platformMigrationCenterApi.executeRelease(id), {}).pipe(
+      map(r => unwrapApiResponse<ReleaseOverview>(r, {} as ReleaseOverview))
+    );
+  }
+
+  createMigrationCenterRelease(payload: CreateReleasePayload): Observable<ReleaseOverview> {
+    return this.http.post<unknown>(platformMigrationCenterApi.releases, payload, {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse<ReleaseOverview>(r, {} as ReleaseOverview))
+    );
+  }
+
+  getMigrationCenterTenants(page = 0, size = 50, search?: string): Observable<SpringPage<TenantReleaseOperation>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (search) params = params.set('search', search);
+    return this.http.get<unknown>(platformMigrationCenterApi.tenants, { params }).pipe(
+      map(r => this.mapPageResponse<TenantReleaseOperation>(r))
+    );
+  }
+
+  getMigrationCenterTenant(tenantId: number): Observable<TenantMigrationDetail> {
+    return this.http.get<unknown>(platformMigrationCenterApi.tenantById(tenantId)).pipe(
+      map(r => unwrapApiResponse<TenantMigrationDetail>(r, {} as TenantMigrationDetail))
+    );
+  }
+
+  previewMigrationCenterTenant(tenantId: number, targetVersion?: string): Observable<MigrationPreview> {
+    let params = new HttpParams();
+    if (targetVersion) params = params.set('targetVersion', targetVersion);
+    return this.http.get<unknown>(platformMigrationCenterApi.tenantPreview(tenantId), { params }).pipe(
+      map(r => unwrapApiResponse<MigrationPreview>(r, {} as MigrationPreview))
+    );
+  }
+
+  validateMigrationCenterTenant(tenantId: number, targetVersion?: string): Observable<MigrationPreview> {
+    let params = new HttpParams();
+    if (targetVersion) params = params.set('targetVersion', targetVersion);
+    return this.http.post<unknown>(platformMigrationCenterApi.tenantValidate(tenantId), {}, { params }).pipe(
+      map(r => unwrapApiResponse<MigrationPreview>(r, {} as MigrationPreview))
+    );
+  }
+
+  migrateMigrationCenterTenant(tenantId: number, targetVersion?: string): Observable<TenantMigrationResult> {
+    let params = new HttpParams();
+    if (targetVersion) params = params.set('targetVersion', targetVersion);
+    return this.http.post<unknown>(platformMigrationCenterApi.tenantMigrate(tenantId), {}, {
+      params,
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse<TenantMigrationResult>(r, {} as TenantMigrationResult))
+    );
+  }
+
+  retryMigrationCenterTenantMigration(tenantId: number): Observable<MigrationExecution> {
+    return this.http.post<unknown>(platformMigrationCenterApi.tenantRetryMigration(tenantId), {}).pipe(
+      map(r => unwrapApiResponse<MigrationExecution>(r, {} as MigrationExecution))
+    );
+  }
+
+  retryMigrationCenterTenantCatalog(tenantId: number): Observable<CatalogSyncExecution> {
+    return this.http.post<unknown>(platformMigrationCenterApi.tenantRetryCatalog(tenantId), {}).pipe(
+      map(r => unwrapApiResponse<CatalogSyncExecution>(r, {} as CatalogSyncExecution))
+    );
+  }
+
+  setMigrationCenterMaintenance(
+    tenantId: number, enabled: boolean, reason?: string
+  ): Observable<TenantReleaseOperation> {
+    return this.http.put<unknown>(platformMigrationCenterApi.tenantMaintenance(tenantId), { enabled, reason }).pipe(
+      map(r => unwrapApiResponse<TenantReleaseOperation>(r, {} as TenantReleaseOperation))
+    );
+  }
+
+  getMigrationCenterScripts(): Observable<MigrationScript[]> {
+    return this.http.get<unknown>(platformMigrationCenterApi.scripts).pipe(
+      map(r => unwrapApiResponse<MigrationScript[]>(r, []))
+    );
+  }
+
+  getMigrationCenterCatalog(): Observable<CatalogOverview> {
+    return this.http.get<unknown>(platformMigrationCenterApi.catalog).pipe(
+      map(r => unwrapApiResponse<CatalogOverview>(r, {
+        status: {
+          totalTenants: 0, synchronizedTenants: 0, pendingTenants: 0, failedTenants: 0,
+          checkedAt: new Date(0).toISOString()
+        },
+        versions: [],
+        tenants: [],
+        checkedAt: new Date(0).toISOString()
+      }))
+    );
+  }
+
+  getMigrationCenterJobs(
+    page = 0,
+    size = 25,
+    filters: { jobType?: string; status?: string; search?: string } = {}
+  ): Observable<SpringPage<ExecutionJob>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (filters.jobType) params = params.set('jobType', filters.jobType);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.search) params = params.set('search', filters.search);
+    return this.http.get<unknown>(platformMigrationCenterApi.jobs, { params }).pipe(
+      map(r => this.mapPageResponse<ExecutionJob>(r))
+    );
+  }
+
+  getMigrationCenterHistory(
+    page = 0,
+    size = 25,
+    filters: { eventType?: string; search?: string } = {}
+  ): Observable<SpringPage<MigrationAuditEvent>> {
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
+    if (filters.eventType) params = params.set('eventType', filters.eventType);
+    if (filters.search) params = params.set('search', filters.search);
+    return this.http.get<unknown>(platformMigrationCenterApi.history, { params }).pipe(
+      map(r => this.mapPageResponse<MigrationAuditEvent>(r))
+    );
+  }
+
+  getLocalMigrationStatus(): Observable<LocalMigrationStatus> {
+    return this.http.get<unknown>(platformMigrationCenterApi.localStatus, {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse<LocalMigrationStatus>(r, {} as LocalMigrationStatus))
+    );
+  }
+
+  validateLocalMigration(): Observable<LocalMigrationRun> {
+    return this.http.post<unknown>(platformMigrationCenterApi.localValidate, {}, {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse<LocalMigrationRun>(r, {} as LocalMigrationRun))
+    );
+  }
+
+  runLocalMigration(): Observable<LocalMigrationRun> {
+    return this.http.post<unknown>(platformMigrationCenterApi.localMigrate, {}, {
+      headers: { 'X-Skip-Error-Toast': '1' }
+    }).pipe(
+      map(r => unwrapApiResponse<LocalMigrationRun>(r, {} as LocalMigrationRun))
     );
   }
 

@@ -28,21 +28,12 @@ export type WidgetType =
   | 'ATTENDANCE_SUMMARY'
   | 'STAFF_ATTENDANCE_TOGGLE'
   | 'STAFF_ATTENDANCE_WEEK'
-  | 'ACADEMIC_SUMMARY'
   | 'TIMETABLE'
   | 'PROFILE_SUMMARY'
   | 'CHILD_PROFILE'
   | 'QUICK_ACTIONS'
   | 'RECENT_RECORDS'
-  | 'REPORTS'
-  | 'SYSTEM_HEALTH'
-  | 'TOP_ORGANIZATIONS'
-  | 'LEAVE_SUMMARY'
-  | 'EXAMINATION_SUMMARY'
-  | 'LIBRARY_SUMMARY'
-  | 'TRANSPORT_SUMMARY'
-  | 'SUPPORT_TICKETS'
-  | 'PROMOTION_BANNER';
+  | 'TOP_ORGANIZATIONS';
 
 export type DataMode = 'LIVE' | 'SAMPLE';
 
@@ -352,11 +343,6 @@ export interface RecentRecordsData {
   items: RecordItem[];
 }
 
-export interface SystemHealthData {
-  overallStatus: string;
-  checks: StatListItem[];
-}
-
 export interface TopOrgItem {
   organizationName: string;
   institutionType?: string;
@@ -366,43 +352,6 @@ export interface TopOrgItem {
 
 export interface TopOrganizationsData {
   items: TopOrgItem[];
-}
-
-export interface LeaveSummaryData {
-  availableDays: number;
-  usedDays: number;
-  pendingRequests: number;
-  lastRequestStatus?: string;
-}
-
-export interface ExaminationSummaryData {
-  upcoming: StatListItem[];
-}
-
-export interface LibrarySummaryData {
-  booksIssued: number;
-  booksOverdue: number;
-  fineDue: number;
-}
-
-export interface TransportSummaryData {
-  routeName?: string;
-  vehicleNumber?: string;
-  pickupTime?: string;
-  dropTime?: string;
-  liveStatus?: string;
-}
-
-export interface TicketItem {
-  subject: string;
-  status?: string;
-  priority?: string;
-  raisedAgo?: string;
-}
-
-export interface SupportTicketsData {
-  openCount: number;
-  items: TicketItem[];
 }
 
 /* ───────────────────────── Staff attendance passthrough ───────────────────────── */

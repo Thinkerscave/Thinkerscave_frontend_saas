@@ -48,9 +48,25 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'promotions', data: { ...TENANT_PAGES.promotions }, loadComponent: () => import('./tenant-management/pages/promotions/promotions.component').then(m => m.PromotionsComponent) },
       { path: 'menus', data: { ...TENANT_PAGES.menuManagement }, loadComponent: () => import('./tenant-management/pages/menu-management/menu-management.component').then(m => m.MenuManagementComponent) },
       { path: 'feature-catalog', data: { ...TENANT_PAGES.featureCatalog, catalogMode: 'platform' }, loadComponent: () => import('./tenant-management/pages/feature-catalog/feature-catalog.component').then(m => m.FeatureCatalogComponent) },
-      { path: 'tenant-health', data: { ...TENANT_PAGES.tenantHealth }, loadComponent: () => import('./tenant-management/pages/platform-health/platform-health.component').then(m => m.PlatformHealthComponent) },
-      { path: 'platform-health', pathMatch: 'full', redirectTo: 'tenant-health' },
-      { path: 'migration-center', data: { ...TENANT_PAGES.migrationCenter }, loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent) },
+      { path: 'tenant-health', pathMatch: 'full', redirectTo: 'migration-center/tenants' },
+      { path: 'platform-health', pathMatch: 'full', redirectTo: 'migration-center/tenants' },
+      {
+        path: 'migration-center',
+        data: { ...TENANT_PAGES.migrationCenter },
+        loadComponent: () => import('./tenant-management/pages/migration-center/migration-center.component').then(m => m.MigrationCenterComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'overview' },
+          { path: 'overview', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/overview-tab.component').then(m => m.MigrationOverviewTabComponent) },
+          { path: 'releases', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/releases-tab.component').then(m => m.MigrationReleasesTabComponent) },
+          { path: 'releases/:id', data: { ...TENANT_PAGES.migrationCenterRelease }, loadComponent: () => import('./tenant-management/pages/migration-center/release-detail/release-detail.component').then(m => m.MigrationReleaseDetailComponent) },
+          { path: 'tenants', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/tenants-tab.component').then(m => m.MigrationTenantsTabComponent) },
+          { path: 'tenants/:id', data: { ...TENANT_PAGES.migrationCenterTenant }, loadComponent: () => import('./tenant-management/pages/migration-center/tenant-detail/tenant-detail.component').then(m => m.MigrationTenantDetailComponent) },
+          { path: 'scripts', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/scripts-tab.component').then(m => m.MigrationScriptsTabComponent) },
+          { path: 'catalog', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/catalog-tab.component').then(m => m.MigrationCatalogTabComponent) },
+          { path: 'jobs', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/jobs-tab.component').then(m => m.MigrationJobsTabComponent) },
+          { path: 'history', loadComponent: () => import('./tenant-management/pages/migration-center/tabs/history-tab.component').then(m => m.MigrationHistoryTabComponent) }
+        ]
+      },
       { path: 'audit-center', data: { ...TENANT_PAGES.auditCenter }, loadComponent: () => import('./tenant-management/pages/audit-center/audit-center.component').then(m => m.AuditCenterComponent) }
     ]
   },
@@ -110,10 +126,10 @@ export const APPLICATION_ROUTES: Routes = [
       { path: 'organizations', pathMatch: 'full', redirectTo: '/app/tenant-management/organizations' },
       { path: 'subscriptions', pathMatch: 'full', redirectTo: '/app/tenant-management/subscription-plans' },
       { path: 'access', pathMatch: 'full', redirectTo: '/app/access-management/users' },
-      { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' },
+      { path: 'monitoring', pathMatch: 'full', redirectTo: '/app/tenant-management/migration-center/tenants' },
       { path: 'audit', pathMatch: 'full', redirectTo: '/app/tenant-management/audit-center' },
       { path: 'feature-catalog', pathMatch: 'full', redirectTo: '/app/tenant-management/feature-catalog' },
-      { path: 'platform-health', pathMatch: 'full', redirectTo: '/app/tenant-management/tenant-health' }
+      { path: 'platform-health', pathMatch: 'full', redirectTo: '/app/tenant-management/migration-center/tenants' }
     ]
   },
   {

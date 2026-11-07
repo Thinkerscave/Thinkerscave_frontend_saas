@@ -220,13 +220,6 @@ export const ACADEMICS_PAGES = {
 } as const;
 
 export const TENANT_PAGES = {
-  dashboard: {
-    breadcrumb: 'Dashboard',
-    pageTitle: 'Dashboard',
-    pageSubtitle: 'ThinkersCave platform-wide overview for super administrators',
-    pageKind: 'main',
-    hideBack: true
-  },
   customers: {
     breadcrumb: 'Customers',
     pageTitle: 'Customers',
@@ -317,19 +310,28 @@ export const TENANT_PAGES = {
     pageKind: 'main',
     hideBack: true
   },
-  tenantHealth: {
-    breadcrumb: 'Tenant Health',
-    pageTitle: 'Tenant Health',
-    pageSubtitle: 'Monitor tenant infrastructure, schema versions and storage',
-    pageKind: 'main',
-    hideBack: true
-  },
   migrationCenter: {
     breadcrumb: 'Migration Center',
     pageTitle: 'Migration Center',
-    pageSubtitle: 'Monitor tenant provisioning jobs and schema migrations',
+    pageSubtitle: 'Releases, Flyway database migrations and catalog synchronization — three independent lifecycles.',
     pageKind: 'main',
     hideBack: true
+  },
+  migrationCenterRelease: {
+    breadcrumb: 'Release Details',
+    pageTitle: 'Release Details',
+    pageSubtitle: 'Validate readiness, execute per tenant and audit the recorded release.',
+    pageKind: 'detail',
+    showBack: true,
+    backFallback: '/app/tenant-management/migration-center/releases'
+  },
+  migrationCenterTenant: {
+    breadcrumb: 'Tenant Details & Health',
+    pageTitle: 'Tenant Details & Health',
+    pageSubtitle: 'Consolidated tenant health, Flyway database and catalog synchronization state.',
+    pageKind: 'detail',
+    showBack: true,
+    backFallback: '/app/tenant-management/migration-center/tenants'
   },
   auditCenter: {
     breadcrumb: 'Audit Center',
@@ -341,13 +343,6 @@ export const TENANT_PAGES = {
 } as const;
 
 export const ACCESS_PAGES = {
-  dashboard: {
-    breadcrumb: 'Overview',
-    pageTitle: 'Overview',
-    pageSubtitle: 'Users, responsibilities and security for your organization',
-    pageKind: 'main',
-    hideBack: true
-  },
   roles: {
     breadcrumb: 'Roles',
     pageTitle: 'Roles',
@@ -861,24 +856,4 @@ export const USER_PROFILE_PAGE = {
   pageKind: 'detail',
   showBack: true,
   backFallback: '/app'
-} as const;
-
-export const EXAM_PAGES = {
-  list: {
-    breadcrumb: 'Exams',
-    pageTitle: 'Exams',
-    pageSubtitle: 'Schedule exams, capture marks and publish results.',
-    pageKind: 'main',
-    hideBack: true
-  }
-} as const;
-
-export const ENROLLMENT_PAGES = {
-  list: {
-    breadcrumb: 'Enrollments',
-    pageTitle: 'Enrollments',
-    pageSubtitle: 'Track student enrolment status and academic placement.',
-    pageKind: 'main',
-    hideBack: true
-  }
 } as const;

@@ -45,13 +45,7 @@
       <tc-child-profile-widget *ngSwitchCase="'CHILD_PROFILE'" [data]="data"></tc-child-profile-widget>
       <tc-quick-actions-widget *ngSwitchCase="'QUICK_ACTIONS'" [data]="data"></tc-quick-actions-widget>
       <tc-recent-records-widget *ngSwitchCase="'RECENT_RECORDS'" [data]="data"></tc-recent-records-widget>
-      <tc-system-health-widget *ngSwitchCase="'SYSTEM_HEALTH'" [data]="data"></tc-system-health-widget>
       <tc-top-organizations-widget *ngSwitchCase="'TOP_ORGANIZATIONS'" [data]="data"></tc-top-organizations-widget>
-      <tc-leave-summary-widget *ngSwitchCase="'LEAVE_SUMMARY'" [data]="data"></tc-leave-summary-widget>
-      <tc-stat-list-widget *ngSwitchCase="'EXAMINATION_SUMMARY'" [items]="data.upcoming || []"></tc-stat-list-widget>
-      <tc-library-summary-widget *ngSwitchCase="'LIBRARY_SUMMARY'" [data]="data"></tc-library-summary-widget>
-      <tc-transport-summary-widget *ngSwitchCase="'TRANSPORT_SUMMARY'" [data]="data"></tc-transport-summary-widget>
-      <tc-support-tickets-widget *ngSwitchCase="'SUPPORT_TICKETS'" [data]="data"></tc-support-tickets-widget>
     </ng-container>
   </tc-widget-card>
 </ng-template>

@@ -33,21 +33,12 @@ export const WIDGET_CHROME: Record<WidgetType, WidgetChrome> = {
   ATTENDANCE_SUMMARY: { icon: 'pi pi-calendar-check', emptyIcon: 'pi pi-calendar-check', emptyMessage: 'No attendance recorded yet.' },
   STAFF_ATTENDANCE_TOGGLE: { icon: 'pi pi-clock', emptyIcon: 'pi pi-clock', emptyMessage: 'Attendance is unavailable right now.' },
   STAFF_ATTENDANCE_WEEK: { icon: 'pi pi-chart-bar', emptyIcon: 'pi pi-chart-bar', emptyMessage: 'No weekly attendance summary is available.' },
-  ACADEMIC_SUMMARY: { icon: 'pi pi-graduation-cap', emptyIcon: 'pi pi-graduation-cap', emptyMessage: 'No academic summary available.' },
   TIMETABLE: { icon: 'pi pi-clock', emptyIcon: 'pi pi-clock', emptyMessage: 'No classes scheduled.' },
   PROFILE_SUMMARY: { icon: 'pi pi-user', emptyIcon: 'pi pi-user', emptyMessage: 'Profile unavailable.' },
   CHILD_PROFILE: { icon: 'pi pi-users', emptyIcon: 'pi pi-users', emptyMessage: 'No linked children found.' },
   QUICK_ACTIONS: { icon: 'pi pi-bolt', emptyIcon: 'pi pi-bolt', emptyMessage: 'No quick actions available.' },
   RECENT_RECORDS: { icon: 'pi pi-table', emptyIcon: 'pi pi-table', emptyMessage: 'No recent records found.' },
-  REPORTS: { icon: 'pi pi-file-pdf', emptyIcon: 'pi pi-file-pdf', emptyMessage: 'No reports available.' },
-  SYSTEM_HEALTH: { icon: 'pi pi-heart-fill', emptyIcon: 'pi pi-heart', emptyMessage: 'Health checks unavailable.' },
-  TOP_ORGANIZATIONS: { icon: 'pi pi-trophy', emptyIcon: 'pi pi-trophy', emptyMessage: 'No organizations to rank yet.' },
-  LEAVE_SUMMARY: { icon: 'pi pi-calendar-minus', emptyIcon: 'pi pi-calendar-minus', emptyMessage: 'No leave records found.' },
-  EXAMINATION_SUMMARY: { icon: 'pi pi-pencil', emptyIcon: 'pi pi-pencil', emptyMessage: 'No upcoming examinations.' },
-  LIBRARY_SUMMARY: { icon: 'pi pi-book', emptyIcon: 'pi pi-book', emptyMessage: 'No library activity found.' },
-  TRANSPORT_SUMMARY: { icon: 'pi pi-car', emptyIcon: 'pi pi-car', emptyMessage: 'No transport route assigned.' },
-  SUPPORT_TICKETS: { icon: 'pi pi-ticket', emptyIcon: 'pi pi-ticket', emptyMessage: 'No open support tickets.' },
-  PROMOTION_BANNER: { icon: 'pi pi-megaphone', emptyIcon: 'pi pi-megaphone', emptyMessage: 'Nothing to promote right now.' }
+  TOP_ORGANIZATIONS: { icon: 'pi pi-trophy', emptyIcon: 'pi pi-trophy', emptyMessage: 'No organizations to rank yet.' }
 };
 
 export function chromeFor(type: WidgetType): WidgetChrome {

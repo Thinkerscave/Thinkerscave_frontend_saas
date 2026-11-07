@@ -1049,29 +1049,3 @@
     i { font-size: 11px; color: var(--tc-primary-600); }
   }
 }
-
-// ─────────────────────────────────────────────
-// Platform Health — color-coded table rows
-.health-row--danger td {
-  background: color-mix(in srgb, var(--tc-danger) 7%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--tc-danger) 20%, transparent);
-}
-.health-row--warn td {
-  background: color-mix(in srgb, var(--tc-warning) 7%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--tc-warning) 20%, transparent);
-}
-.health-row--ok td {
-  background: transparent;
-}
-
-// Platform Health — responsive grid layout
-.platform-health__grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  align-items: start;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: 1fr;
-  }
-}
